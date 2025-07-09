@@ -43,7 +43,7 @@ const Intro = () => {
           <div className="flex items-center justify-center mb-6">
             <Home className="h-16 w-16 text-white mr-4" />
             <h1 className="text-5xl md:text-6xl font-bold text-white">
-              PropertyShare
+              Cabin Buddy
             </h1>
           </div>
           <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">

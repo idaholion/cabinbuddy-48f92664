@@ -1,4 +1,3 @@
-
 import { Calendar, DollarSign, Users, Home, Plus, Receipt, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,7 +51,7 @@ const Index = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Home className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">PropertyShare</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Cabin Buddy</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
