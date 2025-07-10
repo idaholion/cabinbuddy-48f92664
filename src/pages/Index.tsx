@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { BillingDashboard } from "@/components/BillingDashboard";
+import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState } from "react";
 
 const Index = () => {
@@ -71,7 +72,8 @@ const Index = () => {
             {[
               { id: "calendar", label: "Calendar", icon: Calendar },
               { id: "expenses", label: "Expenses", icon: Receipt },
-              { id: "billing", label: "Billing", icon: CreditCard }
+              { id: "billing", label: "Billing", icon: CreditCard },
+              { id: "family", label: "Family", icon: Users }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -116,6 +118,7 @@ const Index = () => {
             {activeTab === "calendar" && <PropertyCalendar />}
             {activeTab === "expenses" && <ExpenseTracker />}
             {activeTab === "billing" && <BillingDashboard />}
+            {activeTab === "family" && <FamilyGroups />}
           </div>
 
           {/* Sidebar */}
