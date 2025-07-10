@@ -63,6 +63,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			backgroundImage: {
+				'gradient-mountain': 'var(--gradient-mountain)',
+				'gradient-forest': 'var(--gradient-forest)', 
+				'gradient-sky': 'var(--gradient-sky)',
+				'gradient-sunset': 'var(--gradient-sunset)'
+			},
+			boxShadow: {
+				'cabin': 'var(--shadow-cabin)',
+				'warm': 'var(--shadow-warm)'
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

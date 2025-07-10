@@ -1,4 +1,4 @@
-import { Calendar, DollarSign, Users, Home, Plus, Receipt, CreditCard } from "lucide-react";
+import { Calendar, DollarSign, Users, Home, Plus, Receipt, CreditCard, Mountain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { BillingDashboard } from "@/components/BillingDashboard";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState } from "react";
+import cabinHero from "@/assets/cabin-hero.jpg";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("calendar");
@@ -45,28 +46,46 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Home className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">Cabin Buddy</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Property
-              </Button>
-              <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-full"></div>
+    <div className="min-h-screen bg-gradient-sky">
+      {/* Hero Section */}
+      <div 
+        className="relative h-48 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${cabinHero})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-forest opacity-80"></div>
+        {/* Header */}
+        <header className="relative z-10 bg-transparent">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <Mountain className="h-8 w-8 text-primary-foreground mr-3" />
+                <h1 className="text-2xl font-bold text-primary-foreground">Cabin Buddy</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Button variant="secondary" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Property
+                </Button>
+                <div className="h-8 w-8 bg-gradient-mountain rounded-full"></div>
+              </div>
             </div>
           </div>
+        </header>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-primary-foreground mb-2">
+              Welcome to Your Mountain Retreat
+            </h2>
+            <p className="text-primary-foreground/90 text-lg">
+              Manage your shared properties with ease
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
             {[
@@ -80,8 +99,8 @@ const Index = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
@@ -96,16 +115,16 @@ const Index = () => {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow">
+            <Card key={index} className="shadow-cabin hover:shadow-warm transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <stat.icon className="h-4 w-4 text-blue-600" />
+                <stat.icon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
+                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -131,11 +150,11 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {recentBookings.map((booking, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex-1">
-                      <div className="font-medium text-sm">{booking.property}</div>
-                      <div className="text-sm text-gray-500">{booking.user}</div>
-                      <div className="text-xs text-gray-400">{booking.dates}</div>
+                      <div className="font-medium text-sm text-foreground">{booking.property}</div>
+                      <div className="text-sm text-muted-foreground">{booking.user}</div>
+                      <div className="text-xs text-muted-foreground">{booking.dates}</div>
                     </div>
                     <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>
                       {booking.status}
