@@ -22,6 +22,7 @@ interface FamilyMember {
 }
 
 export const FamilyGroups = () => {
+  console.log("FamilyGroups component is loading correctly");
   const { toast } = useToast();
   const [members, setMembers] = useState<FamilyMember[]>([
     {
@@ -317,3 +318,6 @@ export const FamilyGroups = () => {
     </div>
   );
 };
+
+// Export as default as well for compatibility
+export default FamilyGroups;
