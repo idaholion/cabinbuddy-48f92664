@@ -1,6 +1,7 @@
 import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import cabinHero from "@/assets/cabin-hero.jpg";
 
 const Index = () => {
@@ -11,26 +12,28 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
-              <Button variant="ghost" className="text-sm font-medium">
-                Login
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/login">Login</Link>
               </Button>
               <Button variant="ghost" className="text-sm font-medium bg-primary/10 text-primary">
                 <Home className="h-4 w-4 mr-2" />
                 Home
               </Button>
-              <Button variant="ghost" className="text-sm font-medium">
-                Set-up Family Organization
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/family-setup">Set-up Family Organization</Link>
               </Button>
-              <Button variant="ghost" className="text-sm font-medium">
-                Set-up Financials
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/financial-setup">Set-up Financials</Link>
               </Button>
               <Button variant="ghost" className="text-sm font-medium">
                 More
               </Button>
             </div>
-            <Button variant="outline" size="sm">
-              <LogIn className="h-4 w-4 mr-2" />
-              Log In
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Log In
+              </Link>
             </Button>
           </div>
         </div>
@@ -56,9 +59,12 @@ const Index = () => {
           <Button 
             className="absolute left-8 top-32 bg-primary/90 hover:bg-primary text-primary-foreground px-8 py-6 text-xl font-semibold shadow-warm"
             size="lg"
+            asChild
           >
-            <Calendar className="h-6 w-6 mr-3" />
-            Cabin Calendar
+            <Link to="/calendar">
+              <Calendar className="h-6 w-6 mr-3" />
+              Cabin Calendar
+            </Link>
           </Button>
 
           {/* Right side buttons cluster */}
@@ -67,18 +73,24 @@ const Index = () => {
             <Button 
               className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64"
               variant="secondary"
+              asChild
             >
-              <CheckCircle className="h-5 w-5 mr-3" />
-              Arrival Check In
+              <Link to="/check-in">
+                <CheckCircle className="h-5 w-5 mr-3" />
+                Arrival Check In
+              </Link>
             </Button>
 
             {/* Daily Cabin Check In */}
             <Button 
               className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64"
               variant="secondary"
+              asChild
             >
-              <Clock className="h-5 w-5 mr-3" />
-              Daily Cabin Check In
+              <Link to="/daily-check-in">
+                <Clock className="h-5 w-5 mr-3" />
+                Daily Cabin Check In
+              </Link>
             </Button>
 
             {/* Shopping List and Add Receipt - smaller buttons side by side */}
