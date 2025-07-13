@@ -4,6 +4,7 @@ import { DollarSign, Receipt, TrendingUp, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BillingDashboard } from "@/components/BillingDashboard";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
+import { FinancialSetupSheet } from "@/components/FinancialSetupSheet";
 
 const FinancialSetup = () => {
   return (
@@ -27,7 +28,7 @@ const FinancialSetup = () => {
               <CardDescription>Configure billing rates and methods</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">Setup Billing</Button>
+              <FinancialSetupSheet />
             </CardContent>
           </Card>
 
