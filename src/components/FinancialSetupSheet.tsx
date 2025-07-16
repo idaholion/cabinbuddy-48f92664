@@ -111,20 +111,19 @@ export const FinancialSetupSheet = () => {
               <CardDescription>Configure payment methods and terms</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="payment-method">Preferred Payment Method</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="check">Check</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="payment-method">Preferred Payment Method</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="venmo">Venmo</SelectItem>
+                      <SelectItem value="paypal">Paypal</SelectItem>
+                      <SelectItem value="send-check">Send check</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label htmlFor="payment-terms">Payment Terms</Label>
                   <Select>
