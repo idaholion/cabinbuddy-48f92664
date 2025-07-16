@@ -34,7 +34,7 @@ const CheckIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-forest p-4">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
