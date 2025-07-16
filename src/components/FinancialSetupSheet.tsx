@@ -125,19 +125,19 @@ export const FinancialSetupSheet = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="payment-terms">Payment Terms</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment terms" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="full-upfront">Full Payment Upfront</SelectItem>
-                    <SelectItem value="50-50">50% Deposit, 50% Before Arrival</SelectItem>
-                    <SelectItem value="25-75">25% Deposit, 75% Before Arrival</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="payment-terms">Payment Terms</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pay-in-advance">Pay in Advance</SelectItem>
+                      <SelectItem value="pay-at-checkout">Pay at Checkout</SelectItem>
+                      <SelectItem value="pay-within-30-days">Pay within 30 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Automatic Invoicing</Label>
