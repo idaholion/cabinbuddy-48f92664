@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DollarSign, CreditCard, Calendar, Settings, Users, FileText } from "lucide-react";
@@ -19,6 +20,8 @@ import { DollarSign, CreditCard, Calendar, Settings, Users, FileText } from "luc
 export const FinancialSetupSheet = () => {
   const [autoInvoicing, setAutoInvoicing] = useState(false);
   const [lateFeesEnabled, setLateFeesEnabled] = useState(false);
+  const [useFeeMethod, setUseFeeMethod] = useState("");
+  const [feeAmount, setFeeAmount] = useState("");
 
   return (
     <Sheet>
@@ -49,30 +52,52 @@ export const FinancialSetupSheet = () => {
               <CardDescription>Set your cabin rental rates and pricing</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="weekend-rate">Weekend Rate</Label>
-                  <Input id="weekend-rate" placeholder="$200" />
-                </div>
-                <div>
-                  <Label htmlFor="weekday-rate">Weekday Rate</Label>
-                  <Input id="weekday-rate" placeholder="$150" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="holiday-rate">Holiday Rate</Label>
-                  <Input id="holiday-rate" placeholder="$250" />
-                </div>
-                <div>
-                  <Label htmlFor="cleaning-fee">Cleaning Fee</Label>
-                  <Input id="cleaning-fee" placeholder="$75" />
-                </div>
-              </div>
               <div>
-                <Label htmlFor="security-deposit">Security Deposit</Label>
-                <Input id="security-deposit" placeholder="$300" />
+                <Label>Use Fee Method (Required)</Label>
+                <RadioGroup value={useFeeMethod} onValueChange={setUseFeeMethod} className="mt-3">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="per-person-per-day" id="per-person-per-day" />
+                    <Label htmlFor="per-person-per-day">Per Person Per Day</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="per-person-per-week" id="per-person-per-week" />
+                    <Label htmlFor="per-person-per-week">Per Person Per Week</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="per-person-entire-stay" id="per-person-entire-stay" />
+                    <Label htmlFor="per-person-entire-stay">Per Person per Entire Stay</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="flat-rate-per-day" id="flat-rate-per-day" />
+                    <Label htmlFor="flat-rate-per-day">Flat Rate Per Day</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="flat-rate-per-week" id="flat-rate-per-week" />
+                    <Label htmlFor="flat-rate-per-week">Flat Rate Per Week</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="flat-rate-entire-stay" id="flat-rate-entire-stay" />
+                    <Label htmlFor="flat-rate-entire-stay">Flat Rate per Entire Stay</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="flat-rate-per-season" id="flat-rate-per-season" />
+                    <Label htmlFor="flat-rate-per-season">Flat Rate Per Season</Label>
+                  </div>
+                </RadioGroup>
               </div>
+              {useFeeMethod && (
+                <div>
+                  <Label htmlFor="fee-amount">Amount ($)</Label>
+                  <Input 
+                    id="fee-amount" 
+                    placeholder="Enter amount" 
+                    value={feeAmount}
+                    onChange={(e) => setFeeAmount(e.target.value)}
+                    type="number"
+                    step="0.01"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
