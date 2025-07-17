@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Type } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Type, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const FontSamples = () => {
@@ -8,32 +9,42 @@ const FontSamples = () => {
     {
       name: "Inter (Sans)",
       className: "font-sans",
-      description: "Clean, modern sans-serif font perfect for UI elements"
+      description: "Clean, modern sans-serif font perfect for UI elements",
+      isGoogle: true,
+      googleUrl: "https://fonts.google.com/specimen/Inter"
     },
     {
       name: "Georgia (Serif)",
       className: "font-serif", 
-      description: "Classic serif font for readable body text"
+      description: "Classic serif font for readable body text",
+      isGoogle: false
     },
     {
       name: "Playfair Display",
       className: "font-display",
-      description: "Elegant display font for headings and titles"
+      description: "Elegant display font for headings and titles",
+      isGoogle: true,
+      googleUrl: "https://fonts.google.com/specimen/Playfair+Display"
     },
     {
       name: "Open Sans (Body)",
       className: "font-body",
-      description: "Friendly sans-serif optimized for body text"
+      description: "Friendly sans-serif optimized for body text",
+      isGoogle: true,
+      googleUrl: "https://fonts.google.com/specimen/Open+Sans"
     },
     {
       name: "Roboto (Button)",
       className: "font-button",
-      description: "Google's signature font for buttons and UI"
+      description: "Google's signature font for buttons and UI",
+      isGoogle: true,
+      googleUrl: "https://fonts.google.com/specimen/Roboto"
     },
     {
       name: "Menlo (Mono)",
       className: "font-mono",
-      description: "Monospace font for code and technical text"
+      description: "Monospace font for code and technical text",
+      isGoogle: false
     }
   ];
 
@@ -55,9 +66,25 @@ const FontSamples = () => {
           {fontSamples.map((font, index) => (
             <Card key={index} className="p-6">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Type className="h-5 w-5 mr-2" />
-                  {font.name}
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Type className="h-5 w-5 mr-2" />
+                    {font.name}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {font.isGoogle && (
+                      <Badge variant="secondary" className="text-xs">
+                        Google Font
+                      </Badge>
+                    )}
+                    {font.googleUrl && (
+                      <Button variant="ghost" size="sm" asChild>
+                        <a href={font.googleUrl} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </Button>
+                    )}
+                  </div>
                 </CardTitle>
                 <CardDescription>{font.description}</CardDescription>
               </CardHeader>
@@ -82,6 +109,48 @@ const FontSamples = () => {
         </div>
 
         <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Google Fonts Integration</CardTitle>
+            <CardDescription>These Google Fonts are loaded via the index.html file</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Current Google Fonts URL:</h3>
+              <code className="block bg-muted p-4 rounded font-mono text-sm break-all">
+                https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Georgia:wght@400;700&family=Playfair+Display:wght@400;600;700&family=Open+Sans:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap
+              </code>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium mb-2">Available Google Fonts:</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {fontSamples.filter(font => font.isGoogle).map((font, index) => (
+                    <li key={index} className="flex items-center justify-between">
+                      <span>{font.name}</span>
+                      {font.googleUrl && (
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={font.googleUrl} target="_blank" rel="noopener noreferrer" className="text-xs">
+                            View on Google Fonts <ExternalLink className="h-3 w-3 ml-1" />
+                          </a>
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">System Fonts:</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {fontSamples.filter(font => !font.isGoogle).map((font, index) => (
+                    <li key={index}>{font.name}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle>Font Usage Guide</CardTitle>
             <CardDescription>How to apply these fonts in your components</CardDescription>
