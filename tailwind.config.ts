@@ -106,7 +106,8 @@ export default {
 				'mono': ['Menlo', 'Monaco', 'monospace'],
 				'display': ['Playfair Display', 'serif'],
 				'body': ['Open Sans', 'sans-serif'],
-				'button': ['Roboto', 'sans-serif']
+				'button': ['Roboto', 'sans-serif'],
+				'script': ['Reklame Script', 'cursive']
 			}
 		}
 	},
