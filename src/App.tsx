@@ -12,6 +12,7 @@ import FinancialSetup from "./pages/FinancialSetup";
 import CabinCalendar from "./pages/CabinCalendar";
 import CheckIn from "./pages/CheckIn";
 import DailyCheckIn from "./pages/DailyCheckIn";
+import FontSamples from "./pages/FontSamples";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/calendar" element={<CabinCalendar />} />
           <Route path="/check-in" element={<CheckIn />} />
           <Route path="/daily-check-in" element={<DailyCheckIn />} />
+          <Route path="/font-samples" element={<FontSamples />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

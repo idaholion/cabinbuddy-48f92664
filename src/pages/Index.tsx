@@ -23,8 +23,8 @@ const Index = () => {
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/financial-setup">Set-up Financials</Link>
               </Button>
-              <Button variant="ghost" className="text-sm font-medium">
-                More
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/font-samples">Font Samples</Link>
               </Button>
             </div>
             <Button variant="outline" size="sm" asChild>
