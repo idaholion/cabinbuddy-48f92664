@@ -3,16 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Users, Plus, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
-
 const FamilySetup = () => {
-  return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+  return <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
+    backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+  }}>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
             <Link to="/dashboard">← Back to Dashboard</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-primary-foreground mb-2">Family Organization Setup</h1>
+          <h1 className="text-4xl font-bold mb-2 text-orange-400">Family Organization Setup</h1>
           <p className="text-lg text-primary-foreground/80">Manage your family groups and cabin access</p>
         </div>
 
@@ -26,7 +26,7 @@ const FamilySetup = () => {
               <CardDescription>View and manage existing family groups</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full font-display">Manage Groups</Button>
+              <Button className="w-full">Manage Groups</Button>
             </CardContent>
           </Card>
 
@@ -59,8 +59,6 @@ const FamilySetup = () => {
 
         <FamilyGroups />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default FamilySetup;
