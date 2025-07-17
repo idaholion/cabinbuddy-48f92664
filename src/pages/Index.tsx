@@ -106,7 +106,7 @@ const Index = () => {
             </Button>
 
             {/* Edit Family Group */}
-            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground font-medium shadow-cabin mx-[50px] px-[23px] py-[50px]">
+            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground font-medium shadow-cabin mx-[50px] px-[23px] py-[50px] my-[60px]">
               <Users className="h-4 w-4 mr-2" />
               Edit Family Group
             </Button>
