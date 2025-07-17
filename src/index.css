@@ -115,3 +115,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .font-sans { font-family: 'Inter', system-ui, sans-serif; }
+  .font-serif { font-family: 'Georgia', serif; }
+  .font-mono { font-family: 'Menlo', 'Monaco', monospace; }
+  .font-display { font-family: 'Playfair Display', serif; }
+  .font-body { font-family: 'Open Sans', sans-serif; }
+  .font-button { font-family: 'Roboto', sans-serif; }
+}
