@@ -26,7 +26,7 @@ const FamilySetup = () => {
               <CardDescription>View and manage existing family groups</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">Manage Groups</Button>
+              <Button className="w-full font-display">Manage Groups</Button>
             </CardContent>
           </Card>
 
