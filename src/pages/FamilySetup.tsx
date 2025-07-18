@@ -13,7 +13,7 @@ const FamilySetup = () => {
             <Link to="/dashboard">← Back to Dashboard</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-orange-400">Family Organization Setup</h1>
-          <p className="text-lg text-primary-foreground/80">Manage your family groups and cabin access</p>
+          <p className="text-orange-500 text-3xl">Manage your family groups and cabin access</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
