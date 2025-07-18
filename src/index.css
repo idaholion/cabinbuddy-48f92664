@@ -129,5 +129,5 @@ All colors MUST be HSL.
 .force-serif-font {
   font-family: 'Times New Roman', serif !important;
   font-style: italic !important;
-  font-weight: bold !important;
+  font-weight: 900 !important;
 }
