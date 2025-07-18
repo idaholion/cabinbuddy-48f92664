@@ -21,8 +21,8 @@ const FamilySetup = () => {
         {/* Setup Family Organization Form */}
         <Card className="bg-card/95 mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
-            <CardDescription className="text-right">Configure your family organization details and leadership</CardDescription>
+            <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
+            <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Organization Name */}
