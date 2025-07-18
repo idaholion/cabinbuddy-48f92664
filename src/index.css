@@ -127,7 +127,7 @@ All colors MUST be HSL.
 }
 
 .force-serif-font {
-  font-family: 'Great Vibes', 'Dancing Script', 'Alex Brush', cursive !important;
+  font-family: cursive !important;
   font-style: normal !important;
   font-weight: 400 !important;
 }

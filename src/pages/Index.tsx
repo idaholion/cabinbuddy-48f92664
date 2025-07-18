@@ -12,12 +12,7 @@ const Index = () => {
     if (titleElement) {
       console.log("Title element found:", titleElement);
       console.log("Current font family:", window.getComputedStyle(titleElement).fontFamily);
-      console.log("Font weight:", window.getComputedStyle(titleElement).fontWeight);
-      
-      // Force the font
-      titleElement.style.fontFamily = 'cursive';
-      titleElement.style.fontStyle = 'italic';
-      console.log("After forcing cursive - font family:", window.getComputedStyle(titleElement).fontFamily);
+      console.log("Font style:", window.getComputedStyle(titleElement).fontStyle);
     }
   }, []);
 
