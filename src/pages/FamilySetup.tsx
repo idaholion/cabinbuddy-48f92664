@@ -32,7 +32,7 @@ const FamilySetup = () => {
           <CardContent className="space-y-3 py-3">
             {/* Organization Name */}
             <div className="space-y-2">
-              <Label htmlFor="orgName">Family Organization Name</Label>
+              <Label htmlFor="orgName" className="text-lg font-semibold text-center block">Family Organization Name</Label>
               <Input id="orgName" placeholder="Enter organization name" />
             </div>
 
