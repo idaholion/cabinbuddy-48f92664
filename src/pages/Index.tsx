@@ -8,10 +8,16 @@ import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 const Index = () => {
   useEffect(() => {
     console.log("Index component mounted, checking font");
-    const titleElement = document.querySelector('.font-script');
+    const titleElement = document.querySelector('h1');
     if (titleElement) {
-      console.log("Font script element found:", titleElement);
-      console.log("Computed styles:", window.getComputedStyle(titleElement).fontFamily);
+      console.log("Title element found:", titleElement);
+      console.log("Current font family:", window.getComputedStyle(titleElement).fontFamily);
+      console.log("Font weight:", window.getComputedStyle(titleElement).fontWeight);
+      
+      // Force the font
+      titleElement.style.fontFamily = 'cursive';
+      titleElement.style.fontStyle = 'italic';
+      console.log("After forcing cursive - font family:", window.getComputedStyle(titleElement).fontFamily);
     }
   }, []);
 
