@@ -24,9 +24,9 @@ const FamilySetup = () => {
             <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
             <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 py-3">
+          <CardContent className="space-y-2 py-2">
             {/* Organization Name */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="flex items-center">
                 <div className="w-full flex justify-center relative">
                   <Label htmlFor="orgName" className="text-lg font-semibold">Family Organization Name</Label>
@@ -37,14 +37,14 @@ const FamilySetup = () => {
             </div>
 
             {/* Administrator Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <h3 className="text-lg font-semibold">Organization Administrator</h3>
-              <div className="grid gap-4 md:grid-cols-2 text-center">
-                <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-2 text-center">
+                <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
                   <Input id="adminName" placeholder="Administrator's full name" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="adminEmail">Email Address</Label>
                   <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
                 </div>
@@ -52,14 +52,14 @@ const FamilySetup = () => {
             </div>
 
             {/* Treasurer Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <h3 className="text-lg font-semibold">Organization Treasurer</h3>
-              <div className="grid gap-4 md:grid-cols-2 text-center">
-                <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-2 text-center">
+                <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
                   <Input id="treasurerName" placeholder="Treasurer's full name" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="treasurerEmail">Email Address</Label>
                   <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
                 </div>
