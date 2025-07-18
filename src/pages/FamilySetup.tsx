@@ -24,7 +24,7 @@ const FamilySetup = () => {
             <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
             <CardDescription>Configure your family organization details and leadership</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 py-4">
+          <CardContent className="space-y-2 py-2">
             {/* Organization Name */}
             <div className="space-y-2">
               <Label htmlFor="orgName">Family Organization Name</Label>
