@@ -19,27 +19,28 @@ const FamilySetup = () => {
         </div>
 
         {/* Setup Family Organization Form */}
-        <Card className="bg-card/95 mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
+        <Card className="bg-card/95 mb-8 relative">
+          <CardHeader className="relative">
+            <CardTitle className="text-2xl text-center pr-32">Set up Family Organization</CardTitle>
             <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
+            <Button className="absolute top-4 right-6">Save Organization Setup</Button>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-2 py-3">
             {/* Organization Name */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="orgName">Family Organization Name</Label>
               <Input id="orgName" placeholder="Enter organization name" />
             </div>
 
             {/* Administrator Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <h3 className="text-lg font-semibold">Organization Administrator</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
                   <Input id="adminName" placeholder="Administrator's full name" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="adminEmail">Email Address</Label>
                   <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
                 </div>
@@ -47,21 +48,19 @@ const FamilySetup = () => {
             </div>
 
             {/* Treasurer Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <h3 className="text-lg font-semibold">Organization Treasurer</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
                   <Input id="treasurerName" placeholder="Treasurer's full name" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="treasurerEmail">Email Address</Label>
                   <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
                 </div>
               </div>
             </div>
-
-            <Button className="w-full md:w-auto">Save Organization Setup</Button>
           </CardContent>
         </Card>
 
