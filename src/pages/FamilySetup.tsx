@@ -15,24 +15,19 @@ const FamilySetup = () => {
             <Link to="/dashboard">← Back to Dashboard</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Organization Setup</h1>
-          <p className="text-orange-500 text-3xl text-center">Setting up your family organization and cabin access</p>
+          <p className="text-orange-500 text-3xl text-center">Setting up your family organization and Family Group names</p>
         </div>
 
         {/* Setup Family Organization Form */}
         <Card className="bg-card/95 mb-8">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
-                <CardDescription className="mt-1">Name your family organization and designate an administrator and treasurer</CardDescription>
-              </div>
-              <Button className="">Save Organization Setup</Button>
-            </div>
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
+            <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 py-3">
+          <CardContent className="space-y-6">
             {/* Organization Name */}
             <div className="space-y-2">
-              <Label htmlFor="orgName" className="text-lg font-semibold text-center block">Family Organization Name</Label>
+              <Label htmlFor="orgName">Family Organization Name</Label>
               <Input id="orgName" placeholder="Enter organization name" />
             </div>
 
@@ -66,7 +61,7 @@ const FamilySetup = () => {
               </div>
             </div>
 
-            
+            <Button className="w-full md:w-auto">Save Organization Setup</Button>
           </CardContent>
         </Card>
 
