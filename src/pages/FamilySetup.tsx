@@ -38,22 +38,18 @@ const FamilySetup = () => {
 
             {/* Administrator Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-2 text-center">
+              <div className="grid gap-2 md:grid-cols-3 text-center items-end">
+                <div className="flex items-end justify-center pb-6">
+                  <h3 className="text-lg font-semibold">Organization Administrator</h3>
+                </div>
                 <div className="space-y-1">
-                  <div className="flex items-center justify-center">
-                    <Label htmlFor="adminName">Name</Label>
-                  </div>
+                  <Label htmlFor="adminName">Name</Label>
                   <Input id="adminName" placeholder="Administrator's full name" />
                 </div>
                 <div className="space-y-1">
-                  <div className="flex items-center justify-center">
-                    <Label htmlFor="adminEmail">Email Address</Label>
-                  </div>
+                  <Label htmlFor="adminEmail">Email Address</Label>
                   <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
                 </div>
-              </div>
-              <div className="absolute left-1/2 transform -translate-x-1/2 -translate-y-6">
-                <h3 className="text-lg font-semibold text-center">Organization Administrator</h3>
               </div>
             </div>
 
