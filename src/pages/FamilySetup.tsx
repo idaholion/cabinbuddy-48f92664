@@ -23,7 +23,7 @@ const FamilySetup = () => {
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
               <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
-              <CardDescription>Configure your family organization details and leadership</CardDescription>
+              <CardDescription>Name your family organization and designate an administrator and treasurer</CardDescription>
             </div>
             <Button className="ml-4">Save Organization Setup</Button>
           </CardHeader>
