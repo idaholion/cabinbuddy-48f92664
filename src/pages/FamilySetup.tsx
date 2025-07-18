@@ -41,15 +41,17 @@ const FamilySetup = () => {
               <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
-                  <Input id="adminName" placeholder="Administrator's full name" />
                 </div>
                 <div className="flex items-center justify-center h-6">
                   <h3 className="text-lg font-semibold">Organization Administrator</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="adminEmail">Email Address</Label>
-                  <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
                 </div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                <Input id="adminName" placeholder="Administrator's full name" />
+                <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
               </div>
             </div>
 
