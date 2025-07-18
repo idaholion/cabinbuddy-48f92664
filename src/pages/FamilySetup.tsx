@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
@@ -56,6 +58,53 @@ const FamilySetup = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Setup Family Organization Form */}
+        <Card className="bg-card/95 mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl">Setup Family Organization</CardTitle>
+            <CardDescription>Configure your family organization details and leadership</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Organization Name */}
+            <div className="space-y-2">
+              <Label htmlFor="orgName">Family Organization Name</Label>
+              <Input id="orgName" placeholder="Enter organization name" />
+            </div>
+
+            {/* Administrator Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Organization Administrator</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="adminName">Name</Label>
+                  <Input id="adminName" placeholder="Administrator's full name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="adminEmail">Email Address</Label>
+                  <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
+                </div>
+              </div>
+            </div>
+
+            {/* Treasurer Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Organization Treasurer</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="treasurerName">Name</Label>
+                  <Input id="treasurerName" placeholder="Treasurer's full name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="treasurerEmail">Email Address</Label>
+                  <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
+                </div>
+              </div>
+            </div>
+
+            <Button className="w-full md:w-auto">Save Organization Setup</Button>
+          </CardContent>
+        </Card>
 
         <FamilyGroups />
       </div>
