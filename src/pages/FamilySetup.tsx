@@ -15,11 +15,11 @@ const FamilySetup = () => {
             <Link to="/dashboard">← Back to Dashboard</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Organization Setup</h1>
-          <p className="text-orange-500 text-3xl">Manage your family groups and cabin access</p>
+          <p className="text-orange-500 text-3xl text-center">Setting up your family organization and cabin access</p>
         </div>
 
         {/* Setup Family Organization Form */}
-        <Card className="bg-card/95 mb-8 max-w-4xl mx-auto">
+        <Card className="bg-card/95 mb-8">
           <CardHeader>
             <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
             <CardDescription>Configure your family organization details and leadership</CardDescription>
