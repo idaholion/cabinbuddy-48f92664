@@ -38,8 +38,10 @@ const FamilySetup = () => {
 
             {/* Administrator Section */}
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Organization Administrator</h3>
-              <div className="grid gap-2 md:grid-cols-2 text-center">
+              <div className="grid gap-2 md:grid-cols-3 text-center items-end">
+                <div className="space-y-1">
+                  <Label className="text-lg font-semibold">Organization Administrator</Label>
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
                   <Input id="adminName" placeholder="Administrator's full name" />
@@ -53,8 +55,10 @@ const FamilySetup = () => {
 
             {/* Treasurer Section */}
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Organization Treasurer</h3>
-              <div className="grid gap-2 md:grid-cols-2 text-center">
+              <div className="grid gap-2 md:grid-cols-3 text-center items-end">
+                <div className="space-y-1">
+                  <Label className="text-lg font-semibold">Organization Treasurer</Label>
+                </div>
                 <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
                   <Input id="treasurerName" placeholder="Treasurer's full name" />
