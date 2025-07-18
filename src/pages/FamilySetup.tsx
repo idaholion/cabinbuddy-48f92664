@@ -38,6 +38,7 @@ const FamilySetup = () => {
 
             {/* Administrator Section */}
             <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Organization Administrator</h3>
               <div className="grid gap-2 md:grid-cols-2 text-center">
                 <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
@@ -48,11 +49,11 @@ const FamilySetup = () => {
                   <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-center -mt-1">Organization Administrator</h3>
             </div>
 
             {/* Treasurer Section */}
             <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Organization Treasurer</h3>
               <div className="grid gap-2 md:grid-cols-2 text-center">
                 <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
@@ -63,7 +64,6 @@ const FamilySetup = () => {
                   <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-center -mt-1">Organization Treasurer</h3>
             </div>
 
             
