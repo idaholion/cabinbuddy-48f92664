@@ -28,7 +28,9 @@ const FamilySetup = () => {
             {/* Organization Name */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="orgName" className="text-lg font-semibold">Family Organization Name</Label>
+                <div className="flex-1 text-center">
+                  <Label htmlFor="orgName" className="text-lg font-semibold">Family Organization Name</Label>
+                </div>
                 <Button>Save Organization Setup</Button>
               </div>
               <Input id="orgName" placeholder="Enter organization name" />
