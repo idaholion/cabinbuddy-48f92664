@@ -38,8 +38,8 @@ const FamilySetup = () => {
 
             {/* Administrator Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-3 text-center items-end">
-                <div className="flex items-end justify-center pb-6">
+              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+                <div className="flex items-center justify-center h-6">
                   <h3 className="text-lg font-semibold">Organization Administrator</h3>
                 </div>
                 <div className="space-y-1">
