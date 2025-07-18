@@ -20,11 +20,16 @@ const FamilySetup = () => {
 
         {/* Setup Family Organization Form */}
         <Card className="bg-card/95 mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
-            <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
+          <CardHeader className="pb-3">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">Set up Family Organization</CardTitle>
+                <CardDescription className="mt-1">Name your family organization and designate an administrator and treasurer</CardDescription>
+              </div>
+              <Button className="">Save Organization Setup</Button>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-3 py-3">
             {/* Organization Name */}
             <div className="space-y-2">
               <Label htmlFor="orgName">Family Organization Name</Label>
@@ -61,7 +66,7 @@ const FamilySetup = () => {
               </div>
             </div>
 
-            <Button className="w-full md:w-auto">Save Organization Setup</Button>
+            
           </CardContent>
         </Card>
 
