@@ -27,11 +27,11 @@ const FamilySetup = () => {
           <CardContent className="space-y-3 py-3">
             {/* Organization Name */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <div className="flex-1 text-center">
+              <div className="flex items-center">
+                <div className="w-full flex justify-center relative">
                   <Label htmlFor="orgName" className="text-lg font-semibold">Family Organization Name</Label>
+                  <Button className="absolute right-0">Save Organization Setup</Button>
                 </div>
-                <Button>Save Organization Setup</Button>
               </div>
               <Input id="orgName" placeholder="Enter organization name" />
             </div>
