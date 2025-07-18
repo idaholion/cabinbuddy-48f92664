@@ -125,3 +125,9 @@ All colors MUST be HSL.
   .font-button { font-family: 'Roboto', sans-serif; }
   .font-script { font-family: 'Alex Brush', cursive; }
 }
+
+.force-serif-font {
+  font-family: 'Times New Roman', serif !important;
+  font-style: italic !important;
+  font-weight: bold !important;
+}
