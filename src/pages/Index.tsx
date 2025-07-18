@@ -58,7 +58,7 @@ const Index = () => {
         
         {/* Main Title */}
         <div className="relative z-10 pt-20 pb-16 text-center">
-          <h1 className="text-8xl mb-4 text-slate-800" style={{fontFamily: '"Alex Brush", "Brush Script MT", cursive', fontSize: '6rem'}}>
+          <h1 className="text-8xl mb-4 text-slate-800" style={{fontFamily: '"Reklame Script", "Alex Brush", cursive', fontSize: '6rem'}}>
             Welcome to Cabin Buddy
           </h1>
         </div>
