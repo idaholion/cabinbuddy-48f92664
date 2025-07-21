@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, Thermometer, Droplets, Zap } from "lucide-react";
+import { Clock, Thermometer, Droplets, Zap, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,6 +18,21 @@ const DailyCheckIn = () => {
     powerUsage: ""
   });
   const [notes, setNotes] = useState("");
+  const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, string>>({});
+
+  // Generate days for the current stay (example: 7 days)
+  const stayDays = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    return {
+      key: `day-${i + 1}`,
+      label: `Day ${i + 1} (${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+    };
+  });
+
+  const handleOccupancyChange = (dayKey: string, value: string) => {
+    setDailyOccupancy(prev => ({ ...prev, [dayKey]: value }));
+  };
 
   const dailyTasks = [
     { id: "security", label: "Checked all doors and windows locked", category: "security" },
@@ -59,6 +74,33 @@ const DailyCheckIn = () => {
         </div>
 
         <div className="grid gap-6">
+          <Card className="bg-card/95">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Number of people at the cabin
+              </CardTitle>
+              <CardDescription>Enter the number of people staying each day</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {stayDays.map((day) => (
+                <div key={day.key} className="space-y-2">
+                  <Label htmlFor={day.key}>
+                    {day.label}
+                  </Label>
+                  <Input
+                    id={day.key}
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    value={dailyOccupancy[day.key] || ""}
+                    onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card className="bg-card/95">
             <CardHeader>
               <CardTitle>Daily Tasks</CardTitle>
