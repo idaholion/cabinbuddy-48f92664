@@ -74,6 +74,72 @@ const FamilySetup = () => {
           </CardContent>
         </Card>
 
+        {/* Setup Family Groups Form */}
+        <Card className="bg-card/95 mb-8">
+          <CardHeader className="pb-2 relative">
+            <Button className="absolute top-6 right-6">Save Family Group Setup</Button>
+            <CardTitle className="text-2xl text-center">Set up Family Groups</CardTitle>
+            <CardDescription className="text-center">Create a family group with lead and host members</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 py-2">
+            {/* Family Group Name */}
+            <div className="space-y-1">
+              <Label htmlFor="groupName" className="text-lg font-semibold text-center block">Family Group Name</Label>
+              <Input id="groupName" placeholder="Enter family group name" />
+            </div>
+
+            {/* Family Group Lead Section */}
+            <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+                <div className="space-y-1">
+                  <Label htmlFor="leadName">Name</Label>
+                </div>
+                <div className="flex items-center justify-center h-6">
+                  <h3 className="text-lg font-semibold">Family Group Lead</h3>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="leadEmail">Email Address</Label>
+                </div>
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                <Input id="leadName" placeholder="Family Group Lead's full name" />
+                <Input id="leadEmail" type="email" placeholder="lead@example.com" />
+              </div>
+            </div>
+
+            {/* Host Members Section */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-center">Host Members</h3>
+              {[...Array(6)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+                    <div className="space-y-1">
+                      <Label htmlFor={`hostName${index + 1}`}>Name</Label>
+                    </div>
+                    <div className="flex items-center justify-center h-6">
+                      <span className="text-sm font-medium">Host Member {index + 1}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor={`hostEmail${index + 1}`}>Email Address</Label>
+                    </div>
+                  </div>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Input id={`hostName${index + 1}`} placeholder={`Host Member ${index + 1} full name`} />
+                    <Input id={`hostEmail${index + 1}`} type="email" placeholder={`hostmember${index + 1}@example.com`} />
+                  </div>
+                </div>
+              ))}
+              
+              <div className="flex justify-center pt-2">
+                <Button variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Additional Host Member
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card className="bg-card/95">
             <CardHeader>
