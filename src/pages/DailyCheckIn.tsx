@@ -93,6 +93,7 @@ const DailyCheckIn = () => {
                     type="number"
                     placeholder="0"
                     min="0"
+                    className="w-20"
                     value={dailyOccupancy[day.key] || ""}
                     onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
                   />
