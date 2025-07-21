@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import FamilySetup from "./pages/FamilySetup";
 import FinancialSetup from "./pages/FinancialSetup";
+import ReservationSetup from "./pages/ReservationSetup";
 import CabinCalendar from "./pages/CabinCalendar";
 import CheckIn from "./pages/CheckIn";
 import DailyCheckIn from "./pages/DailyCheckIn";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/family-setup" element={<FamilySetup />} />
           <Route path="/financial-setup" element={<FinancialSetup />} />
+          <Route path="/reservation-setup" element={<ReservationSetup />} />
           <Route path="/calendar" element={<CabinCalendar />} />
           <Route path="/check-in" element={<CheckIn />} />
           <Route path="/daily-check-in" element={<DailyCheckIn />} />
