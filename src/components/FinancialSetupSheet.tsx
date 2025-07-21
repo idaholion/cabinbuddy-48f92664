@@ -232,10 +232,6 @@ export const FinancialSetupSheet = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="family-discount">Family Member Discount (%)</Label>
-                <Input id="family-discount" placeholder="20" type="number" />
-              </div>
-              <div>
                 <Label htmlFor="billing-frequency">Billing Frequency</Label>
                 <Select>
                   <SelectTrigger>
