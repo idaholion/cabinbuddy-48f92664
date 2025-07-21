@@ -124,54 +124,6 @@ const DailyCheckIn = () => {
 
           <Card className="bg-card/95">
             <CardHeader>
-              <CardTitle>System Readings</CardTitle>
-              <CardDescription>Record daily meter readings and system status</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="temperature" className="flex items-center">
-                  <Thermometer className="h-4 w-4 mr-1" />
-                  Temperature (°F)
-                </Label>
-                <Input
-                  id="temperature"
-                  type="number"
-                  placeholder="72"
-                  value={readings.temperature}
-                  onChange={(e) => handleReadingChange("temperature", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="waterLevel" className="flex items-center">
-                  <Droplets className="h-4 w-4 mr-1" />
-                  Water Level (%)
-                </Label>
-                <Input
-                  id="waterLevel"
-                  type="number"
-                  placeholder="85"
-                  value={readings.waterLevel}
-                  onChange={(e) => handleReadingChange("waterLevel", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="powerUsage" className="flex items-center">
-                  <Zap className="h-4 w-4 mr-1" />
-                  Power Usage (kWh)
-                </Label>
-                <Input
-                  id="powerUsage"
-                  type="number"
-                  placeholder="24"
-                  value={readings.powerUsage}
-                  onChange={(e) => handleReadingChange("powerUsage", e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/95">
-            <CardHeader>
               <CardTitle>Daily Notes</CardTitle>
               <CardDescription>Any observations or issues to report?</CardDescription>
             </CardHeader>
