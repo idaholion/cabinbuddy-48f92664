@@ -14,7 +14,7 @@ const Login = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-script">Welcome to Cabin Buddy</CardTitle>
+          <CardTitle className="text-3xl font-kaushan text-red-500">Login to Cabin Buddy</CardTitle>
           <CardDescription>Sign in to access your cabin management dashboard</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

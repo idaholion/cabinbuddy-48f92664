@@ -107,7 +107,8 @@ export default {
 				'display': ['Playfair Display', 'serif'],
 				'body': ['Open Sans', 'sans-serif'],
 				'button': ['Roboto', 'sans-serif'],
-				'script': ['Alex Brush', 'cursive']
+				'script': ['Alex Brush', 'cursive'],
+				'kaushan': ['Kaushan Script', 'cursive']
 			}
 		}
 	},
