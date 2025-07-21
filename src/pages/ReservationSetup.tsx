@@ -132,7 +132,7 @@ export default function ReservationSetup() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Array.from({ length: 10 }, (_, i) => (
+              {Array.from({ length: 5 }, (_, i) => (
                 <div key={i} className="flex items-center gap-4">
                   <span className="w-6 text-sm font-medium">{i + 1}.</span>
                   <Select>
