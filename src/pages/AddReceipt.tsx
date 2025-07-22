@@ -4,13 +4,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, Camera, DollarSign } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Upload, Camera, DollarSign, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const AddReceipt = () => {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [receipts, setReceipts] = useState([
+    {
+      id: 1,
+      amount: 45.67,
+      description: "Grocery store receipt",
+      thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=100&h=100&fit=crop"
+    },
+    {
+      id: 2,
+      amount: 23.45,
+      description: "Gas station",
+      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=100&h=100&fit=crop"
+    },
+    {
+      id: 3,
+      amount: 156.78,
+      description: "Hardware store supplies",
+      thumbnail: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop"
+    }
+  ]);
   const { toast } = useToast();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,12 +85,20 @@ const AddReceipt = () => {
     }
   };
 
+  const handleDeleteReceipt = (id: number) => {
+    setReceipts(receipts.filter(receipt => receipt.id !== id));
+    toast({
+      title: "Receipt deleted",
+      description: "Receipt has been removed from the list.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">Add Receipt</h1>
         
-        <div className="grid md:grid-cols-2 gap-4 scale-75 origin-top">
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-4 scale-75 origin-top">
           {/* Upload and Camera Section */}
           <Card>
             <CardHeader>
@@ -161,6 +190,56 @@ const AddReceipt = () => {
                   Add Receipt Manually
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Receipts List Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Receipt List
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-80">
+                <div className="space-y-3">
+                  {receipts.map((receipt) => (
+                    <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                      <img 
+                        src={receipt.thumbnail} 
+                        alt="Receipt thumbnail"
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{receipt.description}</p>
+                        <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteReceipt(receipt.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {receipts.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No receipts added yet
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex justify-between items-center font-bold text-lg">
+                  <span>Total:</span>
+                  <span className="text-primary">
+                    ${receipts.reduce((sum, receipt) => sum + receipt.amount, 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
