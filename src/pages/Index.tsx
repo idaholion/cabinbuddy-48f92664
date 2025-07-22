@@ -23,9 +23,6 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/login">Login</Link>
-              </Button>
               <Button variant="ghost" className="text-sm font-medium bg-primary/10 text-primary">
                 <Home className="h-4 w-4 mr-2" />
                 Home
