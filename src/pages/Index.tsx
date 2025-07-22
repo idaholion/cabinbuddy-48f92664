@@ -93,13 +93,17 @@ const Index = () => {
 
             {/* Shopping List and Add Receipt - smaller buttons side by side */}
             <div className="flex space-x-2">
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Shopping List
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                <Link to="/shopping-list">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Shopping List
+                </Link>
               </Button>
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary">
-                <Receipt className="h-4 w-4 mr-2" />
-                Add Receipt
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                <Link to="/add-receipt">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Add Receipt
+                </Link>
               </Button>
             </div>
 
