@@ -101,9 +101,9 @@ const AddReceipt = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Add Receipt</h1>
           <Button variant="outline" asChild>
-            <Link to="/dashboard">
+            <Link to="/home">
               <Home className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Home
             </Link>
           </Button>
         </div>

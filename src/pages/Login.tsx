@@ -37,7 +37,7 @@ const Login = () => {
             />
           </div>
           <Button className="w-full" asChild>
-            <Link to="/dashboard">
+            <Link to="/home">
               <LogIn className="h-4 w-4 mr-2" />
               Sign In
             </Link>

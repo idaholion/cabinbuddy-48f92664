@@ -64,7 +64,7 @@ const DailyCheckIn = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
-            <Link to="/dashboard">← Back to Dashboard</Link>
+            <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-4xl font-bold text-primary-foreground mb-2 flex items-center">
             <Clock className="h-10 w-10 mr-3" />

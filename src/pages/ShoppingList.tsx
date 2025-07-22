@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, ShoppingCart } from "lucide-react";
+import { Trash2, Plus, ShoppingCart, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface ShoppingItem {
@@ -75,8 +75,9 @@ const ShoppingList = () => {
             <ShoppingCart className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">Family Shopping List</h1>
           </div>
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
-            Back to Dashboard
+          <Button variant="outline" onClick={() => navigate("/home")}>
+            <Home className="h-4 w-4 mr-2" />
+            Home
           </Button>
         </div>
 

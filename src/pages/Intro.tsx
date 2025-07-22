@@ -21,7 +21,7 @@ const Intro = () => {
   };
 
   const handleGetStarted = () => {
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   return (

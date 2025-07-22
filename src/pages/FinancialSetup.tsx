@@ -12,7 +12,7 @@ const FinancialSetup = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
-            <Link to="/dashboard">← Back to Dashboard</Link>
+            <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-4xl font-bold text-primary-foreground mb-2">Financial Setup</h1>
           <p className="text-lg text-primary-foreground/80">Manage cabin expenses, billing, and financial tracking</p>
