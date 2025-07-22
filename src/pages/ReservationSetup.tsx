@@ -58,24 +58,7 @@ export default function ReservationSetup() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-sm text-muted-foreground">
-              This order will rotate each year, with the person who selected first selecting last the following year
-            </p>
             
-            <div className="space-y-2">
-              {familyGroups.map((group, index) => (
-                <div key={index} className="flex items-center gap-2 p-2 border rounded">
-                  <span className="font-medium">{index + 1}.</span>
-                  <span>{group}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Time Period Configuration */}
-        <Card>
-          <CardContent className="pt-6">
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span>Each Family Group can select</span>
               <Select value={maxTimeSlots} onValueChange={setMaxTimeSlots}>
@@ -122,8 +105,22 @@ export default function ReservationSetup() {
                 </SelectContent>
               </Select>
             </div>
+            
+            <p className="text-sm text-muted-foreground">
+              This order will rotate each year, with the person who selected first selecting last the following year
+            </p>
+            
+            <div className="space-y-2">
+              {familyGroups.map((group, index) => (
+                <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                  <span className="font-medium">{index + 1}.</span>
+                  <span>{group}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
+
 
         {/* By Seniority Section */}
         <Card>
