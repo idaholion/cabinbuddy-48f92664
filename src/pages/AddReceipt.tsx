@@ -94,11 +94,11 @@ const AddReceipt = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <div className="max-w-2xl mx-auto space-y-6 p-4">
         <h1 className="text-3xl font-bold text-center mb-8">Add Receipt</h1>
         
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-4 scale-75 origin-top">
+        <div className="grid md:grid-cols-2 gap-4 scale-75 origin-top">
           {/* Upload and Camera Section */}
           <Card>
             <CardHeader>
@@ -152,47 +152,6 @@ const AddReceipt = () => {
             </CardContent>
           </Card>
 
-          {/* Manual Entry Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Manual Entry
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleManualSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Enter receipt description..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full">
-                  Add Receipt Manually
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
           {/* Receipts List Section */}
           <Card>
             <CardHeader>
@@ -243,6 +202,49 @@ const AddReceipt = () => {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Manual Entry Section - Fixed to lower left */}
+      <div className="absolute bottom-4 left-4 w-80 scale-75">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Manual Entry
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="amount">Amount</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Enter receipt description..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <Button type="submit" className="w-full">
+                Add Receipt Manually
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
