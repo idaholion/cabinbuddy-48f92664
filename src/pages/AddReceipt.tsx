@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const AddReceipt = () => {
   const [amount, setAmount] = useState("");
+  const [uploadAmount, setUploadAmount] = useState("");
   const [description, setDescription] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [receipts, setReceipts] = useState([
@@ -148,6 +149,18 @@ const AddReceipt = () => {
                   <Camera className="h-4 w-4 mr-2" />
                   Take Picture of Receipt
                 </Button>
+
+                <div className="pt-4 border-t">
+                  <Label htmlFor="upload-amount">Receipt Amount</Label>
+                  <Input
+                    id="upload-amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={uploadAmount}
+                    onChange={(e) => setUploadAmount(e.target.value)}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
