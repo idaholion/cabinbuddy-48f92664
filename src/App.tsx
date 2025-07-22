@@ -15,7 +15,6 @@ import CheckIn from "./pages/CheckIn";
 import DailyCheckIn from "./pages/DailyCheckIn";
 import AddReceipt from "./pages/AddReceipt";
 import ShoppingList from "./pages/ShoppingList";
-import FontSamples from "./pages/FontSamples";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,7 +37,6 @@ const App = () => (
           <Route path="/daily-check-in" element={<DailyCheckIn />} />
           <Route path="/add-receipt" element={<AddReceipt />} />
           <Route path="/shopping-list" element={<ShoppingList />} />
-          <Route path="/font-samples" element={<FontSamples />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
