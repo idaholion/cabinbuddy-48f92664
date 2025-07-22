@@ -65,7 +65,7 @@ const AddReceipt = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-3xl font-bold text-center mb-8">Add Receipt</h1>
         
