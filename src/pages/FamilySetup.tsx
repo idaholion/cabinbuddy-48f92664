@@ -118,15 +118,12 @@ const FamilySetup = () => {
               <h3 className="text-lg font-semibold text-center">Host Members</h3>
               {[...Array(6)].map((_, index) => (
                 <div key={index} className="space-y-2">
-                  <div className="grid gap-2 md:grid-cols-4 text-center items-start">
+                  <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                     <div className="space-y-1">
                       <Label htmlFor={`hostName${index + 1}`}>Name</Label>
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor={`hostPhone${index + 1}`}>Phone Number</Label>
-                    </div>
-                    <div className="flex items-center justify-center h-6">
-                      <span className="text-sm font-medium">Host Member {index + 1}</span>
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor={`hostEmail${index + 1}`}>Email Address</Label>
