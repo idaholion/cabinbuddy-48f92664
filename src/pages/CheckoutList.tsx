@@ -215,7 +215,7 @@ const CheckoutList = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4">
+            <div className="grid gap-1">
               <div className="flex items-center gap-4">
                 <Label htmlFor="shopped" className="text-sm font-medium">
                   Shopped - Groceries, Sporting Goods, Home Improvements/Lumber
