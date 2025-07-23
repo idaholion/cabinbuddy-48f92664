@@ -109,17 +109,11 @@ const Index = () => {
           </div>
 
           {/* Bottom buttons */}
-          <div className="absolute bottom-16 left-8 right-8 flex justify-between">
+          <div className="absolute bottom-16 left-8 right-8 flex justify-start">
             {/* Edit Master Setup */}
             <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin my-[100px]">
               <Settings className="h-4 w-4 mr-2" />
               Edit Master Setup
-            </Button>
-
-            {/* Edit Family Group */}
-            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground font-medium shadow-cabin mx-[50px] px-[23px] py-[50px] my-[60px]">
-              <Users className="h-4 w-4 mr-2" />
-              Edit Family Group
             </Button>
           </div>
         </div>
