@@ -108,9 +108,11 @@ const Index = () => {
             </div>
 
             {/* Check Out */}
-            <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary">
-              <LogOut className="h-5 w-5 mr-3" />
-              Check Out
+            <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/checkout-list">
+                <LogOut className="h-5 w-5 mr-3" />
+                Check Out
+              </Link>
             </Button>
 
             {/* Edit Master Setup */}
