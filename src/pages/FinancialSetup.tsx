@@ -20,21 +20,7 @@ const FinancialSetup = () => {
           <p className="text-lg text-red-500 text-center">View cabin expenses, billing, and financial tracking</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <DollarSign className="h-5 w-5 mr-2" />
-                Billing Setup
-              </CardTitle>
-              <CardDescription>Configure billing rates and methods</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="outline" asChild>
-                <Link to="/financial-setup">Financial Setup</Link>
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
 
           <Card className="bg-card/95">
             <CardHeader>
