@@ -225,7 +225,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.shopped}
                   onChange={(e) => handleSurveyChange("shopped", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -241,7 +241,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.homeRepair}
                   onChange={(e) => handleSurveyChange("homeRepair", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -257,7 +257,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.dinedOut}
                   onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -273,7 +273,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.hiredGuide}
                   onChange={(e) => handleSurveyChange("hiredGuide", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -289,7 +289,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.tickets}
                   onChange={(e) => handleSurveyChange("tickets", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -305,7 +305,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.yellowstone}
                   onChange={(e) => handleSurveyChange("yellowstone", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -321,7 +321,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.fishingLicense}
                   onChange={(e) => handleSurveyChange("fishingLicense", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
@@ -337,7 +337,7 @@ const CheckoutList = () => {
                   type="text"
                   value={surveyData.other}
                   onChange={(e) => handleSurveyChange("other", e.target.value)}
-                  placeholder="Enter 6-digit number"
+                  placeholder="Total"
                   maxLength={6}
                   className="mt-1 w-24"
                   style={{ width: "1in" }}
