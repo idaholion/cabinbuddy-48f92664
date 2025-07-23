@@ -248,23 +248,25 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-start gap-4">
-                <Label htmlFor="dinedOut" className="text-sm font-medium">
+              <div>
+                <Label className="text-sm font-medium">
                   How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
-                  <br />
-                  <br />
-                  Dined Out
                 </Label>
-                <Input
-                  id="dinedOut"
-                  type="text"
-                  value={surveyData.dinedOut}
-                  onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24 mt-8"
-                  style={{ width: "1in" }}
-                />
+                <div className="flex items-center gap-4 mt-2">
+                  <Label htmlFor="dinedOut" className="text-sm font-medium">
+                    Dined Out
+                  </Label>
+                  <Input
+                    id="dinedOut"
+                    type="text"
+                    value={surveyData.dinedOut}
+                    onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
+                    placeholder="Total"
+                    maxLength={6}
+                    className="w-24"
+                    style={{ width: "1in" }}
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-4">
