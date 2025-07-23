@@ -33,6 +33,9 @@ const Index = () => {
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/financial-setup">Set-up Financials</Link>
               </Button>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/cabin-rules">Cabin Rules</Link>
+              </Button>
             </div>
             <Button variant="outline" size="sm" asChild>
               <Link to="/login">
