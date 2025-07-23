@@ -69,7 +69,7 @@ const FamilyGroupSetup = () => {
 
             {/* Host Members Section */}
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-center">Host Members</h3>
+              <h3 className="text-lg font-semibold text-center">Additional Host Members</h3>
               {[...Array(3)].map((_, index) => (
                 <div key={index} className="space-y-2">
                   <div className="grid gap-2 md:grid-cols-3 text-center items-start">
@@ -94,7 +94,7 @@ const FamilyGroupSetup = () => {
               <div className="flex justify-center pt-2">
                 <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Additional Host Member
+                  Add Host Member
                 </Button>
               </div>
             </div>
