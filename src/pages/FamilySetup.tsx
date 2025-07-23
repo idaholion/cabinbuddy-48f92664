@@ -28,21 +28,19 @@ const FamilySetup = () => {
           <CardContent className="space-y-2 py-2">
             {/* Organization Name */}
             <div className="space-y-1">
-              <Label htmlFor="orgName" className="text-lg font-semibold text-center block">Family Organization Name</Label>
+              <Label htmlFor="orgName" className="text-xl font-semibold text-center block">Family Organization Name</Label>
               <Input id="orgName" placeholder="Enter organization name" />
             </div>
 
             {/* Administrator Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
+              <h3 className="text-xl font-semibold text-center">Administrator</h3>
+              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="adminPhone">Phone Number</Label>
-                </div>
-                <div className="flex items-center justify-center h-6">
-                  <h3 className="text-lg font-semibold">Administrator</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="adminEmail">Email Address</Label>
@@ -57,15 +55,13 @@ const FamilySetup = () => {
 
             {/* Treasurer Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
+              <h3 className="text-xl font-semibold text-center">Treasurer</h3>
+              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="treasurerPhone">Phone Number</Label>
-                </div>
-                <div className="flex items-center justify-center h-6">
-                  <h3 className="text-lg font-semibold">Treasurer</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="treasurerEmail">Email Address</Label>
@@ -92,21 +88,19 @@ const FamilySetup = () => {
           <CardContent className="space-y-4 py-2">
             {/* Family Group Name */}
             <div className="space-y-1">
-              <Label htmlFor="groupName" className="text-lg font-semibold text-center block">Family Group Name</Label>
+              <Label htmlFor="groupName" className="text-xl font-semibold text-center block">Family Group Name</Label>
               <Input id="groupName" placeholder="Enter family group name" />
             </div>
 
             {/* Family Group Lead Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
+              <h3 className="text-xl font-semibold text-center">Family Group Lead</h3>
+              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="leadName">Name</Label>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="leadPhone">Phone Number</Label>
-                </div>
-                <div className="flex items-center justify-center h-6">
-                  <h3 className="text-lg font-semibold">Family Group Lead</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="leadEmail">Email Address</Label>
