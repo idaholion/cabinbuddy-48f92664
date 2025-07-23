@@ -216,7 +216,7 @@ const CheckoutList = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="shopped" className="text-sm font-medium">
                   Shopped - Groceries, Sporting Goods, Home Improvements/Lumber
                 </Label>
@@ -232,7 +232,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="homeRepair" className="text-sm font-medium">
                   Home Repair
                 </Label>
@@ -248,7 +248,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4">
                 <Label htmlFor="dinedOut" className="text-sm font-medium">
                   How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
                   <br />
@@ -266,7 +266,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="hiredGuide" className="text-sm font-medium">
                   Hired Guide
                 </Label>
@@ -282,7 +282,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="tickets" className="text-sm font-medium">
                   Tickets - Entertainment
                 </Label>
@@ -298,7 +298,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="yellowstone" className="text-sm font-medium">
                   Went - Yellowstone Park
                 </Label>
@@ -314,7 +314,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="fishingLicense" className="text-sm font-medium">
                   Bought Fishing/Hunting License
                 </Label>
@@ -330,7 +330,7 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Label htmlFor="other" className="text-sm font-medium">
                   Other
                 </Label>
