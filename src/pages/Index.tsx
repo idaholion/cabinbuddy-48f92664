@@ -111,7 +111,7 @@ const Index = () => {
           {/* Bottom buttons */}
           <div className="absolute bottom-0 left-8 right-8 flex justify-center">
             {/* Edit Master Setup */}
-            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin my-[100px]">
+            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin my-[388px]">
               <Settings className="h-4 w-4 mr-2" />
               Edit Master Setup
             </Button>
