@@ -13,6 +13,7 @@ const CheckoutFinal = () => {
     nights: 3,
     costPerPersonPerDay: 45,
     totalCost: 810,
+    receiptsTotal: 127.50, // Total amount of receipts to subtract
     financialMethod: "per-person-per-day", // or "total-split"
     checkInDate: "2024-07-20",
     checkOutDate: "2024-07-23",
@@ -26,14 +27,15 @@ const CheckoutFinal = () => {
     }
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     if (checkoutData.financialMethod === "per-person-per-day") {
       return checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay;
     }
     return checkoutData.totalCost;
   };
 
-  const totalAmount = calculateTotal();
+  const subtotal = calculateSubtotal();
+  const totalAmount = subtotal - checkoutData.receiptsTotal;
 
   return (
     <div className="min-h-screen bg-background">
@@ -111,15 +113,20 @@ const CheckoutFinal = () => {
                     <span className="text-muted-foreground">
                       {checkoutData.guests} guests × {checkoutData.nights} nights × ${checkoutData.costPerPersonPerDay}:
                     </span>
-                    <span className="font-medium">${totalAmount}</span>
+                    <span className="font-medium">${subtotal}</span>
                   </div>
                 </>
               ) : (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total cabin cost:</span>
-                  <span className="font-medium">${totalAmount}</span>
+                  <span className="font-medium">${subtotal}</span>
                 </div>
               )}
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Less: Receipts submitted:</span>
+                <span className="font-medium text-green-600">-${checkoutData.receiptsTotal}</span>
+              </div>
               
               <Separator />
               
