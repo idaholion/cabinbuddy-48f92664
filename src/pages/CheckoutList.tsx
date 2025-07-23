@@ -250,7 +250,9 @@ const CheckoutList = () => {
 
               <div>
                 <Label htmlFor="dinedOut" className="text-sm font-medium">
-                  How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12) - Dined Out
+                  How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
+                  <br />
+                  Dined Out
                 </Label>
                 <Input
                   id="dinedOut"
