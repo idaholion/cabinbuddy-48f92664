@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Download, Eye } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -83,6 +83,33 @@ const Documents = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
+        {/* Quick Access Section */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Quick Access</CardTitle>
+            <CardDescription>
+              Navigate to specialized document collections
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto p-4"
+                onClick={() => navigate("/cabin-seasonal-docs")}
+              >
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <div className="text-left">
+                    <div className="font-medium">Cabin Opening & Closing Documents</div>
+                    <div className="text-sm text-muted-foreground">Seasonal procedures and checklists</div>
+                  </div>
+                </div>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid gap-4">
           {documents.map((doc) => (
             <Card key={doc.id} className="hover:shadow-md transition-shadow">

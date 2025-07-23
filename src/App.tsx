@@ -18,6 +18,7 @@ import AddReceipt from "./pages/AddReceipt";
 import ShoppingList from "./pages/ShoppingList";
 import CabinRules from "./pages/CabinRules";
 import Documents from "./pages/Documents";
+import CabinSeasonalDocs from "./pages/CabinSeasonalDocs";
 import CheckoutList from "./pages/CheckoutList";
 import CheckoutFinal from "./pages/CheckoutFinal";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/shopping-list" element={<ShoppingList />} />
           <Route path="/cabin-rules" element={<CabinRules />} />
           <Route path="/documents" element={<Documents />} />
+          <Route path="/cabin-seasonal-docs" element={<CabinSeasonalDocs />} />
           <Route path="/checkout-list" element={<CheckoutList />} />
           <Route path="/checkout-final" element={<CheckoutFinal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
