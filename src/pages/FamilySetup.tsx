@@ -23,7 +23,7 @@ const FamilySetup = () => {
           <CardHeader className="pb-2 relative">
             <Button className="absolute top-6 right-6">Save Organization Setup</Button>
             <CardTitle className="text-2xl text-center">Set up Family Organization</CardTitle>
-            <CardDescription className="text-center">Name your family organization and designate an administrator and treasurer</CardDescription>
+            
           </CardHeader>
           <CardContent className="space-y-2 py-2">
             {/* Organization Name */}
