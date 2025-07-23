@@ -252,6 +252,7 @@ const CheckoutList = () => {
                 <Label htmlFor="dinedOut" className="text-sm font-medium">
                   How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
                   <br />
+                  <br />
                   Dined Out
                 </Label>
                 <Input
@@ -261,7 +262,7 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="w-24"
+                  className="w-24 mt-8"
                   style={{ width: "1in" }}
                 />
               </div>
@@ -347,13 +348,17 @@ const CheckoutList = () => {
               </div>
 
               {/* Approximate $ spent section */}
-              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="flex items-center gap-4 mt-6 pt-4 border-t">
                 <Label className="text-sm font-medium">
                   Approximate $ spent in area
                 </Label>
-                <div className="text-sm font-medium">
-                  Total $
-                </div>
+                <Input
+                  type="text"
+                  placeholder="Total $"
+                  maxLength={6}
+                  className="w-24"
+                  style={{ width: "1in" }}
+                />
               </div>
 
               <Button className="mt-4">
