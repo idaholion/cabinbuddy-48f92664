@@ -34,9 +34,12 @@ const FamilySetup = () => {
 
             {/* Administrator Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="adminName">Name</Label>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="adminPhone">Phone Number</Label>
                 </div>
                 <div className="flex items-center justify-center h-6">
                   <h3 className="text-lg font-semibold">Organization Administrator</h3>
@@ -45,17 +48,21 @@ const FamilySetup = () => {
                   <Label htmlFor="adminEmail">Email Address</Label>
                 </div>
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-3">
                 <Input id="adminName" placeholder="Administrator's full name" />
+                <Input id="adminPhone" type="tel" placeholder="(555) 123-4567" />
                 <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
               </div>
             </div>
 
             {/* Treasurer Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="treasurerName">Name</Label>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="treasurerPhone">Phone Number</Label>
                 </div>
                 <div className="flex items-center justify-center h-6">
                   <h3 className="text-lg font-semibold">Organization Treasurer</h3>
@@ -64,8 +71,9 @@ const FamilySetup = () => {
                   <Label htmlFor="treasurerEmail">Email Address</Label>
                 </div>
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-3">
                 <Input id="treasurerName" placeholder="Treasurer's full name" />
+                <Input id="treasurerPhone" type="tel" placeholder="(555) 123-4567" />
                 <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
               </div>
             </div>
@@ -90,9 +98,12 @@ const FamilySetup = () => {
 
             {/* Family Group Lead Section */}
             <div className="space-y-2">
-              <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+              <div className="grid gap-2 md:grid-cols-4 text-center items-start">
                 <div className="space-y-1">
                   <Label htmlFor="leadName">Name</Label>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="leadPhone">Phone Number</Label>
                 </div>
                 <div className="flex items-center justify-center h-6">
                   <h3 className="text-lg font-semibold">Family Group Lead</h3>
@@ -101,8 +112,9 @@ const FamilySetup = () => {
                   <Label htmlFor="leadEmail">Email Address</Label>
                 </div>
               </div>
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-3">
                 <Input id="leadName" placeholder="Family Group Lead's full name" />
+                <Input id="leadPhone" type="tel" placeholder="(555) 123-4567" />
                 <Input id="leadEmail" type="email" placeholder="lead@example.com" />
               </div>
             </div>
@@ -112,9 +124,12 @@ const FamilySetup = () => {
               <h3 className="text-lg font-semibold text-center">Host Members</h3>
               {[...Array(6)].map((_, index) => (
                 <div key={index} className="space-y-2">
-                  <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+                  <div className="grid gap-2 md:grid-cols-4 text-center items-start">
                     <div className="space-y-1">
                       <Label htmlFor={`hostName${index + 1}`}>Name</Label>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor={`hostPhone${index + 1}`}>Phone Number</Label>
                     </div>
                     <div className="flex items-center justify-center h-6">
                       <span className="text-sm font-medium">Host Member {index + 1}</span>
@@ -123,8 +138,9 @@ const FamilySetup = () => {
                       <Label htmlFor={`hostEmail${index + 1}`}>Email Address</Label>
                     </div>
                   </div>
-                  <div className="grid gap-2 md:grid-cols-2">
+                  <div className="grid gap-2 md:grid-cols-3">
                     <Input id={`hostName${index + 1}`} placeholder={`Host Member ${index + 1} full name`} />
+                    <Input id={`hostPhone${index + 1}`} type="tel" placeholder="(555) 123-4567" />
                     <Input id={`hostEmail${index + 1}`} type="email" placeholder={`hostmember${index + 1}@example.com`} />
                   </div>
                 </div>
