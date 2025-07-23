@@ -216,7 +216,7 @@ const CheckoutList = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="shopped" className="text-sm font-medium">
                   Shopped - Groceries, Sporting Goods, Home Improvements/Lumber
                 </Label>
@@ -227,12 +227,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("shopped", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="homeRepair" className="text-sm font-medium">
                   Home Repair
                 </Label>
@@ -243,12 +243,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("homeRepair", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-start justify-between">
                 <Label htmlFor="dinedOut" className="text-sm font-medium">
                   How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
                   <br />
@@ -261,12 +261,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="hiredGuide" className="text-sm font-medium">
                   Hired Guide
                 </Label>
@@ -277,12 +277,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("hiredGuide", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="tickets" className="text-sm font-medium">
                   Tickets - Entertainment
                 </Label>
@@ -293,12 +293,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("tickets", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="yellowstone" className="text-sm font-medium">
                   Went - Yellowstone Park
                 </Label>
@@ -309,12 +309,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("yellowstone", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="fishingLicense" className="text-sm font-medium">
                   Bought Fishing/Hunting License
                 </Label>
@@ -325,12 +325,12 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("fishingLicense", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <div>
+              <div className="flex items-center justify-between">
                 <Label htmlFor="other" className="text-sm font-medium">
                   Other
                 </Label>
@@ -341,9 +341,19 @@ const CheckoutList = () => {
                   onChange={(e) => handleSurveyChange("other", e.target.value)}
                   placeholder="Total"
                   maxLength={6}
-                  className="mt-1 w-24"
+                  className="w-24"
                   style={{ width: "1in" }}
                 />
+              </div>
+
+              {/* Approximate $ spent section */}
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <Label className="text-sm font-medium">
+                  Approximate $ spent in area
+                </Label>
+                <div className="text-sm font-medium">
+                  Total $
+                </div>
               </div>
 
               <Button className="mt-4">
