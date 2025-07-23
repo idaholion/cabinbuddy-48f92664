@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -30,7 +31,19 @@ const FamilyGroupSetup = () => {
             {/* Family Group Name */}
             <div className="space-y-1">
               <Label htmlFor="groupName" className="text-xl font-semibold text-center block">Family Group Name</Label>
-              <Input id="groupName" placeholder="Enter family group name" />
+              <Select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a family group" />
+                </SelectTrigger>
+                <SelectContent className="bg-background z-50">
+                  <SelectItem value="family-group-1">Family Group 1</SelectItem>
+                  <SelectItem value="family-group-2">Family Group 2</SelectItem>
+                  <SelectItem value="family-group-3">Family Group 3</SelectItem>
+                  <SelectItem value="family-group-4">Family Group 4</SelectItem>
+                  <SelectItem value="family-group-5">Family Group 5</SelectItem>
+                  <SelectItem value="family-group-6">Family Group 6</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Family Group Lead Section */}
