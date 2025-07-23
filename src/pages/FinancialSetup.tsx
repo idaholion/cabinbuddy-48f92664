@@ -4,7 +4,6 @@ import { DollarSign, Receipt, TrendingUp, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BillingDashboard } from "@/components/BillingDashboard";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
-import { FinancialSetupSheet } from "@/components/FinancialSetupSheet";
 
 const FinancialSetup = () => {
   return (
@@ -17,8 +16,8 @@ const FinancialSetup = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-red-500 mb-2 text-center">Financial Setup</h1>
-          <p className="text-lg text-red-500 text-center">Manage cabin expenses, billing, and financial tracking</p>
+          <h1 className="text-4xl font-bold text-red-500 mb-2 text-center">Finance Reports</h1>
+          <p className="text-lg text-red-500 text-center">View cabin expenses, billing, and financial tracking</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -31,7 +30,9 @@ const FinancialSetup = () => {
               <CardDescription>Configure billing rates and methods</CardDescription>
             </CardHeader>
             <CardContent>
-              <FinancialSetupSheet />
+              <Button className="w-full" variant="outline" asChild>
+                <Link to="/financial-setup">Financial Setup</Link>
+              </Button>
             </CardContent>
           </Card>
 

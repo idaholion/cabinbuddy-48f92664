@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import FamilySetup from "./pages/FamilySetup";
 import FamilyGroupSetup from "./pages/FamilyGroupSetup";
 import FinancialSetup from "./pages/FinancialSetup";
+import FinancialSetupPage from "./pages/FinancialSetupPage";
 import ReservationSetup from "./pages/ReservationSetup";
 import CabinCalendar from "./pages/CabinCalendar";
 import CheckIn from "./pages/CheckIn";
@@ -37,7 +38,8 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/family-setup" element={<FamilySetup />} />
           <Route path="/family-group-setup" element={<FamilyGroupSetup />} />
-          <Route path="/financial-setup" element={<FinancialSetup />} />
+          <Route path="/finance-reports" element={<FinancialSetup />} />
+          <Route path="/financial-setup" element={<FinancialSetupPage />} />
           <Route path="/reservation-setup" element={<ReservationSetup />} />
           <Route path="/calendar" element={<CabinCalendar />} />
           <Route path="/check-in" element={<CheckIn />} />
