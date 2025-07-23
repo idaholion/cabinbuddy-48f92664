@@ -25,7 +25,7 @@ const FamilyGroupSetup = () => {
           <CardHeader className="pb-2 relative">
             <Button className="absolute top-6 right-6">Save Family Group Setup</Button>
             <Button className="absolute top-16 right-6" asChild>
-              <Link to="/financial-setup">Financial Setup</Link>
+              <Link to="/financial-setup">go to Financial Setup</Link>
             </Button>
             <CardTitle className="text-2xl text-center">Set up Family Groups</CardTitle>
             <CardDescription className="text-center">Create a family group with lead and host members</CardDescription>
