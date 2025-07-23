@@ -17,6 +17,7 @@ import DailyCheckIn from "./pages/DailyCheckIn";
 import AddReceipt from "./pages/AddReceipt";
 import ShoppingList from "./pages/ShoppingList";
 import CabinRules from "./pages/CabinRules";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/add-receipt" element={<AddReceipt />} />
           <Route path="/shopping-list" element={<ShoppingList />} />
           <Route path="/cabin-rules" element={<CabinRules />} />
+          <Route path="/documents" element={<Documents />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
