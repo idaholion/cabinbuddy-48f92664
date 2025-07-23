@@ -1,12 +1,33 @@
 import { ArrowLeft, CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 const CheckoutList = () => {
   const navigate = useNavigate();
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
+  const [surveyData, setSurveyData] = useState({
+    shopped: "",
+    homeRepair: "",
+    dinedOut: "",
+    hiredGuide: "",
+    tickets: "",
+    yellowstone: "",
+    fishingLicense: "",
+    other: ""
+  });
+
+  const handleSurveyChange = (field: string, value: string) => {
+    // Only allow digits and limit to 6 characters
+    const numericValue = value.replace(/\D/g, "").slice(0, 6);
+    setSurveyData(prev => ({
+      ...prev,
+      [field]: numericValue
+    }));
+  };
 
   const toggleTask = (taskId: string) => {
     const newCheckedTasks = new Set(checkedTasks);
@@ -184,6 +205,143 @@ const CheckoutList = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Cabin Coalition Survey */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-xl">Cabin Coalition Economic Survey</CardTitle>
+            <CardDescription>
+              Cabin Coalition is a lobbying group that works on the lease amounts. They periodically send us a long survey to help them show that the cabin holders benefit the community economically. To help fill out the survey, mark how many times you did the following within 50 miles of the Cabin.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div>
+                <Label htmlFor="shopped" className="text-sm font-medium">
+                  Shopped - Groceries, Sporting Goods, Home Improvements/Lumber
+                </Label>
+                <Input
+                  id="shopped"
+                  type="text"
+                  value={surveyData.shopped}
+                  onChange={(e) => handleSurveyChange("shopped", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="homeRepair" className="text-sm font-medium">
+                  Home Repair
+                </Label>
+                <Input
+                  id="homeRepair"
+                  type="text"
+                  value={surveyData.homeRepair}
+                  onChange={(e) => handleSurveyChange("homeRepair", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="dinedOut" className="text-sm font-medium">
+                  How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12) - Dined Out
+                </Label>
+                <Input
+                  id="dinedOut"
+                  type="text"
+                  value={surveyData.dinedOut}
+                  onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="hiredGuide" className="text-sm font-medium">
+                  Hired Guide
+                </Label>
+                <Input
+                  id="hiredGuide"
+                  type="text"
+                  value={surveyData.hiredGuide}
+                  onChange={(e) => handleSurveyChange("hiredGuide", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tickets" className="text-sm font-medium">
+                  Tickets - Entertainment
+                </Label>
+                <Input
+                  id="tickets"
+                  type="text"
+                  value={surveyData.tickets}
+                  onChange={(e) => handleSurveyChange("tickets", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="yellowstone" className="text-sm font-medium">
+                  Went - Yellowstone Park
+                </Label>
+                <Input
+                  id="yellowstone"
+                  type="text"
+                  value={surveyData.yellowstone}
+                  onChange={(e) => handleSurveyChange("yellowstone", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fishingLicense" className="text-sm font-medium">
+                  Bought Fishing/Hunting License
+                </Label>
+                <Input
+                  id="fishingLicense"
+                  type="text"
+                  value={surveyData.fishingLicense}
+                  onChange={(e) => handleSurveyChange("fishingLicense", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="other" className="text-sm font-medium">
+                  Other
+                </Label>
+                <Input
+                  id="other"
+                  type="text"
+                  value={surveyData.other}
+                  onChange={(e) => handleSurveyChange("other", e.target.value)}
+                  placeholder="Enter 6-digit number"
+                  maxLength={6}
+                  className="mt-1"
+                />
+              </div>
+
+              <Button className="mt-4">
+                Save Survey Data
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
