@@ -21,11 +21,8 @@ const FamilySetup = () => {
         {/* Combined Family Organization and Groups Setup */}
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
-            <div className="flex justify-between items-start gap-4">
-              <Button className="absolute top-6 right-32">Save Organization Setup</Button>
-              <Button className="absolute top-6 right-6" asChild>
-                <Link to="/family-group-setup">Set up Family Groups</Link>
-              </Button>
+            <div className="flex justify-end">
+              <Button className="">Save Organization Setup</Button>
             </div>
             <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
           </CardHeader>
@@ -85,7 +82,12 @@ const FamilySetup = () => {
 
             {/* Family Groups Section */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-center border-b pb-2">List of Family Groups</h2>
+              <div className="relative">
+                <h2 className="text-xl font-semibold text-center border-b pb-2">List of Family Groups</h2>
+                <Button className="absolute top-0 right-0" asChild>
+                  <Link to="/family-group-setup">Set up Family Groups</Link>
+                </Button>
+              </div>
               
               {[...Array(6)].map((_, index) => (
                 <div key={index} className="space-y-1">
