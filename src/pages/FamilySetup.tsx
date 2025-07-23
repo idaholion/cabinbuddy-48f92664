@@ -42,7 +42,7 @@ const FamilySetup = () => {
                   <Label htmlFor="adminPhone">Phone Number</Label>
                 </div>
                 <div className="flex items-center justify-center h-6">
-                  <h3 className="text-lg font-semibold">Organization Administrator</h3>
+                  <h3 className="text-lg font-semibold">Administrator</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="adminEmail">Email Address</Label>
@@ -65,7 +65,7 @@ const FamilySetup = () => {
                   <Label htmlFor="treasurerPhone">Phone Number</Label>
                 </div>
                 <div className="flex items-center justify-center h-6">
-                  <h3 className="text-lg font-semibold">Organization Treasurer</h3>
+                  <h3 className="text-lg font-semibold">Treasurer</h3>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="treasurerEmail">Email Address</Label>
