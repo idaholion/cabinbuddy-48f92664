@@ -163,7 +163,7 @@ const CheckoutList = () => {
                     return (
                       <div 
                         key={taskIndex}
-                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                        className="flex items-start gap-3 p-1 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                         onClick={() => toggleTask(taskId)}
                       >
                         <div className="mt-0.5">
