@@ -20,7 +20,7 @@ const FinancialSetup = () => {
           <p className="text-lg text-red-500 text-center">View cabin expenses, billing, and financial tracking</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
 
           <Card className="bg-card/95">
             <CardHeader>
@@ -48,18 +48,6 @@ const FinancialSetup = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                Payment Settings
-              </CardTitle>
-              <CardDescription>Configure payment methods and schedules</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="secondary">Settings</Button>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
