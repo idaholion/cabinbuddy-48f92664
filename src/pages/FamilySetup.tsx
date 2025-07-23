@@ -116,7 +116,7 @@ const FamilySetup = () => {
             {/* Host Members Section */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-center">Host Members</h3>
-              {[...Array(6)].map((_, index) => (
+              {[...Array(3)].map((_, index) => (
                 <div key={index} className="space-y-2">
                   <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                     <div className="space-y-1">
