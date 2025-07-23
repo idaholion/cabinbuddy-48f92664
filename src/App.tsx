@@ -8,6 +8,7 @@ import Intro from "./pages/Intro";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import FamilySetup from "./pages/FamilySetup";
+import FamilyGroupSetup from "./pages/FamilyGroupSetup";
 import FinancialSetup from "./pages/FinancialSetup";
 import ReservationSetup from "./pages/ReservationSetup";
 import CabinCalendar from "./pages/CabinCalendar";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/home" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/family-setup" element={<FamilySetup />} />
+          <Route path="/family-group-setup" element={<FamilyGroupSetup />} />
           <Route path="/financial-setup" element={<FinancialSetup />} />
           <Route path="/reservation-setup" element={<ReservationSetup />} />
           <Route path="/calendar" element={<CabinCalendar />} />
