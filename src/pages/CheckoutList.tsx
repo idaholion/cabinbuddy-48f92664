@@ -155,7 +155,7 @@ const CheckoutList = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   {section.tasks.map((task, taskIndex) => {
                     const taskId = `${sectionIndex}-${task}`;
                     const isChecked = checkedTasks.has(taskId);
