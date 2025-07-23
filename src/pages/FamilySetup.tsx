@@ -15,7 +15,7 @@ const FamilySetup = () => {
             <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Organization Setup</h1>
-          <p className="text-orange-500 text-3xl text-center">Setting up your family organization and Family Group names</p>
+          <p className="text-orange-500 text-3xl text-center">Setting up your Family Organization and Family Groups</p>
         </div>
 
         {/* Setup Family Organization Form */}
