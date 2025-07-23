@@ -108,10 +108,12 @@ const Index = () => {
             </Button>
 
             {/* Edit Master Setup */}
-            <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin w-64 mt-4">
-              <Settings className="h-4 w-4 mr-2" />
-              Edit Master Setup
-            </Button>
+            <div className="w-64">
+              <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin w-full">
+                <Settings className="h-4 w-4 mr-2" />
+                Edit Master Setup
+              </Button>
+            </div>
           </div>
 
         </div>
