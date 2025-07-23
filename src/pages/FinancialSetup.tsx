@@ -9,7 +9,10 @@ import { FinancialSetupSheet } from "@/components/FinancialSetupSheet";
 const FinancialSetup = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto relative">
+        <Button className="absolute top-0 right-0" asChild>
+          <Link to="/reservation-setup">Go to Reservation Setup</Link>
+        </Button>
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
