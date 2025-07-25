@@ -81,30 +81,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    console.log('SignIn function called with email:', email);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      // If it's a network error, clear localStorage and suggest refresh
-      if (error.message.includes('fetch') || error.message.includes('network')) {
-        localStorage.clear();
-        toast({
-          title: "Network Error",
-          description: "Please refresh the page and try again. If the issue persists, check your internet connection.",
-          variant: "destructive",
-        });
+      console.log('Auth response:', { error });
+
+      if (error) {
+        console.error('Detailed error:', error);
+        
+        // If it's a network error, provide specific guidance
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          toast({
+            title: "Network Error",
+            description: "Try disabling ad blockers, switching browsers, or using incognito mode.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign In Error", 
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else {
-        toast({
-          title: "Sign In Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.log('Sign in successful');
       }
-    }
 
-    return { error };
+      return { error };
+    } catch (catchError) {
+      console.error('Caught error during sign in:', catchError);
+      toast({
+        title: "Connection Error",
+        description: "Cannot reach authentication server. Check your internet connection or try a different browser.",
+        variant: "destructive",
+      });
+      return { error: catchError };
+    }
   };
 
   const signOut = async () => {
