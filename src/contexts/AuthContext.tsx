@@ -105,6 +105,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         description: error.message,
         variant: "destructive",
       });
+    } else {
+      // Redirect to login page after successful logout
+      window.location.href = '/login';
     }
   };
 
