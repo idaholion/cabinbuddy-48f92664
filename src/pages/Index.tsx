@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -38,6 +38,9 @@ const Index = () => {
               </Button>
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/documents">Documents</Link>
+              </Button>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/photos">Photos</Link>
               </Button>
             </div>
             <Button variant="outline" size="sm" asChild>

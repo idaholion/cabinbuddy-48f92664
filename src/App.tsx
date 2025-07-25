@@ -22,6 +22,7 @@ import Documents from "./pages/Documents";
 import CabinSeasonalDocs from "./pages/CabinSeasonalDocs";
 import CheckoutList from "./pages/CheckoutList";
 import CheckoutFinal from "./pages/CheckoutFinal";
+import PhotoSharing from "./pages/PhotoSharing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/cabin-seasonal-docs" element={<CabinSeasonalDocs />} />
           <Route path="/checkout-list" element={<CheckoutList />} />
           <Route path="/checkout-final" element={<CheckoutFinal />} />
+          <Route path="/photos" element={<PhotoSharing />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
