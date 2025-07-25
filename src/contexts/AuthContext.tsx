@@ -83,6 +83,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signIn = async (email: string, password: string) => {
     console.log('SignIn function called with email:', email);
     
+    // TEMPORARY: Bypass authentication for development
+    if (!email && !password) {
+      // Simulate successful anonymous login
+      const mockUser = {
+        id: 'temp-user-id',
+        email: 'guest@example.com',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        role: 'authenticated'
+      } as any;
+      
+      const mockSession = {
+        access_token: 'mock-token',
+        refresh_token: 'mock-refresh',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockUser
+      } as any;
+      
+      // Update state directly
+      setUser(mockUser);
+      setSession(mockSession);
+      
+      console.log('Mock authentication successful');
+      return { error: null };
+    }
+    
     try {
       // If no email/password provided, use anonymous login
       if (!email && !password) {
