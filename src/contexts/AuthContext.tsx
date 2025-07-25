@@ -87,11 +87,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (error) {
-      toast({
-        title: "Sign In Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // If it's a network error, clear localStorage and suggest refresh
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        localStorage.clear();
+        toast({
+          title: "Network Error",
+          description: "Please refresh the page and try again. If the issue persists, check your internet connection.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sign In Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
 
     return { error };
