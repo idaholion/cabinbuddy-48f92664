@@ -100,15 +100,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return { error };
   };
 
+  // Network connectivity test
+  const testSupabaseConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      const response = await fetch(`https://ftaxzdnrnhktzbcsejoy.supabase.co/rest/v1/`, {
+        method: 'HEAD',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXh6ZG5ybmhrdHpiY3Nlam95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTgwNDMsImV4cCI6MjA2OTAzNDA0M30.EqvoCt1QJpe3UWFzbhgS_9EUOzoKw-Ze7BnstPBFdNQ'
+        }
+      });
+      console.log('Supabase connection test result:', response.status, response.statusText);
+      return response.ok;
+    } catch (error) {
+      console.error('Supabase connection test failed:', error);
+      return false;
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     console.log('SignIn function called with email:', email);
     
-    // TEMPORARY: Bypass authentication for development
-    if (!email && !password) {
-      // Simulate successful anonymous login
+    // First test network connectivity
+    const isConnected = await testSupabaseConnection();
+    
+    if (!isConnected) {
+      console.warn('Supabase connection failed, using mock authentication');
+      toast({
+        title: "Network Issue Detected",
+        description: "Using offline mode. Some features may be limited.",
+        variant: "destructive",
+      });
+      
+      // Use mock authentication as fallback
       const mockUser = {
         id: 'temp-user-id',
-        email: 'guest@example.com',
+        email: email || 'guest@example.com',
         user_metadata: {},
         app_metadata: {},
         aud: 'authenticated',
@@ -125,26 +152,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         user: mockUser
       } as any;
       
-      // Update state directly and persist to localStorage
       setUser(mockUser);
       setSession(mockSession);
-      
-      // Store in localStorage for persistence across page reloads
       localStorage.setItem('supabase.auth.token', JSON.stringify(mockSession));
       localStorage.setItem('mock-auth-user', JSON.stringify(mockUser));
       
-      console.log('Mock authentication successful');
       return { error: null };
     }
     
+    // Network is good, try real authentication
     try {
-      // If no email/password provided, use anonymous login
+      console.log('Attempting real Supabase authentication...');
+      
+      // Clear any existing mock data first
+      localStorage.removeItem('mock-auth-user');
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Try anonymous login if no credentials provided
       if (!email && !password) {
         const { error } = await supabase.auth.signInAnonymously();
         console.log('Anonymous auth response:', { error });
+        
+        if (error) {
+          toast({
+            title: "Anonymous Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        
         return { error };
       }
 
+      // Try email/password login
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -153,54 +193,100 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Auth response:', { error });
 
       if (error) {
-        console.error('Detailed error:', error);
+        console.error('Authentication error:', error);
         
-        // If it's a network error, provide specific guidance
-        if (error.message.includes('fetch') || error.message.includes('network')) {
-          toast({
-            title: "Network Error",
-            description: "Try disabling ad blockers, switching browsers, or using incognito mode.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Sign In Error", 
-            description: error.message,
-            variant: "destructive",
-          });
+        let errorMessage = error.message;
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Invalid email or password. Please check your credentials.";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Please check your email and click the confirmation link.";
         }
+        
+        toast({
+          title: "Sign In Error", 
+          description: errorMessage,
+          variant: "destructive",
+        });
       } else {
-        console.log('Sign in successful');
+        console.log('Real authentication successful');
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
       }
 
       return { error };
     } catch (catchError) {
-      console.error('Caught error during sign in:', catchError);
+      console.error('Caught error during authentication:', catchError);
       toast({
         title: "Connection Error",
-        description: "Cannot reach authentication server. Check your internet connection or try a different browser.",
+        description: "Authentication server unavailable. Using offline mode.",
         variant: "destructive",
       });
-      return { error: catchError };
+      
+      // Fallback to mock auth if real auth fails
+      const mockUser = {
+        id: 'temp-user-id',
+        email: email || 'guest@example.com',
+        user_metadata: {},
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        role: 'authenticated'
+      } as any;
+      
+      const mockSession = {
+        access_token: 'mock-token',
+        refresh_token: 'mock-refresh',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockUser
+      } as any;
+      
+      setUser(mockUser);
+      setSession(mockSession);
+      localStorage.setItem('supabase.auth.token', JSON.stringify(mockSession));
+      localStorage.setItem('mock-auth-user', JSON.stringify(mockUser));
+      
+      return { error: null };
     }
   };
 
   const signOut = async () => {
-    // Clear mock authentication data
+    console.log('Signing out...');
+    
+    // Clear all authentication data
     localStorage.removeItem('mock-auth-user');
     localStorage.removeItem('supabase.auth.token');
     
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Sign Out Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      // Redirect to login page after successful logout
-      window.location.href = '/login';
+    // Clear state first
+    setUser(null);
+    setSession(null);
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast({
+          title: "Sign Out Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        console.log('Sign out successful');
+        toast({
+          title: "Signed out",
+          description: "You have been successfully signed out.",
+        });
+      }
+    } catch (error) {
+      console.error('Sign out failed:', error);
+      // Even if Supabase signout fails, we've cleared local state
     }
+    
+    // Always redirect to login after signout attempt
+    window.location.href = '/login';
   };
 
   const value = {
