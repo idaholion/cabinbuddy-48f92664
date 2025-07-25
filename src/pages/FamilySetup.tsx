@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +15,8 @@ const FamilySetup = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold mb-2 text-red-500 text-center font-script">Organization Setup</h1>
-          <p className="text-red-500 text-3xl text-center font-script">Setting up your Family Organization and Family Groups list</p>
+          <h1 className="text-4xl font-bold mb-2 text-red-500 text-center" style={{ fontFamily: 'Brush Script MT, cursive' }}>Organization Setup</h1>
+          <p className="text-red-500 text-3xl text-center" style={{ fontFamily: 'Brush Script MT, cursive' }}>Setting up your Family Organization and Family Groups list</p>
         </div>
 
         {/* Combined Family Organization and Groups Setup */}
