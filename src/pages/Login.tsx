@@ -25,6 +25,21 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Test connection first
+    try {
+      const response = await fetch('https://ftaxzdnrnhktzbcsejoy.supabase.co/rest/v1/', {
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXh6ZG5ybmhrdHpiY3Nlam95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTgwNDMsImV4cCI6MjA2OTAzNDA0M30.EqvoCt1QJpe3UWFzbhgS_9EUOzoKw-Ze7BnstPBFdNQ'
+        }
+      });
+      console.log('Supabase connection test:', response.status);
+    } catch (testError) {
+      console.error('Connection test failed:', testError);
+      alert('Cannot connect to Supabase. Please check if your project is active.');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await signIn(email, password);
     
     if (!error) {
