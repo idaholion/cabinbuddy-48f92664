@@ -84,6 +84,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('SignIn function called with email:', email);
     
     try {
+      // If no email/password provided, use anonymous login
+      if (!email && !password) {
+        const { error } = await supabase.auth.signInAnonymously();
+        console.log('Anonymous auth response:', { error });
+        return { error };
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,

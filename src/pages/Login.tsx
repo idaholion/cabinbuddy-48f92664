@@ -87,6 +87,24 @@ const Login = () => {
               <LogIn className="h-4 w-4 mr-2" />
               {loading ? "Signing In..." : "Sign In"}
             </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              disabled={loading}
+              onClick={async () => {
+                setLoading(true);
+                const { error } = await signIn('', '');
+                if (error) {
+                  console.error('Anonymous login error:', error);
+                } else {
+                  navigate("/home");
+                }
+                setLoading(false);
+              }}
+            >
+              Continue as Guest (Temporary)
+            </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link to="/signup" className="text-primary hover:underline">
