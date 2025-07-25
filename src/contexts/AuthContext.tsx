@@ -33,6 +33,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check for mock authentication first
+    const mockUser = localStorage.getItem('mock-auth-user');
+    const mockToken = localStorage.getItem('supabase.auth.token');
+    
+    if (mockUser && mockToken) {
+      try {
+        const userData = JSON.parse(mockUser);
+        const sessionData = JSON.parse(mockToken);
+        setUser(userData);
+        setSession(sessionData);
+        setLoading(false);
+        console.log('Restored mock authentication from localStorage');
+        return;
+      } catch (error) {
+        console.error('Error parsing mock auth data:', error);
+        localStorage.removeItem('mock-auth-user');
+        localStorage.removeItem('supabase.auth.token');
+      }
+    }
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -105,9 +125,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         user: mockUser
       } as any;
       
-      // Update state directly
+      // Update state directly and persist to localStorage
       setUser(mockUser);
       setSession(mockSession);
+      
+      // Store in localStorage for persistence across page reloads
+      localStorage.setItem('supabase.auth.token', JSON.stringify(mockSession));
+      localStorage.setItem('mock-auth-user', JSON.stringify(mockUser));
       
       console.log('Mock authentication successful');
       return { error: null };
@@ -162,6 +186,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
+    // Clear mock authentication data
+    localStorage.removeItem('mock-auth-user');
+    localStorage.removeItem('supabase.auth.token');
+    
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
