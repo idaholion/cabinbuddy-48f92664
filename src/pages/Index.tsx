@@ -1,9 +1,34 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
+
+const UserInfo = () => {
+  const { user, signOut } = useAuth();
+
+  return (
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 text-white">
+        <User className="h-4 w-4" />
+        <span className="text-sm">
+          {user?.user_metadata?.first_name || user?.email}
+        </span>
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={signOut}
+        className="text-white border-white hover:bg-white hover:text-primary"
+      >
+        <LogOut className="h-4 w-4 mr-2" />
+        Logout
+      </Button>
+    </div>
+  );
+};
 
 const Index = () => {
   useEffect(() => {
@@ -43,12 +68,7 @@ const Index = () => {
                 <Link to="/photos">Photos</Link>
               </Button>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="h-4 w-4 mr-2" />
-                Log In
-              </Link>
-            </Button>
+            <UserInfo />
           </div>
         </div>
       </nav>
