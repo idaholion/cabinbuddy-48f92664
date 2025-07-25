@@ -118,6 +118,14 @@ const Index = () => {
               </Link>
             </Button>
 
+            {/* Family Photos */}
+            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/photos">
+                <Camera className="h-5 w-5 mr-3" />
+                Family Photos
+              </Link>
+            </Button>
+
             {/* Edit Master Setup */}
             <div className="w-64">
               <Button variant="secondary" className="bg-muted/95 hover:bg-muted text-muted-foreground px-6 py-3 font-medium shadow-cabin w-full">
