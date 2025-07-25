@@ -78,6 +78,27 @@ const FamilySetup = () => {
                   <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
                 </div>
               </div>
+
+              {/* Calendar Keeper Section */}
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-center">Calendar Keeper</h3>
+                <div className="grid gap-2 md:grid-cols-3 text-center items-start">
+                  <div className="space-y-1">
+                    <Label htmlFor="calendarKeeperName">Name</Label>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="calendarKeeperPhone">Phone Number</Label>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="calendarKeeperEmail">Email Address</Label>
+                  </div>
+                </div>
+                <div className="grid gap-2 md:grid-cols-3">
+                  <Input id="calendarKeeperName" placeholder="Calendar Keeper's full name" />
+                  <Input id="calendarKeeperPhone" type="tel" placeholder="(555) 123-4567" />
+                  <Input id="calendarKeeperEmail" type="email" placeholder="calendarkeeper@example.com" />
+                </div>
+              </div>
             </div>
 
             {/* Family Groups Section */}
