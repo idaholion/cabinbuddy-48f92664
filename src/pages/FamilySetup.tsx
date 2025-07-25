@@ -14,8 +14,8 @@ const FamilySetup = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Organization Setup</h1>
-          <p className="text-orange-500 text-3xl text-center">Setting up your Family Organization and Family Groups list</p>
+          <h1 className="text-4xl font-bold mb-2 text-red-500 text-center font-script">Organization Setup</h1>
+          <p className="text-red-500 text-3xl text-center font-script">Setting up your Family Organization and Family Groups list</p>
         </div>
 
         {/* Combined Family Organization and Groups Setup */}
