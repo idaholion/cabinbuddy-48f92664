@@ -37,7 +37,15 @@ const Signup = () => {
         title: "Account created successfully!",
         description: "Please check your email to confirm your account before signing in.",
       });
-      navigate("/login");
+      
+      // Redirect based on organization selection
+      if (joiningExistingOrg === "yes") {
+        navigate("/select-family-group");
+      } else if (startingNewOrg === "yes") {
+        navigate("/setup");
+      } else {
+        navigate("/login");
+      }
     }
     
     setLoading(false);
