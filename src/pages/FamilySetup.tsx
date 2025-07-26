@@ -3,10 +3,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings } from "lucide-react";
+import { Users, Plus, Settings, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 const FamilySetup = () => {
+  const { toast } = useToast();
+  
+  // Generate a unique 6-character alphanumeric organization code
+  const generateOrgCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const [organizationCode] = useState(generateOrgCode());
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(organizationCode);
+    toast({
+      title: "Organization code copied!",
+      description: "The organization code has been copied to your clipboard.",
+    });
+  };
+
   return <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
     backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
   }}>
@@ -36,6 +60,28 @@ const FamilySetup = () => {
               <div className="space-y-1">
                 <Label htmlFor="orgName" className="text-xl font-semibold text-center block">Family Organization Name</Label>
                 <Input id="orgName" placeholder="Enter organization name" />
+              </div>
+
+              {/* Organization Code */}
+              <div className="space-y-2">
+                <Label className="text-lg font-semibold text-center block">Organization Code</Label>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="bg-muted px-4 py-2 rounded-md border-2 border-dashed border-border">
+                    <span className="text-2xl font-bold tracking-wider text-primary">{organizationCode}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyToClipboard}
+                    className="flex items-center gap-1"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  Share this code with new members to help them join your organization
+                </p>
               </div>
 
               {/* Administrator Section */}
