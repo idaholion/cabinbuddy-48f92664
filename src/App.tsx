@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Intro from "./pages/Intro";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Setup from "./pages/Setup";
@@ -43,6 +44,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Intro />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />

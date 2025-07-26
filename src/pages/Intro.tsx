@@ -116,15 +116,25 @@ const Intro = () => {
           ))}
         </div>
 
-        {/* Get Started Button */}
-        <Button 
-          onClick={handleGetStarted}
-          size="lg" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
-        >
-          Get Started
-          <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
+        {/* Get Started Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button 
+            onClick={handleGetStarted}
+            size="lg" 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
+          >
+            Get Started
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button 
+            onClick={() => navigate("/auth")}
+            size="lg" 
+            variant="outline"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 px-8 py-4 text-lg font-semibold"
+          >
+            Sign In / Sign Up
+          </Button>
+        </div>
       </div>
     </div>
   );
