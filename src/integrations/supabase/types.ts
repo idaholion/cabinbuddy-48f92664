@@ -14,6 +14,189 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkin_sessions: {
+        Row: {
+          check_date: string
+          checklist_responses: Json
+          completed_at: string | null
+          created_at: string
+          family_group: string | null
+          guest_names: string[] | null
+          id: string
+          notes: string | null
+          organization_id: string
+          session_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          check_date: string
+          checklist_responses?: Json
+          completed_at?: string | null
+          created_at?: string
+          family_group?: string | null
+          guest_names?: string[] | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          session_type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          check_date?: string
+          checklist_responses?: Json
+          completed_at?: string | null
+          created_at?: string
+          family_group?: string | null
+          guest_names?: string[] | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          session_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_checklists: {
+        Row: {
+          checklist_type: string
+          created_at: string
+          id: string
+          items: Json
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_type: string
+          created_at?: string
+          id?: string
+          items?: Json
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_type?: string
+          created_at?: string
+          id?: string
+          items?: Json
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_groups: {
+        Row: {
+          created_at: string
+          host_members: string[] | null
+          id: string
+          lead_email: string | null
+          lead_name: string | null
+          lead_phone: string | null
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          host_members?: string[] | null
+          id?: string
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          host_members?: string[] | null
+          id?: string
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          admin_email: string | null
+          admin_name: string | null
+          admin_phone: string | null
+          calendar_keeper_email: string | null
+          calendar_keeper_name: string | null
+          calendar_keeper_phone: string | null
+          code: string
+          created_at: string
+          id: string
+          name: string
+          treasurer_email: string | null
+          treasurer_name: string | null
+          treasurer_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          calendar_keeper_email?: string | null
+          calendar_keeper_name?: string | null
+          calendar_keeper_phone?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          treasurer_email?: string | null
+          treasurer_name?: string | null
+          treasurer_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string | null
+          admin_name?: string | null
+          admin_phone?: string | null
+          calendar_keeper_email?: string | null
+          calendar_keeper_name?: string | null
+          calendar_keeper_phone?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          treasurer_email?: string | null
+          treasurer_name?: string | null
+          treasurer_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -22,6 +205,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          organization_id: string | null
           updated_at: string
           user_id: string
         }
@@ -32,6 +216,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          organization_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -42,17 +227,173 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          organization_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          family_group: string | null
+          id: string
+          image_url: string | null
+          organization_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date: string
+          description: string
+          family_group?: string | null
+          id?: string
+          image_url?: string | null
+          organization_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          family_group?: string | null
+          id?: string
+          image_url?: string | null
+          organization_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservation_settings: {
+        Row: {
+          address: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          cleaning_fee: number | null
+          created_at: string
+          damage_deposit: number | null
+          financial_method: string | null
+          id: string
+          max_guests: number | null
+          nightly_rate: number | null
+          organization_id: string
+          pet_fee: number | null
+          property_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          cleaning_fee?: number | null
+          created_at?: string
+          damage_deposit?: number | null
+          financial_method?: string | null
+          id?: string
+          max_guests?: number | null
+          nightly_rate?: number | null
+          organization_id: string
+          pet_fee?: number | null
+          property_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          cleaning_fee?: number | null
+          created_at?: string
+          damage_deposit?: number | null
+          financial_method?: string | null
+          id?: string
+          max_guests?: number | null
+          nightly_rate?: number | null
+          organization_id?: string
+          pet_fee?: number | null
+          property_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservation_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_responses: {
+        Row: {
+          created_at: string
+          family_group: string | null
+          id: string
+          organization_id: string
+          responses: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          family_group?: string | null
+          id?: string
+          organization_id: string
+          responses?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          family_group?: string | null
+          id?: string
+          organization_id?: string
+          responses?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
