@@ -16,8 +16,7 @@ const Signup = () => {
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [startingNewOrg, setStartingNewOrg] = useState("");
-  const [joiningExistingOrg, setJoiningExistingOrg] = useState("");
+  const [organizationType, setOrganizationType] = useState("");
   const [organizationCode, setOrganizationCode] = useState("");
   const { signUp } = useAuth();
   const navigate = useNavigate();
@@ -39,9 +38,9 @@ const Signup = () => {
       });
       
       // Redirect based on organization selection
-      if (joiningExistingOrg === "yes") {
+      if (organizationType === "join") {
         navigate("/select-family-group");
-      } else if (startingNewOrg === "yes") {
+      } else if (organizationType === "start") {
         navigate("/setup");
       } else {
         navigate("/login");
@@ -61,34 +60,20 @@ const Signup = () => {
         <CardContent>
           <div className="space-y-4 mb-6">
             <div className="space-y-3">
-              <Label className="text-base font-medium">Are you starting a new organization?</Label>
-              <RadioGroup value={startingNewOrg} onValueChange={setStartingNewOrg}>
+              <Label className="text-base font-medium">What would you like to do?</Label>
+              <RadioGroup value={organizationType} onValueChange={setOrganizationType}>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="start-yes" />
-                  <Label htmlFor="start-yes">Yes</Label>
+                  <RadioGroupItem value="start" id="start-org" />
+                  <Label htmlFor="start-org">Start a new organization</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="start-no" />
-                  <Label htmlFor="start-no">No</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-3">
-              <Label className="text-base font-medium">Are you joining an existing organization?</Label>
-              <RadioGroup value={joiningExistingOrg} onValueChange={setJoiningExistingOrg}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="yes" id="join-yes" />
-                  <Label htmlFor="join-yes">Yes</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="no" id="join-no" />
-                  <Label htmlFor="join-no">No</Label>
+                  <RadioGroupItem value="join" id="join-org" />
+                  <Label htmlFor="join-org">Join an existing organization</Label>
                 </div>
               </RadioGroup>
             </div>
             
-            {joiningExistingOrg === "yes" && (
+            {organizationType === "join" && (
               <div className="space-y-2">
                 <Label htmlFor="orgCode">Organization Code</Label>
                 <Input
