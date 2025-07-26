@@ -61,7 +61,7 @@ export const ExpenseTracker = () => {
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const pendingExpenses = expenses.filter(e => e.status === 'pending').reduce((sum, expense) => sum + expense.amount, 0);
 
-  const categories = ["Maintenance", "Utilities", "Cleaning", "Insurance", "Taxes", "Other"];
+  const categories = ["Maintenance", "Utilities", "Cleaning", "Insurance", "Other"];
   const properties = ["Lake House", "City Apartment", "Beach Condo"];
 
   return (

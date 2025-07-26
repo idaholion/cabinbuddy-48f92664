@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Receipt, TrendingUp, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
-import { BillingDashboard } from "@/components/BillingDashboard";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 
 const FinancialSetup = () => {
@@ -50,8 +49,7 @@ const FinancialSetup = () => {
 
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <BillingDashboard />
+        <div className="grid gap-8">
           <ExpenseTracker />
         </div>
       </div>
