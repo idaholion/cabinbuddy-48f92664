@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CheckCircle, Clock, AlertTriangle, Plus, Edit3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,18 +12,56 @@ const CheckIn = () => {
   const { toast } = useToast();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
-
-  const checklistItems = [
+  const [checklistItems, setChecklistItems] = useState([
     { id: "keys", label: "Picked up keys", category: "arrival" },
     { id: "walkthrough", label: "Completed property walkthrough", category: "arrival" },
     { id: "utilities", label: "Checked utilities (water, power, heat)", category: "arrival" },
     { id: "wifi", label: "Connected to WiFi", category: "arrival" },
     { id: "emergency", label: "Located emergency contacts and procedures", category: "arrival" },
     { id: "rules", label: "Reviewed cabin rules and policies", category: "arrival" },
-  ];
+  ]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newItemLabel, setNewItemLabel] = useState("");
+
+  // Load organization-specific checklist on mount
+  useEffect(() => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      const savedChecklist = localStorage.getItem(`checklist_${organizationCode}`);
+      if (savedChecklist) {
+        setChecklistItems(JSON.parse(savedChecklist));
+      }
+    }
+  }, []);
 
   const handleCheckChange = (itemId: string, checked: boolean) => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
+  };
+
+  const saveChecklist = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      localStorage.setItem(`checklist_${organizationCode}`, JSON.stringify(checklistItems));
+      toast({
+        title: "Checklist Saved",
+        description: "Checklist has been saved for your organization.",
+      });
+    }
+  };
+
+  const addNewItem = () => {
+    if (newItemLabel.trim()) {
+      const newItem = {
+        id: `custom_${Date.now()}`,
+        label: newItemLabel.trim(),
+        category: "arrival"
+      };
+      setChecklistItems(prev => [...prev, newItem]);
+      setNewItemLabel("");
+      saveChecklist();
+    }
   };
 
   const handleSubmit = () => {
@@ -66,6 +105,55 @@ const CheckIn = () => {
                   </label>
                 </div>
               ))}
+              
+              {isEditing && (
+                <div className="flex items-center space-x-2 mt-4">
+                  <Input
+                    placeholder="Add new checklist item..."
+                    value={newItemLabel}
+                    onChange={(e) => setNewItemLabel(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addNewItem()}
+                  />
+                  <Button onClick={addNewItem} size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex flex-col space-y-3 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Check-in time: {new Date().toLocaleString()}
+                    </span>
+                  </div>
+                  <Button onClick={handleSubmit} className="bg-primary">
+                    Complete Check-In
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {isEditing ? "Done Editing" : "Edit Checklist"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Items
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -84,21 +172,6 @@ const CheckIn = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/95">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Check-in time: {new Date().toLocaleString()}
-                  </span>
-                </div>
-                <Button onClick={handleSubmit} className="bg-primary">
-                  Complete Check-In
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
