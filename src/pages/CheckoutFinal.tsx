@@ -1,4 +1,5 @@
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -6,6 +7,37 @@ import { useNavigate } from "react-router-dom";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
+  const [arrivalNotes, setArrivalNotes] = useState("");
+  const [dailyNotes, setDailyNotes] = useState("");
+  const [surveyData, setSurveyData] = useState("");
+
+  // Load notes and survey data from localStorage
+  useEffect(() => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      
+      // Load arrival checklist notes
+      const arrivalData = localStorage.getItem(`arrival_checkin_${organizationCode}`);
+      if (arrivalData) {
+        const arrival = JSON.parse(arrivalData);
+        setArrivalNotes(arrival.notes || "");
+      }
+      
+      // Load daily checklist notes
+      const dailyData = localStorage.getItem(`daily_checkin_${organizationCode}`);
+      if (dailyData) {
+        const daily = JSON.parse(dailyData);
+        setDailyNotes(daily.notes || "");
+      }
+      
+      // Load cabin coalition survey data
+      const surveyDataStored = localStorage.getItem(`cabin_survey_${organizationCode}`);
+      if (surveyDataStored) {
+        setSurveyData(surveyDataStored);
+      }
+    }
+  }, []);
 
   // Mock data - in a real app, this would come from your state management or API
   const checkoutData = {
@@ -92,6 +124,49 @@ const CheckoutFinal = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Stay Notes & Survey Data */}
+        {(arrivalNotes || dailyNotes || surveyData) && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Stay Report
+              </CardTitle>
+              <CardDescription>
+                Notes and observations from your stay
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {arrivalNotes && (
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Arrival Check-In Notes:</h4>
+                  <div className="bg-muted rounded p-3">
+                    <p className="text-sm whitespace-pre-wrap">{arrivalNotes}</p>
+                  </div>
+                </div>
+              )}
+              
+              {dailyNotes && (
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Daily Check-In Notes:</h4>
+                  <div className="bg-muted rounded p-3">
+                    <p className="text-sm whitespace-pre-wrap">{dailyNotes}</p>
+                  </div>
+                </div>
+              )}
+              
+              {surveyData && (
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Cabin Coalition Survey:</h4>
+                  <div className="bg-muted rounded p-3">
+                    <p className="text-sm whitespace-pre-wrap">{surveyData}</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cost Breakdown */}
         <Card className="mb-6">

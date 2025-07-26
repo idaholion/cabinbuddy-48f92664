@@ -53,6 +53,22 @@ const DailyCheckIn = () => {
 
   const handleSubmit = () => {
     const completedTasks = Object.values(checkedItems).filter(Boolean).length;
+    
+    // Save notes and occupancy data to localStorage for organization
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      const dailyData = {
+        notes,
+        checkedItems,
+        readings,
+        dailyOccupancy,
+        timestamp: new Date().toISOString(),
+        completedTasks
+      };
+      localStorage.setItem(`daily_checkin_${organizationCode}`, JSON.stringify(dailyData));
+    }
+    
     toast({
       title: "Daily Check-In Completed",
       description: `${completedTasks} tasks completed. Readings recorded.`,

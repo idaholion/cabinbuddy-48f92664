@@ -71,6 +71,20 @@ const CheckIn = () => {
 
   const handleSubmit = () => {
     const completedItems = Object.values(checkedItems).filter(Boolean).length;
+    
+    // Save notes to localStorage for organization
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      const checkInData = {
+        notes,
+        checkedItems,
+        timestamp: new Date().toISOString(),
+        completedItems
+      };
+      localStorage.setItem(`arrival_checkin_${organizationCode}`, JSON.stringify(checkInData));
+    }
+    
     toast({
       title: "Check-in Completed",
       description: `${completedItems} of ${checklistItems.length} items completed.`,
