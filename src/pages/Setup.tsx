@@ -28,7 +28,7 @@ const Setup = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link to="/family-setup">Start Family Setup</Link>
+                <Link to="/family-setup">Configure or Change Family Setup</Link>
               </Button>
             </CardContent>
           </Card>
@@ -45,7 +45,7 @@ const Setup = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full" variant="secondary">
-                <Link to="/family-group-setup">Configure Family Groups</Link>
+                <Link to="/family-group-setup">Configure or Change Family Groups</Link>
               </Button>
             </CardContent>
           </Card>
@@ -62,7 +62,7 @@ const Setup = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full" variant="secondary">
-                <Link to="/financial-setup">Setup Finances</Link>
+                <Link to="/financial-setup">Configure or Change Finances</Link>
               </Button>
             </CardContent>
           </Card>
@@ -79,7 +79,7 @@ const Setup = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full" variant="secondary">
-                <Link to="/reservation-setup">Setup Reservations</Link>
+                <Link to="/reservation-setup">Configure or Change Reservations</Link>
               </Button>
             </CardContent>
           </Card>
