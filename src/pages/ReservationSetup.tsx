@@ -113,7 +113,7 @@ export default function ReservationSetup() {
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <span>This order will rotate each year, with the person who selected</span>
                 <Select value={firstLastOption} onValueChange={setFirstLastOption}>
-                  <SelectTrigger className="w-16">
+                  <SelectTrigger className="w-20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
