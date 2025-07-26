@@ -27,6 +27,7 @@ import CheckoutList from "./pages/CheckoutList";
 import CheckoutFinal from "./pages/CheckoutFinal";
 import PhotoSharing from "./pages/PhotoSharing";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/" element={<Intro />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/family-setup" element={<ProtectedRoute><FamilySetup /></ProtectedRoute>} />
           <Route path="/family-group-setup" element={<ProtectedRoute><FamilyGroupSetup /></ProtectedRoute>} />
