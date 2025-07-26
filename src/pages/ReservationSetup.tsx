@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,25 @@ export default function ReservationSetup() {
   const [startTime, setStartTime] = useState("12:00 PM");
   const [rotationOption, setRotationOption] = useState("rotate");
   const [firstLastOption, setFirstLastOption] = useState("first");
+  const [familyGroups, setFamilyGroups] = useState<string[]>([]);
+  const [rotationOrder, setRotationOrder] = useState<string[]>([]);
 
-  // Mock family groups - in real app this would come from previous setup
-  const familyGroups = [
-    "Smith Family", "Johnson Family", "Williams Family", 
-    "Brown Family", "Jones Family", "Garcia Family"
-  ];
+  // Load family groups from localStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('familySetupData');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      const groups = data.familyGroups?.filter((group: string) => group.trim() !== '') || [];
+      setFamilyGroups(groups);
+      setRotationOrder(new Array(groups.length).fill(''));
+    }
+  }, []);
+
+  const handleRotationOrderChange = (index: number, value: string) => {
+    const newOrder = [...rotationOrder];
+    newOrder[index] = value;
+    setRotationOrder(newOrder);
+  };
 
   const years = Array.from({ length: 10 }, (_, i) => (2025 + i).toString());
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -137,10 +150,20 @@ export default function ReservationSetup() {
             </div>
             
             <div className="space-y-2">
-              {familyGroups.map((group, index) => (
-                <div key={index} className="flex items-center gap-2 p-2 border rounded">
-                  <span className="font-medium">{index + 1}.</span>
-                  <span>{group}</span>
+              <Label className="text-sm font-medium">Family Group Rotation Order:</Label>
+              {rotationOrder.map((selectedGroup, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="font-medium w-6">{index + 1}.</span>
+                  <Select value={selectedGroup} onValueChange={(value) => handleRotationOrderChange(index, value)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select Family Group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {familyGroups.map((group) => (
+                        <SelectItem key={group} value={group}>{group}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               ))}
             </div>
