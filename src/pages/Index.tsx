@@ -11,17 +11,17 @@ const UserInfo = () => {
 
   return (
     <div className="flex items-center space-x-2">
-      <div className="flex items-center space-x-2 text-white">
+      <div className="flex items-center space-x-2 text-sm font-medium">
         <User className="h-4 w-4" />
-        <span className="text-sm">
+        <span>
           {user?.user_metadata?.first_name || user?.email}
         </span>
       </div>
       <Button 
-        variant="outline" 
+        variant="ghost" 
         size="sm" 
         onClick={signOut}
-        className="text-white border-white hover:bg-white hover:text-primary"
+        className="text-sm font-medium"
       >
         <LogOut className="h-4 w-4 mr-2" />
         Logout
@@ -51,12 +51,6 @@ const Index = () => {
               <Button variant="ghost" className="text-sm font-medium bg-primary/10 text-primary">
                 <Home className="h-4 w-4 mr-2" />
                 Home
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/family-setup">Set-up Family Organization</Link>
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/financial-setup">Set-up Financials</Link>
               </Button>
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/cabin-rules">Cabin Rules</Link>
