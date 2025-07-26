@@ -84,6 +84,11 @@ const Index = () => {
           <h1 className="text-8xl mb-4 font-script text-red-500">
             Welcome to Cabin Buddy
           </h1>
+          <div className="mt-4">
+            <a href="/fonts" className="text-sm text-white/70 hover:text-white underline">
+              View Font Showcase
+            </a>
+          </div>
         </div>
 
         {/* Action Buttons Overlay */}

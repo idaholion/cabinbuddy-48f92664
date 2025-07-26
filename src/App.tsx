@@ -27,6 +27,7 @@ import CabinSeasonalDocs from "./pages/CabinSeasonalDocs";
 import CheckoutList from "./pages/CheckoutList";
 import CheckoutFinal from "./pages/CheckoutFinal";
 import PhotoSharing from "./pages/PhotoSharing";
+import FontShowcase from "./pages/FontShowcase";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/checkout-list" element={<ProtectedRoute><CheckoutList /></ProtectedRoute>} />
           <Route path="/checkout-final" element={<ProtectedRoute><CheckoutFinal /></ProtectedRoute>} />
           <Route path="/photos" element={<ProtectedRoute><PhotoSharing /></ProtectedRoute>} />
+          <Route path="/fonts" element={<FontShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
