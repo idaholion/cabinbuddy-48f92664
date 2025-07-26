@@ -33,25 +33,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for mock authentication first
-    const mockUser = localStorage.getItem('mock-auth-user');
-    const mockToken = localStorage.getItem('supabase.auth.token');
-    
-    if (mockUser && mockToken) {
-      try {
-        const userData = JSON.parse(mockUser);
-        const sessionData = JSON.parse(mockToken);
-        setUser(userData);
-        setSession(sessionData);
-        setLoading(false);
-        console.log('Restored mock authentication from localStorage');
-        return;
-      } catch (error) {
-        console.error('Error parsing mock auth data:', error);
-        localStorage.removeItem('mock-auth-user');
-        localStorage.removeItem('supabase.auth.token');
-      }
-    }
+    // Clear any mock authentication data
+    localStorage.removeItem('mock-auth-user');
+    localStorage.removeItem('mock-auth-token');
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -59,6 +43,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        console.log('Auth state changed:', event, session?.user?.email);
       }
     );
 
@@ -67,6 +52,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      console.log('Initial session:', session?.user?.email);
     });
 
     return () => subscription.unsubscribe();
@@ -100,119 +86,63 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return { error };
   };
 
-  // Try direct Supabase auth without network test
-  const tryDirectSupabaseAuth = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string) => {
+    console.log('SignIn function called with email:', email);
+    
     try {
-      console.log('Attempting direct Supabase authentication...');
-      
-      // Clear any existing mock data first
-      localStorage.removeItem('mock-auth-user');
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Try anonymous login if no credentials provided
-      if (!email && !password) {
-        const { error } = await supabase.auth.signInAnonymously();
-        console.log('Anonymous auth response:', { error });
-        return { error };
-      }
-
-      // Try email/password login
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('Direct auth response:', { error });
-      return { error };
-    } catch (error) {
-      console.error('Direct Supabase auth failed:', error);
-      return { error };
-    }
-  };
+      if (error) {
+        console.error('Supabase sign in error:', error);
+        toast({
+          title: "Sign In Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
 
-  const signIn = async (email: string, password: string) => {
-    console.log('SignIn function called with email:', email);
-    
-    // Try direct Supabase authentication first
-    const authResult = await tryDirectSupabaseAuth(email, password);
-    
-    if (!authResult.error) {
-      console.log('Real authentication successful');
+      if (data.user && data.session) {
+        console.log('Supabase sign in successful for:', data.user.email);
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
+        return { error: null };
+      }
+
+      return { error: new Error('No user data returned') };
+    } catch (error: any) {
+      console.error('Sign in failed:', error);
       toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
+        title: "Connection Error",
+        description: "Unable to connect to authentication service. Please check your connection.",
+        variant: "destructive",
       });
-      return authResult;
+      return { error };
     }
-    
-    // If real auth failed, fall back to mock authentication
-    console.warn('Supabase authentication failed, using mock authentication');
-    toast({
-      title: "Network Issue Detected", 
-      description: "Using offline mode. Some features may be limited.",
-      variant: "destructive",
-    });
-    
-    const mockUser = {
-      id: 'temp-user-id',
-      email: email || 'guest@example.com',
-      user_metadata: {},
-      app_metadata: {},
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      role: 'authenticated'
-    } as any;
-    
-    const mockSession = {
-      access_token: 'mock-token',
-      refresh_token: 'mock-refresh',
-      expires_in: 3600,
-      token_type: 'bearer',
-      user: mockUser
-    } as any;
-    
-    setUser(mockUser);
-    setSession(mockSession);
-    localStorage.setItem('supabase.auth.token', JSON.stringify(mockSession));
-    localStorage.setItem('mock-auth-user', JSON.stringify(mockUser));
-    
-    return { error: null };
   };
 
   const signOut = async () => {
     console.log('Signing out...');
     
-    // Clear all authentication data
-    localStorage.removeItem('mock-auth-user');
-    localStorage.removeItem('supabase.auth.token');
-    
-    // Clear state first
-    setUser(null);
-    setSession(null);
-    
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
-        toast({
-          title: "Sign Out Error",
-          description: error.message,
-          variant: "destructive",
-        });
       } else {
         console.log('Sign out successful');
-        toast({
-          title: "Signed out",
-          description: "You have been successfully signed out.",
-        });
       }
     } catch (error) {
       console.error('Sign out failed:', error);
-      // Even if Supabase signout fails, we've cleared local state
     }
     
-    // Always redirect to login after signout attempt
+    // Always clear state and redirect
+    setUser(null);
+    setSession(null);
     window.location.href = '/login';
   };
 
