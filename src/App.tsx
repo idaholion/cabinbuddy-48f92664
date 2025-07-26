@@ -10,6 +10,7 @@ import Intro from "./pages/Intro";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Setup from "./pages/Setup";
 import FamilySetup from "./pages/FamilySetup";
 import FamilyGroupSetup from "./pages/FamilyGroupSetup";
 import FinancialSetup from "./pages/FinancialSetup";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/family-setup" element={<ProtectedRoute><FamilySetup /></ProtectedRoute>} />
           <Route path="/family-group-setup" element={<ProtectedRoute><FamilyGroupSetup /></ProtectedRoute>} />
           <Route path="/finance-reports" element={<ProtectedRoute><FinancialSetup /></ProtectedRoute>} />
