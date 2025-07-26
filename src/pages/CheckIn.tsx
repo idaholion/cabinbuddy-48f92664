@@ -22,12 +22,17 @@ const CheckIn = () => {
   ]);
   const [isEditing, setIsEditing] = useState(false);
   const [newItemLabel, setNewItemLabel] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Load organization-specific checklist on mount
+  // Load organization-specific checklist and check admin status on mount
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
+      const { organizationCode, adminEmail } = JSON.parse(familyData);
+      
+      // Check if current user is admin (simplified check)
+      setIsAdmin(adminEmail && adminEmail.trim() !== "");
+      
       const savedChecklist = localStorage.getItem(`checklist_${organizationCode}`);
       if (savedChecklist) {
         setChecklistItems(JSON.parse(savedChecklist));
@@ -133,26 +138,28 @@ const CheckIn = () => {
                   </Button>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    {isEditing ? "Done Editing" : "Edit Checklist"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Items
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      {isEditing ? "Done Editing" : "Edit Checklist"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Items
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
