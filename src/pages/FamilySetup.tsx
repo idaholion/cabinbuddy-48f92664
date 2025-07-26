@@ -105,7 +105,26 @@ const FamilySetup = () => {
     return sixLetterWords[randomIndex];
   };
 
-  const [organizationCode] = useState(generateOrgCode());
+  const [organizationCode, setOrganizationCode] = useState(() => {
+    // Check if we have saved data with an existing code
+    const savedSetup = localStorage.getItem('familySetupData');
+    if (savedSetup) {
+      const data = JSON.parse(savedSetup);
+      return data.organizationCode || generateOrgCode();
+    }
+    return generateOrgCode();
+  });
+
+  // Check if user is admin (for now, assume admin if they have admin email filled)
+  const isAdmin = adminEmail && adminEmail.trim() !== "";
+
+  const regenerateOrgCode = () => {
+    setOrganizationCode(generateOrgCode());
+    toast({
+      title: "Organization code regenerated!",
+      description: "A new organization code has been generated.",
+    });
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(organizationCode);
@@ -167,9 +186,25 @@ const FamilySetup = () => {
                     <Copy className="h-4 w-4" />
                     Copy
                   </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={regenerateOrgCode}
+                      className="flex items-center gap-1"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Change Code
+                    </Button>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground text-center">
                   Share this code with new members to help them join your organization
+                  {orgName && orgName.trim() !== "" && (
+                    <span className="block text-xs text-green-600 mt-1">
+                      Code is locked for "{orgName}". Only administrators can change it.
+                    </span>
+                  )}
                 </p>
               </div>
 
