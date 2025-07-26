@@ -82,7 +82,7 @@ const DailyCheckIn = () => {
               </CardTitle>
               <CardDescription>Enter the number of people staying each day</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
               {stayDays.map((day) => (
                 <div key={day.key} className="space-y-2">
                   <Label htmlFor={day.key}>
