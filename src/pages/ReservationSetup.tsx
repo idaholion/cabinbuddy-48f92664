@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ReservationSetup() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [rotationYear, setRotationYear] = useState("2025");
   const [maxTimeSlots, setMaxTimeSlots] = useState("2");
   const [maxNights, setMaxNights] = useState("7");
@@ -34,6 +36,27 @@ export default function ReservationSetup() {
     const newOrder = [...rotationOrder];
     newOrder[index] = value;
     setRotationOrder(newOrder);
+  };
+
+  const saveReservationSetup = () => {
+    const reservationData = {
+      rotationYear,
+      maxTimeSlots,
+      maxNights,
+      startDay,
+      startTime,
+      rotationOption,
+      firstLastOption,
+      rotationOrder: rotationOrder.filter(group => group !== ''),
+      timestamp: new Date().toISOString()
+    };
+
+    localStorage.setItem('reservationSetupData', JSON.stringify(reservationData));
+    
+    toast({
+      title: "Reservation Setup Saved",
+      description: "Your reservation configuration has been saved successfully.",
+    });
   };
 
   const years = Array.from({ length: 10 }, (_, i) => (2025 + i).toString());
@@ -211,13 +234,18 @@ export default function ReservationSetup() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <Button variant="outline" onClick={() => navigate("/financial-setup")}>
             Back
           </Button>
-          <Button onClick={() => navigate("/calendar")}>
-            Continue to Calendar
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={saveReservationSetup}>
+              Save Setup
+            </Button>
+            <Button onClick={() => navigate("/calendar")}>
+              Continue to Calendar
+            </Button>
+          </div>
         </div>
       </div>
     </div>
