@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
 
 export default function ReservationSetup() {
@@ -13,6 +14,8 @@ export default function ReservationSetup() {
   const [maxNights, setMaxNights] = useState("7");
   const [startDay, setStartDay] = useState("Friday");
   const [startTime, setStartTime] = useState("12:00 PM");
+  const [rotationOption, setRotationOption] = useState("rotate");
+  const [firstLastOption, setFirstLastOption] = useState("first");
 
   // Mock family groups - in real app this would come from previous setup
   const familyGroups = [
@@ -106,9 +109,32 @@ export default function ReservationSetup() {
               </Select>
             </div>
             
-            <p className="text-sm text-muted-foreground">
-              This order will rotate each year, with the person who selected first selecting last the following year
-            </p>
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>This order will rotate each year, with the person who selected</span>
+                <Select value={firstLastOption} onValueChange={setFirstLastOption}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="first">First</SelectItem>
+                    <SelectItem value="last">Last</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
+              </div>
+              
+              <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rotate" id="rotate" />
+                  <Label htmlFor="rotate" className="text-sm text-muted-foreground">Rotation continues</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="fixed" id="fixed" />
+                  <Label htmlFor="fixed" className="text-sm text-muted-foreground">Order does not change</Label>
+                </div>
+              </RadioGroup>
+            </div>
             
             <div className="space-y-2">
               {familyGroups.map((group, index) => (
@@ -122,31 +148,6 @@ export default function ReservationSetup() {
         </Card>
 
 
-        {/* By Seniority Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>By Seniority</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <span className="w-6 text-sm font-medium">{i + 1}.</span>
-                  <Select>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select Family Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {familyGroups.map((group) => (
-                        <SelectItem key={group} value={group}>{group}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Rotating Time Blocks Section */}
         <Card>
