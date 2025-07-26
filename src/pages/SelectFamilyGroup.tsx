@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,17 +7,27 @@ import { Link, useNavigate } from "react-router-dom";
 
 const SelectFamilyGroup = () => {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
+  const [familyGroups, setFamilyGroups] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  // Sample family groups - in a real app, this would come from the family setup data
-  const familyGroups = [
-    "Smith Family",
-    "Johnson Family", 
-    "Williams Family",
-    "Brown Family",
-    "Davis Family",
-    "Miller Family"
-  ];
+  // Load family groups from localStorage
+  useEffect(() => {
+    const savedGroups = localStorage.getItem('familyGroupsList');
+    if (savedGroups) {
+      const groups = JSON.parse(savedGroups);
+      setFamilyGroups(groups);
+    } else {
+      // Fallback to sample data if no saved groups
+      setFamilyGroups([
+        "Smith Family",
+        "Johnson Family", 
+        "Williams Family",
+        "Brown Family",
+        "Davis Family",
+        "Miller Family"
+      ]);
+    }
+  }, []);
 
   return (
     <div
@@ -59,27 +69,42 @@ const SelectFamilyGroup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Family Group</label>
-                <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your family group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {familyGroups.map((group) => (
-                      <SelectItem key={group} value={group}>
-                        {group}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {familyGroups.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Family Group</label>
+                    <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your family group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {familyGroups.map((group) => (
+                          <SelectItem key={group} value={group}>
+                            {group}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {selectedFamilyGroup && (
-                <div className="pt-4">
-                  <Button asChild className="w-full">
-                    <Link to="/family-group-setup">
-                      Go to Family Group Setup for {selectedFamilyGroup}
+                  {selectedFamilyGroup && (
+                    <div className="pt-4">
+                      <Button asChild className="w-full">
+                        <Link to="/family-group-setup">
+                          Go to Family Group Setup for {selectedFamilyGroup}
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center space-y-4">
+                  <p className="text-muted-foreground">
+                    No family groups have been set up yet.
+                  </p>
+                  <Button asChild>
+                    <Link to="/family-setup">
+                      Go to Family Setup to Create Groups
                     </Link>
                   </Button>
                 </div>

@@ -6,10 +6,79 @@ import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+
 const FamilySetup = () => {
   const { toast } = useToast();
+  
+  // State for organization setup
+  const [orgName, setOrgName] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminPhone, setAdminPhone] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [treasurerName, setTreasurerName] = useState("");
+  const [treasurerPhone, setTreasurerPhone] = useState("");
+  const [treasurerEmail, setTreasurerEmail] = useState("");
+  const [calendarKeeperName, setCalendarKeeperName] = useState("");
+  const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
+  const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
+  const [familyGroups, setFamilyGroups] = useState<string[]>(Array(6).fill(""));
+
+  // Load saved data on component mount
+  useEffect(() => {
+    const savedSetup = localStorage.getItem('familySetupData');
+    if (savedSetup) {
+      const data = JSON.parse(savedSetup);
+      setOrgName(data.orgName || "");
+      setAdminName(data.adminName || "");
+      setAdminPhone(data.adminPhone || "");
+      setAdminEmail(data.adminEmail || "");
+      setTreasurerName(data.treasurerName || "");
+      setTreasurerPhone(data.treasurerPhone || "");
+      setTreasurerEmail(data.treasurerEmail || "");
+      setCalendarKeeperName(data.calendarKeeperName || "");
+      setCalendarKeeperPhone(data.calendarKeeperPhone || "");
+      setCalendarKeeperEmail(data.calendarKeeperEmail || "");
+      setFamilyGroups(data.familyGroups || Array(6).fill(""));
+    }
+  }, []);
+
+  // Save organization setup
+  const saveOrganizationSetup = () => {
+    const setupData = {
+      orgName,
+      organizationCode,
+      adminName,
+      adminPhone,
+      adminEmail,
+      treasurerName,
+      treasurerPhone,
+      treasurerEmail,
+      calendarKeeperName,
+      calendarKeeperPhone,
+      calendarKeeperEmail,
+      familyGroups
+    };
+    
+    localStorage.setItem('familySetupData', JSON.stringify(setupData));
+    
+    // Also save just the family groups for the SelectFamilyGroup page
+    const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
+    localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
+    
+    toast({
+      title: "Setup saved successfully!",
+      description: "Your family organization setup has been saved.",
+    });
+  };
+
+  // Handle family group input changes
+  const handleFamilyGroupChange = (index: number, value: string) => {
+    const newFamilyGroups = [...familyGroups];
+    newFamilyGroups[index] = value;
+    setFamilyGroups(newFamilyGroups);
+  };
   
   // Curated list of family-friendly 6-letter words for organization codes
   const sixLetterWords = [
@@ -62,7 +131,7 @@ const FamilySetup = () => {
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
             <div className="flex justify-end">
-              <Button className="">Save Organization Setup</Button>
+              <Button onClick={saveOrganizationSetup}>Save Organization Setup</Button>
             </div>
             <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
           </CardHeader>
@@ -74,7 +143,12 @@ const FamilySetup = () => {
               {/* Organization Name */}
               <div className="space-y-1">
                 <Label htmlFor="orgName" className="text-xl font-semibold text-center block">Family Organization Name</Label>
-                <Input id="orgName" placeholder="Enter organization name" />
+                <Input 
+                  id="orgName" 
+                  placeholder="Enter organization name" 
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                />
               </div>
 
               {/* Organization Code */}
@@ -114,9 +188,26 @@ const FamilySetup = () => {
                   </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
-                  <Input id="adminName" placeholder="Administrator's full name" />
-                  <Input id="adminPhone" type="tel" placeholder="(555) 123-4567" />
-                  <Input id="adminEmail" type="email" placeholder="administrator@example.com" />
+                  <Input 
+                    id="adminName" 
+                    placeholder="Administrator's full name" 
+                    value={adminName}
+                    onChange={(e) => setAdminName(e.target.value)}
+                  />
+                  <Input 
+                    id="adminPhone" 
+                    type="tel" 
+                    placeholder="(555) 123-4567" 
+                    value={adminPhone}
+                    onChange={(e) => setAdminPhone(e.target.value)}
+                  />
+                  <Input 
+                    id="adminEmail" 
+                    type="email" 
+                    placeholder="administrator@example.com" 
+                    value={adminEmail}
+                    onChange={(e) => setAdminEmail(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -135,9 +226,26 @@ const FamilySetup = () => {
                   </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
-                  <Input id="treasurerName" placeholder="Treasurer's full name" />
-                  <Input id="treasurerPhone" type="tel" placeholder="(555) 123-4567" />
-                  <Input id="treasurerEmail" type="email" placeholder="treasurer@example.com" />
+                  <Input 
+                    id="treasurerName" 
+                    placeholder="Treasurer's full name" 
+                    value={treasurerName}
+                    onChange={(e) => setTreasurerName(e.target.value)}
+                  />
+                  <Input 
+                    id="treasurerPhone" 
+                    type="tel" 
+                    placeholder="(555) 123-4567" 
+                    value={treasurerPhone}
+                    onChange={(e) => setTreasurerPhone(e.target.value)}
+                  />
+                  <Input 
+                    id="treasurerEmail" 
+                    type="email" 
+                    placeholder="treasurer@example.com" 
+                    value={treasurerEmail}
+                    onChange={(e) => setTreasurerEmail(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -156,9 +264,26 @@ const FamilySetup = () => {
                   </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
-                  <Input id="calendarKeeperName" placeholder="Calendar Keeper's full name" />
-                  <Input id="calendarKeeperPhone" type="tel" placeholder="(555) 123-4567" />
-                  <Input id="calendarKeeperEmail" type="email" placeholder="calendarkeeper@example.com" />
+                  <Input 
+                    id="calendarKeeperName" 
+                    placeholder="Calendar Keeper's full name" 
+                    value={calendarKeeperName}
+                    onChange={(e) => setCalendarKeeperName(e.target.value)}
+                  />
+                  <Input 
+                    id="calendarKeeperPhone" 
+                    type="tel" 
+                    placeholder="(555) 123-4567" 
+                    value={calendarKeeperPhone}
+                    onChange={(e) => setCalendarKeeperPhone(e.target.value)}
+                  />
+                  <Input 
+                    id="calendarKeeperEmail" 
+                    type="email" 
+                    placeholder="calendarkeeper@example.com" 
+                    value={calendarKeeperEmail}
+                    onChange={(e) => setCalendarKeeperEmail(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -175,7 +300,12 @@ const FamilySetup = () => {
               {[...Array(6)].map((_, index) => (
                 <div key={index} className="space-y-1">
                   <Label htmlFor={`familyGroup${index + 1}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
-                  <Input id={`familyGroup${index + 1}`} placeholder={`Enter Family Group ${index + 1} name`} />
+                  <Input 
+                    id={`familyGroup${index + 1}`} 
+                    placeholder={`Enter Family Group ${index + 1} name`}
+                    value={familyGroups[index]}
+                    onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
+                  />
                 </div>
               ))}
             </div>
