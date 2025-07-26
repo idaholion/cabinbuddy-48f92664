@@ -5,8 +5,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const FamilyGroupSetup = () => {
+  const [familyGroups, setFamilyGroups] = useState<string[]>([]);
+
+  useEffect(() => {
+    const savedSetup = localStorage.getItem('organizationSetup');
+    if (savedSetup) {
+      const setup = JSON.parse(savedSetup);
+      if (setup.familyGroups) {
+        // Filter out empty family group names
+        const validFamilyGroups = setup.familyGroups.filter((group: string) => group.trim() !== '');
+        setFamilyGroups(validFamilyGroups);
+      }
+    }
+  }, []);
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
       backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
@@ -39,12 +53,17 @@ const FamilyGroupSetup = () => {
                   <SelectValue placeholder="Select a family group" />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  <SelectItem value="family-group-1">Family Group 1</SelectItem>
-                  <SelectItem value="family-group-2">Family Group 2</SelectItem>
-                  <SelectItem value="family-group-3">Family Group 3</SelectItem>
-                  <SelectItem value="family-group-4">Family Group 4</SelectItem>
-                  <SelectItem value="family-group-5">Family Group 5</SelectItem>
-                  <SelectItem value="family-group-6">Family Group 6</SelectItem>
+                  {familyGroups.length > 0 ? (
+                    familyGroups.map((group, index) => (
+                      <SelectItem key={index} value={group.toLowerCase().replace(/\s+/g, '-')}>
+                        {group}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-groups" disabled>
+                      No family groups found - Please set them up in Family Setup first
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
