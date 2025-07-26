@@ -11,14 +11,29 @@ import { useToast } from "@/hooks/use-toast";
 const FamilySetup = () => {
   const { toast } = useToast();
   
-  // Generate a unique 6-character alphanumeric organization code
+  // Curated list of family-friendly 6-letter words for organization codes
+  const sixLetterWords = [
+    'CASTLE', 'BRIDGE', 'GARDEN', 'LAUNCH', 'MARKET', 'NATURE',
+    'BRIGHT', 'FRIEND', 'TRAVEL', 'WONDER', 'PLANET', 'SMOOTH',
+    'SILVER', 'GOLDEN', 'SIMPLE', 'STRONG', 'GENTLE', 'GLOBAL',
+    'MASTER', 'WISDOM', 'BREATH', 'HEALTH', 'SUNSET', 'FUTURE',
+    'SPIRIT', 'ENERGY', 'STABLE', 'FAMOUS', 'LEGACY', 'SAFETY',
+    'SISTER', 'MOTHER', 'FATHER', 'FAMILY', 'SUPPLY', 'OFFICE',
+    'POCKET', 'LETTER', 'NUMBER', 'FINGER', 'CIRCLE', 'MIDDLE',
+    'BUTTON', 'LOVELY', 'BOTTLE', 'MENTAL', 'RESULT', 'NOTICE',
+    'REMIND', 'NEARLY', 'MOMENT', 'SPRING', 'WINTER', 'SUMMER',
+    'CHANGE', 'BEFORE', 'FOLLOW', 'AROUND', 'PURPLE', 'YELLOW',
+    'ORANGE', 'PLAYER', 'LEADER', 'FINGER', 'FLOWER', 'SEASON',
+    'REASON', 'CHOICE', 'COUSIN', 'LISTEN', 'CAMERA', 'HANDLE',
+    'PENCIL', 'CANDLE', 'THREAD', 'NEEDLE', 'NORMAL', 'SCHOOL',
+    'BEAUTY', 'RESCUE', 'MODERN', 'ACCESS', 'DOUBLE', 'SINGLE',
+    'TACKLE', 'BUCKET', 'SOCKET', 'SWITCH', 'RHYTHM', 'WARMTH'
+  ];
+
+  // Generate a unique 6-letter word organization code
   const generateOrgCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    const randomIndex = Math.floor(Math.random() * sixLetterWords.length);
+    return sixLetterWords[randomIndex];
   };
 
   const [organizationCode] = useState(generateOrgCode());
