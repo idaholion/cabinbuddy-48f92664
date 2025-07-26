@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import Setup from "./pages/Setup";
 import FamilySetup from "./pages/FamilySetup";
 import FamilyGroupSetup from "./pages/FamilyGroupSetup";
+import SelectFamilyGroup from "./pages/SelectFamilyGroup";
 import FinancialSetup from "./pages/FinancialSetup";
 import FinancialSetupPage from "./pages/FinancialSetupPage";
 import ReservationSetup from "./pages/ReservationSetup";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/family-setup" element={<ProtectedRoute><FamilySetup /></ProtectedRoute>} />
+          <Route path="/select-family-group" element={<ProtectedRoute><SelectFamilyGroup /></ProtectedRoute>} />
           <Route path="/family-group-setup" element={<ProtectedRoute><FamilyGroupSetup /></ProtectedRoute>} />
           <Route path="/finance-reports" element={<ProtectedRoute><FinancialSetup /></ProtectedRoute>} />
           <Route path="/financial-setup" element={<ProtectedRoute><FinancialSetupPage /></ProtectedRoute>} />
