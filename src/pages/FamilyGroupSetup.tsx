@@ -11,13 +11,20 @@ const FamilyGroupSetup = () => {
   const [familyGroups, setFamilyGroups] = useState<string[]>([]);
 
   useEffect(() => {
-    const savedSetup = localStorage.getItem('organizationSetup');
-    if (savedSetup) {
-      const setup = JSON.parse(savedSetup);
-      if (setup.familyGroups) {
-        // Filter out empty family group names
-        const validFamilyGroups = setup.familyGroups.filter((group: string) => group.trim() !== '');
-        setFamilyGroups(validFamilyGroups);
+    // Try to load from the familyGroupsList first (newer format)
+    const savedFamilyGroups = localStorage.getItem('familyGroupsList');
+    if (savedFamilyGroups) {
+      const groups = JSON.parse(savedFamilyGroups);
+      setFamilyGroups(groups);
+    } else {
+      // Fallback to familySetupData format
+      const savedSetup = localStorage.getItem('familySetupData');
+      if (savedSetup) {
+        const setup = JSON.parse(savedSetup);
+        if (setup.familyGroups) {
+          const validFamilyGroups = setup.familyGroups.filter((group: string) => group.trim() !== '');
+          setFamilyGroups(validFamilyGroups);
+        }
       }
     }
   }, []);
