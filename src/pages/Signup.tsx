@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +16,9 @@ const Signup = () => {
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [startingNewOrg, setStartingNewOrg] = useState("");
+  const [joiningExistingOrg, setJoiningExistingOrg] = useState("");
+  const [organizationCode, setOrganizationCode] = useState("");
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -47,6 +51,51 @@ const Signup = () => {
           <CardDescription>Create your account to get started</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="space-y-4 mb-6">
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Are you starting a new organization?</Label>
+              <RadioGroup value={startingNewOrg} onValueChange={setStartingNewOrg}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="start-yes" />
+                  <Label htmlFor="start-yes">Yes</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="start-no" />
+                  <Label htmlFor="start-no">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Are you joining an existing organization?</Label>
+              <RadioGroup value={joiningExistingOrg} onValueChange={setJoiningExistingOrg}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="yes" id="join-yes" />
+                  <Label htmlFor="join-yes">Yes</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="no" id="join-no" />
+                  <Label htmlFor="join-no">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            {joiningExistingOrg === "yes" && (
+              <div className="space-y-2">
+                <Label htmlFor="orgCode">Organization Code</Label>
+                <Input
+                  id="orgCode"
+                  type="text"
+                  placeholder="Enter 6-letter code"
+                  value={organizationCode}
+                  onChange={(e) => setOrganizationCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className="uppercase"
+                />
+              </div>
+            )}
+          </div>
+          
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
