@@ -353,26 +353,41 @@ export type Database = {
       rotation_orders: {
         Row: {
           created_at: string
+          first_last_option: string | null
           id: string
+          max_nights: number | null
+          max_time_slots: number | null
           organization_id: string
           rotation_order: Json
           rotation_year: number
+          start_day: string | null
+          start_time: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          first_last_option?: string | null
           id?: string
+          max_nights?: number | null
+          max_time_slots?: number | null
           organization_id: string
           rotation_order?: Json
           rotation_year: number
+          start_day?: string | null
+          start_time?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          first_last_option?: string | null
           id?: string
+          max_nights?: number | null
+          max_time_slots?: number | null
           organization_id?: string
           rotation_order?: Json
           rotation_year?: number
+          start_day?: string | null
+          start_time?: string | null
           updated_at?: string
         }
         Relationships: []

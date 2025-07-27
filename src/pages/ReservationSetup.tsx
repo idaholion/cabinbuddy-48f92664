@@ -92,6 +92,11 @@ export default function ReservationSetup() {
           organization_id: organization.id,
           rotation_year: parseInt(rotationYear),
           rotation_order: filteredRotationOrder,
+          max_time_slots: parseInt(maxTimeSlots),
+          max_nights: parseInt(maxNights),
+          start_day: startDay,
+          start_time: startTime,
+          first_last_option: firstLastOption,
         }, {
           onConflict: 'organization_id,rotation_year'
         });
