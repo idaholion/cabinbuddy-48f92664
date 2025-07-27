@@ -29,7 +29,9 @@ export const CreateOrganizationDialog = ({
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = externalOnOpenChange || setInternalOpen;
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  
+  // Reset form data when dialog opens
+  const resetForm = () => ({
     name: '',
     code: '',
     admin_name: '',
@@ -42,6 +44,16 @@ export const CreateOrganizationDialog = ({
     calendar_keeper_email: '',
     calendar_keeper_phone: '',
   });
+  
+  const [formData, setFormData] = useState(resetForm);
+  
+  // Reset form when dialog opens
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen) {
+      setFormData(resetForm());
+    }
+    setOpen(newOpen);
+  };
 
   const generateOrgCode = () => {
     const words = [
@@ -105,20 +117,7 @@ export const CreateOrganizationDialog = ({
         description: `Organization "${formData.name}" created successfully!`,
       });
 
-      setOpen(false);
-      setFormData({
-        name: '',
-        code: '',
-        admin_name: '',
-        admin_email: '',
-        admin_phone: '',
-        treasurer_name: '',
-        treasurer_email: '',
-        treasurer_phone: '',
-        calendar_keeper_name: '',
-        calendar_keeper_email: '',
-        calendar_keeper_phone: '',
-      });
+      handleOpenChange(false);
       onOrganizationCreated?.();
     } catch (error) {
       console.error('Error creating organization:', error);
@@ -133,7 +132,7 @@ export const CreateOrganizationDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger ? (
         <DialogTrigger asChild>
           {trigger}
@@ -285,7 +284,7 @@ export const CreateOrganizationDialog = ({
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
