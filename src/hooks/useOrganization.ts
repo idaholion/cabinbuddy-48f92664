@@ -28,24 +28,22 @@ export const useOrganization = () => {
 
     setLoading(true);
     try {
-      // First get user's profile to see their organization_id
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Use the new multi-organization system - get primary organization
+      const { data: primaryOrgId, error: primaryError } = await supabase
+        .rpc('get_user_primary_organization_id');
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error fetching profile:', profileError);
+      if (primaryError) {
+        console.error('Error fetching primary organization:', primaryError);
+        setLoading(false);
         return;
       }
 
-      if (profile?.organization_id) {
+      if (primaryOrgId) {
         // Fetch the organization details
         const { data: org, error: orgError } = await supabase
           .from('organizations')
           .select('*')
-          .eq('id', profile.organization_id)
+          .eq('id', primaryOrgId)
           .single();
 
         if (orgError && orgError.code !== 'PGRST116') {
@@ -90,14 +88,18 @@ export const useOrganization = () => {
         return null;
       }
 
-      // Update user's profile to link to this organization
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ organization_id: newOrg.id })
-        .eq('user_id', user.id);
+      // Add user as admin of the new organization
+      const { error: membershipError } = await supabase
+        .from('user_organizations')
+        .insert({
+          user_id: user.id,
+          organization_id: newOrg.id,
+          role: 'admin',
+          is_primary: true // Make this the primary organization
+        });
 
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
+      if (membershipError) {
+        console.error('Error adding user to organization:', membershipError);
         // Still show success since org was created
       }
 

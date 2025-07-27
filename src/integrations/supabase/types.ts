@@ -415,6 +415,47 @@ export type Database = {
           },
         ]
       }
+      user_organizations: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          joined_at: string
+          organization_id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          joined_at?: string
+          organization_id: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          joined_at?: string
+          organization_id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -424,8 +465,27 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_organizations: {
+        Args: { user_uuid?: string }
+        Returns: {
+          organization_id: string
+          organization_name: string
+          organization_code: string
+          role: string
+          is_primary: boolean
+          joined_at: string
+        }[]
+      }
+      get_user_primary_organization_id: {
+        Args: { user_uuid?: string }
+        Returns: string
+      }
       is_supervisor: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      set_primary_organization: {
+        Args: { org_id: string }
         Returns: boolean
       }
     }

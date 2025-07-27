@@ -37,6 +37,7 @@ import { SupervisorRoute } from "./components/SupervisorRoute";
 import SupervisorOrganizationFamilyGroups from "./pages/SupervisorOrganizationFamilyGroups";
 import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinancial";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
+import { SelectOrganization } from "./pages/SelectOrganization";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/select-organization" element={<ProtectedRoute><SelectOrganization /></ProtectedRoute>} />
             <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
           <Route path="/family-setup" element={<ProtectedRoute><FamilySetup /></ProtectedRoute>} />
           <Route path="/select-family-group" element={<ProtectedRoute><SelectFamilyGroup /></ProtectedRoute>} />

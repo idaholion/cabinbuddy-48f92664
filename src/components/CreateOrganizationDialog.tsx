@@ -10,12 +10,24 @@ import { Plus } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
 
 interface CreateOrganizationDialogProps {
-  onOrganizationCreated: () => void;
+  onOrganizationCreated?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
 }
 
-export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrganizationDialogProps) => {
+export const CreateOrganizationDialog = ({ 
+  onOrganizationCreated, 
+  open: externalOpen, 
+  onOpenChange: externalOnOpenChange, 
+  trigger 
+}: CreateOrganizationDialogProps) => {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Use external open state if provided, otherwise use internal
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = externalOnOpenChange || setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -107,7 +119,7 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
         calendar_keeper_email: '',
         calendar_keeper_phone: '',
       });
-      onOrganizationCreated();
+      onOrganizationCreated?.();
     } catch (error) {
       console.error('Error creating organization:', error);
       toast({
@@ -122,12 +134,18 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Test Organization
-        </Button>
-      </DialogTrigger>
+      {trigger ? (
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Test Organization
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Organization</DialogTitle>
