@@ -1,15 +1,48 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, RotateCcw } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
+import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useState } from "react";
 
 const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
-  const currentYear = new Date().getFullYear();
-  const currentRotationOrder = getRotationForYear(currentYear);
+  const { reservationSettings } = useReservationSettings();
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  
+  // Calculate the rotation year based on current calendar month and start month
+  const getRotationYear = () => {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = currentCalendarMonth.getMonth();
+    const startMonth = reservationSettings?.start_month || "January";
+    
+    // Convert month name to number (0-11)
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    const startMonthIndex = monthNames.indexOf(startMonth);
+    
+    // If we're at or past the start month, we're in the next rotation year
+    if (currentMonth >= startMonthIndex) {
+      return currentYear + 1;
+    }
+    return currentYear;
+  };
+  
+  const rotationYear = getRotationYear();
+  const currentRotationOrder = getRotationForYear(rotationYear);
+  
+  // Placeholder data for selection indicators
+  const getSelectionIndicators = (familyGroup: string) => {
+    // TODO: Replace with actual data from database
+    const mockSelections = {
+      primary: Math.random() > 0.6, // 40% chance of having primary selection
+      secondary: Math.random() > 0.7 // 30% chance of having secondary selection
+    };
+    return mockSelections;
+  };
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -33,24 +66,42 @@ const CabinCalendar = () => {
               <div className="flex items-center gap-2">
                 <RotateCcw className="h-4 w-4 text-red-400" />
                 <Select>
-                  <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-red-200">
-                    <SelectValue placeholder={`${currentYear} Rotation Order`} />
+                  <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-red-200">
+                    <SelectValue placeholder={`${rotationYear} Rotation Order`} />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border shadow-lg z-50">
                     <div className="p-3">
-                      <div className="font-medium text-sm mb-2">{currentYear} Rotation Order</div>
+                      <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
                       <div className="space-y-1">
-                        {currentRotationOrder.map((familyGroup, index) => (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <span className="font-semibold w-6">{index + 1}.</span>
-                            <span>{familyGroup}</span>
-                          </div>
-                        ))}
+                        {currentRotationOrder.map((familyGroup, index) => {
+                          const selections = getSelectionIndicators(familyGroup);
+                          return (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <span className="font-semibold w-6">{index + 1}.</span>
+                              <span className="flex-1">{familyGroup}</span>
+                              <div className="flex items-center gap-1">
+                                {selections.primary && (
+                                  <div title="Primary selection made">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  </div>
+                                )}
+                                {selections.secondary && (
+                                  <div title="Secondary selection made">
+                                    <Clock className="h-3 w-3 text-blue-500" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                       {rotationData && (
                         <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                           <p>Based on {rotationData.rotation_year} rotation</p>
                           <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
+                          {reservationSettings?.start_month && (
+                            <p>Rotation year starts in {reservationSettings.start_month}</p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -61,7 +112,7 @@ const CabinCalendar = () => {
           </div>
         </div>
 
-        <PropertyCalendar />
+        <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
       </div>
     </div>
   );

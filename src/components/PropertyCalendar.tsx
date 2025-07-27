@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const PropertyCalendar = () => {
+interface PropertyCalendarProps {
+  onMonthChange?: (date: Date) => void;
+}
+
+export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [selectedProperty, setSelectedProperty] = useState("all");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -51,6 +55,7 @@ export const PropertyCalendar = () => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + direction);
     setCurrentMonth(newDate);
+    onMonthChange?.(newDate);
   };
 
   const getBookingsForDate = (date: Date) => {
