@@ -7,62 +7,41 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useReceipts } from "@/hooks/useReceipts";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 
 export const ExpenseTracker = () => {
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const { receipts, createReceipt, deleteReceipt, loading } = useReceipts();
+  const { familyGroups } = useFamilyGroups();
+  
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [familyGroup, setFamilyGroup] = useState("");
 
-  const expenses = [
-    {
-      id: 1,
-      description: "Property maintenance",
-      amount: 450,
-      category: "Maintenance",
-      property: "Lake House",
-      date: "2024-12-10",
-      paidBy: "Sarah M.",
-      splitAmong: 3,
-      status: "pending"
-    },
-    {
-      id: 2,
-      description: "Utilities - December",
-      amount: 180,
-      category: "Utilities",
-      property: "City Apartment",
-      date: "2024-12-08",
-      paidBy: "Mike R.",
-      splitAmong: 4,
-      status: "settled"
-    },
-    {
-      id: 3,
-      description: "Cleaning service",
-      amount: 120,
-      category: "Cleaning",
-      property: "Beach Condo",
-      date: "2024-12-05",
-      paidBy: "Lisa K.",
-      splitAmong: 2,
-      status: "pending"
-    },
-    {
-      id: 4,
-      description: "Internet & Cable",
-      amount: 95,
-      category: "Utilities",
-      property: "Lake House",
-      date: "2024-12-03",
-      paidBy: "Tom B.",
-      splitAmong: 3,
-      status: "settled"
-    }
-  ];
-
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const pendingExpenses = expenses.filter(e => e.status === 'pending').reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpenses = receipts.reduce((sum, receipt) => sum + receipt.amount, 0);
+  const pendingExpenses = totalExpenses; // All receipts are pending for now
 
   const categories = ["Maintenance", "Utilities", "Cleaning", "Insurance", "Other"];
-  const properties = ["Lake House", "City Apartment", "Beach Condo"];
+
+  const handleAddExpense = async () => {
+    if (!description || !amount) return;
+
+    await createReceipt({
+      description,
+      amount: parseFloat(amount),
+      date: new Date().toISOString().split('T')[0],
+      family_group: familyGroup || undefined,
+    });
+
+    // Reset form
+    setDescription("");
+    setAmount("");
+    setCategory("");
+    setFamilyGroup("");
+    setShowAddExpense(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -113,37 +92,48 @@ export const ExpenseTracker = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Input id="description" placeholder="Enter expense description" />
+                <Input 
+                  id="description" 
+                  placeholder="Enter expense description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" type="number" placeholder="0.00" />
+                <Input 
+                  id="amount" 
+                  type="number" 
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select>
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category.toLowerCase()}>
-                        {category}
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat.toLowerCase()}>
+                        {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="property">Property</Label>
-                <Select>
+                <Label htmlFor="familyGroup">Family Group</Label>
+                <Select value={familyGroup} onValueChange={setFamilyGroup}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select property" />
+                    <SelectValue placeholder="Select family group" />
                   </SelectTrigger>
                   <SelectContent>
-                    {properties.map((property) => (
-                      <SelectItem key={property} value={property.toLowerCase()}>
-                        {property}
+                    {familyGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name}>
+                        {group.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -154,8 +144,8 @@ export const ExpenseTracker = () => {
               <Button variant="outline" onClick={() => setShowAddExpense(false)}>
                 Cancel
               </Button>
-              <Button onClick={() => setShowAddExpense(false)}>
-                Add Expense
+              <Button onClick={handleAddExpense} disabled={loading}>
+                {loading ? "Adding..." : "Add Expense"}
               </Button>
             </div>
           </CardContent>
@@ -181,37 +171,38 @@ export const ExpenseTracker = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {expenses.map((expense) => (
-              <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+            {receipts.map((receipt) => (
+              <div key={receipt.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
                       <Receipt className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <div className="font-medium">{expense.description}</div>
+                      <div className="font-medium">{receipt.description}</div>
                       <div className="text-sm text-gray-500 flex items-center space-x-4">
                         <span className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {expense.date}
+                          {receipt.date}
                         </span>
-                        <span>{expense.property}</span>
-                        <span>Paid by {expense.paidBy}</span>
+                        {receipt.family_group && <span>{receipt.family_group}</span>}
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="font-bold text-lg">${expense.amount}</div>
-                    <div className="text-sm text-gray-500">
-                      ${(expense.amount / expense.splitAmong).toFixed(2)} per person
-                    </div>
+                    <div className="font-bold text-lg">${receipt.amount}</div>
                   </div>
-                  <Badge variant={expense.status === "settled" ? "default" : "secondary"}>
-                    {expense.status}
+                  <Badge variant="secondary">
+                    pending
                   </Badge>
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => deleteReceipt(receipt.id)}
+                    disabled={loading}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

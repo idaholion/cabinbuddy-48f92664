@@ -7,10 +7,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useReservationSettings } from "@/hooks/useReservationSettings";
 
 export default function ReservationSetup() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { familyGroups } = useFamilyGroups();
+  const { saveReservationSettings, loading } = useReservationSettings();
+  
   const [rotationYear, setRotationYear] = useState("2025");
   const [maxTimeSlots, setMaxTimeSlots] = useState("2");
   const [maxNights, setMaxNights] = useState("7");
@@ -18,19 +23,31 @@ export default function ReservationSetup() {
   const [startTime, setStartTime] = useState("12:00 PM");
   const [rotationOption, setRotationOption] = useState("rotate");
   const [firstLastOption, setFirstLastOption] = useState("first");
-  const [familyGroups, setFamilyGroups] = useState<string[]>([]);
   const [rotationOrder, setRotationOrder] = useState<string[]>([]);
+  
+  // Property details
+  const [propertyName, setPropertyName] = useState("");
+  const [address, setAddress] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
+  const [maxGuests, setMaxGuests] = useState("");
 
-  // Load family groups from localStorage
+  // Load family groups and initialize rotation order
   useEffect(() => {
+    if (familyGroups.length > 0) {
+      setRotationOrder(new Array(familyGroups.length).fill(''));
+    }
+    
+    // Also load from localStorage for backward compatibility
     const savedData = localStorage.getItem('familySetupData');
     if (savedData) {
       const data = JSON.parse(savedData);
       const groups = data.familyGroups?.filter((group: string) => group.trim() !== '') || [];
-      setFamilyGroups(groups);
-      setRotationOrder(new Array(groups.length).fill(''));
+      if (groups.length > 0 && familyGroups.length === 0) {
+        setRotationOrder(new Array(groups.length).fill(''));
+      }
     }
-  }, []);
+  }, [familyGroups]);
 
   const handleRotationOrderChange = (index: number, value: string) => {
     const newOrder = [...rotationOrder];
@@ -38,8 +55,20 @@ export default function ReservationSetup() {
     setRotationOrder(newOrder);
   };
 
-  const saveReservationSetup = () => {
+  const handleSaveReservationSetup = async () => {
     const reservationData = {
+      property_name: propertyName || undefined,
+      address: address || undefined,
+      bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
+      bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
+      max_guests: maxGuests ? parseInt(maxGuests) : undefined,
+    };
+
+    // Save to database
+    await saveReservationSettings(reservationData);
+    
+    // Also save rotation data to localStorage for now
+    const rotationData = {
       rotationYear,
       maxTimeSlots,
       maxNights,
@@ -50,13 +79,7 @@ export default function ReservationSetup() {
       rotationOrder: rotationOrder.filter(group => group !== ''),
       timestamp: new Date().toISOString()
     };
-
-    localStorage.setItem('reservationSetupData', JSON.stringify(reservationData));
-    
-    toast({
-      title: "Reservation Setup Saved",
-      description: "Your reservation configuration has been saved successfully.",
-    });
+    localStorage.setItem('reservationSetupData', JSON.stringify(rotationData));
   };
 
   const years = Array.from({ length: 10 }, (_, i) => (2025 + i).toString());
@@ -182,9 +205,9 @@ export default function ReservationSetup() {
                       <SelectValue placeholder="Select Family Group" />
                     </SelectTrigger>
                     <SelectContent>
-                      {familyGroups.map((group) => (
-                        <SelectItem key={group} value={group}>{group}</SelectItem>
-                      ))}
+                  {familyGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
+                  ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -195,41 +218,61 @@ export default function ReservationSetup() {
 
 
 
-        {/* Rotating Time Blocks Section */}
+        {/* Property Details Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Rotating Time Blocks</CardTitle>
+            <CardTitle>Property Details</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {Array.from({ length: 10 }, (_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <span className="w-6 text-sm font-medium">{i + 1}.</span>
-                  <Select>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select Family Group" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {familyGroups.map((group) => (
-                        <SelectItem key={group} value={group}>{group}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-2">
-                    <Input 
-                      type="date" 
-                      className="w-36"
-                      placeholder="Start Date"
-                    />
-                    <span className="self-center text-muted-foreground">to</span>
-                    <Input 
-                      type="date" 
-                      className="w-36"
-                      placeholder="End Date"
-                    />
-                  </div>
-                </div>
-              ))}
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="propertyName">Property Name</Label>
+                <Input 
+                  id="propertyName"
+                  placeholder="Enter property name"
+                  value={propertyName}
+                  onChange={(e) => setPropertyName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input 
+                  id="address"
+                  placeholder="Enter property address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bedrooms">Bedrooms</Label>
+                <Input 
+                  id="bedrooms"
+                  type="number"
+                  placeholder="Number of bedrooms"
+                  value={bedrooms}
+                  onChange={(e) => setBedrooms(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bathrooms">Bathrooms</Label>
+                <Input 
+                  id="bathrooms"
+                  type="number"
+                  placeholder="Number of bathrooms"
+                  value={bathrooms}
+                  onChange={(e) => setBathrooms(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="maxGuests">Maximum Guests</Label>
+                <Input 
+                  id="maxGuests"
+                  type="number"
+                  placeholder="Maximum number of guests"
+                  value={maxGuests}
+                  onChange={(e) => setMaxGuests(e.target.value)}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -239,8 +282,8 @@ export default function ReservationSetup() {
             Back
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={saveReservationSetup}>
-              Save Setup
+            <Button variant="outline" onClick={handleSaveReservationSetup} disabled={loading}>
+              {loading ? "Saving..." : "Save Setup"}
             </Button>
             <Button onClick={() => navigate("/calendar")}>
               Continue to Calendar
