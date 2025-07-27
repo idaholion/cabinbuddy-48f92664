@@ -36,6 +36,7 @@ export const OrganizationSelector = ({
   const [joiningLoading, setJoiningLoading] = useState(false);
 
   const handleCreateOrganization = () => {
+    console.log('handleCreateOrganization called, navigating to /setup');
     navigate('/setup');
   };
 
