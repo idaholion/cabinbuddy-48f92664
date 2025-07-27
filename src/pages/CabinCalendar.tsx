@@ -11,11 +11,11 @@ const CabinCalendar = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-primary-foreground mb-2 flex items-center">
+          <h1 className="text-4xl font-bold text-red-500 mb-2 flex items-center">
             <Calendar className="h-10 w-10 mr-3" />
             Cabin Calendar
           </h1>
-          <p className="text-lg text-primary-foreground/80">View and manage cabin reservations and availability</p>
+          <p className="text-lg text-red-400">View and manage cabin reservations and availability</p>
         </div>
 
         <PropertyCalendar />
