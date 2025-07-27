@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Clock, Thermometer, Droplets, Zap, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useCheckinSessions } from "@/hooks/useChecklistData";
 
 const DailyCheckIn = () => {
   const { toast } = useToast();
+  const { createSession } = useCheckinSessions();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [readings, setReadings] = useState({
     temperature: "",
@@ -19,6 +21,7 @@ const DailyCheckIn = () => {
   });
   const [notes, setNotes] = useState("");
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Generate days for the current stay (example: 7 days)
   const stayDays = Array.from({ length: 7 }, (_, i) => {
@@ -51,28 +54,51 @@ const DailyCheckIn = () => {
     setReadings(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    const completedTasks = Object.values(checkedItems).filter(Boolean).length;
-    
-    // Save notes and occupancy data to localStorage for organization
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      const dailyData = {
-        notes,
-        checkedItems,
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const completedTasks = Object.values(checkedItems).filter(Boolean).length;
+      
+      // Prepare checklist responses data
+      const checklistResponses = {
+        tasks: checkedItems,
         readings,
         dailyOccupancy,
-        timestamp: new Date().toISOString(),
-        completedTasks
+        completedTasks,
+        timestamp: new Date().toISOString()
       };
-      localStorage.setItem(`daily_checkin_${organizationCode}`, JSON.stringify(dailyData));
+
+      // Create session in Supabase
+      await createSession({
+        session_type: 'daily',
+        check_date: new Date().toISOString().split('T')[0],
+        checklist_responses: checklistResponses,
+        notes: notes || null,
+        user_id: null,
+        family_group: null,
+        guest_names: null,
+        completed_at: new Date().toISOString()
+      });
+      
+      toast({
+        title: "Daily Check-In Completed",
+        description: `${completedTasks} tasks completed. Data saved to database.`,
+      });
+
+      // Reset form
+      setCheckedItems({});
+      setReadings({ temperature: "", waterLevel: "", powerUsage: "" });
+      setNotes("");
+      setDailyOccupancy({});
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save daily check-in. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    toast({
-      title: "Daily Check-In Completed",
-      description: `${completedTasks} tasks completed. Readings recorded.`,
-    });
   };
 
   return (
@@ -163,8 +189,8 @@ const DailyCheckIn = () => {
                     Check-in time: {new Date().toLocaleString()}
                   </span>
                 </div>
-                <Button onClick={handleSubmit} className="bg-primary">
-                  Complete Daily Check-In
+                <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary">
+                  {isSubmitting ? "Saving..." : "Complete Daily Check-In"}
                 </Button>
               </div>
             </CardContent>

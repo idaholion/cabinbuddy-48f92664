@@ -1,43 +1,28 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
+import { useCheckinSessions, useSurveyResponses } from "@/hooks/useChecklistData";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
-  const [arrivalNotes, setArrivalNotes] = useState("");
-  const [dailyNotes, setDailyNotes] = useState("");
-  const [surveyData, setSurveyData] = useState("");
+  const { sessions, loading: sessionsLoading } = useCheckinSessions();
+  const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
 
-  // Load notes and survey data from localStorage
-  useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      
-      // Load arrival checklist notes
-      const arrivalData = localStorage.getItem(`arrival_checkin_${organizationCode}`);
-      if (arrivalData) {
-        const arrival = JSON.parse(arrivalData);
-        setArrivalNotes(arrival.notes || "");
-      }
-      
-      // Load daily checklist notes
-      const dailyData = localStorage.getItem(`daily_checkin_${organizationCode}`);
-      if (dailyData) {
-        const daily = JSON.parse(dailyData);
-        setDailyNotes(daily.notes || "");
-      }
-      
-      // Load cabin coalition survey data
-      const surveyDataStored = localStorage.getItem(`cabin_survey_${organizationCode}`);
-      if (surveyDataStored) {
-        setSurveyData(surveyDataStored);
-      }
-    }
-  }, []);
+  // Filter sessions for the current stay period
+  const checkInDate = new Date("2024-07-20"); // In real app, this would come from context/props
+  const checkOutDate = new Date("2024-07-23");
+  
+  const arrivalSessions = sessions.filter(s => s.session_type === 'arrival');
+  const dailySessions = sessions
+    .filter(s => s.session_type === 'daily')
+    .filter(s => {
+      const sessionDate = new Date(s.check_date);
+      return sessionDate >= checkInDate && sessionDate <= checkOutDate;
+    })
+    .sort((a, b) => new Date(a.check_date).getTime() - new Date(b.check_date).getTime());
 
   // Mock data - in a real app, this would come from your state management or API
   const checkoutData = {
@@ -125,43 +110,101 @@ const CheckoutFinal = () => {
           </CardContent>
         </Card>
 
-        {/* Stay Notes & Survey Data */}
-        {(arrivalNotes || dailyNotes || surveyData) && (
+        {/* Stay Report */}
+        {(!sessionsLoading && !surveyLoading && (arrivalSessions.length > 0 || dailySessions.length > 0 || surveyResponses.length > 0)) && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
-                Stay Report
+                Comprehensive Stay Report
               </CardTitle>
               <CardDescription>
-                Notes and observations from your stay
+                Complete record of your stay activities and observations
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {arrivalNotes && (
+            <CardContent className="space-y-6">
+              {/* Arrival Check-in */}
+              {arrivalSessions.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Arrival Check-In Notes:</h4>
-                  <div className="bg-muted rounded p-3">
-                    <p className="text-sm whitespace-pre-wrap">{arrivalNotes}</p>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Arrival Check-In
+                  </h4>
+                  {arrivalSessions.map((session, index) => (
+                    <div key={session.id} className="bg-muted rounded p-3 mb-2">
+                      <div className="text-xs text-muted-foreground mb-2">
+                        {new Date(session.check_date).toLocaleDateString()}
+                      </div>
+                      {session.notes && (
+                        <p className="text-sm whitespace-pre-wrap">{session.notes}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Daily Check-ins */}
+              {dailySessions.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    Daily Check-Ins ({dailySessions.length} sessions)
+                  </h4>
+                  <div className="space-y-3">
+                    {dailySessions.map((session) => {
+                      const responses = session.checklist_responses as any;
+                      const completedTasks = responses?.completedTasks || 0;
+                      const totalOccupancy = responses?.dailyOccupancy ? 
+                        Object.values(responses.dailyOccupancy).reduce((sum: number, val: any) => sum + (parseInt(val) || 0), 0) : 0;
+                      
+                      return (
+                        <div key={session.id} className="bg-muted rounded p-3">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="text-sm font-medium">
+                              {new Date(session.check_date).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {completedTasks} tasks completed
+                            </div>
+                          </div>
+                          
+                           {(totalOccupancy as number) > 0 && (
+                            <div className="text-xs text-muted-foreground mb-2">
+                              Daily occupancy: {totalOccupancy as number} guests
+                            </div>
+                          )}
+                          
+                          {responses?.readings && Object.values(responses.readings).some((v: any) => v) && (
+                            <div className="text-xs text-muted-foreground mb-2">
+                              Readings recorded: {Object.entries(responses.readings)
+                                .filter(([_, v]) => v)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(", ")}
+                            </div>
+                          )}
+                          
+                          {session.notes && (
+                            <p className="text-sm whitespace-pre-wrap mt-2">{session.notes}</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
-              
-              {dailyNotes && (
+
+              {/* Survey Responses */}
+              {surveyResponses.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Daily Check-In Notes:</h4>
-                  <div className="bg-muted rounded p-3">
-                    <p className="text-sm whitespace-pre-wrap">{dailyNotes}</p>
-                  </div>
-                </div>
-              )}
-              
-              {surveyData && (
-                <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Cabin Coalition Survey:</h4>
-                  <div className="bg-muted rounded p-3">
-                    <p className="text-sm whitespace-pre-wrap">{surveyData}</p>
-                  </div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-3">Survey Responses:</h4>
+                  {surveyResponses.map((response, index) => (
+                    <div key={response.id} className="bg-muted rounded p-3 mb-2">
+                      <div className="text-xs text-muted-foreground mb-2">
+                        {new Date().toLocaleDateString()}
+                      </div>
+                      <p className="text-sm">Survey data recorded</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
