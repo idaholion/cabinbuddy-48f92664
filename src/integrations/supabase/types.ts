@@ -350,6 +350,33 @@ export type Database = {
           },
         ]
       }
+      rotation_orders: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          rotation_order: Json
+          rotation_year: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          rotation_order?: Json
+          rotation_year: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          rotation_order?: Json
+          rotation_year?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       supervisors: {
         Row: {
           created_at: string

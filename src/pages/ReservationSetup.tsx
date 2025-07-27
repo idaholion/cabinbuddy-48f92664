@@ -9,12 +9,18 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useOrganization } from "@/hooks/useOrganization";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ReservationSetup() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
   const { saveReservationSettings, loading } = useReservationSettings();
+  const { organization } = useOrganization();
+
+  // Rotation saving state
+  const [savingRotationOrder, setSavingRotationOrder] = useState(false);
   
   const [rotationYear, setRotationYear] = useState("2025");
   const [maxTimeSlots, setMaxTimeSlots] = useState("2");
@@ -58,6 +64,56 @@ export default function ReservationSetup() {
     setRotationOrder(newOrder);
   };
 
+  const handleSaveRotationOrder = async () => {
+    if (!organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const filteredRotationOrder = rotationOrder.filter(group => group !== '');
+    if (filteredRotationOrder.length === 0) {
+      toast({
+        title: "Error", 
+        description: "Please select at least one family group in the rotation order",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSavingRotationOrder(true);
+    try {
+      const { error } = await supabase
+        .from('rotation_orders')
+        .upsert({
+          organization_id: organization.id,
+          rotation_year: parseInt(rotationYear),
+          rotation_order: filteredRotationOrder,
+        }, {
+          onConflict: 'organization_id,rotation_year'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Rotation order saved for ${rotationYear}`,
+      });
+    } catch (error) {
+      console.error('Error saving rotation order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save rotation order",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingRotationOrder(false);
+    }
+  };
+
   const handleSaveReservationSetup = async () => {
     const reservationData = {
       property_name: propertyName || undefined,
@@ -85,7 +141,7 @@ export default function ReservationSetup() {
     localStorage.setItem('reservationSetupData', JSON.stringify(rotationData));
   };
 
-  const years = Array.from({ length: 10 }, (_, i) => (2025 + i).toString());
+  const years = Array.from({ length: 15 }, (_, i) => (2020 + i).toString());
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const times = [
     "12:00 AM", "1:00 AM", "2:00 AM", "3:00 AM", "4:00 AM", "5:00 AM",
@@ -235,6 +291,16 @@ export default function ReservationSetup() {
                     </Select>
                   </div>
                 ))}
+              </div>
+              
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleSaveRotationOrder} 
+                  disabled={savingRotationOrder}
+                  className="w-full"
+                >
+                  {savingRotationOrder ? "Saving..." : "Save Rotation Order"}
+                </Button>
               </div>
             </CardContent>
           </Card>
