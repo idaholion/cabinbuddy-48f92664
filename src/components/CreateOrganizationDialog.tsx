@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
+import { unformatPhoneNumber } from '@/lib/phone-utils';
 
 interface CreateOrganizationDialogProps {
   onOrganizationCreated: () => void;
@@ -65,13 +67,13 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
           code: formData.code.toUpperCase(),
           admin_name: formData.admin_name || null,
           admin_email: formData.admin_email || null,
-          admin_phone: formData.admin_phone || null,
+          admin_phone: formData.admin_phone ? unformatPhoneNumber(formData.admin_phone) : null,
           treasurer_name: formData.treasurer_name || null,
           treasurer_email: formData.treasurer_email || null,
-          treasurer_phone: formData.treasurer_phone || null,
+          treasurer_phone: formData.treasurer_phone ? unformatPhoneNumber(formData.treasurer_phone) : null,
           calendar_keeper_name: formData.calendar_keeper_name || null,
           calendar_keeper_email: formData.calendar_keeper_email || null,
-          calendar_keeper_phone: formData.calendar_keeper_phone || null,
+          calendar_keeper_phone: formData.calendar_keeper_phone ? unformatPhoneNumber(formData.calendar_keeper_phone) : null,
         })
         .select()
         .single();
@@ -189,12 +191,10 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
               </div>
               <div className="col-span-2">
                 <Label htmlFor="admin_phone">Phone</Label>
-                <Input
+                <PhoneInput
                   id="admin_phone"
-                  type="tel"
                   value={formData.admin_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, admin_phone: e.target.value }))}
-                  placeholder="(555) 123-4567"
+                  onChange={(formatted) => setFormData(prev => ({ ...prev, admin_phone: formatted }))}
                 />
               </div>
             </div>
@@ -224,12 +224,10 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
               </div>
               <div className="col-span-2">
                 <Label htmlFor="treasurer_phone">Phone</Label>
-                <Input
+                <PhoneInput
                   id="treasurer_phone"
-                  type="tel"
                   value={formData.treasurer_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, treasurer_phone: e.target.value }))}
-                  placeholder="(555) 123-4567"
+                  onChange={(formatted) => setFormData(prev => ({ ...prev, treasurer_phone: formatted }))}
                 />
               </div>
             </div>
@@ -259,12 +257,10 @@ export const CreateOrganizationDialog = ({ onOrganizationCreated }: CreateOrgani
               </div>
               <div className="col-span-2">
                 <Label htmlFor="calendar_keeper_phone">Phone</Label>
-                <Input
+                <PhoneInput
                   id="calendar_keeper_phone"
-                  type="tel"
                   value={formData.calendar_keeper_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, calendar_keeper_phone: e.target.value }))}
-                  placeholder="(555) 123-4567"
+                  onChange={(formatted) => setFormData(prev => ({ ...prev, calendar_keeper_phone: formatted }))}
                 />
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowLeft } from "lucide-react";
@@ -8,6 +9,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 interface FamilyGroup {
   id: string;
@@ -131,7 +133,7 @@ const SupervisorOrganizationFamilyGroups = () => {
         .from('family_groups')
         .update({
           lead_name: leadName || undefined,
-          lead_phone: leadPhone || undefined,
+          lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
           lead_email: leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
         })
@@ -250,12 +252,10 @@ const SupervisorOrganizationFamilyGroups = () => {
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="leadPhone">Phone Number</Label>
-                      <Input 
+                      <PhoneInput 
                         id="leadPhone" 
-                        type="tel" 
-                        placeholder="(555) 123-4567"
                         value={leadPhone}
-                        onChange={(e) => setLeadPhone(e.target.value)}
+                        onChange={(formatted) => setLeadPhone(formatted)}
                       />
                     </div>
                     <div className="space-y-1">

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
@@ -9,6 +10,7 @@ import { useState, useEffect } from "react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
+import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
@@ -64,7 +66,7 @@ const FamilyGroupSetup = () => {
       // Update existing group
       await updateFamilyGroup(existingGroup.id, {
         lead_name: leadName || undefined,
-        lead_phone: leadPhone || undefined,
+        lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
       });
@@ -73,7 +75,7 @@ const FamilyGroupSetup = () => {
       await createFamilyGroup({
         name: selectedGroup,
         lead_name: leadName || undefined,
-        lead_phone: leadPhone || undefined,
+        lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
       });
@@ -169,12 +171,10 @@ const FamilyGroupSetup = () => {
                   value={leadName}
                   onChange={(e) => setLeadName(e.target.value)}
                 />
-                <Input 
+                <PhoneInput 
                   id="leadPhone" 
-                  type="tel" 
-                  placeholder="(555) 123-4567"
                   value={leadPhone}
-                  onChange={(e) => setLeadPhone(e.target.value)}
+                  onChange={(formatted) => setLeadPhone(formatted)}
                 />
                 <Input 
                   id="leadEmail" 
@@ -198,11 +198,9 @@ const FamilyGroupSetup = () => {
                       value={member.name}
                       onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
                     />
-                    <Input 
-                      type="tel" 
-                      placeholder="(555) 123-4567"
+                    <PhoneInput 
                       value={member.phone}
-                      onChange={(e) => handleHostMemberChange(index, 'phone', e.target.value)}
+                      onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
                     />
                     <Input 
                       type="email" 

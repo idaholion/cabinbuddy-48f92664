@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -171,10 +172,10 @@ export const FamilyGroups = () => {
               </div>
               <div>
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" value={newMember.phone} onChange={e => setNewMember({
+                <PhoneInput id="phone" value={newMember.phone} onChange={(formatted) => setNewMember({
                 ...newMember,
-                phone: e.target.value
-              })} placeholder="Enter phone number" />
+                phone: formatted
+              })} />
               </div>
               <div>
                 <Label htmlFor="role">Role</Label>

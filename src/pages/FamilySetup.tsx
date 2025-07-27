@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -9,6 +10,7 @@ import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilySetup = () => {
   const { toast } = useToast();
@@ -78,13 +80,13 @@ const FamilySetup = () => {
       code: organizationCode,
       admin_name: adminName || null,
       admin_email: adminEmail || null,
-      admin_phone: adminPhone || null,
+      admin_phone: adminPhone ? unformatPhoneNumber(adminPhone) : null,
       treasurer_name: treasurerName || null,
       treasurer_email: treasurerEmail || null,
-      treasurer_phone: treasurerPhone || null,
+      treasurer_phone: treasurerPhone ? unformatPhoneNumber(treasurerPhone) : null,
       calendar_keeper_name: calendarKeeperName || null,
       calendar_keeper_email: calendarKeeperEmail || null,
-      calendar_keeper_phone: calendarKeeperPhone || null,
+      calendar_keeper_phone: calendarKeeperPhone ? unformatPhoneNumber(calendarKeeperPhone) : null,
     };
     
     try {
@@ -280,12 +282,10 @@ const FamilySetup = () => {
                     value={adminName}
                     onChange={(e) => setAdminName(e.target.value)}
                   />
-                  <Input 
+                  <PhoneInput 
                     id="adminPhone" 
-                    type="tel" 
-                    placeholder="(555) 123-4567" 
                     value={adminPhone}
-                    onChange={(e) => setAdminPhone(e.target.value)}
+                    onChange={(formatted) => setAdminPhone(formatted)}
                   />
                   <Input 
                     id="adminEmail" 
@@ -318,12 +318,10 @@ const FamilySetup = () => {
                     value={treasurerName}
                     onChange={(e) => setTreasurerName(e.target.value)}
                   />
-                  <Input 
+                  <PhoneInput 
                     id="treasurerPhone" 
-                    type="tel" 
-                    placeholder="(555) 123-4567" 
                     value={treasurerPhone}
-                    onChange={(e) => setTreasurerPhone(e.target.value)}
+                    onChange={(formatted) => setTreasurerPhone(formatted)}
                   />
                   <Input 
                     id="treasurerEmail" 
@@ -356,12 +354,10 @@ const FamilySetup = () => {
                     value={calendarKeeperName}
                     onChange={(e) => setCalendarKeeperName(e.target.value)}
                   />
-                  <Input 
+                  <PhoneInput 
                     id="calendarKeeperPhone" 
-                    type="tel" 
-                    placeholder="(555) 123-4567" 
                     value={calendarKeeperPhone}
-                    onChange={(e) => setCalendarKeeperPhone(e.target.value)}
+                    onChange={(formatted) => setCalendarKeeperPhone(formatted)}
                   />
                   <Input 
                     id="calendarKeeperEmail" 
