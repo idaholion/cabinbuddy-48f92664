@@ -15,14 +15,14 @@ const CabinCalendar = () => {
   
   // Calculate the rotation year based on current calendar month and start month
   const getRotationYear = () => {
-    if (!rotationData || !reservationSettings?.start_month) {
+    if (!rotationData || !rotationData.start_month) {
       return new Date().getFullYear();
     }
     
     const calendarYear = currentCalendarMonth.getFullYear();
     const calendarMonthIndex = currentCalendarMonth.getMonth();
     const baseRotationYear = rotationData.rotation_year;
-    const startMonth = reservationSettings.start_month;
+    const startMonth = rotationData.start_month;
     
     // Convert month name to number (0-11)
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -58,7 +58,7 @@ const CabinCalendar = () => {
   
   // Debug logging
   console.log('Calendar month:', currentCalendarMonth.getMonth(), currentCalendarMonth.getFullYear());
-  console.log('Start month:', reservationSettings?.start_month);
+  console.log('Start month:', rotationData?.start_month);
   console.log('Rotation year:', rotationYear);
   console.log('Base rotation year:', rotationData?.rotation_year);
   console.log('Current rotation order:', currentRotationOrder);
@@ -128,8 +128,8 @@ const CabinCalendar = () => {
                         <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                           <p>Based on {rotationData.rotation_year} rotation</p>
                           <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
-                          {reservationSettings?.start_month && (
-                            <p>Rotation year starts in {reservationSettings.start_month}</p>
+                          {rotationData.start_month && (
+                            <p>Rotation year starts in {rotationData.start_month}</p>
                           )}
                         </div>
                       )}
