@@ -8,9 +8,11 @@ import { Link } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const FamilySetup = () => {
   const { toast } = useToast();
+  const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   
   // State for organization setup
   const [orgName, setOrgName] = useState("");
@@ -27,50 +29,97 @@ const FamilySetup = () => {
 
   // Load saved data on component mount
   useEffect(() => {
-    const savedSetup = localStorage.getItem('familySetupData');
-    if (savedSetup) {
-      const data = JSON.parse(savedSetup);
-      setOrgName(data.orgName || "");
-      setAdminName(data.adminName || "");
-      setAdminPhone(data.adminPhone || "");
-      setAdminEmail(data.adminEmail || "");
-      setTreasurerName(data.treasurerName || "");
-      setTreasurerPhone(data.treasurerPhone || "");
-      setTreasurerEmail(data.treasurerEmail || "");
-      setCalendarKeeperName(data.calendarKeeperName || "");
-      setCalendarKeeperPhone(data.calendarKeeperPhone || "");
-      setCalendarKeeperEmail(data.calendarKeeperEmail || "");
-      setFamilyGroups(data.familyGroups || Array(6).fill(""));
+    // First try to load from database if organization exists
+    if (organization) {
+      setOrgName(organization.name || "");
+      setOrganizationCode(organization.code || generateOrgCode());
+      setAdminName(organization.admin_name || "");
+      setAdminPhone(organization.admin_phone || "");
+      setAdminEmail(organization.admin_email || "");
+      setTreasurerName(organization.treasurer_name || "");
+      setTreasurerPhone(organization.treasurer_phone || "");
+      setTreasurerEmail(organization.treasurer_email || "");
+      setCalendarKeeperName(organization.calendar_keeper_name || "");
+      setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
+      setCalendarKeeperEmail(organization.calendar_keeper_email || "");
+    } else {
+      // Fallback to localStorage for backward compatibility
+      const savedSetup = localStorage.getItem('familySetupData');
+      if (savedSetup) {
+        const data = JSON.parse(savedSetup);
+        setOrgName(data.orgName || "");
+        setAdminName(data.adminName || "");
+        setAdminPhone(data.adminPhone || "");
+        setAdminEmail(data.adminEmail || "");
+        setTreasurerName(data.treasurerName || "");
+        setTreasurerPhone(data.treasurerPhone || "");
+        setTreasurerEmail(data.treasurerEmail || "");
+        setCalendarKeeperName(data.calendarKeeperName || "");
+        setCalendarKeeperPhone(data.calendarKeeperPhone || "");
+        setCalendarKeeperEmail(data.calendarKeeperEmail || "");
+        setFamilyGroups(data.familyGroups || Array(6).fill(""));
+      }
     }
-  }, []);
+  }, [organization]);
 
   // Save organization setup
-  const saveOrganizationSetup = () => {
-    const setupData = {
-      orgName,
-      organizationCode,
-      adminName,
-      adminPhone,
-      adminEmail,
-      treasurerName,
-      treasurerPhone,
-      treasurerEmail,
-      calendarKeeperName,
-      calendarKeeperPhone,
-      calendarKeeperEmail,
-      familyGroups
+  const saveOrganizationSetup = async () => {
+    if (!orgName.trim() || !organizationCode.trim()) {
+      toast({
+        title: "Missing required fields",
+        description: "Please provide at least organization name and code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const orgData = {
+      name: orgName,
+      code: organizationCode,
+      admin_name: adminName || null,
+      admin_email: adminEmail || null,
+      admin_phone: adminPhone || null,
+      treasurer_name: treasurerName || null,
+      treasurer_email: treasurerEmail || null,
+      treasurer_phone: treasurerPhone || null,
+      calendar_keeper_name: calendarKeeperName || null,
+      calendar_keeper_email: calendarKeeperEmail || null,
+      calendar_keeper_phone: calendarKeeperPhone || null,
     };
     
-    localStorage.setItem('familySetupData', JSON.stringify(setupData));
-    
-    // Also save just the family groups for the SelectFamilyGroup page
-    const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
-    localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
-    
-    toast({
-      title: "Setup saved successfully!",
-      description: "Your family organization setup has been saved.",
-    });
+    try {
+      if (organization) {
+        // Update existing organization
+        await updateOrganization(orgData);
+      } else {
+        // Create new organization
+        await createOrganization(orgData);
+      }
+      
+      // Also save family groups to localStorage for backward compatibility
+      const setupData = {
+        orgName,
+        organizationCode,
+        adminName,
+        adminPhone,
+        adminEmail,
+        treasurerName,
+        treasurerPhone,
+        treasurerEmail,
+        calendarKeeperName,
+        calendarKeeperPhone,
+        calendarKeeperEmail,
+        familyGroups
+      };
+      
+      localStorage.setItem('familySetupData', JSON.stringify(setupData));
+      
+      // Also save just the family groups for the SelectFamilyGroup page
+      const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
+      localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
+    } catch (error) {
+      console.error('Error saving organization setup:', error);
+    }
   };
 
   // Handle family group input changes
@@ -150,7 +199,9 @@ const FamilySetup = () => {
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
             <div className="flex justify-end">
-              <Button onClick={saveOrganizationSetup}>Save Organization Setup</Button>
+              <Button onClick={saveOrganizationSetup} disabled={orgLoading}>
+                {orgLoading ? "Saving..." : "Save Organization Setup"}
+              </Button>
             </div>
             <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
           </CardHeader>

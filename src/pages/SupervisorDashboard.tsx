@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Users, Building, Shield, Trash2, UserPlus } from 'lucide-react';
 import { OrganizationDetail } from '@/components/OrganizationDetail';
 import { SupervisorManagement } from '@/components/SupervisorManagement';
+import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -17,7 +18,8 @@ export const SupervisorDashboard = () => {
     organizations, 
     supervisors,
     deleteOrganizationData,
-    updateAlternateSupervisor 
+    updateAlternateSupervisor,
+    refetchOrganizations
   } = useSupervisor();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,10 +86,13 @@ export const SupervisorDashboard = () => {
             <h1 className="text-3xl font-bold text-foreground">Cabin Buddy Supervisor</h1>
             <p className="text-muted-foreground">Manage organizations and supervisors</p>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            <Shield className="w-4 h-4 mr-2" />
-            Supervisor Access
-          </Badge>
+          <div className="flex items-center gap-4">
+            <CreateOrganizationDialog onOrganizationCreated={refetchOrganizations} />
+            <Badge variant="secondary" className="text-sm">
+              <Shield className="w-4 h-4 mr-2" />
+              Supervisor Access
+            </Badge>
+          </div>
         </div>
 
         {/* Stats Cards */}
