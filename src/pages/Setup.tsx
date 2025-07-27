@@ -28,7 +28,7 @@ const Setup = () => {
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <Link to="/family-setup">Configure or Change Family Setup</Link>
+                <Link to="/family-setup?mode=create">Configure or Change Family Setup</Link>
               </Button>
             </CardContent>
           </Card>

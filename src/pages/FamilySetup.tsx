@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,10 @@ import { unformatPhoneNumber } from "@/lib/phone-utils";
 const FamilySetup = () => {
   const { toast } = useToast();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
+  const [searchParams] = useSearchParams();
+  
+  // Check if this is a "create new" operation
+  const isCreatingNew = searchParams.get('mode') === 'create';
   
   // State for organization setup
   const [orgName, setOrgName] = useState("");
@@ -31,6 +35,12 @@ const FamilySetup = () => {
 
   // Load saved data on component mount
   useEffect(() => {
+    // If we're creating a new organization, skip loading existing data
+    if (isCreatingNew) {
+      console.log('Creating new organization - starting with blank fields');
+      return;
+    }
+    
     // First try to load from database if organization exists
     if (organization) {
       setOrgName(organization.name || "");
@@ -62,7 +72,7 @@ const FamilySetup = () => {
         setFamilyGroups(data.familyGroups || Array(6).fill(""));
       }
     }
-  }, [organization]);
+  }, [organization, isCreatingNew]);
 
   // Save organization setup
   const saveOrganizationSetup = async () => {
@@ -157,6 +167,11 @@ const FamilySetup = () => {
   };
 
   const [organizationCode, setOrganizationCode] = useState(() => {
+    // If creating new, always generate fresh code
+    if (isCreatingNew) {
+      return generateOrgCode();
+    }
+    
     // Check if we have saved data with an existing code
     const savedSetup = localStorage.getItem('familySetupData');
     if (savedSetup) {
