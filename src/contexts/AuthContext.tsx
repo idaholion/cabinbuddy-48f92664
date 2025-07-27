@@ -38,6 +38,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const currentUser = user || session?.user;
     if (!currentUser) return;
     
+    const currentPath = window.location.pathname;
+    console.log('Checking organization status, current path:', currentPath);
+    
+    // Don't check organization status if user is on setup pages
+    if (currentPath === '/setup' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
+      console.log('Skipping organization check for setup page');
+      return;
+    }
+    
     try {
       const { data: organizations, error } = await supabase.rpc('get_user_organizations');
       
@@ -46,12 +55,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
+      console.log('Organizations found:', organizations?.length || 0);
+
       // If user has no organizations or multiple organizations, redirect to selection
-      // But don't redirect if they're going to setup page to create a new organization
       if (!organizations || organizations.length === 0 || organizations.length > 1) {
-        // Only redirect if we're not already on the organization selection page or setup page
-        const currentPath = window.location.pathname;
-        if (currentPath !== '/select-organization' && currentPath !== '/setup') {
+        // Only redirect if we're not already on the organization selection page
+        if (currentPath !== '/select-organization') {
+          console.log('Redirecting to select-organization');
           window.location.href = '/select-organization';
         }
       }
