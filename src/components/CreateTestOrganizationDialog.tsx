@@ -85,7 +85,13 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
   const { toast } = useToast();
 
   const generateOrgCode = () => {
-    const words = ['CABIN', 'LODGE', 'RETREAT', 'VISTA', 'PEAK', 'FOREST', 'TRAIL', 'LAKE'];
+    const words = [
+      'CASTLE', 'BRIDGE', 'GARDEN', 'LAUNCH', 'MARKET', 'NATURE',
+      'BRIGHT', 'FRIEND', 'TRAVEL', 'WONDER', 'PLANET', 'SMOOTH',
+      'SILVER', 'GOLDEN', 'SIMPLE', 'STRONG', 'GENTLE', 'GLOBAL',
+      'MASTER', 'WISDOM', 'BREATH', 'HEALTH', 'SUNSET', 'FUTURE',
+      'SPIRIT', 'ENERGY', 'STABLE', 'FAMOUS', 'LEGACY', 'SAFETY'
+    ];
     return words[Math.floor(Math.random() * words.length)];
   };
 
