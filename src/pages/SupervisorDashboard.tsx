@@ -10,6 +10,7 @@ import { Search, Users, Building, Shield, Trash2, UserPlus } from 'lucide-react'
 import { OrganizationDetail } from '@/components/OrganizationDetail';
 import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
+import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -86,7 +87,8 @@ export const SupervisorDashboard = () => {
             <h1 className="text-3xl font-bold text-foreground">Cabin Buddy Supervisor</h1>
             <p className="text-muted-foreground">Manage organizations and supervisors</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <CreateTestOrganizationDialog onOrganizationCreated={refetchOrganizations} />
             <CreateOrganizationDialog onOrganizationCreated={refetchOrganizations} />
             <Badge variant="secondary" className="text-sm">
               <Shield className="w-4 h-4 mr-2" />
