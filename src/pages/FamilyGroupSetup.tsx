@@ -19,7 +19,11 @@ const FamilyGroupSetup = () => {
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
-  const [hostMembers, setHostMembers] = useState<string[]>(["", "", ""]);
+  const [hostMembers, setHostMembers] = useState<{name: string; phone: string; email: string}[]>([
+    {name: "", phone: "", email: ""},
+    {name: "", phone: "", email: ""},
+    {name: "", phone: "", email: ""}
+  ]);
 
   // Load from localStorage as fallback for display
   const [localFamilyGroups, setLocalFamilyGroups] = useState<string[]>([]);
@@ -52,7 +56,7 @@ const FamilyGroupSetup = () => {
       return;
     }
 
-    const hostMembersList = hostMembers.filter(member => member.trim() !== '');
+    const hostMembersList = hostMembers.filter(member => member.name.trim() !== '');
     
     const existingGroup = familyGroups.find(g => g.name === selectedGroup);
     
@@ -62,7 +66,7 @@ const FamilyGroupSetup = () => {
         lead_name: leadName || undefined,
         lead_phone: leadPhone || undefined,
         lead_email: leadEmail || undefined,
-        host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+        host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
       });
     } else {
       // Create new group
@@ -71,19 +75,19 @@ const FamilyGroupSetup = () => {
         lead_name: leadName || undefined,
         lead_phone: leadPhone || undefined,
         lead_email: leadEmail || undefined,
-        host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+        host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
       });
     }
   };
 
-  const handleHostMemberChange = (index: number, value: string) => {
+  const handleHostMemberChange = (index: number, field: 'name' | 'phone' | 'email', value: string) => {
     const newHostMembers = [...hostMembers];
-    newHostMembers[index] = value;
+    newHostMembers[index] = { ...newHostMembers[index], [field]: value };
     setHostMembers(newHostMembers);
   };
 
   const addHostMember = () => {
-    setHostMembers([...hostMembers, ""]);
+    setHostMembers([...hostMembers, {name: "", phone: "", email: ""}]);
   };
 
   // Combine database and localStorage groups for display
@@ -187,11 +191,24 @@ const FamilyGroupSetup = () => {
               <h3 className="text-lg font-semibold text-center">Additional Host Members</h3>
               {hostMembers.map((member, index) => (
                 <div key={index} className="space-y-2">
-                  <div className="grid gap-2 md:grid-cols-1">
+                  <h4 className="text-md font-medium">Host Member {index + 1}</h4>
+                  <div className="grid gap-2 md:grid-cols-3">
                     <Input 
-                      placeholder={`Host Member ${index + 1} full name`}
-                      value={member}
-                      onChange={(e) => handleHostMemberChange(index, e.target.value)}
+                      placeholder="Full name"
+                      value={member.name}
+                      onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                    />
+                    <Input 
+                      type="tel" 
+                      placeholder="(555) 123-4567"
+                      value={member.phone}
+                      onChange={(e) => handleHostMemberChange(index, 'phone', e.target.value)}
+                    />
+                    <Input 
+                      type="email" 
+                      placeholder="email@example.com"
+                      value={member.email}
+                      onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
                     />
                   </div>
                 </div>
