@@ -20,7 +20,8 @@ export const SupervisorDashboard = () => {
     supervisors,
     deleteOrganizationData,
     updateAlternateSupervisor,
-    refetchOrganizations
+    refetchOrganizations,
+    refetchSupervisors
   } = useSupervisor();
   
   const [searchTerm, setSearchTerm] = useState('');
