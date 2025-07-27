@@ -25,6 +25,9 @@ export default function ReservationSetup() {
   const [firstLastOption, setFirstLastOption] = useState("first");
   const [rotationOrder, setRotationOrder] = useState<string[]>([]);
   
+  // Setup method selection
+  const [setupMethod, setSetupMethod] = useState("rotation");
+  
   // Property details
   const [propertyName, setPropertyName] = useState("");
   const [address, setAddress] = useState("");
@@ -99,122 +102,162 @@ export default function ReservationSetup() {
           <p className="text-muted-foreground">Configure rotation and time block preferences</p>
         </div>
 
-        {/* Rotation Section */}
+        {/* Setup Method Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Rotation</CardTitle>
+            <CardTitle>Calendar Setup Method</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <p className="text-sm">
-                Rotation order starting in 
-              </p>
-              <Select value={rotationYear} onValueChange={setRotationYear}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span>Each Family Group can select</span>
-              <Select value={maxTimeSlots} onValueChange={setMaxTimeSlots}>
-                <SelectTrigger className="w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 5 }, (_, i) => (i + 1).toString()).map((num) => (
-                    <SelectItem key={num} value={num}>{num}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>time periods, each time period up to</span>
-              <Select value={maxNights} onValueChange={setMaxNights}>
-                <SelectTrigger className="w-16">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
-                    <SelectItem key={num} value={num}>{num}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>consecutive nights, starting on</span>
-              <Select value={startDay} onValueChange={setStartDay}>
-                <SelectTrigger className="w-28">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {days.map((day) => (
-                    <SelectItem key={day} value={day}>{day}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span>at</span>
-              <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger className="w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {times.map((time) => (
-                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span>This order will rotate each year, with the person who selected</span>
-                <Select value={firstLastOption} onValueChange={setFirstLastOption}>
-                  <SelectTrigger className="w-20">
+          <CardContent>
+            <RadioGroup value={setupMethod} onValueChange={setSetupMethod} className="flex items-center gap-6">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="rotation" id="rotation-method" />
+                <Label htmlFor="rotation-method" className="text-base font-medium">Rotation</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="manual" id="manual-method" />
+                <Label htmlFor="manual-method" className="text-base font-medium">Manual Selection</Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* Rotation Section - Only show if rotation is selected */}
+        {setupMethod === "rotation" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Rotation Box</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <p className="text-sm">
+                  Rotation order starting in 
+                </p>
+                <Select value={rotationYear} onValueChange={setRotationYear}>
+                  <SelectTrigger className="w-24">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="first">First</SelectItem>
-                    <SelectItem value="last">Last</SelectItem>
+                    {years.map((year) => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
               </div>
               
-              <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="rotate" id="rotate" />
-                  <Label htmlFor="rotate" className="text-sm text-muted-foreground">Rotation continues</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fixed" id="fixed" />
-                  <Label htmlFor="fixed" className="text-sm text-muted-foreground">Order does not change</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Family Group Rotation Order:</Label>
-              {rotationOrder.map((selectedGroup, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="font-medium w-6">{index + 1}.</span>
-                  <Select value={selectedGroup} onValueChange={(value) => handleRotationOrderChange(index, value)}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select Family Group" />
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span>Each Family Group can select</span>
+                <Select value={maxTimeSlots} onValueChange={setMaxTimeSlots}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 5 }, (_, i) => (i + 1).toString()).map((num) => (
+                      <SelectItem key={num} value={num}>{num}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>time periods, each time period up to</span>
+                <Select value={maxNights} onValueChange={setMaxNights}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
+                      <SelectItem key={num} value={num}>{num}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>consecutive nights, starting on</span>
+                <Select value={startDay} onValueChange={setStartDay}>
+                  <SelectTrigger className="w-28">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {days.map((day) => (
+                      <SelectItem key={day} value={day}>{day}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>at</span>
+                <Select value={startTime} onValueChange={setStartTime}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {times.map((time) => (
+                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>This order will rotate each year, with the person who selected</span>
+                  <Select value={firstLastOption} onValueChange={setFirstLastOption}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                  {familyGroups.map((group) => (
-                    <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
-                  ))}
+                      <SelectItem value="first">First</SelectItem>
+                      <SelectItem value="last">Last</SelectItem>
                     </SelectContent>
                   </Select>
+                  <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                
+                <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rotate" id="rotate" />
+                    <Label htmlFor="rotate" className="text-sm text-muted-foreground">Rotation continues</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="fixed" id="fixed" />
+                    <Label htmlFor="fixed" className="text-sm text-muted-foreground">Order does not change</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Family Group Rotation Order:</Label>
+                {rotationOrder.map((selectedGroup, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="font-medium w-6">{index + 1}.</span>
+                    <Select value={selectedGroup} onValueChange={(value) => handleRotationOrderChange(index, value)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select Family Group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                    {familyGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
+                    ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Manual Calendar Setup - Only show if manual is selected */}
+        {setupMethod === "manual" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Manual Calendar Setup</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  With manual selection, each family group can directly choose their preferred dates on the calendar without rotation constraints.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You can configure additional manual setup options here or proceed to the calendar to start booking dates.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
 
