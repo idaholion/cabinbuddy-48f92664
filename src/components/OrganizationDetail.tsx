@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, DollarSign, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,6 +48,7 @@ export const OrganizationDetail = ({
   onDelete, 
   onUpdateAlternateSupervisor 
 }: OrganizationDetailProps) => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<OrganizationStats>({
     familyGroups: 0,
     receipts: 0,
@@ -196,6 +198,47 @@ export const OrganizationDetail = ({
             </CardContent>
           </Card>
         </div>
+
+        {/* Setup Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Organization Setup</CardTitle>
+            <CardDescription>Manage setup data for this organization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2"
+                onClick={() => navigate(`/supervisor/organization/${organization.id}/family-groups`)}
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-sm">Family Groups</span>
+                <span className="text-xs text-muted-foreground">{stats.familyGroups} groups</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2"
+                onClick={() => navigate(`/supervisor/organization/${organization.id}/financial`)}
+              >
+                <DollarSign className="h-5 w-5" />
+                <span className="text-sm">Financial Setup</span>
+                <span className="text-xs text-muted-foreground">{stats.receipts} receipts</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2"
+                onClick={() => navigate(`/supervisor/organization/${organization.id}/reservation`)}
+              >
+                <Home className="h-5 w-5" />
+                <span className="text-sm">Reservation Setup</span>
+                <span className="text-xs text-muted-foreground">Property details</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Organization Details */}
         <div className="grid gap-6 md:grid-cols-2">

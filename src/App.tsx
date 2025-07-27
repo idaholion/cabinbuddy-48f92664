@@ -34,6 +34,9 @@ import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import { SupervisorDashboard } from "./pages/SupervisorDashboard";
 import { SupervisorRoute } from "./components/SupervisorRoute";
+import SupervisorOrganizationFamilyGroups from "./pages/SupervisorOrganizationFamilyGroups";
+import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinancial";
+import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +73,9 @@ const App = () => (
           <Route path="/checkout-final" element={<ProtectedRoute><CheckoutFinal /></ProtectedRoute>} />
           <Route path="/photos" element={<ProtectedRoute><PhotoSharing /></ProtectedRoute>} />
           <Route path="/supervisor" element={<SupervisorRoute><SupervisorDashboard /></SupervisorRoute>} />
+          <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><SupervisorOrganizationFamilyGroups /></SupervisorRoute>} />
+          <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><SupervisorOrganizationFinancial /></SupervisorRoute>} />
+          <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><SupervisorOrganizationReservation /></SupervisorRoute>} />
           <Route path="/fonts" element={<FontShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
