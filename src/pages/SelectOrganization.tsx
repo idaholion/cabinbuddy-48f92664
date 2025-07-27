@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Home } from 'lucide-react';
 
 export const SelectOrganization = () => {
   const navigate = useNavigate();
@@ -19,14 +21,57 @@ export const SelectOrganization = () => {
     }
   }, [loading, organizations, activeOrganization, navigate]);
 
+  const showBackButton = activeOrganization !== null;
+
   // If no organizations and not loading, stay on this page to let them create/join one
   if (!loading && organizations.length === 0) {
-    return <OrganizationSelector onOrganizationSelected={handleOrganizationSelected} />;
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Organization Setup</h1>
+            <p className="text-muted-foreground">
+              You need to join or create an organization to continue using Cabin Buddy.
+            </p>
+          </div>
+          <OrganizationSelector 
+            onOrganizationSelected={handleOrganizationSelected}
+            showBackButton={false}
+          />
+        </div>
+      </div>
+    );
   }
 
-  // If multiple organizations, show selector
-  if (!loading && organizations.length > 1) {
-    return <OrganizationSelector onOrganizationSelected={handleOrganizationSelected} />;
+  // If multiple organizations, show selector with navigation
+  if (!loading && organizations.length > 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Manage Organizations</h1>
+              <p className="text-muted-foreground">
+                Switch between organizations, join new ones, or create additional organizations.
+              </p>
+            </div>
+            {showBackButton && (
+              <Button variant="outline" asChild>
+                <Link to="/">
+                  <Home className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Link>
+              </Button>
+            )}
+          </div>
+          <OrganizationSelector 
+            onOrganizationSelected={handleOrganizationSelected}
+            showBackButton={showBackButton}
+            onBack={() => navigate('/')}
+          />
+        </div>
+      </div>
+    );
   }
 
   // Loading state

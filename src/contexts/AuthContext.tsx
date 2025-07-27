@@ -11,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  checkOrganizationStatus: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  const checkOrganizationStatus = async () => {
+    const currentUser = user || session?.user;
+    if (!currentUser) return;
+    
+    try {
+      const { data: organizations, error } = await supabase.rpc('get_user_organizations');
+      
+      if (error) {
+        console.error('Error fetching organizations:', error);
+        return;
+      }
+
+      // If user has no organizations or multiple organizations, redirect to selection
+      if (!organizations || organizations.length === 0 || organizations.length > 1) {
+        // Only redirect if we're not already on the organization selection page
+        if (window.location.pathname !== '/select-organization') {
+          window.location.href = '/select-organization';
+        }
+      }
+    } catch (error) {
+      console.error('Error checking organization status:', error);
+    }
+  };
+
   useEffect(() => {
     // Clear any mock authentication data
     localStorage.removeItem('mock-auth-user');
@@ -45,6 +70,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session?.user ?? null);
         setLoading(false);
         console.log('Auth state changed:', event, session?.user?.email);
+        
+        // Check organization status after successful sign in
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(() => {
+            checkOrganizationStatus();
+          }, 500);
+        }
       }
     );
 
@@ -112,6 +144,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
+        
+        // Check organization status after successful login
+        setTimeout(() => {
+          checkOrganizationStatus();
+        }, 500);
+        
         return { error: null };
       }
 
@@ -187,6 +225,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signOut,
     resetPassword,
+    checkOrganizationStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

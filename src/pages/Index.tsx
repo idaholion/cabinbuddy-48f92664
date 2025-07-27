@@ -1,10 +1,12 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -64,6 +66,38 @@ const Index = () => {
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/photos">Photos</Link>
               </Button>
+              
+              {/* Organization Management Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-sm font-medium">
+                    <Users className="h-4 w-4 mr-2" />
+                    Organizations
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem asChild>
+                    <Link to="/select-organization">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Manage Organizations
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/select-organization">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Join Organization
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/select-organization">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Organization
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {isSupervisor && (
                 <Button variant="ghost" className="text-sm font-medium text-primary" asChild>
                   <Link to="/supervisor">
@@ -73,7 +107,10 @@ const Index = () => {
                 </Button>
               )}
             </div>
-            <UserInfo />
+            <div className="flex items-center space-x-4">
+              <OrganizationSwitcher />
+              <UserInfo />
+            </div>
           </div>
         </div>
       </nav>
