@@ -90,7 +90,7 @@ const Index = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/select-organization">
+                    <Link to="/setup">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Organization
                     </Link>
