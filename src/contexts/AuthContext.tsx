@@ -39,15 +39,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!currentUser) return;
     
     const currentPath = window.location.pathname;
-    console.log('Checking organization status, current path:', currentPath);
+    console.log('=== checkOrganizationStatus called ===');
+    console.log('Current path:', currentPath);
+    console.log('User:', currentUser.email);
     
     // Don't check organization status if user is on setup pages
     if (currentPath === '/setup' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
-      console.log('Skipping organization check for setup page');
+      console.log('Skipping organization check for setup page:', currentPath);
       return;
     }
     
     try {
+      console.log('Fetching user organizations...');
       const { data: organizations, error } = await supabase.rpc('get_user_organizations');
       
       if (error) {
@@ -55,15 +58,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return;
       }
 
-      console.log('Organizations found:', organizations?.length || 0);
+      console.log('Organizations found:', organizations?.length || 0, organizations);
 
       // If user has no organizations or multiple organizations, redirect to selection
       if (!organizations || organizations.length === 0 || organizations.length > 1) {
         // Only redirect if we're not already on the organization selection page
         if (currentPath !== '/select-organization') {
-          console.log('Redirecting to select-organization');
+          console.log('Redirecting to select-organization from:', currentPath);
           window.location.href = '/select-organization';
+        } else {
+          console.log('Already on select-organization page, not redirecting');
         }
+      } else {
+        console.log('User has exactly 1 organization, no redirect needed');
       }
     } catch (error) {
       console.error('Error checking organization status:', error);
