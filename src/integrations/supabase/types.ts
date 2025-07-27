@@ -361,6 +361,7 @@ export type Database = {
           rotation_order: Json
           rotation_year: number
           start_day: string | null
+          start_month: string | null
           start_time: string | null
           updated_at: string
         }
@@ -374,6 +375,7 @@ export type Database = {
           rotation_order?: Json
           rotation_year: number
           start_day?: string | null
+          start_month?: string | null
           start_time?: string | null
           updated_at?: string
         }
@@ -387,6 +389,7 @@ export type Database = {
           rotation_order?: Json
           rotation_year?: number
           start_day?: string | null
+          start_month?: string | null
           start_time?: string | null
           updated_at?: string
         }

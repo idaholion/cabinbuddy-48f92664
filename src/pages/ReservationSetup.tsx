@@ -30,6 +30,7 @@ export default function ReservationSetup() {
   const [rotationOption, setRotationOption] = useState("rotate");
   const [firstLastOption, setFirstLastOption] = useState("first");
   const [rotationOrder, setRotationOrder] = useState<string[]>([]);
+  const [startMonth, setStartMonth] = useState("January");
   
   // Setup method selection
   const [setupMethod, setSetupMethod] = useState("rotation");
@@ -97,6 +98,7 @@ export default function ReservationSetup() {
           start_day: startDay,
           start_time: startTime,
           first_last_option: firstLastOption,
+          start_month: startMonth,
         }, {
           onConflict: 'organization_id,rotation_year'
         });
@@ -253,19 +255,35 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span>This order will rotate each year, with the person who selected</span>
-                  <Select value={firstLastOption} onValueChange={setFirstLastOption}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="first">First</SelectItem>
-                      <SelectItem value="last">Last</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
-                </div>
+                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                   <span>This order will rotate each year, with the person who selected</span>
+                   <Select value={firstLastOption} onValueChange={setFirstLastOption}>
+                     <SelectTrigger className="w-20">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="first">First</SelectItem>
+                       <SelectItem value="last">Last</SelectItem>
+                     </SelectContent>
+                   </Select>
+                   <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
+                 </div>
+                 
+                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                   <span>The selection will start the first day of</span>
+                   <Select value={startMonth} onValueChange={setStartMonth}>
+                     <SelectTrigger className="w-24">
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {["January", "February", "March", "April", "May", "June", 
+                         "July", "August", "September", "October", "November", "December"].map((month) => (
+                         <SelectItem key={month} value={month}>{month}</SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                   <span>each year</span>
+                 </div>
                 
                 <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
                   <div className="flex items-center space-x-2">
