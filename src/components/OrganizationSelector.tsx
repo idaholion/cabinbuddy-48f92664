@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
-import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
+import { useNavigate } from 'react-router-dom';
 
 interface OrganizationSelectorProps {
   onOrganizationSelected?: () => void;
@@ -21,6 +21,7 @@ export const OrganizationSelector = ({
   showBackButton = false, 
   onBack 
 }: OrganizationSelectorProps) => {
+  const navigate = useNavigate();
   const { 
     organizations, 
     activeOrganization, 
@@ -32,8 +33,11 @@ export const OrganizationSelector = ({
   
   const [joinCode, setJoinCode] = useState('');
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [joiningLoading, setJoiningLoading] = useState(false);
+
+  const handleCreateOrganization = () => {
+    navigate('/setup');
+  };
 
   const handleSelectOrganization = async (orgId: string) => {
     await switchToOrganization(orgId);
@@ -129,16 +133,10 @@ export const OrganizationSelector = ({
               </DialogContent>
             </Dialog>
 
-            <CreateOrganizationDialog 
-              open={createDialogOpen}
-              onOpenChange={setCreateDialogOpen}
-              trigger={
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Organization
-                </Button>
-              }
-            />
+            <Button onClick={handleCreateOrganization}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Organization
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -231,16 +229,10 @@ export const OrganizationSelector = ({
               </DialogContent>
             </Dialog>
 
-            <CreateOrganizationDialog 
-              open={createDialogOpen}
-              onOpenChange={setCreateDialogOpen}
-              trigger={
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Organization
-                </Button>
-              }
-            />
+            <Button onClick={handleCreateOrganization}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Organization
+            </Button>
           </div>
         </>
       )}
