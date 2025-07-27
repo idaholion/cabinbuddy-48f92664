@@ -32,6 +32,8 @@ import PhotoSharing from "./pages/PhotoSharing";
 import FontShowcase from "./pages/FontShowcase";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import { SupervisorDashboard } from "./pages/SupervisorDashboard";
+import { SupervisorRoute } from "./components/SupervisorRoute";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,7 @@ const App = () => (
           <Route path="/checkout-list" element={<ProtectedRoute><CheckoutList /></ProtectedRoute>} />
           <Route path="/checkout-final" element={<ProtectedRoute><CheckoutFinal /></ProtectedRoute>} />
           <Route path="/photos" element={<ProtectedRoute><PhotoSharing /></ProtectedRoute>} />
+          <Route path="/supervisor" element={<SupervisorRoute><SupervisorDashboard /></SupervisorRoute>} />
           <Route path="/fonts" element={<FontShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -1,9 +1,10 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSupervisor } from "@/hooks/useSupervisor";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -31,6 +32,8 @@ const UserInfo = () => {
 };
 
 const Index = () => {
+  const { isSupervisor } = useSupervisor();
+
   useEffect(() => {
     console.log("Index component mounted, checking font");
     const titleElement = document.querySelector('h1');
@@ -61,6 +64,14 @@ const Index = () => {
               <Button variant="ghost" className="text-sm font-medium" asChild>
                 <Link to="/photos">Photos</Link>
               </Button>
+              {isSupervisor && (
+                <Button variant="ghost" className="text-sm font-medium text-primary" asChild>
+                  <Link to="/supervisor">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Supervisor
+                  </Link>
+                </Button>
+              )}
             </div>
             <UserInfo />
           </div>
