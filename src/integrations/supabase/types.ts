@@ -151,6 +151,7 @@ export type Database = {
           admin_email: string | null
           admin_name: string | null
           admin_phone: string | null
+          alternate_supervisor_email: string | null
           calendar_keeper_email: string | null
           calendar_keeper_name: string | null
           calendar_keeper_phone: string | null
@@ -167,6 +168,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          alternate_supervisor_email?: string | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          alternate_supervisor_email?: string | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
@@ -347,6 +350,33 @@ export type Database = {
           },
         ]
       }
+      supervisors: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       survey_responses: {
         Row: {
           created_at: string
@@ -393,6 +423,10 @@ export type Database = {
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      is_supervisor: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {
