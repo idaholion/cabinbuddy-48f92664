@@ -85,6 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         // Check organization status after successful sign in
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('SIGNED_IN event detected, scheduling organization check');
           setTimeout(() => {
             checkOrganizationStatus();
           }, 500);
