@@ -32,21 +32,29 @@ const CabinCalendar = () => {
     // Calculate which rotation year this calendar month/year represents
     let rotationYear = baseRotationYear;
     
-    // If we're in a year after the base year, calculate the rotation year
-    if (calendarYear > baseRotationYear) {
-      rotationYear = baseRotationYear + (calendarYear - baseRotationYear);
-    }
-    
     // If we're before the start month in the current calendar year, use previous rotation year
     if (calendarMonthIndex < startMonthIndex) {
-      rotationYear = rotationYear - 1;
+      rotationYear = baseRotationYear;
+    } else {
+      // If we're at or after the start month, use next rotation year
+      rotationYear = baseRotationYear + 1;
+    }
+    
+    // Adjust for years after the base year
+    if (calendarYear > baseRotationYear) {
+      const yearDiff = calendarYear - baseRotationYear;
+      if (calendarMonthIndex >= startMonthIndex) {
+        rotationYear = baseRotationYear + yearDiff + 1;
+      } else {
+        rotationYear = baseRotationYear + yearDiff;
+      }
     }
     
     return rotationYear;
   };
   
   const rotationYear = getRotationYear();
-  const currentRotationOrder = getRotationForYear(rotationYear);
+  const currentRotationOrder = rotationData ? getRotationForYear(rotationYear) : [];
   
   // Placeholder data for selection indicators
   const getSelectionIndicators = (familyGroup: string) => {
