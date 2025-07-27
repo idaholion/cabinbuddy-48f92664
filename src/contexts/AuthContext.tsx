@@ -47,9 +47,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // If user has no organizations or multiple organizations, redirect to selection
+      // But don't redirect if they're going to setup page to create a new organization
       if (!organizations || organizations.length === 0 || organizations.length > 1) {
-        // Only redirect if we're not already on the organization selection page
-        if (window.location.pathname !== '/select-organization') {
+        // Only redirect if we're not already on the organization selection page or setup page
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/select-organization' && currentPath !== '/setup') {
           window.location.href = '/select-organization';
         }
       }
