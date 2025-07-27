@@ -56,6 +56,13 @@ const CabinCalendar = () => {
   const rotationYear = getRotationYear();
   const currentRotationOrder = rotationData ? getRotationForYear(rotationYear) : [];
   
+  // Debug logging
+  console.log('Calendar month:', currentCalendarMonth.getMonth(), currentCalendarMonth.getFullYear());
+  console.log('Start month:', reservationSettings?.start_month);
+  console.log('Rotation year:', rotationYear);
+  console.log('Base rotation year:', rotationData?.rotation_year);
+  console.log('Current rotation order:', currentRotationOrder);
+  
   // Placeholder data for selection indicators
   const getSelectionIndicators = (familyGroup: string) => {
     // TODO: Replace with actual data from database
