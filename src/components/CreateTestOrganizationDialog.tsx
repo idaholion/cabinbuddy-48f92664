@@ -29,28 +29,43 @@ const sampleFamilyGroups = [
     lead_name: "Robert Johnson", 
     lead_email: "robert.johnson@email.com", 
     lead_phone: "(555) 111-1111",
-    host_members: ["Lisa Johnson", "David Johnson", "Jennifer Johnson"]
+    host_members: [
+      { name: "Lisa Johnson", phone: "(555) 111-1112", email: "lisa.johnson@email.com" },
+      { name: "David Johnson", phone: "(555) 111-1113", email: "david.johnson@email.com" },
+      { name: "Jennifer Johnson", phone: "(555) 111-1114", email: "jennifer.johnson@email.com" }
+    ]
   },
   { 
     name: "The Smiths", 
     lead_name: "Amanda Smith", 
     lead_email: "amanda.smith@email.com", 
     lead_phone: "(555) 222-2222",
-    host_members: ["Mark Smith", "Katie Smith"]
+    host_members: [
+      { name: "Mark Smith", phone: "(555) 222-2223", email: "mark.smith@email.com" },
+      { name: "Katie Smith", phone: "(555) 222-2224", email: "katie.smith@email.com" }
+    ]
   },
   { 
     name: "The Williams", 
     lead_name: "Thomas Williams", 
     lead_email: "thomas.williams@email.com", 
     lead_phone: "(555) 333-3333",
-    host_members: ["Susan Williams", "James Williams", "Rachel Williams", "Chris Williams"]
+    host_members: [
+      { name: "Susan Williams", phone: "(555) 333-3334", email: "susan.williams@email.com" },
+      { name: "James Williams", phone: "(555) 333-3335", email: "james.williams@email.com" },
+      { name: "Rachel Williams", phone: "(555) 333-3336", email: "rachel.williams@email.com" },
+      { name: "Chris Williams", phone: "(555) 333-3337", email: "chris.williams@email.com" }
+    ]
   },
   { 
     name: "The Browns", 
     lead_name: "Michelle Brown", 
     lead_email: "michelle.brown@email.com", 
     lead_phone: "(555) 444-4444",
-    host_members: ["Kevin Brown", "Ashley Brown"]
+    host_members: [
+      { name: "Kevin Brown", phone: "(555) 444-4445", email: "kevin.brown@email.com" },
+      { name: "Ashley Brown", phone: "(555) 444-4446", email: "ashley.brown@email.com" }
+    ]
   },
 ];
 

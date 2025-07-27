@@ -11,13 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
+interface HostMember {
+  name: string;
+  phone: string;
+  email: string;
+}
+
 interface FamilyGroup {
   id: string;
   name: string;
   lead_name?: string;
   lead_phone?: string;
   lead_email?: string;
-  host_members?: string[];
+  host_members?: HostMember[];
 }
 
 const SupervisorOrganizationFamilyGroups = () => {
@@ -31,7 +37,11 @@ const SupervisorOrganizationFamilyGroups = () => {
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
-  const [hostMembers, setHostMembers] = useState<string[]>([ "", "", "" ]);
+  const [hostMembers, setHostMembers] = useState<HostMember[]>([
+    { name: "", phone: "", email: "" },
+    { name: "", phone: "", email: "" },
+    { name: "", phone: "", email: "" }
+  ]);
   const [newGroupName, setNewGroupName] = useState("");
 
   const fetchFamilyGroups = async () => {
@@ -45,7 +55,14 @@ const SupervisorOrganizationFamilyGroups = () => {
         .order('name');
 
       if (error) throw error;
-      setFamilyGroups(data || []);
+      
+      // Parse the JSONB host_members field
+      const parsedData = (data || []).map(group => ({
+        ...group,
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+      }));
+      
+      setFamilyGroups(parsedData);
     } catch (error) {
       console.error('Error fetching family groups:', error);
     }
@@ -62,13 +79,21 @@ const SupervisorOrganizationFamilyGroups = () => {
         setLeadName(group.lead_name || "");
         setLeadPhone(group.lead_phone || "");
         setLeadEmail(group.lead_email || "");
-        setHostMembers([...(group.host_members || []), "", "", ""].slice(0, Math.max(3, (group.host_members || []).length)));
+        
+        // Handle host members - ensure we have at least 3 empty slots
+        const existingMembers = group.host_members || [];
+        const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ name: "", phone: "", email: "" });
+        setHostMembers([...existingMembers, ...emptyMembers]);
       }
     } else {
       setLeadName("");
       setLeadPhone("");
       setLeadEmail("");
-      setHostMembers([ "", "", "" ]);
+      setHostMembers([
+        { name: "", phone: "", email: "" },
+        { name: "", phone: "", email: "" },
+        { name: "", phone: "", email: "" }
+      ]);
     }
   }, [selectedGroup, familyGroups]);
 
@@ -125,7 +150,11 @@ const SupervisorOrganizationFamilyGroups = () => {
     const group = familyGroups.find(g => g.name === selectedGroup);
     if (!group) return;
 
-    const hostMembersList = hostMembers.filter(member => member.trim() !== '');
+    const hostMembersList = hostMembers.filter(member => member.name.trim() !== '').map(member => ({
+      name: member.name.trim(),
+      phone: member.phone ? unformatPhoneNumber(member.phone) : '',
+      email: member.email.trim()
+    }));
     
     setLoading(true);
     try {
@@ -159,14 +188,14 @@ const SupervisorOrganizationFamilyGroups = () => {
     }
   };
 
-  const handleHostMemberChange = (index: number, value: string) => {
+  const handleHostMemberChange = (index: number, field: keyof HostMember, value: string) => {
     const newHostMembers = [...hostMembers];
-    newHostMembers[index] = value;
+    newHostMembers[index] = { ...newHostMembers[index], [field]: value };
     setHostMembers(newHostMembers);
   };
 
   const addHostMember = () => {
-    setHostMembers([...hostMembers, ""]);
+    setHostMembers([...hostMembers, { name: "", phone: "", email: "" }]);
   };
 
   return (
@@ -272,15 +301,40 @@ const SupervisorOrganizationFamilyGroups = () => {
                 </div>
 
                 {/* Host Members Section */}
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Additional Host Members</h3>
                   {hostMembers.map((member, index) => (
-                    <div key={index} className="space-y-2">
-                      <Input 
-                        placeholder={`Host Member ${index + 1} full name`}
-                        value={member}
-                        onChange={(e) => handleHostMemberChange(index, e.target.value)}
-                      />
+                    <div key={index} className="p-3 border rounded-lg space-y-3">
+                      <div className="text-sm font-medium text-muted-foreground">Host Member {index + 1}</div>
+                      <div className="grid gap-2 md:grid-cols-3">
+                        <div className="space-y-1">
+                          <Label htmlFor={`hostName${index}`}>Name</Label>
+                          <Input 
+                            id={`hostName${index}`}
+                            placeholder="Full name"
+                            value={member.name}
+                            onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`hostPhone${index}`}>Phone Number</Label>
+                          <PhoneInput 
+                            id={`hostPhone${index}`}
+                            value={member.phone}
+                            onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`hostEmail${index}`}>Email Address</Label>
+                          <Input 
+                            id={`hostEmail${index}`}
+                            type="email"
+                            placeholder="email@example.com"
+                            value={member.email}
+                            onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                   
@@ -320,7 +374,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                     )}
                     {group.host_members && group.host_members.length > 0 && (
                       <div className="text-sm text-muted-foreground">
-                        Host Members: {group.host_members.filter(m => m.trim()).length}
+                        Host Members: {group.host_members.filter(m => m.name.trim()).length}
                       </div>
                     )}
                   </div>

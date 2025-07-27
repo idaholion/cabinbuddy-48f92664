@@ -4,12 +4,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 
+interface HostMember {
+  name: string;
+  phone: string;
+  email: string;
+}
+
 interface FamilyGroupData {
   name: string;
   lead_name?: string;
   lead_email?: string;
   lead_phone?: string;
-  host_members?: string[];
+  host_members?: HostMember[];
 }
 
 export const useFamilyGroups = () => {
@@ -35,7 +41,13 @@ export const useFamilyGroups = () => {
         return;
       }
 
-      setFamilyGroups(data || []);
+      // Parse the JSONB host_members field
+      const parsedData = (data || []).map(group => ({
+        ...group,
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+      }));
+      
+      setFamilyGroups(parsedData);
     } catch (error) {
       console.error('Error in fetchFamilyGroups:', error);
     } finally {
@@ -59,7 +71,8 @@ export const useFamilyGroups = () => {
         .from('family_groups')
         .insert({
           ...groupData,
-          organization_id: organization.id
+          organization_id: organization.id,
+          host_members: groupData.host_members as any // Cast to any for JSONB
         })
         .select()
         .single();
@@ -74,7 +87,13 @@ export const useFamilyGroups = () => {
         return null;
       }
 
-      setFamilyGroups(prev => [...prev, newGroup]);
+      // Parse the new group data
+      const parsedNewGroup = {
+        ...newGroup,
+        host_members: Array.isArray(newGroup.host_members) ? (newGroup.host_members as unknown as HostMember[]) : []
+      };
+      
+      setFamilyGroups(prev => [...prev, parsedNewGroup]);
       
       toast({
         title: "Success",
@@ -107,9 +126,15 @@ export const useFamilyGroups = () => {
 
     setLoading(true);
     try {
+      // Prepare updates with proper JSONB casting
+      const updatesWithJsonb = {
+        ...updates,
+        host_members: updates.host_members ? (updates.host_members as any) : undefined
+      };
+
       const { data: updatedGroup, error } = await supabase
         .from('family_groups')
-        .update(updates)
+        .update(updatesWithJsonb)
         .eq('id', groupId)
         .eq('organization_id', organization.id)
         .select()
@@ -125,8 +150,14 @@ export const useFamilyGroups = () => {
         return;
       }
 
+      // Parse the updated group data
+      const parsedUpdatedGroup = {
+        ...updatedGroup,
+        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as HostMember[]) : []
+      };
+      
       setFamilyGroups(prev => 
-        prev.map(group => group.id === groupId ? updatedGroup : group)
+        prev.map(group => group.id === groupId ? parsedUpdatedGroup : group)
       );
       
       toast({

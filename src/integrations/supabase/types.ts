@@ -105,7 +105,7 @@ export type Database = {
       family_groups: {
         Row: {
           created_at: string
-          host_members: string[] | null
+          host_members: Json | null
           id: string
           lead_email: string | null
           lead_name: string | null
@@ -116,7 +116,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          host_members?: string[] | null
+          host_members?: Json | null
           id?: string
           lead_email?: string | null
           lead_name?: string | null
@@ -127,7 +127,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          host_members?: string[] | null
+          host_members?: Json | null
           id?: string
           lead_email?: string | null
           lead_name?: string | null

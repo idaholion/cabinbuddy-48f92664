@@ -19,6 +19,12 @@ export interface Organization {
   calendar_keeper_phone?: string;
 }
 
+interface HostMember {
+  name: string;
+  phone: string;
+  email: string;
+}
+
 export interface FamilyGroup {
   id: string;
   organization_id: string;
@@ -26,7 +32,7 @@ export interface FamilyGroup {
   lead_name?: string;
   lead_phone?: string;
   lead_email?: string;
-  host_members?: string[];
+  host_members?: HostMember[];
 }
 
 export interface ReservationSettings {
@@ -195,7 +201,12 @@ export const useFamilyGroups = () => {
         .order('name');
 
       if (error) throw error;
-      setFamilyGroups(data || []);
+      // Parse the JSONB host_members field
+      const parsedData = (data || []).map((group: any) => ({
+        ...group,
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+      }));
+      setFamilyGroups(parsedData);
     } catch (error) {
       console.error('Error fetching family groups:', error);
     } finally {
@@ -215,12 +226,21 @@ export const useFamilyGroups = () => {
 
       const { data, error } = await supabase
         .from('family_groups')
-        .insert({ ...groupData, organization_id: profile.organization_id })
+        .insert({ 
+          ...groupData, 
+          organization_id: profile.organization_id,
+          host_members: groupData.host_members as any // Cast to any for JSONB
+        })
         .select()
         .single();
 
       if (error) throw error;
-      setFamilyGroups(prev => [...prev, data]);
+      // Parse the new group data
+      const parsedData = {
+        ...data,
+        host_members: Array.isArray(data.host_members) ? (data.host_members as unknown as HostMember[]) : []
+      };
+      setFamilyGroups(prev => [...prev, parsedData]);
       toast({ title: "Family group created successfully!" });
     } catch (error) {
       console.error('Error creating family group:', error);

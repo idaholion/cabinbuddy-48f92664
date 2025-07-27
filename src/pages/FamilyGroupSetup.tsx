@@ -68,7 +68,7 @@ const FamilyGroupSetup = () => {
         lead_name: leadName || undefined,
         lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
-        host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
+        host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
       });
     } else {
       // Create new group
@@ -77,7 +77,7 @@ const FamilyGroupSetup = () => {
         lead_name: leadName || undefined,
         lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
-        host_members: hostMembersList.length > 0 ? hostMembersList.map(m => m.name) : undefined,
+        host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
       });
     }
   };
