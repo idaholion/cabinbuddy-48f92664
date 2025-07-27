@@ -134,6 +134,15 @@ const Intro = () => {
           >
             Sign In / Sign Up
           </Button>
+          {/* DEBUG: Direct Setup Button */}
+          <Button 
+            onClick={() => navigate("/setup")}
+            size="lg" 
+            variant="secondary"
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold"
+          >
+            🔧 DEBUG: Direct to Setup
+          </Button>
         </div>
       </div>
     </div>

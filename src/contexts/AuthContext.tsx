@@ -90,12 +90,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setLoading(false);
         console.log('Auth state changed:', event, session?.user?.email);
         
-        // Check organization status after successful sign in
+        // Don't trigger organization check immediately on page load
+        // Only check when explicitly signing in
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('SIGNED_IN event detected, scheduling organization check');
-          setTimeout(() => {
-            checkOrganizationStatus();
-          }, 500);
+          // Only redirect if user is not already navigating to setup
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/setup' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
+            setTimeout(() => {
+              checkOrganizationStatus();
+            }, 500);
+          }
         }
       }
     );
