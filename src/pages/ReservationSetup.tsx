@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function ReservationSetup() {
@@ -18,6 +19,7 @@ export default function ReservationSetup() {
   const { familyGroups } = useFamilyGroups();
   const { saveReservationSettings, loading } = useReservationSettings();
   const { organization } = useOrganization();
+  const { getRotationForYear, rotationData } = useRotationOrder();
 
   // Rotation saving state
   const [savingRotationOrder, setSavingRotationOrder] = useState(false);
@@ -325,6 +327,50 @@ export default function ReservationSetup() {
                   {savingRotationOrder ? "Saving..." : "Save Rotation Order"}
                 </Button>
               </div>
+              
+              {/* Show rotation order preview */}
+              {rotationOption === "rotate" && rotationOrder.filter(group => group !== '').length > 0 && (
+                <div className="mt-6 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-3">Rotation Order Preview</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[0, 1, 2].map((yearOffset) => {
+                      const year = parseInt(rotationYear) + yearOffset;
+                      const currentOrder = rotationOrder.filter(group => group !== '');
+                      
+                      // Calculate rotation for this year
+                      let yearOrder = [...currentOrder];
+                      for (let i = 0; i < yearOffset; i++) {
+                        if (firstLastOption === "first") {
+                          // Move first person to last position
+                          const first = yearOrder.shift();
+                          if (first) yearOrder.push(first);
+                        } else {
+                          // Move last person to first position
+                          const last = yearOrder.pop();
+                          if (last) yearOrder.unshift(last);
+                        }
+                      }
+                      
+                      return (
+                        <div key={year} className="space-y-2">
+                          <h5 className="text-sm font-medium">{year}:</h5>
+                          <div className="space-y-1">
+                            {yearOrder.map((group, index) => (
+                              <div key={index} className="text-xs p-1 bg-background rounded flex items-center gap-2">
+                                <span className="font-medium w-4">{index + 1}.</span>
+                                <span>{group}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    Rotation: {firstLastOption === "first" ? "First person moves to last position each year" : "Last person moves to first position each year"}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
