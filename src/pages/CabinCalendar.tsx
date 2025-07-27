@@ -15,8 +15,8 @@ const CabinCalendar = () => {
   
   // Calculate the rotation year based on current calendar month and start month
   const getRotationYear = () => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = currentCalendarMonth.getMonth();
+    const calendarYear = currentCalendarMonth.getFullYear();
+    const calendarMonthIndex = currentCalendarMonth.getMonth();
     const startMonth = reservationSettings?.start_month || "January";
     
     // Convert month name to number (0-11)
@@ -24,11 +24,11 @@ const CabinCalendar = () => {
       "July", "August", "September", "October", "November", "December"];
     const startMonthIndex = monthNames.indexOf(startMonth);
     
-    // If we're at or past the start month, we're in the next rotation year
-    if (currentMonth >= startMonthIndex) {
-      return currentYear + 1;
+    // If calendar is showing a month at or past the start month, show next rotation year
+    if (calendarMonthIndex >= startMonthIndex) {
+      return calendarYear + 1;
     }
-    return currentYear;
+    return calendarYear;
   };
   
   const rotationYear = getRotationYear();
