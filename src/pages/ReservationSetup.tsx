@@ -61,6 +61,55 @@ export default function ReservationSetup() {
     }
   }, [familyGroups]);
 
+  // Load existing rotation order from database
+  useEffect(() => {
+    const loadExistingRotationOrder = async () => {
+      if (!organization?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('rotation_orders')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('rotation_year', parseInt(rotationYear))
+          .single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading rotation order:', error);
+          return;
+        }
+        
+        if (data) {
+          // Load all the saved settings
+          setMaxTimeSlots(data.max_time_slots?.toString() || "2");
+          setMaxNights(data.max_nights?.toString() || "7");
+          setStartDay(data.start_day || "Friday");
+          setStartTime(data.start_time || "12:00 PM");
+          setFirstLastOption(data.first_last_option || "first");
+          setStartMonth(data.start_month || "January");
+          
+          // Load the rotation order
+          const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
+          if (savedOrder.length > 0) {
+            const fullOrder = new Array(familyGroups.length).fill('');
+            savedOrder.forEach((group, index) => {
+              if (index < fullOrder.length) {
+                fullOrder[index] = group;
+              }
+            });
+            setRotationOrder(fullOrder);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading rotation order:', error);
+      }
+    };
+    
+    if (organization?.id && familyGroups.length > 0) {
+      loadExistingRotationOrder();
+    }
+  }, [organization?.id, familyGroups.length, rotationYear]);
+
   const handleRotationOrderChange = (index: number, value: string) => {
     const newOrder = [...rotationOrder];
     newOrder[index] = value;
