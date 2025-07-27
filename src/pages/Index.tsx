@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -83,12 +84,12 @@ const Index = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/select-organization">
+                  <JoinOrganizationDialog>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       <UserPlus className="h-4 w-4 mr-2" />
                       Join Organization
-                    </Link>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </JoinOrganizationDialog>
                   <DropdownMenuItem asChild>
                     <Link to="/family-setup?mode=create">
                       <Plus className="h-4 w-4 mr-2" />
