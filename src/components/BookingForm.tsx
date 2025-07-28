@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useReservations } from '@/hooks/useReservations';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { cn } from '@/lib/utils';
 
 interface BookingFormProps {
@@ -30,15 +32,33 @@ interface BookingFormData {
 }
 
 export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete }: BookingFormProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
   const { createReservation, loading: reservationLoading } = useReservations();
+  const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
     calculateTimePeriodWindows, 
     validateBooking, 
     updateTimePeriodUsage,
     timePeriodUsage 
   } = useTimePeriods();
+
+  // Get user's family group
+  const userFamilyGroup = familyGroups.find(fg => 
+    fg.host_members?.some((member: any) => member.email === user?.email)
+  )?.name;
+
+  // Get current rotation order and determine whose turn it is
+  const currentYear = currentMonth.getFullYear();
+  const rotationOrder = getRotationForYear(currentYear);
+  const currentTurnIndex = Math.floor((currentMonth.getMonth()) / (rotationData?.max_time_slots || 2)) % rotationOrder.length;
+  const currentTurnGroup = rotationOrder[currentTurnIndex];
+
+  // Filter family groups - only show user's group if it's their turn, or all groups if user is admin
+  const availableFamilyGroups = userFamilyGroup === currentTurnGroup 
+    ? familyGroups.filter(fg => fg.name === userFamilyGroup)
+    : familyGroups; // Allow admins to book for any group
   
   const [submitting, setSubmitting] = useState(false);
 
@@ -146,6 +166,27 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New Booking</DialogTitle>
+          {userFamilyGroup && (
+            <div className="mt-2 p-3 bg-primary/10 rounded-lg">
+              <p className="text-sm font-medium">
+                {userFamilyGroup === currentTurnGroup ? (
+                  <>
+                    <span className="text-primary">✓ It's your family group's turn to book!</span>
+                    <br />
+                    <span className="text-muted-foreground">
+                      Time periods available: {familyUsage ? 
+                        Math.max(0, familyUsage.time_periods_allowed - familyUsage.time_periods_used) : 
+                        rotationData?.max_time_slots || 2} remaining
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">
+                    Current turn: {currentTurnGroup} • Your group: {userFamilyGroup}
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
         </DialogHeader>
 
         <Form {...form}>
@@ -164,7 +205,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                       required
                     >
                       <option value="">Select Family Group</option>
-                      {familyGroups.map((group) => (
+                      {availableFamilyGroups.map((group) => (
                         <option key={group.id} value={group.name}>
                           {group.name}
                         </option>
