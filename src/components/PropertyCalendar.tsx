@@ -10,6 +10,7 @@ import { useReservations } from "@/hooks/useReservations";
 import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { BookingForm } from "@/components/BookingForm";
+import { TradeRequestForm } from "@/components/TradeRequestForm";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -24,6 +25,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
 
   // Get property name from database or use fallback
@@ -44,8 +46,15 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   };
 
   const handleEditBookingAction = (action: string) => {
-    console.log(`Edit booking action: ${action}`);
-    // TODO: Implement specific actions for each menu item
+    if (action === 'request-trade') {
+      setShowTradeForm(true);
+    } else if (action === 'edit-my-bookings') {
+      // This functionality already exists with the Edit buttons on individual reservations
+      console.log('Edit my bookings - use the Edit buttons on individual reservations');
+    } else if (action === 'request-assistance') {
+      // TODO: Implement calendar keeper assistance request
+      console.log('Request calendar keeper assistance - to be implemented');
+    }
   };
 
   // Generate calendar days for the current month
@@ -311,6 +320,13 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         currentMonth={currentMonth}
         onBookingComplete={handleBookingComplete}
         editingReservation={editingReservation}
+      />
+
+      {/* Trade Request Form Dialog */}
+      <TradeRequestForm 
+        open={showTradeForm}
+        onOpenChange={setShowTradeForm}
+        onTradeComplete={handleBookingComplete}
       />
     </div>
   );

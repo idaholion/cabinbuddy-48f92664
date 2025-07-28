@@ -631,6 +631,107 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          notification_type: string
+          organization_id: string
+          recipient_email: string
+          recipient_family_group: string
+          sent_at: string | null
+          trade_request_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_type: string
+          organization_id: string
+          recipient_email: string
+          recipient_family_group: string
+          sent_at?: string | null
+          trade_request_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_type?: string
+          organization_id?: string
+          recipient_email?: string
+          recipient_family_group?: string
+          sent_at?: string | null
+          trade_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_notifications_trade_request_id_fkey"
+            columns: ["trade_request_id"]
+            isOneToOne: false
+            referencedRelation: "trade_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trade_requests: {
+        Row: {
+          approved_at: string | null
+          approver_message: string | null
+          approver_user_id: string | null
+          created_at: string
+          id: string
+          offered_end_date: string | null
+          offered_start_date: string | null
+          organization_id: string
+          request_type: string
+          requested_end_date: string
+          requested_start_date: string
+          requester_family_group: string
+          requester_message: string | null
+          requester_user_id: string | null
+          status: string
+          target_family_group: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_message?: string | null
+          approver_user_id?: string | null
+          created_at?: string
+          id?: string
+          offered_end_date?: string | null
+          offered_start_date?: string | null
+          organization_id: string
+          request_type: string
+          requested_end_date: string
+          requested_start_date: string
+          requester_family_group: string
+          requester_message?: string | null
+          requester_user_id?: string | null
+          status?: string
+          target_family_group: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_message?: string | null
+          approver_user_id?: string | null
+          created_at?: string
+          id?: string
+          offered_end_date?: string | null
+          offered_start_date?: string | null
+          organization_id?: string
+          request_type?: string
+          requested_end_date?: string
+          requested_start_date?: string
+          requester_family_group?: string
+          requester_message?: string | null
+          requester_user_id?: string | null
+          status?: string
+          target_family_group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_organizations: {
         Row: {
           created_at: string
