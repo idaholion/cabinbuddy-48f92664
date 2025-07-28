@@ -3,6 +3,11 @@ import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+// Twilio configuration
+const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -18,8 +23,49 @@ interface NotificationRequest {
     check_out_date: string;
     guest_email: string;
     guest_name: string;
+    guest_phone?: string;
   };
   days_until?: number;
+}
+
+async function sendSMS(to: string, message: string) {
+  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+    console.log("Twilio credentials not configured, skipping SMS");
+    return null;
+  }
+
+  try {
+    const auth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+    
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          From: twilioPhoneNumber,
+          To: to,
+          Body: message,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error("Twilio SMS error:", error);
+      return { error };
+    }
+
+    const result = await response.json();
+    console.log("SMS sent successfully:", result.sid);
+    return result;
+  } catch (error) {
+    console.error("Error sending SMS:", error);
+    return { error: error.message };
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -32,10 +78,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     let subject = "";
     let htmlContent = "";
+    let smsMessage = "";
 
     switch (type) {
       case 'reminder':
         subject = `Cabin Reservation Reminder - ${days_until} days to go!`;
+        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} days. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. - CabinBuddy`;
         htmlContent = `
           <h1>Your Cabin Reservation is Coming Up!</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -54,6 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       case 'confirmation':
         subject = `Cabin Reservation Confirmed - ${reservation.family_group_name}`;
+        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is confirmed. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. - CabinBuddy`;
         htmlContent = `
           <h1>Your Cabin Reservation is Confirmed!</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -72,6 +121,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       case 'cancellation':
         subject = `Cabin Reservation Cancelled - ${reservation.family_group_name}`;
+        smsMessage = `Hi ${reservation.guest_name}. Your cabin reservation (${reservation.family_group_name}) for ${new Date(reservation.check_in_date).toLocaleDateString()} has been cancelled. - CabinBuddy`;
         htmlContent = `
           <h1>Reservation Cancellation Notice</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -89,6 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
         break;
     }
 
+    // Send email notification
     const emailResponse = await resend.emails.send({
       from: "CabinBuddy <noreply@yourdomainhere.com>",
       to: [reservation.guest_email],
@@ -98,7 +149,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`${type} email sent successfully:`, emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    // Send SMS notification if phone number is provided
+    let smsResponse = null;
+    if (reservation.guest_phone && smsMessage) {
+      smsResponse = await sendSMS(reservation.guest_phone, smsMessage);
+      if (smsResponse && !smsResponse.error) {
+        console.log(`${type} SMS sent successfully`);
+      }
+    }
+
+    return new Response(JSON.stringify({
+      email: emailResponse,
+      sms: smsResponse,
+      success: true
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
