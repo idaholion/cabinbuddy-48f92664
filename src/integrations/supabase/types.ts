@@ -104,6 +104,7 @@ export type Database = {
       }
       family_groups: {
         Row: {
+          alternate_lead_id: string | null
           created_at: string
           host_members: Json | null
           id: string
@@ -112,9 +113,11 @@ export type Database = {
           lead_phone: string | null
           name: string
           organization_id: string
+          reservation_permission: string | null
           updated_at: string
         }
         Insert: {
+          alternate_lead_id?: string | null
           created_at?: string
           host_members?: Json | null
           id?: string
@@ -123,9 +126,11 @@ export type Database = {
           lead_phone?: string | null
           name: string
           organization_id: string
+          reservation_permission?: string | null
           updated_at?: string
         }
         Update: {
+          alternate_lead_id?: string | null
           created_at?: string
           host_members?: Json | null
           id?: string
@@ -134,6 +139,7 @@ export type Database = {
           lead_phone?: string | null
           name?: string
           organization_id?: string
+          reservation_permission?: string | null
           updated_at?: string
         }
         Relationships: [

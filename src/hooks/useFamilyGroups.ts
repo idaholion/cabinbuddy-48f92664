@@ -16,6 +16,8 @@ interface FamilyGroupData {
   lead_email?: string;
   lead_phone?: string;
   host_members?: HostMember[];
+  reservation_permission?: string;
+  alternate_lead_id?: string;
 }
 
 export const useFamilyGroups = () => {

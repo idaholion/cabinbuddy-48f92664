@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -26,6 +27,8 @@ const FamilyGroupSetup = () => {
     {name: "", phone: "", email: ""},
     {name: "", phone: "", email: ""}
   ]);
+  const [reservationPermission, setReservationPermission] = useState("lead_only");
+  const [alternateLeadId, setAlternateLeadId] = useState("");
 
   // Load from localStorage as fallback for display
   const [localFamilyGroups, setLocalFamilyGroups] = useState<string[]>([]);
@@ -69,6 +72,8 @@ const FamilyGroupSetup = () => {
         lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+        reservation_permission: reservationPermission,
+        alternate_lead_id: alternateLeadId || undefined,
       });
     } else {
       // Create new group
@@ -78,6 +83,8 @@ const FamilyGroupSetup = () => {
         lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+        reservation_permission: reservationPermission,
+        alternate_lead_id: alternateLeadId || undefined,
       });
     }
   };
@@ -186,6 +193,26 @@ const FamilyGroupSetup = () => {
               </div>
             </div>
 
+            {/* Reservation Permission Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+              <h3 className="text-lg font-semibold text-center">Reservation Permissions</h3>
+              <p className="text-sm text-muted-foreground text-center">Choose who can make reservations for this family group</p>
+              <RadioGroup value={reservationPermission} onValueChange={setReservationPermission} className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="lead_only" id="lead_only" />
+                  <Label htmlFor="lead_only">Lead Only - Only the group lead can make reservations</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="lead_and_alternate" id="lead_and_alternate" />
+                  <Label htmlFor="lead_and_alternate">Lead and Alternate - Both lead and alternate lead can make reservations</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="all_hosts" id="all_hosts" />
+                  <Label htmlFor="all_hosts">All Host Members - Any host member can make reservations</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             {/* Host Members Section */}
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-center">Additional Host Members</h3>
@@ -218,6 +245,29 @@ const FamilyGroupSetup = () => {
                   Add Host Member
                 </Button>
               </div>
+              
+              {/* Alternate Lead Selection */}
+              {hostMembers.some(member => member.name.trim() !== '') && (
+                <div className="mt-4 p-4 border rounded-lg bg-muted/20">
+                  <h4 className="text-md font-semibold text-center mb-2">Alternate Group Lead</h4>
+                  <p className="text-sm text-muted-foreground text-center mb-3">Select which host member serves as the alternate group lead</p>
+                  <Select value={alternateLeadId} onValueChange={setAlternateLeadId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select alternate lead (optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="">None selected</SelectItem>
+                      {hostMembers
+                        .filter(member => member.name.trim() !== '')
+                        .map((member, index) => (
+                          <SelectItem key={index} value={member.name}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
