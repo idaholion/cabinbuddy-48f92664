@@ -76,19 +76,6 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
-                  ←
-                </Button>
-                <h3 className="text-xl font-semibold">
-                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                </h3>
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
-                  →
-                </Button>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
               <Select value={selectedProperty} onValueChange={setSelectedProperty}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select property" />
@@ -102,6 +89,18 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 </SelectContent>
               </Select>
               <Button>New Booking</Button>
+              <Button variant="outline">Booking Complete</Button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
+                ←
+              </Button>
+              <h3 className="text-xl font-semibold">
+                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+              </h3>
+              <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
+                →
+              </Button>
             </div>
           </div>
         </CardHeader>
