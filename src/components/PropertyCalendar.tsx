@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useReservations } from "@/hooks/useReservations";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -13,6 +15,7 @@ interface PropertyCalendarProps {
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const { reservationSettings } = useReservationSettings();
+  const { createReservation, loading } = useReservations();
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -22,6 +25,25 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const properties = [
     { id: "property", name: propertyName, location: reservationSettings?.address || "Location not set" }
   ];
+
+  // Handle booking complete - save mock data for demonstration
+  const handleBookingComplete = async () => {
+    const mockReservation = {
+      start_date: "2024-12-15",
+      end_date: "2024-12-17",
+      family_group: "Smith Family",
+      guest_count: 4,
+      property_name: propertyName,
+      status: "confirmed"
+    };
+    
+    await createReservation(mockReservation);
+  };
+
+  const handleEditBookingAction = (action: string) => {
+    console.log(`Edit booking action: ${action}`);
+    // TODO: Implement specific actions for each menu item
+  };
 
   const bookings = [
     { id: 1, property: propertyName, user: "Sarah M.", startDate: "2024-12-15", endDate: "2024-12-17", status: "confirmed" },
@@ -89,7 +111,27 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 </SelectContent>
               </Select>
               <Button>New Booking</Button>
-              <Button variant="outline">Booking Complete</Button>
+              <Button variant="outline" onClick={handleBookingComplete} disabled={loading}>
+                {loading ? "Saving..." : "Booking Complete"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Edit Booking <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuItem onClick={() => handleEditBookingAction('edit-my-bookings')}>
+                    Edit my bookings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEditBookingAction('request-trade')}>
+                    Request trade with another group
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEditBookingAction('request-assistance')}>
+                    Request Calendar Keeper assistance
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
