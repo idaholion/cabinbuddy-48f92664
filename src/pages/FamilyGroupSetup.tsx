@@ -191,60 +191,6 @@ const FamilyGroupSetup = () => {
                   onChange={(e) => setLeadEmail(e.target.value)}
                 />
               </div>
-            </div>
-
-            {/* Reservation Permission Section */}
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-              <h3 className="text-lg font-semibold text-center">Reservation Permissions</h3>
-              <p className="text-sm text-muted-foreground text-center">Choose who can make reservations for this family group</p>
-              <RadioGroup value={reservationPermission} onValueChange={setReservationPermission} className="flex flex-col space-y-2">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="lead_only" id="lead_only" />
-                  <Label htmlFor="lead_only">Lead Only - Only the group lead can make reservations</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="lead_and_alternate" id="lead_and_alternate" />
-                  <Label htmlFor="lead_and_alternate">Lead and Alternate - Both lead and alternate lead can make reservations</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="all_hosts" id="all_hosts" />
-                  <Label htmlFor="all_hosts">All Host Members - Any host member can make reservations</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Host Members Section */}
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-center">Additional Host Members</h3>
-              {hostMembers.map((member, index) => (
-                <div key={index} className="space-y-2">
-                  <h4 className="text-md font-medium">Host Member {index + 1}</h4>
-                  <div className="grid gap-2 md:grid-cols-3">
-                    <Input 
-                      placeholder="Full name"
-                      value={member.name}
-                      onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
-                    />
-                    <PhoneInput 
-                      value={member.phone}
-                      onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
-                    />
-                    <Input 
-                      type="email" 
-                      placeholder="email@example.com"
-                      value={member.email}
-                      onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
-                    />
-                  </div>
-                </div>
-              ))}
-              
-              <div className="flex justify-center pt-2">
-                <Button variant="outline" onClick={addHostMember}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Host Member
-                </Button>
-              </div>
               
               {/* Alternate Lead Selection */}
               {hostMembers.some(member => member.name.trim() !== '') && (
@@ -268,6 +214,56 @@ const FamilyGroupSetup = () => {
                   </Select>
                 </div>
               )}
+            </div>
+
+
+            {/* Host Members Section */}
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-center">Additional Host Members</h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">Radio buttons indicate who can reserve time</p>
+              {hostMembers.map((member, index) => (
+                <div key={index} className="space-y-2">
+                  <h4 className="text-md font-medium">Host Member {index + 1}</h4>
+                  <div className="grid gap-2 grid-cols-12 items-center">
+                    <div className="col-span-4">
+                      <Input 
+                        placeholder="Full name"
+                        value={member.name}
+                        onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <PhoneInput 
+                        value={member.phone}
+                        onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
+                      />
+                    </div>
+                    <div className="col-span-5">
+                      <Input 
+                        type="email" 
+                        placeholder="email@example.com"
+                        value={member.email}
+                        onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-center">
+                      <RadioGroupItem 
+                        value={`host_${index}`} 
+                        id={`host_${index}`}
+                        checked={reservationPermission === `host_${index}`}
+                        onClick={() => setReservationPermission(`host_${index}`)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" onClick={addHostMember}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Host Member
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
