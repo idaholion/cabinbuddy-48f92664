@@ -15,6 +15,7 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { cn } from '@/lib/utils';
+import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 
 interface BookingFormProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface BookingFormProps {
     total_cost?: number;
     allocated_start_date?: string;
     allocated_end_date?: string;
+    host_assignments?: any[];
   } | null;
 }
 
@@ -39,6 +41,7 @@ interface BookingFormData {
   familyGroup: string;
   guestCount: number;
   totalCost?: number;
+  hostAssignments: HostAssignment[];
 }
 
 export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation }: BookingFormProps) {
@@ -78,19 +81,31 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       endDate: new Date(),
       familyGroup: '',
       guestCount: 1,
-      totalCost: 0
+      totalCost: 0,
+      hostAssignments: []
     }
   });
 
   // Populate form when editing
   useEffect(() => {
     if (editingReservation) {
+      // Parse existing host assignments if available
+      const existingAssignments = editingReservation.host_assignments || [];
+      const parsedAssignments = Array.isArray(existingAssignments) ? 
+        existingAssignments.map((assignment: any) => ({
+          host_name: assignment.host_name || '',
+          host_email: assignment.host_email || '',
+          start_date: new Date(assignment.start_date),
+          end_date: new Date(assignment.end_date)
+        })) : [];
+
       form.reset({
         startDate: new Date(editingReservation.start_date),
         endDate: new Date(editingReservation.end_date),
         familyGroup: editingReservation.family_group,
         guestCount: editingReservation.guest_count,
-        totalCost: editingReservation.total_cost || 0
+        totalCost: editingReservation.total_cost || 0,
+        hostAssignments: parsedAssignments
       });
     } else {
       form.reset({
@@ -98,7 +113,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         endDate: new Date(),
         familyGroup: '',
         guestCount: 1,
-        totalCost: 0
+        totalCost: 0,
+        hostAssignments: []
       });
     }
   }, [editingReservation, form]);
@@ -106,6 +122,11 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
   const watchedFamilyGroup = form.watch('familyGroup');
+  const watchedHostAssignments = form.watch('hostAssignments');
+
+  // Get the selected family group's host members
+  const selectedFamilyGroup = familyGroups.find(fg => fg.name === watchedFamilyGroup);
+  const familyGroupHosts = selectedFamilyGroup?.host_members || [];
 
   // Calculate time period windows for current month
   const timePeriodWindows = calculateTimePeriodWindows(
@@ -180,12 +201,20 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       
       if (editingReservation) {
         // Update existing reservation
+        const hostAssignmentsData = data.hostAssignments.map(assignment => ({
+          host_name: assignment.host_name,
+          host_email: assignment.host_email,
+          start_date: assignment.start_date.toISOString().split('T')[0],
+          end_date: assignment.end_date.toISOString().split('T')[0]
+        }));
+
         const updatedReservation = await updateReservation(editingReservation.id, {
           start_date: data.startDate.toISOString().split('T')[0],
           end_date: data.endDate.toISOString().split('T')[0],
           guest_count: data.guestCount,
           total_cost: data.totalCost,
-          nights_used: nights
+          nights_used: nights,
+          host_assignments: hostAssignmentsData
         });
 
         if (updatedReservation) {
@@ -206,6 +235,13 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           data.endDate <= w.endDate
         );
 
+        const hostAssignmentsData = data.hostAssignments.map(assignment => ({
+          host_name: assignment.host_name,
+          host_email: assignment.host_email,
+          start_date: assignment.start_date.toISOString().split('T')[0],
+          end_date: assignment.end_date.toISOString().split('T')[0]
+        }));
+
         const reservation = await createReservation({
           start_date: data.startDate.toISOString().split('T')[0],
           end_date: data.endDate.toISOString().split('T')[0],
@@ -215,7 +251,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           allocated_start_date: window?.startDate.toISOString().split('T')[0],
           allocated_end_date: window?.endDate.toISOString().split('T')[0],
           time_period_number: window?.periodNumber,
-          nights_used: nights
+          nights_used: nights,
+          host_assignments: hostAssignmentsData
         });
 
         if (reservation) {
@@ -435,6 +472,18 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                   This family group has already used all allocated time periods for this year.
                 </p>
               </div>
+            )}
+
+            {/* Host Assignments */}
+            {watchedFamilyGroup && watchedStartDate && watchedEndDate && (
+              <HostAssignmentForm
+                reservationStartDate={watchedStartDate}
+                reservationEndDate={watchedEndDate}
+                familyGroupHosts={familyGroupHosts}
+                value={watchedHostAssignments}
+                onChange={(assignments) => form.setValue('hostAssignments', assignments)}
+                disabled={submitting || reservationLoading}
+              />
             )}
 
             {/* Submit Button */}

@@ -11,6 +11,7 @@ export interface MultiPeriodReservationData {
     endDate: Date;
     periodNumber: number;
     nights: number;
+    hostAssignments?: any[];
   }[];
   familyGroup: string;
   guestCount: number;
@@ -139,7 +140,8 @@ export const useMultiPeriodReservations = () => {
           allocated_end_date: period.endDate.toISOString().split('T')[0],
           organization_id: organization.id,
           user_id: user.id,
-          status: 'confirmed'
+          status: 'confirmed',
+          host_assignments: period.hostAssignments || []
         };
 
         const { data: newReservation, error } = await supabase

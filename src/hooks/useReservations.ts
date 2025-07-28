@@ -16,6 +16,7 @@ interface ReservationData {
   allocated_end_date?: string;
   time_period_number?: number;
   nights_used?: number;
+  host_assignments?: any[];
 }
 
 export const useReservations = () => {

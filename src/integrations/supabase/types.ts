@@ -430,6 +430,7 @@ export type Database = {
           end_date: string
           family_group: string
           guest_count: number | null
+          host_assignments: Json | null
           id: string
           nights_used: number | null
           organization_id: string
@@ -448,6 +449,7 @@ export type Database = {
           end_date: string
           family_group: string
           guest_count?: number | null
+          host_assignments?: Json | null
           id?: string
           nights_used?: number | null
           organization_id: string
@@ -466,6 +468,7 @@ export type Database = {
           end_date?: string
           family_group?: string
           guest_count?: number | null
+          host_assignments?: Json | null
           id?: string
           nights_used?: number | null
           organization_id?: string

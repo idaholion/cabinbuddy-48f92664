@@ -16,6 +16,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 
 interface MultiPeriodBookingFormProps {
   open: boolean;
@@ -32,6 +33,7 @@ interface FormData {
     startDate: Date;
     endDate: Date;
     periodNumber: number;
+    hostAssignments: HostAssignment[];
   }[];
 }
 
@@ -70,7 +72,8 @@ export function MultiPeriodBookingForm({
         {
           startDate: new Date(),
           endDate: new Date(),
-          periodNumber: 1
+          periodNumber: 1,
+          hostAssignments: []
         }
       ]
     }
@@ -83,6 +86,10 @@ export function MultiPeriodBookingForm({
 
   const watchedFamilyGroup = form.watch('familyGroup');
   const watchedPeriods = form.watch('periods');
+
+  // Get the selected family group's host members
+  const selectedFamilyGroup = familyGroups.find(fg => fg.name === watchedFamilyGroup);
+  const familyGroupHosts = selectedFamilyGroup?.host_members || [];
 
   // Get available periods for the selected family group
   const availablePeriods = timePeriodWindows.filter(w => w.familyGroup === watchedFamilyGroup);
@@ -107,7 +114,8 @@ export function MultiPeriodBookingForm({
     append({
       startDate: new Date(),
       endDate: new Date(),
-      periodNumber: nextPeriodNumber
+      periodNumber: nextPeriodNumber,
+      hostAssignments: []
     });
   };
 
@@ -121,7 +129,13 @@ export function MultiPeriodBookingForm({
         startDate: p.startDate,
         endDate: p.endDate,
         periodNumber: p.periodNumber,
-        nights: Math.ceil((p.endDate.getTime() - p.startDate.getTime()) / (1000 * 60 * 60 * 24))
+        nights: Math.ceil((p.endDate.getTime() - p.startDate.getTime()) / (1000 * 60 * 60 * 24)),
+        hostAssignments: p.hostAssignments.map(assignment => ({
+          host_name: assignment.host_name,
+          host_email: assignment.host_email,
+          start_date: assignment.start_date.toISOString().split('T')[0],
+          end_date: assignment.end_date.toISOString().split('T')[0]
+        }))
       })),
       familyGroup: data.familyGroup,
       guestCount: data.guestCount,
@@ -372,6 +386,23 @@ export function MultiPeriodBookingForm({
                         )}
                       />
                     </div>
+
+                    {/* Host Assignments for this period */}
+                    <FormField
+                      control={form.control}
+                      name={`periods.${index}.hostAssignments`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <HostAssignmentForm
+                            reservationStartDate={watchedPeriods[index]?.startDate || new Date()}
+                            reservationEndDate={watchedPeriods[index]?.endDate || new Date()}
+                            familyGroupHosts={familyGroupHosts}
+                            value={field.value || []}
+                            onChange={field.onChange}
+                          />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               ))}
