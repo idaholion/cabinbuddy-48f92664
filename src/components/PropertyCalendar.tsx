@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [editingReservation, setEditingReservation] = useState<any>(null);
 
   // Get property name from database or use fallback
   const propertyName = reservationSettings?.property_name || "Property";
@@ -230,32 +231,45 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
               })
               .slice(0, 10)
               .map((reservation) => (
-                <div key={reservation.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-10 w-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{reservation.family_group}</div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {reservation.property_name || propertyName}
-                      </div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {new Date(reservation.start_date).toLocaleDateString()} to {new Date(reservation.end_date).toLocaleDateString()}
-                      </div>
-                      {reservation.nights_used && (
-                        <div className="text-xs text-muted-foreground">
-                          {reservation.nights_used} nights • Period #{reservation.time_period_number}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
-                    {reservation.status}
-                  </Badge>
-                </div>
+                 <div key={reservation.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                   <div className="flex items-center space-x-4">
+                     <div className="h-10 w-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                       <User className="h-5 w-5 text-primary-foreground" />
+                     </div>
+                     <div>
+                       <div className="font-medium">{reservation.family_group}</div>
+                       <div className="text-sm text-muted-foreground flex items-center">
+                         <MapPin className="h-3 w-3 mr-1" />
+                         {reservation.property_name || propertyName}
+                       </div>
+                       <div className="text-sm text-muted-foreground flex items-center">
+                         <Clock className="h-3 w-3 mr-1" />
+                         {new Date(reservation.start_date).toLocaleDateString()} to {new Date(reservation.end_date).toLocaleDateString()}
+                       </div>
+                       {reservation.nights_used && (
+                         <div className="text-xs text-muted-foreground">
+                           {reservation.nights_used} nights • Period #{reservation.time_period_number}
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => {
+                         setEditingReservation(reservation);
+                         setShowBookingForm(true);
+                       }}
+                     >
+                       <Edit2 className="h-4 w-4 mr-1" />
+                       Edit
+                     </Button>
+                     <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
+                       {reservation.status}
+                     </Badge>
+                   </div>
+                 </div>
               ))}
             
             {reservations.filter(reservation => {
@@ -288,9 +302,15 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       {/* Booking Form Dialog */}
       <BookingForm 
         open={showBookingForm}
-        onOpenChange={setShowBookingForm}
+        onOpenChange={(open) => {
+          setShowBookingForm(open);
+          if (!open) {
+            setEditingReservation(null);
+          }
+        }}
         currentMonth={currentMonth}
         onBookingComplete={handleBookingComplete}
+        editingReservation={editingReservation}
       />
     </div>
   );

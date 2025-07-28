@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,6 +21,16 @@ interface BookingFormProps {
   onOpenChange: (open: boolean) => void;
   currentMonth: Date;
   onBookingComplete?: () => void;
+  editingReservation?: {
+    id: string;
+    start_date: string;
+    end_date: string;
+    family_group: string;
+    guest_count: number;
+    total_cost?: number;
+    allocated_start_date?: string;
+    allocated_end_date?: string;
+  } | null;
 }
 
 interface BookingFormData {
@@ -31,11 +41,11 @@ interface BookingFormData {
   totalCost?: number;
 }
 
-export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete }: BookingFormProps) {
+export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation }: BookingFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
-  const { createReservation, loading: reservationLoading } = useReservations();
+  const { createReservation, updateReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
     calculateTimePeriodWindows, 
@@ -72,6 +82,27 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     }
   });
 
+  // Populate form when editing
+  useEffect(() => {
+    if (editingReservation) {
+      form.reset({
+        startDate: new Date(editingReservation.start_date),
+        endDate: new Date(editingReservation.end_date),
+        familyGroup: editingReservation.family_group,
+        guestCount: editingReservation.guest_count,
+        totalCost: editingReservation.total_cost || 0
+      });
+    } else {
+      form.reset({
+        startDate: new Date(),
+        endDate: new Date(),
+        familyGroup: '',
+        guestCount: 1,
+        totalCost: 0
+      });
+    }
+  }, [editingReservation, form]);
+
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
   const watchedFamilyGroup = form.watch('familyGroup');
@@ -82,9 +113,39 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     currentMonth
   );
 
+  // Custom validation for edit mode
+  const validateEditBooking = (startDate: Date, endDate: Date, familyGroup: string) => {
+    const errors: string[] = [];
+    
+    if (!editingReservation) return { isValid: false, errors: ["No reservation to edit"] };
+    
+    // Can't extend beyond original allocated period
+    const originalStart = new Date(editingReservation.allocated_start_date!);
+    const originalEnd = new Date(editingReservation.allocated_end_date!);
+    
+    if (startDate < originalStart) {
+      errors.push(`Cannot move start date before original allocated period (${format(originalStart, "PPP")})`);
+    }
+    if (endDate > originalEnd) {
+      errors.push(`Cannot extend end date beyond original allocated period (${format(originalEnd, "PPP")})`);
+    }
+    
+    // Can't extend duration
+    const originalDuration = Math.ceil((new Date(editingReservation.end_date).getTime() - new Date(editingReservation.start_date).getTime()) / (1000 * 60 * 60 * 24));
+    const newDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (newDuration > originalDuration) {
+      errors.push(`Cannot extend booking duration. Original: ${originalDuration} days, New: ${newDuration} days`);
+    }
+    
+    return { isValid: errors.length === 0, errors };
+  };
+
   // Validate current form state
   const currentValidation = watchedStartDate && watchedEndDate && watchedFamilyGroup
-    ? validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
+    ? editingReservation 
+      ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
+      : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -100,11 +161,13 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   const onSubmit = async (data: BookingFormData) => {
     // Final validation
-    const validation = validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
+    const validation = editingReservation 
+      ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
+      : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
     
     if (!validation.isValid) {
       toast({
-        title: "Booking Invalid",
+        title: editingReservation ? "Edit Invalid" : "Booking Invalid",
         description: validation.errors.join('. '),
         variant: "destructive",
       });
@@ -113,46 +176,65 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
     setSubmitting(true);
     try {
-      // Calculate nights and find the relevant window
       const nights = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24));
-      const window = timePeriodWindows.find(w => 
-        w.familyGroup === data.familyGroup &&
-        data.startDate >= w.startDate &&
-        data.endDate <= w.endDate
-      );
-
-      // Create the reservation with time period tracking
-      const reservation = await createReservation({
-        start_date: data.startDate.toISOString().split('T')[0],
-        end_date: data.endDate.toISOString().split('T')[0],
-        family_group: data.familyGroup,
-        guest_count: data.guestCount,
-        total_cost: data.totalCost,
-        // Add time period tracking fields
-        allocated_start_date: window?.startDate.toISOString().split('T')[0],
-        allocated_end_date: window?.endDate.toISOString().split('T')[0],
-        time_period_number: window?.periodNumber,
-        nights_used: nights
-      });
-
-      if (reservation) {
-        // Update time period usage
-        await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
-        
-        toast({
-          title: "Booking Confirmed",
-          description: `Successfully booked ${nights} nights for ${data.familyGroup}`,
+      
+      if (editingReservation) {
+        // Update existing reservation
+        const updatedReservation = await updateReservation(editingReservation.id, {
+          start_date: data.startDate.toISOString().split('T')[0],
+          end_date: data.endDate.toISOString().split('T')[0],
+          guest_count: data.guestCount,
+          total_cost: data.totalCost,
+          nights_used: nights
         });
 
-        // Reset form and close dialog
-        form.reset();
-        onOpenChange(false);
-        onBookingComplete?.();
+        if (updatedReservation) {
+          toast({
+            title: "Booking Updated",
+            description: `Successfully updated booking for ${data.familyGroup}`,
+          });
+
+          form.reset();
+          onOpenChange(false);
+          onBookingComplete?.();
+        }
+      } else {
+        // Create new reservation
+        const window = timePeriodWindows.find(w => 
+          w.familyGroup === data.familyGroup &&
+          data.startDate >= w.startDate &&
+          data.endDate <= w.endDate
+        );
+
+        const reservation = await createReservation({
+          start_date: data.startDate.toISOString().split('T')[0],
+          end_date: data.endDate.toISOString().split('T')[0],
+          family_group: data.familyGroup,
+          guest_count: data.guestCount,
+          total_cost: data.totalCost,
+          allocated_start_date: window?.startDate.toISOString().split('T')[0],
+          allocated_end_date: window?.endDate.toISOString().split('T')[0],
+          time_period_number: window?.periodNumber,
+          nights_used: nights
+        });
+
+        if (reservation) {
+          await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
+          
+          toast({
+            title: "Booking Confirmed",
+            description: `Successfully booked ${nights} nights for ${data.familyGroup}`,
+          });
+
+          form.reset();
+          onOpenChange(false);
+          onBookingComplete?.();
+        }
       }
     } catch (error) {
       console.error('Booking submission error:', error);
       toast({
-        title: "Booking Failed",
+        title: editingReservation ? "Update Failed" : "Booking Failed",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -165,7 +247,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Booking</DialogTitle>
+          <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
           {userFamilyGroup && (
             <div className="mt-2 p-3 bg-primary/10 rounded-lg">
               <p className="text-sm font-medium">
