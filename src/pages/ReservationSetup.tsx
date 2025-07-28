@@ -242,7 +242,7 @@ export default function ReservationSetup() {
         {setupMethod === "rotation" && (
           <Card>
             <CardHeader>
-              <CardTitle>Rotation Box</CardTitle>
+              <CardTitle>Family Group Order</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
