@@ -146,6 +146,39 @@ export type Database = {
           },
         ]
       }
+      notification_log: {
+        Row: {
+          email_sent: boolean | null
+          family_group: string
+          id: string
+          notification_type: string
+          organization_id: string
+          reservation_period_id: string | null
+          sent_at: string
+          sms_sent: boolean | null
+        }
+        Insert: {
+          email_sent?: boolean | null
+          family_group: string
+          id?: string
+          notification_type: string
+          organization_id: string
+          reservation_period_id?: string | null
+          sent_at?: string
+          sms_sent?: boolean | null
+        }
+        Update: {
+          email_sent?: boolean | null
+          family_group?: string
+          id?: string
+          notification_type?: string
+          organization_id?: string
+          reservation_period_id?: string | null
+          sent_at?: string
+          sms_sent?: boolean | null
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           admin_email: string | null
@@ -291,6 +324,45 @@ export type Database = {
           },
         ]
       }
+      reservation_periods: {
+        Row: {
+          created_at: string
+          current_family_group: string
+          current_group_index: number
+          id: string
+          organization_id: string
+          reservations_completed: boolean | null
+          rotation_year: number
+          selection_end_date: string
+          selection_start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_family_group: string
+          current_group_index: number
+          id?: string
+          organization_id: string
+          reservations_completed?: boolean | null
+          rotation_year: number
+          selection_end_date: string
+          selection_start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_family_group?: string
+          current_group_index?: number
+          id?: string
+          organization_id?: string
+          reservations_completed?: boolean | null
+          rotation_year?: number
+          selection_end_date?: string
+          selection_start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reservation_settings: {
         Row: {
           address: string | null
@@ -350,6 +422,51 @@ export type Database = {
           },
         ]
       }
+      reservations: {
+        Row: {
+          created_at: string
+          end_date: string
+          family_group: string
+          guest_count: number | null
+          id: string
+          organization_id: string
+          property_name: string | null
+          start_date: string
+          status: string | null
+          total_cost: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          family_group: string
+          guest_count?: number | null
+          id?: string
+          organization_id: string
+          property_name?: string | null
+          start_date: string
+          status?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          family_group?: string
+          guest_count?: number | null
+          id?: string
+          organization_id?: string
+          property_name?: string | null
+          start_date?: string
+          status?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       rotation_orders: {
         Row: {
           created_at: string
@@ -360,6 +477,7 @@ export type Database = {
           organization_id: string
           rotation_order: Json
           rotation_year: number
+          selection_days: number | null
           start_day: string | null
           start_month: string | null
           start_time: string | null
@@ -374,6 +492,7 @@ export type Database = {
           organization_id: string
           rotation_order?: Json
           rotation_year: number
+          selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
           start_time?: string | null
@@ -388,6 +507,7 @@ export type Database = {
           organization_id?: string
           rotation_order?: Json
           rotation_year?: number
+          selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
           start_time?: string | null
