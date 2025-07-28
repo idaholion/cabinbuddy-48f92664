@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2 } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,16 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
+  
+  // Phase 4: Enhanced filtering and view options
+  const [filterOptions, setFilterOptions] = useState({
+    showMyBookings: true,
+    showOtherBookings: true,
+    showTimePeriods: true,
+    showTradeRequests: true,
+    familyGroupFilter: 'all'
+  });
+  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline'>('calendar');
 
   // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
@@ -47,6 +57,16 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const pendingTradeRequests = tradeRequests.filter(tr => 
     tr.target_family_group === userFamilyGroup && tr.status === 'pending'
   ).length;
+
+  // Phase 4: Get trade requests affecting dates
+  const getTradeRequestsForDate = (date: Date) => {
+    return tradeRequests.filter(tr => {
+      if (tr.status !== 'pending') return false;
+      const requestStart = new Date(tr.requested_start_date);
+      const requestEnd = new Date(tr.requested_end_date);
+      return date >= requestStart && date <= requestEnd;
+    });
+  };
 
   // Get property name from database or use fallback
   const propertyName = reservationSettings?.property_name || "Property";
@@ -109,10 +129,23 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   };
 
   const getBookingsForDate = (date: Date) => {
-    return reservations.filter(reservation => {
+    const allBookings = reservations.filter(reservation => {
       const startDate = new Date(reservation.start_date);
       const endDate = new Date(reservation.end_date);
       return date >= startDate && date <= endDate;
+    });
+
+    // Phase 4: Apply filtering
+    return allBookings.filter(booking => {
+      if (filterOptions.familyGroupFilter !== 'all' && booking.family_group !== filterOptions.familyGroupFilter) {
+        return false;
+      }
+      
+      const isMyBooking = booking.family_group === userFamilyGroup;
+      if (isMyBooking && !filterOptions.showMyBookings) return false;
+      if (!isMyBooking && !filterOptions.showOtherBookings) return false;
+      
+      return true;
     });
   };
 
@@ -140,6 +173,103 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Phase 4: View Mode Toggle */}
+              <div className="flex border rounded-lg overflow-hidden">
+                <Button 
+                  variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setViewMode('calendar')}
+                  className="rounded-none"
+                >
+                  <Calendar className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === 'list' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-none"
+                >
+                  <Layers className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setViewMode('timeline')}
+                  className="rounded-none"
+                >
+                  <ArrowLeftRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Phase 4: Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64 p-4">
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium">Show Bookings</div>
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showMyBookings}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>My bookings</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showOtherBookings}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Other bookings</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showTimePeriods}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Time periods</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showTradeRequests}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Trade requests</span>
+                      </label>
+                    </div>
+                    
+                    <div className="text-sm font-medium pt-2 border-t">Family Group</div>
+                    <Select 
+                      value={filterOptions.familyGroupFilter} 
+                      onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Groups</SelectItem>
+                        {familyGroups.map(fg => (
+                          <SelectItem key={fg.id} value={fg.name}>{fg.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button>
@@ -205,60 +335,202 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
             ))}
           </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day, index) => {
-              const dayBookings = getBookingsForDate(day);
-              const timePeriod = getTimePeriodForDate(day);
-              const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
-              const isToday = day.toDateString() === new Date().toDateString();
-              
-              return (
-                <div
-                  key={index}
-                  className={`min-h-20 p-1 border border-border relative ${
-                    !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
-                  } ${isToday ? 'ring-2 ring-primary' : ''} ${
-                    timePeriod ? 'border-l-4 border-l-accent' : ''
-                  } hover:bg-accent/10 transition-colors cursor-pointer`}
-                >
-                  <div className={`text-sm font-medium ${
-                    !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
-                  }`}>
-                    {day.getDate()}
-                  </div>
-                  
-                  {/* Time period indicator */}
-                  {timePeriod && isCurrentMonth && (
-                    <div className="text-xs text-muted-foreground mb-1 truncate">
-                      {timePeriod.familyGroup}
+          {/* Enhanced Calendar Grid */}
+          {viewMode === 'calendar' && (
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((day, index) => {
+                const dayBookings = getBookingsForDate(day);
+                const timePeriod = getTimePeriodForDate(day);
+                const tradeRequests = getTradeRequestsForDate(day);
+                const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+                const isToday = day.toDateString() === new Date().toDateString();
+                const hasMyBooking = dayBookings.some(b => b.family_group === userFamilyGroup);
+                const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
+                
+                return (
+                  <div
+                    key={index}
+                    className={`min-h-24 p-1 border border-border relative transition-all duration-200 ${
+                      !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
+                    } ${isToday ? 'ring-2 ring-primary shadow-warm' : ''} ${
+                      timePeriod && filterOptions.showTimePeriods ? 'border-l-4 border-l-accent' : ''
+                    } ${
+                      hasMyBooking ? 'bg-primary/5 border-primary/20' : ''
+                    } ${
+                      hasPendingTrade ? 'bg-destructive/5 border-destructive/20' : ''
+                    } hover:bg-accent/10 hover:shadow-cabin cursor-pointer group`}
+                  >
+                    <div className={`text-sm font-medium ${
+                      !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
+                    }`}>
+                      {day.getDate()}
                     </div>
-                  )}
-                  
-                  {/* Bookings */}
-                  <div className="mt-1 space-y-1">
-                    {dayBookings.slice(0, 2).map((booking, i) => (
-                      <div
-                        key={i}
-                        className={`text-xs px-1 py-0.5 rounded truncate ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        }`}
-                      >
-                        {booking.family_group}
+                    
+                    {/* Enhanced indicators row */}
+                    <div className="flex items-center justify-between mb-1">
+                      {/* Time period indicator */}
+                      {timePeriod && isCurrentMonth && filterOptions.showTimePeriods && (
+                        <div className="text-xs text-accent-foreground bg-accent/20 px-1 rounded truncate flex-1 mr-1">
+                          {timePeriod.familyGroup}
+                        </div>
+                      )}
+                      
+                      {/* Status indicators */}
+                      <div className="flex items-center space-x-1">
+                        {hasMyBooking && (
+                          <div className="w-2 h-2 bg-primary rounded-full" title="Your booking" />
+                        )}
+                        {hasPendingTrade && (
+                          <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" title="Pending trade" />
+                        )}
+                        {dayBookings.some(b => b.time_period_number) && (
+                          <div className="w-2 h-2 bg-secondary rounded-full" title="Multi-period booking" />
+                        )}
                       </div>
-                    ))}
-                    {dayBookings.length > 2 && (
-                      <div className="text-xs text-muted-foreground">
-                        +{dayBookings.length - 2} more
-                      </div>
-                    )}
+                    </div>
+                    
+                    {/* Enhanced bookings display */}
+                    <div className="mt-1 space-y-0.5">
+                      {dayBookings.slice(0, 2).map((booking, i) => {
+                        const isMyBooking = booking.family_group === userFamilyGroup;
+                        return (
+                          <div
+                            key={i}
+                            className={`text-xs px-1 py-0.5 rounded truncate transition-colors ${
+                              isMyBooking 
+                                ? 'bg-primary/20 text-primary-foreground border border-primary/30' 
+                                : booking.status === 'confirmed' 
+                                  ? 'bg-secondary/50 text-secondary-foreground' 
+                                  : 'bg-muted/60 text-muted-foreground'
+                            } ${
+                              booking.time_period_number ? 'border-l-2 border-l-accent' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="truncate">{booking.family_group}</span>
+                              {booking.time_period_number && (
+                                <span className="ml-1 text-xs opacity-60">P{booking.time_period_number}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Trade requests indicator */}
+                      {hasPendingTrade && (
+                        <div className="text-xs px-1 py-0.5 bg-destructive/20 text-destructive rounded truncate">
+                          <ArrowLeftRight className="h-3 w-3 inline mr-1" />
+                          Trade Request
+                        </div>
+                      )}
+                      
+                      {dayBookings.length > 2 && (
+                        <div className="text-xs text-muted-foreground bg-muted/30 px-1 rounded">
+                          +{dayBookings.length - 2} more
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
+          
+          {/* List View */}
+          {viewMode === 'list' && (
+            <div className="space-y-2">
+              {calendarDays
+                .filter(day => day.getMonth() === currentMonth.getMonth())
+                .map(day => {
+                  const dayBookings = getBookingsForDate(day);
+                  const timePeriod = getTimePeriodForDate(day);
+                  const tradeRequests = getTradeRequestsForDate(day);
+                  
+                  if (dayBookings.length === 0 && (!timePeriod || !filterOptions.showTimePeriods) && (tradeRequests.length === 0 || !filterOptions.showTradeRequests)) {
+                    return null;
+                  }
+                  
+                  return (
+                    <div key={day.toISOString()} className="p-3 border border-border rounded-lg bg-card">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                        <div className="flex items-center space-x-2">
+                          {timePeriod && filterOptions.showTimePeriods && (
+                            <Badge variant="outline">{timePeriod.familyGroup} Period</Badge>
+                          )}
+                          {tradeRequests.length > 0 && filterOptions.showTradeRequests && (
+                            <Badge variant="destructive">Trade Request</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        {dayBookings.map((booking, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <span>{booking.family_group}</span>
+                            <div className="flex items-center space-x-2">
+                              {booking.time_period_number && (
+                                <Badge variant="secondary" className="text-xs">Period {booking.time_period_number}</Badge>
+                              )}
+                              <Badge variant={booking.status === 'confirmed' ? 'default' : 'outline'}>
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+                .filter(Boolean)}
+            </div>
+          )}
+          
+          {/* Timeline View */}
+          {viewMode === 'timeline' && (
+            <div className="space-y-4">
+              {familyGroups.map(familyGroup => {
+                const groupBookings = reservations.filter(r => 
+                  r.family_group === familyGroup.name &&
+                  new Date(r.start_date).getMonth() === currentMonth.getMonth()
+                );
+                
+                if (groupBookings.length === 0 && filterOptions.familyGroupFilter !== 'all' && filterOptions.familyGroupFilter !== familyGroup.name) {
+                  return null;
+                }
+                
+                return (
+                  <div key={familyGroup.id} className="p-4 border border-border rounded-lg bg-card">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <Users className="h-5 w-5 text-primary" />
+                      <h4 className="font-medium">{familyGroup.name}</h4>
+                      <div className="flex-1 h-px bg-border"></div>
+                    </div>
+                    <div className="space-y-2">
+                      {groupBookings.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No bookings this month</p>
+                      ) : (
+                        groupBookings.map(booking => (
+                          <div key={booking.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                            <div className="text-sm">
+                              {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {booking.time_period_number && (
+                                <Badge variant="outline" className="text-xs">P{booking.time_period_number}</Badge>
+                              )}
+                              <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
