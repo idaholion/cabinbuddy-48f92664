@@ -75,12 +75,18 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2 text-blue-600" />
-                Property Calendar
-              </CardTitle>
-              <CardDescription>Manage bookings and availability</CardDescription>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
+                  ←
+                </Button>
+                <h3 className="text-xl font-semibold">
+                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </h3>
+                <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
+                  →
+                </Button>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <Select value={selectedProperty} onValueChange={setSelectedProperty}>
@@ -101,17 +107,6 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         </CardHeader>
         <CardContent>
           {/* Calendar Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Button variant="outline" onClick={() => navigateMonth(-1)}>
-              ←
-            </Button>
-            <h3 className="text-xl font-semibold">
-              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </h3>
-            <Button variant="outline" onClick={() => navigateMonth(1)}>
-              →
-            </Button>
-          </div>
 
           {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1 mb-4">
