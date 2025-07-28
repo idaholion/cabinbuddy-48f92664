@@ -245,6 +245,17 @@ export default function ReservationSetup() {
               <CardTitle>Rotation Box</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="rotate" id="rotate" />
+                  <Label htmlFor="rotate" className="text-sm text-muted-foreground">Group Order Rotates</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="fixed" id="fixed" />
+                  <Label htmlFor="fixed" className="text-sm text-muted-foreground">Group Order Constant</Label>
+                </div>
+              </RadioGroup>
+              
               <div className="flex items-center gap-4">
                 <p className="text-sm">
                   Rotation order starting in 
@@ -353,17 +364,6 @@ export default function ReservationSetup() {
                    </Select>
                    <span>each year</span>
                  </div>
-                
-                <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="rotate" id="rotate" />
-                    <Label htmlFor="rotate" className="text-sm text-muted-foreground">Rotation continues</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="fixed" id="fixed" />
-                    <Label htmlFor="fixed" className="text-sm text-muted-foreground">Order does not change</Label>
-                  </div>
-                </RadioGroup>
               </div>
               
               <div className="space-y-2">
