@@ -10,11 +10,13 @@ import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilySetup = () => {
   const { toast } = useToast();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
+  const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
   const [searchParams] = useSearchParams();
   
   // Check if this is a "create new" operation
@@ -75,6 +77,13 @@ const FamilySetup = () => {
     }
   }, [organization, isCreatingNew]);
 
+  // Load property name from reservation settings
+  useEffect(() => {
+    if (reservationSettings && !isCreatingNew) {
+      setPropertyName(reservationSettings.property_name || "");
+    }
+  }, [reservationSettings, isCreatingNew]);
+
   // Save organization setup
   const saveOrganizationSetup = async () => {
     if (!orgName.trim() || !organizationCode.trim()) {
@@ -109,10 +118,16 @@ const FamilySetup = () => {
         await createOrganization(orgData);
       }
       
+      // Save property name to reservation settings if provided
+      if (propertyName.trim()) {
+        await saveReservationSettings({ property_name: propertyName });
+      }
+      
       // Also save family groups to localStorage for backward compatibility
       const setupData = {
         orgName,
         organizationCode,
+        propertyName,
         adminName,
         adminPhone,
         adminEmail,
@@ -217,8 +232,8 @@ const FamilySetup = () => {
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
             <div className="flex justify-end">
-              <Button onClick={saveOrganizationSetup} disabled={orgLoading}>
-                {orgLoading ? "Saving..." : "Save Organization Setup"}
+              <Button onClick={saveOrganizationSetup} disabled={orgLoading || settingsLoading}>
+                {(orgLoading || settingsLoading) ? "Saving..." : "Save Organization Setup"}
               </Button>
             </div>
             <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
