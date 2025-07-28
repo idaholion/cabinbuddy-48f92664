@@ -22,6 +22,7 @@ const FamilySetup = () => {
   
   // State for organization setup
   const [orgName, setOrgName] = useState("");
+  const [propertyName, setPropertyName] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminPhone, setAdminPhone] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -225,7 +226,16 @@ const FamilySetup = () => {
           <CardContent className="space-y-6 py-4">
             {/* Organization Setup Section */}
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-center border-b pb-2">Set up Family Organization</h2>
+              {/* Property Name */}
+              <div className="space-y-1">
+                <Label htmlFor="propertyName" className="text-xl font-semibold text-center block">Property Name</Label>
+                <Input 
+                  id="propertyName" 
+                  placeholder="Enter property name" 
+                  value={propertyName}
+                  onChange={(e) => setPropertyName(e.target.value)}
+                />
+              </div>
               
               {/* Organization Name */}
               <div className="space-y-1">
