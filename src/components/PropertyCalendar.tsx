@@ -12,6 +12,8 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { BookingForm } from "@/components/BookingForm";
 import { TradeRequestForm } from "@/components/TradeRequestForm";
 import { TradeRequestsManager } from "@/components/TradeRequestsManager";
+import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
+import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -32,7 +34,9 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showMultiPeriodForm, setShowMultiPeriodForm] = useState(false);
   const [showTradeForm, setShowTradeForm] = useState(false);
+  const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
 
   // Get user's family group and pending trade requests
@@ -136,9 +140,21 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={() => setShowBookingForm(true)}>
-                New Booking
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button>
+                    New Booking <ChevronDown className="h-4 w-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setShowBookingForm(true)}>
+                    Single Period Booking
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowMultiPeriodForm(true)}>
+                    Multi-Period Booking
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button variant="outline" onClick={handleBookingComplete}>
                 Booking Complete
               </Button>
@@ -284,17 +300,28 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                      </div>
                    </div>
                    <div className="flex items-center space-x-2">
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => {
-                         setEditingReservation(reservation);
-                         setShowBookingForm(true);
-                       }}
-                     >
-                       <Edit2 className="h-4 w-4 mr-1" />
-                       Edit
-                     </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit <ChevronDown className="h-3 w-3 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => {
+                            setEditingReservation(reservation);
+                            setShowBookingForm(true);
+                          }}>
+                            Edit Booking
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setEditingReservation(reservation);
+                            setShowSplitDialog(true);
+                          }}>
+                            Split into Periods
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                      <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
                        {reservation.status}
                      </Badge>
@@ -346,6 +373,27 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         currentMonth={currentMonth}
         onBookingComplete={handleBookingComplete}
         editingReservation={editingReservation}
+      />
+
+      {/* Multi-Period Booking Form Dialog */}
+      <MultiPeriodBookingForm
+        open={showMultiPeriodForm}
+        onOpenChange={setShowMultiPeriodForm}
+        currentMonth={currentMonth}
+        onBookingComplete={handleBookingComplete}
+      />
+
+      {/* Reservation Split Dialog */}
+      <ReservationSplitDialog
+        open={showSplitDialog}
+        onOpenChange={(open) => {
+          setShowSplitDialog(open);
+          if (!open) {
+            setEditingReservation(null);
+          }
+        }}
+        reservation={editingReservation}
+        onSplitComplete={handleBookingComplete}
       />
 
       {/* Trade Request Form Dialog */}
