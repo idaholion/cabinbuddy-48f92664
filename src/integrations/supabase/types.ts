@@ -482,6 +482,7 @@ export type Database = {
       rotation_orders: {
         Row: {
           created_at: string
+          enable_secondary_selection: boolean | null
           first_last_option: string | null
           id: string
           max_nights: number | null
@@ -489,6 +490,7 @@ export type Database = {
           organization_id: string
           rotation_order: Json
           rotation_year: number
+          secondary_max_periods: number | null
           selection_days: number | null
           start_day: string | null
           start_month: string | null
@@ -497,6 +499,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
           max_nights?: number | null
@@ -504,6 +507,7 @@ export type Database = {
           organization_id: string
           rotation_order?: Json
           rotation_year: number
+          secondary_max_periods?: number | null
           selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
@@ -512,6 +516,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
           max_nights?: number | null
@@ -519,6 +524,7 @@ export type Database = {
           organization_id?: string
           rotation_order?: Json
           rotation_year?: number
+          secondary_max_periods?: number | null
           selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
@@ -526,6 +532,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      secondary_selection_status: {
+        Row: {
+          created_at: string | null
+          current_family_group: string | null
+          current_group_index: number | null
+          id: string
+          organization_id: string
+          rotation_year: number
+          started_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_family_group?: string | null
+          current_group_index?: number | null
+          id?: string
+          organization_id: string
+          rotation_year: number
+          started_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_family_group?: string | null
+          current_group_index?: number | null
+          id?: string
+          organization_id?: string
+          rotation_year?: number
+          started_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secondary_selection_status_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supervisors: {
         Row: {
@@ -600,7 +647,10 @@ export type Database = {
           last_selection_date: string | null
           organization_id: string
           rotation_year: number
+          secondary_periods_allowed: number | null
+          secondary_periods_used: number | null
           selection_deadline: string | null
+          selection_round: string | null
           time_periods_allowed: number
           time_periods_used: number
           updated_at: string
@@ -612,7 +662,10 @@ export type Database = {
           last_selection_date?: string | null
           organization_id: string
           rotation_year: number
+          secondary_periods_allowed?: number | null
+          secondary_periods_used?: number | null
           selection_deadline?: string | null
+          selection_round?: string | null
           time_periods_allowed?: number
           time_periods_used?: number
           updated_at?: string
@@ -624,7 +677,10 @@ export type Database = {
           last_selection_date?: string | null
           organization_id?: string
           rotation_year?: number
+          secondary_periods_allowed?: number | null
+          secondary_periods_used?: number | null
           selection_deadline?: string | null
+          selection_round?: string | null
           time_periods_allowed?: number
           time_periods_used?: number
           updated_at?: string

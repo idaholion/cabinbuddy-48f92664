@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
@@ -44,6 +45,10 @@ export default function ReservationSetup() {
   const [bedrooms, setBedrooms] = useState("");
   const [bathrooms, setBathrooms] = useState("");
   const [maxGuests, setMaxGuests] = useState("");
+  
+  // Secondary selection
+  const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
+  const [secondaryMaxPeriods, setSecondaryMaxPeriods] = useState("1");
 
   // Load family groups and initialize rotation order
   useEffect(() => {
@@ -89,6 +94,8 @@ export default function ReservationSetup() {
           setFirstLastOption(data.first_last_option || "first");
           setStartMonth(data.start_month || "January");
           setSelectionDays(data.selection_days?.toString() || "14");
+          setEnableSecondarySelection(data.enable_secondary_selection || false);
+          setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
           
           // Load the rotation order
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
@@ -153,6 +160,8 @@ export default function ReservationSetup() {
           first_last_option: firstLastOption,
           start_month: startMonth,
           selection_days: parseInt(selectionDays),
+          enable_secondary_selection: enableSecondarySelection,
+          secondary_max_periods: parseInt(secondaryMaxPeriods),
         }, {
           onConflict: 'organization_id,rotation_year'
         });
@@ -383,6 +392,51 @@ export default function ReservationSetup() {
                     </Select>
                   </div>
                 ))}
+              </div>
+              
+              {/* Secondary Selection Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="enableSecondarySelection"
+                    checked={enableSecondarySelection}
+                    onCheckedChange={(checked) => setEnableSecondarySelection(checked === true)}
+                  />
+                  <Label htmlFor="enableSecondarySelection" className="text-sm font-medium">
+                    Enable Secondary Week Selection
+                  </Label>
+                </div>
+                
+                {enableSecondarySelection && (
+                  <div className="pl-6 space-y-3">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        <strong>How Secondary Selection Works:</strong>
+                      </p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                        <li>After all family groups complete their primary selections ({maxTimeSlots} periods each)</li>
+                        <li>A secondary round automatically begins</li>
+                        <li>Selection order follows <strong>reverse order</strong> from the last person who selected in the primary round</li>
+                        <li>Each family group can select up to {secondaryMaxPeriods} additional period(s)</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span>In the secondary round, each family group can select up to</span>
+                      <Select value={secondaryMaxPeriods} onValueChange={setSecondaryMaxPeriods}>
+                        <SelectTrigger className="w-16">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 3 }, (_, i) => (i + 1).toString()).map((num) => (
+                            <SelectItem key={num} value={num}>{num}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>additional time period(s)</span>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="pt-4 border-t">
