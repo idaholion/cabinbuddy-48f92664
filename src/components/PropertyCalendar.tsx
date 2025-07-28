@@ -1,30 +1,33 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, MapPin, User, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useReservationSettings } from "@/hooks/useReservationSettings";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
 }
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
-  const [selectedProperty, setSelectedProperty] = useState("lake");
+  const { reservationSettings } = useReservationSettings();
+  const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // Get property name from database or use fallback
+  const propertyName = reservationSettings?.property_name || "Property";
+  
   const properties = [
-    { id: "lake", name: "Lake House", location: "Lake Tahoe, CA" },
-    { id: "city", name: "City Apartment", location: "San Francisco, CA" },
-    { id: "beach", name: "Beach Condo", location: "Santa Monica, CA" }
+    { id: "property", name: propertyName, location: reservationSettings?.address || "Location not set" }
   ];
 
   const bookings = [
-    { id: 1, property: "Lake House", user: "Sarah M.", startDate: "2024-12-15", endDate: "2024-12-17", status: "confirmed" },
-    { id: 2, property: "City Apartment", user: "Mike R.", startDate: "2024-12-20", endDate: "2024-12-22", status: "pending" },
-    { id: 3, property: "Beach Condo", user: "Lisa K.", startDate: "2024-12-25", endDate: "2024-12-30", status: "confirmed" },
-    { id: 4, property: "Lake House", user: "Tom B.", startDate: "2024-12-28", endDate: "2024-12-31", status: "confirmed" }
+    { id: 1, property: propertyName, user: "Sarah M.", startDate: "2024-12-15", endDate: "2024-12-17", status: "confirmed" },
+    { id: 2, property: propertyName, user: "Mike R.", startDate: "2024-12-20", endDate: "2024-12-22", status: "pending" },
+    { id: 3, property: propertyName, user: "Lisa K.", startDate: "2024-12-25", endDate: "2024-12-30", status: "confirmed" },
+    { id: 4, property: propertyName, user: "Tom B.", startDate: "2024-12-28", endDate: "2024-12-31", status: "confirmed" }
   ];
 
   // Generate calendar days for the current month
