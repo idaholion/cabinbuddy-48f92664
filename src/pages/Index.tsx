@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
+import { FeedbackButton } from "@/components/FeedbackButton";
+import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -36,6 +38,9 @@ const UserInfo = () => {
 
 const Index = () => {
   const { isSupervisor } = useSupervisor();
+  
+  // Monitor performance
+  usePerformanceMonitoring();
 
   useEffect(() => {
     console.log("Index component mounted, checking font");
@@ -192,6 +197,9 @@ const Index = () => {
           </div>
 
         </div>
+
+        {/* Feedback Button */}
+        <FeedbackButton />
       </div>
     </div>
   );
