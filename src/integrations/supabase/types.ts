@@ -424,43 +424,55 @@ export type Database = {
       }
       reservations: {
         Row: {
+          allocated_end_date: string | null
+          allocated_start_date: string | null
           created_at: string
           end_date: string
           family_group: string
           guest_count: number | null
           id: string
+          nights_used: number | null
           organization_id: string
           property_name: string | null
           start_date: string
           status: string | null
+          time_period_number: number | null
           total_cost: number | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          allocated_end_date?: string | null
+          allocated_start_date?: string | null
           created_at?: string
           end_date: string
           family_group: string
           guest_count?: number | null
           id?: string
+          nights_used?: number | null
           organization_id: string
           property_name?: string | null
           start_date: string
           status?: string | null
+          time_period_number?: number | null
           total_cost?: number | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          allocated_end_date?: string | null
+          allocated_start_date?: string | null
           created_at?: string
           end_date?: string
           family_group?: string
           guest_count?: number | null
           id?: string
+          nights_used?: number | null
           organization_id?: string
           property_name?: string | null
           start_date?: string
           status?: string | null
+          time_period_number?: number | null
           total_cost?: number | null
           updated_at?: string
           user_id?: string | null
@@ -579,6 +591,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      time_period_usage: {
+        Row: {
+          created_at: string
+          family_group: string
+          id: string
+          last_selection_date: string | null
+          organization_id: string
+          rotation_year: number
+          selection_deadline: string | null
+          time_periods_allowed: number
+          time_periods_used: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_group: string
+          id?: string
+          last_selection_date?: string | null
+          organization_id: string
+          rotation_year: number
+          selection_deadline?: string | null
+          time_periods_allowed?: number
+          time_periods_used?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_group?: string
+          id?: string
+          last_selection_date?: string | null
+          organization_id?: string
+          rotation_year?: number
+          selection_deadline?: string | null
+          time_periods_allowed?: number
+          time_periods_used?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_organizations: {
         Row: {

@@ -12,6 +12,10 @@ interface ReservationData {
   total_cost?: number;
   property_name?: string;
   status?: string;
+  allocated_start_date?: string;
+  allocated_end_date?: string;
+  time_period_number?: number;
+  nights_used?: number;
 }
 
 export const useReservations = () => {

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Calendar, MapPin, User, Clock, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservations } from "@/hooks/useReservations";
+import { useTimePeriods } from "@/hooks/useTimePeriods";
+import { useRotationOrder } from "@/hooks/useRotationOrder";
+import { BookingForm } from "@/components/BookingForm";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -15,9 +17,13 @@ interface PropertyCalendarProps {
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const { reservationSettings } = useReservationSettings();
-  const { createReservation, loading } = useReservations();
+  const { reservations, refetchReservations } = useReservations();
+  const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
+  const { rotationData } = useRotationOrder();
+  
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showBookingForm, setShowBookingForm] = useState(false);
 
   // Get property name from database or use fallback
   const propertyName = reservationSettings?.property_name || "Property";
@@ -26,31 +32,20 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
     { id: "property", name: propertyName, location: reservationSettings?.address || "Location not set" }
   ];
 
-  // Handle booking complete - save mock data for demonstration
-  const handleBookingComplete = async () => {
-    const mockReservation = {
-      start_date: "2024-12-15",
-      end_date: "2024-12-17",
-      family_group: "Smith Family",
-      guest_count: 4,
-      property_name: propertyName,
-      status: "confirmed"
-    };
-    
-    await createReservation(mockReservation);
+  // Calculate time period windows for current month
+  const timePeriodWindows = calculateTimePeriodWindows(
+    currentMonth.getFullYear(),
+    currentMonth
+  );
+
+  const handleBookingComplete = () => {
+    refetchReservations();
   };
 
   const handleEditBookingAction = (action: string) => {
     console.log(`Edit booking action: ${action}`);
     // TODO: Implement specific actions for each menu item
   };
-
-  const bookings = [
-    { id: 1, property: propertyName, user: "Sarah M.", startDate: "2024-12-15", endDate: "2024-12-17", status: "confirmed" },
-    { id: 2, property: propertyName, user: "Mike R.", startDate: "2024-12-20", endDate: "2024-12-22", status: "pending" },
-    { id: 3, property: propertyName, user: "Lisa K.", startDate: "2024-12-25", endDate: "2024-12-30", status: "confirmed" },
-    { id: 4, property: propertyName, user: "Tom B.", startDate: "2024-12-28", endDate: "2024-12-31", status: "confirmed" }
-  ];
 
   // Generate calendar days for the current month
   const generateCalendarDays = () => {
@@ -84,12 +79,17 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   };
 
   const getBookingsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return bookings.filter(booking => {
-      const start = new Date(booking.startDate);
-      const end = new Date(booking.endDate);
-      return date >= start && date <= end;
+    return reservations.filter(reservation => {
+      const startDate = new Date(reservation.start_date);
+      const endDate = new Date(reservation.end_date);
+      return date >= startDate && date <= endDate;
     });
+  };
+
+  const getTimePeriodForDate = (date: Date) => {
+    return timePeriodWindows.find(window => 
+      date >= window.startDate && date <= window.endDate
+    );
   };
 
   return (
@@ -110,9 +110,11 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button>New Booking</Button>
-              <Button variant="outline" onClick={handleBookingComplete} disabled={loading}>
-                {loading ? "Saving..." : "Booking Complete"}
+              <Button onClick={() => setShowBookingForm(true)}>
+                New Booking
+              </Button>
+              <Button variant="outline" onClick={handleBookingComplete}>
+                Booking Complete
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -148,49 +150,60 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         </CardHeader>
         <CardContent>
           {/* Calendar Header */}
-
-          {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1 mb-4">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+              <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
                 {day}
               </div>
             ))}
           </div>
 
+          {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1">
             {calendarDays.map((day, index) => {
               const dayBookings = getBookingsForDate(day);
+              const timePeriod = getTimePeriodForDate(day);
               const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
               const isToday = day.toDateString() === new Date().toDateString();
               
               return (
                 <div
                   key={index}
-                  className={`min-h-20 p-1 border border-gray-200 ${
-                    !isCurrentMonth ? 'bg-gray-50' : 'bg-white'
-                  } ${isToday ? 'ring-2 ring-blue-500' : ''} hover:bg-blue-50 transition-colors cursor-pointer`}
+                  className={`min-h-20 p-1 border border-border relative ${
+                    !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
+                  } ${isToday ? 'ring-2 ring-primary' : ''} ${
+                    timePeriod ? 'border-l-4 border-l-accent' : ''
+                  } hover:bg-accent/10 transition-colors cursor-pointer`}
                 >
                   <div className={`text-sm font-medium ${
-                    !isCurrentMonth ? 'text-gray-400' : isToday ? 'text-blue-600' : 'text-gray-900'
+                    !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
                   }`}>
                     {day.getDate()}
                   </div>
+                  
+                  {/* Time period indicator */}
+                  {timePeriod && isCurrentMonth && (
+                    <div className="text-xs text-muted-foreground mb-1 truncate">
+                      {timePeriod.familyGroup}
+                    </div>
+                  )}
+                  
+                  {/* Bookings */}
                   <div className="mt-1 space-y-1">
                     {dayBookings.slice(0, 2).map((booking, i) => (
                       <div
                         key={i}
                         className={`text-xs px-1 py-0.5 rounded truncate ${
                           booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                         }`}
                       >
-                        {booking.property}
+                        {booking.family_group}
                       </div>
                     ))}
                     {dayBookings.length > 2 && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         +{dayBookings.length - 2} more
                       </div>
                     )}
@@ -206,36 +219,79 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
-          <CardDescription>Next 30 days</CardDescription>
+          <CardDescription>Current month reservations</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{booking.user}</div>
-                    <div className="text-sm text-gray-500 flex items-center">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      {booking.property}
+            {reservations
+              .filter(reservation => {
+                const startDate = new Date(reservation.start_date);
+                return startDate.getMonth() === currentMonth.getMonth();
+              })
+              .slice(0, 10)
+              .map((reservation) => (
+                <div key={reservation.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-10 w-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-primary-foreground" />
                     </div>
-                    <div className="text-sm text-gray-500 flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {booking.startDate} to {booking.endDate}
+                    <div>
+                      <div className="font-medium">{reservation.family_group}</div>
+                      <div className="text-sm text-muted-foreground flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {reservation.property_name || propertyName}
+                      </div>
+                      <div className="text-sm text-muted-foreground flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {new Date(reservation.start_date).toLocaleDateString()} to {new Date(reservation.end_date).toLocaleDateString()}
+                      </div>
+                      {reservation.nights_used && (
+                        <div className="text-xs text-muted-foreground">
+                          {reservation.nights_used} nights • Period #{reservation.time_period_number}
+                        </div>
+                      )}
                     </div>
                   </div>
+                  <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
+                    {reservation.status}
+                  </Badge>
                 </div>
-                <Badge variant={booking.status === "confirmed" ? "default" : "secondary"}>
-                  {booking.status}
-                </Badge>
+              ))}
+            
+            {reservations.filter(reservation => {
+              const startDate = new Date(reservation.start_date);
+              return startDate.getMonth() === currentMonth.getMonth();
+            }).length === 0 && (
+              <p className="text-muted-foreground text-center py-4">No reservations this month</p>
+            )}
+            
+            {/* Time period usage summary */}
+            {timePeriodUsage.length > 0 && (
+              <div className="mt-4 p-3 bg-muted/30 rounded">
+                <h4 className="text-sm font-medium mb-2">Time Period Usage ({currentMonth.getFullYear()})</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {timePeriodUsage.map((usage) => (
+                    <div key={usage.family_group} className="text-xs">
+                      <span className="font-medium">{usage.family_group}:</span>
+                      <span className="text-muted-foreground ml-1">
+                        {usage.time_periods_used}/{usage.time_periods_allowed} periods
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Booking Form Dialog */}
+      <BookingForm 
+        open={showBookingForm}
+        onOpenChange={setShowBookingForm}
+        currentMonth={currentMonth}
+        onBookingComplete={handleBookingComplete}
+      />
     </div>
   );
 };

@@ -1,0 +1,344 @@
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { useForm } from 'react-hook-form';
+import { useToast } from '@/hooks/use-toast';
+import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { useReservations } from '@/hooks/useReservations';
+import { useFamilyGroups } from '@/hooks/useFamilyGroups';
+import { cn } from '@/lib/utils';
+
+interface BookingFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentMonth: Date;
+  onBookingComplete?: () => void;
+}
+
+interface BookingFormData {
+  startDate: Date;
+  endDate: Date;
+  familyGroup: string;
+  guestCount: number;
+  totalCost?: number;
+}
+
+export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete }: BookingFormProps) {
+  const { toast } = useToast();
+  const { familyGroups } = useFamilyGroups();
+  const { createReservation, loading: reservationLoading } = useReservations();
+  const { 
+    calculateTimePeriodWindows, 
+    validateBooking, 
+    updateTimePeriodUsage,
+    timePeriodUsage 
+  } = useTimePeriods();
+  
+  const [submitting, setSubmitting] = useState(false);
+
+  const form = useForm<BookingFormData>({
+    defaultValues: {
+      startDate: new Date(),
+      endDate: new Date(),
+      familyGroup: '',
+      guestCount: 1,
+      totalCost: 0
+    }
+  });
+
+  const watchedStartDate = form.watch('startDate');
+  const watchedEndDate = form.watch('endDate');
+  const watchedFamilyGroup = form.watch('familyGroup');
+
+  // Calculate time period windows for current month
+  const timePeriodWindows = calculateTimePeriodWindows(
+    currentMonth.getFullYear(),
+    currentMonth
+  );
+
+  // Validate current form state
+  const currentValidation = watchedStartDate && watchedEndDate && watchedFamilyGroup
+    ? validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
+    : { isValid: false, errors: [] };
+
+  // Find the relevant time period window for the selected family group
+  const relevantWindow = timePeriodWindows.find(window => 
+    window.familyGroup === watchedFamilyGroup &&
+    watchedStartDate >= window.startDate &&
+    watchedEndDate <= window.endDate
+  );
+
+  // Check if family group can still make bookings
+  const familyUsage = timePeriodUsage.find(u => u.family_group === watchedFamilyGroup);
+  const canMakeBooking = !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+
+  const onSubmit = async (data: BookingFormData) => {
+    // Final validation
+    const validation = validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
+    
+    if (!validation.isValid) {
+      toast({
+        title: "Booking Invalid",
+        description: validation.errors.join('. '),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Calculate nights and find the relevant window
+      const nights = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const window = timePeriodWindows.find(w => 
+        w.familyGroup === data.familyGroup &&
+        data.startDate >= w.startDate &&
+        data.endDate <= w.endDate
+      );
+
+      // Create the reservation with time period tracking
+      const reservation = await createReservation({
+        start_date: data.startDate.toISOString().split('T')[0],
+        end_date: data.endDate.toISOString().split('T')[0],
+        family_group: data.familyGroup,
+        guest_count: data.guestCount,
+        total_cost: data.totalCost,
+        // Add time period tracking fields
+        allocated_start_date: window?.startDate.toISOString().split('T')[0],
+        allocated_end_date: window?.endDate.toISOString().split('T')[0],
+        time_period_number: window?.periodNumber,
+        nights_used: nights
+      });
+
+      if (reservation) {
+        // Update time period usage
+        await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
+        
+        toast({
+          title: "Booking Confirmed",
+          description: `Successfully booked ${nights} nights for ${data.familyGroup}`,
+        });
+
+        // Reset form and close dialog
+        form.reset();
+        onOpenChange(false);
+        onBookingComplete?.();
+      }
+    } catch (error) {
+      console.error('Booking submission error:', error);
+      toast({
+        title: "Booking Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>New Booking</DialogTitle>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Family Group Selection */}
+            <FormField
+              control={form.control}
+              name="familyGroup"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Family Group</FormLabel>
+                  <FormControl>
+                    <select 
+                      {...field} 
+                      className="w-full p-2 border rounded-md bg-background"
+                      required
+                    >
+                      <option value="">Select Family Group</option>
+                      {familyGroups.map((group) => (
+                        <option key={group.id} value={group.name}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Date Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Check-in Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Check-out Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date <= watchedStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Guest Count */}
+            <FormField
+              control={form.control}
+              name="guestCount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Guests</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      max="20"
+                      {...field} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Time Period Info */}
+            {relevantWindow && (
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">Time Period Information</h4>
+                <div className="text-sm space-y-1">
+                  <p>Allocated Period: {format(relevantWindow.startDate, "PPP")} - {format(relevantWindow.endDate, "PPP")}</p>
+                  <p>Maximum Nights: {relevantWindow.maxNights}</p>
+                  {familyUsage && (
+                    <p>Periods Used: {familyUsage.time_periods_used} / {familyUsage.time_periods_allowed}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Validation Messages */}
+            {!currentValidation.isValid && currentValidation.errors.length > 0 && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <h4 className="font-medium text-destructive mb-2">Booking Issues:</h4>
+                <ul className="text-sm text-destructive space-y-1">
+                  {currentValidation.errors.map((error, index) => (
+                    <li key={index}>• {error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {!canMakeBooking && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">
+                  This family group has already used all allocated time periods for this year.
+                </p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={
+                  !currentValidation.isValid || 
+                  !canMakeBooking || 
+                  submitting || 
+                  reservationLoading
+                }
+              >
+                {submitting ? "Creating Booking..." : "Confirm Booking"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
