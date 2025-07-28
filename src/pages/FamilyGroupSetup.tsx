@@ -193,27 +193,25 @@ const FamilyGroupSetup = () => {
               </div>
               
               {/* Alternate Lead Selection */}
-              {hostMembers.some(member => member.name.trim() !== '') && (
-                <div className="mt-4 p-4 border rounded-lg bg-muted/20">
-                  <h4 className="text-md font-semibold text-center mb-2">Alternate Group Lead</h4>
-                  <p className="text-sm text-muted-foreground text-center mb-3">Select which host member serves as the alternate group lead</p>
-                  <Select value={alternateLeadId} onValueChange={setAlternateLeadId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select alternate lead (optional)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      <SelectItem value="">None selected</SelectItem>
-                      {hostMembers
-                        .filter(member => member.name.trim() !== '')
-                        .map((member, index) => (
-                          <SelectItem key={index} value={member.name}>
-                            {member.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="mt-4 p-4 border rounded-lg bg-muted/20">
+                <h4 className="text-md font-semibold text-center mb-2">Alternate Group Lead</h4>
+                <p className="text-sm text-muted-foreground text-center mb-3">Select which host member serves as the alternate group lead</p>
+                <Select value={alternateLeadId} onValueChange={setAlternateLeadId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select alternate lead (optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="">None selected</SelectItem>
+                    {hostMembers
+                      .filter(member => member.name.trim() !== '')
+                      .map((member, index) => (
+                        <SelectItem key={index} value={member.name}>
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
 
@@ -224,37 +222,37 @@ const FamilyGroupSetup = () => {
               {hostMembers.map((member, index) => (
                 <div key={index} className="space-y-2">
                   <h4 className="text-md font-medium">Host Member {index + 1}</h4>
-                  <div className="grid gap-2 grid-cols-12 items-center">
-                    <div className="col-span-4">
-                      <Input 
-                        placeholder="Full name"
-                        value={member.name}
-                        onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <PhoneInput 
-                        value={member.phone}
-                        onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
-                      />
-                    </div>
-                    <div className="col-span-5">
-                      <Input 
-                        type="email" 
-                        placeholder="email@example.com"
-                        value={member.email}
-                        onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <RadioGroupItem 
-                        value={`host_${index}`} 
-                        id={`host_${index}`}
-                        checked={reservationPermission === `host_${index}`}
-                        onClick={() => setReservationPermission(`host_${index}`)}
-                      />
-                    </div>
-                  </div>
+                   <div className="grid gap-2 grid-cols-12 items-center">
+                     <div className="col-span-4">
+                       <Input 
+                         placeholder="Full name"
+                         value={member.name}
+                         onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                       />
+                     </div>
+                     <div className="col-span-1">
+                       <PhoneInput 
+                         value={member.phone}
+                         onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
+                       />
+                     </div>
+                     <div className="col-span-6">
+                       <Input 
+                         type="email" 
+                         placeholder="email@example.com"
+                         value={member.email}
+                         onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
+                       />
+                     </div>
+                     <div className="col-span-1 flex justify-center">
+                       <RadioGroupItem 
+                         value={`host_${index}`} 
+                         id={`host_${index}`}
+                         checked={reservationPermission === `host_${index}`}
+                         onClick={() => setReservationPermission(`host_${index}`)}
+                       />
+                     </div>
+                   </div>
                 </div>
               ))}
               
