@@ -33,6 +33,7 @@ export default function ReservationSetup() {
   const [firstLastOption, setFirstLastOption] = useState("first");
   const [rotationOrder, setRotationOrder] = useState<string[]>([]);
   const [startMonth, setStartMonth] = useState("January");
+  const [selectionDays, setSelectionDays] = useState("14");
   
   // Setup method selection
   const [setupMethod, setSetupMethod] = useState("rotation");
@@ -87,6 +88,7 @@ export default function ReservationSetup() {
           setStartTime(data.start_time || "12:00 PM");
           setFirstLastOption(data.first_last_option || "first");
           setStartMonth(data.start_month || "January");
+          setSelectionDays(data.selection_days?.toString() || "14");
           
           // Load the rotation order
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
@@ -150,6 +152,7 @@ export default function ReservationSetup() {
           start_time: startTime,
           first_last_option: firstLastOption,
           start_month: startMonth,
+          selection_days: parseInt(selectionDays),
         }, {
           onConflict: 'organization_id,rotation_year'
         });
@@ -303,6 +306,21 @@ export default function ReservationSetup() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span>Each person will have</span>
+                <Select value={selectionDays} onValueChange={setSelectionDays}>
+                  <SelectTrigger className="w-16">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[3, 5, 7, 10, 14, 21, 30].map((days) => (
+                      <SelectItem key={days} value={days.toString()}>{days}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span>days to make their reservations in the calendar before it moves to the next person in line.</span>
               </div>
               
               <div className="space-y-3">
