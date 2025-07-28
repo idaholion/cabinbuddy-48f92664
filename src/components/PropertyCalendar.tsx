@@ -11,7 +11,7 @@ interface PropertyCalendarProps {
 }
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
-  const [selectedProperty, setSelectedProperty] = useState("all");
+  const [selectedProperty, setSelectedProperty] = useState("lake");
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const properties = [
@@ -85,7 +85,6 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   <SelectValue placeholder="Select property" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Properties</SelectItem>
                   {properties.map((property) => (
                     <SelectItem key={property.id} value={property.id}>
                       {property.name}
