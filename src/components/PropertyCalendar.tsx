@@ -11,22 +11,38 @@ import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { BookingForm } from "@/components/BookingForm";
 import { TradeRequestForm } from "@/components/TradeRequestForm";
+import { TradeRequestsManager } from "@/components/TradeRequestsManager";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useTradeRequests } from "@/hooks/useTradeRequests";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
 }
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
+  const { user } = useAuth();
   const { reservationSettings } = useReservationSettings();
   const { reservations, refetchReservations } = useReservations();
   const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
   const { rotationData } = useRotationOrder();
+  const { familyGroups } = useFamilyGroups();
+  const { tradeRequests } = useTradeRequests();
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
+
+  // Get user's family group and pending trade requests
+  const userFamilyGroup = familyGroups.find(fg => 
+    fg.host_members?.some((member: any) => member.email === user?.email)
+  )?.name;
+
+  const pendingTradeRequests = tradeRequests.filter(tr => 
+    tr.target_family_group === userFamilyGroup && tr.status === 'pending'
+  ).length;
 
   // Get property name from database or use fallback
   const propertyName = reservationSettings?.property_name || "Property";
@@ -128,8 +144,13 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant="outline" className="relative">
                     Edit Booking <ChevronDown className="h-4 w-4 ml-1" />
+                    {pendingTradeRequests > 0 && (
+                      <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                        {pendingTradeRequests}
+                      </Badge>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">
@@ -307,6 +328,11 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Trade Requests Manager */}
+      {pendingTradeRequests > 0 || tradeRequests.length > 0 ? (
+        <TradeRequestsManager />
+      ) : null}
 
       {/* Booking Form Dialog */}
       <BookingForm 

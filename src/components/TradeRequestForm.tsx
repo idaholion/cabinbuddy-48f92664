@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTradeRequests } from '@/hooks/useTradeRequests';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 interface TradeRequestFormProps {
@@ -92,6 +93,19 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
       const result = await createTradeRequest(tradeData, userFamilyGroup);
 
       if (result) {
+        // Send notification email
+        try {
+          await supabase.functions.invoke('send-trade-notification', {
+            body: {
+              tradeRequestId: result.id,
+              notificationType: 'request_created'
+            }
+          });
+        } catch (emailError) {
+          console.error('Failed to send notification email:', emailError);
+          // Don't fail the whole request if email fails
+        }
+
         form.reset();
         onOpenChange(false);
         onTradeComplete?.();
