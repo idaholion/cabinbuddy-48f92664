@@ -40,6 +40,7 @@ import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinan
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
 import { SidebarDemo } from "./components/SidebarExample";
+import { MainLayout } from "./components/MainLayout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,30 +69,30 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/home" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/select-organization" element={<ProtectedRoute><SelectOrganization /></ProtectedRoute>} />
-            <Route path="/setup" element={<ProtectedRoute><Setup /></ProtectedRoute>} />
-          <Route path="/family-setup" element={<ProtectedRoute><FamilySetup /></ProtectedRoute>} />
-          <Route path="/select-family-group" element={<ProtectedRoute><SelectFamilyGroup /></ProtectedRoute>} />
-          <Route path="/family-group-setup" element={<ProtectedRoute><FamilyGroupSetup /></ProtectedRoute>} />
-          <Route path="/finance-reports" element={<ProtectedRoute><FinancialSetup /></ProtectedRoute>} />
-          <Route path="/financial-setup" element={<ProtectedRoute><FinancialSetupPage /></ProtectedRoute>} />
-          <Route path="/reservation-setup" element={<ProtectedRoute><ReservationSetup /></ProtectedRoute>} />
-          <Route path="/calendar" element={<ProtectedRoute><CabinCalendar /></ProtectedRoute>} />
-          <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
-          <Route path="/daily-check-in" element={<ProtectedRoute><DailyCheckIn /></ProtectedRoute>} />
-          <Route path="/add-receipt" element={<ProtectedRoute><AddReceipt /></ProtectedRoute>} />
-          <Route path="/shopping-list" element={<ProtectedRoute><ShoppingList /></ProtectedRoute>} />
-          <Route path="/cabin-rules" element={<ProtectedRoute><CabinRules /></ProtectedRoute>} />
-          <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
-          <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><CabinSeasonalDocs /></ProtectedRoute>} />
-          <Route path="/checkout-list" element={<ProtectedRoute><CheckoutList /></ProtectedRoute>} />
-          <Route path="/checkout-final" element={<ProtectedRoute><CheckoutFinal /></ProtectedRoute>} />
-          <Route path="/photos" element={<ProtectedRoute><PhotoSharing /></ProtectedRoute>} />
-          <Route path="/supervisor" element={<SupervisorRoute><SupervisorDashboard /></SupervisorRoute>} />
-          <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><SupervisorOrganizationFamilyGroups /></SupervisorRoute>} />
-          <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><SupervisorOrganizationFinancial /></SupervisorRoute>} />
-           <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><SupervisorOrganizationReservation /></SupervisorRoute>} />
+            <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
+            <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
+            <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
+          <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />
+          <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
+          <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><FamilyGroupSetup /></MainLayout></ProtectedRoute>} />
+          <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><FinancialSetup /></MainLayout></ProtectedRoute>} />
+          <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><FinancialSetupPage /></MainLayout></ProtectedRoute>} />
+          <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><ReservationSetup /></MainLayout></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
+          <Route path="/check-in" element={<ProtectedRoute><MainLayout><CheckIn /></MainLayout></ProtectedRoute>} />
+          <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><DailyCheckIn /></MainLayout></ProtectedRoute>} />
+          <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><AddReceipt /></MainLayout></ProtectedRoute>} />
+          <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><ShoppingList /></MainLayout></ProtectedRoute>} />
+          <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><CabinRules /></MainLayout></ProtectedRoute>} />
+          <Route path="/documents" element={<ProtectedRoute><MainLayout><Documents /></MainLayout></ProtectedRoute>} />
+          <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><CabinSeasonalDocs /></MainLayout></ProtectedRoute>} />
+          <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><CheckoutList /></MainLayout></ProtectedRoute>} />
+          <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><CheckoutFinal /></MainLayout></ProtectedRoute>} />
+          <Route path="/photos" element={<ProtectedRoute><MainLayout><PhotoSharing /></MainLayout></ProtectedRoute>} />
+          <Route path="/supervisor" element={<SupervisorRoute><MainLayout><SupervisorDashboard /></MainLayout></SupervisorRoute>} />
+          <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFamilyGroups /></MainLayout></SupervisorRoute>} />
+          <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFinancial /></MainLayout></SupervisorRoute>} />
+           <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><MainLayout><SupervisorOrganizationReservation /></MainLayout></SupervisorRoute>} />
            <Route path="/sidebar-demo" element={<SidebarDemo />} />
            <Route path="/fonts" element={<FontShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
