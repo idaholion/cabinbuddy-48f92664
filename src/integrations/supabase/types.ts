@@ -162,6 +162,7 @@ export type Database = {
       family_groups: {
         Row: {
           alternate_lead_id: string | null
+          color: string | null
           created_at: string
           host_members: Json | null
           id: string
@@ -174,6 +175,7 @@ export type Database = {
         }
         Insert: {
           alternate_lead_id?: string | null
+          color?: string | null
           created_at?: string
           host_members?: Json | null
           id?: string
@@ -186,6 +188,7 @@ export type Database = {
         }
         Update: {
           alternate_lead_id?: string | null
+          color?: string | null
           created_at?: string
           host_members?: Json | null
           id?: string
@@ -897,6 +900,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_default_colors: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_available_colors: {
+        Args: { p_organization_id: string; p_current_group_id?: string }
+        Returns: string[]
+      }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -24,6 +25,7 @@ interface FamilyGroup {
   lead_phone?: string;
   lead_email?: string;
   host_members?: HostMember[];
+  color?: string;
 }
 
 const SupervisorOrganizationFamilyGroups = () => {
@@ -43,6 +45,8 @@ const SupervisorOrganizationFamilyGroups = () => {
     { name: "", phone: "", email: "" }
   ]);
   const [newGroupName, setNewGroupName] = useState("");
+  const [groupColor, setGroupColor] = useState("");
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
 
   const fetchFamilyGroups = async () => {
     if (!organizationId) return;
@@ -68,8 +72,25 @@ const SupervisorOrganizationFamilyGroups = () => {
     }
   };
 
+  const fetchAvailableColors = async (currentGroupId?: string) => {
+    if (!organizationId) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_available_colors', {
+        p_organization_id: organizationId,
+        p_current_group_id: currentGroupId || null
+      });
+      
+      if (error) throw error;
+      setAvailableColors(data || []);
+    } catch (error) {
+      console.error('Error fetching available colors:', error);
+    }
+  };
+
   useEffect(() => {
     fetchFamilyGroups();
+    fetchAvailableColors();
   }, [organizationId]);
 
   useEffect(() => {
@@ -79,21 +100,27 @@ const SupervisorOrganizationFamilyGroups = () => {
         setLeadName(group.lead_name || "");
         setLeadPhone(group.lead_phone || "");
         setLeadEmail(group.lead_email || "");
+        setGroupColor(group.color || "");
         
         // Handle host members - ensure we have at least 3 empty slots
         const existingMembers = group.host_members || [];
         const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ name: "", phone: "", email: "" });
         setHostMembers([...existingMembers, ...emptyMembers]);
+        
+        // Fetch available colors for this group
+        fetchAvailableColors(group.id);
       }
     } else {
       setLeadName("");
       setLeadPhone("");
       setLeadEmail("");
+      setGroupColor("");
       setHostMembers([
         { name: "", phone: "", email: "" },
         { name: "", phone: "", email: "" },
         { name: "", phone: "", email: "" }
       ]);
+      fetchAvailableColors();
     }
   }, [selectedGroup, familyGroups]);
 
@@ -165,6 +192,7 @@ const SupervisorOrganizationFamilyGroups = () => {
           lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
           lead_email: leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+          color: groupColor || undefined,
         })
         .eq('id', group.id);
 
@@ -176,6 +204,7 @@ const SupervisorOrganizationFamilyGroups = () => {
       });
 
       fetchFamilyGroups();
+      fetchAvailableColors();
     } catch (error) {
       console.error('Error updating family group:', error);
       toast({
@@ -300,6 +329,22 @@ const SupervisorOrganizationFamilyGroups = () => {
                   </div>
                 </div>
 
+                {/* Color Selection */}
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Group Color</h3>
+                  <div className="space-y-1">
+                    <Label htmlFor="groupColor">Calendar Color</Label>
+                    <ColorPicker
+                      value={groupColor}
+                      onChange={setGroupColor}
+                      availableColors={availableColors}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This color will be used to identify this family group's reservations on the calendar.
+                    </p>
+                  </div>
+                </div>
+
                 {/* Host Members Section */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Additional Host Members</h3>
@@ -365,7 +410,15 @@ const SupervisorOrganizationFamilyGroups = () => {
               <div className="grid gap-3">
                 {familyGroups.map((group) => (
                   <div key={group.id} className="p-3 border rounded-lg">
-                    <div className="font-medium">{group.name}</div>
+                    <div className="flex items-center gap-2">
+                      {group.color && (
+                        <div
+                          className="w-4 h-4 rounded-full border border-border"
+                          style={{ backgroundColor: group.color }}
+                        />
+                      )}
+                      <div className="font-medium">{group.name}</div>
+                    </div>
                     {group.lead_name && (
                       <div className="text-sm text-muted-foreground">
                         Lead: {group.lead_name}

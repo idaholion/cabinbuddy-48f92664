@@ -336,6 +336,26 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
               </div>
             </div>
           </div>
+          
+          {/* Family Group Color Legend */}
+          {familyGroups.some(fg => fg.color) && (
+            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Family Group Colors</h4>
+              <div className="flex flex-wrap gap-3">
+                {familyGroups
+                  .filter(fg => fg.color)
+                  .map(familyGroup => (
+                    <div key={familyGroup.id} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full border border-border"
+                        style={{ backgroundColor: familyGroup.color }}
+                      />
+                      <span className="text-xs text-muted-foreground">{familyGroup.name}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {/* Calendar Header */}
@@ -405,23 +425,33 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                     <div className="mt-1 space-y-0.5">
                       {dayBookings.slice(0, 2).map((booking, i) => {
                         const isMyBooking = booking.family_group === userFamilyGroup;
+                        const familyGroup = familyGroups.find(fg => fg.name === booking.family_group);
+                        const groupColor = familyGroup?.color;
+                        
                         return (
                           <div
                             key={i}
-                            className={`text-xs px-1 py-0.5 rounded truncate transition-colors ${
-                              isMyBooking 
-                                ? 'bg-primary/20 text-primary-foreground border border-primary/30' 
-                                : booking.status === 'confirmed' 
-                                  ? 'bg-secondary/50 text-secondary-foreground' 
-                                  : 'bg-muted/60 text-muted-foreground'
+                            className={`text-xs px-1 py-0.5 rounded truncate transition-colors border ${
+                              groupColor 
+                                ? 'text-white' 
+                                : isMyBooking 
+                                  ? 'bg-primary/20 text-primary-foreground border-primary/30' 
+                                  : booking.status === 'confirmed' 
+                                    ? 'bg-secondary/50 text-secondary-foreground border-secondary/30' 
+                                    : 'bg-muted/60 text-muted-foreground border-muted/30'
                             } ${
                               booking.time_period_number ? 'border-l-2 border-l-accent' : ''
                             }`}
+                            style={{
+                              backgroundColor: groupColor || undefined,
+                              borderColor: groupColor ? `${groupColor}66` : undefined,
+                              textShadow: groupColor ? '0 1px 2px rgba(0,0,0,0.8)' : undefined
+                            }}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="truncate">{booking.family_group}</span>
+                              <span className="truncate font-medium">{booking.family_group}</span>
                               {booking.time_period_number && (
-                                <span className="ml-1 text-xs opacity-60">P{booking.time_period_number}</span>
+                                <span className="ml-1 text-xs opacity-80">P{booking.time_period_number}</span>
                               )}
                             </div>
                           </div>
@@ -476,19 +506,32 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        {dayBookings.map((booking, i) => (
-                          <div key={i} className="flex items-center justify-between text-sm">
-                            <span>{booking.family_group}</span>
-                            <div className="flex items-center space-x-2">
-                              {booking.time_period_number && (
-                                <Badge variant="secondary" className="text-xs">Period {booking.time_period_number}</Badge>
-                              )}
-                              <Badge variant={booking.status === 'confirmed' ? 'default' : 'outline'}>
-                                {booking.status}
-                              </Badge>
+                        {dayBookings.map((booking, i) => {
+                          const familyGroup = familyGroups.find(fg => fg.name === booking.family_group);
+                          const groupColor = familyGroup?.color;
+                          
+                          return (
+                            <div key={i} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                {groupColor && (
+                                  <div
+                                    className="w-3 h-3 rounded-full border border-border"
+                                    style={{ backgroundColor: groupColor }}
+                                  />
+                                )}
+                                <span>{booking.family_group}</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {booking.time_period_number && (
+                                  <Badge variant="secondary" className="text-xs">Period {booking.time_period_number}</Badge>
+                                )}
+                                <Badge variant={booking.status === 'confirmed' ? 'default' : 'outline'}>
+                                  {booking.status}
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -513,6 +556,12 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 return (
                   <div key={familyGroup.id} className="p-4 border border-border rounded-lg bg-card">
                     <div className="flex items-center space-x-3 mb-3">
+                      {familyGroup.color && (
+                        <div
+                          className="w-4 h-4 rounded-full border border-border"
+                          style={{ backgroundColor: familyGroup.color }}
+                        />
+                      )}
                       <Users className="h-5 w-5 text-primary" />
                       <h4 className="font-medium">{familyGroup.name}</h4>
                       <div className="flex-1 h-px bg-border"></div>
@@ -567,7 +616,18 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                        <User className="h-5 w-5 text-primary-foreground" />
                      </div>
                      <div>
-                       <div className="font-medium">{reservation.family_group}</div>
+                       <div className="flex items-center gap-2">
+                         {(() => {
+                           const familyGroup = familyGroups.find(fg => fg.name === reservation.family_group);
+                           return familyGroup?.color && (
+                             <div
+                               className="w-3 h-3 rounded-full border border-border"
+                               style={{ backgroundColor: familyGroup.color }}
+                             />
+                           );
+                         })()}
+                         <div className="font-medium">{reservation.family_group}</div>
+                       </div>
                        <div className="text-sm text-muted-foreground flex items-center">
                          <MapPin className="h-3 w-3 mr-1" />
                          {reservation.property_name || propertyName}

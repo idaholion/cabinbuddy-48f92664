@@ -17,7 +17,7 @@ interface FamilyGroupData {
   lead_email?: string;
   lead_phone?: string;
   host_members?: HostMember[];
-  
+  color?: string;
   alternate_lead_id?: string;
 }
 
@@ -237,6 +237,86 @@ export const useFamilyGroups = () => {
     }
   };
 
+  const getAvailableColors = async (currentGroupId?: string) => {
+    if (!organization?.id) return [];
+    
+    try {
+      const { data, error } = await supabase.rpc('get_available_colors', {
+        p_organization_id: organization.id,
+        p_current_group_id: currentGroupId || null
+      });
+      
+      if (error) {
+        console.error('Error getting available colors:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error in getAvailableColors:', error);
+      return [];
+    }
+  };
+
+  const updateFamilyGroupColor = async (groupId: string, color: string) => {
+    if (!user || !organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization found.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      const { data: updatedGroup, error } = await supabase
+        .from('family_groups')
+        .update({ color })
+        .eq('id', groupId)
+        .eq('organization_id', organization.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating family group color:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update family group color. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Parse the updated group data
+      const parsedUpdatedGroup = {
+        ...updatedGroup,
+        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as HostMember[]) : []
+      };
+      
+      setFamilyGroups(prev => 
+        prev.map(group => group.id === groupId ? parsedUpdatedGroup : group)
+      );
+      
+      toast({
+        title: "Success",
+        description: "Family group color updated successfully!",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error in updateFamilyGroupColor:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     familyGroups,
     loading,
@@ -244,5 +324,7 @@ export const useFamilyGroups = () => {
     updateFamilyGroup,
     renameFamilyGroup,
     refetchFamilyGroups: fetchFamilyGroups,
+    getAvailableColors,
+    updateFamilyGroupColor,
   };
 };
