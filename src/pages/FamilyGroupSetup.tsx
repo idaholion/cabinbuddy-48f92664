@@ -40,7 +40,7 @@ const FamilyGroupSetup = () => {
         { name: "", phone: "", email: "", role: "" }
       ],
       reservationPermission: "lead_only",
-      alternateLeadId: "",
+      alternateLeadId: "none",
     },
     mode: "onChange",
   });
@@ -93,7 +93,7 @@ const FamilyGroupSetup = () => {
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "");
       setValue("leadEmail", selectedFamilyGroup.lead_email || "");
       setValue("reservationPermission", selectedFamilyGroup.reservation_permission || "lead_only");
-      setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "");
+      setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none");
       
       // Populate host members with role field
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
@@ -146,7 +146,7 @@ const FamilyGroupSetup = () => {
           lead_email: data.leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
           reservation_permission: data.reservationPermission,
-          alternate_lead_id: data.alternateLeadId === "" ? undefined : data.alternateLeadId,
+          alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
         
         toast({
@@ -161,7 +161,7 @@ const FamilyGroupSetup = () => {
           lead_email: data.leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
           reservation_permission: data.reservationPermission,
-          alternate_lead_id: data.alternateLeadId === "" ? undefined : data.alternateLeadId,
+          alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
         
         toast({
@@ -516,7 +516,7 @@ const FamilyGroupSetup = () => {
                             <SelectValue placeholder="Select alternate lead (optional)" />
                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
-                            <SelectItem value="">None selected</SelectItem>
+                            <SelectItem value="none">None selected</SelectItem>
                             {watchedData.hostMembers
                               ?.filter(member => member.name && member.name.trim() !== '')
                               .map((member, index) => (
