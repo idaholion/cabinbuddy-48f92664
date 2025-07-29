@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HelpCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import {
   Dialog,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useCalendarKeeperAssistance } from "@/hooks/useCalendarKeeperAssistance";
+import { useAutoSaveForm } from "@/hooks/useAutoSaveForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CalendarKeeperAssistanceDialogProps {
@@ -39,6 +40,15 @@ export const CalendarKeeperAssistanceDialog = ({ children }: CalendarKeeperAssis
 
   const { createRequest, loading, requests } = useCalendarKeeperAssistance();
 
+  const { clearSavedData } = useAutoSaveForm({
+    formData,
+    formKey: 'calendar-keeper-assistance',
+    onLoad: (savedData) => {
+      setFormData({ ...formData, ...savedData });
+    },
+    enabled: isOpen,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -48,6 +58,7 @@ export const CalendarKeeperAssistanceDialog = ({ children }: CalendarKeeperAssis
 
     const success = await createRequest(formData);
     if (success) {
+      clearSavedData();
       setFormData({
         subject: '',
         description: '',

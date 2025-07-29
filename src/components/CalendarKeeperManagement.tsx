@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MessageSquare, CheckCircle, Clock, AlertTriangle, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,44 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SearchFilter } from "@/components/ui/search-filter";
 import { useCalendarKeeperAssistance, CalendarKeeperRequest } from "@/hooks/useCalendarKeeperAssistance";
+import { supabase } from "@/integrations/supabase/client";
 
 export const CalendarKeeperManagement = () => {
   const { requests, updateRequestStatus, loading } = useCalendarKeeperAssistance();
   const [selectedRequest, setSelectedRequest] = useState<CalendarKeeperRequest | null>(null);
   const [response, setResponse] = useState("");
   const [newStatus, setNewStatus] = useState<'in_progress' | 'resolved' | 'closed'>('in_progress');
+  
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [urgencyFilter, setUrgencyFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // Real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('calendar-keeper-requests')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'calendar_keeper_requests'
+        },
+        () => {
+          // Refresh requests when changes occur
+          window.location.reload();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,8 +91,24 @@ export const CalendarKeeperManagement = () => {
     }
   };
 
+  // Filtered and searched requests
+  const filteredRequests = useMemo(() => {
+    return requests.filter(request => {
+      const matchesSearch = 
+        request.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.requester_family_group.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+      const matchesUrgency = urgencyFilter === "all" || request.urgency === urgencyFilter;
+      const matchesCategory = categoryFilter === "all" || request.category === categoryFilter;
+      
+      return matchesSearch && matchesStatus && matchesUrgency && matchesCategory;
+    });
+  }, [requests, searchQuery, statusFilter, urgencyFilter, categoryFilter]);
+
   const filterRequestsByStatus = (status: string) => {
-    return requests.filter(req => req.status === status);
+    return filteredRequests.filter(req => req.status === status);
   };
 
   const openRequests = filterRequestsByStatus('open');
@@ -81,6 +128,17 @@ export const CalendarKeeperManagement = () => {
           <Badge variant="secondary">{resolvedRequests.length} Resolved</Badge>
         </div>
       </div>
+
+      <SearchFilter
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        urgencyFilter={urgencyFilter}
+        onUrgencyChange={setUrgencyFilter}
+        categoryFilter={categoryFilter}
+        onCategoryChange={setCategoryFilter}
+      />
 
       <Tabs defaultValue="open" className="space-y-4">
         <TabsList>
