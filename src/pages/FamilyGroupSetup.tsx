@@ -35,9 +35,9 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       hostMembers: [
-        { name: "", phone: "", email: "", role: "" },
-        { name: "", phone: "", email: "", role: "" },
-        { name: "", phone: "", email: "", role: "" }
+        { name: "", phone: "", email: "" },
+        { name: "", phone: "", email: "" },
+        { name: "", phone: "", email: "" }
       ],
       reservationPermission: "lead_only",
       alternateLeadId: "none",
@@ -95,21 +95,20 @@ const FamilyGroupSetup = () => {
       setValue("reservationPermission", selectedFamilyGroup.reservation_permission || "lead_only");
       setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none");
       
-      // Populate host members with role field
+      // Populate host members
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
         const formattedHostMembers = selectedFamilyGroup.host_members.map(member => ({
           name: member.name || "",
           phone: member.phone || "",
           email: member.email || "",
-          role: (member as any).role || "",
         }));
         setValue("hostMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         setValue("hostMembers", [
-          { name: "", phone: "", email: "", role: "" },
-          { name: "", phone: "", email: "", role: "" },
-          { name: "", phone: "", email: "", role: "" }
+          { name: "", phone: "", email: "" },
+          { name: "", phone: "", email: "" },
+          { name: "", phone: "", email: "" }
         ]);
       }
     } else if (watchedData.selectedGroup === "") {
@@ -133,7 +132,6 @@ const FamilyGroupSetup = () => {
         name: member.name || "",
         phone: member.phone || "",
         email: member.email || "",
-        role: member.role || "",
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
@@ -177,7 +175,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addHostMember = () => {
-    append({ name: "", phone: "", email: "", role: "" });
+    append({ name: "", phone: "", email: "" });
     setShowAllMembers(true);
   };
 
@@ -191,9 +189,9 @@ const FamilyGroupSetup = () => {
 
   const clearAllHostMembers = () => {
     setValue("hostMembers", [
-      { name: "", phone: "", email: "", role: "" },
-      { name: "", phone: "", email: "", role: "" },
-      { name: "", phone: "", email: "", role: "" }
+      { name: "", phone: "", email: "" },
+      { name: "", phone: "", email: "" },
+      { name: "", phone: "", email: "" }
     ]);
     setShowAllMembers(false);
   };
@@ -206,7 +204,7 @@ const FamilyGroupSetup = () => {
     
     // Ensure at least 3 slots
     while (filledMembers.length < 3) {
-      filledMembers.push({ name: "", phone: "", email: "", role: "" });
+      filledMembers.push({ name: "", phone: "", email: "" });
     }
     
     setValue("hostMembers", filledMembers);
@@ -521,7 +519,7 @@ const FamilyGroupSetup = () => {
                               ?.filter(member => member.name && member.name.trim() !== '')
                               .map((member, index) => (
                                 <SelectItem key={index} value={member.name || ""}>
-                                  {member.name} {member.role && `(${member.role})`}
+                                  {member.name}
                                 </SelectItem>
                               ))}
                           </SelectContent>

@@ -56,7 +56,6 @@ export const familyGroupSetupSchema = z.object({
       if (!val || val === "") return true;
       return z.string().email().safeParse(val).success;
     }, "Please enter a valid email address"),
-    role: z.string().optional(),
   }))
     .refine((members) => {
       // Check for duplicate names (non-empty only)

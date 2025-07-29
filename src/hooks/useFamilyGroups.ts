@@ -8,7 +8,6 @@ interface HostMember {
   name: string;
   phone: string;
   email: string;
-  role?: string;
 }
 
 interface FamilyGroupData {

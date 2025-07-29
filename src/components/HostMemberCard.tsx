@@ -111,7 +111,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <FormField
             control={control}
             name={`hostMembers.${index}.name`}
@@ -126,61 +126,35 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             )}
           />
 
-          <FormField
-            control={control}
-            name={`hostMembers.${index}.role`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Role/Relationship</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name={`hostMembers.${index}.email`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role (optional)" />
-                    </SelectTrigger>
+                    <Input {...field} type="email" placeholder="Enter email" />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="spouse">Spouse</SelectItem>
-                    <SelectItem value="partner">Partner</SelectItem>
-                    <SelectItem value="child">Child</SelectItem>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="friend">Friend</SelectItem>
-                    <SelectItem value="relative">Relative</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={control}
-            name={`hostMembers.${index}.email`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input {...field} type="email" placeholder="Enter email" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name={`hostMembers.${index}.phone`}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input {...field} type="tel" placeholder="Enter phone number" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={control}
+              name={`hostMembers.${index}.phone`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="tel" placeholder="Enter phone number" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {hasRootError && (
