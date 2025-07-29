@@ -39,7 +39,7 @@ import SupervisorOrganizationFamilyGroups from "./pages/SupervisorOrganizationFa
 import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinancial";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
-import { SidebarDemo } from "./components/SidebarExample";
+
 import { MainLayout } from "./components/MainLayout";
 
 const queryClient = new QueryClient({
@@ -93,7 +93,7 @@ const App = () => (
           <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFamilyGroups /></MainLayout></SupervisorRoute>} />
           <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFinancial /></MainLayout></SupervisorRoute>} />
            <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><MainLayout><SupervisorOrganizationReservation /></MainLayout></SupervisorRoute>} />
-           <Route path="/sidebar-demo" element={<SidebarDemo />} />
+           
            <Route path="/fonts" element={<FontShowcase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
