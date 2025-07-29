@@ -89,7 +89,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip="Dashboard">
                   <NavLink 
                     to="/home" 
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
@@ -112,7 +112,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {setupItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
@@ -136,7 +136,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {cabinItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
@@ -160,7 +160,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {resourcesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
@@ -184,7 +184,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {managementItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
