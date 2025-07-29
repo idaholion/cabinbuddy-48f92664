@@ -31,6 +31,7 @@ import CheckoutList from "./pages/CheckoutList";
 import CheckoutFinal from "./pages/CheckoutFinal";
 import PhotoSharing from "./pages/PhotoSharing";
 import FontShowcase from "./pages/FontShowcase";
+import BreadcrumbDemo from "./pages/BreadcrumbDemo";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import { SupervisorDashboard } from "./pages/SupervisorDashboard";
@@ -95,6 +96,7 @@ const App = () => (
            <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><MainLayout><SupervisorOrganizationReservation /></MainLayout></SupervisorRoute>} />
            
            <Route path="/fonts" element={<FontShowcase />} />
+           <Route path="/breadcrumbs" element={<MainLayout><BreadcrumbDemo /></MainLayout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
