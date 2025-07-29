@@ -75,12 +75,6 @@ export function AppSidebar() {
         .sidebar-item-text {
           opacity: 1 !important;
         }
-        [data-state="collapsed"] .sidebar-item-text {
-          display: none;
-        }
-        [data-collapsible="icon"] .sidebar-item-text {
-          display: none;
-        }
         [data-state="expanded"] .sidebar-item-text {
           display: inline !important;
           opacity: 1 !important;
