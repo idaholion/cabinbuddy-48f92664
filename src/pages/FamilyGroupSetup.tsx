@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -28,6 +28,7 @@ const FamilyGroupSetup = () => {
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
+  const hasLoadedAutoSave = useRef(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -69,10 +70,13 @@ const FamilyGroupSetup = () => {
     })
   );
 
-  // Load auto-saved data on mount
+  // Load auto-saved data on mount (only once)
   useEffect(() => {
+    if (hasLoadedAutoSave.current) return;
+    
     const savedData = loadSavedData();
-    if (savedData && !watchedData.selectedGroup) {
+    if (savedData && savedData.selectedGroup) {
+      hasLoadedAutoSave.current = true;
       Object.keys(savedData).forEach((key) => {
         setValue(key as keyof FamilyGroupSetupFormData, savedData[key]);
       });
@@ -82,7 +86,7 @@ const FamilyGroupSetup = () => {
         description: "Your previous work has been restored from auto-save.",
       });
     }
-  }, [loadSavedData, setValue, toast, watchedData.selectedGroup]);
+  }, [loadSavedData, setValue, toast]);
 
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
