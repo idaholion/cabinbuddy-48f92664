@@ -15,6 +15,7 @@ import { TradeRequestForm } from "@/components/TradeRequestForm";
 import { TradeRequestsManager } from "@/components/TradeRequestsManager";
 import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
+import { CalendarKeeperAssistanceDialog } from "@/components/CalendarKeeperAssistanceDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -94,8 +95,8 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       // This functionality already exists with the Edit buttons on individual reservations
       console.log('Edit my bookings - use the Edit buttons on individual reservations');
     } else if (action === 'request-assistance') {
-      // TODO: Implement calendar keeper assistance request
-      console.log('Request calendar keeper assistance - to be implemented');
+      // Assistance dialog is now handled by the CalendarKeeperAssistanceDialog component
+      console.log('Request calendar keeper assistance - handled by dialog component');
     }
   };
 
@@ -308,9 +309,11 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   <DropdownMenuItem onClick={() => handleEditBookingAction('request-trade')}>
                     Request trade with another group
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleEditBookingAction('request-assistance')}>
-                    Request Calendar Keeper assistance
-                  </DropdownMenuItem>
+                  <CalendarKeeperAssistanceDialog>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      Request Calendar Keeper assistance
+                    </DropdownMenuItem>
+                  </CalendarKeeperAssistanceDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -15,7 +15,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request';
   reservation: {
     id: string;
     family_group_name: string;
@@ -134,6 +134,24 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Reservation ID:</strong> ${reservation.id}</p>
           </div>
           <p>If you have any questions, please don't hesitate to contact us.</p>
+          <p>Best regards,<br>CabinBuddy Team</p>
+        `;
+        break;
+      
+      case 'assistance_request':
+        subject = `Calendar Keeper Assistance Request - ${reservation.family_group_name}`;
+        smsMessage = `New assistance request from ${reservation.family_group_name}. Please check the cabin management system. - CabinBuddy`;
+        htmlContent = `
+          <h1>New Assistance Request</h1>
+          <p>Hi ${reservation.guest_name},</p>
+          <p>You have received a new assistance request from ${reservation.family_group_name}.</p>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3>Request Details:</h3>
+            <p><strong>From:</strong> ${reservation.family_group_name}</p>
+            <p><strong>Request ID:</strong> ${reservation.id}</p>
+          </div>
+          <p>Please log into the cabin management system to view the full details and respond to the request.</p>
+          <p>This is an automated notification from the cabin reservation system.</p>
           <p>Best regards,<br>CabinBuddy Team</p>
         `;
         break;

@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_keeper_requests: {
+        Row: {
+          calendar_keeper_response: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          organization_id: string
+          requester_email: string
+          requester_family_group: string
+          requester_name: string
+          requester_user_id: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          subject: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          calendar_keeper_response?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          id?: string
+          organization_id: string
+          requester_email: string
+          requester_family_group: string
+          requester_name: string
+          requester_user_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          calendar_keeper_response?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string
+          requester_email?: string
+          requester_family_group?: string
+          requester_name?: string
+          requester_user_id?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
       checkin_sessions: {
         Row: {
           check_date: string

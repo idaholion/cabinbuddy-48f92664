@@ -5,7 +5,7 @@ export const useNotifications = () => {
   const { toast } = useToast();
 
   const sendNotification = async (
-    type: 'reminder' | 'confirmation' | 'cancellation',
+    type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request',
     reservation: {
       id: string;
       family_group_name: string;
