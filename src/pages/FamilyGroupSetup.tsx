@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilyGroupSetup = () => {
@@ -32,6 +33,46 @@ const FamilyGroupSetup = () => {
 
   // Load from localStorage as fallback for display
   const [localFamilyGroups, setLocalFamilyGroups] = useState<string[]>([]);
+
+  // Auto-save form data
+  const formData = {
+    selectedGroup,
+    leadName,
+    leadPhone,
+    leadEmail,
+    hostMembers,
+    reservationPermission,
+    alternateLeadId,
+  };
+
+  const { loadSavedData, clearSavedData } = useAutoSave({
+    key: 'family-group-setup',
+    data: formData,
+    enabled: !!selectedGroup, // Only auto-save when a group is selected
+  });
+
+  // Load auto-saved data on mount
+  useEffect(() => {
+    const savedData = loadSavedData();
+    if (savedData && !selectedGroup) {
+      setSelectedGroup(savedData.selectedGroup || "");
+      setLeadName(savedData.leadName || "");
+      setLeadPhone(savedData.leadPhone || "");
+      setLeadEmail(savedData.leadEmail || "");
+      setHostMembers(savedData.hostMembers || [
+        {name: "", phone: "", email: ""},
+        {name: "", phone: "", email: ""},
+        {name: "", phone: "", email: ""}
+      ]);
+      setReservationPermission(savedData.reservationPermission || "lead_only");
+      setAlternateLeadId(savedData.alternateLeadId || "none");
+      
+      toast({
+        title: "Draft Restored",
+        description: "Your previous work has been restored from auto-save.",
+      });
+    }
+  }, []);
 
   useEffect(() => {
     // Load from localStorage for backward compatibility
@@ -114,6 +155,14 @@ const FamilyGroupSetup = () => {
         reservation_permission: reservationPermission,
         alternate_lead_id: alternateLeadId === "none" ? undefined : alternateLeadId,
       });
+      
+      // Clear auto-saved data after successful update
+      clearSavedData();
+      
+      toast({
+        title: "Success",
+        description: "Family group updated successfully.",
+      });
     } else {
       // Create new group
       await createFamilyGroup({
@@ -124,6 +173,14 @@ const FamilyGroupSetup = () => {
         host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
         reservation_permission: reservationPermission,
         alternate_lead_id: alternateLeadId === "none" ? undefined : alternateLeadId,
+      });
+      
+      // Clear auto-saved data after successful creation
+      clearSavedData();
+      
+      toast({
+        title: "Success",
+        description: "Family group created successfully.",
       });
     }
   };
@@ -171,6 +228,11 @@ const FamilyGroupSetup = () => {
             </Button>
             <CardTitle className="text-2xl text-center">Set up Family Groups</CardTitle>
             <CardDescription className="text-center">Create a family group with lead and host members</CardDescription>
+            {selectedGroup && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                📝 Auto-saving your changes...
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-4 py-2">
             {/* Family Group Name */}
