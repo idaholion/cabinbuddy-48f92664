@@ -28,7 +28,7 @@ const FamilyGroupSetup = () => {
     {name: "", phone: "", email: ""}
   ]);
   const [reservationPermission, setReservationPermission] = useState("lead_only");
-  const [alternateLeadId, setAlternateLeadId] = useState("");
+  const [alternateLeadId, setAlternateLeadId] = useState("none");
 
   // Load from localStorage as fallback for display
   const [localFamilyGroups, setLocalFamilyGroups] = useState<string[]>([]);
@@ -73,7 +73,7 @@ const FamilyGroupSetup = () => {
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
         reservation_permission: reservationPermission,
-        alternate_lead_id: alternateLeadId || undefined,
+        alternate_lead_id: alternateLeadId === "none" ? undefined : alternateLeadId,
       });
     } else {
       // Create new group
@@ -84,7 +84,7 @@ const FamilyGroupSetup = () => {
         lead_email: leadEmail || undefined,
         host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
         reservation_permission: reservationPermission,
-        alternate_lead_id: alternateLeadId || undefined,
+        alternate_lead_id: alternateLeadId === "none" ? undefined : alternateLeadId,
       });
     }
   };
@@ -200,8 +200,8 @@ const FamilyGroupSetup = () => {
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select alternate lead (optional)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background z-50">
-                    <SelectItem value="">None selected</SelectItem>
+                    <SelectContent className="bg-background z-50">
+                      <SelectItem value="none">None selected</SelectItem>
                     {hostMembers
                       .filter(member => member.name.trim() !== '')
                       .map((member, index) => (
