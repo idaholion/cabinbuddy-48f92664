@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,11 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
+  
+  // Force refresh on component mount to ensure we get latest data
+  useEffect(() => {
+    refetchReservations();
+  }, []);
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
