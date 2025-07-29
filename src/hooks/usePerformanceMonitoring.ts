@@ -73,16 +73,30 @@ export const usePerformanceMonitoring = () => {
 };
 
 export const trackUserAction = (action: string, details?: Record<string, any>) => {
-  console.log('User Action:', { action, details, timestamp: Date.now() });
+  const actionData = { action, details, timestamp: Date.now() };
+  console.log('User Action:', actionData);
+  
   // In production, send to analytics service
+  if (typeof window !== 'undefined' && (window as any).analytics) {
+    (window as any).analytics.track('user_action', actionData);
+  }
 };
 
-export const trackError = (error: Error, context?: string) => {
-  console.error('Tracked Error:', { 
+export const trackError = (error: Error, context?: string, additionalData?: Record<string, any>) => {
+  const errorData = { 
     message: error.message, 
     stack: error.stack, 
     context,
-    timestamp: Date.now() 
-  });
+    timestamp: Date.now(),
+    url: typeof window !== 'undefined' ? window.location.pathname : '',
+    userAgent: typeof window !== 'undefined' ? navigator.userAgent : '',
+    ...additionalData
+  };
+  
+  console.error('Tracked Error:', errorData);
+  
   // In production, send to error tracking service
+  if (typeof window !== 'undefined' && (window as any).analytics) {
+    (window as any).analytics.trackError(error, context, additionalData);
+  }
 };

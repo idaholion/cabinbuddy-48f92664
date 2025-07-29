@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { SearchInput } from "@/components/ui/search-input";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservations } from "@/hooks/useReservations";
 import { useTimePeriods } from "@/hooks/useTimePeriods";
@@ -48,6 +49,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
     familyGroupFilter: 'all'
   });
   const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline'>('calendar');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
@@ -312,16 +314,23 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
-                ←
-              </Button>
-              <h3 className="text-xl font-semibold">
-                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-              </h3>
-              <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
-                →
-              </Button>
+            <div className="flex items-center space-x-4">
+              <SearchInput
+                placeholder="Search reservations, family groups..."
+                onSearch={setSearchQuery}
+                className="w-64"
+              />
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
+                  ←
+                </Button>
+                <h3 className="text-xl font-semibold">
+                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </h3>
+                <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
+                  →
+                </Button>
+              </div>
             </div>
           </div>
         </CardHeader>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Users, UserPlus, Mail, Phone, Calendar, Edit, Trash2, Crown, Shield, User } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,7 @@ export const FamilyGroups = () => {
     phone: "",
     role: "member" as const
   });
+  const [searchQuery, setSearchQuery] = useState("");
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "owner":
@@ -225,6 +227,13 @@ export const FamilyGroups = () => {
         <CardHeader>
           <CardTitle>Family Groups</CardTitle>
           <CardDescription>Manage access and permissions for family members</CardDescription>
+          <div className="mt-4">
+            <SearchInput
+              placeholder="Search family members..."
+              onSearch={setSearchQuery}
+              className="w-full"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

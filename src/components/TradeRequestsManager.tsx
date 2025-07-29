@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Calendar, MessageSquare, Clock, ArrowRightLeft, Bell } from 'lucide-react';
+import { SearchInput } from '@/components/ui/search-input';
 import { format } from 'date-fns';
 import { useTradeRequests } from '@/hooks/useTradeRequests';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
@@ -16,6 +17,7 @@ export function TradeRequestsManager() {
   const { familyGroups } = useFamilyGroups();
   const [selectedTradeRequest, setSelectedTradeRequest] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
@@ -161,6 +163,14 @@ export function TradeRequestsManager() {
         </CardHeader>
         
         <CardContent>
+          <div className="mb-4">
+            <SearchInput
+              placeholder="Search trade requests..."
+              onSearch={setSearchQuery}
+              className="w-full"
+            />
+          </div>
+          
           <Tabs defaultValue="incoming" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="incoming" className="relative">
