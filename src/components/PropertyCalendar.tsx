@@ -16,6 +16,7 @@ import { TradeRequestsManager } from "@/components/TradeRequestsManager";
 import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 import { CalendarKeeperAssistanceDialog } from "@/components/CalendarKeeperAssistanceDialog";
+import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -351,9 +352,13 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
                   ←
                 </Button>
-                <h3 className="text-xl font-semibold">
-                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                </h3>
+                <MonthYearPicker 
+                  currentDate={currentMonth} 
+                  onDateChange={(newDate) => {
+                    setCurrentMonth(newDate);
+                    onMonthChange?.(newDate);
+                  }} 
+                />
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
                   →
                 </Button>
