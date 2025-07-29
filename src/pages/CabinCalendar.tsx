@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useSelectionStatus } from "@/hooks/useSelectionStatus";
 import { useState } from "react";
 
 const CabinCalendar = () => {
@@ -55,23 +56,7 @@ const CabinCalendar = () => {
   
   const rotationYear = getRotationYear();
   const currentRotationOrder = rotationData ? getRotationForYear(rotationYear) : [];
-  
-  // Debug logging
-  console.log('Calendar month:', currentCalendarMonth.getMonth(), currentCalendarMonth.getFullYear());
-  console.log('Start month:', rotationData?.start_month);
-  console.log('Rotation year:', rotationYear);
-  console.log('Base rotation year:', rotationData?.rotation_year);
-  console.log('Current rotation order:', currentRotationOrder);
-  
-  // Placeholder data for selection indicators
-  const getSelectionIndicators = (familyGroup: string) => {
-    // TODO: Replace with actual data from database
-    const mockSelections = {
-      primary: Math.random() > 0.6, // 40% chance of having primary selection
-      secondary: Math.random() > 0.7 // 30% chance of having secondary selection
-    };
-    return mockSelections;
-  };
+  const { getSelectionIndicators, loading: selectionLoading } = useSelectionStatus(rotationYear);
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
