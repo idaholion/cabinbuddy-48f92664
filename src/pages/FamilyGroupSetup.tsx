@@ -478,21 +478,6 @@ const FamilyGroupSetup = () => {
                     )}
                   </div>
 
-                  {/* Lead Only Option */}
-                  <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded">
-                    <input
-                      type="radio"
-                      id="reservation-lead"
-                      name="reservationPermission"
-                      value="lead_only"
-                      checked={watchedData.reservationPermission === "lead_only"}
-                      onChange={(e) => setValue('reservationPermission', e.target.value)}
-                      className="h-4 w-4"
-                    />
-                    <label htmlFor="reservation-lead" className="text-sm font-medium">
-                      Lead Only - Only the family group lead can make reservations
-                    </label>
-                  </div>
 
                   {/* Duplicate validation errors */}
                   {errors.hostMembers?.root && (
