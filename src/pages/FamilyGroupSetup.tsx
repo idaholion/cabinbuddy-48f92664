@@ -51,6 +51,45 @@ const FamilyGroupSetup = () => {
     }
   }, []);
 
+  // Get the selected family group data
+  const selectedFamilyGroup = familyGroups.find(g => g.name === selectedGroup);
+  const selectedGroupHostMembers = selectedFamilyGroup?.host_members || [];
+
+  // Load form data when a family group is selected
+  useEffect(() => {
+    if (selectedFamilyGroup) {
+      setLeadName(selectedFamilyGroup.lead_name || "");
+      setLeadPhone(selectedFamilyGroup.lead_phone || "");
+      setLeadEmail(selectedFamilyGroup.lead_email || "");
+      setReservationPermission(selectedFamilyGroup.reservation_permission || "lead_only");
+      setAlternateLeadId(selectedFamilyGroup.alternate_lead_id || "none");
+      
+      // Populate host members
+      if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
+        setHostMembers(selectedFamilyGroup.host_members);
+      } else {
+        // Reset to default empty host members
+        setHostMembers([
+          {name: "", phone: "", email: ""},
+          {name: "", phone: "", email: ""},
+          {name: "", phone: "", email: ""}
+        ]);
+      }
+    } else {
+      // Reset form when no group is selected
+      setLeadName("");
+      setLeadPhone("");
+      setLeadEmail("");
+      setReservationPermission("lead_only");
+      setAlternateLeadId("none");
+      setHostMembers([
+        {name: "", phone: "", email: ""},
+        {name: "", phone: "", email: ""},
+        {name: "", phone: "", email: ""}
+      ]);
+    }
+  }, [selectedGroup, selectedFamilyGroup]);
+
   const handleSaveFamilyGroup = async () => {
     if (!selectedGroup) {
       toast({
@@ -202,14 +241,14 @@ const FamilyGroupSetup = () => {
                   </SelectTrigger>
                     <SelectContent className="bg-background z-50">
                       <SelectItem value="none">None selected</SelectItem>
-                    {hostMembers
-                      .filter(member => member.name.trim() !== '')
-                      .map((member, index) => (
-                        <SelectItem key={index} value={member.name}>
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
+                      {selectedGroupHostMembers
+                        .filter(member => member.name && member.name.trim() !== '')
+                        .map((member, index) => (
+                          <SelectItem key={index} value={member.name}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
                 </Select>
               </div>
             </div>
