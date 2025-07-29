@@ -184,11 +184,64 @@ export const useFamilyGroups = () => {
     }
   }, [organization?.id]);
 
+  const renameFamilyGroup = async (oldName: string, newName: string) => {
+    if (!user || !organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (oldName === newName) {
+      return; // No change needed
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('rename_family_group', {
+        p_organization_id: organization.id,
+        p_old_name: oldName,
+        p_new_name: newName
+      });
+
+      if (error) {
+        console.error('Error renaming family group:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to rename family group. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Refresh the family groups list
+      await fetchFamilyGroups();
+      
+      toast({
+        title: "Success",
+        description: `Family group renamed from "${oldName}" to "${newName}" successfully!`,
+      });
+
+    } catch (error) {
+      console.error('Error in renameFamilyGroup:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while renaming the family group.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     familyGroups,
     loading,
     createFamilyGroup,
     updateFamilyGroup,
+    renameFamilyGroup,
     refetchFamilyGroups: fetchFamilyGroups,
   };
 };

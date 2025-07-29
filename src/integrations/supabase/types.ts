@@ -866,6 +866,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      rename_family_group: {
+        Args: {
+          p_organization_id: string
+          p_old_name: string
+          p_new_name: string
+        }
+        Returns: boolean
+      }
       set_primary_organization: {
         Args: { org_id: string }
         Returns: boolean

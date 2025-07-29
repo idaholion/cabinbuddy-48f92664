@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, Trash2, Users, Edit2, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -24,8 +24,10 @@ import { HostMemberCard } from "@/components/HostMemberCard";
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
   const { organization } = useOrganization();
-  const { familyGroups, createFamilyGroup, updateFamilyGroup, loading } = useFamilyGroups();
+  const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading } = useFamilyGroups();
   const [showAllMembers, setShowAllMembers] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingGroupName, setEditingGroupName] = useState("");
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -276,24 +278,90 @@ const FamilyGroupSetup = () => {
                         Family Group Name <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a family group" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            {allGroups.length > 0 ? (
-                              allGroups.map((group, index) => (
-                                <SelectItem key={index} value={group}>
-                                  {group}
+                        <div className="space-y-4">
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a family group" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background z-50">
+                              {allGroups.length > 0 ? (
+                                allGroups.map((group, index) => (
+                                  <SelectItem key={index} value={group}>
+                                    {group}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="no-groups" disabled>
+                                  No family groups found - Please set them up in Family Setup first
                                 </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="no-groups" disabled>
-                                No family groups found - Please set them up in Family Setup first
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          
+                          {/* Rename Group Section */}
+                          {field.value && field.value !== "no-groups" && (
+                            <div className="p-3 bg-muted/30 rounded border">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-medium">Rename Family Group</h4>
+                                {!isEditingName && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setIsEditingName(true);
+                                      setEditingGroupName(field.value);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4 mr-1" />
+                                    Rename
+                                  </Button>
+                                )}
+                              </div>
+                              
+                              {isEditingName ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={editingGroupName}
+                                    onChange={(e) => setEditingGroupName(e.target.value)}
+                                    placeholder="Enter new group name"
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={async () => {
+                                      if (editingGroupName.trim() && editingGroupName !== field.value) {
+                                        await renameFamilyGroup(field.value, editingGroupName.trim());
+                                        field.onChange(editingGroupName.trim());
+                                      }
+                                      setIsEditingName(false);
+                                    }}
+                                    disabled={!editingGroupName.trim() || editingGroupName === field.value}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setIsEditingName(false);
+                                      setEditingGroupName("");
+                                    }}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">
+                                  Current name: <span className="font-medium">{field.value}</span>
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -480,7 +548,6 @@ const FamilyGroupSetup = () => {
                     </Button>
                   </div>
                 </div>
-
 
                 {/* Alternate Lead Selection */}
                 <FormField
