@@ -72,9 +72,7 @@ export const familyGroupSetupSchema = z.object({
       const phones = members.map(m => m.phone.replace(/\D/g, '')).filter(Boolean);
       return new Set(phones).size === phones.length;
     }, "Host member phone numbers must be unique"),
-  reservationPermission: z.enum(["lead_only", "any_member"], {
-    required_error: "Please select a reservation permission option"
-  }),
+  reservationPermission: z.string().optional(),
   alternateLeadId: z.string(),
 });
 

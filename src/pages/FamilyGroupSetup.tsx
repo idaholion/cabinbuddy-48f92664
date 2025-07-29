@@ -370,7 +370,7 @@ const FamilyGroupSetup = () => {
                         Host Members ({filledMembersCount} filled)
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Additional family members who can use the property
+                        Additional family members who can use the property. Check the radio button to indicate who can make reservations.
                       </p>
                     </div>
                     
@@ -410,6 +410,22 @@ const FamilyGroupSetup = () => {
                     )}
                   </div>
 
+                  {/* Lead Only Option */}
+                  <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded">
+                    <input
+                      type="radio"
+                      id="reservation-lead"
+                      name="reservationPermission"
+                      value="lead_only"
+                      checked={watchedData.reservationPermission === "lead_only"}
+                      onChange={(e) => setValue('reservationPermission', e.target.value)}
+                      className="h-4 w-4"
+                    />
+                    <label htmlFor="reservation-lead" className="text-sm font-medium">
+                      Lead Only - Only the family group lead can make reservations
+                    </label>
+                  </div>
+
                   {/* Duplicate validation errors */}
                   {errors.hostMembers?.root && (
                     <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
@@ -435,6 +451,8 @@ const FamilyGroupSetup = () => {
                             control={control}
                             onRemove={removeHostMember}
                             canRemove={fields.length > 1}
+                            reservationPermission={watchedData.reservationPermission}
+                            onReservationChange={(value) => setValue('reservationPermission', value)}
                           />
                         ))}
                       </div>
@@ -463,38 +481,6 @@ const FamilyGroupSetup = () => {
                   </div>
                 </div>
 
-                {/* Reservation Permission */}
-                <FormField
-                  control={control}
-                  name="reservationPermission"
-                  render={({ field }) => (
-                    <FormItem className="p-4 border rounded-lg bg-muted/20">
-                      <FormLabel className="text-md font-semibold text-center block">
-                        Reservation Permissions
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground text-center mb-3">
-                        Who can make reservations for this family group?
-                      </p>
-                      <FormControl>
-                        <RadioGroup value={field.value} onValueChange={field.onChange} className="flex flex-col gap-3">
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="lead_only" id="lead_only" />
-                            <label htmlFor="lead_only" className="text-sm font-medium">
-                              Lead only - Only the family group lead can make reservations
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="any_member" id="any_member" />
-                            <label htmlFor="any_member" className="text-sm font-medium">
-                              Any member - Any host member can make reservations
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 {/* Alternate Lead Selection */}
                 <FormField

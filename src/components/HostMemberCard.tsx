@@ -17,6 +17,8 @@ interface HostMemberCardProps {
   onRemove: (index: number) => void;
   canRemove: boolean;
   isDragOver?: boolean;
+  reservationPermission?: string;
+  onReservationChange: (value: string) => void;
 }
 
 export const HostMemberCard: React.FC<HostMemberCardProps> = ({
@@ -25,6 +27,8 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
   onRemove,
   canRemove,
   isDragOver = false,
+  reservationPermission,
+  onReservationChange,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
   const hostMembers = watch('hostMembers');
@@ -154,6 +158,21 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
+            <input
+              type="radio"
+              id={`reservation-${index}`}
+              name="reservationPermission"
+              value={`host_${index}`}
+              checked={reservationPermission === `host_${index}`}
+              onChange={(e) => onReservationChange(e.target.value)}
+              className="h-4 w-4"
+            />
+            <label htmlFor={`reservation-${index}`} className="text-sm">
+              Can make reservations
+            </label>
           </div>
         </div>
 
