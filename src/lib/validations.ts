@@ -56,6 +56,7 @@ export const familyGroupSetupSchema = z.object({
       if (!val || val === "") return true;
       return z.string().email().safeParse(val).success;
     }, "Please enter a valid email address"),
+    canReserve: z.boolean().optional().default(false),
   }))
     .refine((members) => {
       // Check for duplicate names (non-empty only)
@@ -72,7 +73,7 @@ export const familyGroupSetupSchema = z.object({
       const phones = members.map(m => m.phone.replace(/\D/g, '')).filter(Boolean);
       return new Set(phones).size === phones.length;
     }, "Host member phone numbers must be unique"),
-  reservationPermission: z.string().optional(),
+  
   alternateLeadId: z.string(),
 });
 

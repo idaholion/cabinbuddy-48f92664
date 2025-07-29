@@ -8,6 +8,7 @@ interface HostMember {
   name: string;
   phone: string;
   email: string;
+  canReserve?: boolean;
 }
 
 interface FamilyGroupData {
@@ -16,7 +17,7 @@ interface FamilyGroupData {
   lead_email?: string;
   lead_phone?: string;
   host_members?: HostMember[];
-  reservation_permission?: string;
+  
   alternate_lead_id?: string;
 }
 

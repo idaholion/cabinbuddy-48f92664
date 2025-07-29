@@ -37,11 +37,10 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       hostMembers: [
-        { name: "", phone: "", email: "" },
-        { name: "", phone: "", email: "" },
-        { name: "", phone: "", email: "" }
+        { name: "", phone: "", email: "", canReserve: false },
+        { name: "", phone: "", email: "", canReserve: false },
+        { name: "", phone: "", email: "", canReserve: false }
       ],
-      reservationPermission: "lead_only",
       alternateLeadId: "none",
     },
     mode: "onChange",
@@ -94,7 +93,7 @@ const FamilyGroupSetup = () => {
       setValue("leadName", selectedFamilyGroup.lead_name || "");
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "");
       setValue("leadEmail", selectedFamilyGroup.lead_email || "");
-      setValue("reservationPermission", selectedFamilyGroup.reservation_permission || "lead_only");
+      
       setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none");
       
       // Populate host members
@@ -103,14 +102,15 @@ const FamilyGroupSetup = () => {
           name: member.name || "",
           phone: member.phone || "",
           email: member.email || "",
+          canReserve: member.canReserve || false,
         }));
         setValue("hostMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         setValue("hostMembers", [
-          { name: "", phone: "", email: "" },
-          { name: "", phone: "", email: "" },
-          { name: "", phone: "", email: "" }
+          { name: "", phone: "", email: "", canReserve: false },
+          { name: "", phone: "", email: "", canReserve: false },
+          { name: "", phone: "", email: "", canReserve: false }
         ]);
       }
     } else if (watchedData.selectedGroup === "") {
@@ -134,6 +134,7 @@ const FamilyGroupSetup = () => {
         name: member.name || "",
         phone: member.phone || "",
         email: member.email || "",
+        canReserve: member.canReserve || false,
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
@@ -145,7 +146,6 @@ const FamilyGroupSetup = () => {
           lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
           lead_email: data.leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
-          reservation_permission: data.reservationPermission,
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
         
@@ -160,7 +160,7 @@ const FamilyGroupSetup = () => {
           lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
           lead_email: data.leadEmail || undefined,
           host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
-          reservation_permission: data.reservationPermission,
+          
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
         
@@ -177,7 +177,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addHostMember = () => {
-    append({ name: "", phone: "", email: "" });
+    append({ name: "", phone: "", email: "", canReserve: false });
     setShowAllMembers(true);
   };
 
@@ -191,9 +191,9 @@ const FamilyGroupSetup = () => {
 
   const clearAllHostMembers = () => {
     setValue("hostMembers", [
-      { name: "", phone: "", email: "" },
-      { name: "", phone: "", email: "" },
-      { name: "", phone: "", email: "" }
+      { name: "", phone: "", email: "", canReserve: false },
+      { name: "", phone: "", email: "", canReserve: false },
+      { name: "", phone: "", email: "", canReserve: false }
     ]);
     setShowAllMembers(false);
   };
@@ -206,7 +206,7 @@ const FamilyGroupSetup = () => {
     
     // Ensure at least 3 slots
     while (filledMembers.length < 3) {
-      filledMembers.push({ name: "", phone: "", email: "" });
+      filledMembers.push({ name: "", phone: "", email: "", canReserve: false });
     }
     
     setValue("hostMembers", filledMembers);
@@ -437,9 +437,9 @@ const FamilyGroupSetup = () => {
                         <Users className="h-5 w-5" />
                         Host Members ({filledMembersCount} filled)
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Additional family members who can use the property. Check the radio button to indicate who can make reservations.
-                      </p>
+                       <p className="text-sm text-muted-foreground mt-1">
+                         Additional family members who can use the property. Check the box to indicate who can make reservations.
+                       </p>
                     </div>
                     
                     {fields.length > 3 && (
@@ -504,8 +504,6 @@ const FamilyGroupSetup = () => {
                             control={control}
                             onRemove={removeHostMember}
                             canRemove={fields.length > 1}
-                            reservationPermission={watchedData.reservationPermission}
-                            onReservationChange={(value) => setValue('reservationPermission', value)}
                           />
                         ))}
                       </div>
