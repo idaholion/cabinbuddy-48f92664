@@ -113,7 +113,6 @@ export type Database = {
           lead_phone: string | null
           name: string
           organization_id: string
-          reservation_permission: string | null
           updated_at: string
         }
         Insert: {
@@ -126,7 +125,6 @@ export type Database = {
           lead_phone?: string | null
           name: string
           organization_id: string
-          reservation_permission?: string | null
           updated_at?: string
         }
         Update: {
@@ -139,7 +137,6 @@ export type Database = {
           lead_phone?: string | null
           name?: string
           organization_id?: string
-          reservation_permission?: string | null
           updated_at?: string
         }
         Relationships: [
