@@ -35,8 +35,15 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   
   // Force refresh on component mount to ensure we get latest data
   useEffect(() => {
+    console.log('PropertyCalendar mounted, fetching reservations...');
     refetchReservations();
   }, []);
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Reservations data:', reservations);
+    console.log('Number of reservations:', reservations.length);
+  }, [reservations]);
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -88,6 +95,12 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
     currentMonth.getFullYear(),
     currentMonth
   );
+  
+  // Debug time period windows
+  useEffect(() => {
+    console.log('Time period windows:', timePeriodWindows);
+    console.log('Number of time period windows:', timePeriodWindows.length);
+  }, [timePeriodWindows]);
 
   const handleBookingComplete = () => {
     refetchReservations();
