@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings, Copy } from "lucide-react";
+import { Users, Plus, Settings, Copy, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
@@ -34,7 +34,7 @@ const FamilySetup = () => {
   const [calendarKeeperName, setCalendarKeeperName] = useState("");
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
-  const [familyGroups, setFamilyGroups] = useState<string[]>(Array(6).fill(""));
+  const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
 
   // Load saved data on component mount
   useEffect(() => {
@@ -72,7 +72,7 @@ const FamilySetup = () => {
         setCalendarKeeperName(data.calendarKeeperName || "");
         setCalendarKeeperPhone(data.calendarKeeperPhone || "");
         setCalendarKeeperEmail(data.calendarKeeperEmail || "");
-        setFamilyGroups(data.familyGroups || Array(6).fill(""));
+        setFamilyGroups(data.familyGroups && data.familyGroups.length > 0 ? data.familyGroups : [""]);
       }
     }
   }, [organization, isCreatingNew]);
@@ -155,6 +155,18 @@ const FamilySetup = () => {
     const newFamilyGroups = [...familyGroups];
     newFamilyGroups[index] = value;
     setFamilyGroups(newFamilyGroups);
+  };
+
+  // Add a new family group field
+  const addFamilyGroup = () => {
+    setFamilyGroups(prev => [...prev, ""]);
+  };
+
+  // Remove a family group field
+  const removeFamilyGroup = (index: number) => {
+    if (familyGroups.length > 1) {
+      setFamilyGroups(prev => prev.filter((_, i) => i !== index));
+    }
   };
   
   // Curated list of family-friendly 6-letter words for organization codes
@@ -413,23 +425,55 @@ const FamilySetup = () => {
             {/* Family Groups Section */}
             <div className="space-y-4">
               <div className="relative">
-                <h2 className="text-xl font-semibold text-center border-b pb-2">List of Family Groups</h2>
+                <h2 className="text-xl font-semibold text-center border-b pb-2">
+                  List of Family Groups ({familyGroups.filter(g => g.trim()).length}/{familyGroups.length})
+                </h2>
                 <Button className="absolute top-0 right-0" asChild>
                   <Link to="/family-group-setup">Set up Family Groups</Link>
                 </Button>
               </div>
               
-              {[...Array(6)].map((_, index) => (
-                <div key={index} className="space-y-1">
-                  <Label htmlFor={`familyGroup${index + 1}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
-                  <Input 
-                    id={`familyGroup${index + 1}`} 
-                    placeholder={`Enter Family Group ${index + 1} name`}
-                    value={familyGroups[index]}
-                    onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
-                  />
+              <div className="space-y-3">
+                {familyGroups.map((group, index) => (
+                  <div key={index} className="flex items-end gap-2">
+                    <div className="flex-1 space-y-1">
+                      <Label htmlFor={`familyGroup${index}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
+                      <Input
+                        id={`familyGroup${index}`}
+                        placeholder={`Enter Family Group ${index + 1} name`}
+                        value={group}
+                        onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
+                        autoFocus={index === familyGroups.length - 1 && group === ""}
+                      />
+                    </div>
+                    {familyGroups.length > 1 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeFamilyGroup(index)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={addFamilyGroup}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Family Group
+                  </Button>
                 </div>
-              ))}
+              </div>
+              
+              <div className="text-sm text-muted-foreground text-center mt-4">
+                <p>Need more details? Use the <strong>Set up Family Groups</strong> button to configure lead contacts and host members for each family group.</p>
+              </div>
             </div>
           </CardContent>
         </Card>
