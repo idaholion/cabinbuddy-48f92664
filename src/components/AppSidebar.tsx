@@ -120,11 +120,16 @@ const managementItems = [
     url: "/select-organization",
     icon: Building,
   },
-  {
-    title: "Calendar Keeper",
-    url: "/calendar-keeper-management",
-    icon: HeadphonesIcon,
-  },
+    {
+      title: "Calendar Keeper",
+      url: "/calendar-keeper-management",
+      icon: HeadphonesIcon,
+    },
+    {
+      title: "Financial Review",
+      url: "/financial-review",
+      icon: DollarSign,
+    },
 ];
 
 export function AppSidebar() {
