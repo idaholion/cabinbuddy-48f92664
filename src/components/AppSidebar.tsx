@@ -12,7 +12,8 @@ import {
   Image,
   CheckSquare,
   Settings,
-  Building
+  Building,
+  HeadphonesIcon
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -118,6 +119,11 @@ const managementItems = [
     title: "Organization",
     url: "/select-organization",
     icon: Building,
+  },
+  {
+    title: "Calendar Keeper",
+    url: "/calendar-keeper-management",
+    icon: HeadphonesIcon,
   },
 ];
 

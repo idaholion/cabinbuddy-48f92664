@@ -42,6 +42,7 @@ import SupervisorOrganizationFamilyGroups from "./pages/SupervisorOrganizationFa
 import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinancial";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
+import CalendarKeeperManagementPage from "./pages/CalendarKeeperManagement";
 
 import { MainLayout } from "./components/MainLayout";
 
@@ -92,6 +93,7 @@ const AppContent = () => {
         <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><CheckoutList /></MainLayout></ProtectedRoute>} />
         <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><CheckoutFinal /></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><PhotoSharing /></MainLayout></ProtectedRoute>} />
+        <Route path="/calendar-keeper-management" element={<ProtectedRoute><MainLayout><CalendarKeeperManagementPage /></MainLayout></ProtectedRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><SupervisorDashboard /></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFamilyGroups /></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFinancial /></MainLayout></SupervisorRoute>} />
