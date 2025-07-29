@@ -323,6 +323,12 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 onSearch={setSearchQuery}
                 className="w-64"
               />
+            </div>
+          </div>
+          
+          {/* Month Navigation and Family Group Color Legend */}
+          <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
                   ←
@@ -334,28 +340,26 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   →
                 </Button>
               </div>
+              {familyGroups.some(fg => fg.color) && (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">Family Groups:</span>
+                  <div className="flex flex-wrap gap-3">
+                    {familyGroups
+                      .filter(fg => fg.color)
+                      .map(familyGroup => (
+                        <div key={familyGroup.id} className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full border border-border"
+                            style={{ backgroundColor: familyGroup.color }}
+                          />
+                          <span className="text-xs text-muted-foreground">{familyGroup.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          
-          {/* Family Group Color Legend */}
-          {familyGroups.some(fg => fg.color) && (
-            <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-              <h4 className="text-sm font-medium mb-2">Family Group Colors</h4>
-              <div className="flex flex-wrap gap-3">
-                {familyGroups
-                  .filter(fg => fg.color)
-                  .map(familyGroup => (
-                    <div key={familyGroup.id} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full border border-border"
-                        style={{ backgroundColor: familyGroup.color }}
-                      />
-                      <span className="text-xs text-muted-foreground">{familyGroup.name}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           {/* Calendar Header */}
