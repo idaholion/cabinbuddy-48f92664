@@ -74,7 +74,7 @@ export function AppSidebar() {
       <SidebarContent>
         {/* Main Dashboard */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Dashboard
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -93,7 +93,7 @@ export function AppSidebar() {
 
         {/* Setup Section */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Setup
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -114,7 +114,7 @@ export function AppSidebar() {
 
         {/* Cabin Management */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Cabin Management
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -135,7 +135,7 @@ export function AppSidebar() {
 
         {/* Resources */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Resources
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -156,7 +156,7 @@ export function AppSidebar() {
 
         {/* Management */}
         <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
+          <SidebarGroupLabel>
             Management
           </SidebarGroupLabel>
           <SidebarGroupContent>
