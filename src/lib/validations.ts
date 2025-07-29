@@ -29,9 +29,38 @@ export const organizationSchema = z.object({
 // Family group validation schemas
 export const familyGroupSchema = z.object({
   name: requiredStringSchema.min(2, "Family group name must be at least 2 characters"),
-  lead_name: optionalStringSchema,
+  lead_name: requiredStringSchema.min(2, "Lead name must be at least 2 characters"),
   lead_email: emailSchema.optional().or(z.literal("")),
   lead_phone: phoneSchema.optional().or(z.literal("")),
+});
+
+// Enhanced family group setup validation schema
+export const familyGroupSetupSchema = z.object({
+  selectedGroup: requiredStringSchema.min(1, "Please select or create a family group"),
+  leadName: requiredStringSchema.min(2, "Lead name must be at least 2 characters"),
+  leadPhone: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    return /^[\+]?[1-9][\d]{0,15}$/.test(val);
+  }, "Please enter a valid phone number"),
+  leadEmail: z.string().optional().refine((val) => {
+    if (!val || val === "") return true;
+    return z.string().email().safeParse(val).success;
+  }, "Please enter a valid email address"),
+  hostMembers: z.array(z.object({
+    name: z.string(),
+    phone: z.string().refine((val) => {
+      if (!val || val === "") return true;
+      return /^[\+]?[1-9][\d]{0,15}$/.test(val);
+    }, "Please enter a valid phone number"),
+    email: z.string().refine((val) => {
+      if (!val || val === "") return true;
+      return z.string().email().safeParse(val).success;
+    }, "Please enter a valid email address"),
+  })),
+  reservationPermission: z.enum(["lead_only", "any_member"], {
+    required_error: "Please select a reservation permission option"
+  }),
+  alternateLeadId: z.string(),
 });
 
 // Reservation validation schemas
@@ -119,6 +148,7 @@ export const tradeRequestSchema = z.object({
 
 export type OrganizationFormData = z.infer<typeof organizationSchema>;
 export type FamilyGroupFormData = z.infer<typeof familyGroupSchema>;
+export type FamilyGroupSetupFormData = z.infer<typeof familyGroupSetupSchema>;
 export type ReservationFormData = z.infer<typeof reservationSchema>;
 export type ReceiptFormData = z.infer<typeof receiptSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;
