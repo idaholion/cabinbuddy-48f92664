@@ -109,14 +109,27 @@ export const EnhancedPropertyCalendar = ({
 
   // Get the family group color for selection styling
   const getSelectionColor = () => {
+    console.log('getSelectionColor called:', {
+      selectedFamilyGroupData,
+      familyGroupColors,
+      availableColors: Object.keys(familyGroupColors)
+    });
+    
     if (selectedFamilyGroupData?.name && familyGroupColors[selectedFamilyGroupData.name]) {
       const colorClass = familyGroupColors[selectedFamilyGroupData.name];
+      console.log('Found color class for group:', selectedFamilyGroupData.name, colorClass);
       // Extract color name from class like 'bg-red-100 border-red-300' -> 'red'
       const colorMatch = colorClass.match(/bg-(\w+)-/);
-      return colorMatch ? colorMatch[1] : 'green';
+      const extractedColor = colorMatch ? colorMatch[1] : 'green';
+      console.log('Extracted color:', extractedColor);
+      return extractedColor;
     }
+    console.log('No family group selected or no color found, defaulting to green');
     return 'green';
   };
+
+  const extractedColor = getSelectionColor();
+  console.log('Final selection color:', extractedColor);
 
   // Drag selection functionality
   const {
@@ -129,7 +142,7 @@ export const EnhancedPropertyCalendar = ({
     isDateInCurrentDrag,
     isDateInSelectedRanges,
     selectionColor,
-  } = useDragSelection(onDateRangeSelect, 5, getSelectionColor());
+  } = useDragSelection(onDateRangeSelect, 5, extractedColor);
 
   // Handle mouse events for drag selection
   const handleMouseDown = useCallback((date: Date, e: React.MouseEvent) => {

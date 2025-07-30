@@ -18,6 +18,8 @@ export const useDragSelection = (
   maxRanges: number = 5,
   selectionColor?: string
 ) => {
+  console.log('useDragSelection initialized with:', { onRangeSelect, maxRanges, selectionColor });
+  
   const [dragState, setDragState] = useState<DragSelectionState>({
     isDragging: false,
     dragStart: null,
