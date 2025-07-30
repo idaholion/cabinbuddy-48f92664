@@ -43,6 +43,7 @@ import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinan
 import FinancialReview from "./pages/FinancialReview";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
+import { Onboarding } from "./pages/Onboarding";
 import CalendarKeeperManagementPage from "./pages/CalendarKeeperManagement";
 import { CalendarKeeperRoute } from "./components/CalendarKeeperRoute";
 
@@ -76,6 +77,7 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
+        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />

@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('Current path:', currentPath);
     console.log('User:', currentUser.email);
     
-    // Don't check organization status if user is on setup pages
-    if (currentPath === '/setup' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
+    // Don't check organization status if user is on setup pages or onboarding
+    if (currentPath === '/setup' || currentPath === '/onboarding' || currentPath === '/select-organization' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
       console.log('Skipping organization check for setup page:', currentPath);
       return;
     }
@@ -60,9 +60,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       console.log('Organizations found:', organizations?.length || 0, organizations);
 
-      // If user has no organizations or multiple organizations, redirect to selection
-      if (!organizations || organizations.length === 0 || organizations.length > 1) {
-        // Only redirect if we're not already on the organization selection page
+      // Handle different organization scenarios
+      if (!organizations || organizations.length === 0) {
+        // No organizations - redirect to onboarding
+        if (currentPath !== '/onboarding') {
+          console.log('Redirecting to onboarding from:', currentPath);
+          window.location.href = '/onboarding';
+        } else {
+          console.log('Already on onboarding page, not redirecting');
+        }
+      } else if (organizations.length > 1) {
+        // Multiple organizations - redirect to selection
         if (currentPath !== '/select-organization') {
           console.log('Redirecting to select-organization from:', currentPath);
           window.location.href = '/select-organization';
@@ -94,9 +102,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Only check when explicitly signing in
         if (event === 'SIGNED_IN' && session?.user) {
           console.log('SIGNED_IN event detected, scheduling organization check');
-          // Only redirect if user is not already navigating to setup
+          // Only redirect if user is not already navigating to setup or organization pages
           const currentPath = window.location.pathname;
-          if (currentPath !== '/setup' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
+          if (currentPath !== '/setup' && currentPath !== '/onboarding' && currentPath !== '/select-organization' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
             setTimeout(() => {
               checkOrganizationStatus();
             }, 500);
