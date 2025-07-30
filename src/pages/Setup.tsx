@@ -15,8 +15,8 @@ const Setup = () => {
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
 
-  // Extremely strict completion criteria - every required field must have meaningful content
-  const isOrganizationComplete = !!(
+  // Debug the actual values causing completion to be true
+  const orgComplete = !!(
     organization?.name?.trim() &&
     organization?.admin_name?.trim() &&
     organization?.admin_email?.trim()?.includes('@') &&
@@ -25,8 +25,8 @@ const Setup = () => {
     organization?.calendar_keeper_name?.trim() &&
     organization?.calendar_keeper_email?.trim()?.includes('@')
   );
-    
-  const isFamilyGroupsComplete = !!(
+
+  const familyComplete = !!(
     familyGroups &&
     familyGroups.length > 0 &&
     familyGroups.every(group => 
@@ -35,6 +35,33 @@ const Setup = () => {
       group?.lead_email?.trim()?.includes('@')
     )
   );
+
+  // Show what's causing completion if either is true
+  useEffect(() => {
+    if (orgComplete || familyComplete) {
+      console.log('=== COMPLETION DEBUG ===');
+      console.log('Organization complete:', orgComplete);
+      console.log('Organization data:', {
+        name: organization?.name,
+        admin_name: organization?.admin_name,
+        admin_email: organization?.admin_email,
+        treasurer_name: organization?.treasurer_name,
+        treasurer_email: organization?.treasurer_email,
+        calendar_keeper_name: organization?.calendar_keeper_name,
+        calendar_keeper_email: organization?.calendar_keeper_email
+      });
+      console.log('Family groups complete:', familyComplete);
+      console.log('Family groups data:', familyGroups?.map(g => ({
+        name: g.name,
+        lead_name: g.lead_name,
+        lead_email: g.lead_email
+      })));
+    }
+  }, [orgComplete, familyComplete, organization, familyGroups]);
+
+  // Use the computed values
+  const isOrganizationComplete = orgComplete;
+  const isFamilyGroupsComplete = familyComplete;
     
   const isFinancialComplete = !!(
     reservationSettings?.nightly_rate &&
