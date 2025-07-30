@@ -42,7 +42,15 @@ export type Database = {
           performed_by_user_id?: string | null
           records_affected?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_bulk_operation_audit_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendar_keeper_requests: {
         Row: {
@@ -99,7 +107,15 @@ export type Database = {
           updated_at?: string
           urgency?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_calendar_keeper_requests_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       checkin_sessions: {
         Row: {
@@ -152,6 +168,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_checkin_sessions_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       custom_checklists: {
@@ -182,6 +205,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "custom_checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_custom_checklists_organization"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -237,6 +267,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_family_groups_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notification_log: {
@@ -269,6 +306,53 @@ export type Database = {
           reservation_period_id?: string | null
           sent_at?: string
           sms_sent?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_notification_log_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_access_audit: {
+        Row: {
+          access_type: string
+          attempted_organization_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          operation_type: string
+          success: boolean
+          table_name: string
+          user_id: string | null
+          user_organization_id: string | null
+        }
+        Insert: {
+          access_type: string
+          attempted_organization_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation_type: string
+          success?: boolean
+          table_name: string
+          user_id?: string | null
+          user_organization_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          attempted_organization_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation_type?: string
+          success?: boolean
+          table_name?: string
+          user_id?: string | null
+          user_organization_id?: string | null
         }
         Relationships: []
       }
@@ -409,6 +493,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_receipts_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "receipts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -463,7 +554,15 @@ export type Database = {
           updated_at?: string
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_recurring_bills_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reservation_periods: {
         Row: {
@@ -502,7 +601,15 @@ export type Database = {
           selection_start_date?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_reservation_periods_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reservation_settings: {
         Row: {
@@ -554,6 +661,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_reservation_settings_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "reservation_settings_organization_id_fkey"
             columns: ["organization_id"]
@@ -621,7 +735,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_reservations_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rotation_orders: {
         Row: {
@@ -675,7 +797,15 @@ export type Database = {
           start_time?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_rotation_orders_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       secondary_selection_status: {
         Row: {
@@ -709,6 +839,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_secondary_selection_status_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "secondary_selection_status_organization_id_fkey"
             columns: ["organization_id"]
@@ -775,6 +912,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_survey_responses_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "survey_responses_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -829,7 +973,15 @@ export type Database = {
           time_periods_used?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_time_period_usage_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trade_notifications: {
         Row: {
@@ -863,6 +1015,13 @@ export type Database = {
           trade_request_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_trade_notifications_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trade_notifications_trade_request_id_fkey"
             columns: ["trade_request_id"]
@@ -930,7 +1089,15 @@ export type Database = {
           target_family_group?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_trade_requests_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_organizations: {
         Row: {
@@ -964,6 +1131,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_user_organizations_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_organizations_organization_id_fkey"
             columns: ["organization_id"]
@@ -1023,6 +1197,10 @@ export type Database = {
       }
       supervisor_bulk_update_family_groups: {
         Args: { p_organization_id: string; p_confirmation_code: string }
+        Returns: boolean
+      }
+      validate_organization_access: {
+        Args: { target_org_id: string; operation_name?: string }
         Returns: boolean
       }
     }
