@@ -9,10 +9,6 @@ import { useSupervisor } from "@/hooks/useSupervisor";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { FeedbackButton } from "@/components/FeedbackButton";
-import { UserOnboarding } from "@/components/UserOnboarding";
-import { DashboardStats } from "@/components/DashboardStats";
-import { QuickActions } from "@/components/QuickActions";
-import { GlobalSearch } from "@/components/GlobalSearch";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
@@ -20,10 +16,10 @@ const UserInfo = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="flex items-center space-x-1 sm:space-x-2">
-      <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium">
-        <User className="h-3 w-3 sm:h-4 sm:w-4" />
-        <span className="hidden sm:inline truncate max-w-[100px] sm:max-w-none">
+    <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 text-sm font-medium">
+        <User className="h-4 w-4" />
+        <span>
           {user?.user_metadata?.first_name || user?.email}
         </span>
       </div>
@@ -31,11 +27,10 @@ const UserInfo = () => {
         variant="ghost" 
         size="sm" 
         onClick={signOut}
-        className="text-xs sm:text-sm font-medium"
+        className="text-sm font-medium"
       >
-        <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-        <span className="hidden sm:inline">Logout</span>
-        <span className="sm:hidden">Out</span>
+        <LogOut className="h-4 w-4 mr-2" />
+        Logout
       </Button>
     </div>
   );
@@ -58,69 +53,154 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="space-y-6">
-      {/* User Onboarding */}
-      <UserOnboarding />
-      
-      {/* Mobile Search */}
-      <div className="md:hidden">
-        <GlobalSearch />
-      </div>
-      
-      {/* Dashboard Stats */}
-      <DashboardStats />
-      
-      {/* Hero Section with Quick Actions */}
-      <div className="relative overflow-hidden rounded-lg bg-cover bg-center bg-no-repeat min-h-[400px] md:min-h-[500px]" style={{
-        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
-      }}>
-        <div className="absolute inset-0 bg-gradient-forest/60"></div>
-        
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 py-8">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl mb-6 font-kaushan text-white drop-shadow-lg">
-            Welcome to Cabin Buddy
-          </h1>
-          <p className="text-lg text-white/90 mb-8 max-w-2xl">
-            Manage your cabin experience with ease. From reservations to check-ins, we've got you covered.
-          </p>
-          
-          {/* Featured Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl w-full">
-            <Button className="bg-primary/90 hover:bg-primary text-primary-foreground px-6 py-4 text-base font-semibold h-auto" size="lg" asChild>
-              <Link to="/calendar" className="flex flex-col items-center gap-2">
-                <Calendar className="h-6 w-6" />
-                <span>Cabin Calendar</span>
-                <span className="text-xs opacity-90">View reservations</span>
-              </Link>
-            </Button>
-            
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-base font-medium h-auto" variant="secondary" asChild>
-              <Link to="/check-in" className="flex flex-col items-center gap-2">
-                <CheckCircle className="h-6 w-6" />
-                <span>Check In</span>
-                <span className="text-xs opacity-70">Arrival process</span>
-              </Link>
-            </Button>
+    <div className="min-h-screen relative">
+      {/* Top Navigation */}
+      <nav className="relative z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-6">
+              <Button variant="ghost" className="text-sm font-medium bg-primary/10 text-primary">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/cabin-rules">Cabin Rules</Link>
+              </Button>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/documents">Documents</Link>
+              </Button>
+              <Button variant="ghost" className="text-sm font-medium" asChild>
+                <Link to="/photos">Photos</Link>
+              </Button>
+              
+              {/* Organization Management Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-sm font-medium">
+                    <Users className="h-4 w-4 mr-2" />
+                    Organizations
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem asChild>
+                    <Link to="/select-organization">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Manage Organizations
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <JoinOrganizationDialog>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Join Organization
+                    </DropdownMenuItem>
+                  </JoinOrganizationDialog>
+                  <DropdownMenuItem asChild>
+                    <Link to="/family-setup?mode=create">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Organization
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-6 py-4 text-base font-medium h-auto" variant="secondary" asChild>
-              <Link to="/photos" className="flex flex-col items-center gap-2">
-                <Camera className="h-6 w-6" />
-                <span>Family Photos</span>
-                <span className="text-xs opacity-70">Share memories</span>
-              </Link>
-            </Button>
+              {isSupervisor && (
+                <Button variant="ghost" className="text-sm font-medium text-primary" asChild>
+                  <Link to="/supervisor">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Supervisor
+                  </Link>
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
+              <OrganizationSwitcher />
+              <UserInfo />
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* All Quick Actions */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <QuickActions variant="grid" showAll />
-      </div>
+      </nav>
 
-      {/* Feedback Button */}
-      <FeedbackButton />
+      {/* Full Screen Hero with Action Buttons */}
+      <div className="relative min-h-screen bg-cover bg-center bg-no-repeat" style={{
+        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+      }}>
+        <div className="absolute inset-0 bg-gradient-forest/40"></div>
+        
+        {/* Main Title */}
+        <div className="relative z-10 pt-8 pb-16 text-center">
+          <h1 className="text-8xl mb-4 font-kaushan text-red-500">
+            Welcome to Cabin Buddy
+          </h1>
+        </div>
+
+        {/* Action Buttons Overlay */}
+        <div className="relative z-10 px-8">
+          {/* Cabin Calendar - Large button on left */}
+          <Button className="absolute left-8 top-32 bg-primary/90 hover:bg-primary text-primary-foreground px-8 py-6 text-xl font-semibold shadow-warm" size="lg" asChild>
+            <Link to="/calendar">
+              <Calendar className="h-6 w-6 mr-3" />
+              Cabin Calendar
+            </Link>
+          </Button>
+
+          {/* Right side buttons cluster */}
+          <div className="absolute right-8 top-24 space-y-4">
+            {/* Arrival Check In */}
+            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/check-in">
+                <CheckCircle className="h-5 w-5 mr-3" />
+                Arrival Check In
+              </Link>
+            </Button>
+
+            {/* Daily Cabin Check In */}
+            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/daily-check-in">
+                <Clock className="h-5 w-5 mr-3" />
+                Daily Cabin Check In
+              </Link>
+            </Button>
+
+            {/* Shopping List and Add Receipt - smaller buttons side by side */}
+            <div className="flex space-x-2">
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                <Link to="/shopping-list">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Shopping List
+                </Link>
+              </Button>
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                <Link to="/add-receipt">
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Add Receipt
+                </Link>
+              </Button>
+            </div>
+
+            {/* Check Out */}
+            <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/checkout-list">
+                <LogOut className="h-5 w-5 mr-3" />
+                Check Out
+              </Link>
+            </Button>
+
+            {/* Family Photos */}
+            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+              <Link to="/photos">
+                <Camera className="h-5 w-5 mr-3" />
+                Family Photos
+              </Link>
+            </Button>
+
+          </div>
+
+        </div>
+
+        {/* Feedback Button */}
+        <FeedbackButton />
+      </div>
     </div>
   );
 };

@@ -1,22 +1,19 @@
 import { 
   Home,
   Users,
-  UsersRound,
   DollarSign,
   Calendar,
-  LogIn,
-  CheckCircle,
+  ClipboardCheck,
   CalendarDays,
   Receipt,
   ShoppingCart,
   FileText,
-  BookOpen,
-  Camera,
-  LogOut,
-  BarChart3,
+  Book,
+  Image,
+  CheckSquare,
+  Settings,
   Building,
-  UserCog,
-  Shield
+  HeadphonesIcon
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -33,86 +30,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
 
-// Reorganized into 4 logical groups for better navigation
-const coreActivitiesItems = [
-  {
-    title: "Cabin Calendar",
-    url: "/enhanced-calendar",
-    icon: Calendar,
-  },
-  {
-    title: "Check In",
-    url: "/check-in",
-    icon: LogIn,
-  },
-  {
-    title: "Daily Check In", 
-    url: "/daily-check-in",
-    icon: CheckCircle,
-  },
-  {
-    title: "Shopping List",
-    url: "/shopping-list",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Add Receipt",
-    url: "/add-receipt", 
-    icon: Receipt,
-  },
-  {
-    title: "Check Out",
-    url: "/checkout-list",
-    icon: LogOut,
-  },
-];
-
-const resourcesItems = [
-  {
-    title: "Cabin Rules",
-    url: "/cabin-rules",
-    icon: BookOpen,
-  },
-  {
-    title: "Documents",
-    url: "/documents",
-    icon: FileText,
-  },
-  {
-    title: "Seasonal Docs", 
-    url: "/cabin-seasonal-docs",
-    icon: Calendar,
-  },
-  {
-    title: "Photos",
-    url: "/photos",
-    icon: Camera,
-  },
-];
-
-const managementItems = [
-  {
-    title: "Financial Review",
-    url: "/financial-review",
-    icon: DollarSign,
-  },
-  {
-    title: "Finance Reports",
-    url: "/finance-reports", 
-    icon: BarChart3,
-  },
-  {
-    title: "Organization",
-    url: "/select-organization",
-    icon: Building,
-  },
-  {
-    title: "Calendar Keeper",
-    url: "/calendar-keeper-management",
-    icon: UserCog,
-  },
-];
-
 const setupItems = [
   {
     title: "Family Setup",
@@ -120,9 +37,9 @@ const setupItems = [
     icon: Users,
   },
   {
-    title: "Family Group Setup",
-    url: "/family-group-setup", 
-    icon: UsersRound,
+    title: "Family Group Setup", 
+    url: "/family-group-setup",
+    icon: Users,
   },
   {
     title: "Financial Setup",
@@ -131,31 +48,116 @@ const setupItems = [
   },
   {
     title: "Reservation Setup",
-    url: "/reservation-setup",
+    url: "/reservation-setup", 
+    icon: Calendar,
+  },
+];
+
+const cabinItems = [
+  {
+    title: "Cabin Calendar",
+    url: "/calendar",
+    icon: Calendar,
+  },
+  {
+    title: "Check In",
+    url: "/check-in",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Daily Check In",
+    url: "/daily-check-in",
     icon: CalendarDays,
   },
+  {
+    title: "Shopping List",
+    url: "/shopping-list",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Add Receipt",
+    url: "/add-receipt",
+    icon: Receipt,
+  },
+  {
+    title: "Check Out",
+    url: "/checkout-list",
+    icon: CheckSquare,
+  },
+];
+
+const resourcesItems = [
+  {
+    title: "Cabin Rules",
+    url: "/cabin-rules",
+    icon: Book,
+  },
+  {
+    title: "Documents",
+    url: "/documents",
+    icon: FileText,
+  },
+  {
+    title: "Seasonal Docs",
+    url: "/cabin-seasonal-docs",
+    icon: FileText,
+  },
+  {
+    title: "Photos",
+    url: "/photos",
+    icon: Image,
+  },
+];
+
+const managementItems = [
+  {
+    title: "Finance Reports",
+    url: "/finance-reports",
+    icon: DollarSign,
+  },
+  {
+    title: "Organization",
+    url: "/select-organization",
+    icon: Building,
+  },
+    {
+      title: "Calendar Keeper",
+      url: "/calendar-keeper-management",
+      icon: HeadphonesIcon,
+    },
+    {
+      title: "Financial Review",
+      url: "/financial-review",
+      icon: DollarSign,
+    },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
-
+  
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-accent text-accent-foreground" : "";
+    isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50";
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar className="border-r" collapsible="icon">
+      <div className="p-2">
+        <SidebarTrigger />
+      </div>
+      
       <SidebarContent>
         {/* Dashboard */}
         <SidebarGroup>
-          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/home" className={getNavCls}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Home</span>
+                <SidebarMenuButton asChild tooltip="Dashboard">
+                  <NavLink 
+                    to="/home" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Home className="h-4 w-4" />
+                    <span>Dashboard</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -163,16 +165,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Core Activities - Main cabin operations */}
+        {/* Cabin */}
         <SidebarGroup>
-          <SidebarGroupLabel>Core Activities</SidebarGroupLabel>
+          <SidebarGroupLabel>Cabin</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {coreActivitiesItems.map((item) => (
+              {cabinItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -182,16 +187,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Resources & Information */}
+        {/* Resources */}
         <SidebarGroup>
-          <SidebarGroupLabel>Resources & Info</SidebarGroupLabel>
+          <SidebarGroupLabel>Resources</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {resourcesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -201,16 +209,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Management - Consolidated management functions */}
+        {/* Management */}
         <SidebarGroup>
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -220,16 +231,19 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup & Administration */}
+        {/* Setup */}
         <SidebarGroup>
-          <SidebarGroupLabel>Setup & Admin</SidebarGroupLabel>
+          <SidebarGroupLabel>Setup</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {setupItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -239,17 +253,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Supervisor Section - Only show if user is supervisor */}
+        {/* Supervisor */}
         {isSupervisor && (
           <SidebarGroup>
             <SidebarGroupLabel>Supervisor</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/supervisor" className={getNavCls}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Supervisor Dashboard</span>
+                  <SidebarMenuButton asChild tooltip="Supervisor Dashboard">
+                    <NavLink 
+                      to="/supervisor" 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Dashboard</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

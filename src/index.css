@@ -124,20 +124,6 @@ All colors MUST be HSL.
   .font-body { font-family: 'Open Sans', sans-serif; }
   .font-button { font-family: 'Roboto', sans-serif; }
   .font-script { font-family: 'Alex Brush', cursive; }
-  
-  /* Mobile-first responsive text utilities */
-  .text-responsive-xs { @apply text-xs sm:text-sm; }
-  .text-responsive-sm { @apply text-sm sm:text-base; }
-  .text-responsive-base { @apply text-base sm:text-lg; }
-  .text-responsive-lg { @apply text-lg sm:text-xl; }
-  .text-responsive-xl { @apply text-xl sm:text-2xl; }
-  
-  /* Touch-friendly minimum sizes */
-  .touch-target { min-height: 44px; min-width: 44px; }
-  
-  /* Mobile spacing helpers */
-  .mobile-padding { @apply px-4 sm:px-6 lg:px-8; }
-  .mobile-margin { @apply mx-4 sm:mx-6 lg:mx-8; }
 }
 
 .force-serif-font {

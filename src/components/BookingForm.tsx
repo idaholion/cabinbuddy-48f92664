@@ -282,7 +282,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-auto w-[calc(100vw-16px)] sm:w-full">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
           {userFamilyGroup && (
@@ -337,7 +337,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             />
 
             {/* Date Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="startDate"

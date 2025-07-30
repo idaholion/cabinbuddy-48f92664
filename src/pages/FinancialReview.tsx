@@ -7,12 +7,8 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Receipt, DollarSign, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
-import { EnhancedBillingDashboard } from "@/components/EnhancedBillingDashboard";
-import { RecurringBills } from "@/components/RecurringBills";
-import { EnhancedFinancialRecords } from "@/components/EnhancedFinancialRecords";
 
 const FinancialReview = () => {
   const {
@@ -121,26 +117,118 @@ const FinancialReview = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="billing" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="billing">Billing Dashboard</TabsTrigger>
-          <TabsTrigger value="records">Financial Records</TabsTrigger>
-          <TabsTrigger value="recurring">Recurring Bills</TabsTrigger>
-        </TabsList>
+      {/* Year Selector and Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Year
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="records" className="space-y-6">
-          <EnhancedFinancialRecords />
-        </TabsContent>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Receipt className="h-4 w-4" />
+              Total Records
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{records.length}</div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="billing">
-          <EnhancedBillingDashboard />
-        </TabsContent>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Total Amount
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalAmount)}</div>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="recurring">
-          <RecurringBills />
-        </TabsContent>
-      </Tabs>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">
+              Export Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                // Simple CSV export
+                const csvContent = [
+                  ['Date', 'Description', 'Family Group', 'Amount'],
+                  ...records.map(record => [
+                    record.date,
+                    record.description,
+                    record.family_group || '',
+                    record.amount.toString()
+                  ])
+                ].map(row => row.join(',')).join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `financial-data-${selectedYear}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              CSV
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Data Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Financial Records - {selectedYear}</CardTitle>
+          <CardDescription>
+            {accessLevel === 'admin' && 'Showing all financial records for the organization'}
+            {accessLevel === 'group_lead' && `Showing financial records for ${userFamilyGroup}`}
+            {accessLevel === 'host' && 'Showing your financial records'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {records.length === 0 ? (
+            <EmptyState
+              icon={<Receipt className="h-12 w-12" />}
+              title="No financial records found"
+              description={`No financial data available for ${selectedYear}.`}
+            />
+          ) : (
+            <DataTable
+              data={records}
+              columns={columns}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -4,13 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { LoadingProvider } from "@/contexts/LoadingContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { MonitoringProvider } from "@/components/MonitoringProvider";
+import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
+import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
+import { useEnhancedErrorTracking } from '@/hooks/useEnhancedErrorTracking';
 import Intro from "./pages/Intro";
-import Dashboard from "./pages/Dashboard";
-import Home from "./pages/Home";
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -44,7 +44,6 @@ import FinancialReview from "./pages/FinancialReview";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
 import CalendarKeeperManagementPage from "./pages/CalendarKeeperManagement";
-import EnhancedCabinCalendarPage from "./pages/EnhancedCabinCalendar";
 import { CalendarKeeperRoute } from "./components/CalendarKeeperRoute";
 
 import { MainLayout } from "./components/MainLayout";
@@ -63,6 +62,11 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
+  // Initialize monitoring and analytics
+  usePerformanceMonitoring();
+  useProductionAnalytics();
+  useEnhancedErrorTracking();
+
   return (
     <BrowserRouter>
       <Routes>
@@ -71,8 +75,7 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />
@@ -82,7 +85,6 @@ const AppContent = () => {
         <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><FinancialSetupPage /></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><ReservationSetup /></MainLayout></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
-        <Route path="/enhanced-calendar" element={<ProtectedRoute><MainLayout><EnhancedCabinCalendarPage /></MainLayout></ProtectedRoute>} />
         <Route path="/check-in" element={<ProtectedRoute><MainLayout><CheckIn /></MainLayout></ProtectedRoute>} />
         <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><DailyCheckIn /></MainLayout></ProtectedRoute>} />
         <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><AddReceipt /></MainLayout></ProtectedRoute>} />
@@ -112,17 +114,13 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <LoadingProvider>
-        <AuthProvider>
-          <MonitoringProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              <AppContent />
-            </ErrorBoundary>
-          </MonitoringProvider>
-        </AuthProvider>
-      </LoadingProvider>
+      <AuthProvider>
+        <ErrorBoundary>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </ErrorBoundary>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
