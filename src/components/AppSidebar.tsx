@@ -1,19 +1,22 @@
 import { 
   Home,
   Users,
+  UsersRound,
   DollarSign,
   Calendar,
-  ClipboardCheck,
+  LogIn,
+  CheckCircle,
   CalendarDays,
   Receipt,
   ShoppingCart,
   FileText,
-  Book,
-  Image,
-  CheckSquare,
-  Settings,
+  BookOpen,
+  Camera,
+  LogOut,
+  BarChart3,
   Building,
-  HeadphonesIcon
+  UserCog,
+  Shield
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -30,30 +33,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
 
-const setupItems = [
-  {
-    title: "Family Setup",
-    url: "/family-setup",
-    icon: Users,
-  },
-  {
-    title: "Family Group Setup", 
-    url: "/family-group-setup",
-    icon: Users,
-  },
-  {
-    title: "Financial Setup",
-    url: "/financial-setup",
-    icon: DollarSign,
-  },
-  {
-    title: "Reservation Setup",
-    url: "/reservation-setup", 
-    icon: Calendar,
-  },
-];
-
-const cabinItems = [
+// Reorganized into 4 logical groups for better navigation
+const coreActivitiesItems = [
   {
     title: "Cabin Calendar",
     url: "/calendar",
@@ -62,12 +43,12 @@ const cabinItems = [
   {
     title: "Check In",
     url: "/check-in",
-    icon: ClipboardCheck,
+    icon: LogIn,
   },
   {
-    title: "Daily Check In",
+    title: "Daily Check In", 
     url: "/daily-check-in",
-    icon: CalendarDays,
+    icon: CheckCircle,
   },
   {
     title: "Shopping List",
@@ -76,13 +57,13 @@ const cabinItems = [
   },
   {
     title: "Add Receipt",
-    url: "/add-receipt",
+    url: "/add-receipt", 
     icon: Receipt,
   },
   {
     title: "Check Out",
     url: "/checkout-list",
-    icon: CheckSquare,
+    icon: LogOut,
   },
 ];
 
@@ -90,7 +71,7 @@ const resourcesItems = [
   {
     title: "Cabin Rules",
     url: "/cabin-rules",
-    icon: Book,
+    icon: BookOpen,
   },
   {
     title: "Documents",
@@ -98,66 +79,83 @@ const resourcesItems = [
     icon: FileText,
   },
   {
-    title: "Seasonal Docs",
+    title: "Seasonal Docs", 
     url: "/cabin-seasonal-docs",
-    icon: FileText,
+    icon: Calendar,
   },
   {
     title: "Photos",
     url: "/photos",
-    icon: Image,
+    icon: Camera,
   },
 ];
 
 const managementItems = [
   {
-    title: "Finance Reports",
-    url: "/finance-reports",
+    title: "Financial Review",
+    url: "/financial-review",
     icon: DollarSign,
+  },
+  {
+    title: "Finance Reports",
+    url: "/finance-reports", 
+    icon: BarChart3,
   },
   {
     title: "Organization",
     url: "/select-organization",
     icon: Building,
   },
-    {
-      title: "Calendar Keeper",
-      url: "/calendar-keeper-management",
-      icon: HeadphonesIcon,
-    },
-    {
-      title: "Financial Review",
-      url: "/financial-review",
-      icon: DollarSign,
-    },
+  {
+    title: "Calendar Keeper",
+    url: "/calendar-keeper-management",
+    icon: UserCog,
+  },
+];
+
+const setupItems = [
+  {
+    title: "Family Setup",
+    url: "/family-setup",
+    icon: Users,
+  },
+  {
+    title: "Family Group Setup",
+    url: "/family-group-setup", 
+    icon: UsersRound,
+  },
+  {
+    title: "Financial Setup",
+    url: "/financial-setup",
+    icon: DollarSign,
+  },
+  {
+    title: "Reservation Setup",
+    url: "/reservation-setup",
+    icon: CalendarDays,
+  },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
-  
+
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50";
+    isActive ? "bg-accent text-accent-foreground" : "";
 
   return (
-    <Sidebar className="border-r" collapsible="icon">
-      <div className="p-2">
-        <SidebarTrigger />
-      </div>
-      
+    <Sidebar variant="inset">
       <SidebarContent>
         {/* Dashboard */}
         <SidebarGroup>
+          <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Dashboard">
-                  <NavLink 
-                    to="/home" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Home className="h-4 w-4" />
-                    <span>Dashboard</span>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/home" className={getNavCls}>
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Home</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -165,19 +163,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Cabin */}
+        {/* Core Activities - Main cabin operations */}
         <SidebarGroup>
-          <SidebarGroupLabel>Cabin</SidebarGroupLabel>
+          <SidebarGroupLabel>Core Activities</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {cabinItems.map((item) => (
+              {coreActivitiesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -187,19 +182,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Resources */}
+        {/* Resources & Information */}
         <SidebarGroup>
-          <SidebarGroupLabel>Resources</SidebarGroupLabel>
+          <SidebarGroupLabel>Resources & Info</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {resourcesItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -209,19 +201,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Management */}
+        {/* Management - Consolidated management functions */}
         <SidebarGroup>
           <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {managementItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -231,19 +220,16 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup */}
+        {/* Setup & Administration */}
         <SidebarGroup>
-          <SidebarGroupLabel>Setup</SidebarGroupLabel>
+          <SidebarGroupLabel>Setup & Admin</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {setupItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavCls}>
+                      <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -253,20 +239,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Supervisor */}
+        {/* Supervisor Section - Only show if user is supervisor */}
         {isSupervisor && (
           <SidebarGroup>
             <SidebarGroupLabel>Supervisor</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Supervisor Dashboard">
-                    <NavLink 
-                      to="/supervisor" 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span>Dashboard</span>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/supervisor" className={getNavCls}>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Supervisor Dashboard</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
