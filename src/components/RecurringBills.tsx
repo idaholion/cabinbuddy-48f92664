@@ -12,7 +12,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, Phone, CreditCard, Trash2, Edit, Save, X } from "lucide-react";
+import { Plus, Calendar, Phone, CreditCard, Trash2, Edit, Save, X, Search, Filter, Bell, DollarSign, FileText } from "lucide-react";
 
 interface RecurringBill {
   id: string;
@@ -48,9 +48,13 @@ export const RecurringBills = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
   const [bills, setBills] = useState<RecurringBill[]>([]);
+  const [filteredBills, setFilteredBills] = useState<RecurringBill[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedFrequency, setSelectedFrequency] = useState<string>("all");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,6 +73,29 @@ export const RecurringBills = () => {
       fetchBills();
     }
   }, [organization?.id]);
+
+  // Filter bills based on search and filters
+  useEffect(() => {
+    let filtered = bills;
+
+    if (searchTerm) {
+      filtered = filtered.filter(bill =>
+        bill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(bill => bill.category === selectedCategory);
+    }
+
+    if (selectedFrequency !== "all") {
+      filtered = filtered.filter(bill => bill.frequency === selectedFrequency);
+    }
+
+    setFilteredBills(filtered);
+  }, [bills, searchTerm, selectedCategory, selectedFrequency]);
 
   const fetchBills = async () => {
     if (!organization?.id) return;
@@ -263,6 +290,52 @@ export const RecurringBills = () => {
         </div>
       </div>
 
+      {/* Search and Filter Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search bills..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="utilities">Utilities</SelectItem>
+                <SelectItem value="taxes">Taxes</SelectItem>
+                <SelectItem value="insurance">Insurance</SelectItem>
+                <SelectItem value="property">Property</SelectItem>
+                <SelectItem value="security">Security</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedFrequency} onValueChange={setSelectedFrequency}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Frequencies" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Frequencies</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="annually">Annually</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Filter className="h-4 w-4" />
+              <span>{filteredBills.length} of {bills.length} bills</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {bills.length === 0 && !showAddForm ? (
         <EmptyState
           icon={<Calendar className="h-12 w-12" />}
@@ -284,7 +357,7 @@ export const RecurringBills = () => {
             />
           )}
           
-          {bills.map((bill) => (
+          {filteredBills.map((bill) => (
             <BillCard
               key={bill.id}
               bill={bill}
