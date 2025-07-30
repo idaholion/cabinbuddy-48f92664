@@ -86,11 +86,11 @@ export const BillingDashboard = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'overdue':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       case 'current':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       default:
         return null;
     }
@@ -117,10 +117,10 @@ export const BillingDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Outstanding</p>
-                <p className="text-2xl font-bold text-red-600">${totalOutstanding}</p>
+                <p className="text-caption text-muted-foreground">Outstanding</p>
+                <p className="text-heading-3 text-destructive">${totalOutstanding}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-red-600" />
+              <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -128,10 +128,10 @@ export const BillingDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Overdue Users</p>
-                <p className="text-2xl font-bold text-orange-600">{overdueUsers}</p>
+                <p className="text-caption text-muted-foreground">Overdue Users</p>
+                <p className="text-heading-3 text-warning">{overdueUsers}</p>
               </div>
-              <Clock className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -139,10 +139,10 @@ export const BillingDashboard = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Current Users</p>
-                <p className="text-2xl font-bold text-green-600">{currentUsers}</p>
+                <p className="text-caption text-muted-foreground">Current Users</p>
+                <p className="text-heading-3 text-success">{currentUsers}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -151,8 +151,8 @@ export const BillingDashboard = () => {
       {/* User Balances */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
+          <CardTitle className="text-heading-4 flex items-center">
+            <CreditCard className="h-5 w-5 mr-2 text-primary" />
             User Balances
           </CardTitle>
           <CardDescription>Track payment status for each property co-owner</CardDescription>
@@ -163,22 +163,22 @@ export const BillingDashboard = () => {
               <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <Avatar>
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-green-500 text-white">
+                    <AvatarFallback className="bg-gradient-mountain text-primary-foreground">
                       {user.avatar}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                    <div className="text-xs text-gray-400">Last payment: {user.lastPayment}</div>
+                    <div className="text-body font-medium">{user.name}</div>
+                    <div className="text-body-small text-muted-foreground">{user.email}</div>
+                    <div className="text-caption text-muted-foreground">Last payment: {user.lastPayment}</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className={`font-bold ${user.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className={`text-body font-bold ${user.balance < 0 ? 'text-destructive' : 'text-success'}`}>
                       {user.balance < 0 ? `-$${Math.abs(user.balance)}` : '$0.00'}
                     </div>
-                    <div className="text-sm text-gray-500">Balance</div>
+                    <div className="text-caption text-muted-foreground">Balance</div>
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(user.status)}
@@ -204,7 +204,7 @@ export const BillingDashboard = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Bills</CardTitle>
+              <CardTitle className="text-heading-4">Recent Bills</CardTitle>
               <CardDescription>Generated bills and payment status</CardDescription>
             </div>
             <Button>
@@ -217,13 +217,13 @@ export const BillingDashboard = () => {
           <div className="space-y-4">
             {bills.map((bill) => (
               <div key={bill.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium">{bill.description}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="flex-1">
+                  <div className="text-body font-medium">{bill.description}</div>
+                  <div className="text-body-small text-muted-foreground">
                     Due: {bill.dueDate} • {bill.recipients} recipients
                   </div>
                   <div className="mt-2">
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="flex items-center justify-between text-caption mb-1">
                       <span>Payment Progress</span>
                       <span>{bill.paid}/{bill.recipients} paid</span>
                     </div>
@@ -232,8 +232,8 @@ export const BillingDashboard = () => {
                 </div>
                 <div className="flex items-center space-x-4 ml-4">
                   <div className="text-right">
-                    <div className="font-bold text-lg">${bill.amount}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-heading-4">${bill.amount}</div>
+                    <div className="text-caption text-muted-foreground">
                       ${(bill.amount / bill.recipients).toFixed(2)} per person
                     </div>
                   </div>

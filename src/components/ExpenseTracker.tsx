@@ -51,10 +51,10 @@ export const ExpenseTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">${totalExpenses}</p>
+                <p className="text-caption text-muted-foreground">Total Expenses</p>
+                <p className="text-heading-3 text-foreground">${totalExpenses}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -62,10 +62,10 @@ export const ExpenseTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-orange-600">${pendingExpenses}</p>
+                <p className="text-caption text-muted-foreground">Pending</p>
+                <p className="text-heading-3 text-warning">${pendingExpenses}</p>
               </div>
-              <Receipt className="h-8 w-8 text-orange-600" />
+              <Receipt className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -73,10 +73,10 @@ export const ExpenseTracker = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Settled</p>
-                <p className="text-2xl font-bold text-green-600">${totalExpenses - pendingExpenses}</p>
+                <p className="text-caption text-muted-foreground">Settled</p>
+                <p className="text-heading-3 text-success">${totalExpenses - pendingExpenses}</p>
               </div>
-              <Users className="h-8 w-8 text-green-600" />
+              <Users className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -86,7 +86,7 @@ export const ExpenseTracker = () => {
       {showAddExpense && (
         <Card>
           <CardHeader>
-            <CardTitle>Add New Expense</CardTitle>
+            <CardTitle className="text-heading-4">Add New Expense</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,8 +157,8 @@ export const ExpenseTracker = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center">
-                <Receipt className="h-5 w-5 mr-2 text-blue-600" />
+              <CardTitle className="text-heading-4 flex items-center">
+                <Receipt className="h-5 w-5 mr-2 text-primary" />
                 Recent Expenses
               </CardTitle>
               <CardDescription>Track and split property expenses</CardDescription>
@@ -172,15 +172,15 @@ export const ExpenseTracker = () => {
         <CardContent>
           <div className="space-y-4">
             {receipts.map((receipt) => (
-              <div key={receipt.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+              <div key={receipt.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                      <Receipt className="h-5 w-5 text-white" />
+                    <div className="h-10 w-10 bg-gradient-mountain rounded-full flex items-center justify-center">
+                      <Receipt className="h-5 w-5 text-primary-foreground" />
                     </div>
                     <div>
-                      <div className="font-medium">{receipt.description}</div>
-                      <div className="text-sm text-gray-500 flex items-center space-x-4">
+                      <div className="text-body font-medium">{receipt.description}</div>
+                      <div className="text-body-small text-muted-foreground flex items-center space-x-4">
                         <span className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
                           {receipt.date}
@@ -192,7 +192,7 @@ export const ExpenseTracker = () => {
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="font-bold text-lg">${receipt.amount}</div>
+                    <div className="text-heading-4">${receipt.amount}</div>
                   </div>
                   <Badge variant="secondary">
                     pending
