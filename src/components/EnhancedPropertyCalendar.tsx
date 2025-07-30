@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Clock, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { QueryError } from '@/components/ui/error-states';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { useDragSelection, DateRange } from '@/hooks/useDragSelection';
 
 interface CalendarDay {
   date: Date;
@@ -24,6 +25,7 @@ interface CalendarDay {
 interface EnhancedPropertyCalendarProps {
   onDateSelect?: (date: Date) => void;
   onReservationSelect?: (reservation: Reservation) => void;
+  onDateRangeSelect?: (ranges: DateRange[]) => void;
   selectedFamilyGroup?: string;
   viewMode?: 'month' | 'week';
 }
@@ -42,6 +44,7 @@ const FAMILY_GROUP_COLORS = [
 export const EnhancedPropertyCalendar = ({
   onDateSelect,
   onReservationSelect,
+  onDateRangeSelect,
   selectedFamilyGroup,
   viewMode = 'month'
 }: EnhancedPropertyCalendarProps) => {
@@ -56,6 +59,49 @@ export const EnhancedPropertyCalendar = ({
   } = useReservations();
   
   const queryClient = useQueryClient();
+
+  // Drag selection functionality
+  const {
+    dragState,
+    startDrag,
+    updateDrag,
+    endDrag,
+    removeRange,
+    clearSelection,
+    isDateInCurrentDrag,
+    isDateInSelectedRanges,
+  } = useDragSelection(onDateRangeSelect, 5);
+
+  // Handle mouse events for drag selection
+  const handleMouseDown = useCallback((date: Date, e: React.MouseEvent) => {
+    // Only start drag if clicking on available dates
+    const dayReservations = reservations.filter(reservation => {
+      const resStart = new Date(reservation.start_date);
+      const resEnd = new Date(reservation.end_date);
+      return date >= resStart && date <= resEnd;
+    });
+
+    const filteredReservations = selectedFamilyGroup 
+      ? dayReservations.filter(r => r.family_group === selectedFamilyGroup)
+      : dayReservations;
+
+    if (filteredReservations.length === 0) {
+      e.preventDefault();
+      startDrag(date);
+    }
+  }, [reservations, selectedFamilyGroup, startDrag]);
+
+  const handleMouseEnter = useCallback((date: Date) => {
+    if (dragState.isDragging) {
+      updateDrag(date);
+    }
+  }, [dragState.isDragging, updateDrag]);
+
+  const handleMouseUp = useCallback(() => {
+    if (dragState.isDragging) {
+      endDrag();
+    }
+  }, [dragState.isDragging, endDrag]);
 
   // Generate family group color mapping
   useEffect(() => {
@@ -205,51 +251,70 @@ export const EnhancedPropertyCalendar = ({
               </div>
               
               {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((day, index) => (
-                  <Tooltip key={index}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "min-h-20 p-1 border border-border rounded-md cursor-pointer transition-colors",
-                          day.isToday && "bg-primary/10 border-primary",
-                          day.isAvailable && "hover:bg-muted",
-                          !day.isAvailable && "bg-muted/50"
-                        )}
-                        onClick={() => onDateSelect?.(day.date)}
-                      >
-                        <div className={cn(
-                          "text-sm font-medium mb-1",
-                          day.isToday ? "text-primary" : "text-foreground"
-                        )}>
-                          {format(day.date, 'd')}
-                        </div>
-                        
-                        {/* Reservations */}
-                        <div className="space-y-1">
-                          {day.reservations.slice(0, 2).map((reservation, resIndex) => (
-                            <div
-                              key={resIndex}
-                              className={cn(
-                                "text-xs px-1 py-0.5 rounded border cursor-pointer truncate",
-                                familyGroupColors[reservation.family_group] || 'bg-gray-100 border-gray-300 text-gray-800'
-                              )}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onReservationSelect?.(reservation);
-                              }}
-                            >
-                              {reservation.family_group}
-                            </div>
-                          ))}
-                          {day.reservations.length > 2 && (
-                            <div className="text-xs text-muted-foreground px-1">
-                              +{day.reservations.length - 2} more
-                            </div>
+              <div 
+                className="grid grid-cols-7 gap-1 select-none"
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {calendarDays.map((day, index) => {
+                  const isInCurrentDrag = isDateInCurrentDrag(day.date);
+                  const isInSelectedRange = isDateInSelectedRanges(day.date);
+                  
+                  return (
+                    <Tooltip key={index}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            "min-h-20 p-1 border border-border rounded-md cursor-pointer transition-all duration-150",
+                            day.isToday && "bg-primary/10 border-primary",
+                            day.isAvailable && "hover:bg-muted",
+                            !day.isAvailable && "bg-muted/50 cursor-not-allowed",
+                            isInCurrentDrag && day.isAvailable && "bg-blue-100 border-blue-400 shadow-sm",
+                            isInSelectedRange && "bg-green-100 border-green-400 shadow-sm",
+                            dragState.isDragging && day.isAvailable && "hover:bg-blue-50"
                           )}
+                          onMouseDown={(e) => handleMouseDown(day.date, e)}
+                          onMouseEnter={() => handleMouseEnter(day.date)}
+                          onClick={() => {
+                            if (!dragState.isDragging) {
+                              onDateSelect?.(day.date);
+                            }
+                          }}
+                        >
+                          <div className={cn(
+                            "text-sm font-medium mb-1",
+                            day.isToday ? "text-primary" : "text-foreground",
+                            isInCurrentDrag && "text-blue-700",
+                            isInSelectedRange && "text-green-700"
+                          )}>
+                            {format(day.date, 'd')}
+                          </div>
+                          
+                          {/* Reservations */}
+                          <div className="space-y-1">
+                            {day.reservations.slice(0, 2).map((reservation, resIndex) => (
+                              <div
+                                key={resIndex}
+                                className={cn(
+                                  "text-xs px-1 py-0.5 rounded border cursor-pointer truncate",
+                                  familyGroupColors[reservation.family_group] || 'bg-gray-100 border-gray-300 text-gray-800'
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onReservationSelect?.(reservation);
+                                }}
+                              >
+                                {reservation.family_group}
+                              </div>
+                            ))}
+                            {day.reservations.length > 2 && (
+                              <div className="text-xs text-muted-foreground px-1">
+                                +{day.reservations.length - 2} more
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </TooltipTrigger>
+                      </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-xs">
                       <div className="space-y-2">
                         <div className="font-medium">{format(day.date, 'PPP')}</div>
@@ -273,11 +338,49 @@ export const EnhancedPropertyCalendar = ({
                       </div>
                     </TooltipContent>
                   </Tooltip>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Selected Date Ranges Display */}
+        {dragState.selectedRanges.length > 0 && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Selected Date Ranges</CardTitle>
+                <Button variant="outline" size="sm" onClick={clearSelection}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {dragState.selectedRanges.map((range, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium">
+                        {format(range.start, 'MMM d')} - {format(range.end, 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeRange(index)}
+                      className="h-6 w-6 p-0 text-green-600 hover:text-green-800"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Legend */}
         <Card>
@@ -290,6 +393,14 @@ export const EnhancedPropertyCalendar = ({
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 bg-muted/50 border border-border rounded" />
                 <span className="text-sm">Unavailable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 bg-blue-100 border border-blue-400 rounded" />
+                <span className="text-sm">Currently Selecting</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 bg-green-100 border border-green-400 rounded" />
+                <span className="text-sm">Selected Range</span>
               </div>
               {Object.entries(familyGroupColors).map(([group, colorClass]) => (
                 <div key={group} className="flex items-center gap-2">

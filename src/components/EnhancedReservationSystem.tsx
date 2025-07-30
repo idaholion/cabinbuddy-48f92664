@@ -12,6 +12,8 @@ import { useReservations, Reservation } from '@/hooks/useEnhancedReservations';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { ReservationListSkeleton } from '@/components/ui/loading-skeletons';
 import { QueryError, EmptyState } from '@/components/ui/error-states';
+import { DateRange } from '@/hooks/useDragSelection';
+import { toast } from 'sonner';
 
 export const EnhancedReservationSystem = () => {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>();
@@ -28,6 +30,14 @@ export const EnhancedReservationSystem = () => {
 
   const handleCreateSuccess = () => {
     setIsCreateDialogOpen(false);
+  };
+
+  const handleDateRangeSelect = (ranges: DateRange[]) => {
+    if (ranges.length > 0) {
+      toast.success(`Selected ${ranges.length} date range${ranges.length > 1 ? 's' : ''}. Ready to create reservation!`);
+      // You can integrate this with the multi-reservation form
+      // For now, just show a success message
+    }
   };
 
   const filteredReservations = selectedFamilyGroup 
@@ -179,6 +189,7 @@ export const EnhancedReservationSystem = () => {
           <EnhancedPropertyCalendar
             selectedFamilyGroup={selectedFamilyGroup}
             onReservationSelect={handleReservationSelect}
+            onDateRangeSelect={handleDateRangeSelect}
           />
         </TabsContent>
         
