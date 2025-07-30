@@ -136,6 +136,10 @@ export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
   
+  // Check if we're on a supervisor organization page
+  const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
+  const organizationId = organizationMatch ? organizationMatch[1] : null;
+  
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-accent text-accent-foreground" : "hover:bg-accent/50";
 
@@ -270,6 +274,47 @@ export function AppSidebar() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                
+                {/* Organization-specific supervisor links */}
+                {organizationId && (
+                  <>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Family Groups">
+                        <NavLink 
+                          to={`/supervisor/organization/${organizationId}/family-groups`}
+                          className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                        >
+                          <Users className="h-4 w-4" />
+                          <span>Family Groups</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Financial Setup">
+                        <NavLink 
+                          to={`/supervisor/organization/${organizationId}/financial`}
+                          className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                          <span>Financial Setup</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip="Reservation Setup">
+                        <NavLink 
+                          to={`/supervisor/organization/${organizationId}/reservation`}
+                          className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                        >
+                          <Calendar className="h-4 w-4" />
+                          <span>Reservation Setup</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
