@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      bulk_operation_audit: {
+        Row: {
+          details: Json | null
+          id: string
+          operation_type: string
+          organization_id: string | null
+          performed_at: string | null
+          performed_by_user_id: string | null
+          records_affected: number | null
+        }
+        Insert: {
+          details?: Json | null
+          id?: string
+          operation_type: string
+          organization_id?: string | null
+          performed_at?: string | null
+          performed_by_user_id?: string | null
+          records_affected?: number | null
+        }
+        Update: {
+          details?: Json | null
+          id?: string
+          operation_type?: string
+          organization_id?: string | null
+          performed_at?: string | null
+          performed_by_user_id?: string | null
+          records_affected?: number | null
+        }
+        Relationships: []
+      }
       calendar_keeper_requests: {
         Row: {
           calendar_keeper_response: string | null
@@ -386,6 +416,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recurring_bills: {
+        Row: {
+          account_number: string | null
+          amount: number | null
+          category: string
+          created_at: string
+          due_date: string | null
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          phone_number: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          amount?: number | null
+          category: string
+          created_at?: string
+          due_date?: string | null
+          frequency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone_number?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          amount?: number | null
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone_number?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       reservation_periods: {
         Row: {
@@ -941,6 +1019,10 @@ export type Database = {
       }
       set_primary_organization: {
         Args: { org_id: string }
+        Returns: boolean
+      }
+      supervisor_bulk_update_family_groups: {
+        Args: { p_organization_id: string; p_confirmation_code: string }
         Returns: boolean
       }
     }

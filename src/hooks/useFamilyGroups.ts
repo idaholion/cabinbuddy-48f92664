@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useSupervisor } from '@/hooks/useSupervisor';
 
 interface HostMember {
   name: string;
@@ -25,6 +26,7 @@ export const useFamilyGroups = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const { isSupervisor } = useSupervisor();
   const [loading, setLoading] = useState(false);
   const [familyGroups, setFamilyGroups] = useState<any[]>([]);
 
@@ -317,6 +319,58 @@ export const useFamilyGroups = () => {
     }
   };
 
+  const assignDefaultColorsWithProtection = async () => {
+    if (!isSupervisor) {
+      toast({
+        title: "Access Denied",
+        description: "Only supervisors can assign default colors to all family groups.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization found.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('assign_default_colors');
+      
+      if (error) {
+        console.error('Error assigning default colors:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to assign default colors. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Refresh the family groups list to show the new colors
+      await fetchFamilyGroups();
+      
+      toast({
+        title: "Success",
+        description: "Default colors assigned to family groups successfully!",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error in assignDefaultColorsWithProtection:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while assigning colors.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     familyGroups,
     loading,
@@ -326,5 +380,7 @@ export const useFamilyGroups = () => {
     refetchFamilyGroups: fetchFamilyGroups,
     getAvailableColors,
     updateFamilyGroupColor,
+    assignDefaultColorsWithProtection,
+    isSupervisor,
   };
 };

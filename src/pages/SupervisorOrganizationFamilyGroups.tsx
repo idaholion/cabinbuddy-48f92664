@@ -5,12 +5,14 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ColorPicker } from "@/components/ui/color-picker";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus, ArrowLeft, Palette, AlertTriangle } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
+import { SupervisorBulkOperationDialog } from "@/components/SupervisorBulkOperationDialog";
+import { useBulkOperationProtection } from "@/hooks/useBulkOperationProtection";
 
 interface HostMember {
   name: string;
@@ -32,6 +34,14 @@ const SupervisorOrganizationFamilyGroups = () => {
   const { organizationId } = useParams<{ organizationId: string }>();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const {
+    requestBulkOperation,
+    executeBulkOperation,
+    cancelOperation,
+    isDialogOpen,
+    currentOperation,
+    loading: bulkLoading,
+  } = useBulkOperationProtection();
   
   const [familyGroups, setFamilyGroups] = useState<FamilyGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -227,6 +237,33 @@ const SupervisorOrganizationFamilyGroups = () => {
     setHostMembers([...hostMembers, { name: "", phone: "", email: "" }]);
   };
 
+  const handleBulkAssignColors = () => {
+    const groupsWithoutColors = familyGroups.filter(group => !group.color);
+    
+    if (groupsWithoutColors.length === 0) {
+      toast({
+        title: "No Action Needed",
+        description: "All family groups already have colors assigned.",
+      });
+      return;
+    }
+
+    requestBulkOperation({
+      operationType: "assign default colors",
+      organizationId: organizationId!,
+      organizationName: `Organization ${organizationId}`,
+      estimatedRecords: groupsWithoutColors.length,
+      onConfirm: async () => {
+        const { error } = await supabase.rpc('assign_default_colors');
+        if (error) {
+          throw new Error(error.message);
+        }
+        await fetchFamilyGroups();
+        await fetchAvailableColors();
+      }
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -399,6 +436,32 @@ const SupervisorOrganizationFamilyGroups = () => {
           </CardContent>
         </Card>
 
+        {/* Bulk Operations */}
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              Supervisor Bulk Operations
+            </CardTitle>
+            <CardDescription>
+              These operations affect multiple family groups simultaneously and require supervisor authorization.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleBulkAssignColors}
+                disabled={bulkLoading}
+                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                <Palette className="h-4 w-4 mr-2" />
+                Assign Default Colors to All Groups
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Existing Groups Overview */}
         <Card>
           <CardHeader>
@@ -441,6 +504,17 @@ const SupervisorOrganizationFamilyGroups = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Bulk Operation Confirmation Dialog */}
+      <SupervisorBulkOperationDialog
+        open={isDialogOpen}
+        onOpenChange={cancelOperation}
+        operationType={currentOperation?.operationType || ""}
+        affectedRecords={currentOperation?.estimatedRecords || 0}
+        organizationName={currentOperation?.organizationName || ""}
+        onConfirm={executeBulkOperation}
+        loading={bulkLoading}
+      />
     </div>
   );
 };
