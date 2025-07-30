@@ -9,7 +9,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MonitoringProvider } from "@/components/MonitoringProvider";
 import Intro from "./pages/Intro";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -70,7 +71,8 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />
