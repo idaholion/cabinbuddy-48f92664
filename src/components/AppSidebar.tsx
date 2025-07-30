@@ -37,7 +37,7 @@ import { useSupervisor } from "@/hooks/useSupervisor";
 const coreActivitiesItems = [
   {
     title: "Cabin Calendar",
-    url: "/calendar",
+    url: "/enhanced-calendar",
     icon: Calendar,
   },
   {

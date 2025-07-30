@@ -43,6 +43,7 @@ import FinancialReview from "./pages/FinancialReview";
 import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
 import CalendarKeeperManagementPage from "./pages/CalendarKeeperManagement";
+import EnhancedCabinCalendarPage from "./pages/EnhancedCabinCalendar";
 import { CalendarKeeperRoute } from "./components/CalendarKeeperRoute";
 
 import { MainLayout } from "./components/MainLayout";
@@ -79,6 +80,7 @@ const AppContent = () => {
         <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><FinancialSetupPage /></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><ReservationSetup /></MainLayout></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
+        <Route path="/enhanced-calendar" element={<ProtectedRoute><MainLayout><EnhancedCabinCalendarPage /></MainLayout></ProtectedRoute>} />
         <Route path="/check-in" element={<ProtectedRoute><MainLayout><CheckIn /></MainLayout></ProtectedRoute>} />
         <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><DailyCheckIn /></MainLayout></ProtectedRoute>} />
         <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><AddReceipt /></MainLayout></ProtectedRoute>} />

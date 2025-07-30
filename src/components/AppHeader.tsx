@@ -18,7 +18,7 @@ interface QuickAction {
 }
 
 const quickActions: QuickAction[] = [
-  { title: 'Calendar', url: '/calendar', icon: <Calendar className="h-4 w-4" />, variant: 'default' },
+  { title: 'Calendar', url: '/enhanced-calendar', icon: <Calendar className="h-4 w-4" />, variant: 'default' },
   { title: 'Check In', url: '/check-in', icon: <CheckCircle className="h-4 w-4" />, variant: 'outline' },
   { title: 'Add Receipt', url: '/add-receipt', icon: <Receipt className="h-4 w-4" />, variant: 'outline' },
   { title: 'Dashboard', url: '/home', icon: <Home className="h-4 w-4" />, variant: 'outline' },
