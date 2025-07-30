@@ -108,11 +108,11 @@ const DailyCheckIn = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-primary-foreground mb-2 flex items-center">
+          <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center bg-background/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
             <Clock className="h-10 w-10 mr-3" />
             Daily Cabin Check-In
           </h1>
-          <p className="text-lg text-primary-foreground/80">Complete your daily maintenance checklist</p>
+          <p className="text-lg text-muted-foreground bg-background/80 backdrop-blur-sm p-3 rounded-md">Complete your daily maintenance checklist</p>
         </div>
 
         <div className="grid gap-6">
