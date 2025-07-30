@@ -15,7 +15,8 @@ export interface DragSelectionState {
 
 export const useDragSelection = (
   onRangeSelect?: (ranges: DateRange[]) => void,
-  maxRanges: number = 5
+  maxRanges: number = 5,
+  selectionColor?: string
 ) => {
   const [dragState, setDragState] = useState<DragSelectionState>({
     isDragging: false,
@@ -129,5 +130,6 @@ export const useDragSelection = (
     clearSelection,
     isDateInCurrentDrag,
     isDateInSelectedRanges,
+    selectionColor: selectionColor || 'green',
   };
 };

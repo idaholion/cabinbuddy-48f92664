@@ -27,6 +27,7 @@ interface EnhancedPropertyCalendarProps {
   onReservationSelect?: (reservation: Reservation) => void;
   onDateRangeSelect?: (ranges: DateRange[]) => void;
   selectedFamilyGroup?: string;
+  selectedFamilyGroupData?: { id: string; name: string; color: string };
   viewMode?: 'month' | 'week';
 }
 
@@ -46,6 +47,7 @@ export const EnhancedPropertyCalendar = ({
   onReservationSelect,
   onDateRangeSelect,
   selectedFamilyGroup,
+  selectedFamilyGroupData,
   viewMode = 'month'
 }: EnhancedPropertyCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -70,7 +72,8 @@ export const EnhancedPropertyCalendar = ({
     clearSelection,
     isDateInCurrentDrag,
     isDateInSelectedRanges,
-  } = useDragSelection(onDateRangeSelect, 5);
+    selectionColor,
+  } = useDragSelection(onDateRangeSelect, 5, selectedFamilyGroupData?.color);
 
   // Handle mouse events for drag selection
   const handleMouseDown = useCallback((date: Date, e: React.MouseEvent) => {
@@ -270,7 +273,7 @@ export const EnhancedPropertyCalendar = ({
                             day.isAvailable && "hover:bg-muted",
                             !day.isAvailable && "bg-muted/50 cursor-not-allowed",
                             isInCurrentDrag && day.isAvailable && "bg-blue-100 border-blue-400 shadow-sm",
-                            isInSelectedRange && "bg-green-100 border-green-400 shadow-sm",
+                            isInSelectedRange && `bg-${selectionColor}-100 border-${selectionColor}-400 shadow-sm`,
                             dragState.isDragging && day.isAvailable && "hover:bg-blue-50"
                           )}
                           onMouseDown={(e) => handleMouseDown(day.date, e)}
@@ -285,7 +288,7 @@ export const EnhancedPropertyCalendar = ({
                             "text-sm font-medium mb-1",
                             day.isToday ? "text-primary" : "text-foreground",
                             isInCurrentDrag && "text-blue-700",
-                            isInSelectedRange && "text-green-700"
+                            isInSelectedRange && `text-${selectionColor}-700`
                           )}>
                             {format(day.date, 'd')}
                           </div>
@@ -360,9 +363,9 @@ export const EnhancedPropertyCalendar = ({
             <CardContent>
               <div className="space-y-2">
                 {dragState.selectedRanges.map((range, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-md">
+                  <div key={index} className={`flex items-center justify-between p-3 bg-${selectionColor}-50 border border-${selectionColor}-200 rounded-md`}>
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4 text-green-600" />
+                      <CalendarIcon className={`h-4 w-4 text-${selectionColor}-600`} />
                       <span className="text-sm font-medium">
                         {format(range.start, 'MMM d')} - {format(range.end, 'MMM d, yyyy')}
                       </span>
@@ -371,7 +374,7 @@ export const EnhancedPropertyCalendar = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeRange(index)}
-                      className="h-6 w-6 p-0 text-green-600 hover:text-green-800"
+                      className={`h-6 w-6 p-0 text-${selectionColor}-600 hover:text-${selectionColor}-800`}
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -399,8 +402,10 @@ export const EnhancedPropertyCalendar = ({
                 <span className="text-sm">Currently Selecting</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 bg-green-100 border border-green-400 rounded" />
-                <span className="text-sm">Selected Range</span>
+                <div className={`h-4 w-4 bg-${selectionColor}-100 border border-${selectionColor}-400 rounded`} />
+                <span className="text-sm">
+                  Selected Range {selectedFamilyGroupData && `(${selectedFamilyGroupData.name})`}
+                </span>
               </div>
               {Object.entries(familyGroupColors).map(([group, colorClass]) => (
                 <div key={group} className="flex items-center gap-2">

@@ -188,6 +188,7 @@ export const EnhancedReservationSystem = () => {
         <TabsContent value="calendar" className="mt-6">
           <EnhancedPropertyCalendar
             selectedFamilyGroup={selectedFamilyGroup}
+            selectedFamilyGroupData={familyGroups.find(g => g.name === selectedFamilyGroup)}
             onReservationSelect={handleReservationSelect}
             onDateRangeSelect={handleDateRangeSelect}
           />
