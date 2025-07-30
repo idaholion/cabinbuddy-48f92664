@@ -4,10 +4,12 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-      <div className="max-w-4xl mx-auto text-center">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-center p-8" style={{
+      backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+    }}>
+      <div className="w-full text-center">
         {/* Main Title */}
-        <h1 className="text-6xl md:text-8xl font-kaushan text-red-600 mb-12">
+        <h1 className="text-6xl md:text-8xl text-red-600 mb-12" style={{ fontFamily: 'Kaushan Script, cursive' }}>
           Welcome to Cabin Buddy
         </h1>
         
