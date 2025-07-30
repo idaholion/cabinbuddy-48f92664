@@ -110,9 +110,9 @@ export const BillingDashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -158,40 +158,44 @@ export const BillingDashboard = () => {
           <CardDescription>Track payment status for each property co-owner</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <Avatar>
-                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-green-500 text-white">
+              <div key={user.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg space-y-3 sm:space-y-0">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-green-500 text-white text-xs sm:text-sm">
                       {user.avatar}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <div className="font-medium">{user.name}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                    <div className="text-xs text-gray-400">Last payment: {user.lastPayment}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm sm:text-base truncate">{user.name}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</div>
+                    <div className="text-xs text-muted-foreground">Last payment: {user.lastPayment}</div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
+                
+                <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
                   <div className="text-right">
-                    <div className={`font-bold ${user.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className={`font-bold text-sm sm:text-base ${user.balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {user.balance < 0 ? `-$${Math.abs(user.balance)}` : '$0.00'}
                     </div>
-                    <div className="text-sm text-gray-500">Balance</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Balance</div>
                   </div>
+                  
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(user.status)}
-                    <Badge variant={getStatusColor(user.status) as any}>
-                      {user.status}
-                    </Badge>
+                    <div className="flex items-center space-x-1 sm:space-x-2">
+                      {getStatusIcon(user.status)}
+                      <Badge variant={getStatusColor(user.status) as any} className="text-xs">
+                        {user.status}
+                      </Badge>
+                    </div>
+                    {user.balance < 0 && (
+                      <Button size="sm" variant="outline" className="text-xs sm:text-sm">
+                        <Send className="h-3 w-3 mr-1" />
+                        <span className="hidden sm:inline">Remind</span>
+                      </Button>
+                    )}
                   </div>
-                  {user.balance < 0 && (
-                    <Button size="sm" variant="outline">
-                      <Send className="h-3 w-3 mr-1" />
-                      Remind
-                    </Button>
-                  )}
                 </div>
               </div>
             ))}
@@ -214,34 +218,38 @@ export const BillingDashboard = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {bills.map((bill) => (
-              <div key={bill.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex-1">
-                  <div className="font-medium">{bill.description}</div>
-                  <div className="text-sm text-gray-500">
+              <div key={bill.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg space-y-3 sm:space-y-0">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm sm:text-base">{bill.description}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Due: {bill.dueDate} • {bill.recipients} recipients
                   </div>
                   <div className="mt-2">
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="flex items-center justify-between text-xs sm:text-sm mb-1">
                       <span>Payment Progress</span>
                       <span>{bill.paid}/{bill.recipients} paid</span>
                     </div>
                     <Progress value={(bill.paid / bill.recipients) * 100} className="h-2" />
                   </div>
                 </div>
-                <div className="flex items-center space-x-4 ml-4">
+                
+                <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4 sm:ml-4">
                   <div className="text-right">
-                    <div className="font-bold text-lg">${bill.amount}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-bold text-base sm:text-lg">${bill.amount}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">
                       ${(bill.amount / bill.recipients).toFixed(2)} per person
                     </div>
                   </div>
-                  <Badge variant={
-                    bill.status === 'completed' ? 'default' : 
-                    bill.status === 'sent' ? 'secondary' : 
-                    'outline'
-                  }>
+                  <Badge 
+                    variant={
+                      bill.status === 'completed' ? 'default' : 
+                      bill.status === 'sent' ? 'secondary' : 
+                      'outline'
+                    }
+                    className="text-xs"
+                  >
                     {bill.status}
                   </Badge>
                 </div>

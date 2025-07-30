@@ -16,10 +16,10 @@ const UserInfo = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="flex items-center space-x-2">
-      <div className="flex items-center space-x-2 text-sm font-medium">
-        <User className="h-4 w-4" />
-        <span>
+    <div className="flex items-center space-x-1 sm:space-x-2">
+      <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium">
+        <User className="h-3 w-3 sm:h-4 sm:w-4" />
+        <span className="hidden sm:inline truncate max-w-[100px] sm:max-w-none">
           {user?.user_metadata?.first_name || user?.email}
         </span>
       </div>
@@ -27,10 +27,11 @@ const UserInfo = () => {
         variant="ghost" 
         size="sm" 
         onClick={signOut}
-        className="text-sm font-medium"
+        className="text-xs sm:text-sm font-medium"
       >
-        <LogOut className="h-4 w-4 mr-2" />
-        Logout
+        <LogOut className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden sm:inline">Logout</span>
+        <span className="sm:hidden">Out</span>
       </Button>
     </div>
   );
@@ -56,29 +57,34 @@ const Index = () => {
     <div className="min-h-screen relative">
       {/* Top Navigation */}
       <nav className="relative z-20 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-6">
-              <Button variant="ghost" className="text-sm font-medium bg-primary/10 text-primary">
-                <Home className="h-4 w-4 mr-2" />
-                Home
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            {/* Mobile: Show fewer nav items */}
+            <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6 overflow-x-auto">
+              <Button variant="ghost" className="text-xs sm:text-sm font-medium bg-primary/10 text-primary whitespace-nowrap">
+                <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Home</span>
               </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/cabin-rules">Cabin Rules</Link>
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/documents">Documents</Link>
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/photos">Photos</Link>
-              </Button>
+              
+              {/* Mobile: Show condensed navigation */}
+              <div className="hidden sm:flex items-center space-x-4">
+                <Button variant="ghost" className="text-sm font-medium" asChild>
+                  <Link to="/cabin-rules">Cabin Rules</Link>
+                </Button>
+                <Button variant="ghost" className="text-sm font-medium" asChild>
+                  <Link to="/documents">Documents</Link>
+                </Button>
+                <Button variant="ghost" className="text-sm font-medium" asChild>
+                  <Link to="/photos">Photos</Link>
+                </Button>
+              </div>
               
               {/* Organization Management Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-sm font-medium">
-                    <Users className="h-4 w-4 mr-2" />
-                    Organizations
+                  <Button variant="ghost" className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden xs:inline">Organizations</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -105,16 +111,19 @@ const Index = () => {
               </DropdownMenu>
 
               {isSupervisor && (
-                <Button variant="ghost" className="text-sm font-medium text-primary" asChild>
+                <Button variant="ghost" className="text-xs sm:text-sm font-medium text-primary whitespace-nowrap" asChild>
                   <Link to="/supervisor">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Supervisor
+                    <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden xs:inline">Supervisor</span>
                   </Link>
                 </Button>
               )}
             </div>
-            <div className="flex items-center space-x-4">
-              <OrganizationSwitcher />
+            
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden sm:block">
+                <OrganizationSwitcher />
+              </div>
               <UserInfo />
             </div>
           </div>
@@ -128,74 +137,123 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
         {/* Main Title */}
-        <div className="relative z-10 pt-8 pb-16 text-center">
-          <h1 className="text-8xl mb-4 font-kaushan text-red-500">
+        <div className="relative z-10 pt-4 sm:pt-8 pb-8 sm:pb-16 text-center px-4">
+          <h1 className="text-4xl sm:text-6xl lg:text-8xl mb-4 font-kaushan text-red-500">
             Welcome to Cabin Buddy
           </h1>
         </div>
 
-        {/* Action Buttons Overlay */}
-        <div className="relative z-10 px-8">
-          {/* Cabin Calendar - Large button on left */}
-          <Button className="absolute left-8 top-32 bg-primary/90 hover:bg-primary text-primary-foreground px-8 py-6 text-xl font-semibold shadow-warm" size="lg" asChild>
-            <Link to="/calendar">
-              <Calendar className="h-6 w-6 mr-3" />
-              Cabin Calendar
-            </Link>
-          </Button>
-
-          {/* Right side buttons cluster */}
-          <div className="absolute right-8 top-24 space-y-4">
-            {/* Arrival Check In */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+        {/* Mobile: Stack buttons vertically, Desktop: Original layout */}
+        <div className="relative z-10 px-4 sm:px-8">
+          {/* Mobile Layout */}
+          <div className="sm:hidden space-y-4 max-w-sm mx-auto">
+            <Button className="w-full bg-primary/90 hover:bg-primary text-primary-foreground px-6 py-4 text-lg font-semibold shadow-warm" size="lg" asChild>
+              <Link to="/calendar">
+                <Calendar className="h-5 w-5 mr-3" />
+                Cabin Calendar
+              </Link>
+            </Button>
+            
+            <Button className="w-full bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin" variant="secondary" asChild>
               <Link to="/check-in">
                 <CheckCircle className="h-5 w-5 mr-3" />
                 Arrival Check In
               </Link>
             </Button>
 
-            {/* Daily Cabin Check In */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="w-full bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin" variant="secondary" asChild>
               <Link to="/daily-check-in">
                 <Clock className="h-5 w-5 mr-3" />
                 Daily Cabin Check In
               </Link>
             </Button>
 
-            {/* Shopping List and Add Receipt - smaller buttons side by side */}
-            <div className="flex space-x-2">
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+            <div className="grid grid-cols-2 gap-2">
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin" variant="secondary" asChild>
                 <Link to="/shopping-list">
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  Shopping List
+                  Shop List
                 </Link>
               </Button>
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin" variant="secondary" asChild>
                 <Link to="/add-receipt">
                   <Receipt className="h-4 w-4 mr-2" />
-                  Add Receipt
+                  Receipt
                 </Link>
               </Button>
             </div>
 
-            {/* Check Out */}
-            <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="w-full bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin" variant="secondary" asChild>
               <Link to="/checkout-list">
                 <LogOut className="h-5 w-5 mr-3" />
                 Check Out
               </Link>
             </Button>
 
-            {/* Family Photos */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="w-full bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin" variant="secondary" asChild>
               <Link to="/photos">
                 <Camera className="h-5 w-5 mr-3" />
                 Family Photos
               </Link>
             </Button>
-
           </div>
 
+          {/* Desktop Layout */}
+          <div className="hidden sm:block">
+            {/* Cabin Calendar - Large button on left */}
+            <Button className="absolute left-8 top-32 bg-primary/90 hover:bg-primary text-primary-foreground px-8 py-6 text-xl font-semibold shadow-warm" size="lg" asChild>
+              <Link to="/calendar">
+                <Calendar className="h-6 w-6 mr-3" />
+                Cabin Calendar
+              </Link>
+            </Button>
+
+            {/* Right side buttons cluster */}
+            <div className="absolute right-8 top-24 space-y-4">
+              <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+                <Link to="/check-in">
+                  <CheckCircle className="h-5 w-5 mr-3" />
+                  Arrival Check In
+                </Link>
+              </Button>
+
+              <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+                <Link to="/daily-check-in">
+                  <Clock className="h-5 w-5 mr-3" />
+                  Daily Cabin Check In
+                </Link>
+              </Button>
+
+              <div className="flex space-x-2">
+                <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                  <Link to="/shopping-list">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Shopping List
+                  </Link>
+                </Button>
+                <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+                  <Link to="/add-receipt">
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Add Receipt
+                  </Link>
+                </Button>
+              </div>
+
+              <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+                <Link to="/checkout-list">
+                  <LogOut className="h-5 w-5 mr-3" />
+                  Check Out
+                </Link>
+              </Button>
+
+              <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+                <Link to="/photos">
+                  <Camera className="h-5 w-5 mr-3" />
+                  Family Photos
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Feedback Button */}
