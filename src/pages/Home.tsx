@@ -9,7 +9,7 @@ const Home = () => {
     }}>
       <div className="w-full text-center">
         {/* Main Title */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-red-600 whitespace-nowrap" style={{ fontFamily: 'Kaushan Script, cursive' }}>
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl text-red-600 whitespace-nowrap" style={{ fontFamily: 'Kaushan Script, cursive' }}>
           Welcome to Cabin Buddy
         </h1>
       </div>
