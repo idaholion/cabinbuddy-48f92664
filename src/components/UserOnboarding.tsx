@@ -17,19 +17,19 @@ interface OnboardingStep {
 
 const onboardingSteps: OnboardingStep[] = [
   {
-    id: 'calendar',
-    title: 'View Cabin Calendar',
-    description: 'Check available dates and current reservations',
-    path: '/calendar',
-    icon: <Calendar className="h-5 w-5" />,
-    completed: false
-  },
-  {
     id: 'organization',
     title: 'Join Your Family Organization',
     description: 'Connect with your family group to start sharing the cabin',
     path: '/select-organization',
     icon: <Users className="h-5 w-5" />,
+    completed: false
+  },
+  {
+    id: 'calendar',
+    title: 'View Cabin Calendar',
+    description: 'Check available dates and current reservations',
+    path: '/calendar',
+    icon: <Calendar className="h-5 w-5" />,
     completed: false
   },
   {
