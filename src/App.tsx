@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LoadingProvider } from "@/contexts/LoadingContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { MonitoringProvider } from "@/components/MonitoringProvider";
@@ -107,15 +108,17 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <MonitoringProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            <AppContent />
-          </ErrorBoundary>
-        </MonitoringProvider>
-      </AuthProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <MonitoringProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner />
+              <AppContent />
+            </ErrorBoundary>
+          </MonitoringProvider>
+        </AuthProvider>
+      </LoadingProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
