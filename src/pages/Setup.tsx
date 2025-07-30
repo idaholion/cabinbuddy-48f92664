@@ -14,30 +14,41 @@ const Setup = () => {
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
 
-  // Check completion status for each step
-  const isOrganizationComplete = Boolean(organization && 
-    organization.name && 
-    organization.admin_name && 
-    organization.admin_email && 
-    organization.treasurer_name && 
-    organization.treasurer_email && 
-    organization.calendar_keeper_name && 
-    organization.calendar_keeper_email);
+  // Check completion status for each step with stricter criteria
+  const isOrganizationComplete = Boolean(
+    organization && 
+    organization.name && organization.name.trim() && 
+    organization.admin_name && organization.admin_name.trim() && 
+    organization.admin_email && organization.admin_email.trim() && 
+    organization.treasurer_name && organization.treasurer_name.trim() && 
+    organization.treasurer_email && organization.treasurer_email.trim() && 
+    organization.calendar_keeper_name && organization.calendar_keeper_name.trim() && 
+    organization.calendar_keeper_email && organization.calendar_keeper_email.trim()
+  );
     
-  const isFamilyGroupsComplete = Boolean(familyGroups && 
+  const isFamilyGroupsComplete = Boolean(
+    familyGroups && 
     familyGroups.length > 0 && 
-    familyGroups.every(group => group.lead_name && group.lead_email));
+    familyGroups.every(group => 
+      group.lead_name && group.lead_name.trim() && 
+      group.lead_email && group.lead_email.trim()
+    )
+  );
     
-  const isFinancialComplete = Boolean(reservationSettings && 
-    reservationSettings.nightly_rate && 
-    reservationSettings.cleaning_fee && 
-    reservationSettings.damage_deposit);
+  const isFinancialComplete = Boolean(
+    reservationSettings && 
+    reservationSettings.nightly_rate && reservationSettings.nightly_rate > 0 && 
+    reservationSettings.cleaning_fee && reservationSettings.cleaning_fee > 0 && 
+    reservationSettings.damage_deposit && reservationSettings.damage_deposit > 0
+  );
     
-  const isReservationComplete = Boolean(rotationData && 
+  const isReservationComplete = Boolean(
+    rotationData && 
     rotationData.rotation_order && 
     rotationData.rotation_order.length > 0 && 
-    rotationData.max_time_slots && 
-    rotationData.start_month);
+    rotationData.max_time_slots && rotationData.max_time_slots > 0 && 
+    rotationData.start_month && rotationData.start_month.trim()
+  );
 
   const CompletionBadge = ({ isComplete }: { isComplete: boolean }) => (
     isComplete ? (
