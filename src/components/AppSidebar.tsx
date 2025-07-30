@@ -30,6 +30,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 
 const setupItems = [
   {
@@ -117,20 +118,15 @@ const managementItems = [
     icon: DollarSign,
   },
   {
-    title: "Organization",
-    url: "/select-organization",
-    icon: Building,
+    title: "Calendar Keeper",
+    url: "/calendar-keeper-management",
+    icon: HeadphonesIcon,
   },
-    {
-      title: "Calendar Keeper",
-      url: "/calendar-keeper-management",
-      icon: HeadphonesIcon,
-    },
-    {
-      title: "Financial Review",
-      url: "/financial-review",
-      icon: DollarSign,
-    },
+  {
+    title: "Financial Review",
+    url: "/financial-review",
+    icon: DollarSign,
+  },
 ];
 
 export function AppSidebar() {
@@ -146,8 +142,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r" collapsible="icon">
-      <div className="p-2">
+      <div className="flex items-center justify-between p-2 border-b">
         <SidebarTrigger />
+      </div>
+      
+      {/* Organization Switcher Header */}
+      <div className="p-2 border-b">
+        <OrganizationSwitcher />
       </div>
       
       <SidebarContent>
@@ -170,25 +171,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* TODO: TEMPORARY - REMOVE BEFORE PRODUCTION */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-orange-500">🚧 DEV ONLY</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="TEMP: Manage Organizations (REMOVE BEFORE PROD)">
-                  <NavLink 
-                    to="/select-organization" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2 border-l-2 border-orange-500`}
-                  >
-                    <Wrench className="h-4 w-4 text-orange-500" />
-                    <span className="text-orange-500">TEMP: Manage Orgs</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
         {/* Cabin */}
         <SidebarGroup>
