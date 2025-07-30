@@ -9,68 +9,9 @@ const Home = () => {
     }}>
       <div className="w-full text-center">
         {/* Main Title */}
-        <h1 className="text-6xl md:text-8xl text-red-600 mb-12" style={{ fontFamily: 'Kaushan Script, cursive' }}>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-red-600 whitespace-nowrap" style={{ fontFamily: 'Kaushan Script, cursive' }}>
           Welcome to Cabin Buddy
         </h1>
-        
-        {/* Navigation Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/checkin">
-              <CheckCircle className="h-8 w-8" />
-              <span>Check In</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/shopping-list">
-              <ShoppingCart className="h-8 w-8" />
-              <span>Shopping List</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/add-receipt">
-              <Receipt className="h-8 w-8" />
-              <span>Add Receipt</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/cabin-calendar">
-              <Calendar className="h-8 w-8" />
-              <span>Calendar</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/financial-review">
-              <DollarSign className="h-8 w-8" />
-              <span>Financial Review</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/photo-sharing">
-              <Camera className="h-8 w-8" />
-              <span>Photo Sharing</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/documents">
-              <FileText className="h-8 w-8" />
-              <span>Documents</span>
-            </Link>
-          </Button>
-          
-          <Button asChild size="lg" className="h-24 flex flex-col gap-2">
-            <Link to="/setup">
-              <Settings className="h-8 w-8" />
-              <span>Setup</span>
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );
