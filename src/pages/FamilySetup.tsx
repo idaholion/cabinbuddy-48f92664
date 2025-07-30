@@ -234,7 +234,7 @@ const FamilySetup = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
-            <Link to="/home">← Back to Home</Link>
+            <Link to="/setup">← Back to Setup</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-red-500 text-center" style={{ fontFamily: 'Brush Script MT, cursive' }}>Organization Setup</h1>
           <p className="text-red-500 text-3xl text-center" style={{ fontFamily: 'Brush Script MT, cursive' }}>Setting up your Family Organization and Family Groups list</p>

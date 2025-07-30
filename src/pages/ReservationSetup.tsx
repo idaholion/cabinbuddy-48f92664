@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -223,6 +223,11 @@ export default function ReservationSetup() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        <div className="mb-4">
+          <Button variant="outline" asChild>
+            <Link to="/setup">← Back to Setup</Link>
+          </Button>
+        </div>
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Reservation Setup</h1>
           <p className="text-muted-foreground">Configure rotation and time block preferences</p>

@@ -242,7 +242,7 @@ const FamilyGroupSetup = () => {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
-            <Link to="/family-setup">← Back to Family Setup</Link>
+            <Link to="/setup">← Back to Setup</Link>
           </Button>
           <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Family Group Setup</h1>
           <p className="text-orange-500 text-3xl text-center">Setting up your Family Groups</p>
