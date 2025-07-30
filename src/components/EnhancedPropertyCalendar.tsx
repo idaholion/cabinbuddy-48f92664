@@ -42,6 +42,51 @@ const FAMILY_GROUP_COLORS = [
   'bg-orange-100 border-orange-300 text-orange-800',
 ];
 
+// Selection style classes mapping
+const SELECTION_STYLES = {
+  red: 'bg-red-100 border-red-400 shadow-sm',
+  blue: 'bg-blue-100 border-blue-400 shadow-sm',
+  green: 'bg-green-100 border-green-400 shadow-sm',
+  yellow: 'bg-yellow-100 border-yellow-400 shadow-sm',
+  purple: 'bg-purple-100 border-purple-400 shadow-sm',
+  pink: 'bg-pink-100 border-pink-400 shadow-sm',
+  indigo: 'bg-indigo-100 border-indigo-400 shadow-sm',
+  orange: 'bg-orange-100 border-orange-400 shadow-sm',
+};
+
+const RANGE_DISPLAY_STYLES = {
+  red: 'bg-red-50 border-red-200',
+  blue: 'bg-blue-50 border-blue-200',
+  green: 'bg-green-50 border-green-200',
+  yellow: 'bg-yellow-50 border-yellow-200',
+  purple: 'bg-purple-50 border-purple-200',
+  pink: 'bg-pink-50 border-pink-200',
+  indigo: 'bg-indigo-50 border-indigo-200',
+  orange: 'bg-orange-50 border-orange-200',
+};
+
+const ICON_STYLES = {
+  red: 'text-red-600',
+  blue: 'text-blue-600',
+  green: 'text-green-600',
+  yellow: 'text-yellow-600',
+  purple: 'text-purple-600',
+  pink: 'text-pink-600',
+  indigo: 'text-indigo-600',
+  orange: 'text-orange-600',
+};
+
+const LEGEND_STYLES = {
+  red: 'bg-red-100 border-red-400',
+  blue: 'bg-blue-100 border-blue-400',
+  green: 'bg-green-100 border-green-400',
+  yellow: 'bg-yellow-100 border-yellow-400',
+  purple: 'bg-purple-100 border-purple-400',
+  pink: 'bg-pink-100 border-pink-400',
+  indigo: 'bg-indigo-100 border-indigo-400',
+  orange: 'bg-orange-100 border-orange-400',
+};
+
 export const EnhancedPropertyCalendar = ({
   onDateSelect,
   onReservationSelect,
@@ -62,6 +107,17 @@ export const EnhancedPropertyCalendar = ({
   
   const queryClient = useQueryClient();
 
+  // Get the family group color for selection styling
+  const getSelectionColor = () => {
+    if (selectedFamilyGroupData?.name && familyGroupColors[selectedFamilyGroupData.name]) {
+      const colorClass = familyGroupColors[selectedFamilyGroupData.name];
+      // Extract color name from class like 'bg-red-100 border-red-300' -> 'red'
+      const colorMatch = colorClass.match(/bg-(\w+)-/);
+      return colorMatch ? colorMatch[1] : 'green';
+    }
+    return 'green';
+  };
+
   // Drag selection functionality
   const {
     dragState,
@@ -73,7 +129,7 @@ export const EnhancedPropertyCalendar = ({
     isDateInCurrentDrag,
     isDateInSelectedRanges,
     selectionColor,
-  } = useDragSelection(onDateRangeSelect, 5, selectedFamilyGroupData?.color);
+  } = useDragSelection(onDateRangeSelect, 5, getSelectionColor());
 
   // Handle mouse events for drag selection
   const handleMouseDown = useCallback((date: Date, e: React.MouseEvent) => {
@@ -273,7 +329,7 @@ export const EnhancedPropertyCalendar = ({
                             day.isAvailable && "hover:bg-muted",
                             !day.isAvailable && "bg-muted/50 cursor-not-allowed",
                             isInCurrentDrag && day.isAvailable && "bg-blue-100 border-blue-400 shadow-sm",
-                            isInSelectedRange && `bg-${selectionColor}-100 border-${selectionColor}-400 shadow-sm`,
+                            isInSelectedRange && SELECTION_STYLES[selectionColor as keyof typeof SELECTION_STYLES] || '',
                             dragState.isDragging && day.isAvailable && "hover:bg-blue-50"
                           )}
                           onMouseDown={(e) => handleMouseDown(day.date, e)}
@@ -288,7 +344,7 @@ export const EnhancedPropertyCalendar = ({
                             "text-sm font-medium mb-1",
                             day.isToday ? "text-primary" : "text-foreground",
                             isInCurrentDrag && "text-blue-700",
-                            isInSelectedRange && `text-${selectionColor}-700`
+                            isInSelectedRange && ICON_STYLES[selectionColor as keyof typeof ICON_STYLES]
                           )}>
                             {format(day.date, 'd')}
                           </div>
@@ -363,9 +419,9 @@ export const EnhancedPropertyCalendar = ({
             <CardContent>
               <div className="space-y-2">
                 {dragState.selectedRanges.map((range, index) => (
-                  <div key={index} className={`flex items-center justify-between p-3 bg-${selectionColor}-50 border border-${selectionColor}-200 rounded-md`}>
+                  <div key={index} className={cn("flex items-center justify-between p-3 rounded-md", RANGE_DISPLAY_STYLES[selectionColor as keyof typeof RANGE_DISPLAY_STYLES])}>
                     <div className="flex items-center gap-2">
-                      <CalendarIcon className={`h-4 w-4 text-${selectionColor}-600`} />
+                      <CalendarIcon className={cn("h-4 w-4", ICON_STYLES[selectionColor as keyof typeof ICON_STYLES])} />
                       <span className="text-sm font-medium">
                         {format(range.start, 'MMM d')} - {format(range.end, 'MMM d, yyyy')}
                       </span>
@@ -374,7 +430,7 @@ export const EnhancedPropertyCalendar = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeRange(index)}
-                      className={`h-6 w-6 p-0 text-${selectionColor}-600 hover:text-${selectionColor}-800`}
+                      className={cn("h-6 w-6 p-0", ICON_STYLES[selectionColor as keyof typeof ICON_STYLES])}
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -402,7 +458,7 @@ export const EnhancedPropertyCalendar = ({
                 <span className="text-sm">Currently Selecting</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`h-4 w-4 bg-${selectionColor}-100 border border-${selectionColor}-400 rounded`} />
+                <div className={cn("h-4 w-4 rounded", LEGEND_STYLES[selectionColor as keyof typeof LEGEND_STYLES])} />
                 <span className="text-sm">
                   Selected Range {selectedFamilyGroupData && `(${selectedFamilyGroupData.name})`}
                 </span>
