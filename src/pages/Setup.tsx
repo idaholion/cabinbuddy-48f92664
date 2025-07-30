@@ -15,10 +15,29 @@ const Setup = () => {
   const { rotationData } = useRotationOrder();
 
   // Check completion status for each step
-  const isOrganizationComplete = organization && organization.name && organization.admin_name;
-  const isFamilyGroupsComplete = familyGroups && familyGroups.length > 0;
-  const isFinancialComplete = reservationSettings && (reservationSettings.nightly_rate || reservationSettings.cleaning_fee);
-  const isReservationComplete = rotationData && rotationData.rotation_order && rotationData.rotation_order.length > 0;
+  const isOrganizationComplete = Boolean(organization && 
+    organization.name && 
+    organization.admin_name && 
+    organization.admin_email && 
+    organization.treasurer_name && 
+    organization.treasurer_email && 
+    organization.calendar_keeper_name && 
+    organization.calendar_keeper_email);
+    
+  const isFamilyGroupsComplete = Boolean(familyGroups && 
+    familyGroups.length > 0 && 
+    familyGroups.every(group => group.lead_name && group.lead_email));
+    
+  const isFinancialComplete = Boolean(reservationSettings && 
+    reservationSettings.nightly_rate && 
+    reservationSettings.cleaning_fee && 
+    reservationSettings.damage_deposit);
+    
+  const isReservationComplete = Boolean(rotationData && 
+    rotationData.rotation_order && 
+    rotationData.rotation_order.length > 0 && 
+    rotationData.max_time_slots && 
+    rotationData.start_month);
 
   const CompletionBadge = ({ isComplete }: { isComplete: boolean }) => (
     isComplete ? (
