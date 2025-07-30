@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Receipt, DollarSign, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
 import { BillingDashboard } from "@/components/BillingDashboard";
+import { RecurringBills } from "@/components/RecurringBills";
 
 const FinancialReview = () => {
   const {
@@ -120,10 +121,11 @@ const FinancialReview = () => {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="records" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="records">Financial Records</TabsTrigger>
+      <Tabs defaultValue="billing" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="billing">Billing Dashboard</TabsTrigger>
+          <TabsTrigger value="records">Financial Records</TabsTrigger>
+          <TabsTrigger value="recurring">Recurring Bills</TabsTrigger>
         </TabsList>
 
         <TabsContent value="records" className="space-y-6">
@@ -243,6 +245,10 @@ const FinancialReview = () => {
 
         <TabsContent value="billing">
           <BillingDashboard />
+        </TabsContent>
+
+        <TabsContent value="recurring">
+          <RecurringBills />
         </TabsContent>
       </Tabs>
     </div>

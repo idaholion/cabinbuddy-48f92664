@@ -18,7 +18,7 @@ interface RecurringBill {
   id: string;
   name: string;
   category: string;
-  due_date: string; // format: "MM-DD" or specific date
+  due_date?: string;
   account_number?: string;
   phone_number?: string;
   website?: string;
@@ -82,7 +82,7 @@ export const RecurringBills = () => {
         .order('category', { ascending: true });
 
       if (error) throw error;
-      setBills(data || []);
+      setBills((data || []) as RecurringBill[]);
     } catch (error) {
       console.error('Error fetching recurring bills:', error);
       toast({
@@ -95,14 +95,21 @@ export const RecurringBills = () => {
     }
   };
 
-  const handleSave = async (billData: Partial<RecurringBill>, isNew = false) => {
+  const handleSave = async (billData: any, isNew = false) => {
     if (!organization?.id) return;
 
     try {
       const dataToSave = {
-        ...billData,
-        organization_id: organization.id,
+        name: billData.name,
+        category: billData.category,
+        due_date: billData.due_date || null,
+        account_number: billData.account_number || null,
+        phone_number: billData.phone_number || null,
+        website: billData.website || null,
         amount: billData.amount ? parseFloat(billData.amount.toString()) : null,
+        frequency: billData.frequency,
+        notes: billData.notes || null,
+        organization_id: organization.id,
       };
 
       if (isNew) {
@@ -261,11 +268,6 @@ export const RecurringBills = () => {
           icon={<Calendar className="h-12 w-12" />}
           title="No recurring bills found"
           description="Add your recurring bills to track important account information and due dates."
-          action={
-            <Button onClick={addDefaultBills}>
-              Add Default Bills
-            </Button>
-          }
         />
       ) : (
         <div className="grid gap-4">

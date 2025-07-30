@@ -387,6 +387,54 @@ export type Database = {
           },
         ]
       }
+      recurring_bills: {
+        Row: {
+          account_number: string | null
+          amount: number | null
+          category: string
+          created_at: string
+          due_date: string | null
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          phone_number: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          amount?: number | null
+          category: string
+          created_at?: string
+          due_date?: string | null
+          frequency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          phone_number?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          amount?: number | null
+          category?: string
+          created_at?: string
+          due_date?: string | null
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          phone_number?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       reservation_periods: {
         Row: {
           created_at: string
