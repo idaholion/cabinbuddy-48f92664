@@ -12,8 +12,8 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   console.log('ProtectedRoute - user:', user, 'loading:', loading);
 
-  // Show loading during auth state changes to prevent flashing
-  if (loading || (!user && loading)) {
+  // Show loading only during initial auth check to prevent flashing
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="space-y-4 w-full max-w-sm">
