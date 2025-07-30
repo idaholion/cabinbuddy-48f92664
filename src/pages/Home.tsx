@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-contain bg-center bg-no-repeat flex flex-col items-center pt-20 p-8" style={{
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center pt-20 p-8" style={{
       backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
     }}>
       <div className="w-full text-center">
