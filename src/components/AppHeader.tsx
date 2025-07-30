@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrganizationSwitcher } from '@/components/OrganizationSwitcher';
+import { GlobalSearch } from '@/components/GlobalSearch';
+import { QuickActions as QuickActionsComponent } from '@/components/QuickActions';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -142,8 +144,11 @@ export const AppHeader = () => {
           </div>
         </div>
 
-        {/* Center - Quick actions */}
-        <div className="flex items-center justify-center flex-1 max-w-2xl mx-4">
+        {/* Center - Search and Quick actions */}
+        <div className="flex items-center justify-center flex-1 max-w-2xl mx-4 gap-4">
+          <div className="hidden md:block flex-1 max-w-sm">
+            <GlobalSearch />
+          </div>
           <QuickActions />
         </div>
 
