@@ -12,7 +12,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Calendar, Phone, CreditCard, Trash2, Edit, Save, X, Search, Filter, Bell, DollarSign, FileText } from "lucide-react";
+import { Plus, Calendar, Phone, CreditCard, Trash2, Edit, Save, X, Search, Filter, Bell, DollarSign, FileText, Download, AlertCircle } from "lucide-react";
 
 interface RecurringBill {
   id: string;
@@ -268,16 +268,74 @@ export const RecurringBills = () => {
     );
   }
 
+  const exportToCSV = () => {
+    const csvData = bills.map(bill => ({
+      Name: bill.name,
+      Category: bill.category,
+      'Due Date': bill.due_date || '',
+      Frequency: bill.frequency,
+      Amount: bill.amount || '',
+      'Account Number': bill.account_number || '',
+      'Phone Number': bill.phone_number || '',
+      Website: bill.website || '',
+      Notes: bill.notes || ''
+    }));
+    
+    const csvString = [
+      Object.keys(csvData[0]).join(','),
+      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `recurring-bills-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Success",
+      description: "Bills exported successfully",
+    });
+  };
+
+  const getTotalMonthlyEstimate = () => {
+    return bills.reduce((total, bill) => {
+      if (!bill.amount) return total;
+      switch (bill.frequency) {
+        case 'monthly': return total + bill.amount;
+        case 'quarterly': return total + (bill.amount / 3);
+        case 'annually': return total + (bill.amount / 12);
+        default: return total;
+      }
+    }, 0);
+  };
+
+  const getUpcomingDues = () => {
+    const now = new Date();
+    const currentDay = now.getDate();
+    return bills.filter(bill => {
+      if (!bill.due_date) return false;
+      const dueDay = parseInt(bill.due_date);
+      return !isNaN(dueDay) && dueDay > currentDay && dueDay <= currentDay + 7;
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Recurring Bills</h2>
+          <h2 className="text-2xl font-bold">Enhanced Recurring Bills</h2>
           <p className="text-muted-foreground">
-            Manage recurring bills and important account information
+            Manage recurring bills with reminders, exports, and tracking
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           {bills.length === 0 && (
             <Button onClick={addDefaultBills} variant="outline">
               Add Default Bills
@@ -289,6 +347,81 @@ export const RecurringBills = () => {
           </Button>
         </div>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Monthly Estimate</p>
+                <p className="font-bold text-lg">${getTotalMonthlyEstimate().toFixed(2)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Bills</p>
+                <p className="font-bold text-lg">{bills.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-orange-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Due This Week</p>
+                <p className="font-bold text-lg">{getUpcomingDues().length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              <div>
+                <p className="text-sm text-muted-foreground">Categories</p>
+                <p className="font-bold text-lg">{new Set(bills.map(b => b.category)).size}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Upcoming Reminders */}
+      {getUpcomingDues().length > 0 && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-700">
+              <AlertCircle className="h-5 w-5" />
+              Upcoming Bills Due This Week
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {getUpcomingDues().map(bill => (
+                <div key={bill.id} className="flex items-center justify-between">
+                  <span className="font-medium">{bill.name}</span>
+                  <Badge variant="outline" className="text-orange-700 border-orange-300">
+                    Due: {bill.due_date}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filter Bar */}
       <Card>
