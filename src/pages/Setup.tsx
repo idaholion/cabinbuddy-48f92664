@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,25 +15,19 @@ const Setup = () => {
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
 
+  // Add alert to confirm this code is running
+  useEffect(() => {
+    alert(`Debug Info:
+Organization exists: ${!!organization}
+Organization name: ${organization?.name || 'none'}
+Family groups count: ${familyGroups?.length || 0}
+First group: ${familyGroups?.[0]?.name || 'none'}`);
+  }, [organization, familyGroups]);
+
   // Very strict completion criteria - require ALL essential fields to have meaningful values
-  const isOrganizationComplete = !!(
-    organization?.name?.trim() &&
-    organization?.admin_name?.trim() &&
-    organization?.admin_email?.trim() &&
-    organization?.treasurer_name?.trim() &&
-    organization?.treasurer_email?.trim() &&
-    organization?.calendar_keeper_name?.trim() &&
-    organization?.calendar_keeper_email?.trim()
-  );
+  const isOrganizationComplete = false; // Force to false for testing
     
-  const isFamilyGroupsComplete = !!(
-    familyGroups &&
-    familyGroups.length > 0 &&
-    familyGroups.every(group => 
-      group?.lead_name?.trim() && 
-      group?.lead_email?.trim()
-    )
-  );
+  const isFamilyGroupsComplete = false; // Force to false for testing
     
   const isFinancialComplete = !!(
     reservationSettings?.nightly_rate &&
