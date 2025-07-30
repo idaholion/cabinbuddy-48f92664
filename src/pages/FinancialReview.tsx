@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Receipt, DollarSign, Calendar, Users } from "lucide-react";
 import { format } from "date-fns";
-import { BillingDashboard } from "@/components/BillingDashboard";
+// import { BillingDashboard } from "@/components/BillingDashboard";
 
 const FinancialReview = () => {
   const {
@@ -242,7 +242,9 @@ const FinancialReview = () => {
         </TabsContent>
 
         <TabsContent value="billing">
-          <BillingDashboard />
+          <div className="text-center p-8">
+            <p className="text-muted-foreground">Billing Dashboard coming soon...</p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
