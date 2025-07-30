@@ -24,6 +24,17 @@ export const EnhancedReservationSystem = () => {
   const { reservations, isLoading, error } = useReservations();
   const { familyGroups } = useFamilyGroups();
 
+  // Get the selected family group data, defaulting to the first family group if none selected
+  const getSelectedFamilyGroupData = () => {
+    if (selectedFamilyGroup) {
+      return familyGroups.find(g => g.name === selectedFamilyGroup);
+    }
+    // Default to the first family group if available
+    return familyGroups.length > 0 ? familyGroups[0] : undefined;
+  };
+
+  const selectedFamilyGroupData = getSelectedFamilyGroupData();
+
   const handleReservationSelect = (reservation: Reservation) => {
     setSelectedReservation(reservation);
   };
@@ -188,7 +199,7 @@ export const EnhancedReservationSystem = () => {
         <TabsContent value="calendar" className="mt-6">
           <EnhancedPropertyCalendar
             selectedFamilyGroup={selectedFamilyGroup}
-            selectedFamilyGroupData={familyGroups.find(g => g.name === selectedFamilyGroup)}
+            selectedFamilyGroupData={selectedFamilyGroupData}
             onReservationSelect={handleReservationSelect}
             onDateRangeSelect={handleDateRangeSelect}
           />

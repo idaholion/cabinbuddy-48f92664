@@ -89,34 +89,33 @@ const LEGEND_STYLES = {
 
 // Convert hex color to Tailwind color name
 const hexToTailwindColor = (hexColor: string): string => {
-  const colorMap: Record<string, string> = {
-    '#ef4444': 'red',    // red-500
-    '#f87171': 'red',    // red-400
-    '#dc2626': 'red',    // red-600
-    '#3b82f6': 'blue',   // blue-500
-    '#60a5fa': 'blue',   // blue-400
-    '#2563eb': 'blue',   // blue-600
-    '#10b981': 'green',  // green-500
-    '#34d399': 'green',  // green-400
-    '#059669': 'green',  // green-600
-    '#f59e0b': 'yellow', // yellow-500
-    '#fbbf24': 'yellow', // yellow-400
-    '#d97706': 'yellow', // yellow-600
-    '#8b5cf6': 'purple', // purple-500
-    '#a78bfa': 'purple', // purple-400
-    '#7c3aed': 'purple', // purple-600
-    '#ec4899': 'pink',   // pink-500
-    '#f472b6': 'pink',   // pink-400
-    '#db2777': 'pink',   // pink-600
-    '#6366f1': 'indigo', // indigo-500
-    '#818cf8': 'indigo', // indigo-400
-    '#4f46e5': 'indigo', // indigo-600
-    '#f97316': 'orange', // orange-500
-    '#fb923c': 'orange', // orange-400
-    '#ea580c': 'orange', // orange-600
-  };
+  const hex = hexColor.toLowerCase();
   
-  return colorMap[hexColor.toLowerCase()] || 'green';
+  // More comprehensive color mapping
+  if (hex.includes('ef4444') || hex.includes('dc2626') || hex.includes('f87171') || hex.includes('b91c1c')) return 'red';
+  if (hex.includes('3b82f6') || hex.includes('2563eb') || hex.includes('60a5fa') || hex.includes('1d4ed8')) return 'blue';
+  if (hex.includes('06b6d4') || hex.includes('0891b2') || hex.includes('22d3ee') || hex.includes('0e7490')) return 'blue'; // cyan maps to blue
+  if (hex.includes('10b981') || hex.includes('059669') || hex.includes('34d399') || hex.includes('047857')) return 'green';
+  if (hex.includes('f59e0b') || hex.includes('d97706') || hex.includes('fbbf24') || hex.includes('b45309')) return 'yellow';
+  if (hex.includes('8b5cf6') || hex.includes('7c3aed') || hex.includes('a78bfa') || hex.includes('6d28d9')) return 'purple';
+  if (hex.includes('ec4899') || hex.includes('db2777') || hex.includes('f472b6') || hex.includes('be185d')) return 'pink';
+  if (hex.includes('6366f1') || hex.includes('4f46e5') || hex.includes('818cf8') || hex.includes('3730a3')) return 'indigo';
+  if (hex.includes('f97316') || hex.includes('ea580c') || hex.includes('fb923c') || hex.includes('c2410c')) return 'orange';
+  
+  // Default fallback based on hex value ranges
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  
+  // Determine dominant color
+  if (r > g && r > b) return 'red';
+  if (g > r && g > b) return 'green';
+  if (b > r && b > g) return 'blue';
+  if (r > 150 && g > 150) return 'yellow';
+  if (r > 150 && b > 150) return 'purple';
+  if (g > 150 && b > 150) return 'blue';
+  
+  return 'blue'; // Default to blue for cyan-like colors
 };
 
 export const EnhancedPropertyCalendar = ({
