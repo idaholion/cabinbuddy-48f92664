@@ -73,16 +73,19 @@ const FinancialSetupPage = () => {
                   </RadioGroup>
                 </div>
                 <div>
-                  <Label htmlFor="fee-amount">Use Fee Amount ($)</Label>
-                  <Input 
-                    id="fee-amount" 
-                    placeholder="Enter amount" 
-                    value={feeAmount}
-                    onChange={(e) => setFeeAmount(e.target.value)}
-                    type="number"
-                    step="0.01"
-                    className="mt-3"
-                  />
+                  <Label htmlFor="fee-amount">Use Fee Amount</Label>
+                  <div className="relative mt-3">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input 
+                      id="fee-amount" 
+                      placeholder="0.00" 
+                      value={feeAmount}
+                      onChange={(e) => setFeeAmount(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      className="pl-8"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
