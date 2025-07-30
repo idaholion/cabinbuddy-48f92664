@@ -6,9 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
-import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
-import { useEnhancedErrorTracking } from '@/hooks/useEnhancedErrorTracking';
+import { MonitoringProvider } from "@/components/MonitoringProvider";
 import Intro from "./pages/Intro";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -62,11 +60,6 @@ const queryClient = new QueryClient({
 });
 
 const AppContent = () => {
-  // Initialize monitoring and analytics
-  usePerformanceMonitoring();
-  useProductionAnalytics();
-  useEnhancedErrorTracking();
-
   return (
     <BrowserRouter>
       <Routes>
@@ -115,11 +108,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <ErrorBoundary>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </ErrorBoundary>
+        <MonitoringProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </ErrorBoundary>
+        </MonitoringProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
