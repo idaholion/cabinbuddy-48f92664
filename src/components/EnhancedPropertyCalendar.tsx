@@ -87,6 +87,38 @@ const LEGEND_STYLES = {
   orange: 'bg-orange-100 border-orange-400',
 };
 
+// Convert hex color to Tailwind color name
+const hexToTailwindColor = (hexColor: string): string => {
+  const colorMap: Record<string, string> = {
+    '#ef4444': 'red',    // red-500
+    '#f87171': 'red',    // red-400
+    '#dc2626': 'red',    // red-600
+    '#3b82f6': 'blue',   // blue-500
+    '#60a5fa': 'blue',   // blue-400
+    '#2563eb': 'blue',   // blue-600
+    '#10b981': 'green',  // green-500
+    '#34d399': 'green',  // green-400
+    '#059669': 'green',  // green-600
+    '#f59e0b': 'yellow', // yellow-500
+    '#fbbf24': 'yellow', // yellow-400
+    '#d97706': 'yellow', // yellow-600
+    '#8b5cf6': 'purple', // purple-500
+    '#a78bfa': 'purple', // purple-400
+    '#7c3aed': 'purple', // purple-600
+    '#ec4899': 'pink',   // pink-500
+    '#f472b6': 'pink',   // pink-400
+    '#db2777': 'pink',   // pink-600
+    '#6366f1': 'indigo', // indigo-500
+    '#818cf8': 'indigo', // indigo-400
+    '#4f46e5': 'indigo', // indigo-600
+    '#f97316': 'orange', // orange-500
+    '#fb923c': 'orange', // orange-400
+    '#ea580c': 'orange', // orange-600
+  };
+  
+  return colorMap[hexColor.toLowerCase()] || 'green';
+};
+
 export const EnhancedPropertyCalendar = ({
   onDateSelect,
   onReservationSelect,
@@ -111,20 +143,16 @@ export const EnhancedPropertyCalendar = ({
   const getSelectionColor = () => {
     console.log('getSelectionColor called:', {
       selectedFamilyGroupData,
-      familyGroupColors,
-      availableColors: Object.keys(familyGroupColors)
+      hexColor: selectedFamilyGroupData?.color
     });
     
-    if (selectedFamilyGroupData?.name && familyGroupColors[selectedFamilyGroupData.name]) {
-      const colorClass = familyGroupColors[selectedFamilyGroupData.name];
-      console.log('Found color class for group:', selectedFamilyGroupData.name, colorClass);
-      // Extract color name from class like 'bg-red-100 border-red-300' -> 'red'
-      const colorMatch = colorClass.match(/bg-(\w+)-/);
-      const extractedColor = colorMatch ? colorMatch[1] : 'green';
-      console.log('Extracted color:', extractedColor);
-      return extractedColor;
+    if (selectedFamilyGroupData?.color) {
+      const tailwindColor = hexToTailwindColor(selectedFamilyGroupData.color);
+      console.log('Converted hex to tailwind:', selectedFamilyGroupData.color, '->', tailwindColor);
+      return tailwindColor;
     }
-    console.log('No family group selected or no color found, defaulting to green');
+    
+    console.log('No family group color found, defaulting to green');
     return 'green';
   };
 
