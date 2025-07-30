@@ -15,19 +15,26 @@ const Setup = () => {
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
 
-  // Add alert to confirm this code is running
-  useEffect(() => {
-    alert(`Debug Info:
-Organization exists: ${!!organization}
-Organization name: ${organization?.name || 'none'}
-Family groups count: ${familyGroups?.length || 0}
-First group: ${familyGroups?.[0]?.name || 'none'}`);
-  }, [organization, familyGroups]);
-
-  // Very strict completion criteria - require ALL essential fields to have meaningful values
-  const isOrganizationComplete = false; // Force to false for testing
+  // Extremely strict completion criteria - every required field must have meaningful content
+  const isOrganizationComplete = !!(
+    organization?.name?.trim() &&
+    organization?.admin_name?.trim() &&
+    organization?.admin_email?.trim()?.includes('@') &&
+    organization?.treasurer_name?.trim() &&
+    organization?.treasurer_email?.trim()?.includes('@') &&
+    organization?.calendar_keeper_name?.trim() &&
+    organization?.calendar_keeper_email?.trim()?.includes('@')
+  );
     
-  const isFamilyGroupsComplete = false; // Force to false for testing
+  const isFamilyGroupsComplete = !!(
+    familyGroups &&
+    familyGroups.length > 0 &&
+    familyGroups.every(group => 
+      group?.name?.trim() &&
+      group?.lead_name?.trim() && 
+      group?.lead_email?.trim()?.includes('@')
+    )
+  );
     
   const isFinancialComplete = !!(
     reservationSettings?.nightly_rate &&
@@ -42,6 +49,7 @@ First group: ${familyGroups?.[0]?.name || 'none'}`);
     rotationData?.rotation_order &&
     Array.isArray(rotationData.rotation_order) &&
     rotationData.rotation_order.length > 0 &&
+    rotationData.rotation_order.every(item => typeof item === 'string' && item.trim()) &&
     rotationData?.max_time_slots &&
     rotationData.max_time_slots > 0 &&
     rotationData?.start_month?.trim()
