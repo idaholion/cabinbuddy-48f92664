@@ -90,7 +90,7 @@ const SupervisorOrganizationFinancial = () => {
           description: description.trim(),
           amount: parseFloat(amount),
           date,
-          family_group: selectedFamilyGroup || undefined,
+          family_group: selectedFamilyGroup === "none" ? undefined : selectedFamilyGroup || undefined,
         });
 
       if (error) throw error;
@@ -230,7 +230,7 @@ const SupervisorOrganizationFinancial = () => {
                     <SelectValue placeholder="Select family group" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No family group</SelectItem>
+                    <SelectItem value="none">No family group</SelectItem>
                     {familyGroups.map((group) => (
                       <SelectItem key={group.id} value={group.name}>
                         {group.name}
