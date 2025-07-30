@@ -13,7 +13,8 @@ import {
   CheckSquare,
   Settings,
   Building,
-  HeadphonesIcon
+  HeadphonesIcon,
+  Wrench
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -162,6 +163,26 @@ export function AppSidebar() {
                   >
                     <Home className="h-4 w-4" />
                     <span>Dashboard</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* TODO: TEMPORARY - REMOVE BEFORE PRODUCTION */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-orange-500">🚧 DEV ONLY</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="TEMP: Manage Organizations (REMOVE BEFORE PROD)">
+                  <NavLink 
+                    to="/select-organization" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2 border-l-2 border-orange-500`}
+                  >
+                    <Wrench className="h-4 w-4 text-orange-500" />
+                    <span className="text-orange-500">TEMP: Manage Orgs</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
