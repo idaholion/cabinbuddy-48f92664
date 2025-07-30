@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useSupervisor } from "@/hooks/useSupervisor";
 
 interface Photo {
   id: string;
@@ -21,6 +22,7 @@ interface Photo {
 }
 
 export default function PhotoSharing() {
+  const { isSupervisor } = useSupervisor();
   const [photos, setPhotos] = useState<Photo[]>([
     {
       id: "1",
@@ -184,12 +186,13 @@ export default function PhotoSharing() {
                       {photo.uploadedAt}
                     </div>
                   </div>
-                  {photo.uploadedBy === "You" && (
+                  {(photo.uploadedBy === "You" || isSupervisor) && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(photo.id)}
                       className="text-muted-foreground hover:text-destructive p-1 h-auto"
+                      title={isSupervisor && photo.uploadedBy !== "You" ? "Delete as admin" : "Delete your photo"}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
