@@ -137,7 +137,7 @@ const Index = () => {
         {/* Action Buttons Overlay */}
         <div className="relative z-10 px-8">
           {/* Cabin Calendar - Large button on left */}
-          <Button className="absolute left-8 top-32 bg-primary/90 hover:bg-primary text-primary-foreground px-8 py-6 text-xl font-semibold shadow-warm" size="lg" asChild>
+          <Button className="absolute left-8 top-32 px-8 py-6 text-xl font-semibold shadow-warm" variant="default" size="lg" asChild>
             <Link to="/calendar">
               <Calendar className="h-6 w-6 mr-3" />
               Cabin Calendar
@@ -147,7 +147,7 @@ const Index = () => {
           {/* Right side buttons cluster */}
           <div className="absolute right-8 top-24 space-y-4">
             {/* Arrival Check In */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
               <Link to="/check-in">
                 <CheckCircle className="h-5 w-5 mr-3" />
                 Arrival Check In
@@ -155,7 +155,7 @@ const Index = () => {
             </Button>
 
             {/* Daily Cabin Check In */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
               <Link to="/daily-check-in">
                 <Clock className="h-5 w-5 mr-3" />
                 Daily Cabin Check In
@@ -164,13 +164,13 @@ const Index = () => {
 
             {/* Shopping List and Add Receipt - smaller buttons side by side */}
             <div className="flex space-x-2">
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+              <Button className="px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
                 <Link to="/shopping-list">
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Shopping List
                 </Link>
               </Button>
-              <Button className="bg-accent/90 hover:bg-accent text-accent-foreground px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
+              <Button className="px-4 py-3 font-medium shadow-cabin flex-1" variant="secondary" asChild>
                 <Link to="/add-receipt">
                   <Receipt className="h-4 w-4 mr-2" />
                   Add Receipt
@@ -179,7 +179,7 @@ const Index = () => {
             </div>
 
             {/* Check Out */}
-            <Button className="bg-secondary/95 hover:bg-secondary text-secondary-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
               <Link to="/checkout-list">
                 <LogOut className="h-5 w-5 mr-3" />
                 Check Out
@@ -187,7 +187,7 @@ const Index = () => {
             </Button>
 
             {/* Family Photos */}
-            <Button className="bg-card/95 hover:bg-card text-card-foreground px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="secondary" asChild>
               <Link to="/photos">
                 <Camera className="h-5 w-5 mr-3" />
                 Family Photos
