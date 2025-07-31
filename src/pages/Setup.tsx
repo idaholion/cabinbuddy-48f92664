@@ -82,6 +82,23 @@ const Setup = () => {
     rotationData?.start_month?.trim()
   );
 
+  // Determine the next step to highlight
+  const getNextStep = () => {
+    if (!isOrganizationComplete) return 1;
+    if (!isFamilyGroupsComplete) return 2;
+    if (!isFinancialComplete) return 3;
+    if (!isReservationComplete) return 4;
+    return null; // All complete
+  };
+
+  const nextStep = getNextStep();
+
+  const getButtonVariant = (stepNumber: number, isComplete: boolean) => {
+    if (isComplete) return "outline"; // Blue outline for completed
+    if (stepNumber === nextStep) return "default"; // Green for next step
+    return "secondary"; // Grey for pending steps
+  };
+
   const CompletionBadge = ({ isComplete }: { isComplete: boolean }) => (
     isComplete ? (
       <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 border-green-200">
@@ -121,7 +138,7 @@ const Setup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full">
+              <Button asChild className="w-full" variant={getButtonVariant(1, isOrganizationComplete)}>
                 <Link to="/family-setup?mode=create">Configure or Change Family Setup</Link>
               </Button>
             </CardContent>
@@ -141,7 +158,7 @@ const Setup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full" variant="secondary">
+              <Button asChild className="w-full" variant={getButtonVariant(2, isFamilyGroupsComplete)}>
                 <Link to="/family-group-setup">Configure or Change Family Groups</Link>
               </Button>
             </CardContent>
@@ -161,7 +178,7 @@ const Setup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full" variant="secondary">
+              <Button asChild className="w-full" variant={getButtonVariant(3, isFinancialComplete)}>
                 <Link to="/financial-setup">Configure or Change Finances</Link>
               </Button>
             </CardContent>
@@ -181,7 +198,7 @@ const Setup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild className="w-full" variant="secondary">
+              <Button asChild className="w-full" variant={getButtonVariant(4, isReservationComplete)}>
                 <Link to="/reservation-setup">Configure or Change Reservations</Link>
               </Button>
             </CardContent>
