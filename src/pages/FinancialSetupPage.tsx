@@ -23,8 +23,8 @@ const FinancialSetupPage = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-red-500 mb-2 text-center">Financial Setup</h1>
-          <p className="text-lg text-red-500 text-center">Configure your cabin's financial settings, billing rates, and payment options</p>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Buddy Setup</h1>
+          <p className="text-xl text-primary text-center font-medium">Configure your cabin's financial settings, billing rates, and payment options</p>
         </div>
 
         <div className="space-y-6 bg-card/95 p-6 rounded-lg">

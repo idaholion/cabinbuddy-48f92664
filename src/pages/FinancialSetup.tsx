@@ -15,8 +15,8 @@ const FinancialSetup = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-red-500 mb-2 text-center">Finance Reports</h1>
-          <p className="text-lg text-red-500 text-center">View cabin expenses, billing, and financial tracking</p>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Buddy Setup</h1>
+          <p className="text-xl text-primary text-center font-medium">View cabin expenses, billing, and financial tracking</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 mb-8">
