@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 
 interface Photo {
   id: string;
@@ -92,20 +94,15 @@ export default function PhotoSharing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Family Photo Gallery</h1>
-              <p className="text-muted-foreground">Share your cabin memories with family</p>
-            </div>
-          </div>
+        <PageHeader 
+          title="Family Photo Gallery"
+          subtitle="Share your cabin memories with family"
+          icon={Camera}
+        >
+          <NavigationHeader />
+        </PageHeader>
 
+        <div className="flex justify-end mb-6">
           <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center space-x-2">

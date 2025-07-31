@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, RotateCcw, CheckCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -61,69 +63,64 @@ const CabinCalendar = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <Button variant="outline" asChild className="mb-4">
-            <Link to="/home">← Back to Home</Link>
-          </Button>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-red-500 mb-2 flex items-center">
-                <Calendar className="h-10 w-10 mr-3" />
-                Cabin Calendar
-              </h1>
-              <p className="text-lg text-red-400">View and manage cabin reservations and availability</p>
-            </div>
-            
-            {/* Rotation Order Dropdown */}
-            {currentRotationOrder.length > 0 && (
-              <div className="flex items-center gap-2">
-                <RotateCcw className="h-4 w-4 text-red-400" />
-                <Select>
-                  <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-red-200">
-                    <SelectValue placeholder={`${rotationYear} Rotation Order`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border border-border shadow-lg z-50">
-                    <div className="p-3">
-                      <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
-                      <div className="space-y-1">
-                        {currentRotationOrder.map((familyGroup, index) => {
-                          const selections = getSelectionIndicators(familyGroup);
-                          return (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <span className="font-semibold w-6">{index + 1}.</span>
-                              <span className="flex-1">{familyGroup}</span>
-                              <div className="flex items-center gap-1">
-                                {selections.primary && (
-                                  <div title="Primary selection made">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                  </div>
-                                )}
-                                {selections.secondary && (
-                                  <div title="Secondary selection made">
-                                    <Clock className="h-3 w-3 text-blue-500" />
-                                  </div>
-                                )}
-                              </div>
+        <PageHeader 
+          title="Cabin Calendar"
+          subtitle="View and manage cabin reservations and availability"
+          icon={Calendar}
+          backgroundImage={true}
+        >
+          <NavigationHeader />
+        </PageHeader>
+
+        <div className="flex justify-end mb-4">
+          {/* Rotation Order Dropdown */}
+          {currentRotationOrder.length > 0 && (
+            <div className="flex items-center gap-2">
+              <RotateCcw className="h-4 w-4 text-primary" />
+              <Select>
+                <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-border">
+                  <SelectValue placeholder={`${rotationYear} Rotation Order`} />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border shadow-lg z-50">
+                  <div className="p-3">
+                    <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
+                    <div className="space-y-1">
+                      {currentRotationOrder.map((familyGroup, index) => {
+                        const selections = getSelectionIndicators(familyGroup);
+                        return (
+                          <div key={index} className="flex items-center gap-2 text-sm">
+                            <span className="font-semibold w-6">{index + 1}.</span>
+                            <span className="flex-1">{familyGroup}</span>
+                            <div className="flex items-center gap-1">
+                              {selections.primary && (
+                                <div title="Primary selection made">
+                                  <CheckCircle className="h-3 w-3 text-success" />
+                                </div>
+                              )}
+                              {selections.secondary && (
+                                <div title="Secondary selection made">
+                                  <Clock className="h-3 w-3 text-info" />
+                                </div>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                      {rotationData && (
-                        <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-                          <p>Based on {rotationData.rotation_year} rotation</p>
-                          <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
-                          {rotationData.start_month && (
-                            <p>Rotation year starts in {rotationData.start_month}</p>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
+                    {rotationData && (
+                      <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                        <p>Based on {rotationData.rotation_year} rotation</p>
+                        <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
+                        {rotationData.start_month && (
+                          <p>Rotation year starts in {rotationData.start_month}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />

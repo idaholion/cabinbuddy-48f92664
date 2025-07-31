@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Camera, DollarSign, Trash2, Home } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 
 const AddReceipt = () => {
   const [amount, setAmount] = useState("");
@@ -98,15 +100,14 @@ const AddReceipt = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-2xl mx-auto space-y-6 p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Add Receipt</h1>
-          <Button variant="outline" asChild>
-            <Link to="/home">
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Link>
-          </Button>
-        </div>
+        <PageHeader 
+          title="Add Receipt"
+          subtitle="Upload and manage cabin expense receipts"
+          icon={Receipt}
+          backgroundImage={true}
+        >
+          <NavigationHeader />
+        </PageHeader>
         
         <div className="grid md:grid-cols-2 gap-4 scale-75 origin-top">
           {/* Upload and Camera Section */}

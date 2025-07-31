@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Clock, Thermometer, Droplets, Zap, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useCheckinSessions } from "@/hooks/useChecklistData";
 
 const DailyCheckIn = () => {
@@ -104,16 +106,14 @@ const DailyCheckIn = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Button variant="outline" asChild className="mb-4">
-            <Link to="/home">← Back to Home</Link>
-          </Button>
-          <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center bg-background/90 backdrop-blur-sm p-4 rounded-lg shadow-lg">
-            <Clock className="h-10 w-10 mr-3" />
-            Daily Cabin Check-In
-          </h1>
-          <p className="text-lg text-muted-foreground bg-background/80 backdrop-blur-sm p-3 rounded-md">Complete your daily maintenance checklist</p>
-        </div>
+        <PageHeader 
+          title="Daily Cabin Check-In"
+          subtitle="Complete your daily maintenance checklist"
+          icon={Clock}
+          backgroundImage={true}
+        >
+          <NavigationHeader />
+        </PageHeader>
 
         <div className="grid gap-6">
           <Card className="bg-card/95">

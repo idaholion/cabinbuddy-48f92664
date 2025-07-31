@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle, Clock, AlertTriangle, Plus, Edit3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 
 const CheckIn = () => {
   const { toast } = useToast();
@@ -94,16 +96,14 @@ const CheckIn = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Button variant="outline" asChild className="mb-4">
-            <Link to="/home">← Back to Home</Link>
-          </Button>
-          <h1 className="text-4xl font-bold text-primary mb-2 flex items-center drop-shadow-lg">
-            <CheckCircle className="h-10 w-10 mr-3" />
-            Arrival Check-In
-          </h1>
-          <p className="text-lg text-primary drop-shadow-md">Complete your arrival checklist</p>
-        </div>
+        <PageHeader 
+          title="Arrival Check-In"
+          subtitle="Complete your arrival checklist"
+          icon={CheckCircle}
+          backgroundImage={true}
+        >
+          <NavigationHeader />
+        </PageHeader>
 
         <div className="grid gap-6">
           <Card className="bg-card/95">

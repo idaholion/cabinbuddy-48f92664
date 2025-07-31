@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, ShoppingCart, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "@/components/ui/page-header";
+import { NavigationHeader } from "@/components/ui/navigation-header";
 
 interface ShoppingItem {
   id: string;
@@ -69,17 +71,13 @@ const ShoppingList = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Family Shopping List</h1>
-          </div>
-          <Button variant="outline" onClick={() => navigate("/home")}>
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-        </div>
+        <PageHeader 
+          title="Family Shopping List"
+          subtitle="Collaborative shopping list for cabin stays"
+          icon={ShoppingCart}
+        >
+          <NavigationHeader />
+        </PageHeader>
 
         {/* Add Item Form */}
         <Card>
