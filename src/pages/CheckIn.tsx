@@ -98,11 +98,11 @@ const CheckIn = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold text-primary-foreground mb-2 flex items-center">
+          <h1 className="text-4xl font-bold text-primary mb-2 flex items-center drop-shadow-lg">
             <CheckCircle className="h-10 w-10 mr-3" />
             Arrival Check-In
           </h1>
-          <p className="text-lg text-primary-foreground/80">Complete your arrival checklist</p>
+          <p className="text-lg text-primary drop-shadow-md">Complete your arrival checklist</p>
         </div>
 
         <div className="grid gap-6">
