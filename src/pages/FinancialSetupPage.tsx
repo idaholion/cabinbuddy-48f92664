@@ -21,7 +21,7 @@ const FinancialSetupPage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4">
-            <Link to="/finance-reports">← Back to Finance Reports</Link>
+            <Link to="/setup">← Back to Setup</Link>
           </Button>
           <h1 className="text-4xl font-bold text-red-500 mb-2 text-center">Financial Setup</h1>
           <p className="text-lg text-red-500 text-center">Configure your cabin's financial settings, billing rates, and payment options</p>
