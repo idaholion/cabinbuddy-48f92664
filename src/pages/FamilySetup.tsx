@@ -237,7 +237,7 @@ const FamilySetup = () => {
             <Link to="/setup">← Back to Setup</Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Organization Setup</h1>
-          <p className="text-xl text-primary text-center font-medium">Setting up your Family Organization and Family Groups list</p>
+          <p className="text-2xl text-primary text-center font-medium">Setting up your Family Organization and Family Groups list</p>
         </div>
 
         {/* Combined Family Organization and Groups Setup */}

@@ -245,7 +245,7 @@ const FamilyGroupSetup = () => {
             <Link to="/setup">← Back to Setup</Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
-          <p className="text-xl text-primary text-center font-medium">Setting up your Family Groups</p>
+          <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
         </div>
 
         <Card className="bg-card/95 mb-8">

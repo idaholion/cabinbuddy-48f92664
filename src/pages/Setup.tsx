@@ -120,7 +120,7 @@ const Setup = () => {
             <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
-          <p className="text-xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
+          <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
