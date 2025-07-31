@@ -229,7 +229,7 @@ export default function ReservationSetup() {
           </Button>
         </div>
         <div className="text-center space-y-2">
-          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Buddy Setup</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Reservation Setup</h1>
           <p className="text-xl text-primary text-center font-medium">Configure rotation and time block preferences</p>
         </div>
 
