@@ -9,7 +9,7 @@ interface NavigationHeaderProps {
 }
 
 export function NavigationHeader({ 
-  backTo = "/", 
+  backTo = "/home", 
   backLabel = "Back to Home",
   className = "mb-4" 
 }: NavigationHeaderProps) {
