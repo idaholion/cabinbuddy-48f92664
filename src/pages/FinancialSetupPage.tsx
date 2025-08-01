@@ -8,12 +8,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DollarSign, CreditCard, Calendar, Settings, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { BillingCalculator } from "@/lib/billing-calculator";
 
 const FinancialSetupPage = () => {
   const { settings, loading, saveFinancialSettings } = useFinancialSettings();
+  const navigate = useNavigate();
   const [autoInvoicing, setAutoInvoicing] = useState(false);
   const [lateFeesEnabled, setLateFeesEnabled] = useState(false);
   const [useFeeMethod, setUseFeeMethod] = useState("");
@@ -96,6 +97,9 @@ const FinancialSetupPage = () => {
       check_payable_to: checkPayableTo,
       check_mailing_address: checkMailingAddress,
     });
+    
+    // Navigate to reservation setup after saving
+    navigate('/reservation-setup');
   };
 
   return (
@@ -438,7 +442,7 @@ const FinancialSetupPage = () => {
               onClick={handleSaveSettings}
               disabled={loading || !useFeeMethod || !feeAmount}
             >
-              {loading ? "Saving..." : "Save Settings"}
+              {loading ? "Saving..." : "Save settings and go to Reservation Setup"}
             </Button>
             <Button variant="outline" className="flex-1">Preview Invoice</Button>
           </div>
