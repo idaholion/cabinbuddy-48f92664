@@ -1192,6 +1192,128 @@ export type Database = {
           },
         ]
       }
+      work_weekend_approvals: {
+        Row: {
+          approval_type: string
+          approved_at: string | null
+          approved_by_email: string | null
+          approved_by_name: string | null
+          created_at: string
+          family_group: string
+          id: string
+          organization_id: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          work_weekend_id: string
+        }
+        Insert: {
+          approval_type: string
+          approved_at?: string | null
+          approved_by_email?: string | null
+          approved_by_name?: string | null
+          created_at?: string
+          family_group: string
+          id?: string
+          organization_id: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          work_weekend_id: string
+        }
+        Update: {
+          approval_type?: string
+          approved_at?: string | null
+          approved_by_email?: string | null
+          approved_by_name?: string | null
+          created_at?: string
+          family_group?: string
+          id?: string
+          organization_id?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          work_weekend_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_weekend_approvals_work_weekend_id_fkey"
+            columns: ["work_weekend_id"]
+            isOneToOne: false
+            referencedRelation: "work_weekends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_weekends: {
+        Row: {
+          conflict_reservations: Json | null
+          created_at: string
+          description: string | null
+          end_date: string
+          fully_approved_at: string | null
+          id: string
+          organization_id: string
+          proposer_email: string
+          proposer_family_group: string | null
+          proposer_name: string
+          proposer_user_id: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          start_date: string
+          status: string
+          supervisor_approved_at: string | null
+          supervisor_approved_by: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          conflict_reservations?: Json | null
+          created_at?: string
+          description?: string | null
+          end_date: string
+          fully_approved_at?: string | null
+          id?: string
+          organization_id: string
+          proposer_email: string
+          proposer_family_group?: string | null
+          proposer_name: string
+          proposer_user_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          start_date: string
+          status?: string
+          supervisor_approved_at?: string | null
+          supervisor_approved_by?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          conflict_reservations?: Json | null
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          fully_approved_at?: string | null
+          id?: string
+          organization_id?: string
+          proposer_email?: string
+          proposer_family_group?: string | null
+          proposer_name?: string
+          proposer_user_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          start_date?: string
+          status?: string
+          supervisor_approved_at?: string | null
+          supervisor_approved_by?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
