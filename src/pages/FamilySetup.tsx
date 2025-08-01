@@ -126,16 +126,17 @@ const FamilySetup = () => {
     };
     
     try {
+      let newOrganization;
       if (organization) {
         // Update existing organization
-        await updateOrganization(orgData);
+        newOrganization = await updateOrganization(orgData);
       } else {
         // Create new organization
-        await createOrganization(orgData);
+        newOrganization = await createOrganization(orgData);
       }
       
-      // Save property name to reservation settings if provided
-      if (propertyName.trim()) {
+      // Save property name to reservation settings if provided and organization exists
+      if (propertyName.trim() && (organization || newOrganization)) {
         await saveReservationSettings({ property_name: propertyName });
       }
       
