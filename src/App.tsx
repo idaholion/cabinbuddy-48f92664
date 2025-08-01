@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Setup from "./pages/Setup";
+import SetupWithTour from "./pages/SetupWithTour";
 import FamilySetup from "./pages/FamilySetup";
 import FamilyGroupSetup from "./pages/FamilyGroupSetup";
 import SelectFamilyGroup from "./pages/SelectFamilyGroup";
@@ -80,6 +81,7 @@ const AppContent = () => {
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
+        <Route path="/setup-with-tour" element={<ProtectedRoute><SetupWithTour /></ProtectedRoute>} />
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><FamilyGroupSetup /></MainLayout></ProtectedRoute>} />
