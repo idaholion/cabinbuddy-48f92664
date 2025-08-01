@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useProductionLogger } from '@/hooks/useProductionLogger';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -9,8 +10,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
-
-  console.log('ProtectedRoute - user:', user, 'loading:', loading);
+  const { logInfo } = useProductionLogger();
 
   // Show loading only during initial auth check to prevent flashing
   if (loading) {
@@ -26,10 +26,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    console.log('ProtectedRoute - No user found, redirecting to login');
+    logInfo('ProtectedRoute - No user found, redirecting to login', {}, { component: 'ProtectedRoute' });
     return <Navigate to="/login" replace />;
   }
 
-  console.log('ProtectedRoute - User authenticated, rendering children');
+  logInfo('ProtectedRoute - User authenticated', { userId: user.id }, { component: 'ProtectedRoute' });
   return <>{children}</>;
 };

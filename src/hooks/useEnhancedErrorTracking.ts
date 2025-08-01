@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { trackError } from './usePerformanceMonitoring';
 import { useToast } from '@/hooks/use-toast';
+import { useProductionLogger } from './useProductionLogger';
 
 interface ErrorContext {
   component?: string;
@@ -14,17 +14,17 @@ interface ErrorContext {
 
 export const useEnhancedErrorTracking = () => {
   const { toast } = useToast();
+  const { logError } = useProductionLogger();
 
   useEffect(() => {
     // Global error handler for unhandled errors
     const handleGlobalError = (event: ErrorEvent) => {
-      const context: ErrorContext = {
-        route: window.location.pathname,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now(),
-      };
-
-      trackError(new Error(event.message), 'Global Error Handler', context);
+      logError(
+        new Error(event.message), 
+        'high', 
+        'system',
+        { component: 'Global Error Handler' }
+      );
       
       // Show user-friendly error message
       toast({
@@ -36,17 +36,16 @@ export const useEnhancedErrorTracking = () => {
 
     // Global promise rejection handler
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const context: ErrorContext = {
-        route: window.location.pathname,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now(),
-      };
-
       const error = event.reason instanceof Error 
         ? event.reason 
         : new Error(String(event.reason));
 
-      trackError(error, 'Unhandled Promise Rejection', context);
+      logError(
+        error, 
+        'high', 
+        'network',
+        { component: 'Unhandled Promise Rejection' }
+      );
       
       toast({
         title: "Network Error",
@@ -62,22 +61,19 @@ export const useEnhancedErrorTracking = () => {
       window.removeEventListener('error', handleGlobalError);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
-  }, [toast]);
+  }, [toast, logError]);
 
   const trackComponentError = (
     error: Error, 
     component: string, 
     additionalContext?: Partial<ErrorContext>
   ) => {
-    const context: ErrorContext = {
-      component,
-      route: window.location.pathname,
-      userAgent: navigator.userAgent,
-      timestamp: Date.now(),
-      ...additionalContext,
-    };
-
-    trackError(error, `Component Error: ${component}`, context);
+    logError(
+      error, 
+      'medium', 
+      'user',
+      { component, ...additionalContext }
+    );
   };
 
   const trackAsyncError = (
@@ -85,15 +81,12 @@ export const useEnhancedErrorTracking = () => {
     action: string, 
     additionalContext?: Partial<ErrorContext>
   ) => {
-    const context: ErrorContext = {
-      action,
-      route: window.location.pathname,
-      userAgent: navigator.userAgent,
-      timestamp: Date.now(),
-      ...additionalContext,
-    };
-
-    trackError(error, `Async Error: ${action}`, context);
+    logError(
+      error, 
+      'medium', 
+      'system',
+      { action, ...additionalContext }
+    );
   };
 
   return {
@@ -110,18 +103,16 @@ export const withErrorTracking = <T extends any[]>(
     try {
       return await fn(...args);
     } catch (error) {
-      const errorContext: ErrorContext = {
-        action: context,
-        route: window.location.pathname,
-        userAgent: navigator.userAgent,
-        timestamp: Date.now(),
-      };
-
-      trackError(
-        error instanceof Error ? error : new Error(String(error)),
-        context,
-        errorContext
-      );
+      // Log error using development console in dev mode
+      if (process.env.NODE_ENV === 'development') {
+        console.group(`🚨 Async Error in ${context}`);
+        console.error('Error:', error);
+        console.log('Route:', window.location.pathname);
+        console.log('UserAgent:', navigator.userAgent);
+        console.log('Timestamp:', Date.now());
+        console.groupEnd();
+      }
+      
       throw error;
     }
   };

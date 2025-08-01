@@ -39,49 +39,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!currentUser) return;
     
     const currentPath = window.location.pathname;
-    console.log('=== checkOrganizationStatus called ===');
-    console.log('Current path:', currentPath);
-    console.log('User:', currentUser.email);
     
     // Don't check organization status if user is on setup pages or onboarding
     if (currentPath === '/setup' || currentPath === '/onboarding' || currentPath === '/select-organization' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
-      console.log('Skipping organization check for setup page:', currentPath);
       return;
     }
     
     try {
-      console.log('Fetching user organizations...');
       const { data: organizations, error } = await supabase.rpc('get_user_organizations');
       
       if (error) {
-        console.error('Error fetching organizations:', error);
         return;
       }
-
-      console.log('Organizations found:', organizations?.length || 0, organizations);
 
       // Handle different organization scenarios
       if (!organizations || organizations.length === 0) {
         // No organizations - redirect to onboarding
         if (currentPath !== '/onboarding') {
-          console.log('Redirecting to onboarding from:', currentPath);
           window.location.href = '/onboarding';
-        } else {
-          console.log('Already on onboarding page, not redirecting');
         }
       } else if (organizations.length > 1) {
         // Multiple organizations - redirect to selection
         if (currentPath !== '/select-organization') {
-          console.log('Redirecting to select-organization from:', currentPath);
           window.location.href = '/select-organization';
-        } else {
-          console.log('Already on select-organization page, not redirecting');
         }
-      } else {
-        console.log('User has exactly 1 organization, no redirect needed');
       }
     } catch (error) {
-      console.error('Error checking organization status:', error);
+      // Silently handle error in production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error checking organization status:', error);
+      }
     }
   };
 
@@ -96,12 +83,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        console.log('Auth state changed:', event, session?.user?.email);
-        
         // Don't trigger organization check immediately on page load
         // Only check when explicitly signing in
         if (event === 'SIGNED_IN' && session?.user) {
-          console.log('SIGNED_IN event detected, scheduling organization check');
           // Only redirect if user is not already navigating to setup or organization pages
           const currentPath = window.location.pathname;
           if (currentPath !== '/setup' && currentPath !== '/onboarding' && currentPath !== '/select-organization' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
@@ -118,7 +102,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      console.log('Initial session:', session?.user?.email);
+      
     });
 
     return () => subscription.unsubscribe();
@@ -153,8 +137,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('SignIn function called with email:', email);
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -162,7 +144,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
-        console.error('Supabase sign in error:', error);
         toast({
           title: "Sign In Error",
           description: error.message,
@@ -172,7 +153,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data.user && data.session) {
-        console.log('Supabase sign in successful for:', data.user.email);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
@@ -188,7 +168,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       return { error: new Error('No user data returned') };
     } catch (error: any) {
-      console.error('Sign in failed:', error);
       toast({
         title: "Connection Error",
         description: "Unable to connect to authentication service. Please check your connection.",
@@ -205,7 +184,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (error) {
-        console.error('Password reset error:', error);
         toast({
           title: "Reset Password Error",
           description: error.message,
@@ -220,7 +198,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
       return { error: null };
     } catch (error: any) {
-      console.error('Password reset failed:', error);
       toast({
         title: "Connection Error",
         description: "Unable to send reset email. Please try again.",
@@ -231,17 +208,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    console.log('Signing out...');
-    
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
+      // Handle error silently in production
+      if (error && process.env.NODE_ENV === 'development') {
         console.error('Sign out error:', error);
-      } else {
-        console.log('Sign out successful');
       }
     } catch (error) {
-      console.error('Sign out failed:', error);
+      // Handle error silently in production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Sign out failed:', error);
+      }
     }
     
     // Always clear state and redirect
