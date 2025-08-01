@@ -282,7 +282,7 @@ const Setup = () => {
           </div>
         </div>
 
-        <div className="mb-4 pt-2">
+        <div className="mb-4">
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
