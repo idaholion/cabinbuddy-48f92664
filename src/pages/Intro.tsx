@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Upload, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import cabinHutBackground from "@/assets/cabin-hut-background.jpg";
 
 const Intro = () => {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
@@ -34,7 +33,7 @@ const Intro = () => {
       <div 
         className="absolute top-24 bottom-0 left-0 right-0"
         style={{
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : `url(${cabinHutBackground})`,
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
