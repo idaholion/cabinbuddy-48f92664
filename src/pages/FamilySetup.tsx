@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilySetup = () => {
@@ -18,6 +19,7 @@ const FamilySetup = () => {
   const navigate = useNavigate();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
+  const { createFamilyGroup } = useFamilyGroups();
   const [searchParams] = useSearchParams();
   
   // Check if this is a "create new" operation
@@ -154,6 +156,29 @@ const FamilySetup = () => {
         }
       }
       
+      // Create family groups in the database
+      const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
+      const currentOrgId = (organization || newOrganization)?.id;
+      
+      if (nonEmptyGroups.length > 0 && currentOrgId) {
+        for (const groupName of nonEmptyGroups) {
+          try {
+            await createFamilyGroup({
+              name: groupName.trim(),
+              lead_name: adminName || "",
+              lead_phone: adminPhone || "",
+              lead_email: adminEmail || "",
+              host_members: [],
+              color: null,
+              alternate_lead_id: null
+            });
+          } catch (error) {
+            console.error(`Failed to create family group ${groupName}:`, error);
+            // Continue with other groups even if one fails
+          }
+        }
+      }
+      
       // Also save family groups to localStorage for backward compatibility
       const setupData = {
         orgName,
@@ -174,7 +199,6 @@ const FamilySetup = () => {
       localStorage.setItem('familySetupData', JSON.stringify(setupData));
       
       // Also save just the family groups for the SelectFamilyGroup page
-      const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
       localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
     } catch (error) {
       console.error('Error saving organization setup:', error);
