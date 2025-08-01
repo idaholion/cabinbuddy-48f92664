@@ -14,7 +14,8 @@ import {
   Settings,
   Building,
   HeadphonesIcon,
-  Wrench
+  Wrench,
+  LogOut
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { useAuth } from "@/contexts/AuthContext";
 
 const setupItems = [
   {
@@ -132,6 +134,7 @@ const managementItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
+  const { signOut } = useAuth();
   
   // Check if we're on a supervisor organization page
   const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
@@ -322,6 +325,29 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        {/* Logout Section - Always at bottom */}
+        <SidebarGroup className="mt-auto border-t pt-2">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  tooltip="Logout"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <button 
+                    onClick={() => signOut()}
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
