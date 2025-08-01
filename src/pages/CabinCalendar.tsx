@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, RotateCcw, CheckCircle, Clock } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -15,7 +15,7 @@ import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSelectionStatus } from "@/hooks/useSelectionStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -23,6 +23,7 @@ const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   
   // Get user's family group
   const userProfile = user?.user_metadata || {};
@@ -30,6 +31,13 @@ const CabinCalendar = () => {
     fg.lead_email === user?.email || 
     fg.host_members?.some((member: any) => member.email === user?.email)
   )?.name;
+  
+  // Set default selected family group to user's group
+  useEffect(() => {
+    if (userFamilyGroup && !selectedFamilyGroup) {
+      setSelectedFamilyGroup(userFamilyGroup);
+    }
+  }, [userFamilyGroup, selectedFamilyGroup]);
   
   // Calculate the rotation year based on current calendar month and start month
   const getRotationYear = () => {
@@ -87,7 +95,33 @@ const CabinCalendar = () => {
           <NavigationHeader />
         </PageHeader>
 
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-4 gap-4">
+          {/* Family Group Selector */}
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+              <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-border">
+                <SelectValue placeholder="Select Family Group" />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border shadow-lg z-50">
+                <SelectItem value="">All Family Groups</SelectItem>
+                {familyGroups.map((familyGroup) => (
+                  <SelectItem key={familyGroup.id} value={familyGroup.name}>
+                    <div className="flex items-center gap-2">
+                      {familyGroup.color && (
+                        <div
+                          className="w-3 h-3 rounded-full border border-border"
+                          style={{ backgroundColor: familyGroup.color }}
+                        />
+                      )}
+                      {familyGroup.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           {/* Rotation Order Dropdown */}
           {currentRotationOrder.length > 0 && (
             <div className="flex items-center gap-2">
@@ -139,7 +173,10 @@ const CabinCalendar = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
+          <PropertyCalendar 
+            onMonthChange={setCurrentCalendarMonth}
+            selectedFamilyGroupFilter={selectedFamilyGroup}
+          />
         </div>
       </div>
     </div>

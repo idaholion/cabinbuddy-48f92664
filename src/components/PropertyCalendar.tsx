@@ -29,9 +29,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
+  selectedFamilyGroupFilter?: string;
 }
 
-export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
+export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: PropertyCalendarProps) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
@@ -54,7 +55,8 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   useEffect(() => {
     console.log('Reservations data:', reservations);
     console.log('Number of reservations:', reservations.length);
-  }, [reservations]);
+    console.log('Family groups with colors:', familyGroups.map(fg => ({ name: fg.name, color: fg.color })));
+  }, [reservations, familyGroups]);
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -214,8 +216,14 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       return date >= startDate && date <= endDate;
     });
 
-    // Phase 4: Apply filtering
+    // Apply filtering from both the internal filter options and the external family group filter
     return allBookings.filter(booking => {
+      // Apply external family group filter from parent component
+      if (selectedFamilyGroupFilter && selectedFamilyGroupFilter !== '' && booking.family_group !== selectedFamilyGroupFilter) {
+        return false;
+      }
+      
+      // Apply internal filter options
       if (filterOptions.familyGroupFilter !== 'all' && booking.family_group !== filterOptions.familyGroupFilter) {
         return false;
       }
