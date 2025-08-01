@@ -32,33 +32,18 @@ const Intro = () => {
         return;
       }
       
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const result = e.target?.result as string;
-          console.log("✅ FileReader loaded, result length:", result?.length);
-          console.log("🔄 About to create blob URL...");
-          
-          // Convert to blob URL instead of data URL to avoid CSS issues
-          const blobUrl = URL.createObjectURL(file);
-          console.log("🎯 Created blob URL:", blobUrl);
-          
-          // Set both state and ref with blob URL
-          backgroundImageRef.current = blobUrl;
-          setBackgroundImage(blobUrl);
-          setForceUpdate(prev => prev + 1); // Force re-render
-          
-          console.log("✅ Background image set successfully!");
-          console.log("📊 State:", blobUrl ? "SET" : "NOT SET");
-          console.log("📎 Ref:", backgroundImageRef.current ? "SET" : "NOT SET");
-        } catch (error) {
-          console.error("❌ Error in FileReader onload:", error);
-        }
-      };
-      reader.onerror = (e) => {
-        console.error("❌ FileReader error:", e);
-      };
-      reader.readAsDataURL(file);
+      console.log("🎯 Creating blob URL directly...");
+      const blobUrl = URL.createObjectURL(file);
+      console.log("✅ Blob URL created:", blobUrl);
+      
+      // Use direct DOM manipulation to avoid React state issues
+      const backgroundElement = document.getElementById('background-container');
+      if (backgroundElement) {
+        backgroundElement.style.backgroundImage = `url("${blobUrl}")`;
+        console.log("✅ Background applied directly to DOM element");
+      } else {
+        console.error("❌ Background container not found");
+      }
     } else {
       console.log("❌ No file selected");
     }
@@ -85,6 +70,7 @@ const Intro = () => {
       
       {/* Background image container - positioned down by 1 inch */}
       <div 
+        id="background-container"
         className="absolute top-24 bottom-0 left-0 right-0"
         style={{
           backgroundImage: (() => {
