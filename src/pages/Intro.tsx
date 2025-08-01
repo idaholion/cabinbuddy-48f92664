@@ -33,10 +33,10 @@ const Intro = () => {
         bgElement.style.backgroundColor = '';
         
         console.log("🖼️ Setting background image:", blobUrl);
-        bgElement.style.backgroundImage = `url("${blobUrl}")`;
-        bgElement.style.backgroundSize = 'cover';
-        bgElement.style.backgroundPosition = 'center';
-        bgElement.style.backgroundRepeat = 'no-repeat';
+        bgElement.style.setProperty('background-image', `url("${blobUrl}")`, 'important');
+        bgElement.style.setProperty('background-size', 'cover', 'important');
+        bgElement.style.setProperty('background-position', 'center', 'important');
+        bgElement.style.setProperty('background-repeat', 'no-repeat', 'important');
         
         console.log("✅ All styles applied");
         console.log("🔍 Current backgroundImage value:", bgElement.style.backgroundImage);
