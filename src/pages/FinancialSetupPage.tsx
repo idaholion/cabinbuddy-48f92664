@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { DollarSign, CreditCard, Calendar, Settings, Users, FileText } from "lucide-react";
+import { DollarSign, CreditCard, Calendar, Settings, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { BillingCalculator } from "@/lib/billing-calculator";
@@ -29,7 +29,6 @@ const FinancialSetupPage = () => {
   const [cancellationPolicy, setCancellationPolicy] = useState("");
   const [taxId, setTaxId] = useState("");
   const [taxJurisdiction, setTaxJurisdiction] = useState("");
-  const [billingFrequency, setBillingFrequency] = useState("");
   const [venmoHandle, setVenmoHandle] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");
   const [checkPayableTo, setCheckPayableTo] = useState("");
@@ -52,7 +51,6 @@ const FinancialSetupPage = () => {
       setCancellationPolicy(settings.cancellation_policy || "");
       setTaxId(settings.tax_id || "");
       setTaxJurisdiction(settings.tax_jurisdiction || "");
-      setBillingFrequency(settings.billing_frequency || "");
       setVenmoHandle(settings.venmo_handle || "");
       setPaypalEmail(settings.paypal_email || "");
       setCheckPayableTo(settings.check_payable_to || "");
@@ -93,7 +91,6 @@ const FinancialSetupPage = () => {
       cancellation_policy: cancellationPolicy,
       tax_id: taxId,
       tax_jurisdiction: taxJurisdiction,
-      billing_frequency: billingFrequency,
       venmo_handle: venmoHandle,
       paypal_email: paypalEmail,
       check_payable_to: checkPayableTo,
@@ -429,33 +426,6 @@ const FinancialSetupPage = () => {
                   value={taxJurisdiction}
                   onChange={(e) => setTaxJurisdiction(e.target.value)}
                 />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Family Member Billing */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Family Member Billing
-              </CardTitle>
-              <CardDescription>Set rates and billing preferences for family members</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="billing-frequency">Billing Frequency</Label>
-                <Select value={billingFrequency} onValueChange={setBillingFrequency}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select billing frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="per-stay">Per Stay</SelectItem>
-                    <SelectItem value="monthly">Monthly Summary</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="annual">Annual</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
