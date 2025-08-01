@@ -39,18 +39,19 @@ const Intro = () => {
           backgroundRepeat: 'no-repeat'
         }}
       >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-forest/40"></div>
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-forest/40"></div>
+      </div>
       
-      {/* Main Title */}
-      <div className="absolute z-10 top-4 left-0 right-0 text-center">
+      {/* Main Title - positioned over the white strip */}
+      <div className="absolute z-20 top-4 left-0 right-0 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
           Welcome to Cabin Buddy
         </h1>
       </div>
 
-      {/* Content */}
-      <div className="absolute z-10 top-32 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
+      {/* Content - positioned to start where white strip ends */}
+      <div className="absolute z-20 top-32 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
         <div className="mb-4">
           <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
@@ -76,7 +77,6 @@ const Intro = () => {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
-      </div>
       </div>
     </div>
   );
