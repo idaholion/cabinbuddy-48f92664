@@ -125,7 +125,7 @@ const Intro = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-8 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-2 justify-center">
           <Button 
             onClick={() => navigate("/login")}
             size="lg" 
