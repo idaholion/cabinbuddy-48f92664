@@ -160,7 +160,7 @@ const SupervisorOrganizationFinancial = () => {
         </div>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Financial Management</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Management</h1>
           <p className="text-muted-foreground">Manage receipts and expenses for this organization</p>
         </div>
 

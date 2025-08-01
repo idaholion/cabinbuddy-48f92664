@@ -99,7 +99,7 @@ const FinancialReview = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Financial Review</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Review</h1>
           <p className="text-muted-foreground">
             Review financial data and receipts
           </p>

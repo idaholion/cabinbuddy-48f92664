@@ -144,7 +144,7 @@ const SupervisorOrganizationReservation = () => {
         </div>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Reservation Settings</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Reservation Settings</h1>
           <p className="text-muted-foreground">Manage property details and pricing for this organization</p>
         </div>
 

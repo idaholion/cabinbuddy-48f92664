@@ -36,7 +36,7 @@ export const SelectOrganization = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Switch Organizations</h1>
+              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Switch Organizations</h1>
               <p className="text-muted-foreground">
                 You're a member of multiple organizations. Choose which one you'd like to access, or manage your organization memberships.
               </p>

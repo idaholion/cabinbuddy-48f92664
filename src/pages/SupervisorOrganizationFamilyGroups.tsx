@@ -275,7 +275,7 @@ const SupervisorOrganizationFamilyGroups = () => {
         </div>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Family Groups Management</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Groups Management</h1>
           <p className="text-muted-foreground">Manage family groups for this organization</p>
         </div>
 

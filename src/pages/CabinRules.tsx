@@ -15,8 +15,8 @@ const CabinRules = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
-          <h1 className="text-4xl font-bold mb-2 text-orange-400 text-center">Cabin Rules & Policies</h1>
-          <p className="text-orange-500 text-xl text-center">Please review and follow all cabin guidelines</p>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Rules & Policies</h1>
+          <p className="text-2xl text-primary text-center font-medium">Please review and follow all cabin guidelines</p>
         </div>
 
         <Card className="bg-card/95 mb-6">
