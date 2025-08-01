@@ -38,7 +38,7 @@ const Intro = () => {
       <div className="absolute inset-0 bg-gradient-forest/40"></div>
       
       {/* Main Title */}
-      <div className="relative z-10 pt-8 pb-4 text-center">
+      <div className="relative z-10 pt-4 pb-4 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
           Welcome to Cabin Buddy
         </h1>
