@@ -37,15 +37,19 @@ const Intro = () => {
         try {
           const result = e.target?.result as string;
           console.log("✅ FileReader loaded, result length:", result?.length);
-          console.log("🔄 About to set background image...");
+          console.log("🔄 About to create blob URL...");
           
-          // Set both state and ref
-          backgroundImageRef.current = result;
-          setBackgroundImage(result);
+          // Convert to blob URL instead of data URL to avoid CSS issues
+          const blobUrl = URL.createObjectURL(file);
+          console.log("🎯 Created blob URL:", blobUrl);
+          
+          // Set both state and ref with blob URL
+          backgroundImageRef.current = blobUrl;
+          setBackgroundImage(blobUrl);
           setForceUpdate(prev => prev + 1); // Force re-render
           
           console.log("✅ Background image set successfully!");
-          console.log("📊 State:", result ? "SET" : "NOT SET");
+          console.log("📊 State:", blobUrl ? "SET" : "NOT SET");
           console.log("📎 Ref:", backgroundImageRef.current ? "SET" : "NOT SET");
         } catch (error) {
           console.error("❌ Error in FileReader onload:", error);
@@ -86,19 +90,19 @@ const Intro = () => {
           backgroundImage: (() => {
             const imageData = backgroundImageRef.current || backgroundImage;
             console.log("🎨 Rendering - imageData exists:", !!imageData);
-            console.log("🎨 Rendering - imageData length:", imageData?.length || 0);
-            console.log("🎨 Rendering - imageData starts with:", imageData?.substring(0, 30) || "NO DATA");
             
-            try {
-              const imageUrl = imageData ? `url("${imageData}")` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
-              console.log("🖼️ Final imageUrl:", imageData ? "CUSTOM IMAGE URL" : "DEFAULT IMAGE");
-              return imageUrl;
-            } catch (error) {
-              console.error("❌ Error creating background image URL:", error);
-              backgroundImageRef.current = null;
-              setBackgroundImage(null);
+            if (!imageData) {
               return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
             }
+            
+            // Check if it's a blob URL or data URL
+            if (!imageData.startsWith('data:image/') && !imageData.startsWith('blob:')) {
+              console.error("❌ Invalid image data format:", imageData.substring(0, 50));
+              return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
+            }
+            
+            console.log("✅ Valid image data, creating URL");
+            return `url("${imageData}")`;
           })(),
           backgroundSize: 'cover',
           backgroundPosition: 'center',
