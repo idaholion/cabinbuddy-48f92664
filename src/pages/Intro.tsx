@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Upload, ArrowRight } from "lucide-react";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 const Intro = () => {
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -22,6 +23,10 @@ const Intro = () => {
 
   const handleGetStarted = () => {
     navigate("/home");
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -43,6 +48,26 @@ const Intro = () => {
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
       </div>
       
+      {/* Upload Button - positioned in top right */}
+      <Button
+        onClick={triggerFileInput}
+        size="sm"
+        variant="outline"
+        className="absolute z-30 top-6 right-6 bg-white/90 text-black border-white hover:bg-white px-4 py-2"
+      >
+        <Upload className="w-4 h-4 mr-2" />
+        Change Background
+      </Button>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
+
       {/* Main Title - positioned over the white strip */}
       <div className="absolute z-20 top-4 left-0 right-0 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
