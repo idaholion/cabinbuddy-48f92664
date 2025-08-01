@@ -25,15 +25,20 @@ const Intro = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen relative"
-      style={{
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
+    <div className="min-h-screen relative">
+      {/* White strip at top */}
+      <div className="h-24 bg-white w-full"></div>
+      
+      {/* Background image container - positioned down by 1 inch */}
+      <div 
+        className="absolute top-24 bottom-0 left-0 right-0"
+        style={{
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-gradient-forest/40"></div>
       
@@ -71,6 +76,7 @@ const Intro = () => {
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );
