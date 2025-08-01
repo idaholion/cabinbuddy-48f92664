@@ -2,10 +2,12 @@ import { z } from "zod";
 
 // Common validation schemas
 export const emailSchema = z.string().email("Please enter a valid email address");
-export const phoneSchema = z.string().regex(
-  /^[\+]?[1-9][\d]{0,15}$/,
-  "Please enter a valid phone number"
-);
+export const phoneSchema = z.string().refine((val) => {
+  if (!val || val === "") return true;
+  // Remove all non-digit characters and check if it's a valid phone number
+  const cleaned = val.replace(/\D/g, '');
+  return cleaned.length >= 10 && cleaned.length <= 15;
+}, "Please enter a valid phone number");
 export const requiredStringSchema = z.string().min(1, "This field is required");
 export const optionalStringSchema = z.string().optional();
 export const positiveNumberSchema = z.number().positive("Must be a positive number");
@@ -40,7 +42,9 @@ export const familyGroupSetupSchema = z.object({
   leadName: requiredStringSchema.min(2, "Lead name must be at least 2 characters"),
   leadPhone: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
-    return /^[\+]?[1-9][\d]{0,15}$/.test(val);
+    // Remove all non-digit characters and check if it's a valid phone number
+    const cleaned = val.replace(/\D/g, '');
+    return cleaned.length >= 10 && cleaned.length <= 15;
   }, "Please enter a valid phone number"),
   leadEmail: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
@@ -50,7 +54,9 @@ export const familyGroupSetupSchema = z.object({
     name: z.string(),
     phone: z.string().refine((val) => {
       if (!val || val === "") return true;
-      return /^[\+]?[1-9][\d]{0,15}$/.test(val);
+      // Remove all non-digit characters and check if it's a valid phone number
+      const cleaned = val.replace(/\D/g, '');
+      return cleaned.length >= 10 && cleaned.length <= 15;
     }, "Please enter a valid phone number"),
     email: z.string().refine((val) => {
       if (!val || val === "") return true;
