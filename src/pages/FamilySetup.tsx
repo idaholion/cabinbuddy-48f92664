@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy, X } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,7 @@ import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilySetup = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
   const [searchParams] = useSearchParams();
@@ -165,6 +166,12 @@ const FamilySetup = () => {
     } catch (error) {
       console.error('Error saving organization setup:', error);
     }
+  };
+
+  // Save organization setup and navigate to family groups
+  const saveAndContinueToFamilyGroups = async () => {
+    await saveOrganizationSetup();
+    navigate("/family-group-setup");
   };
 
   // Handle family group input changes
@@ -538,6 +545,18 @@ const FamilySetup = () => {
               
               <div className="text-sm text-muted-foreground text-center mt-4">
                 <p>Need more details? Use the <strong>Set up Family Groups</strong> button to configure lead contacts and host members for each family group.</p>
+              </div>
+              
+              {/* Save and Continue Button */}
+              <div className="flex justify-center pt-6 border-t border-border">
+                <Button 
+                  onClick={saveAndContinueToFamilyGroups} 
+                  disabled={orgLoading || settingsLoading}
+                  className="w-full max-w-md"
+                  size="lg"
+                >
+                  {(orgLoading || settingsLoading) ? "Saving..." : "Save and Continue to Family Groups"}
+                </Button>
               </div>
             </div>
           </CardContent>
