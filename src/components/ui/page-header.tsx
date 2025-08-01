@@ -17,11 +17,11 @@ export function PageHeader({
   backgroundImage = false 
 }: PageHeaderProps) {
   const titleClasses = backgroundImage 
-    ? "text-4xl font-bold text-primary drop-shadow-lg mb-2 flex items-center"
+    ? "text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center"
     : "text-4xl font-bold text-foreground mb-2 flex items-center";
     
   const subtitleClasses = backgroundImage
-    ? "text-lg text-primary drop-shadow-md"
+    ? "text-2xl text-primary text-center font-medium"
     : "text-lg text-muted-foreground";
 
   return (
