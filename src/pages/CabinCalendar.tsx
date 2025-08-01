@@ -138,64 +138,8 @@ const CabinCalendar = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
-          </div>
-          
-          <div className="space-y-6">
-            <Card className="bg-background/90 backdrop-blur-sm border-border">
-              <CardHeader>
-                <CardTitle className="text-lg">New Bookings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Tabs defaultValue="single" className="w-full">
-                  <TabsList className="w-full flex">
-                    <TabsTrigger value="single" className="flex-1">Single Period</TabsTrigger>
-                    <TabsTrigger value="multi" className="flex-1">Multi-Period</TabsTrigger>
-                    <TabsTrigger value="work-weekend" className="flex-1">Work Weekend</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="single" className="mt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Single period bookings are made directly on the calendar. Click any date to start booking.
-                      </p>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="multi" className="mt-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Multi-period bookings are made directly on the calendar. Click any date to start booking.
-                      </p>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="work-weekend" className="mt-4">
-                    <WorkWeekendProposalForm 
-                      onSuccess={() => {
-                        // Optionally trigger calendar refresh
-                        window.location.reload();
-                      }}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            <CalendarKeeperManualReservation 
-              onReservationCreated={() => {
-                // Optionally trigger calendar refresh
-                window.location.reload();
-              }}
-            />
-            
-            <SecondarySelectionManager 
-              currentMonth={currentCalendarMonth}
-              userFamilyGroup={userFamilyGroup}
-            />
-          </div>
+        <div className="grid grid-cols-1 gap-6">
+          <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
         </div>
       </div>
     </div>

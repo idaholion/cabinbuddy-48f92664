@@ -21,6 +21,7 @@ import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
+import { useOrganization } from "@/hooks/useOrganization";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PropertyCalendarProps {
@@ -29,12 +30,16 @@ interface PropertyCalendarProps {
 
 export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { reservations, refetchReservations } = useReservations();
   const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
+  
+  // Check if user is calendar keeper
+  const isCalendarKeeper = organization?.calendar_keeper_email === user?.email;
   
   // Force refresh on component mount to ensure we get latest data
   useEffect(() => {
@@ -310,6 +315,17 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowWorkWeekendForm(true)}>
                     Work Weekend
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    disabled={!isCalendarKeeper}
+                    className={!isCalendarKeeper ? "text-muted-foreground" : ""}
+                    onClick={() => {
+                      if (isCalendarKeeper) {
+                        window.location.href = '/calendar-keeper-management';
+                      }
+                    }}
+                  >
+                    Calendar Keeper Tools
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
