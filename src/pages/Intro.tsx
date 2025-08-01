@@ -69,6 +69,25 @@ const Intro = () => {
         Change Background
       </Button>
 
+      {/* Test Button - Debug */}
+      <Button
+        onClick={() => {
+          const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
+          if (bgElement) {
+            bgElement.style.backgroundColor = 'red';
+            bgElement.style.backgroundImage = 'none';
+            console.log("✅ Test: Background changed to red");
+          } else {
+            console.error("❌ Test: Background element not found");
+          }
+        }}
+        size="sm"
+        variant="outline"
+        className="absolute z-30 top-16 right-6 bg-red-500/90 text-white border-red-500 hover:bg-red-600 px-4 py-2"
+      >
+        Test Red
+      </Button>
+
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
