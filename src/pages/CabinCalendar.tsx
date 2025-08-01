@@ -149,27 +149,27 @@ const CabinCalendar = () => {
                 <CardTitle className="text-lg">New Bookings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Tabs defaultValue="manual" className="w-full">
+                <Tabs defaultValue="single" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="manual">Manual Reservation</TabsTrigger>
-                    <TabsTrigger value="secondary">Secondary Selection</TabsTrigger>
+                    <TabsTrigger value="single">Single Period</TabsTrigger>
+                    <TabsTrigger value="multi">Multi-Period</TabsTrigger>
                     <TabsTrigger value="work-weekend">Work Weekend</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="manual" className="mt-4">
-                    <CalendarKeeperManualReservation 
-                      onReservationCreated={() => {
-                        // Optionally trigger calendar refresh
-                        window.location.reload();
-                      }}
-                    />
+                  <TabsContent value="single" className="mt-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Single period bookings are made directly on the calendar. Click any date to start booking.
+                      </p>
+                    </div>
                   </TabsContent>
                   
-                  <TabsContent value="secondary" className="mt-4">
-                    <SecondarySelectionManager 
-                      currentMonth={currentCalendarMonth}
-                      userFamilyGroup={userFamilyGroup}
-                    />
+                  <TabsContent value="multi" className="mt-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Multi-period bookings are made directly on the calendar. Click any date to start booking.
+                      </p>
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="work-weekend" className="mt-4">
@@ -183,6 +183,18 @@ const CabinCalendar = () => {
                 </Tabs>
               </CardContent>
             </Card>
+
+            <CalendarKeeperManualReservation 
+              onReservationCreated={() => {
+                // Optionally trigger calendar refresh
+                window.location.reload();
+              }}
+            />
+            
+            <SecondarySelectionManager 
+              currentMonth={currentCalendarMonth}
+              userFamilyGroup={userFamilyGroup}
+            />
           </div>
         </div>
       </div>
