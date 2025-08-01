@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings, Copy, X } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Users, Plus, Settings, Copy, X, Menu, Info } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { useState, useEffect } from "react";
@@ -36,6 +37,12 @@ const FamilySetup = () => {
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
   const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
+  
+  // State for sidebar info card dismissal
+  const [showSidebarInfo, setShowSidebarInfo] = useState(() => {
+    // Only show for first-time users (check if dismissal is stored)
+    return !localStorage.getItem('sidebarInfoDismissed');
+  });
 
   // Load saved data on component mount
   useEffect(() => {
@@ -282,6 +289,12 @@ const FamilySetup = () => {
     });
   };
 
+  // Handle sidebar info card dismissal
+  const handleDismissSidebarInfo = () => {
+    setShowSidebarInfo(false);
+    localStorage.setItem('sidebarInfoDismissed', 'true');
+  };
+
   return <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
     backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
   }}>
@@ -293,6 +306,30 @@ const FamilySetup = () => {
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Organization Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Setting up your Family Organization and Family Groups list</p>
         </div>
+
+        {/* Sidebar Info Card - First time users only */}
+        {showSidebarInfo && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-900">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+                <span>
+                  <strong>Tip:</strong> Use the sidebar menu button (☰) in the top-left to navigate between different sections of the app. 
+                  Click it to expand or collapse the navigation menu at any time.
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDismissSidebarInfo}
+                className="ml-4 hover:bg-blue-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Combined Family Organization and Groups Setup */}
         <Card className="bg-card/95 mb-8">
