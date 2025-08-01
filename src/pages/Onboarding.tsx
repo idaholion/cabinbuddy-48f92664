@@ -1,6 +1,7 @@
 import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { useNavigate } from 'react-router-dom';
-import { Home, Building } from 'lucide-react';
+import { Home, Building, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const Onboarding = () => {
   const navigate = useNavigate();
@@ -12,6 +13,19 @@ export const Onboarding = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Temporary Design Review Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button 
+          onClick={() => navigate('/')} 
+          variant="outline"
+          size="sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          View Landing Page
+        </Button>
+      </div>
+      
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center mb-8">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Welcome to Cabin Buddy!</h1>
