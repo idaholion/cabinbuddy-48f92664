@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +34,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
-  const { reservations, refetchReservations } = useReservations();
+  const { reservations, loading: reservationsLoading, refetchReservations } = useReservations();
   const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
@@ -158,6 +160,52 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
     onMonthChange?.(newDate);
   };
 
+  const jumpToToday = () => {
+    const today = new Date();
+    setCurrentMonth(today);
+    onMonthChange?.(today);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if no input is focused
+      if (document.activeElement?.tagName === 'INPUT' || 
+          document.activeElement?.tagName === 'TEXTAREA' || 
+          document.activeElement?.getAttribute('role') === 'combobox') {
+        return;
+      }
+
+      switch(e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          navigateMonth(-1);
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          navigateMonth(1);
+          break;
+        case 't':
+        case 'T':
+          if (e.ctrlKey || e.metaKey) return;
+          e.preventDefault();
+          jumpToToday();
+          break;
+        case 'Escape':
+          // Close any open dialogs
+          setShowBookingForm(false);
+          setShowMultiPeriodForm(false);
+          setShowWorkWeekendForm(false);
+          setShowTradeForm(false);
+          setShowSplitDialog(false);
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentMonth]);
+
   const getBookingsForDate = (date: Date) => {
     const allBookings = reservations.filter(reservation => {
       const startDate = new Date(reservation.start_date);
@@ -190,56 +238,62 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select property" />
-                </SelectTrigger>
-                <SelectContent>
-                  {properties.map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
-                      {property.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {/* Phase 4: View Mode Toggle */}
-              <div className="flex border rounded-lg overflow-hidden">
-                <Button 
-                  variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('calendar')}
-                  className="rounded-none"
-                >
-                  <Calendar className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={viewMode === 'list' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="rounded-none"
-                >
-                  <Layers className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('timeline')}
-                  className="rounded-none"
-                >
-                  <ArrowLeftRight className="h-4 w-4" />
-                </Button>
+            <div className="flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Select property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>
+                        {property.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Phase 4: View Mode Toggle */}
+                <div className="flex border rounded-lg overflow-hidden">
+                  <Button 
+                    variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('calendar')}
+                    className="rounded-none"
+                  >
+                    <Calendar className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Calendar</span>
+                  </Button>
+                  <Button 
+                    variant={viewMode === 'list' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="rounded-none"
+                  >
+                    <Layers className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">List</span>
+                  </Button>
+                  <Button 
+                    variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setViewMode('timeline')}
+                    className="rounded-none"
+                  >
+                    <ArrowLeftRight className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Timeline</span>
+                  </Button>
+                </div>
               </div>
               
-              {/* Phase 4: Filter Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" />
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
+              <div className="flex flex-wrap gap-2">
+                {/* Phase 4: Filter Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-1" />
+                      Filter
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 p-4">
                   <div className="space-y-3">
                     <div className="text-sm font-medium">Show Bookings</div>
@@ -299,13 +353,16 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                     </Select>
                   </div>
                 </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button>
-                    New Booking <ChevronDown className="h-4 w-4 ml-1" />
-                  </Button>
-                </DropdownMenuTrigger>
+                </DropdownMenu>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm">
+                      <span className="hidden sm:inline">New Booking</span>
+                      <span className="sm:hidden">New</span>
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => setShowBookingForm(true)}>
                     Single Period Booking
@@ -328,21 +385,26 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                     Calendar Keeper Tools
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="outline" onClick={handleBookingComplete}>
-                Booking Complete
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="relative">
-                    Edit Booking <ChevronDown className="h-4 w-4 ml-1" />
-                    {pendingTradeRequests > 0 && (
-                      <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
-                        {pendingTradeRequests}
-                      </Badge>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
+                </DropdownMenu>
+                
+                <Button variant="outline" size="sm" onClick={handleBookingComplete}>
+                  <span className="hidden sm:inline">Booking Complete</span>
+                  <span className="sm:hidden">Complete</span>
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="relative">
+                      <span className="hidden sm:inline">Edit Booking</span>
+                      <span className="sm:hidden">Edit</span>
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                      {pendingTradeRequests > 0 && (
+                        <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                          {pendingTradeRequests}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56">
                   <DropdownMenuItem onClick={() => handleEditBookingAction('edit-my-bookings')}>
                     Edit my bookings
@@ -356,20 +418,22 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                     </DropdownMenuItem>
                   </CalendarKeeperAssistanceDialog>
                 </DropdownMenuContent>
-              </DropdownMenu>
+                </DropdownMenu>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            <div className="flex items-center mt-3 lg:mt-0">
               <SearchInput
                 placeholder="Search reservations, family groups..."
                 onSearch={setSearchQuery}
-                className="w-64"
+                className="w-full sm:w-64"
               />
             </div>
           </div>
           
           {/* Month Navigation and Family Group Color Legend */}
           <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
                   ←
@@ -383,6 +447,16 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 />
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
                   →
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={jumpToToday}
+                  className="ml-2 font-medium"
+                  title="Jump to today (Press T)"
+                >
+                  <CalendarDays className="h-4 w-4 mr-1" />
+                  Today
                 </Button>
               </div>
               {familyGroups.some(fg => fg.color) && (
@@ -409,17 +483,26 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         <CardContent>
           {/* Calendar Header */}
           <div className="grid grid-cols-7 gap-1 mb-4">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
               <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-                {day}
+                <span className="hidden sm:inline">{day}</span>
+                <span className="sm:hidden">{day.charAt(0)}</span>
               </div>
             ))}
           </div>
 
-          {/* Enhanced Calendar Grid */}
+          {/* Enhanced Calendar Grid with Loading States */}
           {viewMode === 'calendar' && (
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => {
+            <>
+              {reservationsLoading ? (
+                <div className="grid grid-cols-7 gap-1">
+                  {Array.from({length: 42}).map((_, i) => (
+                    <Skeleton key={i} className="h-24 rounded-md" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
@@ -431,7 +514,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 return (
                   <div
                     key={index}
-                    className={`min-h-24 p-1 border border-border relative transition-all duration-200 ${
+                    className={`min-h-16 sm:min-h-20 md:min-h-24 p-1 border border-border relative transition-all duration-200 ${
                       !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
                     } ${isToday ? 'ring-2 ring-primary shadow-warm' : ''} ${
                       timePeriod && filterOptions.showTimePeriods ? 'border-l-4 border-l-accent' : ''
@@ -523,8 +606,10 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                     </div>
                   </div>
                 );
-              })}
-            </div>
+                  })}
+                </div>
+              )}
+            </>
           )}
           
           {/* List View */}
