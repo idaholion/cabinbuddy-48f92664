@@ -99,6 +99,7 @@ export default function ReservationSetup() {
           setSelectionDays(data.selection_days?.toString() || "14");
           setEnableSecondarySelection(data.enable_secondary_selection || false);
           setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
+          setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
           
           // Load the rotation order
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
@@ -165,6 +166,7 @@ export default function ReservationSetup() {
           selection_days: parseInt(selectionDays),
           enable_secondary_selection: enableSecondarySelection,
           secondary_max_periods: parseInt(secondaryMaxPeriods),
+          enable_post_rotation_selection: enablePostRotationSelection,
         }, {
           onConflict: 'organization_id,rotation_year'
         });
