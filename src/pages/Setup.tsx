@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -21,6 +22,12 @@ const Setup = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [cardAnimations, setCardAnimations] = useState([false, false, false, false]);
   const [progressValue, setProgressValue] = useState(0);
+  
+  // State for sidebar info card dismissal
+  const [showSidebarInfo, setShowSidebarInfo] = useState(() => {
+    // Only show for first-time users (check if dismissal is stored)
+    return !localStorage.getItem('sidebarInfoDismissed');
+  });
 
   // Debug the actual values causing completion to be true
   const orgComplete = !!(
@@ -232,6 +239,12 @@ const Setup = () => {
     );
   };
 
+  // Handle sidebar info card dismissal
+  const handleDismissSidebarInfo = () => {
+    setShowSidebarInfo(false);
+    localStorage.setItem('sidebarInfoDismissed', 'true');
+  };
+
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat px-4 pt-1 pb-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto relative">
@@ -289,6 +302,30 @@ const Setup = () => {
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
         </div>
+
+        {/* Sidebar Info Card - First time users only */}
+        {showSidebarInfo && (
+          <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-900">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Menu className="h-4 w-4" />
+                <span>
+                  <strong>Tip:</strong> Use the sidebar menu button (☰) in the top-left to navigate between different sections of the app. 
+                  Click it to expand or collapse the navigation menu at any time.
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDismissSidebarInfo}
+                className="ml-4 hover:bg-blue-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <StepCard
