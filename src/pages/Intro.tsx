@@ -11,13 +11,23 @@ const Intro = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input changed", event.target.files);
     const file = event.target.files?.[0];
     if (file) {
+      console.log("File selected:", file.name, file.size);
       const reader = new FileReader();
       reader.onload = (e) => {
-        setBackgroundImage(e.target?.result as string);
+        const result = e.target?.result as string;
+        console.log("FileReader loaded, result length:", result?.length);
+        setBackgroundImage(result);
+        console.log("Background image state updated");
+      };
+      reader.onerror = (e) => {
+        console.error("FileReader error:", e);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log("No file selected");
     }
   };
 
