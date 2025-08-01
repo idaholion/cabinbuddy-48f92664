@@ -234,40 +234,60 @@ const Setup = () => {
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Button variant="outline" asChild className="mb-4">
+      <div className="max-w-4xl mx-auto relative">
+        {/* Circular Progress Dial - Upper Right Corner */}
+        <div className="absolute top-4 right-4 z-10">
+          <div className="relative w-20 h-20">
+            {/* Background Circle */}
+            <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 80 80">
+              <circle
+                cx="40"
+                cy="40"
+                r="36"
+                fill="none"
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth="6"
+              />
+              {/* Progress Circle */}
+              <circle
+                cx="40"
+                cy="40"
+                r="36"
+                fill="none"
+                stroke={completedSteps === totalSteps ? "#22c55e" : "#3b82f6"}
+                strokeWidth="6"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 36}`}
+                strokeDashoffset={`${2 * Math.PI * 36 * (1 - progressValue / 100)}`}
+                className="transition-all duration-1000 ease-out"
+              />
+            </svg>
+            {/* Center Content */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className={cn(
+                  "text-lg font-bold transition-all duration-300",
+                  completedSteps === totalSteps ? "text-green-600" : "text-primary"
+                )}>
+                  {completedSteps}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  of {totalSteps}
+                </div>
+                {completedSteps === totalSteps && (
+                  <Sparkles className="h-3 w-3 text-green-600 animate-spin mx-auto mt-1" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <Button variant="outline" asChild className="mb-6">
             <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
-          
-          {/* Progress Indicator */}
-          <div className="bg-card/95 p-6 rounded-lg mt-6 animate-fade-in">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-muted-foreground">Setup Progress</span>
-              <span className={cn(
-                "text-sm font-medium transition-all duration-300",
-                completedSteps === totalSteps ? "text-green-600 font-bold" : "text-muted-foreground"
-              )}>
-                {completedSteps} of {totalSteps} completed
-                {completedSteps === totalSteps && (
-                  <Sparkles className="inline h-4 w-4 ml-1 animate-spin" />
-                )}
-              </span>
-            </div>
-            <div className="relative">
-              <Progress 
-                value={progressValue} 
-                className={cn(
-                  "h-3 transition-all duration-1000 ease-out"
-                )} 
-              />
-              {completedSteps === totalSteps && (
-                <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-600/20 rounded-full animate-fade-in" />
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
