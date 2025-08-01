@@ -80,10 +80,8 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   // Initialize monitoring and analytics
   usePerformanceMonitoring();
-  useProductionAnalytics(); 
   useEnhancedErrorTracking();
-  useLaunchAnalytics(); // Add launch-specific analytics
-  usePageTracking(); // Track page views automatically
+  useLaunchAnalytics(); // This includes page tracking, so no need for duplicate
 
   return (
     <BrowserRouter>
