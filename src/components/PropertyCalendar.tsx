@@ -16,10 +16,12 @@ import { TradeRequestsManager } from "@/components/TradeRequestsManager";
 import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 import { CalendarKeeperAssistanceDialog } from "@/components/CalendarKeeperAssistanceDialog";
+import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -50,6 +52,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showMultiPeriodForm, setShowMultiPeriodForm] = useState(false);
+  const [showWorkWeekendForm, setShowWorkWeekendForm] = useState(false);
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
@@ -304,6 +307,9 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setShowMultiPeriodForm(true)}>
                     Multi-Period Booking
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowWorkWeekendForm(true)}>
+                    Work Weekend
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -773,6 +779,21 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
         onOpenChange={setShowTradeForm}
         onTradeComplete={handleBookingComplete}
       />
+
+      {/* Work Weekend Proposal Form Dialog */}
+      <Dialog open={showWorkWeekendForm} onOpenChange={setShowWorkWeekendForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Propose Work Weekend</DialogTitle>
+          </DialogHeader>
+          <WorkWeekendProposalForm 
+            onSuccess={() => {
+              setShowWorkWeekendForm(false);
+              handleBookingComplete();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
