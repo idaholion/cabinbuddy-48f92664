@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 const FamilySetup = () => {
@@ -25,6 +25,31 @@ const FamilySetup = () => {
   // Check if this is a "create new" operation
   const isCreatingNew = searchParams.get('mode') === 'create';
   
+  // Curated list of family-friendly 6-letter words for organization codes
+  const sixLetterWords = [
+    'CASTLE', 'BRIDGE', 'GARDEN', 'LAUNCH', 'MARKET', 'NATURE',
+    'BRIGHT', 'FRIEND', 'TRAVEL', 'WONDER', 'PLANET', 'SMOOTH',
+    'SILVER', 'GOLDEN', 'SIMPLE', 'STRONG', 'GENTLE', 'GLOBAL',
+    'MASTER', 'WISDOM', 'BREATH', 'HEALTH', 'SUNSET', 'FUTURE',
+    'SPIRIT', 'ENERGY', 'STABLE', 'FAMOUS', 'LEGACY', 'SAFETY',
+    'SISTER', 'MOTHER', 'FATHER', 'FAMILY', 'SUPPLY', 'OFFICE',
+    'POCKET', 'LETTER', 'NUMBER', 'FINGER', 'CIRCLE', 'MIDDLE',
+    'BUTTON', 'LOVELY', 'BOTTLE', 'MENTAL', 'RESULT', 'NOTICE',
+    'REMIND', 'NEARLY', 'MOMENT', 'SPRING', 'WINTER', 'SUMMER',
+    'CHANGE', 'BEFORE', 'FOLLOW', 'AROUND', 'PURPLE', 'YELLOW',
+    'ORANGE', 'PLAYER', 'LEADER', 'FINGER', 'FLOWER', 'SEASON',
+    'REASON', 'CHOICE', 'COUSIN', 'LISTEN', 'CAMERA', 'HANDLE',
+    'PENCIL', 'CANDLE', 'THREAD', 'NEEDLE', 'NORMAL', 'SCHOOL',
+    'BEAUTY', 'RESCUE', 'MODERN', 'ACCESS', 'DOUBLE', 'SINGLE',
+    'TACKLE', 'BUCKET', 'SOCKET', 'SWITCH', 'RHYTHM', 'WARMTH'
+  ];
+
+  // Generate a unique 6-letter word organization code
+  const generateOrgCode = () => {
+    const randomIndex = Math.floor(Math.random() * sixLetterWords.length);
+    return sixLetterWords[randomIndex];
+  };
+
   // State for organization setup
   const [orgName, setOrgName] = useState("");
   const [propertyName, setPropertyName] = useState("");
@@ -38,6 +63,30 @@ const FamilySetup = () => {
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
   const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
+  const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
+
+  // Auto-save all form data
+  const formData = {
+    orgName,
+    propertyName,
+    adminName,
+    adminPhone,
+    adminEmail,
+    treasurerName,
+    treasurerPhone,
+    treasurerEmail,
+    calendarKeeperName,
+    calendarKeeperPhone,
+    calendarKeeperEmail,
+    familyGroups,
+    organizationCode
+  };
+
+  const { loadSavedData, clearSavedData } = useAutoSave({
+    key: 'family-setup',
+    data: formData,
+    enabled: true,
+  });
 
   // Load saved data on component mount
   useEffect(() => {
@@ -68,6 +117,30 @@ const FamilySetup = () => {
       } else {
         console.log('No signup data found in localStorage');
       }
+      
+      // Load auto-saved data if available
+      const savedData = loadSavedData();
+      if (savedData) {
+        console.log('Loading auto-saved data:', savedData);
+        setOrgName(savedData.orgName || "");
+        setPropertyName(savedData.propertyName || "");
+        if (!adminName) setAdminName(savedData.adminName || "");
+        if (!adminEmail) setAdminEmail(savedData.adminEmail || "");
+        setAdminPhone(savedData.adminPhone || "");
+        setTreasurerName(savedData.treasurerName || "");
+        setTreasurerPhone(savedData.treasurerPhone || "");
+        setTreasurerEmail(savedData.treasurerEmail || "");
+        setCalendarKeeperName(savedData.calendarKeeperName || "");
+        setCalendarKeeperPhone(savedData.calendarKeeperPhone || "");
+        setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
+        setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
+        if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
+        
+        toast({
+          title: "Draft Restored",
+          description: "Your previous work has been restored from auto-save.",
+        });
+      }
       return;
     }
     
@@ -85,24 +158,48 @@ const FamilySetup = () => {
       setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
       setCalendarKeeperEmail(organization.calendar_keeper_email || "");
     } else {
-      // Fallback to localStorage for backward compatibility
-      const savedSetup = localStorage.getItem('familySetupData');
-      if (savedSetup) {
-        const data = JSON.parse(savedSetup);
-        setOrgName(data.orgName || "");
-        setAdminName(data.adminName || "");
-        setAdminPhone(data.adminPhone || "");
-        setAdminEmail(data.adminEmail || "");
-        setTreasurerName(data.treasurerName || "");
-        setTreasurerPhone(data.treasurerPhone || "");
-        setTreasurerEmail(data.treasurerEmail || "");
-        setCalendarKeeperName(data.calendarKeeperName || "");
-        setCalendarKeeperPhone(data.calendarKeeperPhone || "");
-        setCalendarKeeperEmail(data.calendarKeeperEmail || "");
-        setFamilyGroups(data.familyGroups && data.familyGroups.length > 0 ? data.familyGroups : [""]);
+      // Try to load auto-saved data first
+      const savedData = loadSavedData();
+      if (savedData) {
+        console.log('Loading auto-saved data:', savedData);
+        setOrgName(savedData.orgName || "");
+        setPropertyName(savedData.propertyName || "");
+        setAdminName(savedData.adminName || "");
+        setAdminPhone(savedData.adminPhone || "");
+        setAdminEmail(savedData.adminEmail || "");
+        setTreasurerName(savedData.treasurerName || "");
+        setTreasurerPhone(savedData.treasurerPhone || "");
+        setTreasurerEmail(savedData.treasurerEmail || "");
+        setCalendarKeeperName(savedData.calendarKeeperName || "");
+        setCalendarKeeperPhone(savedData.calendarKeeperPhone || "");
+        setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
+        setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
+        if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
+        
+        toast({
+          title: "Draft Restored",
+          description: "Your previous work has been restored from auto-save.",
+        });
+      } else {
+        // Fallback to localStorage for backward compatibility
+        const savedSetup = localStorage.getItem('familySetupData');
+        if (savedSetup) {
+          const data = JSON.parse(savedSetup);
+          setOrgName(data.orgName || "");
+          setAdminName(data.adminName || "");
+          setAdminPhone(data.adminPhone || "");
+          setAdminEmail(data.adminEmail || "");
+          setTreasurerName(data.treasurerName || "");
+          setTreasurerPhone(data.treasurerPhone || "");
+          setTreasurerEmail(data.treasurerEmail || "");
+          setCalendarKeeperName(data.calendarKeeperName || "");
+          setCalendarKeeperPhone(data.calendarKeeperPhone || "");
+          setCalendarKeeperEmail(data.calendarKeeperEmail || "");
+          setFamilyGroups(data.familyGroups && data.familyGroups.length > 0 ? data.familyGroups : [""]);
+        }
       }
     }
-  }, [organization, isCreatingNew]);
+  }, [organization, isCreatingNew, loadSavedData, toast, adminName, adminEmail]);
 
   // Load property name from reservation settings
   useEffect(() => {
@@ -198,6 +295,9 @@ const FamilySetup = () => {
       
       localStorage.setItem('familySetupData', JSON.stringify(setupData));
       
+      // Clear auto-saved data after successful save
+      clearSavedData();
+      
       // Also save just the family groups for the SelectFamilyGroup page
       localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
     } catch (error) {
@@ -209,6 +309,8 @@ const FamilySetup = () => {
   const saveAndContinueToFamilyGroups = async () => {
     try {
       await saveOrganizationSetup();
+      // Clear auto-saved data since we're navigating away
+      clearSavedData();
       // Small delay to ensure organization context is updated
       setTimeout(() => {
         navigate("/family-group-setup");
@@ -238,46 +340,6 @@ const FamilySetup = () => {
       setFamilyGroups(prev => prev.filter((_, i) => i !== index));
     }
   };
-  
-  // Curated list of family-friendly 6-letter words for organization codes
-  const sixLetterWords = [
-    'CASTLE', 'BRIDGE', 'GARDEN', 'LAUNCH', 'MARKET', 'NATURE',
-    'BRIGHT', 'FRIEND', 'TRAVEL', 'WONDER', 'PLANET', 'SMOOTH',
-    'SILVER', 'GOLDEN', 'SIMPLE', 'STRONG', 'GENTLE', 'GLOBAL',
-    'MASTER', 'WISDOM', 'BREATH', 'HEALTH', 'SUNSET', 'FUTURE',
-    'SPIRIT', 'ENERGY', 'STABLE', 'FAMOUS', 'LEGACY', 'SAFETY',
-    'SISTER', 'MOTHER', 'FATHER', 'FAMILY', 'SUPPLY', 'OFFICE',
-    'POCKET', 'LETTER', 'NUMBER', 'FINGER', 'CIRCLE', 'MIDDLE',
-    'BUTTON', 'LOVELY', 'BOTTLE', 'MENTAL', 'RESULT', 'NOTICE',
-    'REMIND', 'NEARLY', 'MOMENT', 'SPRING', 'WINTER', 'SUMMER',
-    'CHANGE', 'BEFORE', 'FOLLOW', 'AROUND', 'PURPLE', 'YELLOW',
-    'ORANGE', 'PLAYER', 'LEADER', 'FINGER', 'FLOWER', 'SEASON',
-    'REASON', 'CHOICE', 'COUSIN', 'LISTEN', 'CAMERA', 'HANDLE',
-    'PENCIL', 'CANDLE', 'THREAD', 'NEEDLE', 'NORMAL', 'SCHOOL',
-    'BEAUTY', 'RESCUE', 'MODERN', 'ACCESS', 'DOUBLE', 'SINGLE',
-    'TACKLE', 'BUCKET', 'SOCKET', 'SWITCH', 'RHYTHM', 'WARMTH'
-  ];
-
-  // Generate a unique 6-letter word organization code
-  const generateOrgCode = () => {
-    const randomIndex = Math.floor(Math.random() * sixLetterWords.length);
-    return sixLetterWords[randomIndex];
-  };
-
-  const [organizationCode, setOrganizationCode] = useState(() => {
-    // If creating new, always generate fresh code
-    if (isCreatingNew) {
-      return generateOrgCode();
-    }
-    
-    // Check if we have saved data with an existing code
-    const savedSetup = localStorage.getItem('familySetupData');
-    if (savedSetup) {
-      const data = JSON.parse(savedSetup);
-      return data.organizationCode || generateOrgCode();
-    }
-    return generateOrgCode();
-  });
 
   // Check if user is admin (for now, assume admin if they have admin email filled)
   const isAdmin = adminEmail && adminEmail.trim() !== "";
@@ -342,6 +404,9 @@ const FamilySetup = () => {
               </Button>
             </div>
             <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
+            <CardDescription className="text-center">
+              📝 Auto-saving your changes...
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 py-4">
             {/* Organization Setup Section */}
