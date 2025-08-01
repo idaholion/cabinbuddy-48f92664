@@ -793,6 +793,7 @@ export type Database = {
       rotation_orders: {
         Row: {
           created_at: string
+          enable_post_rotation_selection: boolean | null
           enable_secondary_selection: boolean | null
           first_last_option: string | null
           id: string
@@ -810,6 +811,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          enable_post_rotation_selection?: boolean | null
           enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
@@ -827,6 +829,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          enable_post_rotation_selection?: boolean | null
           enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
