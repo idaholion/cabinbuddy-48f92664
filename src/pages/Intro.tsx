@@ -45,23 +45,15 @@ const Intro = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
         <div className="mb-4">
           <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button 
-            onClick={handleGetStarted}
-            size="lg" 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
-          >
-            Demo
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+        {/* Action Buttons - moved to bottom */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-8 justify-center">
           <Button 
             onClick={() => navigate("/login")}
             size="lg" 
@@ -69,6 +61,14 @@ const Intro = () => {
             className="bg-white/10 border-white/20 text-white hover:bg-white/20 px-8 py-4 text-lg font-semibold"
           >
             Sign In / Sign Up
+          </Button>
+          <Button 
+            onClick={handleGetStarted}
+            size="lg" 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
+          >
+            Demo
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </div>
