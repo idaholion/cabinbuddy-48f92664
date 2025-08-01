@@ -20,11 +20,17 @@ const Intro = () => {
       const blobUrl = URL.createObjectURL(file);
       console.log("🎯 Created blob URL:", blobUrl);
       
-      // Apply background directly
+      // Apply background directly (same as red test but with image)
       const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
       if (bgElement) {
+        bgElement.style.backgroundColor = ''; // Clear any previous color
         bgElement.style.backgroundImage = `url("${blobUrl}")`;
-        console.log("✅ Background applied successfully");
+        bgElement.style.backgroundSize = 'cover';
+        bgElement.style.backgroundPosition = 'center';
+        bgElement.style.backgroundRepeat = 'no-repeat';
+        console.log("✅ Background image applied successfully");
+      } else {
+        console.error("❌ Background element not found");
       }
     }
     event.target.value = '';
