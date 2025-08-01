@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, DollarSign, Calendar, Settings, CheckCircle } from "lucide-react";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -15,6 +16,11 @@ const Setup = () => {
   const { familyGroups } = useFamilyGroups();
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
+  
+  // Animation state
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [cardAnimations, setCardAnimations] = useState([false, false, false, false]);
+  const [progressValue, setProgressValue] = useState(0);
 
   // Debug the actual values causing completion to be true
   const orgComplete = !!(
@@ -110,18 +116,121 @@ const Setup = () => {
   const totalSteps = 4;
   const progressPercentage = (completedSteps / totalSteps) * 100;
 
-  const CompletionBadge = ({ isComplete }: { isComplete: boolean }) => (
-    isComplete ? (
-      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 border-green-200">
-        <CheckCircle className="h-3 w-3 mr-1" />
-        Complete
-      </Badge>
-    ) : (
-      <Badge variant="outline" className="ml-2">
-        Pending
-      </Badge>
-    )
+  // Animation effects
+  useEffect(() => {
+    // Staggered card reveals on page load
+    const timers = cardAnimations.map((_, index) => 
+      setTimeout(() => {
+        setCardAnimations(prev => {
+          const newState = [...prev];
+          newState[index] = true;
+          return newState;
+        });
+      }, 200 + index * 150)
+    );
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  useEffect(() => {
+    // Animate progress bar
+    const timer = setTimeout(() => {
+      setProgressValue(progressPercentage);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [progressPercentage]);
+
+  useEffect(() => {
+    // Show celebration when all complete
+    if (completedSteps === totalSteps && !showCelebration) {
+      const timer = setTimeout(() => {
+        setShowCelebration(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [completedSteps, totalSteps, showCelebration]);
+
+  const CompletionBadge = ({ isComplete, delay = 0 }: { isComplete: boolean; delay?: number }) => (
+    <div className={cn(
+      "transition-all duration-500 ease-out",
+      isComplete ? "animate-scale-in" : "",
+    )} style={{ animationDelay: `${delay}ms` }}>
+      {isComplete ? (
+        <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 border-green-200 animate-fade-in">
+          <CheckCircle className={cn("h-3 w-3 mr-1 transition-transform duration-300", 
+            isComplete ? "animate-scale-in" : "")} 
+          />
+          Complete
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="ml-2 opacity-70">
+          Pending
+        </Badge>
+      )}
+    </div>
   );
+
+  const StepCard = ({ 
+    stepNumber, 
+    title, 
+    description, 
+    icon: Icon, 
+    isComplete, 
+    linkTo,
+    linkText 
+  }: {
+    stepNumber: number;
+    title: string;
+    description: string;
+    icon: any;
+    isComplete: boolean;
+    linkTo: string;
+    linkText: string;
+  }) => {
+    const isNextStep = stepNumber === nextStep;
+    const isVisible = cardAnimations[stepNumber - 1];
+    
+    return (
+      <Card className={cn(
+        "bg-card/95 transition-all duration-700 ease-out transform",
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
+        isComplete && "ring-2 ring-green-200 shadow-lg",
+        isNextStep && !isComplete && "ring-2 ring-primary/50 shadow-lg animate-pulse",
+        "hover:scale-[1.02] hover:shadow-xl"
+      )}>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Icon className={cn(
+                "h-6 w-6 mr-2 transition-all duration-300",
+                isComplete && "text-green-600 animate-scale-in",
+                isNextStep && !isComplete && "text-primary animate-pulse"
+              )} />
+              {title}
+            </div>
+            <CompletionBadge isComplete={isComplete} delay={stepNumber * 100} />
+          </CardTitle>
+          <CardDescription className="transition-opacity duration-300">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            asChild 
+            className={cn(
+              "w-full transition-all duration-300 hover:scale-[1.02]",
+              isNextStep && !isComplete && "animate-pulse shadow-lg",
+              isComplete && "hover:bg-green-50"
+            )} 
+            variant={getButtonVariant(stepNumber, isComplete)}
+          >
+            <Link to={linkTo}>{linkText}</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -134,108 +243,118 @@ const Setup = () => {
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
           
           {/* Progress Indicator */}
-          <div className="bg-card/95 p-6 rounded-lg mt-6">
+          <div className="bg-card/95 p-6 rounded-lg mt-6 animate-fade-in">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-muted-foreground">Setup Progress</span>
-              <span className="text-sm font-medium text-muted-foreground">{completedSteps} of {totalSteps} completed</span>
+              <span className={cn(
+                "text-sm font-medium transition-all duration-300",
+                completedSteps === totalSteps ? "text-green-600 font-bold" : "text-muted-foreground"
+              )}>
+                {completedSteps} of {totalSteps} completed
+                {completedSteps === totalSteps && (
+                  <Sparkles className="inline h-4 w-4 ml-1 animate-spin" />
+                )}
+              </span>
             </div>
-            <Progress value={progressPercentage} className="h-3" />
+            <div className="relative">
+              <Progress 
+                value={progressValue} 
+                className={cn(
+                  "h-3 transition-all duration-1000 ease-out",
+                  completedSteps === totalSteps && "animate-pulse"
+                )} 
+              />
+              {completedSteps === totalSteps && (
+                <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-600/20 rounded-full animate-fade-in" />
+              )}
+            </div>
           </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Users className="h-6 w-6 mr-2" />
-                  Step 1: Family Setup
-                </div>
-                <CompletionBadge isComplete={isOrganizationComplete} />
-              </CardTitle>
-              <CardDescription>
-                Configure your organization details, administrator, treasurer, and calendar keeper information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant={getButtonVariant(1, isOrganizationComplete)}>
-                <Link to="/family-setup?mode=create">Configure or Change Family Setup</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <StepCard
+            stepNumber={1}
+            title="Step 1: Family Setup"
+            description="Configure your organization details, administrator, treasurer, and calendar keeper information."
+            icon={Users}
+            isComplete={isOrganizationComplete}
+            linkTo="/family-setup?mode=create"
+            linkText="Configure or Change Family Setup"
+          />
 
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Users className="h-6 w-6 mr-2" />
-                  Step 2: Family Groups
-                </div>
-                <CompletionBadge isComplete={isFamilyGroupsComplete} />
-              </CardTitle>
-              <CardDescription>
-                Set up individual family groups with lead members and host details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant={getButtonVariant(2, isFamilyGroupsComplete)}>
-                <Link to="/family-group-setup">Configure or Change Family Groups</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <StepCard
+            stepNumber={2}
+            title="Step 2: Family Groups"
+            description="Set up individual family groups with lead members and host details."
+            icon={Users}
+            isComplete={isFamilyGroupsComplete}
+            linkTo="/family-group-setup"
+            linkText="Configure or Change Family Groups"
+          />
 
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <DollarSign className="h-6 w-6 mr-2" />
-                  Step 3: Financial Setup
-                </div>
-                <CompletionBadge isComplete={isFinancialComplete} />
-              </CardTitle>
-              <CardDescription>
-                Configure billing rates, payment settings, fees, and tax information for your cabin.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant={getButtonVariant(3, isFinancialComplete)}>
-                <Link to="/financial-setup">Configure or Change Finances</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <StepCard
+            stepNumber={3}
+            title="Step 3: Financial Setup"
+            description="Configure billing rates, payment settings, fees, and tax information for your cabin."
+            icon={DollarSign}
+            isComplete={isFinancialComplete}
+            linkTo="/financial-setup"
+            linkText="Configure or Change Finances"
+          />
 
-          <Card className="bg-card/95">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Calendar className="h-6 w-6 mr-2" />
-                  Step 4: Reservation Setup
-                </div>
-                <CompletionBadge isComplete={isReservationComplete} />
-              </CardTitle>
-              <CardDescription>
-                Configure rotation schedules, time blocks, and seniority settings for reservations.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full" variant={getButtonVariant(4, isReservationComplete)}>
-                <Link to="/reservation-setup">Configure or Change Reservations</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <StepCard
+            stepNumber={4}
+            title="Step 4: Reservation Setup"
+            description="Configure rotation schedules, time blocks, and seniority settings for reservations."
+            icon={Calendar}
+            isComplete={isReservationComplete}
+            linkTo="/reservation-setup"
+            linkText="Configure or Change Reservations"
+          />
         </div>
 
         <div className="mt-8 text-center">
-          <Card className="bg-card/95">
+          <Card className={cn(
+            "bg-card/95 transition-all duration-700 ease-out transform",
+            showCelebration ? "animate-scale-in ring-4 ring-green-200 shadow-2xl" : "",
+            completedSteps === totalSteps ? "bg-gradient-to-br from-green-50 to-emerald-50" : ""
+          )}>
             <CardHeader>
-              <CardTitle className="flex items-center justify-center">
-                <Settings className="h-6 w-6 mr-2" />
-                Setup Complete
+              <CardTitle className={cn(
+                "flex items-center justify-center transition-all duration-500",
+                completedSteps === totalSteps ? "text-green-700" : ""
+              )}>
+                <Settings className={cn(
+                  "h-6 w-6 mr-2 transition-all duration-300",
+                  completedSteps === totalSteps ? "text-green-600 animate-spin" : ""
+                )} />
+                {completedSteps === totalSteps ? "🎉 Setup Complete! 🎉" : "Setup Complete"}
+                {showCelebration && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-0 left-1/4 animate-bounce">✨</div>
+                    <div className="absolute top-2 right-1/4 animate-bounce delay-100">🎊</div>
+                    <div className="absolute bottom-4 left-1/3 animate-bounce delay-200">⭐</div>
+                    <div className="absolute bottom-2 right-1/3 animate-bounce delay-300">🌟</div>
+                  </div>
+                )}
               </CardTitle>
-              <CardDescription>
-                Once you've completed all steps above, your cabin management system will be ready to use!
+              <CardDescription className={cn(
+                "transition-all duration-300",
+                completedSteps === totalSteps ? "text-green-600 font-medium" : ""
+              )}>
+                {completedSteps === totalSteps 
+                  ? "Congratulations! Your cabin management system is fully configured and ready to use!"
+                  : "Once you've completed all steps above, your cabin management system will be ready to use!"
+                }
               </CardDescription>
             </CardHeader>
+            {completedSteps === totalSteps && (
+              <CardContent className="animate-fade-in">
+                <Button asChild className="w-full max-w-md mx-auto animate-pulse bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                  <Link to="/home">🏠 Go to Dashboard</Link>
+                </Button>
+              </CardContent>
+            )}
           </Card>
         </div>
       </div>
