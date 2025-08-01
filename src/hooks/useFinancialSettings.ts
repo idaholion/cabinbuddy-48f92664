@@ -20,7 +20,7 @@ export interface FinancialSettings {
   cancellation_policy?: string;
   tax_id?: string;
   tax_jurisdiction?: string;
-  billing_frequency?: string;
+  
   venmo_handle?: string;
   paypal_email?: string;
   check_payable_to?: string;
@@ -67,7 +67,7 @@ export const useFinancialSettings = () => {
           cancellation_policy: data.cancellation_policy || '',
           tax_id: data.tax_id || '',
           tax_jurisdiction: data.tax_jurisdiction || '',
-          billing_frequency: data.billing_frequency || 'per-stay',
+          
           venmo_handle: data.venmo_handle || '',
           paypal_email: data.paypal_email || '',
           check_payable_to: data.check_payable_to || '',
@@ -111,7 +111,7 @@ export const useFinancialSettings = () => {
         cancellation_policy: settingsData.cancellation_policy,
         tax_id: settingsData.tax_id,
         tax_jurisdiction: settingsData.tax_jurisdiction,
-        billing_frequency: settingsData.billing_frequency,
+        
         venmo_handle: settingsData.venmo_handle,
         paypal_email: settingsData.paypal_email,
         check_payable_to: settingsData.check_payable_to,
