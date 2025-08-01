@@ -35,12 +35,12 @@ const Intro = () => {
       }}
     >
       {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/40"></div>
+      <div className="absolute inset-0 bg-gradient-forest/40"></div>
       
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="mb-12">
-          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
+          <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
             Welcome to Cabin Buddy!
           </h1>
           <p className="text-2xl text-primary text-center font-medium max-w-3xl mx-auto">
