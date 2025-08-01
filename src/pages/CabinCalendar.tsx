@@ -104,7 +104,7 @@ const CabinCalendar = () => {
                 <SelectValue placeholder="Select Family Group" />
               </SelectTrigger>
               <SelectContent className="bg-background border border-border shadow-lg z-50">
-                <SelectItem value="">All Family Groups</SelectItem>
+                <SelectItem value="all">All Family Groups</SelectItem>
                 {familyGroups.map((familyGroup) => (
                   <SelectItem key={familyGroup.id} value={familyGroup.name}>
                     <div className="flex items-center gap-2">
