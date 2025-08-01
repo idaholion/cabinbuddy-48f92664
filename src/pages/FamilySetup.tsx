@@ -496,13 +496,10 @@ const FamilySetup = () => {
 
             {/* Family Groups Section */}
             <div className="space-y-4">
-              <div className="relative">
+              <div>
                 <h2 className="text-xl font-semibold text-center border-b pb-2">
                   List of Family Groups ({familyGroups.filter(g => g.trim()).length}/{familyGroups.length})
                 </h2>
-                <Button className="absolute top-0 right-0" asChild>
-                  <Link to="/family-group-setup">Set up Family Groups</Link>
-                </Button>
               </div>
               
               <div className="space-y-3">
@@ -544,7 +541,7 @@ const FamilySetup = () => {
               </div>
               
               <div className="text-sm text-muted-foreground text-center mt-4">
-                <p>Need more details? Use the <strong>Set up Family Groups</strong> button to configure lead contacts and host members for each family group.</p>
+                <p>After saving, you can add more details like lead contacts and host members for each family group in the next step.</p>
               </div>
               
               {/* Save and Continue Button */}
