@@ -165,9 +165,9 @@ const FamilySetup = () => {
           try {
             await createFamilyGroup({
               name: groupName.trim(),
-              lead_name: adminName || "",
-              lead_phone: adminPhone || "",
-              lead_email: adminEmail || "",
+              lead_name: "",
+              lead_phone: "",
+              lead_email: "",
               host_members: [],
               color: null,
               alternate_lead_id: null
