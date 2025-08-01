@@ -117,7 +117,7 @@ const Intro = () => {
       </div>
 
       {/* Content */}
-      <div className="absolute z-20 top-24 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
+      <div className="absolute z-20 top-28 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
         <div className="mb-4">
           <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
