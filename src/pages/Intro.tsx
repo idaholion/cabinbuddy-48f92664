@@ -54,7 +54,14 @@ const Intro = () => {
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    console.log("🎯 Triggering file input click");
+    const input = fileInputRef.current;
+    if (input) {
+      console.log("✅ File input found, clicking...");
+      input.click();
+    } else {
+      console.error("❌ File input ref is null");
+    }
   };
 
   return (
