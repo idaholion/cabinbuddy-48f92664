@@ -20,14 +20,17 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
 import { HostMemberCard } from "@/components/HostMemberCard";
+import { useNavigate } from "react-router-dom";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { organization } = useOrganization();
   const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading } = useFamilyGroups();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
+  const [showAlternateLeadDialog, setShowAlternateLeadDialog] = useState(false);
   const hasLoadedAutoSave = useRef(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
@@ -234,6 +237,26 @@ const FamilyGroupSetup = () => {
   const filledMembersCount = watchedData.hostMembers?.filter(member => 
     member.name?.trim() || member.email?.trim() || member.phone?.trim()
   ).length || 0;
+
+  const saveAndContinue = async () => {
+    const currentData = getValues();
+    
+    // Check if alternate lead is selected
+    if (!currentData.alternateLeadId || currentData.alternateLeadId === "none") {
+      setShowAlternateLeadDialog(true);
+      return;
+    }
+    
+    // Save the form and navigate
+    await handleSubmit(onSubmit)();
+    navigate("/financial-setup");
+  };
+
+  const handleContinueWithoutAlternateLead = async () => {
+    await handleSubmit(onSubmit)();
+    setShowAlternateLeadDialog(false);
+    navigate("/financial-setup");
+  };
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
@@ -573,6 +596,47 @@ const FamilyGroupSetup = () => {
             </Form>
           </CardContent>
         </Card>
+        
+        {/* Save and Continue Section */}
+        <Card className="bg-card/95">
+          <CardContent className="space-y-4 py-6">
+            <div className="text-sm text-muted-foreground text-center">
+              <p>Ready to proceed to the next step? Make sure you've selected an alternate group lead.</p>
+            </div>
+            
+            {/* Save and Continue Button */}
+            <div className="flex justify-center">
+              <Button 
+                onClick={saveAndContinue} 
+                disabled={loading || !isValid}
+                className="w-full max-w-md"
+                size="lg"
+              >
+                {loading ? "Saving..." : "Save and Go to Next Step"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Alternate Lead Confirmation Dialog */}
+        <AlertDialog open={showAlternateLeadDialog} onOpenChange={setShowAlternateLeadDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Alternate Group Lead Not Selected</AlertDialogTitle>
+              <AlertDialogDescription>
+                You haven't selected an alternate group lead yet. It's recommended to have an alternate lead in case the primary lead is unavailable. Would you like to go back and select one, or continue without selecting an alternate lead for now?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowAlternateLeadDialog(false)}>
+                Go Back to Select
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleContinueWithoutAlternateLead}>
+                Continue Later
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
