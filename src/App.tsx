@@ -1,6 +1,8 @@
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -9,43 +11,53 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
 import { useEnhancedErrorTracking } from '@/hooks/useEnhancedErrorTracking';
+
+// Eager load frequently used pages
 import Intro from "./pages/Intro";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Setup from "./pages/Setup";
-
-import FamilySetup from "./pages/FamilySetup";
-import FamilyGroupSetup from "./pages/FamilyGroupSetup";
 import SelectFamilyGroup from "./pages/SelectFamilyGroup";
-import FinancialSetup from "./pages/FinancialSetup";
-import FinancialSetupPage from "./pages/FinancialSetupPage";
-import ReservationSetup from "./pages/ReservationSetup";
 import CabinCalendar from "./pages/CabinCalendar";
-import CheckIn from "./pages/CheckIn";
-import DailyCheckIn from "./pages/DailyCheckIn";
-import AddReceipt from "./pages/AddReceipt";
-import ShoppingList from "./pages/ShoppingList";
-import CabinRules from "./pages/CabinRules";
-import Documents from "./pages/Documents";
-import CabinSeasonalDocs from "./pages/CabinSeasonalDocs";
-import CheckoutList from "./pages/CheckoutList";
-import CheckoutFinal from "./pages/CheckoutFinal";
-import PhotoSharing from "./pages/PhotoSharing";
-import FontShowcase from "./pages/FontShowcase";
-import BreadcrumbDemo from "./pages/BreadcrumbDemo";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
-import { SupervisorDashboard } from "./pages/SupervisorDashboard";
-import { SupervisorRoute } from "./components/SupervisorRoute";
-import SupervisorOrganizationFamilyGroups from "./pages/SupervisorOrganizationFamilyGroups";
-import SupervisorOrganizationFinancial from "./pages/SupervisorOrganizationFinancial";
-import FinancialReview from "./pages/FinancialReview";
-import SupervisorOrganizationReservation from "./pages/SupervisorOrganizationReservation";
 import { SelectOrganization } from "./pages/SelectOrganization";
 import { Onboarding } from "./pages/Onboarding";
-import CalendarKeeperManagementPage from "./pages/CalendarKeeperManagement";
+
+// Lazy load setup pages (used less frequently)
+const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
+const FamilyGroupSetup = React.lazy(() => import("./pages/FamilyGroupSetup"));
+const FinancialSetup = React.lazy(() => import("./pages/FinancialSetup"));
+const FinancialSetupPage = React.lazy(() => import("./pages/FinancialSetupPage"));
+const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
+
+// Lazy load other complex pages
+const CheckIn = React.lazy(() => import("./pages/CheckIn"));
+const DailyCheckIn = React.lazy(() => import("./pages/DailyCheckIn"));
+const AddReceipt = React.lazy(() => import("./pages/AddReceipt"));
+const ShoppingList = React.lazy(() => import("./pages/ShoppingList"));
+const CabinRules = React.lazy(() => import("./pages/CabinRules"));
+const Documents = React.lazy(() => import("./pages/Documents"));
+const CabinSeasonalDocs = React.lazy(() => import("./pages/CabinSeasonalDocs"));
+const CheckoutList = React.lazy(() => import("./pages/CheckoutList"));
+const CheckoutFinal = React.lazy(() => import("./pages/CheckoutFinal"));
+const PhotoSharing = React.lazy(() => import("./pages/PhotoSharing"));
+const FinancialReview = React.lazy(() => import("./pages/FinancialReview"));
+
+// Lazy load admin/supervisor pages
+const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
+const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
+const SupervisorOrganizationFinancial = React.lazy(() => import("./pages/SupervisorOrganizationFinancial"));
+const SupervisorOrganizationReservation = React.lazy(() => import("./pages/SupervisorOrganizationReservation"));
+const CalendarKeeperManagementPage = React.lazy(() => import("./pages/CalendarKeeperManagement"));
+
+// Lazy load utility pages
+const FontShowcase = React.lazy(() => import("./pages/FontShowcase"));
+const BreadcrumbDemo = React.lazy(() => import("./pages/BreadcrumbDemo"));
+
+import { SupervisorRoute } from "./components/SupervisorRoute";
 import { CalendarKeeperRoute } from "./components/CalendarKeeperRoute";
 
 import { MainLayout } from "./components/MainLayout";
@@ -82,32 +94,32 @@ const AppContent = () => {
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
         
-        <Route path="/family-setup" element={<ProtectedRoute><MainLayout><FamilySetup /></MainLayout></ProtectedRoute>} />
+        <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
-        <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><FamilyGroupSetup /></MainLayout></ProtectedRoute>} />
-        <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><FinancialSetup /></MainLayout></ProtectedRoute>} />
-        <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><FinancialSetupPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><ReservationSetup /></MainLayout></ProtectedRoute>} />
+        <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
-        <Route path="/check-in" element={<ProtectedRoute><MainLayout><CheckIn /></MainLayout></ProtectedRoute>} />
-        <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><DailyCheckIn /></MainLayout></ProtectedRoute>} />
-        <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><AddReceipt /></MainLayout></ProtectedRoute>} />
-        <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><ShoppingList /></MainLayout></ProtectedRoute>} />
-        <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><CabinRules /></MainLayout></ProtectedRoute>} />
-        <Route path="/documents" element={<ProtectedRoute><MainLayout><Documents /></MainLayout></ProtectedRoute>} />
-        <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><CabinSeasonalDocs /></MainLayout></ProtectedRoute>} />
-        <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><CheckoutList /></MainLayout></ProtectedRoute>} />
-        <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><CheckoutFinal /></MainLayout></ProtectedRoute>} />
-        <Route path="/photos" element={<ProtectedRoute><MainLayout><PhotoSharing /></MainLayout></ProtectedRoute>} />
-        <Route path="/financial-review" element={<ProtectedRoute><MainLayout><FinancialReview /></MainLayout></ProtectedRoute>} />
-        <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><CalendarKeeperManagementPage /></MainLayout></CalendarKeeperRoute>} />
-        <Route path="/supervisor" element={<SupervisorRoute><MainLayout><SupervisorDashboard /></MainLayout></SupervisorRoute>} />
-        <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFamilyGroups /></MainLayout></SupervisorRoute>} />
-        <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><SupervisorOrganizationFinancial /></MainLayout></SupervisorRoute>} />
-        <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><MainLayout><SupervisorOrganizationReservation /></MainLayout></SupervisorRoute>} />
+        <Route path="/check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckIn /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DailyCheckIn /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AddReceipt /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ShoppingList /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSeasonalDocs /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutList /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutFinal /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/financial-review" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialReview /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagementPage /></Suspense></MainLayout></CalendarKeeperRoute>} />
+        <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
+        <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
+        <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFinancial /></Suspense></MainLayout></SupervisorRoute>} />
+        <Route path="/supervisor/organization/:organizationId/reservation" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationReservation /></Suspense></MainLayout></SupervisorRoute>} />
         
-        <Route path="/fonts" element={<FontShowcase />} />
-        <Route path="/breadcrumbs" element={<MainLayout><BreadcrumbDemo /></MainLayout>} />
+        <Route path="/fonts" element={<Suspense fallback={<LoadingSpinner />}><FontShowcase /></Suspense>} />
+        <Route path="/breadcrumbs" element={<MainLayout><Suspense fallback={<LoadingSpinner />}><BreadcrumbDemo /></Suspense></MainLayout>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
