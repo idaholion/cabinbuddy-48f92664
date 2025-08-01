@@ -46,6 +46,27 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
 
     setIsLoading(true);
     try {
+      // Debug: Check current session and user
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+      console.log('User ID:', session?.user?.id);
+      console.log('User email:', session?.user?.email);
+      
+      // Test supervisor function first
+      const { data: supervisorTest, error: supervisorError } = await supabase.rpc('is_supervisor');
+      console.log('Supervisor test result:', supervisorTest);
+      console.log('Supervisor test error:', supervisorError);
+      
+      if (!supervisorTest) {
+        toast({
+          title: "Authentication Error",
+          description: "Unable to verify supervisor privileges. Please try logging out and back in.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('supervisor_reset_database', {
         p_confirmation_code: 'RESET_ALL_DATA'
       });
