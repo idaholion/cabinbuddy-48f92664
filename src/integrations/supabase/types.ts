@@ -1195,6 +1195,14 @@ export type Database = {
         Args: { org_id: string }
         Returns: boolean
       }
+      supervisor_bulk_remove_host_member: {
+        Args: {
+          p_organization_id: string
+          p_confirmation_code: string
+          p_host_name: string
+        }
+        Returns: number
+      }
       supervisor_bulk_update_family_groups: {
         Args: { p_organization_id: string; p_confirmation_code: string }
         Returns: boolean
