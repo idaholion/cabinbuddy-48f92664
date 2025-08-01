@@ -55,8 +55,12 @@ const Intro = () => {
     navigate("/home");
   };
 
-  const triggerFileInput = () => {
-    console.log("🎯 Triggering file input click");
+  const triggerFileInput = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    console.log("🎯 Triggering file input click, prevented defaults");
     const input = fileInputRef.current;
     if (input) {
       console.log("✅ File input found, clicking...");
