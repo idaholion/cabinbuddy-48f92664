@@ -30,12 +30,12 @@ const Intro = () => {
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundPosition: 'center 20%',
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-gradient-forest/40"></div>
+      {/* Gradient overlay for better text readability in sky area */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 via-transparent to-black/20"></div>
       
       {/* Main Title */}
       <div className="relative z-10 pt-4 pb-4 text-center">
