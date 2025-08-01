@@ -563,7 +563,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                       </div>
                     </div>
                     
-                    {/* Enhanced bookings display */}
+                    {/* Enhanced bookings display - only show actual reservations */}
                     <div className="mt-1 space-y-0.5">
                       {dayBookings.slice(0, 2).map((booking, i) => {
                         const isMyBooking = booking.family_group === userFamilyGroup;
@@ -599,6 +599,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                           </div>
                         );
                       })}
+                      
+                      {/* Show time period info only when no actual bookings exist for this date */}
+                      {dayBookings.length === 0 && timePeriod && isCurrentMonth && filterOptions.showTimePeriods && (
+                        <div className="text-xs px-1 py-0.5 bg-accent/10 text-accent-foreground border border-accent/20 rounded truncate">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate">Available: {timePeriod.familyGroup}</span>
+                            <span className="ml-1 text-xs opacity-70">P{timePeriod.periodNumber}</span>
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Trade requests indicator */}
                       {hasPendingTrade && (
