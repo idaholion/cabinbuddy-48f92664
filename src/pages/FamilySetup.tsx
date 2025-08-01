@@ -43,20 +43,28 @@ const FamilySetup = () => {
     if (isCreatingNew) {
       console.log('Creating new organization - checking for signup data');
       const signupData = localStorage.getItem('signupData');
+      console.log('Retrieved signup data:', signupData);
       if (signupData) {
         try {
           const data = JSON.parse(signupData);
+          console.log('Parsed signup data:', data);
           const now = Date.now();
+          console.log('Current time:', now, 'Data time:', data.timestamp, 'Age:', now - data.timestamp);
           // Only use data if it's less than 1 hour old
           if (data.timestamp && (now - data.timestamp) < 3600000) {
+            console.log('Auto-populating admin data:', data);
             setAdminName(`${data.firstName} ${data.lastName}`.trim());
             setAdminEmail(data.email);
             // Clear the signup data after using it
             localStorage.removeItem('signupData');
+          } else {
+            console.log('Signup data too old, not using');
           }
         } catch (error) {
           console.error('Error parsing signup data:', error);
         }
+      } else {
+        console.log('No signup data found in localStorage');
       }
       return;
     }
