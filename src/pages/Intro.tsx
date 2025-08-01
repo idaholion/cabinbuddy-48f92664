@@ -1,14 +1,27 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, Upload, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Intro = () => {
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(() => {
+    // Load from localStorage on initial render
+    return localStorage.getItem('intro-background-image');
+  });
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Save to localStorage whenever backgroundImage changes
+  useEffect(() => {
+    console.log("useEffect triggered, backgroundImage:", backgroundImage ? "CUSTOM IMAGE" : "DEFAULT");
+    if (backgroundImage) {
+      localStorage.setItem('intro-background-image', backgroundImage);
+    } else {
+      localStorage.removeItem('intro-background-image');
+    }
+  }, [backgroundImage]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("File input changed", event.target.files);
