@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
+import { CalendarKeeperManualReservation } from "@/components/CalendarKeeperManualReservation";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSelectionStatus } from "@/hooks/useSelectionStatus";
@@ -141,6 +142,13 @@ const CabinCalendar = () => {
           </div>
           
           <div className="space-y-6">
+            <CalendarKeeperManualReservation 
+              onReservationCreated={() => {
+                // Optionally trigger calendar refresh
+                window.location.reload();
+              }}
+            />
+            
             <SecondarySelectionManager 
               currentMonth={currentCalendarMonth}
               userFamilyGroup={userFamilyGroup}
