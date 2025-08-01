@@ -30,6 +30,7 @@ import { Onboarding } from "./pages/Onboarding";
 // Lazy load setup pages (used less frequently)
 const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
 const FamilyGroupSetup = React.lazy(() => import("./pages/FamilyGroupSetup"));
+const HostProfile = React.lazy(() => import("./pages/HostProfile"));
 const FinancialSetup = React.lazy(() => import("./pages/FinancialSetup"));
 const FinancialSetupPage = React.lazy(() => import("./pages/FinancialSetupPage"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
@@ -100,6 +101,7 @@ const AppContent = () => {
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/host-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />

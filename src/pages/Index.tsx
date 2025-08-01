@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
@@ -38,6 +39,7 @@ const UserInfo = () => {
 
 const Index = () => {
   const { isSupervisor } = useSupervisor();
+  const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
   
   // Monitor performance
   usePerformanceMonitoring();
@@ -193,6 +195,28 @@ const Index = () => {
                 Family Photos
               </Link>
             </Button>
+
+            {/* Role-based Setup Options */}
+            {!roleLoading && (
+              <>
+                {isGroupLead && (
+                  <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64 bg-primary/10 text-primary border-primary" variant="outline" asChild>
+                    <Link to="/family-group-setup">
+                      <Users className="h-5 w-5 mr-3" />
+                      Family Group Setup
+                    </Link>
+                  </Button>
+                )}
+                {isHostMember && (
+                  <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64 bg-secondary/10 text-secondary-foreground border-secondary" variant="outline" asChild>
+                    <Link to="/host-profile">
+                      <User className="h-5 w-5 mr-3" />
+                      Update My Profile
+                    </Link>
+                  </Button>
+                )}
+              </>
+            )}
 
           </div>
 
