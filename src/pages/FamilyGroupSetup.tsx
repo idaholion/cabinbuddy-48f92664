@@ -62,7 +62,7 @@ const FamilyGroupSetup = () => {
   const { loadSavedData, clearSavedData } = useAutoSave({
     key: 'family-group-setup',
     data: watchedData,
-    enabled: !!watchedData.selectedGroup,
+    enabled: true, // Always enable auto-save
   });
 
   // Drag and drop sensors
