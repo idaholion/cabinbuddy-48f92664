@@ -1,54 +1,32 @@
-
-import { useState, useRef, useEffect } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, Upload, ArrowRight } from "lucide-react";
+import { Upload, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Intro = () => {
-  console.log("🔄 Intro component is mounting/re-mounting");
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(0);
-  const backgroundImageRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Debug: Log whenever backgroundImage state changes
-  useEffect(() => {
-    console.log("🖼️ backgroundImage state changed:", backgroundImage ? "CUSTOM IMAGE SET" : "DEFAULT IMAGE");
-    console.log("🔗 backgroundImageRef current:", backgroundImageRef.current ? "CUSTOM REF SET" : "DEFAULT REF");
-  }, [backgroundImage, forceUpdate]);
-
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("📁 File input changed", event.target.files);
     const file = event.target.files?.[0];
     if (file) {
       console.log("📄 File selected:", file.name, file.size);
       
-      // Check file size limit (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        console.error("📦 File too large:", file.size);
         alert("Please select an image smaller than 5MB");
         return;
       }
       
-      console.log("🎯 Creating blob URL directly...");
       const blobUrl = URL.createObjectURL(file);
-      console.log("✅ Blob URL created:", blobUrl);
+      console.log("🎯 Created blob URL:", blobUrl);
       
-      // Use direct DOM manipulation to avoid React state issues
-      const backgroundElement = document.getElementById('background-container');
-      if (backgroundElement) {
-        backgroundElement.style.backgroundImage = `url("${blobUrl}")`;
-        console.log("✅ Background applied directly to DOM element");
-      } else {
-        console.error("❌ Background container not found");
+      // Apply background directly
+      const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
+      if (bgElement) {
+        bgElement.style.backgroundImage = `url("${blobUrl}")`;
+        console.log("✅ Background applied successfully");
       }
-    } else {
-      console.log("❌ No file selected");
     }
-    
-    // Clear the input so the same file can be selected again
     event.target.value = '';
   };
 
@@ -57,39 +35,20 @@ const Intro = () => {
   };
 
   const triggerFileInput = () => {
-    console.log("🎯 Triggering file input click");
     fileInputRef.current?.click();
   };
-
-  console.log("Current backgroundImage state:", backgroundImage ? "CUSTOM IMAGE SET" : "DEFAULT IMAGE");
 
   return (
     <div className="min-h-screen relative">
       {/* White strip at top */}
       <div className="h-24 bg-white w-full"></div>
       
-      {/* Background image container - positioned down by 1 inch */}
+      {/* Background image container */}
       <div 
-        id="background-container"
+        data-background="true"
         className="absolute top-24 bottom-0 left-0 right-0"
         style={{
-          backgroundImage: (() => {
-            const imageData = backgroundImageRef.current || backgroundImage;
-            console.log("🎨 Rendering - imageData exists:", !!imageData);
-            
-            if (!imageData) {
-              return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
-            }
-            
-            // Check if it's a blob URL or data URL
-            if (!imageData.startsWith('data:image/') && !imageData.startsWith('blob:')) {
-              console.error("❌ Invalid image data format:", imageData.substring(0, 50));
-              return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
-            }
-            
-            console.log("✅ Valid image data, creating URL");
-            return `url("${imageData}")`;
-          })(),
+          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -99,7 +58,7 @@ const Intro = () => {
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
       </div>
       
-      {/* Upload Button - positioned in top right */}
+      {/* Upload Button */}
       <Button
         onClick={triggerFileInput}
         size="sm"
@@ -108,20 +67,6 @@ const Intro = () => {
       >
         <Upload className="w-4 h-4 mr-2" />
         Change Background
-      </Button>
-
-      {/* Test Button - positioned below upload button */}
-      <Button
-        onClick={() => {
-          console.log("🧪 Test button clicked - setting solid color background");
-          setBackgroundImage("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPgo=");
-          backgroundImageRef.current = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPgo=";
-        }}
-        size="sm"
-        variant="outline"
-        className="absolute z-30 top-16 right-6 bg-red-500/90 text-white border-red-500 hover:bg-red-600 px-4 py-2"
-      >
-        Test Red BG
       </Button>
 
       {/* Hidden file input */}
@@ -133,14 +78,14 @@ const Intro = () => {
         className="hidden"
       />
 
-      {/* Main Title - positioned over the white strip */}
+      {/* Main Title */}
       <div className="absolute z-20 top-4 left-0 right-0 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
           Welcome to Cabin Buddy
         </h1>
       </div>
 
-      {/* Content - positioned to start where white strip ends */}
+      {/* Content */}
       <div className="absolute z-20 top-32 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-200px)]">
         <div className="mb-4">
           <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
@@ -148,7 +93,7 @@ const Intro = () => {
           </p>
         </div>
 
-        {/* Action Buttons - moved to bottom */}
+        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-8 justify-center">
           <Button 
             onClick={() => navigate("/login")}
