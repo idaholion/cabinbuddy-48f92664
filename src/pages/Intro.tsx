@@ -69,7 +69,17 @@ const Intro = () => {
       <div 
         className="absolute top-24 bottom-0 left-0 right-0"
         style={{
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          backgroundImage: (() => {
+            console.log("🎨 Rendering background, current state:", backgroundImage ? "CUSTOM" : "DEFAULT");
+            try {
+              const imageUrl = backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
+              console.log("🖼️ Using image URL:", imageUrl.substring(0, 50) + "...");
+              return imageUrl;
+            } catch (error) {
+              console.error("❌ Error creating background image URL:", error);
+              return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
+            }
+          })(),
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
