@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Users, DollarSign, Calendar, Settings, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -99,6 +100,16 @@ const Setup = () => {
     return "secondary"; // Grey for pending steps
   };
 
+  // Calculate overall progress
+  const completedSteps = [
+    isOrganizationComplete,
+    isFamilyGroupsComplete,
+    isFinancialComplete,
+    isReservationComplete
+  ].filter(Boolean).length;
+  const totalSteps = 4;
+  const progressPercentage = (completedSteps / totalSteps) * 100;
+
   const CompletionBadge = ({ isComplete }: { isComplete: boolean }) => (
     isComplete ? (
       <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800 border-green-200">
@@ -121,6 +132,15 @@ const Setup = () => {
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
+          
+          {/* Progress Indicator */}
+          <div className="bg-card/95 p-6 rounded-lg mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-muted-foreground">Setup Progress</span>
+              <span className="text-sm font-medium text-muted-foreground">{completedSteps} of {totalSteps} completed</span>
+            </div>
+            <Progress value={progressPercentage} className="h-3" />
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
