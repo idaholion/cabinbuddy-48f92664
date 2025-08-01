@@ -69,7 +69,7 @@ const CheckoutFinal = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Final Checkout</h1>
+              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Final Checkout</h1>
               <p className="text-sm text-muted-foreground">
                 Review your stay and complete payment
               </p>

@@ -72,7 +72,7 @@ const Documents = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Documents</h1>
+              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Documents</h1>
               <p className="text-sm text-muted-foreground">
                 Access important cabin documentation and files
               </p>
