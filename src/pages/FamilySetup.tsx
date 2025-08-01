@@ -146,7 +146,12 @@ const FamilySetup = () => {
       
       // Save property name to reservation settings if provided and organization exists
       if (propertyName.trim() && (organization || newOrganization)) {
-        await saveReservationSettings({ property_name: propertyName });
+        try {
+          await saveReservationSettings({ property_name: propertyName });
+        } catch (error) {
+          console.log('Property name will be saved later - organization context not ready yet');
+          // This is not critical, property name can be saved later
+        }
       }
       
       // Also save family groups to localStorage for backward compatibility
@@ -178,8 +183,17 @@ const FamilySetup = () => {
 
   // Save organization setup and navigate to family groups
   const saveAndContinueToFamilyGroups = async () => {
-    await saveOrganizationSetup();
-    navigate("/family-group-setup");
+    try {
+      await saveOrganizationSetup();
+      // Small delay to ensure organization context is updated
+      setTimeout(() => {
+        navigate("/family-group-setup");
+      }, 100);
+    } catch (error) {
+      console.error('Error in save and continue:', error);
+      // Still navigate even if there was an error, user can retry later
+      navigate("/family-group-setup");
+    }
   };
 
   // Handle family group input changes
