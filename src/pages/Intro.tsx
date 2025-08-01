@@ -19,14 +19,14 @@ const Intro = () => {
   }, [backgroundImage]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input changed", event.target.files);
+    console.log("📁 File input changed", event.target.files);
     const file = event.target.files?.[0];
     if (file) {
-      console.log("File selected:", file.name, file.size);
+      console.log("📄 File selected:", file.name, file.size);
       
       // Check file size limit (5MB)
       if (file.size > 5 * 1024 * 1024) {
-        console.error("File too large:", file.size);
+        console.error("📦 File too large:", file.size);
         alert("Please select an image smaller than 5MB");
         return;
       }
@@ -35,26 +35,30 @@ const Intro = () => {
       reader.onload = (e) => {
         try {
           const result = e.target?.result as string;
-          console.log("FileReader loaded, result length:", result?.length);
-          console.log("About to call setBackgroundImage and set ref...");
+          console.log("✅ FileReader loaded, result length:", result?.length);
+          console.log("🔄 About to set background image...");
           
           // Set both state and ref
           backgroundImageRef.current = result;
           setBackgroundImage(result);
           
-          console.log("Both state and ref set successfully");
-          console.log("Ref value:", backgroundImageRef.current ? "SET" : "NOT SET");
+          console.log("✅ Background image set successfully!");
+          console.log("📊 State:", backgroundImage ? "SET" : "NOT SET");
+          console.log("📎 Ref:", backgroundImageRef.current ? "SET" : "NOT SET");
         } catch (error) {
-          console.error("Error in FileReader onload:", error);
+          console.error("❌ Error in FileReader onload:", error);
         }
       };
       reader.onerror = (e) => {
-        console.error("FileReader error:", e);
+        console.error("❌ FileReader error:", e);
       };
       reader.readAsDataURL(file);
     } else {
-      console.log("No file selected");
+      console.log("❌ No file selected");
     }
+    
+    // Clear the input so the same file can be selected again
+    event.target.value = '';
   };
 
   const handleGetStarted = () => {
@@ -62,6 +66,7 @@ const Intro = () => {
   };
 
   const triggerFileInput = () => {
+    console.log("🎯 Triggering file input click");
     fileInputRef.current?.click();
   };
 
