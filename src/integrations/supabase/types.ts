@@ -1392,6 +1392,14 @@ export type Database = {
         }
         Returns: number
       }
+      supervisor_delete_organization: {
+        Args: { p_organization_id: string; p_confirmation_code: string }
+        Returns: string
+      }
+      supervisor_reset_database: {
+        Args: { p_confirmation_code: string }
+        Returns: string
+      }
       validate_organization_access: {
         Args: { target_org_id: string; operation_name?: string }
         Returns: boolean
