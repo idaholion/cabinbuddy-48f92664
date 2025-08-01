@@ -15,17 +15,20 @@ import { Plus, Trash2, Users, Edit2, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
 import { HostMemberCard } from "@/components/HostMemberCard";
 import { useNavigate } from "react-router-dom";
+import { LoadingState } from "@/components/ui/loading-spinner";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { organization } = useOrganization();
+  const { user, loading: authLoading } = useAuth();
+  const { organization, loading: organizationLoading } = useOrganization();
   const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading } = useFamilyGroups();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -257,6 +260,60 @@ const FamilyGroupSetup = () => {
     setShowAlternateLeadDialog(false);
     navigate("/financial-setup");
   };
+
+  // Show loading state while auth or organization data is loading
+  if (authLoading || organizationLoading) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
+        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+      }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <Button variant="outline" asChild className="mb-4">
+              <Link to="/setup">← Back to Setup</Link>
+            </Button>
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
+            <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
+          </div>
+          <Card className="bg-card/95 mb-8">
+            <CardContent className="py-8">
+              <LoadingState message="Loading organization data..." size="lg" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no organization is found
+  if (!organization) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
+        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+      }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <Button variant="outline" asChild className="mb-4">
+              <Link to="/setup">← Back to Setup</Link>
+            </Button>
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
+            <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
+          </div>
+          <Card className="bg-card/95 mb-8">
+            <CardContent className="py-8">
+              <div className="text-center space-y-4">
+                <p className="text-lg text-muted-foreground">No organization found.</p>
+                <p className="text-sm text-muted-foreground">Please ensure you have an organization set up before creating family groups.</p>
+                <Button asChild>
+                  <Link to="/setup">Go to Setup</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{

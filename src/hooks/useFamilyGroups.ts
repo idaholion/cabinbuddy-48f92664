@@ -31,7 +31,10 @@ export const useFamilyGroups = () => {
   const [familyGroups, setFamilyGroups] = useState<any[]>([]);
 
   const fetchFamilyGroups = async () => {
-    if (!user || !organization?.id) return;
+    if (!user || !organization?.id) {
+      console.warn('fetchFamilyGroups called without user or organization:', { user: !!user, organization: !!organization });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -62,6 +65,7 @@ export const useFamilyGroups = () => {
 
   const createFamilyGroup = async (groupData: FamilyGroupData) => {
     if (!user || !organization?.id) {
+      console.warn('createFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to create a family group.",
@@ -121,6 +125,7 @@ export const useFamilyGroups = () => {
 
   const updateFamilyGroup = async (groupId: string, updates: Partial<FamilyGroupData>) => {
     if (!user || !organization?.id) {
+      console.warn('updateFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
       toast({
         title: "Error",
         description: "No organization found.",
