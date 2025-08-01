@@ -89,7 +89,7 @@ const Intro = () => {
         data-background="true"
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          backgroundImage: 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
@@ -98,7 +98,7 @@ const Intro = () => {
           if (el && !el.dataset.initialized) {
             el.dataset.initialized = 'true';
             // Set initial styles via JavaScript to match inline styles
-            el.style.setProperty('background-image', 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)');
+            el.style.setProperty('background-image', 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)');
             el.style.setProperty('background-size', 'cover');
             el.style.setProperty('background-position', 'center');
             el.style.setProperty('background-repeat', 'no-repeat');
