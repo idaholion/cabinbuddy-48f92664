@@ -127,12 +127,20 @@ const Intro = () => {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-0 justify-center">
           <Button 
+            onClick={() => navigate("/signup")}
+            size="lg" 
+            variant="outline"
+            className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+          >
+            Sign Up
+          </Button>
+          <Button 
             onClick={() => navigate("/login")}
             size="lg" 
             variant="outline"
             className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
           >
-            Sign In / Sign Up
+            Sign In
           </Button>
           <Button 
             onClick={handleGetStarted}
