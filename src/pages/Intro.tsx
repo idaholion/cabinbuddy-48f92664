@@ -8,12 +8,14 @@ import { useNavigate } from "react-router-dom";
 const Intro = () => {
   console.log("🔄 Intro component is mounting/re-mounting");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const backgroundImageRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Debug: Log whenever backgroundImage state changes
   useEffect(() => {
     console.log("🖼️ backgroundImage state changed:", backgroundImage ? "CUSTOM IMAGE SET" : "DEFAULT IMAGE");
+    console.log("🔗 backgroundImageRef current:", backgroundImageRef.current ? "CUSTOM REF SET" : "DEFAULT REF");
   }, [backgroundImage]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,9 +36,14 @@ const Intro = () => {
         try {
           const result = e.target?.result as string;
           console.log("FileReader loaded, result length:", result?.length);
-          console.log("About to call setBackgroundImage...");
+          console.log("About to call setBackgroundImage and set ref...");
+          
+          // Set both state and ref
+          backgroundImageRef.current = result;
           setBackgroundImage(result);
-          console.log("setBackgroundImage called successfully");
+          
+          console.log("Both state and ref set successfully");
+          console.log("Ref value:", backgroundImageRef.current ? "SET" : "NOT SET");
         } catch (error) {
           console.error("Error in FileReader onload:", error);
         }
