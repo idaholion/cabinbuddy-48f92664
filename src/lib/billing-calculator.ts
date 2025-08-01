@@ -6,6 +6,8 @@ export interface BillingConfig {
   cleaningFee?: number;
   petFee?: number;
   damageDeposit?: number;
+  lateFeeAmount?: number;
+  lateFeeDays?: number;
 }
 
 export interface StayDetails {

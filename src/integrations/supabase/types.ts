@@ -614,50 +614,83 @@ export type Database = {
       reservation_settings: {
         Row: {
           address: string | null
+          auto_invoicing: boolean | null
           bathrooms: number | null
           bedrooms: number | null
+          billing_frequency: string | null
+          cancellation_policy: string | null
           cleaning_fee: number | null
           created_at: string
           damage_deposit: number | null
           financial_method: string | null
           id: string
+          late_fee_amount: number | null
+          late_fee_grace_days: number | null
+          late_fees_enabled: boolean | null
           max_guests: number | null
           nightly_rate: number | null
           organization_id: string
+          payment_terms: string | null
           pet_fee: number | null
+          preferred_payment_method: string | null
           property_name: string | null
+          tax_id: string | null
+          tax_jurisdiction: string | null
+          tax_rate: number | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          auto_invoicing?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
+          billing_frequency?: string | null
+          cancellation_policy?: string | null
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
           financial_method?: string | null
           id?: string
+          late_fee_amount?: number | null
+          late_fee_grace_days?: number | null
+          late_fees_enabled?: boolean | null
           max_guests?: number | null
           nightly_rate?: number | null
           organization_id: string
+          payment_terms?: string | null
           pet_fee?: number | null
+          preferred_payment_method?: string | null
           property_name?: string | null
+          tax_id?: string | null
+          tax_jurisdiction?: string | null
+          tax_rate?: number | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          auto_invoicing?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
+          billing_frequency?: string | null
+          cancellation_policy?: string | null
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
           financial_method?: string | null
           id?: string
+          late_fee_amount?: number | null
+          late_fee_grace_days?: number | null
+          late_fees_enabled?: boolean | null
           max_guests?: number | null
           nightly_rate?: number | null
           organization_id?: string
+          payment_terms?: string | null
           pet_fee?: number | null
+          preferred_payment_method?: string | null
           property_name?: string | null
+          tax_id?: string | null
+          tax_jurisdiction?: string | null
+          tax_rate?: number | null
           updated_at?: string
         }
         Relationships: [

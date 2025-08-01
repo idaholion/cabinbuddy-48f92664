@@ -11,7 +11,7 @@ export interface FinancialSettings {
   cleaning_fee?: number;
   pet_fee?: number;
   damage_deposit?: number;
-  payment_method?: string;
+  preferred_payment_method?: string;
   payment_terms?: string;
   auto_invoicing?: boolean;
   late_fees_enabled?: boolean;
@@ -50,10 +50,20 @@ export const useFinancialSettings = () => {
         setSettings({
           billing_method: data.financial_method || 'per-person-per-day',
           billing_amount: data.nightly_rate || 0,
+          tax_rate: data.tax_rate || 0,
           cleaning_fee: data.cleaning_fee || 0,
           pet_fee: data.pet_fee || 0,
           damage_deposit: data.damage_deposit || 0,
-          // Additional fields can be added to reservation_settings table as needed
+          preferred_payment_method: data.preferred_payment_method || '',
+          payment_terms: data.payment_terms || '',
+          auto_invoicing: data.auto_invoicing || false,
+          late_fees_enabled: data.late_fees_enabled || false,
+          late_fee_amount: data.late_fee_amount || 0,
+          late_fee_grace_days: data.late_fee_grace_days || 3,
+          cancellation_policy: data.cancellation_policy || '',
+          tax_id: data.tax_id || '',
+          tax_jurisdiction: data.tax_jurisdiction || '',
+          billing_frequency: data.billing_frequency || 'per-stay',
         });
       }
     } catch (error) {
@@ -80,9 +90,20 @@ export const useFinancialSettings = () => {
         organization_id: organization.id,
         financial_method: settingsData.billing_method,
         nightly_rate: settingsData.billing_amount,
+        tax_rate: settingsData.tax_rate,
         cleaning_fee: settingsData.cleaning_fee,
         pet_fee: settingsData.pet_fee,
         damage_deposit: settingsData.damage_deposit,
+        preferred_payment_method: settingsData.preferred_payment_method,
+        payment_terms: settingsData.payment_terms,
+        auto_invoicing: settingsData.auto_invoicing,
+        late_fees_enabled: settingsData.late_fees_enabled,
+        late_fee_amount: settingsData.late_fee_amount,
+        late_fee_grace_days: settingsData.late_fee_grace_days,
+        cancellation_policy: settingsData.cancellation_policy,
+        tax_id: settingsData.tax_id,
+        tax_jurisdiction: settingsData.tax_jurisdiction,
+        billing_frequency: settingsData.billing_frequency,
       };
 
       const { data: existingSettings } = await supabase

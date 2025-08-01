@@ -77,6 +77,7 @@ const CheckoutFinal = () => {
     const billingConfig = {
       method: financialSettings.billing_method as any,
       amount: financialSettings.billing_amount,
+      taxRate: financialSettings.tax_rate,
       cleaningFee: financialSettings.cleaning_fee,
       petFee: financialSettings.pet_fee,
       damageDeposit: financialSettings.damage_deposit,

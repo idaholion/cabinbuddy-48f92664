@@ -22,6 +22,14 @@ const FinancialSetupPage = () => {
   const [petFee, setPetFee] = useState("");
   const [damageDeposit, setDamageDeposit] = useState("");
   const [taxRate, setTaxRate] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState("");
+  const [lateFeeAmount, setLateFeeAmount] = useState("");
+  const [lateFeeDays, setLateFeeDays] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [taxJurisdiction, setTaxJurisdiction] = useState("");
+  const [billingFrequency, setBillingFrequency] = useState("");
 
   useEffect(() => {
     if (settings) {
@@ -30,8 +38,17 @@ const FinancialSetupPage = () => {
       setCleaningFee(settings.cleaning_fee?.toString() || "");
       setPetFee(settings.pet_fee?.toString() || "");
       setDamageDeposit(settings.damage_deposit?.toString() || "");
+      setTaxRate(settings.tax_rate?.toString() || "");
+      setPaymentMethod(settings.preferred_payment_method || "");
+      setPaymentTerms(settings.payment_terms || "");
       setAutoInvoicing(settings.auto_invoicing || false);
       setLateFeesEnabled(settings.late_fees_enabled || false);
+      setLateFeeAmount(settings.late_fee_amount?.toString() || "");
+      setLateFeeDays(settings.late_fee_grace_days?.toString() || "");
+      setCancellationPolicy(settings.cancellation_policy || "");
+      setTaxId(settings.tax_id || "");
+      setTaxJurisdiction(settings.tax_jurisdiction || "");
+      setBillingFrequency(settings.billing_frequency || "");
     }
   }, [settings]);
 
@@ -55,11 +72,20 @@ const FinancialSetupPage = () => {
     await saveFinancialSettings({
       billing_method: useFeeMethod,
       billing_amount: parseFloat(feeAmount) || 0,
+      tax_rate: parseFloat(taxRate) || undefined,
       cleaning_fee: parseFloat(cleaningFee) || undefined,
       pet_fee: parseFloat(petFee) || undefined,
       damage_deposit: parseFloat(damageDeposit) || undefined,
+      preferred_payment_method: paymentMethod,
+      payment_terms: paymentTerms,
       auto_invoicing: autoInvoicing,
       late_fees_enabled: lateFeesEnabled,
+      late_fee_amount: parseFloat(lateFeeAmount) || undefined,
+      late_fee_grace_days: parseInt(lateFeeDays) || undefined,
+      cancellation_policy: cancellationPolicy,
+      tax_id: taxId,
+      tax_jurisdiction: taxJurisdiction,
+      billing_frequency: billingFrequency,
     });
   };
 
@@ -199,7 +225,7 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="payment-method">Preferred Payment Method</Label>
-                  <Select>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select payment method" />
                     </SelectTrigger>
@@ -207,18 +233,21 @@ const FinancialSetupPage = () => {
                       <SelectItem value="venmo">Venmo</SelectItem>
                       <SelectItem value="paypal">Paypal</SelectItem>
                       <SelectItem value="send-check">Send check</SelectItem>
+                      <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="payment-terms">Payment Terms</Label>
-                  <Select>
+                  <Select value={paymentTerms} onValueChange={setPaymentTerms}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select payment terms" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="pay-in-advance">Pay in Advance</SelectItem>
                       <SelectItem value="pay-at-checkout">Pay at Checkout</SelectItem>
+                      <SelectItem value="pay-within-7-days">Pay within 7 days</SelectItem>
                       <SelectItem value="pay-within-30-days">Pay within 30 days</SelectItem>
                     </SelectContent>
                   </Select>
@@ -254,17 +283,34 @@ const FinancialSetupPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="late-fee-amount">Late Fee Amount</Label>
-                    <Input id="late-fee-amount" placeholder="$25" />
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input 
+                        id="late-fee-amount" 
+                        placeholder="25.00" 
+                        value={lateFeeAmount}
+                        onChange={(e) => setLateFeeAmount(e.target.value)}
+                        type="number"
+                        step="0.01"
+                        className="pl-8"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="late-fee-days">Grace Period (Days)</Label>
-                    <Input id="late-fee-days" placeholder="3" type="number" />
+                    <Input 
+                      id="late-fee-days" 
+                      placeholder="3" 
+                      type="number" 
+                      value={lateFeeDays}
+                      onChange={(e) => setLateFeeDays(e.target.value)}
+                    />
                   </div>
                 </div>
               )}
               <div>
                 <Label htmlFor="cancellation-policy">Cancellation Policy</Label>
-                <Select>
+                <Select value={cancellationPolicy} onValueChange={setCancellationPolicy}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select cancellation policy" />
                   </SelectTrigger>
@@ -303,12 +349,22 @@ const FinancialSetupPage = () => {
                 </div>
                 <div>
                   <Label htmlFor="tax-id">Tax ID Number</Label>
-                  <Input id="tax-id" placeholder="12-3456789" />
+                  <Input 
+                    id="tax-id" 
+                    placeholder="12-3456789" 
+                    value={taxId}
+                    onChange={(e) => setTaxId(e.target.value)}
+                  />
                 </div>
               </div>
               <div>
                 <Label htmlFor="tax-jurisdiction">Tax Jurisdiction</Label>
-                <Input id="tax-jurisdiction" placeholder="City, State" />
+                <Input 
+                  id="tax-jurisdiction" 
+                  placeholder="City, State" 
+                  value={taxJurisdiction}
+                  onChange={(e) => setTaxJurisdiction(e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
@@ -325,7 +381,7 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="billing-frequency">Billing Frequency</Label>
-                <Select>
+                <Select value={billingFrequency} onValueChange={setBillingFrequency}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select billing frequency" />
                   </SelectTrigger>
