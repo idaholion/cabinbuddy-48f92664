@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
-  const { familyGroups } = useFamilyGroups();
+  const { familyGroups, assignDefaultColorsWithProtection } = useFamilyGroups();
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
@@ -38,6 +38,15 @@ const CabinCalendar = () => {
       setSelectedFamilyGroup(userFamilyGroup);
     }
   }, [userFamilyGroup, selectedFamilyGroup]);
+  
+  // Assign default colors to family groups if they don't have colors
+  useEffect(() => {
+    const hasUncoloredGroups = familyGroups.some(fg => !fg.color);
+    if (hasUncoloredGroups && familyGroups.length > 0) {
+      console.log('Assigning default colors to family groups...');
+      assignDefaultColorsWithProtection();
+    }
+  }, [familyGroups, assignDefaultColorsWithProtection]);
   
   // Calculate the rotation year based on current calendar month and start month
   const getRotationYear = () => {
