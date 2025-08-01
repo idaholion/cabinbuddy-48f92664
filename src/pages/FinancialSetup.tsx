@@ -52,6 +52,12 @@ const FinancialSetup = () => {
         <div className="grid gap-8">
           <ExpenseTracker />
         </div>
+        
+        <div className="mt-12 text-center">
+          <Button asChild size="lg" className="text-lg px-8 py-6">
+            <Link to="/reservation-setup">Save settings and go to Reservation Setup</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
