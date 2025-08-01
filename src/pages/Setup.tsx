@@ -196,7 +196,7 @@ const Setup = () => {
         "bg-card/95 transition-all duration-700 ease-out transform",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
         isComplete && "ring-2 ring-green-200 shadow-lg",
-        isNextStep && !isComplete && "ring-2 ring-primary/50 shadow-lg animate-pulse",
+        isNextStep && !isComplete && "ring-2 ring-primary/30 shadow-md hover:ring-primary/50",
         "hover:scale-[1.02] hover:shadow-xl"
       )}>
         <CardHeader>
@@ -205,7 +205,7 @@ const Setup = () => {
               <Icon className={cn(
                 "h-6 w-6 mr-2 transition-all duration-300",
                 isComplete && "text-green-600 animate-scale-in",
-                isNextStep && !isComplete && "text-primary animate-pulse"
+                isNextStep && !isComplete && "text-primary"
               )} />
               {title}
             </div>
@@ -220,7 +220,7 @@ const Setup = () => {
             asChild 
             className={cn(
               "w-full transition-all duration-300 hover:scale-[1.02]",
-              isNextStep && !isComplete && "animate-pulse shadow-lg",
+              isNextStep && !isComplete && "shadow-md hover:shadow-lg",
               isComplete && "hover:bg-green-50"
             )} 
             variant={getButtonVariant(stepNumber, isComplete)}
@@ -260,8 +260,7 @@ const Setup = () => {
               <Progress 
                 value={progressValue} 
                 className={cn(
-                  "h-3 transition-all duration-1000 ease-out",
-                  completedSteps === totalSteps && "animate-pulse"
+                  "h-3 transition-all duration-1000 ease-out"
                 )} 
               />
               {completedSteps === totalSteps && (
@@ -350,7 +349,7 @@ const Setup = () => {
             </CardHeader>
             {completedSteps === totalSteps && (
               <CardContent className="animate-fade-in">
-                <Button asChild className="w-full max-w-md mx-auto animate-pulse bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                <Button asChild className="w-full max-w-md mx-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 hover:scale-[1.02] transition-all duration-200">
                   <Link to="/home">🏠 Go to Dashboard</Link>
                 </Button>
               </CardContent>
