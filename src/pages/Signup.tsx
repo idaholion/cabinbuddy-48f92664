@@ -37,6 +37,16 @@ const Signup = () => {
         description: "Please check your email to confirm your account before signing in.",
       });
       
+      // Store signup data for organization creation if starting new org
+      if (organizationType === "start") {
+        localStorage.setItem('signupData', JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          timestamp: Date.now()
+        }));
+      }
+      
       // Redirect based on organization selection
       if (organizationType === "join") {
         navigate("/select-family-group");

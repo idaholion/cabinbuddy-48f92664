@@ -38,9 +38,25 @@ const FamilySetup = () => {
 
   // Load saved data on component mount
   useEffect(() => {
-    // If we're creating a new organization, skip loading existing data
+    // If we're creating a new organization, auto-populate admin data from signup
     if (isCreatingNew) {
-      console.log('Creating new organization - starting with blank fields');
+      console.log('Creating new organization - checking for signup data');
+      const signupData = localStorage.getItem('signupData');
+      if (signupData) {
+        try {
+          const data = JSON.parse(signupData);
+          const now = Date.now();
+          // Only use data if it's less than 1 hour old
+          if (data.timestamp && (now - data.timestamp) < 3600000) {
+            setAdminName(`${data.firstName} ${data.lastName}`.trim());
+            setAdminEmail(data.email);
+            // Clear the signup data after using it
+            localStorage.removeItem('signupData');
+          }
+        } catch (error) {
+          console.error('Error parsing signup data:', error);
+        }
+      }
       return;
     }
     
@@ -228,6 +244,28 @@ const FamilySetup = () => {
     });
   };
 
+  // Copy admin data to treasurer
+  const copyAdminToTreasurer = () => {
+    setTreasurerName(adminName);
+    setTreasurerEmail(adminEmail);
+    setTreasurerPhone(adminPhone);
+    toast({
+      title: "Information copied!",
+      description: "Administrator information has been copied to Treasurer.",
+    });
+  };
+
+  // Copy admin data to calendar keeper
+  const copyAdminToCalendarKeeper = () => {
+    setCalendarKeeperName(adminName);
+    setCalendarKeeperEmail(adminEmail);
+    setCalendarKeeperPhone(adminPhone);
+    toast({
+      title: "Information copied!",
+      description: "Administrator information has been copied to Calendar Keeper.",
+    });
+  };
+
   return <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
     backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
   }}>
@@ -351,7 +389,20 @@ const FamilySetup = () => {
 
               {/* Treasurer Section */}
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-center">Treasurer</h3>
+                <div className="flex items-center justify-center gap-2">
+                  <h3 className="text-xl font-semibold">Treasurer</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copyAdminToTreasurer}
+                    className="flex items-center gap-1"
+                    title="Copy administrator information to treasurer"
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy from Admin
+                  </Button>
+                </div>
                 <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                   <div className="space-y-1">
                     <Label htmlFor="treasurerName">Name</Label>
@@ -387,7 +438,20 @@ const FamilySetup = () => {
 
               {/* Calendar Keeper Section */}
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-center">Calendar Keeper</h3>
+                <div className="flex items-center justify-center gap-2">
+                  <h3 className="text-xl font-semibold">Calendar Keeper</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copyAdminToCalendarKeeper}
+                    className="flex items-center gap-1"
+                    title="Copy administrator information to calendar keeper"
+                  >
+                    <Copy className="h-3 w-3" />
+                    Copy from Admin
+                  </Button>
+                </div>
                 <div className="grid gap-2 md:grid-cols-3 text-center items-start">
                   <div className="space-y-1">
                     <Label htmlFor="calendarKeeperName">Name</Label>
