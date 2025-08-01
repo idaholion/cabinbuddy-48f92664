@@ -8,10 +8,15 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 interface TimePeriodWindow {
   startDate: Date;
   endDate: Date;
+  start_date: Date;
+  end_date: Date;
   periodNumber: number;
+  period_number: number;
   familyGroup: string;
+  family_group: string;
   maxNights: number;
   isAvailable: boolean;
+  available: boolean;
   isCurrentTurn: boolean;
 }
 
@@ -19,6 +24,10 @@ interface TimePeriodUsageData {
   family_group: string;
   time_periods_used: number;
   time_periods_allowed: number;
+  secondary_periods_used?: number;
+  secondary_periods_allowed?: number;
+  selection_round?: string;
+  last_selection_date?: Date;
   selection_deadline?: Date;
 }
 
@@ -76,11 +85,16 @@ export const useTimePeriods = () => {
       windows.push({
         startDate: windowStart,
         endDate: windowEnd,
+        start_date: windowStart,
+        end_date: windowEnd,
         periodNumber,
+        period_number: periodNumber,
         familyGroup: currentFamilyGroup,
+        family_group: currentFamilyGroup,
         maxNights,
-        isAvailable: true, // Will be updated based on usage
-        isCurrentTurn: false // Will be updated based on current rotation
+        isAvailable: true,
+        available: true,
+        isCurrentTurn: false
       });
 
       // Move to next time period
@@ -172,6 +186,10 @@ export const useTimePeriods = () => {
         family_group: item.family_group,
         time_periods_used: item.time_periods_used,
         time_periods_allowed: item.time_periods_allowed,
+        secondary_periods_used: item.secondary_periods_used || 0,
+        secondary_periods_allowed: item.secondary_periods_allowed || 1,
+        selection_round: item.selection_round || 'primary',
+        last_selection_date: item.last_selection_date ? new Date(item.last_selection_date) : undefined,
         selection_deadline: item.selection_deadline ? new Date(item.selection_deadline) : undefined
       }));
       setTimePeriodUsage(processedData);

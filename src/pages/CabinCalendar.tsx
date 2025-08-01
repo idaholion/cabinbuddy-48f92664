@@ -6,15 +6,27 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
+import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSelectionStatus } from "@/hooks/useSelectionStatus";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useState } from "react";
 
 const CabinCalendar = () => {
+  const { user } = useAuth();
+  const { familyGroups } = useFamilyGroups();
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+  
+  // Get user's family group
+  const userProfile = user?.user_metadata || {};
+  const userFamilyGroup = familyGroups.find(fg => 
+    fg.lead_email === user?.email || 
+    fg.host_members?.some((member: any) => member.email === user?.email)
+  )?.name;
   
   // Calculate the rotation year based on current calendar month and start month
   const getRotationYear = () => {
@@ -123,7 +135,18 @@ const CabinCalendar = () => {
           )}
         </div>
 
-        <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <PropertyCalendar onMonthChange={setCurrentCalendarMonth} />
+          </div>
+          
+          <div className="space-y-6">
+            <SecondarySelectionManager 
+              currentMonth={currentCalendarMonth}
+              userFamilyGroup={userFamilyGroup}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

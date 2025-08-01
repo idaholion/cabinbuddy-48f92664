@@ -13,6 +13,9 @@ interface RotationOrderData {
   start_time?: string;
   first_last_option?: string;
   start_month?: string;
+  enable_secondary_selection?: boolean;
+  secondary_max_periods?: number;
+  selection_days?: number;
 }
 
 interface DatabaseRotationOrder {
