@@ -137,6 +137,8 @@ const Intro = () => {
         type="file"
         accept="image/*"
         onChange={handleImageUpload}
+        onInput={(e) => console.log("🔥 onInput triggered:", (e.target as HTMLInputElement).files?.length)}
+        onClick={(e) => console.log("🔥 File input clicked")}
         className="hidden"
       />
 
