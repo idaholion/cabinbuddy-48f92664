@@ -113,6 +113,20 @@ const Intro = () => {
         Change Background
       </Button>
 
+      {/* Test Button - positioned below upload button */}
+      <Button
+        onClick={() => {
+          console.log("🧪 Test button clicked - setting solid color background");
+          setBackgroundImage("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPgo=");
+          backgroundImageRef.current = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmY2YjZiIi8+Cjwvc3ZnPgo=";
+        }}
+        size="sm"
+        variant="outline"
+        className="absolute z-30 top-16 right-6 bg-red-500/90 text-white border-red-500 hover:bg-red-600 px-4 py-2"
+      >
+        Test Red BG
+      </Button>
+
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
