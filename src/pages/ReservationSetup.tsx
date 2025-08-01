@@ -49,6 +49,9 @@ export default function ReservationSetup() {
   // Secondary selection
   const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
   const [secondaryMaxPeriods, setSecondaryMaxPeriods] = useState("1");
+  
+  // Post rotation selection
+  const [enablePostRotationSelection, setEnablePostRotationSelection] = useState(false);
 
   // Load family groups and initialize rotation order
   useEffect(() => {
@@ -439,6 +442,46 @@ export default function ReservationSetup() {
                         </SelectContent>
                       </Select>
                       <span>additional time period(s)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Post Rotation Selection Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="enablePostRotationSelection"
+                    checked={enablePostRotationSelection}
+                    onCheckedChange={(checked) => setEnablePostRotationSelection(checked === true)}
+                  />
+                  <Label htmlFor="enablePostRotationSelection" className="text-sm font-medium">
+                    Enable Post Rotation Selection
+                  </Label>
+                </div>
+                
+                {enablePostRotationSelection && (
+                  <div className="pl-6 space-y-3">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        <strong>How Post Rotation Selection Works:</strong>
+                      </p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                        <li>After secondary selection completes (or primary if secondary is disabled)</li>
+                        <li>Open first-come, first-served booking for all available dates</li>
+                        <li>Any family group or authorized host member can make reservations</li>
+                        <li>Calendar keeper can manually add reservations for any family group</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <p className="mb-2">Additional limits and restrictions can be configured here:</p>
+                      <div className="p-2 bg-background rounded border border-dashed">
+                        <p className="text-xs text-muted-foreground italic">
+                          Future configuration options (e.g., max additional periods per group, booking windows, etc.) 
+                          will be added here as needed.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
