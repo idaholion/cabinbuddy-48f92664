@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
 import { useEnhancedErrorTracking } from '@/hooks/useEnhancedErrorTracking';
+import { useLaunchAnalytics, usePageTracking } from '@/hooks/useLaunchAnalytics';
 
 // Eager load frequently used pages
 import Intro from "./pages/Intro";
@@ -78,8 +79,10 @@ const queryClient = new QueryClient({
 const AppContent = () => {
   // Initialize monitoring and analytics
   usePerformanceMonitoring();
-  useProductionAnalytics();
+  useProductionAnalytics(); 
   useEnhancedErrorTracking();
+  useLaunchAnalytics(); // Add launch-specific analytics
+  usePageTracking(); // Track page views automatically
 
   return (
     <BrowserRouter>
