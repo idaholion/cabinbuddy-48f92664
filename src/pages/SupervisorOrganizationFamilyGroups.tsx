@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { SupervisorBulkOperationDialog } from "@/components/SupervisorBulkOperationDialog";
 import { useBulkOperationProtection } from "@/hooks/useBulkOperationProtection";
+import { FamilyGroupBulkOperations } from "@/components/FamilyGroupBulkOperations";
 
 interface HostMember {
   name: string;
@@ -436,15 +437,18 @@ const SupervisorOrganizationFamilyGroups = () => {
           </CardContent>
         </Card>
 
-        {/* Bulk Operations */}
+        {/* Advanced Bulk Operations */}
+        <FamilyGroupBulkOperations />
+
+        {/* Color Assignment */}
         <Card className="border-orange-200 bg-orange-50/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-600" />
-              Supervisor Bulk Operations
+              Color Assignment
             </CardTitle>
             <CardDescription>
-              These operations affect multiple family groups simultaneously and require supervisor authorization.
+              Assign default colors to family groups that don't have one.
             </CardDescription>
           </CardHeader>
           <CardContent>

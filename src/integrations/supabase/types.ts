@@ -1216,6 +1216,15 @@ export type Database = {
         }
         Returns: number
       }
+      supervisor_bulk_update_reservations: {
+        Args: {
+          p_organization_id: string
+          p_confirmation_code: string
+          p_enable_all_hosts?: boolean
+          p_disable_all_hosts?: boolean
+        }
+        Returns: number
+      }
       validate_organization_access: {
         Args: { target_org_id: string; operation_name?: string }
         Returns: boolean
