@@ -83,13 +83,11 @@ const Intro = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* White strip at top */}
-      <div className="h-24 bg-white w-full"></div>
       
       {/* Background image container */}
       <div 
         data-background="true"
-        className="absolute top-24 bottom-0 left-0 right-0"
+        className="absolute inset-0"
         style={{
           backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
           backgroundSize: 'cover',
