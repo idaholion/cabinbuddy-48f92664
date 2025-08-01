@@ -96,6 +96,16 @@ const Intro = () => {
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
+        ref={(el) => {
+          if (el && !el.dataset.initialized) {
+            el.dataset.initialized = 'true';
+            // Set initial styles via JavaScript to match inline styles
+            el.style.setProperty('background-image', 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)');
+            el.style.setProperty('background-size', 'cover');
+            el.style.setProperty('background-position', 'center');
+            el.style.setProperty('background-repeat', 'no-repeat');
+          }
+        }}
       >
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
