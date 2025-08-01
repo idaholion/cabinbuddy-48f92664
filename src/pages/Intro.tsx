@@ -38,7 +38,7 @@ const Intro = () => {
       <div className="absolute inset-0 bg-gradient-forest/40"></div>
       
       {/* Main Title */}
-      <div className="relative z-10 pt-8 pb-8 text-center">
+      <div className="relative z-10 pt-8 pb-4 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
           Welcome to Cabin Buddy
         </h1>
@@ -46,7 +46,7 @@ const Intro = () => {
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="mb-8">
+        <div className="mb-4">
           <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
           </p>
