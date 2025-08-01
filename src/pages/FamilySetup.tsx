@@ -217,7 +217,9 @@ const FamilySetup = () => {
 
   // Save organization setup
   const saveOrganizationSetup = async () => {
+    console.log('🔄 Starting saveOrganizationSetup with data:', { orgName, organizationCode, familyGroups });
     if (!orgName.trim() || !organizationCode.trim()) {
+      console.log('❌ Validation failed:', { orgName: orgName.trim(), organizationCode: organizationCode.trim() });
       toast({
         title: "Missing required fields",
         description: "Please provide at least organization name and code.",
@@ -241,14 +243,17 @@ const FamilySetup = () => {
     };
     
     try {
+      console.log('🔄 Attempting to save organization:', orgData);
       let newOrganization;
       if (organization) {
-        // Update existing organization
+        console.log('📝 Updating existing organization:', organization.id);
         newOrganization = await updateOrganization(orgData);
       } else {
-        // Create new organization
+        console.log('✨ Creating new organization');
         newOrganization = await createOrganization(orgData);
       }
+      
+      console.log('✅ Organization saved:', newOrganization);
       
       // Save property name to reservation settings if provided and organization exists
       if (propertyName.trim() && (organization || newOrganization)) {
@@ -264,10 +269,14 @@ const FamilySetup = () => {
       const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
       const currentOrgId = (organization || newOrganization)?.id;
       
+      console.log('🔄 Creating family groups:', { nonEmptyGroups, currentOrgId });
+      
       if (nonEmptyGroups.length > 0 && currentOrgId) {
+        console.log(`📝 Attempting to create ${nonEmptyGroups.length} family groups in organization ${currentOrgId}`);
         for (const groupName of nonEmptyGroups) {
           try {
-            await createFamilyGroup({
+            console.log(`🔄 Creating family group: "${groupName}"`);
+            const result = await createFamilyGroup({
               name: groupName.trim(),
               lead_name: "",
               lead_phone: "",
@@ -276,11 +285,19 @@ const FamilySetup = () => {
               color: null,
               alternate_lead_id: null
             });
+            console.log(`✅ Created family group "${groupName}":`, result);
           } catch (error) {
-            console.error(`Failed to create family group ${groupName}:`, error);
+            console.error(`❌ Failed to create family group ${groupName}:`, error);
+            toast({
+              title: "Family Group Creation Error",
+              description: `Failed to create family group "${groupName}". Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              variant: "destructive",
+            });
             // Continue with other groups even if one fails
           }
         }
+      } else {
+        console.log('⚠️ No family groups to create or no organization ID:', { nonEmptyGroupsCount: nonEmptyGroups.length, currentOrgId });
       }
       
       // Also save family groups to localStorage for backward compatibility
@@ -307,8 +324,15 @@ const FamilySetup = () => {
       
       // Also save just the family groups for the SelectFamilyGroup page
       localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
+      
+      console.log('✅ Organization setup completed successfully');
     } catch (error) {
-      console.error('Error saving organization setup:', error);
+      console.error('❌ Error saving organization setup:', error);
+      toast({
+        title: "Save Error",
+        description: `Failed to save organization setup. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
     }
   };
 
