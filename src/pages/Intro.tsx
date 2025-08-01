@@ -8,7 +8,9 @@ const Intro = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("🎯 handleImageUpload called");
+    event.preventDefault();
+    event.stopPropagation();
+    console.log("🎯 handleImageUpload called, prevented defaults");
     const file = event.target.files?.[0];
     if (file) {
       console.log("📄 File selected:", file.name, file.size);
