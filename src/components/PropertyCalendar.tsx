@@ -20,6 +20,7 @@ import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 import { CalendarKeeperAssistanceDialog } from "@/components/CalendarKeeperAssistanceDialog";
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
+import { EnhancedMonthPicker } from "@/components/EnhancedMonthPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -438,12 +439,13 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
                   ←
                 </Button>
-                <MonthYearPicker 
+                <EnhancedMonthPicker 
                   currentDate={currentMonth} 
                   onDateChange={(newDate) => {
                     setCurrentMonth(newDate);
                     onMonthChange?.(newDate);
-                  }} 
+                  }}
+                  reservations={reservations}
                 />
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
                   →
