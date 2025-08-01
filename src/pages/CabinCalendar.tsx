@@ -150,10 +150,10 @@ const CabinCalendar = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Tabs defaultValue="single" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="single">Single Period</TabsTrigger>
-                    <TabsTrigger value="multi">Multi-Period</TabsTrigger>
-                    <TabsTrigger value="work-weekend">Work Weekend</TabsTrigger>
+                  <TabsList className="w-full flex">
+                    <TabsTrigger value="single" className="flex-1">Single Period</TabsTrigger>
+                    <TabsTrigger value="multi" className="flex-1">Multi-Period</TabsTrigger>
+                    <TabsTrigger value="work-weekend" className="flex-1">Work Weekend</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="single" className="mt-4">
