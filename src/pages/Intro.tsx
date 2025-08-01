@@ -47,8 +47,8 @@ const Intro = () => {
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="mb-12">
-          <p className="text-2xl text-white drop-shadow-lg text-center font-medium max-w-3xl mx-auto">
-            Perfect for families and friends sharing a cabin, vacation home, or any property.
+          <p className="text-2xl text-white text-center font-medium max-w-3xl mx-auto bg-black/30 rounded-lg p-6 backdrop-blur-sm">
+            Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
           </p>
         </div>
 
