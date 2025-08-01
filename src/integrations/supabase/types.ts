@@ -1199,6 +1199,15 @@ export type Database = {
         Args: { p_organization_id: string; p_confirmation_code: string }
         Returns: boolean
       }
+      supervisor_bulk_update_leads: {
+        Args: {
+          p_organization_id: string
+          p_confirmation_code: string
+          p_lead_phone?: string
+          p_lead_email?: string
+        }
+        Returns: number
+      }
       validate_organization_access: {
         Args: { target_org_id: string; operation_name?: string }
         Returns: boolean
