@@ -316,7 +316,7 @@ const FamilyGroupSetup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat px-4 pt-1 pb-4" style={{
       backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
     }}>
       <div className="max-w-6xl mx-auto">
