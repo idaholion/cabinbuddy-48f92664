@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy, X } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -64,6 +64,7 @@ const FamilySetup = () => {
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
   const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
+  const hasShownToastRef = useRef(false);
 
   // Auto-save all form data
   const formData = {
@@ -120,26 +121,29 @@ const FamilySetup = () => {
       
       // Load auto-saved data if available
       const savedData = loadSavedData();
-      if (savedData) {
+      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
         console.log('Loading auto-saved data:', savedData);
-        setOrgName(savedData.orgName || "");
-        setPropertyName(savedData.propertyName || "");
-        if (!adminName) setAdminName(savedData.adminName || "");
-        if (!adminEmail) setAdminEmail(savedData.adminEmail || "");
-        setAdminPhone(savedData.adminPhone || "");
-        setTreasurerName(savedData.treasurerName || "");
-        setTreasurerPhone(savedData.treasurerPhone || "");
-        setTreasurerEmail(savedData.treasurerEmail || "");
-        setCalendarKeeperName(savedData.calendarKeeperName || "");
-        setCalendarKeeperPhone(savedData.calendarKeeperPhone || "");
-        setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
-        setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
+        if (savedData.orgName) setOrgName(savedData.orgName);
+        if (savedData.propertyName) setPropertyName(savedData.propertyName);
+        if (savedData.adminPhone) setAdminPhone(savedData.adminPhone);
+        if (savedData.treasurerName) setTreasurerName(savedData.treasurerName);
+        if (savedData.treasurerPhone) setTreasurerPhone(savedData.treasurerPhone);
+        if (savedData.treasurerEmail) setTreasurerEmail(savedData.treasurerEmail);
+        if (savedData.calendarKeeperName) setCalendarKeeperName(savedData.calendarKeeperName);
+        if (savedData.calendarKeeperPhone) setCalendarKeeperPhone(savedData.calendarKeeperPhone);
+        if (savedData.calendarKeeperEmail) setCalendarKeeperEmail(savedData.calendarKeeperEmail);
+        if (savedData.familyGroups && savedData.familyGroups.length > 0) {
+          setFamilyGroups(savedData.familyGroups);
+        }
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
         
-        toast({
-          title: "Draft Restored",
-          description: "Your previous work has been restored from auto-save.",
-        });
+        if (!hasShownToastRef.current) {
+          hasShownToastRef.current = true;
+          toast({
+            title: "Draft Restored",
+            description: "Your previous work has been restored from auto-save.",
+          });
+        }
       }
       return;
     }
@@ -158,9 +162,9 @@ const FamilySetup = () => {
       setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
       setCalendarKeeperEmail(organization.calendar_keeper_email || "");
     } else {
-      // Try to load auto-saved data first
+      // Try to load auto-saved data first (only if there's meaningful data)
       const savedData = loadSavedData();
-      if (savedData) {
+      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
         console.log('Loading auto-saved data:', savedData);
         setOrgName(savedData.orgName || "");
         setPropertyName(savedData.propertyName || "");
@@ -176,10 +180,13 @@ const FamilySetup = () => {
         setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
         
-        toast({
-          title: "Draft Restored",
-          description: "Your previous work has been restored from auto-save.",
-        });
+        if (!hasShownToastRef.current) {
+          hasShownToastRef.current = true;
+          toast({
+            title: "Draft Restored",
+            description: "Your previous work has been restored from auto-save.",
+          });
+        }
       } else {
         // Fallback to localStorage for backward compatibility
         const savedSetup = localStorage.getItem('familySetupData');
@@ -199,7 +206,7 @@ const FamilySetup = () => {
         }
       }
     }
-  }, [organization, isCreatingNew, loadSavedData, toast, adminName, adminEmail]);
+  }, [organization, isCreatingNew]); // Removed problematic dependencies
 
   // Load property name from reservation settings
   useEffect(() => {
