@@ -26,7 +26,7 @@ const Intro = () => {
 
   return (
     <div 
-      className="min-h-screen relative flex items-center justify-center"
+      className="min-h-screen relative"
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
         backgroundSize: 'cover',
@@ -37,12 +37,16 @@ const Intro = () => {
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-gradient-forest/40"></div>
       
+      {/* Main Title */}
+      <div className="relative z-10 pt-8 pb-16 text-center">
+        <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
+          Welcome to Cabin Buddy
+        </h1>
+      </div>
+
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="mb-12">
-          <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
-            Welcome to Cabin Buddy!
-          </h1>
           <p className="text-2xl text-primary text-center font-medium max-w-3xl mx-auto">
             Streamline your shared property management with our comprehensive calendar and billing solution. 
             Coordinate bookings, track expenses, and manage payments all in one place.
