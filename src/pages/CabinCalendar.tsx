@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, RotateCcw, CheckCircle, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,6 +9,7 @@ import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
 import { CalendarKeeperManualReservation } from "@/components/CalendarKeeperManualReservation";
+import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSelectionStatus } from "@/hooks/useSelectionStatus";
@@ -142,17 +144,45 @@ const CabinCalendar = () => {
           </div>
           
           <div className="space-y-6">
-            <CalendarKeeperManualReservation 
-              onReservationCreated={() => {
-                // Optionally trigger calendar refresh
-                window.location.reload();
-              }}
-            />
-            
-            <SecondarySelectionManager 
-              currentMonth={currentCalendarMonth}
-              userFamilyGroup={userFamilyGroup}
-            />
+            <Card className="bg-background/90 backdrop-blur-sm border-border">
+              <CardHeader>
+                <CardTitle className="text-lg">New Bookings</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Tabs defaultValue="manual" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="manual">Manual Reservation</TabsTrigger>
+                    <TabsTrigger value="secondary">Secondary Selection</TabsTrigger>
+                    <TabsTrigger value="work-weekend">Work Weekend</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="manual" className="mt-4">
+                    <CalendarKeeperManualReservation 
+                      onReservationCreated={() => {
+                        // Optionally trigger calendar refresh
+                        window.location.reload();
+                      }}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="secondary" className="mt-4">
+                    <SecondarySelectionManager 
+                      currentMonth={currentCalendarMonth}
+                      userFamilyGroup={userFamilyGroup}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="work-weekend" className="mt-4">
+                    <WorkWeekendProposalForm 
+                      onSuccess={() => {
+                        // Optionally trigger calendar refresh
+                        window.location.reload();
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
