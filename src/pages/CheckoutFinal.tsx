@@ -5,11 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useCheckinSessions, useSurveyResponses } from "@/hooks/useChecklistData";
+import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { BillingCalculator } from "@/lib/billing-calculator";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
+  const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
 
   // Filter sessions for the current stay period
   const checkInDate = new Date("2024-07-20"); // In real app, this would come from context/props
@@ -44,15 +47,54 @@ const CheckoutFinal = () => {
     }
   };
 
-  const calculateSubtotal = () => {
-    if (checkoutData.financialMethod === "per-person-per-day") {
-      return checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay;
+  const calculateBilling = () => {
+    if (!financialSettings) {
+      // Fallback to old calculation method
+      if (checkoutData.financialMethod === "per-person-per-day") {
+        return {
+          baseAmount: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
+          cleaningFee: 0,
+          petFee: 0,
+          damageDeposit: 0,
+          subtotal: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
+          tax: 0,
+          total: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
+          details: `${checkoutData.guests} guests × ${checkoutData.nights} nights × $${checkoutData.costPerPersonPerDay}/person/day`
+        };
+      }
+      return {
+        baseAmount: checkoutData.totalCost,
+        cleaningFee: 0,
+        petFee: 0,
+        damageDeposit: 0,
+        subtotal: checkoutData.totalCost,
+        tax: 0,
+        total: checkoutData.totalCost,
+        details: 'Total cabin cost'
+      };
     }
-    return checkoutData.totalCost;
+
+    const billingConfig = {
+      method: financialSettings.billing_method as any,
+      amount: financialSettings.billing_amount,
+      cleaningFee: financialSettings.cleaning_fee,
+      petFee: financialSettings.pet_fee,
+      damageDeposit: financialSettings.damage_deposit,
+    };
+
+    const stayDetails = {
+      guests: checkoutData.guests,
+      nights: checkoutData.nights,
+      weeks: Math.ceil(checkoutData.nights / 7),
+      checkInDate: new Date(checkoutData.checkInDate),
+      checkOutDate: new Date(checkoutData.checkOutDate),
+    };
+
+    return BillingCalculator.calculateStayBilling(billingConfig, stayDetails);
   };
 
-  const subtotal = calculateSubtotal();
-  const totalAmount = subtotal - checkoutData.receiptsTotal;
+  const billing = calculateBilling();
+  const totalAmount = billing.total - checkoutData.receiptsTotal;
 
   return (
     <div className="min-h-screen bg-background">
@@ -221,36 +263,57 @@ const CheckoutFinal = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {checkoutData.financialMethod === "per-person-per-day" ? (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rate per person per day:</span>
-                    <span className="font-medium">${checkoutData.costPerPersonPerDay}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {checkoutData.guests} guests × {checkoutData.nights} nights × ${checkoutData.costPerPersonPerDay}:
-                    </span>
-                    <span className="font-medium">${subtotal}</span>
-                  </div>
-                </>
-              ) : (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Base rate:</span>
+                <span className="font-medium">{BillingCalculator.formatCurrency(billing.baseAmount)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mb-2">
+                {billing.details}
+              </div>
+              
+              {billing.cleaningFee > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Total cabin cost:</span>
-                  <span className="font-medium">${subtotal}</span>
+                  <span className="text-muted-foreground">Cleaning fee:</span>
+                  <span className="font-medium">{BillingCalculator.formatCurrency(billing.cleaningFee)}</span>
+                </div>
+              )}
+              
+              {billing.petFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Pet fee:</span>
+                  <span className="font-medium">{BillingCalculator.formatCurrency(billing.petFee)}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span className="font-medium">{BillingCalculator.formatCurrency(billing.subtotal)}</span>
+              </div>
+              
+              {billing.tax > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tax:</span>
+                  <span className="font-medium">{BillingCalculator.formatCurrency(billing.tax)}</span>
+                </div>
+              )}
+              
+              {billing.damageDeposit > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Damage deposit:</span>
+                  <span className="font-medium">{BillingCalculator.formatCurrency(billing.damageDeposit)}</span>
                 </div>
               )}
               
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Less: Receipts submitted:</span>
-                <span className="font-medium text-green-600">-${checkoutData.receiptsTotal}</span>
+                <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
               </div>
               
               <Separator />
               
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total Amount Due:</span>
-                <span className="text-primary">${totalAmount}</span>
+                <span className="text-primary">{BillingCalculator.formatCurrency(totalAmount)}</span>
               </div>
             </div>
           </CardContent>

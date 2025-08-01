@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,59 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { DollarSign, CreditCard, Calendar, Settings, Users, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { BillingCalculator } from "@/lib/billing-calculator";
 
 const FinancialSetupPage = () => {
+  const { settings, loading, saveFinancialSettings } = useFinancialSettings();
   const [autoInvoicing, setAutoInvoicing] = useState(false);
   const [lateFeesEnabled, setLateFeesEnabled] = useState(false);
   const [useFeeMethod, setUseFeeMethod] = useState("");
   const [feeAmount, setFeeAmount] = useState("");
+  const [cleaningFee, setCleaningFee] = useState("");
+  const [petFee, setPetFee] = useState("");
+  const [damageDeposit, setDamageDeposit] = useState("");
+  const [taxRate, setTaxRate] = useState("");
+
+  useEffect(() => {
+    if (settings) {
+      setUseFeeMethod(settings.billing_method);
+      setFeeAmount(settings.billing_amount?.toString() || "");
+      setCleaningFee(settings.cleaning_fee?.toString() || "");
+      setPetFee(settings.pet_fee?.toString() || "");
+      setDamageDeposit(settings.damage_deposit?.toString() || "");
+      setAutoInvoicing(settings.auto_invoicing || false);
+      setLateFeesEnabled(settings.late_fees_enabled || false);
+    }
+  }, [settings]);
+
+  const handleSaveSettings = async () => {
+    const config = {
+      method: useFeeMethod as any,
+      amount: parseFloat(feeAmount) || 0,
+      taxRate: parseFloat(taxRate) || undefined,
+      cleaningFee: parseFloat(cleaningFee) || undefined,
+      petFee: parseFloat(petFee) || undefined,
+      damageDeposit: parseFloat(damageDeposit) || undefined,
+    };
+
+    const validation = BillingCalculator.validateBillingConfig(config);
+    
+    if (!validation.isValid) {
+      console.error('Validation errors:', validation.errors);
+      return;
+    }
+
+    await saveFinancialSettings({
+      billing_method: useFeeMethod,
+      billing_amount: parseFloat(feeAmount) || 0,
+      cleaning_fee: parseFloat(cleaningFee) || undefined,
+      pet_fee: parseFloat(petFee) || undefined,
+      damage_deposit: parseFloat(damageDeposit) || undefined,
+      auto_invoicing: autoInvoicing,
+      late_fees_enabled: lateFeesEnabled,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -81,6 +128,55 @@ const FinancialSetupPage = () => {
                       placeholder="0.00" 
                       value={feeAmount}
                       onChange={(e) => setFeeAmount(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Additional Fee Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <Label htmlFor="cleaning-fee">Cleaning Fee</Label>
+                  <div className="relative mt-2">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input 
+                      id="cleaning-fee" 
+                      placeholder="0.00" 
+                      value={cleaningFee}
+                      onChange={(e) => setCleaningFee(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="pet-fee">Pet Fee</Label>
+                  <div className="relative mt-2">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input 
+                      id="pet-fee" 
+                      placeholder="0.00" 
+                      value={petFee}
+                      onChange={(e) => setPetFee(e.target.value)}
+                      type="number"
+                      step="0.01"
+                      className="pl-8"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="damage-deposit">Damage Deposit</Label>
+                  <div className="relative mt-2">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input 
+                      id="damage-deposit" 
+                      placeholder="0.00" 
+                      value={damageDeposit}
+                      onChange={(e) => setDamageDeposit(e.target.value)}
                       type="number"
                       step="0.01"
                       className="pl-8"
@@ -196,7 +292,14 @@ const FinancialSetupPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="tax-rate">Tax Rate (%)</Label>
-                  <Input id="tax-rate" placeholder="8.5" type="number" step="0.1" />
+                  <Input 
+                    id="tax-rate" 
+                    placeholder="8.5" 
+                    type="number" 
+                    step="0.1" 
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="tax-id">Tax ID Number</Label>
@@ -240,7 +343,13 @@ const FinancialSetupPage = () => {
           <Separator />
 
           <div className="flex gap-3">
-            <Button className="flex-1">Save Settings</Button>
+            <Button 
+              className="flex-1" 
+              onClick={handleSaveSettings}
+              disabled={loading || !useFeeMethod || !feeAmount}
+            >
+              {loading ? "Saving..." : "Save Settings"}
+            </Button>
             <Button variant="outline" className="flex-1">Preview Invoice</Button>
           </div>
         </div>
