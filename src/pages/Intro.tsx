@@ -15,12 +15,25 @@ const Intro = () => {
     const file = event.target.files?.[0];
     if (file) {
       console.log("File selected:", file.name, file.size);
+      
+      // Check file size limit (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        console.error("File too large:", file.size);
+        alert("Please select an image smaller than 5MB");
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string;
-        console.log("FileReader loaded, result length:", result?.length);
-        setBackgroundImage(result);
-        console.log("Background image state updated to:", result.substring(0, 50) + "...");
+        try {
+          const result = e.target?.result as string;
+          console.log("FileReader loaded, result length:", result?.length);
+          console.log("About to call setBackgroundImage...");
+          setBackgroundImage(result);
+          console.log("setBackgroundImage called successfully");
+        } catch (error) {
+          console.error("Error in FileReader onload:", error);
+        }
       };
       reader.onerror = (e) => {
         console.error("FileReader error:", e);
