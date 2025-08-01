@@ -91,7 +91,7 @@ const Intro = () => {
         style={{
           backgroundImage: 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center top',
+          backgroundPosition: 'center -1in',
           backgroundRepeat: 'no-repeat'
         }}
         ref={(el) => {
@@ -100,7 +100,7 @@ const Intro = () => {
             // Set initial styles via JavaScript to match inline styles
             el.style.setProperty('background-image', 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)');
             el.style.setProperty('background-size', 'cover');
-            el.style.setProperty('background-position', 'center top');
+            el.style.setProperty('background-position', 'center -1in');
             el.style.setProperty('background-repeat', 'no-repeat');
           }
         }}
