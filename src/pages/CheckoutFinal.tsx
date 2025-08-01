@@ -37,13 +37,11 @@ const CheckoutFinal = () => {
     financialMethod: "per-person-per-day", // or "total-split"
     checkInDate: "2024-07-20",
     checkOutDate: "2024-07-23",
-    venmoHandle: "@CabinBuddy-Payments",
+    venmoHandle: financialSettings?.venmo_handle || "@CabinBuddy-Payments",
+    paypalEmail: financialSettings?.paypal_email || "payments@cabin.com",
     checkAddress: {
-      name: "Cabin Management LLC",
-      street: "123 Mountain View Drive",
-      city: "Yellowstone",
-      state: "MT",
-      zip: "59718"
+      name: financialSettings?.check_payable_to || "Cabin Management LLC",
+      address: financialSettings?.check_mailing_address || "123 Mountain View Drive\nYellowstone, MT 59718"
     }
   };
 
@@ -373,14 +371,13 @@ const CheckoutFinal = () => {
                 <p className="text-sm font-medium mb-2">Mail check to:</p>
                 <div className="text-sm space-y-1">
                   <p className="font-medium">{checkoutData.checkAddress.name}</p>
-                  <p>{checkoutData.checkAddress.street}</p>
-                  <p>
-                    {checkoutData.checkAddress.city}, {checkoutData.checkAddress.state} {checkoutData.checkAddress.zip}
-                  </p>
+                  <div className="whitespace-pre-line">
+                    {checkoutData.checkAddress.address}
+                  </div>
                 </div>
                 <div className="mt-3 pt-2 border-t">
                   <p className="text-sm">
-                    <span className="font-medium">Amount:</span> ${totalAmount}
+                    <span className="font-medium">Amount:</span> {BillingCalculator.formatCurrency(totalAmount)}
                   </p>
                   <p className="text-sm">
                     <span className="font-medium">Memo:</span> Cabin Stay {checkoutData.checkInDate} to {checkoutData.checkOutDate}

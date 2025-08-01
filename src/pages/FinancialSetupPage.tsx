@@ -30,6 +30,10 @@ const FinancialSetupPage = () => {
   const [taxId, setTaxId] = useState("");
   const [taxJurisdiction, setTaxJurisdiction] = useState("");
   const [billingFrequency, setBillingFrequency] = useState("");
+  const [venmoHandle, setVenmoHandle] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [checkPayableTo, setCheckPayableTo] = useState("");
+  const [checkMailingAddress, setCheckMailingAddress] = useState("");
 
   useEffect(() => {
     if (settings) {
@@ -49,6 +53,10 @@ const FinancialSetupPage = () => {
       setTaxId(settings.tax_id || "");
       setTaxJurisdiction(settings.tax_jurisdiction || "");
       setBillingFrequency(settings.billing_frequency || "");
+      setVenmoHandle(settings.venmo_handle || "");
+      setPaypalEmail(settings.paypal_email || "");
+      setCheckPayableTo(settings.check_payable_to || "");
+      setCheckMailingAddress(settings.check_mailing_address || "");
     }
   }, [settings]);
 
@@ -86,6 +94,10 @@ const FinancialSetupPage = () => {
       tax_id: taxId,
       tax_jurisdiction: taxJurisdiction,
       billing_frequency: billingFrequency,
+      venmo_handle: venmoHandle,
+      paypal_email: paypalEmail,
+      check_payable_to: checkPayableTo,
+      check_mailing_address: checkMailingAddress,
     });
   };
 
@@ -231,13 +243,65 @@ const FinancialSetupPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="venmo">Venmo</SelectItem>
-                      <SelectItem value="paypal">Paypal</SelectItem>
+                      <SelectItem value="paypal">PayPal</SelectItem>
                       <SelectItem value="send-check">Send check</SelectItem>
-                      <SelectItem value="bank-transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                
+                {/* Payment Account Information */}
+                {paymentMethod === 'venmo' && (
+                  <div>
+                    <Label htmlFor="venmo-handle">Venmo Handle</Label>
+                    <Input 
+                      id="venmo-handle" 
+                      placeholder="@your-venmo-handle" 
+                      value={venmoHandle}
+                      onChange={(e) => setVenmoHandle(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Include the @ symbol (e.g., @CabinPayments)
+                    </p>
+                  </div>
+                )}
+                
+                {paymentMethod === 'paypal' && (
+                  <div>
+                    <Label htmlFor="paypal-email">PayPal Email</Label>
+                    <Input 
+                      id="paypal-email" 
+                      placeholder="payments@example.com" 
+                      type="email"
+                      value={paypalEmail}
+                      onChange={(e) => setPaypalEmail(e.target.value)}
+                    />
+                  </div>
+                )}
+                
+                {paymentMethod === 'send-check' && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="check-payable-to">Check Payable To</Label>
+                      <Input 
+                        id="check-payable-to" 
+                        placeholder="Cabin Management LLC" 
+                        value={checkPayableTo}
+                        onChange={(e) => setCheckPayableTo(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="check-mailing-address">Mailing Address</Label>
+                      <textarea 
+                        id="check-mailing-address" 
+                        placeholder="123 Mountain View Drive&#10;Yellowstone, MT 59718"
+                        value={checkMailingAddress}
+                        onChange={(e) => setCheckMailingAddress(e.target.value)}
+                        className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md resize-none"
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="payment-terms">Payment Terms</Label>
                   <Select value={paymentTerms} onValueChange={setPaymentTerms}>

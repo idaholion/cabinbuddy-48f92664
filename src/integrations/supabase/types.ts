@@ -619,6 +619,8 @@ export type Database = {
           bedrooms: number | null
           billing_frequency: string | null
           cancellation_policy: string | null
+          check_mailing_address: string | null
+          check_payable_to: string | null
           cleaning_fee: number | null
           created_at: string
           damage_deposit: number | null
@@ -631,6 +633,7 @@ export type Database = {
           nightly_rate: number | null
           organization_id: string
           payment_terms: string | null
+          paypal_email: string | null
           pet_fee: number | null
           preferred_payment_method: string | null
           property_name: string | null
@@ -638,6 +641,7 @@ export type Database = {
           tax_jurisdiction: string | null
           tax_rate: number | null
           updated_at: string
+          venmo_handle: string | null
         }
         Insert: {
           address?: string | null
@@ -646,6 +650,8 @@ export type Database = {
           bedrooms?: number | null
           billing_frequency?: string | null
           cancellation_policy?: string | null
+          check_mailing_address?: string | null
+          check_payable_to?: string | null
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
@@ -658,6 +664,7 @@ export type Database = {
           nightly_rate?: number | null
           organization_id: string
           payment_terms?: string | null
+          paypal_email?: string | null
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
@@ -665,6 +672,7 @@ export type Database = {
           tax_jurisdiction?: string | null
           tax_rate?: number | null
           updated_at?: string
+          venmo_handle?: string | null
         }
         Update: {
           address?: string | null
@@ -673,6 +681,8 @@ export type Database = {
           bedrooms?: number | null
           billing_frequency?: string | null
           cancellation_policy?: string | null
+          check_mailing_address?: string | null
+          check_payable_to?: string | null
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
@@ -685,6 +695,7 @@ export type Database = {
           nightly_rate?: number | null
           organization_id?: string
           payment_terms?: string | null
+          paypal_email?: string | null
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
@@ -692,6 +703,7 @@ export type Database = {
           tax_jurisdiction?: string | null
           tax_rate?: number | null
           updated_at?: string
+          venmo_handle?: string | null
         }
         Relationships: [
           {
