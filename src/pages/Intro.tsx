@@ -109,47 +109,6 @@ const Intro = () => {
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
       </div>
       
-      {/* Upload Button */}
-      <Button
-        onClick={triggerFileInput}
-        size="sm"
-        variant="outline"
-        className="absolute z-30 top-6 right-6 bg-white/90 text-black border-white hover:bg-white px-4 py-2"
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        Change Background
-      </Button>
-
-      {/* Test Button - Debug */}
-      <Button
-        onClick={() => {
-          const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
-          if (bgElement) {
-            bgElement.style.backgroundColor = 'red';
-            bgElement.style.backgroundImage = 'none';
-            console.log("✅ Test: Background changed to red");
-          } else {
-            console.error("❌ Test: Background element not found");
-          }
-        }}
-        size="sm"
-        variant="outline"
-        className="absolute z-30 top-16 right-6 bg-red-500/90 text-white border-red-500 hover:bg-red-600 px-4 py-2"
-      >
-        Test Red
-      </Button>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        onInput={(e) => console.log("🔥 onInput triggered:", (e.target as HTMLInputElement).files?.length)}
-        onClick={(e) => console.log("🔥 File input clicked")}
-        className="hidden"
-      />
-
       {/* Main Title */}
       <div className="absolute z-20 top-4 left-0 right-0 text-center">
         <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
