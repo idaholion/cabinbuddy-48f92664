@@ -82,17 +82,17 @@ const Intro = () => {
         className="absolute top-24 bottom-0 left-0 right-0"
         style={{
           backgroundImage: (() => {
-            console.log("🎨 Rendering background, current state:", backgroundImage ? "CUSTOM" : "DEFAULT");
-            console.log("🔗 Rendering background, current ref:", backgroundImageRef.current ? "CUSTOM REF" : "DEFAULT REF");
+            const imageData = backgroundImageRef.current || backgroundImage;
+            console.log("🎨 Rendering - imageData exists:", !!imageData);
+            console.log("🎨 Rendering - imageData length:", imageData?.length || 0);
+            console.log("🎨 Rendering - imageData starts with:", imageData?.substring(0, 30) || "NO DATA");
+            
             try {
-              // Use ref first, then fallback to state, then default
-              const imageData = backgroundImageRef.current || backgroundImage;
-              const imageUrl = imageData ? `url(${imageData})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
-              console.log("🖼️ Using image URL:", imageData ? "CUSTOM DATA" : "DEFAULT IMAGE");
+              const imageUrl = imageData ? `url("${imageData}")` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
+              console.log("🖼️ Final imageUrl:", imageData ? "CUSTOM IMAGE URL" : "DEFAULT IMAGE");
               return imageUrl;
             } catch (error) {
               console.error("❌ Error creating background image URL:", error);
-              // Reset both on error
               backgroundImageRef.current = null;
               setBackgroundImage(null);
               return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
