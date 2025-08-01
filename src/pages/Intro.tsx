@@ -78,12 +78,18 @@ const Intro = () => {
         style={{
           backgroundImage: (() => {
             console.log("🎨 Rendering background, current state:", backgroundImage ? "CUSTOM" : "DEFAULT");
+            console.log("🔗 Rendering background, current ref:", backgroundImageRef.current ? "CUSTOM REF" : "DEFAULT REF");
             try {
-              const imageUrl = backgroundImage ? `url(${backgroundImage})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
-              console.log("🖼️ Using image URL:", imageUrl.substring(0, 50) + "...");
+              // Use ref first, then fallback to state, then default
+              const imageData = backgroundImageRef.current || backgroundImage;
+              const imageUrl = imageData ? `url(${imageData})` : 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
+              console.log("🖼️ Using image URL:", imageData ? "CUSTOM DATA" : "DEFAULT IMAGE");
               return imageUrl;
             } catch (error) {
               console.error("❌ Error creating background image URL:", error);
+              // Reset both on error
+              backgroundImageRef.current = null;
+              setBackgroundImage(null);
               return 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)';
             }
           })(),
