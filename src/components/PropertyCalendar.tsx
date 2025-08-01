@@ -204,7 +204,7 @@ export const PropertyCalendar = ({ onMonthChange }: PropertyCalendarProps) => {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentMonth]);
+  }, []); // Removed currentMonth dependency to prevent infinite loop
 
   const getBookingsForDate = (date: Date) => {
     const allBookings = reservations.filter(reservation => {
