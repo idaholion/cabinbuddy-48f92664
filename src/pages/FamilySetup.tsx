@@ -329,7 +329,7 @@ const FamilySetup = () => {
                     <Copy className="h-4 w-4" />
                     Copy
                   </Button>
-                  {isAdmin && (
+                  {(isCreatingNew || isAdmin) && (
                     <Button
                       variant="outline"
                       size="sm"
