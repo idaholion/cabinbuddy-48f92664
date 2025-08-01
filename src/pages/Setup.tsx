@@ -282,8 +282,8 @@ const Setup = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <Button variant="outline" asChild className="mb-6">
+        <div className="mb-4 pt-2">
+          <Button variant="outline" asChild className="mb-4">
             <Link to="/home">← Back to Home</Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
