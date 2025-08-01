@@ -58,7 +58,18 @@ const Intro = () => {
     const input = fileInputRef.current;
     if (input) {
       console.log("✅ File input found, clicking...");
+      
+      // Add event listener to detect when dialog opens
+      const handleFocus = () => {
+        console.log("🔍 File dialog opened (focus event)");
+        input.removeEventListener('focus', handleFocus);
+      };
+      
+      input.addEventListener('focus', handleFocus);
       input.click();
+      
+      // Also check if the input has any change listeners
+      console.log("🔍 Input has change event listener:", !!input.onchange);
     } else {
       console.error("❌ File input ref is null");
     }
