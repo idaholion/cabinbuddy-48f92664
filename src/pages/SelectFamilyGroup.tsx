@@ -52,7 +52,7 @@ const SelectFamilyGroup = () => {
 
           {/* Page title */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
               Select Family Group
             </h1>
             <p className="text-xl text-white/90">

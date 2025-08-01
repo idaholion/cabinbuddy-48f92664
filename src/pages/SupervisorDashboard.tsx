@@ -85,7 +85,7 @@ export const SupervisorDashboard = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Cabin Buddy Supervisor</h1>
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Buddy Supervisor</h1>
             <p className="text-muted-foreground">Manage organizations and supervisors</p>
           </div>
           <div className="flex items-center gap-2">

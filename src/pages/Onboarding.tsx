@@ -14,7 +14,7 @@ export const Onboarding = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">Welcome to Cabin Buddy!</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Welcome to Cabin Buddy!</h1>
           <p className="text-lg text-muted-foreground mb-6">
             We don't see you as a Cabin Buddy member yet. No worries! You can either:
           </p>

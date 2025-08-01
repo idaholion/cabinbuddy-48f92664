@@ -38,7 +38,7 @@ const FontShowcase = () => {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <h1 className="text-3xl font-bold">Font Showcase</h1>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Font Showcase</h1>
         </div>
 
         {/* Font Grid */}
