@@ -6,9 +6,15 @@ import { Home, Upload, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Intro = () => {
+  console.log("🔄 Intro component is mounting/re-mounting");
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Debug: Log whenever backgroundImage state changes
+  useEffect(() => {
+    console.log("🖼️ backgroundImage state changed:", backgroundImage ? "CUSTOM IMAGE SET" : "DEFAULT IMAGE");
+  }, [backgroundImage]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log("File input changed", event.target.files);
