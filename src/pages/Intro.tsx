@@ -8,6 +8,7 @@ const Intro = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("🎯 handleImageUpload called");
     const file = event.target.files?.[0];
     if (file) {
       console.log("📄 File selected:", file.name, file.size);
@@ -17,23 +18,35 @@ const Intro = () => {
         return;
       }
       
+      console.log("🔄 Creating blob URL...");
       const blobUrl = URL.createObjectURL(file);
       console.log("🎯 Created blob URL:", blobUrl);
       
-      // Apply background directly (same as red test but with image)
+      console.log("🔍 Looking for background element...");
       const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
+      console.log("🔍 Background element found:", !!bgElement);
+      
       if (bgElement) {
-        bgElement.style.backgroundColor = ''; // Clear any previous color
+        console.log("🧹 Clearing previous styles...");
+        bgElement.style.backgroundColor = '';
+        
+        console.log("🖼️ Setting background image:", blobUrl);
         bgElement.style.backgroundImage = `url("${blobUrl}")`;
         bgElement.style.backgroundSize = 'cover';
         bgElement.style.backgroundPosition = 'center';
         bgElement.style.backgroundRepeat = 'no-repeat';
-        console.log("✅ Background image applied successfully");
+        
+        console.log("✅ All styles applied");
+        console.log("🔍 Current backgroundImage value:", bgElement.style.backgroundImage);
       } else {
         console.error("❌ Background element not found");
       }
+    } else {
+      console.log("❌ No file selected");
     }
+    console.log("🧹 Clearing input value");
     event.target.value = '';
+    console.log("✅ handleImageUpload complete");
   };
 
   const handleGetStarted = () => {
