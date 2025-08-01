@@ -20,7 +20,7 @@ const Intro = () => {
         const result = e.target?.result as string;
         console.log("FileReader loaded, result length:", result?.length);
         setBackgroundImage(result);
-        console.log("Background image state updated");
+        console.log("Background image state updated to:", result.substring(0, 50) + "...");
       };
       reader.onerror = (e) => {
         console.error("FileReader error:", e);
@@ -38,6 +38,8 @@ const Intro = () => {
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
+
+  console.log("Current backgroundImage state:", backgroundImage ? "CUSTOM IMAGE SET" : "DEFAULT IMAGE");
 
   return (
     <div className="min-h-screen relative">
