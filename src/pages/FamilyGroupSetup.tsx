@@ -280,9 +280,6 @@ const FamilyGroupSetup = () => {
               >
                 {loading ? "Saving..." : "Save Family Group Setup"}
               </Button>
-              <Button variant="outline" asChild>
-                <Link to="/financial-setup">Go to Financial Setup →</Link>
-              </Button>
             </div>
             <CardTitle className="text-2xl text-center pr-48">Set up Family Groups</CardTitle>
             <CardDescription className="text-center pr-48">Create a family group with lead and host members</CardDescription>
@@ -612,7 +609,7 @@ const FamilyGroupSetup = () => {
                 className="w-full max-w-md"
                 size="lg"
               >
-                {loading ? "Saving..." : "Save and Go to Next Step"}
+                {loading ? "Saving..." : "Save and Go to Financial Setup"}
               </Button>
             </div>
           </CardContent>
