@@ -58,7 +58,7 @@ const Intro = () => {
             onClick={() => navigate("/login")}
             size="lg" 
             variant="outline"
-            className="bg-white/10 border-white/20 text-white hover:bg-white/20 px-8 py-4 text-lg font-semibold"
+            className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
           >
             Sign In / Sign Up
           </Button>
