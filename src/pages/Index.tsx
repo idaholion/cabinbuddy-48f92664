@@ -170,13 +170,6 @@ const Index = () => {
               </Link>
             </Button>
 
-            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
-              <Link to="/add-receipt">
-                <Receipt className="h-5 w-5 mr-3" />
-                Add Receipt
-              </Link>
-            </Button>
-
             {/* More dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -186,6 +179,12 @@ const Index = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/add-receipt">
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Add Receipt
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/shopping-list">
                     <ShoppingCart className="h-4 w-4 mr-2" />
