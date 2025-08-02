@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
@@ -147,54 +147,95 @@ const Index = () => {
           </Button>
 
           {/* Right side buttons cluster */}
-          <div className="absolute right-8 top-24 space-y-4">
-            {/* Arrival Check In */}
-            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="outline" asChild>
+          <div className="absolute right-8 top-24 space-y-4 w-64">
+            {/* Main action buttons - all same width */}
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/check-in">
                 <CheckCircle className="h-5 w-5 mr-3" />
                 Arrival Check In
               </Link>
             </Button>
 
-            {/* Daily Cabin Check In */}
-            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="outline" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/daily-check-in">
                 <Clock className="h-5 w-5 mr-3" />
                 Daily Cabin Check In
               </Link>
             </Button>
 
-            {/* Shopping List and Add Receipt - smaller buttons side by side */}
-            <div className="flex space-x-2">
-              <Button className="px-4 py-3 font-medium shadow-cabin flex-1" variant="outline" asChild>
-                <Link to="/shopping-list">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Shopping List
-                </Link>
-              </Button>
-              <Button className="px-4 py-3 font-medium shadow-cabin flex-1" variant="outline" asChild>
-                <Link to="/add-receipt">
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Add Receipt
-                </Link>
-              </Button>
-            </div>
-
-            {/* Check Out */}
-            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="outline" asChild>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/checkout-list">
                 <LogOut className="h-5 w-5 mr-3" />
                 Check Out
               </Link>
             </Button>
 
-            {/* Family Photos */}
-            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64" variant="outline" asChild>
-              <Link to="/photos">
-                <Camera className="h-5 w-5 mr-3" />
-                Family Photos
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
+              <Link to="/add-receipt">
+                <Receipt className="h-5 w-5 mr-3" />
+                Add Receipt
               </Link>
             </Button>
+
+            {/* More dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline">
+                  <MoreHorizontal className="h-5 w-5 mr-3" />
+                  More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/shopping-list">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Shopping List
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/documents">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Documents
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/photos">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Family Photos
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cabin-rules">
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Cabin Rules
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/cabin-seasonal-docs">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Cabin Seasonal Docs
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/financial-review">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Finance Report
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/host-profile">
+                    <User className="h-4 w-4 mr-2" />
+                    Host Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/financial-review">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Financial Review
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Role-based Setup Options */}
             {!roleLoading && (
