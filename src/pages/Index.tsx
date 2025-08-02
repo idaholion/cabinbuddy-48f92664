@@ -264,7 +264,7 @@ const Index = () => {
         </div>
 
         {/* Feedback Button */}
-        <div className="fixed bottom-8 right-8 z-30">
+        <div className="fixed bottom-8 left-8 z-30">
           <FeedbackButton />
         </div>
       </div>
