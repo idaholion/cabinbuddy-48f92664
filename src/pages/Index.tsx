@@ -249,12 +249,7 @@ const Index = () => {
                   </Button>
                 )}
                 {isHostMember && (
-                  <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
-                    <Link to="/host-profile">
-                      <User className="h-5 w-5 mr-3" />
-                      Update My Profile
-                    </Link>
-                  </Button>
+                  <></>
                 )}
               </>
             )}
