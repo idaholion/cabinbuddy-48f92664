@@ -96,13 +96,13 @@ const CheckIn = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat pt-[30px] px-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center">
-            <CheckCircle className="h-10 w-10 mr-3" />
+        <div className="mb-4 md:mb-8">
+          <h1 className="text-4xl md:text-6xl mb-2 md:mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center">
+            <CheckCircle className="h-6 w-6 md:h-10 md:w-10 mr-2 md:mr-3" />
             Arrival Check-In
           </h1>
           <div className="relative flex items-center justify-center">
-            <p className="text-2xl text-primary text-center font-medium">Complete your arrival checklist</p>
+            <p className="text-lg md:text-2xl text-primary text-center font-medium">Complete your arrival checklist</p>
             <div className="absolute left-0">
               <NavigationHeader backLabel="Home" className="mb-0" />
             </div>

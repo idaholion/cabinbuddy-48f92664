@@ -109,12 +109,12 @@ const CabinCalendar = () => {
         <Card className="bg-card/95 mb-8 min-h-screen">
           <CardHeader className="pb-2 pt-4">
             <div className="text-center mb-2">
-              <h1 className="text-6xl mb-2 font-kaushan text-primary drop-shadow-lg flex items-center justify-center">
-                <Calendar className="h-10 w-10 mr-3" />
+              <h1 className="text-4xl md:text-6xl mb-2 font-kaushan text-primary drop-shadow-lg flex items-center justify-center">
+                <Calendar className="h-6 w-6 md:h-10 md:w-10 mr-2 md:mr-3" />
                 Cabin Calendar
               </h1>
               <div className="relative flex items-center justify-center">
-                <p className="text-2xl text-primary font-medium">View and manage cabin reservations and availability</p>
+                <p className="text-lg md:text-2xl text-primary font-medium">View and manage cabin reservations and availability</p>
                 <div className="absolute left-0">
                   <NavigationHeader backLabel="Home" className="mb-0" />
                 </div>
@@ -123,15 +123,15 @@ const CabinCalendar = () => {
           </CardHeader>
           
           <CardContent>
-            {/* Compact toolbar above calendar */}
-            <div className="flex justify-between items-center mb-1 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
-              <div className="flex items-center gap-4 flex-1">
-                {/* Rotation Order Dropdown */}
+            {/* Responsive toolbar above calendar */}
+            <div className="mb-1 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                {/* First row - Rotation Order */}
                 {currentRotationOrder.length > 0 && (
                   <div className="flex items-center gap-2">
                     <RotateCcw className="h-4 w-4 text-primary" />
                     <Select>
-                      <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-border">
+                      <SelectTrigger className="w-full md:w-56 bg-background/90 backdrop-blur-sm border-border">
                         <SelectValue placeholder={`${rotationYear} Rotation Order`} />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-border shadow-lg z-50">
@@ -175,15 +175,17 @@ const CabinCalendar = () => {
                   </div>
                 )}
                 
-                {/* Booking Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm">
-                      <span className="hidden sm:inline">Booking</span>
-                      <span className="sm:hidden">Book</span>
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                {/* Second row - Controls */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1">
+                  {/* Booking Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" className="w-full md:w-auto">
+                        <span className="hidden sm:inline">Booking</span>
+                        <span className="sm:hidden">Book</span>
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem>
                       Single Period Booking
@@ -234,15 +236,15 @@ const CabinCalendar = () => {
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                  </DropdownMenu>
 
-                {/* Family Group Selector - moved to right of Booking */}
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                    <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-border">
-                      <SelectValue placeholder="Select Family Group" />
-                    </SelectTrigger>
+                  {/* Family Group Selector */}
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                      <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
+                        <SelectValue placeholder="Select Family Group" />
+                      </SelectTrigger>
                     <SelectContent className="bg-background border border-border shadow-lg z-50">
                       <SelectItem value="all">All Family Groups</SelectItem>
                       {familyGroups.map((familyGroup) => (
@@ -259,22 +261,23 @@ const CabinCalendar = () => {
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Property Selector - moved to far right */}
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <Select value="property">
-                    <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-border">
-                      <SelectValue placeholder="Select property" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border shadow-lg z-50">
-                      <SelectItem value="property">
-                        {reservationSettings?.property_name || "Property"}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                    </Select>
+                  </div>
+                  
+                  {/* Property Selector */}
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <Select value="property">
+                      <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
+                        <SelectValue placeholder="Select property" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border shadow-lg z-50">
+                        <SelectItem value="property">
+                          {reservationSettings?.property_name || "Property"}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </div>

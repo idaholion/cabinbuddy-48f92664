@@ -100,16 +100,20 @@ const AddReceipt = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-2xl mx-auto space-y-6 p-4">
-        <PageHeader 
-          title="Add Receipt"
-          subtitle="Upload and manage cabin expense receipts"
-          icon={Receipt}
-          backgroundImage={true}
-        >
-          <NavigationHeader />
-        </PageHeader>
+        <div className="mb-4 md:mb-8">
+          <h1 className="text-4xl md:text-6xl mb-2 md:mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center">
+            <Receipt className="h-6 w-6 md:h-10 md:w-10 mr-2 md:mr-3" />
+            Add Receipt
+          </h1>
+          <div className="relative flex items-center justify-center">
+            <p className="text-lg md:text-2xl text-primary text-center font-medium">Upload and manage cabin expense receipts</p>
+            <div className="absolute left-0">
+              <NavigationHeader className="mb-0" />
+            </div>
+          </div>
+        </div>
         
-        <div className="grid md:grid-cols-2 gap-4 scale-75 origin-top">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 scale-100 md:scale-75 origin-top">
           {/* Upload and Camera Section */}
           <Card>
             <CardHeader>
@@ -227,8 +231,8 @@ const AddReceipt = () => {
         </div>
       </div>
 
-      {/* Manual Entry Section - Fixed to lower left */}
-      <div className="absolute bottom-4 left-4 w-80 scale-75">
+      {/* Manual Entry Section - Responsive positioning */}
+      <div className="mt-6 md:absolute md:bottom-4 md:left-4 w-full md:w-80 scale-100 md:scale-75">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
