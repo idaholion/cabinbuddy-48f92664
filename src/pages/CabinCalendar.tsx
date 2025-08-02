@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -256,6 +256,21 @@ const CabinCalendar = () => {
                           </div>
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Property Selector - moved to far right */}
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <Select value="property">
+                    <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-border">
+                      <SelectValue placeholder="Select property" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border shadow-lg z-50">
+                      <SelectItem value="property">
+                        {reservationSettings?.property_name || "Property"}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

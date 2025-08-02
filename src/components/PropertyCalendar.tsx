@@ -248,23 +248,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
         <CardHeader>
             <div className="flex items-center justify-between">
             <div className="flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
-              {/* Property selector moved from left side */}
+              {/* Property selector removed from here */}
             </div>
             
             <div className="flex items-center gap-2 mt-3 lg:mt-0">
-              {/* Property selector - positioned here after other controls */}
-              <Select value={selectedProperty} onValueChange={setSelectedProperty}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Select property" />
-                </SelectTrigger>
-                <SelectContent>
-                  {properties.map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
-                      {property.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               {/* Phase 4: View Mode Toggle - moved to far right */}
               <div className="flex border rounded-lg overflow-hidden">
                 <Button 
