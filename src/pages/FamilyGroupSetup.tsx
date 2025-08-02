@@ -321,7 +321,7 @@ const FamilyGroupSetup = () => {
     }}>
       <div className="max-w-6xl mx-auto">
         <div className="mb-0 pt-0">
-          <h1 className="text-6xl mb-2 mt-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
+          <h1 className="text-6xl mb-6 mt-12 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
         </div>
 
