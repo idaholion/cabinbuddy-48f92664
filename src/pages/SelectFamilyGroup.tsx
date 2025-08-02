@@ -36,7 +36,7 @@ const SelectFamilyGroup = () => {
         backgroundImage: "url('/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png')",
       }}
     >
-      <div className="min-h-screen bg-black/50 p-4">
+      <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-2xl">
           {/* Back button */}
           <div className="mb-6 pt-6">
