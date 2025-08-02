@@ -366,9 +366,9 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
             </div>
           </div>
           
-          {/* Month Navigation and Family Group Color Legend */}
-          <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          {/* Month Navigation and Family Group Color Legend - moved up with minimal spacing */}
+          <div className="mt-2 p-2 bg-muted/30 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
                   ←
@@ -396,18 +396,18 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 </Button>
               </div>
               {familyGroups.some(fg => fg.color) && (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <span className="text-sm font-medium">Family Groups:</span>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {familyGroups
                       .filter(fg => fg.color)
                       .map(familyGroup => (
-                        <div key={familyGroup.id} className="flex items-center gap-2">
+                        <div key={familyGroup.id} className="flex items-center gap-1">
                           <div
                             className="w-3 h-3 rounded-full border border-border"
                             style={{ backgroundColor: familyGroup.color }}
                           />
-                          <span className="text-xs text-muted-foreground">{familyGroup.name}</span>
+                          <span className="text-xs">{familyGroup.name}</span>
                         </div>
                       ))}
                   </div>
