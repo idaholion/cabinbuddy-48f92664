@@ -316,17 +316,16 @@ const FamilyGroupSetup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat px-4 pt-0 pb-4" style={{
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{
       backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
     }}>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-0 pt-0">
-          <h1 className="text-6xl mb-6 mt-12 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
-          <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
-        </div>
-
-        <Card className="bg-card/95 mb-8">
-          <CardHeader className="pb-2 relative">
+        <Card className="bg-card/95 mb-8 min-h-screen">
+          <CardHeader className="pb-2 relative pt-8">
+            <div className="text-center mb-6">
+              <h1 className="text-6xl mb-6 mt-8 font-kaushan text-primary drop-shadow-lg">Family Group Setup</h1>
+              <p className="text-2xl text-primary font-medium">Setting up your Family Groups</p>
+            </div>
             <div className="absolute top-6 left-6">
               <Button variant="outline" asChild className="text-sm">
                 <Link to="/setup">← Back to Setup</Link>
