@@ -321,15 +321,17 @@ const FamilyGroupSetup = () => {
     }}>
       <div className="max-w-6xl mx-auto">
         <div className="mb-0 pt-0">
-          <Button variant="outline" asChild className="mb-0 text-sm">
-            <Link to="/setup">← Back to Setup</Link>
-          </Button>
           <h1 className="text-6xl mb-1 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
         </div>
 
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
+            <div className="absolute top-6 left-6">
+              <Button variant="outline" asChild className="text-sm">
+                <Link to="/setup">← Back to Setup</Link>
+              </Button>
+            </div>
             <div className="absolute top-6 right-6 flex flex-col gap-2">
               <Button 
                 onClick={handleSubmit(onSubmit)}
