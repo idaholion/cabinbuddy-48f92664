@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -15,22 +17,31 @@ import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSelectionStatus } from "@/hooks/useSelectionStatus";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useTradeRequests } from "@/hooks/useTradeRequests";
+import { useOrganization } from "@/hooks/useOrganization";
 import { useState, useEffect } from "react";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const { familyGroups, assignDefaultColorsWithProtection } = useFamilyGroups();
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
+  const { tradeRequests } = useTradeRequests();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
+
+  // Check if user is calendar keeper
+  const isCalendarKeeper = organization?.calendar_keeper_email === user?.email;
   
-  // Get user's family group
-  const userProfile = user?.user_metadata || {};
+  // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
-    fg.lead_email === user?.email || 
     fg.host_members?.some((member: any) => member.email === user?.email)
   )?.name;
+
+  const pendingTradeRequests = tradeRequests.filter(tr => 
+    tr.target_family_group === userFamilyGroup && tr.status === 'pending'
+  ).length;
   
   // Set default selected family group to user's group
   useEffect(() => {
@@ -187,6 +198,67 @@ const CabinCalendar = () => {
                     </Select>
                   </div>
                 )}
+                
+                {/* Booking Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm">
+                      <span className="hidden sm:inline">Booking</span>
+                      <span className="sm:hidden">Book</span>
+                      <ChevronDown className="h-4 w-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem>
+                      Single Period Booking
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Multi-Period Booking
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Work Weekend
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      disabled={!isCalendarKeeper}
+                      className={!isCalendarKeeper ? "text-muted-foreground" : ""}
+                      onClick={() => {
+                        if (isCalendarKeeper) {
+                          window.location.href = '/calendar-keeper-management';
+                        }
+                      }}
+                    >
+                      Calendar Keeper Tools
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      Booking Complete
+                    </DropdownMenuItem>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger className="relative">
+                        Edit Booking
+                        {pendingTradeRequests > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className="ml-2 h-5 w-5 p-0 text-xs"
+                          >
+                            {pendingTradeRequests}
+                          </Badge>
+                        )}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem>
+                          Edit my bookings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Request trade with another group
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          Request Calendar Keeper assistance
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

@@ -364,67 +364,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 </DropdownMenuContent>
                 </DropdownMenu>
                 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm">
-                      <span className="hidden sm:inline">Booking</span>
-                      <span className="sm:hidden">Book</span>
-                      <ChevronDown className="h-4 w-4 ml-1" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => setShowBookingForm(true)}>
-                    Single Period Booking
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowMultiPeriodForm(true)}>
-                    Multi-Period Booking
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowWorkWeekendForm(true)}>
-                    Work Weekend
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    disabled={!isCalendarKeeper}
-                    className={!isCalendarKeeper ? "text-muted-foreground" : ""}
-                    onClick={() => {
-                      if (isCalendarKeeper) {
-                        window.location.href = '/calendar-keeper-management';
-                      }
-                    }}
-                  >
-                    Calendar Keeper Tools
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleBookingComplete}>
-                    Booking Complete
-                  </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="relative">
-                      Edit Booking
-                      {pendingTradeRequests > 0 && (
-                        <Badge 
-                          variant="destructive" 
-                          className="ml-2 h-5 w-5 p-0 text-xs"
-                        >
-                          {pendingTradeRequests}
-                        </Badge>
-                      )}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => handleEditBookingAction('edit-my-bookings')}>
-                        Edit my bookings
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditBookingAction('request-trade')}>
-                        Request trade with another group
-                      </DropdownMenuItem>
-                      <CalendarKeeperAssistanceDialog>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          Request Calendar Keeper assistance
-                        </DropdownMenuItem>
-                      </CalendarKeeperAssistanceDialog>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
             
