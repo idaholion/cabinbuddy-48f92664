@@ -147,7 +147,7 @@ const Index = () => {
           </Button>
 
           {/* Right side buttons cluster */}
-          <div className="absolute right-8 top-24 space-y-4 w-64">
+          <div className="absolute right-32 top-24 space-y-4 w-64">
             {/* Main action buttons - all same width */}
             <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/check-in">
@@ -264,7 +264,9 @@ const Index = () => {
         </div>
 
         {/* Feedback Button */}
-        <FeedbackButton />
+        <div className="fixed bottom-8 right-8 z-30">
+          <FeedbackButton />
+        </div>
       </div>
     </div>
   );
