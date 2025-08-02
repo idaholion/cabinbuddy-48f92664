@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { SearchInput } from "@/components/ui/search-input";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservations } from "@/hooks/useReservations";
@@ -367,8 +367,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size="sm">
-                      <span className="hidden sm:inline">New Booking</span>
-                      <span className="sm:hidden">New</span>
+                      <span className="hidden sm:inline">Booking</span>
+                      <span className="sm:hidden">Book</span>
                       <ChevronDown className="h-4 w-4 ml-1" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -393,39 +393,36 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   >
                     Calendar Keeper Tools
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <Button variant="outline" size="sm" onClick={handleBookingComplete}>
-                  <span className="hidden sm:inline">Booking Complete</span>
-                  <span className="sm:hidden">Complete</span>
-                </Button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="relative">
-                      <span className="hidden sm:inline">Edit Booking</span>
-                      <span className="sm:hidden">Edit</span>
-                      <ChevronDown className="h-4 w-4 ml-1" />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleBookingComplete}>
+                    Booking Complete
+                  </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="relative">
+                      Edit Booking
                       {pendingTradeRequests > 0 && (
-                        <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                        <Badge 
+                          variant="destructive" 
+                          className="ml-2 h-5 w-5 p-0 text-xs"
+                        >
                           {pendingTradeRequests}
                         </Badge>
                       )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuItem onClick={() => handleEditBookingAction('edit-my-bookings')}>
-                    Edit my bookings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleEditBookingAction('request-trade')}>
-                    Request trade with another group
-                  </DropdownMenuItem>
-                  <CalendarKeeperAssistanceDialog>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                      Request Calendar Keeper assistance
-                    </DropdownMenuItem>
-                  </CalendarKeeperAssistanceDialog>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => handleEditBookingAction('edit-my-bookings')}>
+                        Edit my bookings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditBookingAction('request-trade')}>
+                        Request trade with another group
+                      </DropdownMenuItem>
+                      <CalendarKeeperAssistanceDialog>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          Request Calendar Keeper assistance
+                        </DropdownMenuItem>
+                      </CalendarKeeperAssistanceDialog>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
                 </DropdownMenu>
               </div>
