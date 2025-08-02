@@ -323,7 +323,7 @@ const FamilyGroupSetup = () => {
         <Card className="bg-card/95 mb-8 min-h-screen">
           <CardHeader className="pb-2 relative pt-8">
             <div className="text-center mb-6">
-              <h1 className="text-6xl mb-6 mt-4 font-kaushan text-primary drop-shadow-lg">Family Group Setup</h1>
+              <h1 className="text-6xl mb-6 mt-2 font-kaushan text-primary drop-shadow-lg">Family Group Setup</h1>
               <p className="text-2xl text-primary font-medium">Setting up your Family Groups</p>
             </div>
             <div className="absolute top-6 left-6">
