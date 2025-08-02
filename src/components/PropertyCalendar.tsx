@@ -246,118 +246,123 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     <div className="space-y-6">
       <Card>
         <CardHeader>
+          {/* Move controls to top of container */}
+          <div className="flex items-center justify-between w-full gap-4 mb-4">
+            {/* Phase 4: View Mode Toggle - positioned on left */}
+            <div className="flex border rounded-lg overflow-hidden">
+              <Button 
+                variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setViewMode('calendar')}
+                className="rounded-none"
+              >
+                <Calendar className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Calendar</span>
+              </Button>
+              <Button 
+                variant={viewMode === 'list' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none"
+              >
+                <Layers className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">List</span>
+              </Button>
+              <Button 
+                variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setViewMode('timeline')}
+                className="rounded-none"
+              >
+                <ArrowLeftRight className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Timeline</span>
+              </Button>
+            </div>
+            
+            {/* Phase 4: Filter Dropdown - positioned in center */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filter
+                </Button>
+              </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 p-4">
+              <div className="space-y-3">
+                <div className="text-sm font-medium">Show Bookings</div>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input 
+                      type="checkbox" 
+                      checked={filterOptions.showMyBookings}
+                      onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
+                      className="rounded border-border"
+                    />
+                    <span>My bookings</span>
+                  </label>
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input 
+                      type="checkbox" 
+                      checked={filterOptions.showOtherBookings}
+                      onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
+                      className="rounded border-border"
+                    />
+                    <span>Other bookings</span>
+                  </label>
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input 
+                      type="checkbox" 
+                      checked={filterOptions.showTimePeriods}
+                      onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
+                      className="rounded border-border"
+                    />
+                    <span>Time periods</span>
+                  </label>
+                  <label className="flex items-center space-x-2 text-sm">
+                    <input 
+                      type="checkbox" 
+                      checked={filterOptions.showTradeRequests}
+                      onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
+                      className="rounded border-border"
+                    />
+                    <span>Trade requests</span>
+                  </label>
+                </div>
+                
+                <div className="text-sm font-medium pt-2 border-t">Family Group</div>
+                <Select 
+                  value={filterOptions.familyGroupFilter} 
+                  onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Groups</SelectItem>
+                    {familyGroups.map(fg => (
+                      <SelectItem key={fg.id} value={fg.name}>{fg.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Search Input - positioned on right */}
+            <SearchInput
+              placeholder="Search reservations, family groups..."
+              onSearch={setSearchQuery}
+              className="w-64"
+            />
+          </div>
+          
             <div className="flex items-center justify-between">
             <div className="flex flex-col lg:flex-row lg:items-center space-y-3 lg:space-y-0 lg:space-x-4">
               {/* Property selector removed from here */}
             </div>
             
-            <div className="flex items-center justify-between w-full gap-4 mt-3 lg:mt-0">
-              {/* Phase 4: View Mode Toggle - positioned on left */}
-              <div className="flex border rounded-lg overflow-hidden">
-                <Button 
-                  variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('calendar')}
-                  className="rounded-none"
-                >
-                  <Calendar className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Calendar</span>
-                </Button>
-                <Button 
-                  variant={viewMode === 'list' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="rounded-none"
-                >
-                  <Layers className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">List</span>
-                </Button>
-                <Button 
-                  variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
-                  size="sm"
-                  onClick={() => setViewMode('timeline')}
-                  className="rounded-none"
-                >
-                  <ArrowLeftRight className="h-4 w-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Timeline</span>
-                </Button>
-              </div>
-              
-              {/* Phase 4: Filter Dropdown - positioned in center */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" />
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-64 p-4">
-                <div className="space-y-3">
-                  <div className="text-sm font-medium">Show Bookings</div>
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={filterOptions.showMyBookings}
-                        onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
-                        className="rounded border-border"
-                      />
-                      <span>My bookings</span>
-                    </label>
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={filterOptions.showOtherBookings}
-                        onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
-                        className="rounded border-border"
-                      />
-                      <span>Other bookings</span>
-                    </label>
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={filterOptions.showTimePeriods}
-                        onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
-                        className="rounded border-border"
-                      />
-                      <span>Time periods</span>
-                    </label>
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input 
-                        type="checkbox" 
-                        checked={filterOptions.showTradeRequests}
-                        onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
-                        className="rounded border-border"
-                      />
-                      <span>Trade requests</span>
-                    </label>
-                  </div>
-                  
-                  <div className="text-sm font-medium pt-2 border-t">Family Group</div>
-                  <Select 
-                    value={filterOptions.familyGroupFilter} 
-                    onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Groups</SelectItem>
-                      {familyGroups.map(fg => (
-                        <SelectItem key={fg.id} value={fg.name}>{fg.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </DropdownMenuContent>
-              </DropdownMenu>
-              
-              {/* Search Input - positioned on right */}
-              <SearchInput
-                placeholder="Search reservations, family groups..."
-                onSearch={setSearchQuery}
-                className="w-64"
-              />
+            <div className="flex items-center gap-2 mt-3 lg:mt-0">
+              {/* Controls moved to top */}
             </div>
           </div>
           
