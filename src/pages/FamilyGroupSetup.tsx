@@ -320,11 +320,11 @@ const FamilyGroupSetup = () => {
       backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
     }}>
       <div className="max-w-6xl mx-auto">
-        <div className="mb-2 pt-0">
-          <Button variant="outline" asChild className="mb-2">
+        <div className="mb-0 pt-0">
+          <Button variant="outline" asChild className="mb-0 text-sm">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
-          <h1 className="text-6xl mb-2 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
+          <h1 className="text-6xl mb-1 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
         </div>
 
