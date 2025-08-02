@@ -105,11 +105,6 @@ const CabinCalendar = () => {
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      {/* Move navigation to very top */}
-      <div className="max-w-7xl mx-auto pl-6 py-2">
-        <NavigationHeader className="mb-0" />
-      </div>
-      
       <div className="max-w-7xl mx-auto">
         <Card className="bg-card/95 mb-8 min-h-screen">
           <CardHeader className="pb-2 pt-4">
@@ -118,7 +113,12 @@ const CabinCalendar = () => {
                 <Calendar className="h-10 w-10 mr-3" />
                 Cabin Calendar
               </h1>
-              <p className="text-2xl text-primary font-medium">View and manage cabin reservations and availability</p>
+              <div className="relative flex items-center justify-center">
+                <p className="text-2xl text-primary font-medium">View and manage cabin reservations and availability</p>
+                <div className="absolute left-0">
+                  <NavigationHeader backLabel="Home" className="mb-0" />
+                </div>
+              </div>
             </div>
           </CardHeader>
           
