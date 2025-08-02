@@ -124,7 +124,7 @@ const CabinCalendar = () => {
           
           <CardContent>
             {/* Compact toolbar above calendar */}
-            <div className="flex justify-between items-center mb-4 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
+            <div className="flex justify-between items-center mb-1 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
               <div className="flex items-center gap-4 flex-1">
                 {/* Rotation Order Dropdown */}
                 {currentRotationOrder.length > 0 && (

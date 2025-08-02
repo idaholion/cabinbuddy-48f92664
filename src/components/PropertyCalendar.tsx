@@ -245,9 +245,9 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           {/* Move controls to top of container */}
-          <div className="flex items-center justify-between w-full gap-4 mb-4">
+          <div className="flex items-center justify-between w-full gap-4 mb-2">
             {/* Phase 4: View Mode Toggle - positioned on left */}
             <div className="flex border rounded-lg overflow-hidden">
               <Button 
@@ -367,7 +367,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           </div>
           
           {/* Month Navigation and Family Group Color Legend - moved up with minimal spacing */}
-          <div className="mt-2 p-2 bg-muted/30 rounded-lg">
+          <div className="mt-1 p-2 bg-muted/30 rounded-lg">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
