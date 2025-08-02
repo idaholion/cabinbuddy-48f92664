@@ -251,8 +251,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               {/* Property selector removed from here */}
             </div>
             
-            <div className="flex items-center gap-2 mt-3 lg:mt-0">
-              {/* Phase 4: View Mode Toggle - moved to far right */}
+            <div className="flex items-center justify-between w-full gap-4 mt-3 lg:mt-0">
+              {/* Phase 4: View Mode Toggle - positioned on left */}
               <div className="flex border rounded-lg overflow-hidden">
                 <Button 
                   variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
@@ -283,7 +283,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 </Button>
               </div>
               
-              {/* Phase 4: Filter Dropdown - to right of view mode */}
+              {/* Phase 4: Filter Dropdown - positioned in center */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -352,11 +352,11 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               </DropdownMenuContent>
               </DropdownMenu>
               
-              {/* Search Input - moved to far right */}
+              {/* Search Input - positioned on right */}
               <SearchInput
                 placeholder="Search reservations, family groups..."
                 onSearch={setSearchQuery}
-                className="w-full sm:w-64"
+                className="w-64"
               />
             </div>
           </div>
