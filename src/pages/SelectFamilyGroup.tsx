@@ -39,7 +39,7 @@ const SelectFamilyGroup = () => {
       <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-2xl">
           {/* Back button */}
-          <div className="mb-6 pt-6">
+          <div className="mb-6 pt-6 -mb-12">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
