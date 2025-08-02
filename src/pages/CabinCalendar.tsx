@@ -123,33 +123,7 @@ const CabinCalendar = () => {
           <CardContent>
             {/* Compact toolbar above calendar */}
             <div className="flex justify-between items-center mb-4 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
-              <div className="flex items-center gap-4">
-                {/* Family Group Selector */}
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                    <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-border">
-                      <SelectValue placeholder="Select Family Group" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border shadow-lg z-50">
-                      <SelectItem value="all">All Family Groups</SelectItem>
-                      {familyGroups.map((familyGroup) => (
-                        <SelectItem key={familyGroup.id} value={familyGroup.name}>
-                          <div className="flex items-center gap-2">
-                            {familyGroup.color && (
-                              <div
-                                className="w-3 h-3 rounded-full border border-border"
-                                style={{ backgroundColor: familyGroup.color }}
-                              />
-                            )}
-                            {familyGroup.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
+              <div className="flex items-center gap-4 flex-1">
                 {/* Rotation Order Dropdown */}
                 {currentRotationOrder.length > 0 && (
                   <div className="flex items-center gap-2">
@@ -259,6 +233,32 @@ const CabinCalendar = () => {
                     </DropdownMenuSub>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Family Group Selector - moved to right of Booking */}
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                    <SelectTrigger className="w-48 bg-background/90 backdrop-blur-sm border-border">
+                      <SelectValue placeholder="Select Family Group" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border shadow-lg z-50">
+                      <SelectItem value="all">All Family Groups</SelectItem>
+                      {familyGroups.map((familyGroup) => (
+                        <SelectItem key={familyGroup.id} value={familyGroup.name}>
+                          <div className="flex items-center gap-2">
+                            {familyGroup.color && (
+                              <div
+                                className="w-3 h-3 rounded-full border border-border"
+                                style={{ backgroundColor: familyGroup.color }}
+                              />
+                            )}
+                            {familyGroup.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
