@@ -105,8 +105,8 @@ const CabinCalendar = () => {
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      {/* Move navigation outside the card for more space */}
-      <div className="max-w-7xl mx-auto pt-4 pl-6">
+      {/* Move navigation to very top */}
+      <div className="max-w-7xl mx-auto pl-6 py-2">
         <NavigationHeader className="mb-0" />
       </div>
       
