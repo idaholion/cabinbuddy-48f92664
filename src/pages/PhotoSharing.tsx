@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2 } from "lucide-react";
+import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -66,6 +67,27 @@ export default function PhotoSharing() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setNewPhoto({ ...newPhoto, file: e.target.files[0] });
+    }
+  };
+
+  const handleNativePhotoSelection = async (source: CameraSource) => {
+    try {
+      const image = await CapacitorCamera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: source
+      });
+      
+      if (image.dataUrl) {
+        // Convert data URL to File object for consistency with existing upload logic
+        const response = await fetch(image.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setNewPhoto({ ...newPhoto, file });
+      }
+    } catch (error) {
+      console.error('Error selecting photo:', error);
     }
   };
 
@@ -130,15 +152,46 @@ export default function PhotoSharing() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="photo">Photo</Label>
+                  <Label>Choose Photo Source</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleNativePhotoSelection(CameraSource.Photos)}
+                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                    >
+                      <Image className="h-6 w-6" />
+                      <span className="text-sm">Photo Library</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleNativePhotoSelection(CameraSource.Camera)}
+                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                    >
+                      <Camera className="h-6 w-6" />
+                      <span className="text-sm">Take Photo</span>
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
                   <Input
                     id="photo"
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="mt-1"
+                    className="mt-2"
                   />
                 </div>
+                {newPhoto.file && (
+                  <div className="text-sm text-muted-foreground">
+                    Selected: {newPhoto.file.name}
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="caption">Caption</Label>
                   <Textarea
