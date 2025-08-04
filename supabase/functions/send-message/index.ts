@@ -44,15 +44,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Sending message:', { organizationId, recipientGroup, messageType, urgent });
 
-    // Get organization details
-    const { data: organization, error: orgError } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', organizationId)
-      .single();
+    let organization = null;
+    
+    // Skip organization lookup for test messages
+    if (recipientGroup !== 'test') {
+      // Get organization details
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', organizationId)
+        .single();
 
-    if (orgError || !organization) {
-      throw new Error('Organization not found');
+      if (orgError || !orgData) {
+        throw new Error('Organization not found');
+      }
+      
+      organization = orgData;
     }
 
     let recipients: { email?: string; phone?: string; name?: string }[] = [];
@@ -198,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
                   ${message.replace(/\n/g, '<br>')}
                 </div>
                 <p>Best regards,<br>
-                ${organization.name} Team</p>
+                ${organization ? `${organization.name} Team` : 'CabinBuddy'}</p>
                 ${urgent ? '<p style="color: red; font-weight: bold;">⚠️ This message was marked as urgent.</p>' : ''}
               `,
             });
