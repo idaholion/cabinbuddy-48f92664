@@ -32,7 +32,7 @@ const Index = () => {
   const { isSupervisor } = useSupervisor();
   const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
   const { activeOrganization } = useMultiOrganization();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   
   // Monitor performance
   usePerformanceMonitoring();
@@ -111,6 +111,9 @@ const Index = () => {
           <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
             Welcome to Cabin Buddy
           </h1>
+          <p className="text-4xl font-kaushan text-primary/80 drop-shadow-md">
+            {user?.user_metadata?.first_name || user?.email}
+          </p>
         </div>
 
         {/* Action Buttons Overlay */}
