@@ -89,28 +89,35 @@ export default function ReservationSetup() {
         }
         
         if (data) {
-          // Load all the saved settings
-          setMaxTimeSlots(data.max_time_slots?.toString() || "2");
-          setMaxNights(data.max_nights?.toString() || "7");
-          setStartDay(data.start_day || "Friday");
-          setStartTime(data.start_time || "12:00 PM");
-          setFirstLastOption(data.first_last_option || "first");
-          setStartMonth(data.start_month || "January");
-          setSelectionDays(data.selection_days?.toString() || "14");
-          setEnableSecondarySelection(data.enable_secondary_selection || false);
-          setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
-          setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
-          
-          // Load the rotation order
+          // Check if this is a manual setup (indicated by 'manual_mode' in rotation_order)
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
-          if (savedOrder.length > 0) {
-            const fullOrder = new Array(familyGroups.length).fill('');
-            savedOrder.forEach((group, index) => {
-              if (index < fullOrder.length) {
-                fullOrder[index] = group;
-              }
-            });
-            setRotationOrder(fullOrder);
+          if (savedOrder.length === 1 && savedOrder[0] === 'manual_mode') {
+            setSetupMethod('manual');
+          } else {
+            setSetupMethod('rotation');
+            
+            // Load all the saved settings for rotation mode
+            setMaxTimeSlots(data.max_time_slots?.toString() || "2");
+            setMaxNights(data.max_nights?.toString() || "7");
+            setStartDay(data.start_day || "Friday");
+            setStartTime(data.start_time || "12:00 PM");
+            setFirstLastOption(data.first_last_option || "first");
+            setStartMonth(data.start_month || "January");
+            setSelectionDays(data.selection_days?.toString() || "14");
+            setEnableSecondarySelection(data.enable_secondary_selection || false);
+            setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
+            setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
+            
+            // Load the rotation order
+            if (savedOrder.length > 0) {
+              const fullOrder = new Array(familyGroups.length).fill('');
+              savedOrder.forEach((group, index) => {
+                if (index < fullOrder.length) {
+                  fullOrder[index] = group;
+                }
+              });
+              setRotationOrder(fullOrder);
+            }
           }
         }
       } catch (error) {
@@ -201,8 +208,38 @@ export default function ReservationSetup() {
     // Save to database
     await saveReservationSettings(reservationData);
     
+    // Save setup method to rotation_orders table to track the mode
+    if (organization?.id) {
+      try {
+        const { error } = await supabase
+          .from('rotation_orders')
+          .upsert({
+            organization_id: organization.id,
+            rotation_year: parseInt(rotationYear),
+            rotation_order: setupMethod === 'manual' ? ['manual_mode'] : rotationOrder.filter(group => group !== ''),
+            max_time_slots: setupMethod === 'manual' ? 0 : parseInt(maxTimeSlots),
+            max_nights: setupMethod === 'manual' ? 0 : parseInt(maxNights),
+            start_day: setupMethod === 'manual' ? null : startDay,
+            start_time: setupMethod === 'manual' ? null : startTime,
+            first_last_option: setupMethod === 'manual' ? null : firstLastOption,
+            start_month: setupMethod === 'manual' ? null : startMonth,
+            selection_days: setupMethod === 'manual' ? 0 : parseInt(selectionDays),
+            enable_secondary_selection: setupMethod === 'manual' ? false : enableSecondarySelection,
+            secondary_max_periods: setupMethod === 'manual' ? 0 : parseInt(secondaryMaxPeriods),
+            enable_post_rotation_selection: setupMethod === 'manual' ? false : enablePostRotationSelection,
+          }, {
+            onConflict: 'organization_id,rotation_year'
+          });
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error saving setup method:', error);
+      }
+    }
+    
     // Also save rotation data to localStorage for now
     const rotationData = {
+      setupMethod,
       rotationYear,
       maxTimeSlots,
       maxNights,
@@ -555,12 +592,45 @@ export default function ReservationSetup() {
               <CardTitle>Manual Calendar Setup</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">
-                  With manual selection, each family group can directly choose their preferred dates on the calendar without rotation constraints.
+              <div className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+                <h4 className="text-lg font-semibold text-amber-800 mb-2">Calendar Keeper Control</h4>
+                <p className="text-amber-700 mb-3">
+                  With manual calendar setup, <strong>only the Calendar Keeper</strong> has permission to create, modify, or delete reservations.
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  You can configure additional manual setup options here or proceed to the calendar to start booking dates.
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span className="text-sm text-amber-700">Calendar Keeper can manually input all reservation data</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span className="text-sm text-amber-700">Calendar Keeper can assign reservations to any family group</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <span className="text-sm text-amber-700">Family groups cannot make their own reservations</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <span className="text-sm text-amber-700">No automated rotation or selection process</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h5 className="font-medium text-blue-800 mb-2">How Manual Calendar Works:</h5>
+                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                  <li>Calendar Keeper receives booking requests via email, phone, or other communication</li>
+                  <li>Calendar Keeper manually enters reservation details in the calendar</li>
+                  <li>Family groups can view the calendar but cannot create or modify reservations</li>
+                  <li>All reservation management is handled by the Calendar Keeper</li>
+                </ol>
+              </div>
+              
+              <div className="text-center py-4">
+                <p className="text-muted-foreground text-sm">
+                  This setup is ideal for organizations that prefer centralized booking management 
+                  or have specific approval processes for reservations.
                 </p>
               </div>
             </CardContent>
