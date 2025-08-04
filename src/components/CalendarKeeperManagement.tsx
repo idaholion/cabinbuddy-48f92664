@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { MessageSquare, CheckCircle, Clock, AlertTriangle, X, Send, Bell, Calendar } from "lucide-react";
+import { MessageSquare, CheckCircle, Clock, AlertTriangle, X, Send, Bell, Calendar, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { SearchFilter } from "@/components/ui/search-filter";
 import { useCalendarKeeperAssistance, CalendarKeeperRequest } from "@/hooks/useCalendarKeeperAssistance";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationManagement } from "./NotificationManagement";
+import { ReminderTemplateManager } from "./ReminderTemplateManager";
 
 export const CalendarKeeperManagement = () => {
   const { requests, updateRequestStatus, loading } = useCalendarKeeperAssistance();
@@ -140,10 +141,18 @@ export const CalendarKeeperManagement = () => {
             <MessageSquare className="h-4 w-4" />
             <span>Assistance Requests</span>
           </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center space-x-2">
+            <Mail className="h-4 w-4" />
+            <span>Reminder Templates</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="notifications">
           <NotificationManagement />
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <ReminderTemplateManager />
         </TabsContent>
 
         <TabsContent value="requests" className="space-y-4">
