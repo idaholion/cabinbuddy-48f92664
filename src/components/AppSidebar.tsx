@@ -31,7 +31,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
-import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 
 const setupItems = [
@@ -149,10 +148,6 @@ export function AppSidebar() {
         <SidebarTrigger />
       </div>
       
-      {/* Organization Switcher Header */}
-      <div className="p-2 border-b">
-        <OrganizationSwitcher />
-      </div>
       
       <SidebarContent>
         {/* Dashboard */}
