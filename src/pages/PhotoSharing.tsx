@@ -172,7 +172,7 @@ export default function PhotoSharing() {
                   alt={photo.caption}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
-                {photo.isSample && hasUserPhotos && (
+                {photo.isSample && (
                   <Button
                     variant="destructive"
                     size="sm"
