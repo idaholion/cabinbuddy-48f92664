@@ -11,6 +11,7 @@ import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
+import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -40,6 +41,7 @@ const UserInfo = () => {
 const Index = () => {
   const { isSupervisor } = useSupervisor();
   const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
+  const { activeOrganization } = useMultiOrganization();
   
   // Monitor performance
   usePerformanceMonitoring();
@@ -61,16 +63,6 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/cabin-rules">Cabin Rules</Link>
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/documents">Documents</Link>
-              </Button>
-              <Button variant="ghost" className="text-sm font-medium" asChild>
-                <Link to="/photos">Photos</Link>
-              </Button>
-              
               {/* Organization Management Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -130,6 +122,11 @@ const Index = () => {
           <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
             Welcome to Cabin Buddy
           </h1>
+          {activeOrganization && (
+            <p className="text-4xl font-kaushan text-primary/80 drop-shadow-md">
+              {activeOrganization.organization_name}
+            </p>
+          )}
         </div>
 
         {/* Action Buttons Overlay */}
