@@ -218,7 +218,7 @@ const Index = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/data-backup">
                     <Database className="h-4 w-4 mr-2" />
-                    Data Backup
+                    Data Restore
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

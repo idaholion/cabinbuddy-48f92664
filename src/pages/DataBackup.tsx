@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, Database, Calendar, FileText, Trash2, RefreshCw } from "lucide-react";
+import { Download, Database, Calendar, FileText, Trash2, RefreshCw, Upload, AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { format } from "date-fns";
@@ -25,6 +26,8 @@ export default function DataBackup() {
   const [creating, setCreating] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [restoreDialog, setRestoreDialog] = useState<{open: boolean, backup?: BackupMetadata, preview?: any}>({open: false});
+  const [restoring, setRestoring] = useState(false);
   const { toast } = useToast();
 
   const checkAdminStatus = async () => {
@@ -146,6 +149,65 @@ export default function DataBackup() {
     }
   };
 
+  const previewRestore = async (backup: BackupMetadata) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('restore-organization-backup', {
+        body: {
+          backup_file_path: backup.file_path,
+          confirm_restore: false
+        }
+      });
+
+      if (error) throw error;
+
+      setRestoreDialog({
+        open: true,
+        backup,
+        preview: data.data
+      });
+    } catch (error) {
+      console.error('Error previewing restore:', error);
+      toast({
+        title: "Preview Failed",
+        description: "Failed to preview backup data",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const confirmRestore = async () => {
+    if (!restoreDialog.backup) return;
+    
+    setRestoring(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('restore-organization-backup', {
+        body: {
+          backup_file_path: restoreDialog.backup.file_path,
+          confirm_restore: true
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Restore Completed",
+        description: `Data restored from ${restoreDialog.preview?.backup_date ? format(new Date(restoreDialog.preview.backup_date), 'MMM d, yyyy') : 'backup'}`,
+      });
+
+      setRestoreDialog({open: false});
+      fetchBackups(); // Refresh to show any new backup records
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      toast({
+        title: "Restore Failed",
+        description: "Failed to restore data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   const deleteBackup = async (backup: BackupMetadata) => {
     try {
       // Delete from storage
@@ -199,8 +261,8 @@ export default function DataBackup() {
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <div className="container mx-auto px-4 py-8">
           <PageHeader 
-            title="Data Backup & Recovery"
-            subtitle="Manage your organization's data backups"
+            title="Data Restore & Recovery"
+            subtitle="Access data backups and restore functionality"
             icon={Database}
           >
             <NavigationHeader />
@@ -220,8 +282,8 @@ export default function DataBackup() {
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <div className="container mx-auto px-4 py-8">
           <PageHeader 
-            title="Data Backup & Recovery"
-            subtitle="Manage your organization's data backups"
+            title="Data Restore & Recovery"
+            subtitle="Access data backups and restore functionality"
             icon={Database}
           >
             <NavigationHeader />
@@ -247,8 +309,8 @@ export default function DataBackup() {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8">
         <PageHeader 
-          title="Data Backup & Recovery"
-          subtitle="Manage your organization's data backups"
+          title="Data Restore & Recovery"
+          subtitle="Manage organization data backups and restore capabilities"
           icon={Database}
         >
           <NavigationHeader />
@@ -355,6 +417,15 @@ export default function DataBackup() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => previewRestore(backup)}
+                          className="flex items-center gap-1"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Restore
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => downloadBackup(backup)}
                           className="flex items-center gap-1"
                         >
@@ -377,6 +448,104 @@ export default function DataBackup() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Restore Confirmation Dialog */}
+        <Dialog open={restoreDialog.open} onOpenChange={(open) => setRestoreDialog({open})}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Confirm Data Restore
+              </DialogTitle>
+              <DialogDescription>
+                This will restore your organization data from the selected backup. All current data will be replaced.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {restoreDialog.preview && (
+              <div className="space-y-4">
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Backup Information</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Backup Date:</span>
+                      <p className="font-medium">
+                        {format(new Date(restoreDialog.preview.backup_date), 'MMM d, yyyy h:mm a')}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Backup Type:</span>
+                      <p className="font-medium capitalize">{restoreDialog.preview.backup_type}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2 text-amber-800">⚠️ Important Notice</h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    <li>• A backup of your current data will be created before restore</li>
+                    <li>• All current organization data will be replaced with backup data</li>
+                    <li>• This action cannot be undone (except by restoring another backup)</li>
+                    <li>• Any data added since this backup will be lost</li>
+                  </ul>
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Data to be Restored</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Family Groups:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.family_groups}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Reservations:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.reservations}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Receipts:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.receipts}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Rotation Orders:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.rotation_orders}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Check-in Sessions:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.checkin_sessions}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>User Profiles:</span>
+                      <span className="font-medium">{restoreDialog.preview.data_summary.profiles}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setRestoreDialog({open: false})}
+                disabled={restoring}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmRestore}
+                disabled={restoring}
+                className="flex items-center gap-2"
+              >
+                {restoring ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {restoring ? 'Restoring...' : 'Confirm Restore'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
