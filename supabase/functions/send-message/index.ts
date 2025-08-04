@@ -11,9 +11,11 @@ interface SendMessageRequest {
   organizationId: string;
   subject: string;
   message: string;
-  recipientGroup: 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users';
+  recipientGroup: 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users' | 'test';
   messageType: 'email' | 'sms' | 'both';
   urgent: boolean;
+  testEmail?: string;
+  testPhone?: string;
 }
 
 const supabase = createClient(
@@ -35,7 +37,9 @@ const handler = async (req: Request): Promise<Response> => {
       message,
       recipientGroup,
       messageType,
-      urgent
+      urgent,
+      testEmail,
+      testPhone
     }: SendMessageRequest = await req.json();
 
     console.log('Sending message:', { organizationId, recipientGroup, messageType, urgent });
@@ -53,17 +57,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     let recipients: { email?: string; phone?: string; name?: string }[] = [];
 
-    // Determine recipients based on group
-    switch (recipientGroup) {
-      case 'administrator':
-        if (organization.admin_email) {
-          recipients.push({
-            email: organization.admin_email,
-            phone: organization.admin_phone,
-            name: organization.admin_name || 'Administrator'
-          });
-        }
-        break;
+    // Handle test messages
+    if (recipientGroup === 'test') {
+      if (testEmail) {
+        recipients.push({
+          email: testEmail,
+          name: 'Test User'
+        });
+      }
+      if (testPhone) {
+        recipients.push({
+          phone: testPhone,
+          name: 'Test User'
+        });
+      }
+    } else {
+      // Determine recipients based on group
+      switch (recipientGroup) {
+        case 'administrator':
+          if (organization.admin_email) {
+            recipients.push({
+              email: organization.admin_email,
+              phone: organization.admin_phone,
+              name: organization.admin_name || 'Administrator'
+            });
+          }
+          break;
 
       case 'calendar_keeper':
         if (organization.calendar_keeper_email) {
@@ -146,6 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
           });
         }
         break;
+      }
     }
 
     // Remove duplicates and filter out invalid recipients

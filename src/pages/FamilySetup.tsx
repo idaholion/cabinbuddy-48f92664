@@ -13,6 +13,7 @@ import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
+import { NotificationTest } from "@/components/NotificationTest";
 
 const FamilySetup = () => {
   const { toast } = useToast();
@@ -701,6 +702,11 @@ const FamilySetup = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Notification Test Component */}
+        <div className="mt-6 flex justify-center">
+          <NotificationTest />
+        </div>
 
       </div>
     </div>
