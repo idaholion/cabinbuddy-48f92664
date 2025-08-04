@@ -225,7 +225,7 @@ const Index = () => {
             <Link to="/host-profile" className="flex items-center space-x-3">
               <User className="h-5 w-5" />
               <span className="font-kaushan text-xl">
-                {user?.user_metadata?.first_name || user?.email}
+                Richard Andrew
               </span>
             </Link>
           </Button>
