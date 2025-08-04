@@ -206,27 +206,44 @@ const DailyCheckIn = () => {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />
-                  Number of people at the cabin
+                  Guest Occupancy Tracking
                 </CardTitle>
-                <CardDescription>Enter the number of people staying each day of your reservation</CardDescription>
+                <CardDescription>
+                  Track the number of people staying each day. You can fill this out day by day as you go, 
+                  or complete it all at once - whatever works best for you. You can always come back and update it.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
-                {stayDays.map((day) => (
-                  <div key={day.key} className="space-y-2">
-                    <Label htmlFor={day.key}>
-                      {day.label}
-                    </Label>
-                    <Input
-                      id={day.key}
-                      type="number"
-                      placeholder="0"
-                      min="0"
-                      className="w-20"
-                      value={dailyOccupancy[day.key] || ""}
-                      onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
-                    />
+              <CardContent>
+                {/* Helpful info box */}
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm text-blue-800">
+                    <strong>💡 Tip:</strong> You don't need to fill out everything at once! You can:
+                    <ul className="mt-1 ml-4 list-disc space-y-1">
+                      <li>Fill out just today and come back tomorrow for the next day</li>
+                      <li>Complete your entire stay in advance if you know your plans</li>
+                      <li>Update or add information any time during your reservation</li>
+                    </ul>
                   </div>
-                ))}
+                </div>
+                
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
+                  {stayDays.map((day) => (
+                    <div key={day.key} className="space-y-2">
+                      <Label htmlFor={day.key}>
+                        {day.label}
+                      </Label>
+                      <Input
+                        id={day.key}
+                        type="number"
+                        placeholder="0"
+                        min="0"
+                        className="w-20"
+                        value={dailyOccupancy[day.key] || ""}
+                        onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -277,7 +294,7 @@ const DailyCheckIn = () => {
                   </span>
                 </div>
                 <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary">
-                  {isSubmitting ? "Saving..." : "Complete Daily Check-In"}
+                  {isSubmitting ? "Saving..." : "Save Check-In Data"}
                 </Button>
               </div>
             </CardContent>
