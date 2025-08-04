@@ -252,6 +252,48 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          organization_id: string
+          title: string
+          updated_at: string
+          uploaded_by_user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id: string
+          title: string
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       family_groups: {
         Row: {
           alternate_lead_id: string | null
@@ -962,6 +1004,45 @@ export type Database = {
           },
         ]
       }
+      seasonal_documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_type: string
+          external_url: string | null
+          file_url: string | null
+          id: string
+          organization_id: string
+          season: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id: string
+          season: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_type?: string
+          external_url?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id?: string
+          season?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       secondary_selection_status: {
         Row: {
           created_at: string | null
@@ -1009,6 +1090,80 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shopping_list_items: {
+        Row: {
+          added_by_user_id: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          item_name: string
+          organization_id: string
+          quantity: string | null
+          shopping_list_id: string
+          updated_at: string
+        }
+        Insert: {
+          added_by_user_id?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          item_name: string
+          organization_id: string
+          quantity?: string | null
+          shopping_list_id: string
+          updated_at?: string
+        }
+        Update: {
+          added_by_user_id?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          item_name?: string
+          organization_id?: string
+          quantity?: string | null
+          shopping_list_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopping_list_items_shopping_list_id_fkey"
+            columns: ["shopping_list_id"]
+            isOneToOne: false
+            referencedRelation: "shopping_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopping_lists: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       supervisors: {
         Row: {

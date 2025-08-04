@@ -1,72 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, ShoppingCart, Home } from "lucide-react";
+import { Trash2, Plus, ShoppingCart, Home, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
-
-interface ShoppingItem {
-  id: string;
-  name: string;
-  quantity?: string;
-  addedBy: string;
-  completed: boolean;
-  priority: "low" | "medium" | "high";
-}
+import { useShoppingLists } from "@/hooks/useShoppingLists";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ShoppingList = () => {
   const navigate = useNavigate();
+  const { items, loading, addItem: addItemToDb, toggleItemComplete, deleteItem: deleteItemFromDb, createShoppingList, shoppingLists } = useShoppingLists();
+  const { user } = useAuth();
   const [newItem, setNewItem] = useState("");
   const [newQuantity, setNewQuantity] = useState("");
-  const [items, setItems] = useState<ShoppingItem[]>([
-    { id: "1", name: "Milk", quantity: "1 gallon", addedBy: "Mom", completed: false, priority: "medium" },
-    { id: "2", name: "Bread", quantity: "2 loaves", addedBy: "Dad", completed: false, priority: "high" },
-    { id: "3", name: "Eggs", quantity: "1 dozen", addedBy: "Emma", completed: true, priority: "medium" },
-    { id: "4", name: "Bananas", addedBy: "Jake", completed: false, priority: "low" },
-  ]);
+  const [currentListId, setCurrentListId] = useState<string | null>(null);
 
-  const addItem = () => {
-    if (!newItem.trim()) return;
-    
-    const item: ShoppingItem = {
-      id: Date.now().toString(),
-      name: newItem.trim(),
-      quantity: newQuantity.trim() || undefined,
-      addedBy: "You",
-      completed: false,
-      priority: "medium"
+  // Ensure we have a shopping list to work with
+  useEffect(() => {
+    const initializeList = async () => {
+      if (shoppingLists.length === 0 && !loading) {
+        // Create a default shopping list if none exist
+        const newList = await createShoppingList();
+        if (newList) {
+          setCurrentListId(newList.id);
+        }
+      } else if (shoppingLists.length > 0 && !currentListId) {
+        // Use the first available list
+        setCurrentListId(shoppingLists[0].id);
+      }
     };
+
+    initializeList();
+  }, [shoppingLists, loading, createShoppingList, currentListId]);
+
+  const addItem = async () => {
+    if (!newItem.trim() || !currentListId) return;
     
-    setItems([...items, item]);
-    setNewItem("");
-    setNewQuantity("");
-  };
-
-  const toggleComplete = (id: string) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, completed: !item.completed } : item
-    ));
-  };
-
-  const deleteItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high": return "destructive";
-      case "medium": return "default";
-      case "low": return "secondary";
-      default: return "default";
+    try {
+      await addItemToDb(currentListId, {
+        item_name: newItem.trim(),
+        quantity: newQuantity.trim() || undefined,
+        category: "general" // Default category
+      });
+      
+      setNewItem("");
+      setNewQuantity("");
+    } catch (error) {
+      console.error('Failed to add item:', error);
     }
   };
 
-  const pendingItems = items.filter(item => !item.completed);
-  const completedItems = items.filter(item => item.completed);
+  const toggleComplete = (id: string) => {
+    toggleItemComplete(id);
+  };
+
+  const deleteItem = (id: string) => {
+    deleteItemFromDb(id);
+  };
+
+  const getPriorityColor = (category?: string) => {
+    // Map categories to priority colors for visual consistency
+    switch (category) {
+      case "urgent": return "destructive";
+      case "important": return "default";
+      case "general": return "secondary";
+      default: return "secondary";
+    }
+  };
+
+  const pendingItems = items.filter(item => !item.is_completed);
+  const completedItems = items.filter(item => item.is_completed);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -117,20 +132,20 @@ const ShoppingList = () => {
               {pendingItems.map(item => (
                 <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg">
                   <Checkbox
-                    checked={item.completed}
+                    checked={item.is_completed}
                     onCheckedChange={() => toggleComplete(item.id)}
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium">{item.item_name}</span>
                       {item.quantity && (
                         <span className="text-sm text-muted-foreground">({item.quantity})</span>
                       )}
-                      <Badge variant={getPriorityColor(item.priority)}>
-                        {item.priority}
+                      <Badge variant={getPriorityColor(item.category)}>
+                        {item.category || "general"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">Added by {item.addedBy}</p>
+                    <p className="text-sm text-muted-foreground">Added by {item.added_by_user_id === user?.id ? 'You' : 'Family Member'}</p>
                   </div>
                   <Button
                     variant="ghost"
@@ -161,17 +176,17 @@ const ShoppingList = () => {
                 {completedItems.map(item => (
                   <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg opacity-60">
                     <Checkbox
-                      checked={item.completed}
+                      checked={item.is_completed}
                       onCheckedChange={() => toggleComplete(item.id)}
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="line-through">{item.name}</span>
+                        <span className="line-through">{item.item_name}</span>
                         {item.quantity && (
                           <span className="text-sm text-muted-foreground">({item.quantity})</span>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">Added by {item.addedBy}</p>
+                      <p className="text-sm text-muted-foreground">Added by {item.added_by_user_id === user?.id ? 'You' : 'Family Member'}</p>
                     </div>
                     <Button
                       variant="ghost"

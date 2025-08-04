@@ -1,0 +1,232 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/hooks/useOrganization';
+import { useToast } from '@/hooks/use-toast';
+
+export interface Document {
+  id: string;
+  organization_id: string;
+  title: string;
+  description?: string;
+  category: string;
+  file_url?: string;
+  file_size?: number;
+  file_type?: string;
+  uploaded_by_user_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const useDocuments = () => {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { organization } = useOrganization();
+  const { toast } = useToast();
+
+  const fetchDocuments = async () => {
+    if (!organization?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load documents",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadDocument = async (file: File, documentData: {
+    title: string;
+    description?: string;
+    category: string;
+  }) => {
+    if (!user || !organization?.id) return;
+
+    try {
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${organization.id}/${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      // Insert document record
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          organization_id: organization.id,
+          uploaded_by_user_id: user.id,
+          file_url: publicUrl,
+          file_size: file.size,
+          file_type: file.type,
+          ...documentData
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Document uploaded successfully"
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload document",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const addDocumentLink = async (documentData: {
+    title: string;
+    description?: string;
+    category: string;
+    file_url: string;
+  }) => {
+    if (!user || !organization?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          organization_id: organization.id,
+          uploaded_by_user_id: user.id,
+          ...documentData
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Document link added successfully"
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error adding document link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add document link",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const deleteDocument = async (documentId: string) => {
+    if (!user) return;
+
+    try {
+      const document = documents.find(d => d.id === documentId);
+      if (!document) return;
+
+      // Delete file from storage if it exists
+      if (document.file_url && document.file_url.includes('supabase')) {
+        const fileName = document.file_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('documents')
+            .remove([`${organization?.id}/${user.id}/${fileName}`]);
+        }
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', documentId);
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.filter(d => d.id !== documentId));
+      toast({
+        title: "Success",
+        description: "Document deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete document",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateDocument = async (documentId: string, updates: Partial<Document>) => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .update(updates)
+        .eq('id', documentId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => prev.map(d => d.id === documentId ? data : d));
+      toast({
+        title: "Success",
+        description: "Document updated successfully"
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error updating document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update document",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    if (organization?.id) {
+      fetchDocuments();
+    }
+  }, [organization?.id]);
+
+  return {
+    documents,
+    loading,
+    uploadDocument,
+    addDocumentLink,
+    deleteDocument,
+    updateDocument,
+    refetch: fetchDocuments
+  };
+};

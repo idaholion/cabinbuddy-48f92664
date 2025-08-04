@@ -1,61 +1,94 @@
-import { ArrowLeft, FileText, Download, Eye, Calendar } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, FileText, Download, Eye, Calendar, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { useDocuments } from "@/hooks/useDocuments";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Documents = () => {
   const navigate = useNavigate();
+  const { documents, loading, uploadDocument, addDocumentLink, deleteDocument } = useDocuments();
+  const { user } = useAuth();
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    file: null as File | null,
+    fileUrl: ""
+  });
 
-  const documents = [
-    {
-      id: 1,
-      name: "Property Deed",
-      type: "Legal Document",
-      size: "2.3 MB",
-      lastModified: "2024-01-15",
-      description: "Official property ownership documentation"
-    },
-    {
-      id: 2,
-      name: "Insurance Policy",
-      type: "Insurance",
-      size: "1.8 MB",
-      lastModified: "2024-02-20",
-      description: "Comprehensive property insurance coverage details"
-    },
-    {
-      id: 3,
-      name: "Maintenance Records",
-      type: "Maintenance",
-      size: "5.2 MB",
-      lastModified: "2024-03-10",
-      description: "Complete history of property maintenance and repairs"
-    },
-    {
-      id: 4,
-      name: "Rental Agreement Template",
-      type: "Legal Document",
-      size: "876 KB",
-      lastModified: "2024-02-28",
-      description: "Standard rental agreement for family bookings"
-    },
-    {
-      id: 5,
-      name: "Emergency Contacts",
-      type: "Reference",
-      size: "124 KB",
-      lastModified: "2024-03-05",
-      description: "Local emergency services and important contacts"
-    },
-    {
-      id: 6,
-      name: "Appliance Manuals",
-      type: "Reference",
-      size: "12.4 MB",
-      lastModified: "2024-01-30",
-      description: "User manuals for all cabin appliances and equipment"
-    }
+  const categories = [
+    "Legal Document",
+    "Insurance", 
+    "Maintenance",
+    "Reference",
+    "Financial",
+    "Emergency",
+    "Safety"
   ];
+
+  const handleFileUpload = async () => {
+    if (!uploadForm.title || !uploadForm.category) return;
+
+    setUploading(true);
+    try {
+      if (uploadForm.file) {
+        await uploadDocument(uploadForm.file, {
+          title: uploadForm.title,
+          description: uploadForm.description,
+          category: uploadForm.category
+        });
+      } else if (uploadForm.fileUrl) {
+        await addDocumentLink({
+          title: uploadForm.title,
+          description: uploadForm.description,
+          category: uploadForm.category,
+          file_url: uploadForm.fileUrl
+        });
+      }
+
+      setUploadForm({
+        title: "",
+        description: "",
+        category: "",
+        file: null,
+        fileUrl: ""
+      });
+      setIsUploadOpen(false);
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDownload = (document: any) => {
+    if (document.file_url) {
+      window.open(document.file_url, '_blank');
+    }
+  };
+
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return 'Unknown size';
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,57 +153,170 @@ const Documents = () => {
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{doc.name}</CardTitle>
+                      <CardTitle className="text-lg">{doc.title}</CardTitle>
                       <CardDescription className="mt-1">
                         {doc.description}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                    >
                       <Eye className="h-4 w-4" />
                       View
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownload(doc)}
+                    >
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
+                    {user?.id === doc.uploaded_by_user_id && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => deleteDocument(doc.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="bg-secondary px-2 py-1 rounded text-xs font-medium">
-                    {doc.type}
+                    {doc.category}
                   </span>
-                  <span>{doc.size}</span>
-                  <span>Modified: {doc.lastModified}</span>
+                  <span>{formatFileSize(doc.file_size)}</span>
+                  <span>Modified: {new Date(doc.updated_at).toLocaleDateString()}</span>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
+        {documents.length === 0 && (
+          <div className="text-center py-12">
+            <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No documents yet</h3>
+            <p className="text-muted-foreground mb-4">Upload your first document to get started!</p>
+          </div>
+        )}
+
         {/* Upload Section */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Upload New Document</CardTitle>
-            <CardDescription>
-              Add important documents for easy access by family members
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">
-                Drag and drop files here, or click to select
-              </p>
-              <Button variant="outline">
-                Choose Files
-              </Button>
+        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Upload New Document</CardTitle>
+              <CardDescription>
+                Add important documents for easy access by family members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DialogTrigger asChild>
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Click to upload documents or add links
+                  </p>
+                  <Button variant="outline">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Document
+                  </Button>
+                </div>
+              </DialogTrigger>
+            </CardContent>
+          </Card>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload Document</DialogTitle>
+              <DialogDescription>
+                Upload a file or add a link to an external document
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Document Title</Label>
+                <Input
+                  id="title"
+                  value={uploadForm.title}
+                  onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                  placeholder="Enter document title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Input
+                  id="description"
+                  value={uploadForm.description}
+                  onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                  placeholder="Brief description of the document"
+                />
+              </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select 
+                  value={uploadForm.category} 
+                  onValueChange={(value) => setUploadForm({ ...uploadForm, category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="file">Upload File</Label>
+                <Input
+                  id="file"
+                  type="file"
+                  onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files?.[0] || null })}
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                />
+              </div>
+              <div className="text-center text-sm text-muted-foreground">OR</div>
+              <div>
+                <Label htmlFor="fileUrl">Document URL</Label>
+                <Input
+                  id="fileUrl"
+                  value={uploadForm.fileUrl}
+                  onChange={(e) => setUploadForm({ ...uploadForm, fileUrl: e.target.value })}
+                  placeholder="https://example.com/document.pdf"
+                />
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsUploadOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleFileUpload} 
+                disabled={uploading || !uploadForm.title || !uploadForm.category || (!uploadForm.file && !uploadForm.fileUrl)}
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4 mr-2" />
+                )}
+                {uploading ? 'Uploading...' : 'Upload Document'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
