@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
-import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
