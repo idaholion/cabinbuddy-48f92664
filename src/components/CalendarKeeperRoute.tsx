@@ -22,8 +22,10 @@ export const CalendarKeeperRoute = ({ children }: CalendarKeeperRouteProps) => {
         return;
       }
 
-      // Check if user is the calendar keeper for the current organization
-      const isKeeper = organization.calendar_keeper_email === user.email;
+      // Check if user is the calendar keeper OR an admin/treasurer for the current organization
+      const isKeeper = organization.calendar_keeper_email === user.email ||
+                       organization.admin_email === user.email ||
+                       organization.treasurer_email === user.email;
       setIsCalendarKeeper(isKeeper);
       setLoading(false);
     };
