@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Camera, DollarSign, Trash2, Home, Receipt } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -70,11 +71,33 @@ const AddReceipt = () => {
     }
   };
 
+  const handleNativePhotoSelection = async (source: CameraSource) => {
+    try {
+      const image = await CapacitorCamera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: source
+      });
+      
+      if (image.dataUrl) {
+        toast({
+          title: "Receipt captured",
+          description: `Receipt photo has been ${source === CameraSource.Camera ? 'taken' : 'selected'} successfully.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error selecting photo:', error);
+      toast({
+        title: "Photo selection failed",
+        description: "Unable to access camera or photo library.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleTakePicture = () => {
-    toast({
-      title: "Camera feature",
-      description: "Camera functionality would be implemented here.",
-    });
+    handleNativePhotoSelection(CameraSource.Camera);
   };
 
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -125,8 +148,39 @@ const AddReceipt = () => {
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div>
+                  <Label>Choose Photo Source</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleNativePhotoSelection(CameraSource.Photos)}
+                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                    >
+                      <Image className="h-6 w-6" />
+                      <span className="text-sm">Photo Library</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleNativePhotoSelection(CameraSource.Camera)}
+                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                    >
+                      <Camera className="h-6 w-6" />
+                      <span className="text-sm">Take Photo</span>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                  </div>
+                </div>
+
+                <div>
                   <Label htmlFor="file-upload" className="cursor-pointer">
-                    <Button asChild className="w-full">
+                    <Button asChild className="w-full" variant="outline">
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
                         Choose File
@@ -143,26 +197,21 @@ const AddReceipt = () => {
                 </div>
                 
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                     dragOver ? "border-primary bg-primary/10" : "border-muted-foreground/25"
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
+                  <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
                     Drag and drop your receipt here
                   </p>
-                  <p className="text-sm text-muted-foreground mt-2">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Supports images and PDF files
                   </p>
                 </div>
-
-                <Button onClick={handleTakePicture} variant="outline" className="w-full">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Take Picture of Receipt
-                </Button>
 
                 <div className="pt-4 border-t">
                   <Label htmlFor="upload-amount">Receipt Amount</Label>
