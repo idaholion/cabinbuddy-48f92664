@@ -52,7 +52,7 @@ const Intro = () => {
   };
 
   const handleGetStarted = () => {
-    navigate("/home");
+    navigate("/demo");
   };
 
   const triggerFileInput = (event?: React.MouseEvent) => {
