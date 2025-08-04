@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
@@ -213,6 +213,12 @@ const Index = () => {
                   <Link to="/cabin-seasonal-docs">
                     <FileText className="h-4 w-4 mr-2" />
                     Cabin Seasonal Docs
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/data-backup">
+                    <Database className="h-4 w-4 mr-2" />
+                    Data Backup
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
