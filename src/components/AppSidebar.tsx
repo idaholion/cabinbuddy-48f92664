@@ -18,7 +18,8 @@ import {
   LogOut,
   UserPlus,
   Plus,
-  MessageSquare
+  MessageSquare,
+  Monitor
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -121,6 +122,11 @@ const managementItems = [
     title: "Messaging",
     url: "/messaging",
     icon: MessageSquare,
+  },
+  {
+    title: "Demo",
+    url: "/demo",
+    icon: Monitor,
   },
   {
     title: "Finance Reports",

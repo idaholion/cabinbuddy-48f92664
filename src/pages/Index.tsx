@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
@@ -184,6 +184,12 @@ const Index = () => {
                   <Link to="/messaging">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Messaging
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/demo">
+                    <Monitor className="h-4 w-4 mr-2" />
+                    System Demo
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
