@@ -24,56 +24,193 @@ export default function Demo() {
       id: 'setup-overview',
       title: 'System Setup',
       description: 'Complete cabin management system configuration',
-      explanation: 'The setup process guides administrators through configuring family groups, financial settings, reservation rules, and communication preferences.',
+      explanation: 'The setup process guides administrators through configuring family groups, financial settings, reservation rules, and communication preferences with real data entry forms.',
       icon: Users,
       content: (
         <div className="p-6 bg-background min-h-[500px]">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Cabin Management Setup</h1>
-              <p className="text-muted-foreground">Configure your cabin sharing system</p>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Family Group Setup</h1>
+              <p className="text-muted-foreground">Configure your family groups and member assignments</p>
             </div>
             
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-              <Card className="border-green-200 bg-green-50">
+            <div className="grid gap-8 md:grid-cols-2">
+              {/* Family Setup Form */}
+              <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Users className="h-6 w-6 text-green-600" />
-                    <h3 className="font-semibold">Family Setup</h3>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Complete</Badge>
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    Add New Family Group
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Family Name</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="The Johnson Family"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Primary Contact</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="Sarah Johnson"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <input 
+                        type="email" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="sarah.johnson@email.com"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Phone</label>
+                      <input 
+                        type="tel" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="(555) 123-4567"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Number of Members</label>
+                      <select className="w-full mt-1 p-2 border border-input rounded-md" value="4" disabled>
+                        <option>4</option>
+                      </select>
+                    </div>
+                    <Button className="w-full" disabled>Add Family Group</Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">Define family groups and assign members</p>
-                  <p className="text-xs text-green-700">✓ 8 families configured</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-green-200 bg-green-50">
+              {/* Current Family Groups */}
+              <Card>
                 <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <DollarSign className="h-6 w-6 text-green-600" />
-                    <h3 className="font-semibold">Financial Setup</h3>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Complete</Badge>
+                  <h3 className="font-semibold mb-4">Current Family Groups</h3>
+                  <div className="space-y-3">
+                    <div className="p-3 border rounded-lg bg-green-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-medium">The Smith Family</div>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Contact: Mike Smith</p>
+                      <p className="text-sm text-muted-foreground">mike.smith@email.com</p>
+                      <p className="text-sm text-muted-foreground">Members: 5</p>
+                    </div>
+                    <div className="p-3 border rounded-lg bg-green-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-medium">The Wilson Family</div>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Contact: Lisa Wilson</p>
+                      <p className="text-sm text-muted-foreground">lisa.wilson@email.com</p>
+                      <p className="text-sm text-muted-foreground">Members: 3</p>
+                    </div>
+                    <div className="p-3 border rounded-lg bg-green-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-medium">The Brown Family</div>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Contact: David Brown</p>
+                      <p className="text-sm text-muted-foreground">david.brown@email.com</p>
+                      <p className="text-sm text-muted-foreground">Members: 4</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">Configure expense tracking and billing</p>
-                  <p className="text-xs text-green-700">✓ Annual fee: $2,400</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-green-200 bg-green-50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Calendar className="h-6 w-6 text-green-600" />
-                    <h3 className="font-semibold">Reservation Setup</h3>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Complete</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">Define booking rules and rotation</p>
-                  <p className="text-xs text-green-700">✓ 2-week max stays</p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 text-sm">🎉 Setup complete! Your cabin management system is ready for use.</p>
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              {/* Financial Setup Preview */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    Financial Configuration
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Annual Family Fee</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="$2,400"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Payment Due Date</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="January 15th"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Late Fee</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="$50"
+                        readOnly
+                      />
+                    </div>
+                    <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                      ✓ Financial settings configured
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reservation Setup Preview */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-purple-600" />
+                    Reservation Rules
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Maximum Stay Length</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="14 days"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Booking Opens</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="1st of each month at 9:00 AM"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Rotation Method</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="Fair rotation by family"
+                        readOnly
+                      />
+                    </div>
+                    <div className="text-sm text-purple-700 bg-purple-50 p-2 rounded">
+                      ✓ Reservation system configured
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
