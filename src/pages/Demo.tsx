@@ -775,19 +775,17 @@ export default function Demo() {
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12"
             onClick={prevSlide}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
 
           <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-16 h-16 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold shadow-lg"
             onClick={nextSlide}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-8 w-8" />
           </Button>
 
           {/* Slide Content */}
@@ -813,10 +811,15 @@ export default function Demo() {
           </Card>
         </div>
 
-        {/* Navigation Footer */}
-        <div className="flex items-center justify-between mt-6">
-          <Button variant="outline" onClick={prevSlide} disabled={currentSlide === 0}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
+        {/* Navigation Footer - Moved higher and made more prominent */}
+        <div className="flex items-center justify-between mt-4 px-4">
+          <Button 
+            variant="outline" 
+            onClick={prevSlide} 
+            disabled={currentSlide === 0}
+            className="flex items-center gap-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
             Previous
           </Button>
 
@@ -824,9 +827,13 @@ export default function Demo() {
             {currentSlide + 1} of {demoSlides.length}
           </div>
 
-          <Button onClick={nextSlide} disabled={currentSlide === demoSlides.length - 1}>
+          <Button 
+            onClick={nextSlide} 
+            disabled={currentSlide === demoSlides.length - 1}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-lg font-semibold"
+          >
             Next
-            <ChevronRight className="ml-2 h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
       </div>
