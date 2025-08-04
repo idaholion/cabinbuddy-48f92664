@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User } from "lucide-react";
+import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -20,6 +20,7 @@ interface Photo {
   uploadedAt: string;
   likes: number;
   comments: string[];
+  isSample?: boolean;
 }
 
 export default function PhotoSharing() {
@@ -31,7 +32,8 @@ export default function PhotoSharing() {
       uploadedBy: "Sarah Johnson",
       uploadedAt: "2024-01-15",
       likes: 12,
-      comments: ["Gorgeous view!", "Love this place"]
+      comments: ["Gorgeous view!", "Love this place"],
+      isSample: true
     },
     {
       id: "2", 
@@ -40,7 +42,8 @@ export default function PhotoSharing() {
       uploadedBy: "Mike Davis",
       uploadedAt: "2024-01-14",
       likes: 8,
-      comments: ["Yummy!", "Great find!"]
+      comments: ["Yummy!", "Great find!"],
+      isSample: true
     },
     {
       id: "3",
@@ -49,7 +52,8 @@ export default function PhotoSharing() {
       uploadedBy: "Emily Wilson",
       uploadedAt: "2024-01-13",
       likes: 15,
-      comments: ["So cute!", "Best cabin mascot ever"]
+      comments: ["So cute!", "Best cabin mascot ever"],
+      isSample: true
     }
   ]);
 
@@ -90,6 +94,13 @@ export default function PhotoSharing() {
         : photo
     ));
   };
+
+  const handleDelete = (photoId: string) => {
+    setPhotos(photos.filter(photo => photo.id !== photoId));
+  };
+
+  // Check if there are any user photos (non-sample photos)
+  const hasUserPhotos = photos.some(photo => !photo.isSample);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -155,12 +166,22 @@ export default function PhotoSharing() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {photos.map((photo) => (
             <Card key={photo.id} className="overflow-hidden bg-card/95 hover:shadow-lg transition-shadow">
-              <div className="aspect-square overflow-hidden">
+              <div className="aspect-square overflow-hidden relative">
                 <img
                   src={photo.url}
                   alt={photo.caption}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
+                {photo.isSample && hasUserPhotos && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(photo.id)}
+                    className="absolute top-2 right-2 h-8 w-8 p-0 opacity-80 hover:opacity-100"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3 mb-3">
