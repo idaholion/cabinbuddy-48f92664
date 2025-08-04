@@ -67,7 +67,30 @@ const handler = async (req: Request): Promise<Response> => {
                 guest_email: reservation.family_groups.contact_email,
                 guest_name: reservation.family_groups.contact_name,
               },
-              days_until: days
+              days_until: days,
+              pre_arrival_checklist: {
+                seven_day: [
+                  'Review shopping list and coordinate with other families',
+                  'Check weather forecast for packing',
+                  'Share guest information packet with friends/family joining',
+                  'Review cabin rules and policies',
+                  'Plan transportation and confirm directions'
+                ],
+                three_day: [
+                  'Final review of shopping list',
+                  'Confirm arrival time with calendar keeper if needed',
+                  'Pack according to weather forecast',
+                  'Double-check emergency contact information',
+                  'Review check-in procedures'
+                ],
+                one_day: [
+                  'Final weather check and packing adjustments',
+                  'Confirm departure time and route',
+                  'Ensure all guests have cabin address and WiFi info',
+                  'Last-minute coordination with other families',
+                  'Emergency contacts saved in phone'
+                ]
+              }
             }
           });
           
