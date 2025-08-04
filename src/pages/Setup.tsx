@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X } from "lucide-react";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -20,7 +20,7 @@ const Setup = () => {
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
-  const [cardAnimations, setCardAnimations] = useState([false, false, false, false]);
+  const [cardAnimations, setCardAnimations] = useState([false, false, false, false, false]);
   const [progressValue, setProgressValue] = useState(0);
   
   // State for sidebar info card dismissal
@@ -96,12 +96,19 @@ const Setup = () => {
     rotationData?.start_month?.trim()
   );
 
+  // Calendar Keeper Management is considered complete when the organization has a calendar keeper
+  const isCalendarKeeperComplete = !!(
+    organization?.calendar_keeper_name?.trim() &&
+    organization?.calendar_keeper_email?.trim()?.includes('@')
+  );
+
   // Determine the next step to highlight
   const getNextStep = () => {
     if (!isOrganizationComplete) return 1;
     if (!isFamilyGroupsComplete) return 2;
     if (!isFinancialComplete) return 3;
     if (!isReservationComplete) return 4;
+    if (!isCalendarKeeperComplete) return 5;
     return null; // All complete
   };
 
@@ -118,9 +125,10 @@ const Setup = () => {
     isOrganizationComplete,
     isFamilyGroupsComplete,
     isFinancialComplete,
-    isReservationComplete
+    isReservationComplete,
+    isCalendarKeeperComplete
   ].filter(Boolean).length;
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progressPercentage = (completedSteps / totalSteps) * 100;
 
   // Animation effects
@@ -327,7 +335,7 @@ const Setup = () => {
           </Alert>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <StepCard
             stepNumber={1}
             title="Step 1: Family Setup"
@@ -366,6 +374,16 @@ const Setup = () => {
             isComplete={isReservationComplete}
             linkTo="/reservation-setup"
             linkText="Configure or Change Reservations"
+          />
+
+          <StepCard
+            stepNumber={5}
+            title="Step 5: Calendar Keeper Management"
+            description="Configure messaging templates and reminder settings for communicating with cabin users about deadlines and updates."
+            icon={MessageSquare}
+            isComplete={isCalendarKeeperComplete}
+            linkTo="/calendar-keeper-management"
+            linkText="Configure Calendar Keeper Management"
           />
         </div>
 
