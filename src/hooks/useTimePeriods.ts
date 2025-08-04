@@ -46,8 +46,22 @@ export const useTimePeriods = () => {
   ): TimePeriodWindow[] => {
     if (!rotationData) return [];
 
+    // Only generate time periods for the current rotation year or within 1 year range
+    const currentYear = new Date().getFullYear();
+    const monthYear = month.getFullYear();
+    
+    // Don't generate time periods for years too far in the past or future
+    if (Math.abs(monthYear - currentYear) > 1) {
+      return [];
+    }
+    
+    // Only generate if we're looking at the rotation year or current year
+    if (monthYear !== rotationData.rotation_year && monthYear !== currentYear) {
+      return [];
+    }
+
     const windows: TimePeriodWindow[] = [];
-    const rotationOrder = getRotationForYear(year);
+    const rotationOrder = getRotationForYear(monthYear);
     const maxTimeSlots = rotationData.max_time_slots || 2;
     const maxNights = rotationData.max_nights || 7;
     const startDay = rotationData.start_day || 'Friday';
@@ -59,7 +73,7 @@ export const useTimePeriods = () => {
     };
     const startDayIndex = dayMap[startDay] ?? 5;
 
-    // Calculate time period windows for the month
+    // Calculate time period windows only for the specific month being viewed
     const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
     const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
     
@@ -78,7 +92,7 @@ export const useTimePeriods = () => {
       // Create time period window
       const windowStart = new Date(currentDate);
       const windowEnd = new Date(currentDate);
-      windowEnd.setDate(windowEnd.getDate() + maxNights);
+      windowEnd.setDate(windowEnd.getDate() + maxNights - 1); // Subtract 1 to make it inclusive
 
       const currentFamilyGroup = rotationOrder[currentGroupIndex % rotationOrder.length];
       
@@ -97,7 +111,7 @@ export const useTimePeriods = () => {
         isCurrentTurn: false
       });
 
-      // Move to next time period
+      // Move to next time period (add maxNights to get to next period)
       currentDate.setDate(currentDate.getDate() + maxNights);
       periodNumber++;
       currentGroupIndex++;
