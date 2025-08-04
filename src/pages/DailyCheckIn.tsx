@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const DailyCheckIn = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { createSession } = useCheckinSessions();
+  const { createSession, updateSession, sessions, refetch: refetchSessions } = useCheckinSessions();
   const { reservations } = useReservations();
   const { familyGroups } = useFamilyGroups();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
@@ -31,6 +31,7 @@ const DailyCheckIn = () => {
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentReservation, setCurrentReservation] = useState<any>(null);
+  const [existingSession, setExistingSession] = useState<any>(null);
 
   // Find user's family group
   const userFamilyGroup = familyGroups.find(fg => 
@@ -59,6 +60,34 @@ const DailyCheckIn = () => {
 
     setCurrentReservation(activeReservation);
   }, [userFamilyGroup, reservations]);
+
+  // Load existing session data when we have current reservation and sessions
+  useEffect(() => {
+    if (!currentReservation || !userFamilyGroup || !sessions.length) return;
+
+    // Find existing session for this reservation period
+    const existingDailySession = sessions.find(session => 
+      session.session_type === 'daily' &&
+      session.family_group === userFamilyGroup &&
+      session.check_date >= currentReservation.start_date &&
+      session.check_date <= currentReservation.end_date
+    );
+
+    if (existingDailySession) {
+      setExistingSession(existingDailySession);
+      
+      // Load the existing data into the form
+      const responses = existingDailySession.checklist_responses;
+      if (responses) {
+        if (responses.tasks) setCheckedItems(responses.tasks);
+        if (responses.readings) setReadings(responses.readings);
+        if (responses.dailyOccupancy) setDailyOccupancy(responses.dailyOccupancy);
+      }
+      if (existingDailySession.notes) setNotes(existingDailySession.notes);
+    } else {
+      setExistingSession(null);
+    }
+  }, [currentReservation, userFamilyGroup, sessions]);
 
   // Generate days for the current reservation (or empty if no reservation)
   const stayDays = currentReservation ? (() => {
@@ -116,28 +145,40 @@ const DailyCheckIn = () => {
         timestamp: new Date().toISOString()
       };
 
-      // Create session in Supabase
-      await createSession({
-        session_type: 'daily',
-        check_date: new Date().toISOString().split('T')[0],
-        checklist_responses: checklistResponses,
-        notes: notes || null,
-        user_id: user?.id || null,
-        family_group: userFamilyGroup || null,
-        guest_names: null,
-        completed_at: new Date().toISOString()
-      });
-      
-      toast({
-        title: "Daily Check-In Completed",
-        description: `${completedTasks} tasks completed. Data saved to database.`,
-      });
+      if (existingSession) {
+        // Update existing session
+        await updateSession(existingSession.id, {
+          checklist_responses: checklistResponses,
+          notes: notes || null,
+          completed_at: new Date().toISOString()
+        });
+        
+        toast({
+          title: "Check-In Data Updated",
+          description: `${completedTasks} tasks completed. Your data has been updated successfully.`,
+        });
+      } else {
+        // Create new session
+        await createSession({
+          session_type: 'daily',
+          check_date: new Date().toISOString().split('T')[0],
+          checklist_responses: checklistResponses,
+          notes: notes || null,
+          user_id: user?.id || null,
+          family_group: userFamilyGroup || null,
+          guest_names: null,
+          completed_at: new Date().toISOString()
+        });
+        
+        toast({
+          title: "Daily Check-In Saved",
+          description: `${completedTasks} tasks completed. Data saved to database.`,
+        });
+      }
 
-      // Reset form
-      setCheckedItems({});
-      setReadings({ temperature: "", waterLevel: "", powerUsage: "" });
-      setNotes("");
-      setDailyOccupancy({});
+      // Refresh sessions to get the updated data
+      await refetchSessions();
+      
     } catch (error) {
       toast({
         title: "Error",
@@ -183,6 +224,11 @@ const DailyCheckIn = () => {
                     <div className="text-sm text-muted-foreground">
                       {stayDays.length} day{stayDays.length !== 1 ? 's' : ''} total
                     </div>
+                    {existingSession && (
+                      <div className="text-sm text-green-600 mt-2">
+                        ✓ You have saved check-in data (last updated: {new Date(existingSession.completed_at || existingSession.created_at).toLocaleDateString()})
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
