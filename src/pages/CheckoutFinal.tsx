@@ -6,6 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { useCheckinSessions, useSurveyResponses } from "@/hooks/useChecklistData";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { useReceipts } from "@/hooks/useReceipts";
+import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 
 const CheckoutFinal = () => {
@@ -13,62 +15,77 @@ const CheckoutFinal = () => {
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
   const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
+  const { receipts, loading: receiptsLoading } = useReceipts();
+  const { reservations, loading: reservationsLoading } = useReservations();
 
-  // Filter sessions for the current stay period
-  const checkInDate = new Date("2024-07-20"); // In real app, this would come from context/props
-  const checkOutDate = new Date("2024-07-23");
+  // Get the most recent reservation for checkout data
+  const currentReservation = reservations
+    .filter(r => r.status === 'confirmed')
+    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0];
+
+  // Calculate stay dates from the current reservation
+  const checkInDate = currentReservation ? new Date(currentReservation.start_date) : null;
+  const checkOutDate = currentReservation ? new Date(currentReservation.end_date) : null;
   
+  // Filter sessions for the current stay period
   const arrivalSessions = sessions.filter(s => s.session_type === 'arrival');
   const dailySessions = sessions
     .filter(s => s.session_type === 'daily')
     .filter(s => {
+      if (!checkInDate || !checkOutDate) return false;
       const sessionDate = new Date(s.check_date);
       return sessionDate >= checkInDate && sessionDate <= checkOutDate;
     })
     .sort((a, b) => new Date(a.check_date).getTime() - new Date(b.check_date).getTime());
 
-  // Mock data - in a real app, this would come from your state management or API
+  // Calculate receipts total for the stay period
+  const calculateReceiptsTotal = () => {
+    if (!checkInDate || !checkOutDate) return 0;
+    
+    return receipts
+      .filter(receipt => {
+        const receiptDate = new Date(receipt.date);
+        return receiptDate >= checkInDate && receiptDate <= checkOutDate;
+      })
+      .reduce((total, receipt) => total + receipt.amount, 0);
+  };
+
+  const receiptsTotal = calculateReceiptsTotal();
+
+  // Calculate number of nights
+  const calculateNights = () => {
+    if (!checkInDate || !checkOutDate) return 0;
+    const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+  };
+
+  // Build checkout data from actual reservation data
   const checkoutData = {
-    guests: 6,
-    nights: 3,
-    costPerPersonPerDay: 45,
-    totalCost: 810,
-    receiptsTotal: 127.50, // Total amount of receipts to subtract
-    financialMethod: "per-person-per-day", // or "total-split"
-    checkInDate: "2024-07-20",
-    checkOutDate: "2024-07-23",
-    venmoHandle: financialSettings?.venmo_handle || "@CabinBuddy-Payments",
-    paypalEmail: financialSettings?.paypal_email || "payments@cabin.com",
+    guests: currentReservation?.guest_count || 0,
+    nights: calculateNights(),
+    receiptsTotal,
+    checkInDate: checkInDate?.toISOString().split('T')[0] || '',
+    checkOutDate: checkOutDate?.toISOString().split('T')[0] || '',
+    venmoHandle: financialSettings?.venmo_handle || '',
+    paypalEmail: financialSettings?.paypal_email || '',
     checkAddress: {
-      name: financialSettings?.check_payable_to || "Cabin Management LLC",
-      address: financialSettings?.check_mailing_address || "123 Mountain View Drive\nYellowstone, MT 59718"
+      name: financialSettings?.check_payable_to || '',
+      address: financialSettings?.check_mailing_address || ''
     }
   };
 
   const calculateBilling = () => {
-    if (!financialSettings) {
-      // Fallback to old calculation method
-      if (checkoutData.financialMethod === "per-person-per-day") {
-        return {
-          baseAmount: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
-          cleaningFee: 0,
-          petFee: 0,
-          damageDeposit: 0,
-          subtotal: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
-          tax: 0,
-          total: checkoutData.guests * checkoutData.nights * checkoutData.costPerPersonPerDay,
-          details: `${checkoutData.guests} guests × ${checkoutData.nights} nights × $${checkoutData.costPerPersonPerDay}/person/day`
-        };
-      }
+    // If no financial settings or no reservation data, return empty billing
+    if (!financialSettings || !currentReservation || checkoutData.nights === 0) {
       return {
-        baseAmount: checkoutData.totalCost,
+        baseAmount: 0,
         cleaningFee: 0,
         petFee: 0,
         damageDeposit: 0,
-        subtotal: checkoutData.totalCost,
+        subtotal: 0,
         tax: 0,
-        total: checkoutData.totalCost,
-        details: 'Total cabin cost'
+        total: 0,
+        details: 'No stay data available'
       };
     }
 
@@ -93,7 +110,13 @@ const CheckoutFinal = () => {
   };
 
   const billing = calculateBilling();
-  const totalAmount = billing.total - checkoutData.receiptsTotal;
+  const totalAmount = Math.max(0, billing.total - checkoutData.receiptsTotal);
+
+  // Show loading state if any data is still loading
+  const isLoading = sessionsLoading || surveyLoading || financialLoading || receiptsLoading || reservationsLoading;
+
+  // Check if we have the necessary data to show checkout
+  const hasStayData = currentReservation && checkoutData.checkInDate && checkoutData.checkOutDate;
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,7 +144,32 @@ const CheckoutFinal = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6 max-w-2xl">
-        {/* Stay Summary */}
+        {/* Show loading or empty state */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-muted-foreground">Loading checkout data...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : !hasStayData ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-3">
+                <h3 className="text-lg font-semibold">No Stay Data Available</h3>
+                <p className="text-sm text-muted-foreground">
+                  No recent reservations found. Please ensure you have completed a stay to view checkout details.
+                </p>
+                <Button onClick={() => navigate("/")}>
+                  Return to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Stay Summary */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -407,6 +455,8 @@ const CheckoutFinal = () => {
             </div>
           </CardContent>
         </Card>
+            </>
+        )}
       </div>
     </div>
   );
