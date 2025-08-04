@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { MessageSquare, CheckCircle, Clock, AlertTriangle, X } from "lucide-react";
+import { MessageSquare, CheckCircle, Clock, AlertTriangle, X, Send, Bell, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SearchFilter } from "@/components/ui/search-filter";
 import { useCalendarKeeperAssistance, CalendarKeeperRequest } from "@/hooks/useCalendarKeeperAssistance";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationManagement } from "./NotificationManagement";
 
 export const CalendarKeeperManagement = () => {
   const { requests, updateRequestStatus, loading } = useCalendarKeeperAssistance();
@@ -119,8 +120,8 @@ export const CalendarKeeperManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Calendar Keeper Assistance</h2>
-          <p className="text-muted-foreground">Manage assistance requests from family groups</p>
+          <h2 className="text-2xl font-bold">Calendar Keeper Dashboard</h2>
+          <p className="text-muted-foreground">Manage assistance requests and notification system</p>
         </div>
         <div className="flex items-center space-x-2">
           <Badge variant="destructive">{openRequests.length} Open</Badge>
@@ -129,85 +130,104 @@ export const CalendarKeeperManagement = () => {
         </div>
       </div>
 
-      <SearchFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        urgencyFilter={urgencyFilter}
-        onUrgencyChange={setUrgencyFilter}
-        categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
-      />
-
-      <Tabs defaultValue="open" className="space-y-4">
+      <Tabs defaultValue="notifications" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="open">Open ({openRequests.length})</TabsTrigger>
-          <TabsTrigger value="in_progress">In Progress ({inProgressRequests.length})</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved ({resolvedRequests.length})</TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center space-x-2">
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="requests" className="flex items-center space-x-2">
+            <MessageSquare className="h-4 w-4" />
+            <span>Assistance Requests</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="open" className="space-y-4">
-          {openRequests.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">No open requests</p>
-              </CardContent>
-            </Card>
-          ) : (
-            openRequests.map((request) => (
-              <RequestCard 
-                key={request.id} 
-                request={request} 
-                onSelect={setSelectedRequest}
-                getStatusColor={getStatusColor}
-                getUrgencyColor={getUrgencyColor}
-                getCategoryIcon={getCategoryIcon}
-              />
-            ))
-          )}
+        <TabsContent value="notifications">
+          <NotificationManagement />
         </TabsContent>
 
-        <TabsContent value="in_progress" className="space-y-4">
-          {inProgressRequests.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">No requests in progress</p>
-              </CardContent>
-            </Card>
-          ) : (
-            inProgressRequests.map((request) => (
-              <RequestCard 
-                key={request.id} 
-                request={request} 
-                onSelect={setSelectedRequest}
-                getStatusColor={getStatusColor}
-                getUrgencyColor={getUrgencyColor}
-                getCategoryIcon={getCategoryIcon}
-              />
-            ))
-          )}
-        </TabsContent>
+        <TabsContent value="requests" className="space-y-4">
+          <SearchFilter
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            urgencyFilter={urgencyFilter}
+            onUrgencyChange={setUrgencyFilter}
+            categoryFilter={categoryFilter}
+            onCategoryChange={setCategoryFilter}
+          />
 
-        <TabsContent value="resolved" className="space-y-4">
-          {resolvedRequests.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">No resolved requests</p>
-              </CardContent>
-            </Card>
-          ) : (
-            resolvedRequests.map((request) => (
-              <RequestCard 
-                key={request.id} 
-                request={request} 
-                onSelect={setSelectedRequest}
-                getStatusColor={getStatusColor}
-                getUrgencyColor={getUrgencyColor}
-                getCategoryIcon={getCategoryIcon}
-              />
-            ))
-          )}
+          <Tabs defaultValue="open" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="open">Open ({openRequests.length})</TabsTrigger>
+              <TabsTrigger value="in_progress">In Progress ({inProgressRequests.length})</TabsTrigger>
+              <TabsTrigger value="resolved">Resolved ({resolvedRequests.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="open" className="space-y-4">
+              {openRequests.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">No open requests</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                openRequests.map((request) => (
+                  <RequestCard 
+                    key={request.id} 
+                    request={request} 
+                    onSelect={setSelectedRequest}
+                    getStatusColor={getStatusColor}
+                    getUrgencyColor={getUrgencyColor}
+                    getCategoryIcon={getCategoryIcon}
+                  />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="in_progress" className="space-y-4">
+              {inProgressRequests.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">No requests in progress</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                inProgressRequests.map((request) => (
+                  <RequestCard 
+                    key={request.id} 
+                    request={request} 
+                    onSelect={setSelectedRequest}
+                    getStatusColor={getStatusColor}
+                    getUrgencyColor={getUrgencyColor}
+                    getCategoryIcon={getCategoryIcon}
+                  />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="resolved" className="space-y-4">
+              {resolvedRequests.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">No resolved requests</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                resolvedRequests.map((request) => (
+                  <RequestCard 
+                    key={request.id} 
+                    request={request} 
+                    onSelect={setSelectedRequest}
+                    getStatusColor={getStatusColor}
+                    getUrgencyColor={getUrgencyColor}
+                    getCategoryIcon={getCategoryIcon}
+                  />
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
 
