@@ -176,9 +176,19 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Remove duplicates and filter out invalid recipients
-    const uniqueRecipients = recipients.filter((recipient, index, arr) => 
-      recipient.email && arr.findIndex(r => r.email === recipient.email) === index
-    );
+    const uniqueRecipients = recipients.filter((recipient, index, arr) => {
+      // Keep recipients that have either email or phone
+      const hasContact = recipient.email || recipient.phone;
+      if (!hasContact) return false;
+      
+      // Remove duplicates based on email or phone
+      const isDuplicate = arr.findIndex(r => 
+        (recipient.email && r.email === recipient.email) ||
+        (recipient.phone && r.phone === recipient.phone)
+      ) !== index;
+      
+      return !isDuplicate;
+    });
 
     console.log(`Found ${uniqueRecipients.length} recipients`);
 
