@@ -22,19 +22,22 @@ const AddReceipt = () => {
       id: 1,
       amount: 45.67,
       description: "Grocery store receipt",
-      thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=100&h=100&fit=crop"
+      thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=100&h=100&fit=crop",
+      isSample: true
     },
     {
       id: 2,
       amount: 23.45,
       description: "Gas station",
-      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=100&h=100&fit=crop"
+      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=100&h=100&fit=crop",
+      isSample: true
     },
     {
       id: 3,
       amount: 156.78,
       description: "Hardware store supplies",
-      thumbnail: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop"
+      thumbnail: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop",
+      isSample: true
     }
   ]);
   const { toast } = useToast();
@@ -122,7 +125,7 @@ const AddReceipt = () => {
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      <div className="max-w-2xl mx-auto space-y-6 p-4">
+      <div className="container mx-auto p-4 max-w-7xl">
         <div className="mb-4 md:mb-8">
           <h1 className="text-4xl md:text-6xl mb-2 md:mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center">
             <Receipt className="h-6 w-6 md:h-10 md:w-10 mr-2 md:mr-3" />
@@ -130,14 +133,15 @@ const AddReceipt = () => {
           </h1>
           <div className="relative flex items-center justify-center">
             <p className="text-lg md:text-2xl text-primary text-center font-medium">Upload and manage cabin expense receipts</p>
-            <div className="absolute left-0">
+            <div className="absolute -left-16">
               <NavigationHeader className="mb-0" />
             </div>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 scale-100 md:scale-75 origin-top">
-          {/* Upload and Camera Section */}
+        {/* Three Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Upload Receipt Section - Left Column */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -228,7 +232,49 @@ const AddReceipt = () => {
             </CardContent>
           </Card>
 
-          {/* Receipts List Section */}
+          {/* Manual Entry Section - Middle Column */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Manual Entry
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Enter receipt description..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                    rows={4}
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full">
+                  Add Receipt Manually
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Receipt List Section - Right Column */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -240,7 +286,7 @@ const AddReceipt = () => {
               <ScrollArea className="h-80">
                 <div className="space-y-3">
                   {receipts.map((receipt) => (
-                    <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
                       <img 
                         src={receipt.thumbnail} 
                         alt="Receipt thumbnail"
@@ -258,6 +304,11 @@ const AddReceipt = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      {receipt.isSample && (
+                        <div className="absolute top-1 right-1">
+                          <span className="text-xs bg-muted text-muted-foreground px-1 rounded">Sample</span>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {receipts.length === 0 && (
@@ -278,49 +329,6 @@ const AddReceipt = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Manual Entry Section - Responsive positioning */}
-      <div className="mt-6 md:absolute md:bottom-4 md:left-4 w-full md:w-80 scale-100 md:scale-75">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Manual Entry
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleManualSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter receipt description..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <Button type="submit" className="w-full">
-                Add Receipt Manually
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
