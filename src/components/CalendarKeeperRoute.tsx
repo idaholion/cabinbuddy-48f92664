@@ -32,9 +32,11 @@ export const CalendarKeeperRoute = ({ children }: CalendarKeeperRouteProps) => {
       }
 
       // Check if user is the calendar keeper OR an admin/treasurer for the current organization
-      const isKeeper = organization.calendar_keeper_email === user.email ||
-                       organization.admin_email === user.email ||
-                       organization.treasurer_email === user.email;
+      // Use case-insensitive email comparison
+      const userEmail = user.email.toLowerCase();
+      const isKeeper = organization.calendar_keeper_email?.toLowerCase() === userEmail ||
+                       organization.admin_email?.toLowerCase() === userEmail ||
+                       organization.treasurer_email?.toLowerCase() === userEmail;
       
       console.log('Calendar Keeper Access Result:', {
         isKeeper,
