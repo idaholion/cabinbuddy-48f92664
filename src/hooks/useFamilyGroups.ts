@@ -49,13 +49,26 @@ export const useFamilyGroups = () => {
         return;
       }
 
-      // Parse the JSONB host_members field
+      // Parse the JSONB host_members field and deduplicate by name
       const parsedData = (data || []).map(group => ({
         ...group,
         host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
       }));
       
-      setFamilyGroups(parsedData);
+      // Deduplicate family groups by name, keeping the oldest one
+      const uniqueGroups = parsedData.reduce((acc: any[], group: any) => {
+        const existingGroup = acc.find(g => g.name === group.name);
+        if (!existingGroup) {
+          acc.push(group);
+        } else if (new Date(group.created_at) < new Date(existingGroup.created_at)) {
+          // Replace with older group
+          const index = acc.findIndex(g => g.name === group.name);
+          acc[index] = group;
+        }
+        return acc;
+      }, []);
+      
+      setFamilyGroups(uniqueGroups);
     } catch (error) {
       console.error('Error in fetchFamilyGroups:', error);
     } finally {
