@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -444,9 +444,13 @@ const CheckoutFinal = () => {
               <p className="text-sm text-muted-foreground">
                 Please complete payment within 7 days. You will receive a confirmation email once payment is processed.
               </p>
-              <div className="flex gap-3 justify-center">
+              <div className="flex gap-3 justify-center flex-wrap">
                 <Button variant="outline" onClick={() => navigate("/home")}>
                   Return to Home
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/stay-history")}>
+                  <History className="h-4 w-4 mr-2" />
+                  View Stay History
                 </Button>
                 <Button onClick={() => window.print()}>
                   Print Summary
