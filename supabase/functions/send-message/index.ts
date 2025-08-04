@@ -234,7 +234,7 @@ const handler = async (req: Request): Promise<Response> => {
       await Promise.all(emailPromises);
     }
 
-    // Send SMS if requested (using Twilio)
+    // Send SMS if requested (using Twilio SDK format)
     if (messageType === 'sms' || messageType === 'both') {
       const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
       const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -247,6 +247,10 @@ const handler = async (req: Request): Promise<Response> => {
             try {
               const smsMessage = urgent ? `[URGENT] ${subject}\n\n${message}` : `${subject}\n\n${message}`;
               
+              console.log(`Sending SMS to ${recipient.phone} from ${twilioPhoneNumber}`);
+              console.log(`Message: ${smsMessage}`);
+              
+              // Using Twilio REST API with proper format
               const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`, {
                 method: 'POST',
                 headers: {
@@ -257,13 +261,17 @@ const handler = async (req: Request): Promise<Response> => {
                   From: twilioPhoneNumber,
                   To: recipient.phone!,
                   Body: smsMessage
-                })
+                }).toString()
               });
 
+              const responseData = await response.json();
+              
               if (!response.ok) {
-                console.error(`Failed to send SMS to ${recipient.phone}`);
+                console.error(`Failed to send SMS to ${recipient.phone}:`, responseData);
                 return false;
               }
+              
+              console.log(`SMS sent successfully. SID: ${responseData.sid}`);
               return true;
             } catch (error) {
               console.error(`Error sending SMS to ${recipient.phone}:`, error);
