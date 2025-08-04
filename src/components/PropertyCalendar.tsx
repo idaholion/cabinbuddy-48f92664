@@ -71,7 +71,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [filterOptions, setFilterOptions] = useState({
     showMyBookings: true,
     showOtherBookings: true,
-    showTimePeriods: true,
+    showTimePeriods: false, // Hidden by default to avoid confusion with actual reservations
     showTradeRequests: true,
     familyGroupFilter: 'all'
   });
