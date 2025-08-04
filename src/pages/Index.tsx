@@ -215,8 +215,18 @@ const Index = () => {
 
         </div>
 
-        {/* Feedback Button */}
-        <div className="fixed bottom-8 left-8 z-30">
+        {/* Bottom Left User Info */}
+        <div className="fixed bottom-8 left-8 z-30 flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            className="bg-background/90 backdrop-blur-sm border-primary/20 hover:bg-primary/10" 
+            asChild
+          >
+            <Link to="/host-profile" className="flex items-center space-x-2">
+              <User className="h-4 w-4" />
+              <span>{user?.user_metadata?.first_name || user?.email}</span>
+            </Link>
+          </Button>
           <FeedbackButton />
         </div>
       </div>

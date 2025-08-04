@@ -33,6 +33,7 @@ const HostProfile = () => {
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableHosts, setAvailableHosts] = useState<any[]>([]);
   const [selectedHostMember, setSelectedHostMember] = useState<any>(null);
+  const [autoPopulated, setAutoPopulated] = useState(false);
 
   const form = useForm<HostProfileFormData>({
     resolver: zodResolver(hostProfileSchema),
@@ -75,6 +76,44 @@ const HostProfile = () => {
       }
     }
   }, [watchedHostName, availableHosts, setValue]);
+
+  // Auto-populate user information when family groups load
+  useEffect(() => {
+    if (familyGroups.length > 0 && user && !autoPopulated) {
+      const userEmail = user.email;
+      const userFirstName = user.user_metadata?.first_name;
+      
+      // Try to find user by email or name in family groups
+      for (const group of familyGroups) {
+        if (group.host_members) {
+          const foundMember = group.host_members.find((member: any) => 
+            member.email === userEmail || 
+            (userFirstName && member.name?.toLowerCase().includes(userFirstName.toLowerCase()))
+          );
+          
+          if (foundMember) {
+            // Auto-populate the form
+            setValue("selectedFamilyGroup", group.name);
+            setValue("selectedHostName", foundMember.name);
+            setValue("email", foundMember.email || userEmail || "");
+            setValue("phone", foundMember.phone || "");
+            
+            setSelectedGroup(group);
+            setAvailableHosts(group.host_members);
+            setSelectedHostMember(foundMember);
+            setAutoPopulated(true);
+            
+            toast({
+              title: "Profile Found",
+              description: `Auto-populated your profile from ${group.name}`,
+            });
+            
+            break;
+          }
+        }
+      }
+    }
+  }, [familyGroups, user, setValue, autoPopulated, toast]);
 
   const formData = form.watch();
   const autoSaveHook = useAutoSave({ 
