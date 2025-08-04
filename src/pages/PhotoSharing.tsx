@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone } from "lucide-react";
+import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone, Download, CheckSquare, Square } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -59,6 +59,8 @@ export default function PhotoSharing() {
   ]);
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
     caption: "",
     file: null as File | null
@@ -121,6 +123,55 @@ export default function PhotoSharing() {
     setPhotos(photos.filter(photo => photo.id !== photoId));
   };
 
+  const handleDownload = async (photo: Photo) => {
+    try {
+      const response = await fetch(photo.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${photo.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${photo.uploadedAt}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading photo:', error);
+    }
+  };
+
+  const handleSelectPhoto = (photoId: string) => {
+    const newSelected = new Set(selectedPhotos);
+    if (newSelected.has(photoId)) {
+      newSelected.delete(photoId);
+    } else {
+      newSelected.add(photoId);
+    }
+    setSelectedPhotos(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPhotos.size === photos.length) {
+      setSelectedPhotos(new Set());
+    } else {
+      setSelectedPhotos(new Set(photos.map(photo => photo.id)));
+    }
+  };
+
+  const handleDownloadSelected = async () => {
+    const selectedPhotoList = photos.filter(photo => selectedPhotos.has(photo.id));
+    for (const photo of selectedPhotoList) {
+      await handleDownload(photo);
+      // Add a small delay between downloads to avoid overwhelming the browser
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedPhotos(new Set());
+  };
+
   // Check if there are any user photos (non-sample photos)
   const hasUserPhotos = photos.some(photo => !photo.isSample);
 
@@ -135,7 +186,38 @@ export default function PhotoSharing() {
           <NavigationHeader />
         </PageHeader>
 
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant={isSelectionMode ? "default" : "outline"}
+              onClick={toggleSelectionMode}
+              className="flex items-center space-x-2"
+            >
+              <CheckSquare className="h-4 w-4" />
+              <span>{isSelectionMode ? "Cancel Selection" : "Select Photos"}</span>
+            </Button>
+            {isSelectionMode && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleSelectAll}
+                  className="flex items-center space-x-2"
+                >
+                  <Square className="h-4 w-4" />
+                  <span>{selectedPhotos.size === photos.length ? "Deselect All" : "Select All"}</span>
+                </Button>
+                {selectedPhotos.size > 0 && (
+                  <Button
+                    onClick={handleDownloadSelected}
+                    className="flex items-center space-x-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download Selected ({selectedPhotos.size})</span>
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
           <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center space-x-2">
@@ -220,6 +302,20 @@ export default function PhotoSharing() {
           {photos.map((photo) => (
             <Card key={photo.id} className="overflow-hidden bg-card/95 hover:shadow-lg transition-shadow">
               <div className="aspect-square overflow-hidden relative">
+                {isSelectionMode && (
+                  <Button
+                    variant={selectedPhotos.has(photo.id) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleSelectPhoto(photo.id)}
+                    className="absolute top-2 left-2 h-8 w-8 p-0 z-10"
+                  >
+                    {selectedPhotos.has(photo.id) ? (
+                      <CheckSquare className="h-4 w-4" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
                 <img
                   src={photo.url}
                   alt={photo.caption}
@@ -275,9 +371,20 @@ export default function PhotoSharing() {
                       <span className="text-xs">{photo.comments.length}</span>
                     </Button>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-muted-foreground">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDownload(photo)}
+                      className="text-muted-foreground hover:text-primary"
+                      title="Download photo"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-muted-foreground">
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 
                 {photo.comments.length > 0 && (
