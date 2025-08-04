@@ -23,7 +23,22 @@ export default function DataBackup() {
   const [backups, setBackups] = useState<BackupMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checking, setChecking] = useState(true);
   const { toast } = useToast();
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data, error } = await supabase.rpc('is_organization_admin');
+      if (error) throw error;
+      setIsAdmin(data || false);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const fetchBackups = async () => {
     try {
@@ -47,8 +62,14 @@ export default function DataBackup() {
   };
 
   useEffect(() => {
-    fetchBackups();
+    checkAdminStatus();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchBackups();
+    }
+  }, [isAdmin]);
 
   const createManualBackup = async () => {
     setCreating(true);
@@ -171,6 +192,56 @@ export default function DataBackup() {
     
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
+
+  // Show loading while checking admin status
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <div className="container mx-auto px-4 py-8">
+          <PageHeader 
+            title="Data Backup & Recovery"
+            subtitle="Manage your organization's data backups"
+            icon={Database}
+          >
+            <NavigationHeader />
+          </PageHeader>
+          <div className="text-center py-12">
+            <RefreshCw className="h-16 w-16 mx-auto mb-4 text-muted-foreground animate-spin" />
+            <p className="text-muted-foreground">Checking permissions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for non-admin users
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <div className="container mx-auto px-4 py-8">
+          <PageHeader 
+            title="Data Backup & Recovery"
+            subtitle="Manage your organization's data backups"
+            icon={Database}
+          >
+            <NavigationHeader />
+          </PageHeader>
+          <Card>
+            <CardContent className="text-center py-12">
+              <Database className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Administrator Access Required</h3>
+              <p className="text-muted-foreground mb-4">
+                Data backup and recovery features are restricted to organization administrators only.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Contact your organization administrator if you need access to backup data.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
