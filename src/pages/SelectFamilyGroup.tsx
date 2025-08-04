@@ -2,32 +2,66 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Users, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/hooks/useOrganization";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const SelectFamilyGroup = () => {
-  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
-  const [familyGroups, setFamilyGroups] = useState<string[]>([]);
   const navigate = useNavigate();
+  const { familyGroups, loading } = useFamilyGroups();
+  const { user } = useAuth();
+  const { organization } = useOrganization();
+  const { toast } = useToast();
+  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
 
-  // Load family groups from localStorage
-  useEffect(() => {
-    const savedGroups = localStorage.getItem('familyGroupsList');
-    if (savedGroups) {
-      const groups = JSON.parse(savedGroups);
-      setFamilyGroups(groups);
-    } else {
-      // Fallback to sample data if no saved groups
-      setFamilyGroups([
-        "Smith Family",
-        "Johnson Family", 
-        "Williams Family",
-        "Brown Family",
-        "Davis Family",
-        "Miller Family"
-      ]);
+  const handleFamilyGroupSelection = async () => {
+    if (!selectedFamilyGroup || !user) return;
+
+    try {
+      // Update user's profile with selected family group
+      const { error } = await supabase
+        .from('profiles')
+        .update({ family_role: selectedFamilyGroup })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Selected ${selectedFamilyGroup} as your family group.`
+      });
+
+      // Navigate to main application
+      navigate("/");
+    } catch (error) {
+      console.error('Error updating family group:', error);
+      toast({
+        title: "Error",
+        description: "Failed to select family group. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, []);
+  };
+
+  // Redirect if no organization selected
+  useEffect(() => {
+    if (!loading && !organization) {
+      navigate("/select-organization");
+    }
+  }, [organization, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center" 
+           style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -51,60 +85,62 @@ const SelectFamilyGroup = () => {
           </div>
 
           {/* Page title */}
-          <div className="text-center mb-2">
-            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
-              Select Family Group
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-6xl font-kaushan text-primary mb-4 drop-shadow-lg">
+              Select Your Family Group
             </h1>
-            <p className="text-xl text-primary">
-              Choose the family group you are a member of
+            <p className="text-xl text-primary drop-shadow-md">
+              Choose your family group in {organization?.name || 'this organization'}
             </p>
           </div>
 
           {/* Selection card */}
-          <Card className="bg-white/95 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Family Group Selection</CardTitle>
+          <Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl">
+                <Users className="h-6 w-6" />
+                Family Groups
+              </CardTitle>
               <CardDescription>
-                Select the family group you are a member of from the list below
+                Select the family group you belong to in {organization?.name || 'this organization'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {familyGroups.length > 0 ? (
                 <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Family Group</label>
-                    <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your family group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {familyGroups.map((group) => (
-                          <SelectItem key={group} value={group}>
-                            {group}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose your family group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {familyGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.name}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
                   {selectedFamilyGroup && (
-                    <div className="pt-4">
-                      <Button asChild className="w-full">
-                        <Link to="/family-group-setup">
-                          Go to Family Group Setup for {selectedFamilyGroup}
-                        </Link>
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={handleFamilyGroupSelection}
+                      className="w-full"
+                      size="lg"
+                    >
+                      Continue to {organization?.name || 'Cabin'} Management
+                    </Button>
                   )}
                 </>
               ) : (
-                <div className="text-center space-y-4">
-                  <p className="text-muted-foreground">
-                    No family groups have been set up yet.
+                <div className="text-center py-8">
+                  <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Family Groups Found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    There are no family groups set up in {organization?.name || 'this organization'} yet.
                   </p>
                   <Button asChild>
                     <Link to="/family-setup">
-                      Go to Family Setup to Create Groups
+                      Set Up Family Groups
                     </Link>
                   </Button>
                 </div>
