@@ -394,11 +394,13 @@ export default function ReservationSetup() {
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Select Family Group" />
                       </SelectTrigger>
-                      <SelectContent>
-                    {familyGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
-                    ))}
-                      </SelectContent>
+                       <SelectContent>
+                    {familyGroups
+                      .filter(group => !rotationOrder.includes(group.name) || rotationOrder[index] === group.name)
+                      .map((group) => (
+                        <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
+                      ))}
+                       </SelectContent>
                     </Select>
                   </div>
                 ))}
