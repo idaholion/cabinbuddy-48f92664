@@ -216,15 +216,17 @@ const Index = () => {
         </div>
 
         {/* Bottom Left User Info */}
-        <div className="fixed bottom-8 left-72 z-30 flex items-center space-x-4">
+        <div className="fixed bottom-8 left-60 z-30 flex items-center space-x-4">
           <Button 
             variant="outline" 
-            className="bg-background/90 backdrop-blur-sm border-primary/20 hover:bg-primary/10" 
+            className="bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-primary/10 px-6 py-3 text-lg font-semibold text-primary shadow-lg" 
             asChild
           >
-            <Link to="/host-profile" className="flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>{user?.user_metadata?.first_name || user?.email}</span>
+            <Link to="/host-profile" className="flex items-center space-x-3">
+              <User className="h-5 w-5" />
+              <span className="font-kaushan text-xl">
+                {user?.user_metadata?.first_name || user?.email}
+              </span>
             </Link>
           </Button>
           <FeedbackButton />
