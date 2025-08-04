@@ -15,7 +15,9 @@ import {
   Building,
   HeadphonesIcon,
   Wrench,
-  LogOut
+  LogOut,
+  UserPlus,
+  Plus
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useAuth } from "@/contexts/AuthContext";
+import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 
 const setupItems = [
   {
@@ -169,6 +172,46 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Organizations */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Organizations</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Organizations">
+                  <NavLink 
+                    to="/select-organization" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Manage Organizations</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <JoinOrganizationDialog>
+                  <SidebarMenuButton tooltip="Join Organization" className="flex items-center gap-2 w-full cursor-pointer">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Join Organization</span>
+                  </SidebarMenuButton>
+                </JoinOrganizationDialog>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Create Organization">
+                  <NavLink 
+                    to="/family-setup?mode=create" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create Organization</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {/* Cabin */}
         <SidebarGroup>

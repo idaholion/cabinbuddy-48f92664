@@ -49,49 +49,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen relative">
-      {/* Top Navigation */}
-      <nav className="relative z-20 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-6">
-              {/* Organization Management Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="text-sm font-medium">
-                    <Users className="h-4 w-4 mr-2" />
-                    Organizations
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem asChild>
-                    <Link to="/select-organization">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Manage Organizations
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <JoinOrganizationDialog>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Join Organization
-                    </DropdownMenuItem>
-                  </JoinOrganizationDialog>
-                  <DropdownMenuItem asChild>
-                    <Link to="/family-setup?mode=create">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Organization
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-            </div>
-            <div className="flex items-center space-x-4">
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Full Screen Hero with Action Buttons */}
       <div className="relative min-h-screen bg-cover bg-center bg-no-repeat" style={{
         backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
@@ -142,7 +99,6 @@ const Index = () => {
               </Link>
             </Button>
 
-            {/* More dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline">
@@ -151,6 +107,25 @@ const Index = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/select-organization">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Organizations
+                  </Link>
+                </DropdownMenuItem>
+                <JoinOrganizationDialog>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Join Organization
+                  </DropdownMenuItem>
+                </JoinOrganizationDialog>
+                <DropdownMenuItem asChild>
+                  <Link to="/family-setup?mode=create">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Organization
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/add-receipt">
                     <Receipt className="h-4 w-4 mr-2" />
