@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_metadata: {
+        Row: {
+          backup_type: string
+          created_at: string
+          created_by_user_id: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          organization_id: string
+          status: string
+        }
+        Insert: {
+          backup_type?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          organization_id: string
+          status?: string
+        }
+        Update: {
+          backup_type?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          organization_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       bulk_operation_audit: {
         Row: {
           details: Json | null
