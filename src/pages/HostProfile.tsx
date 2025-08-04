@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,13 +8,15 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const hostProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -27,13 +29,16 @@ type HostProfileFormData = z.infer<typeof hostProfileSchema>;
 
 const HostProfile = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableHosts, setAvailableHosts] = useState<any[]>([]);
   const [selectedHostMember, setSelectedHostMember] = useState<any>(null);
   const [autoPopulated, setAutoPopulated] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<HostProfileFormData>({
     resolver: zodResolver(hostProfileSchema),
@@ -115,6 +120,117 @@ const HostProfile = () => {
     }
   }, [familyGroups, user, setValue, autoPopulated, toast]);
 
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (data && !error) {
+          setUserProfile(data);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, [user]);
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setAvatarUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('user-avatars')
+        .upload(fileName, file, { 
+          upsert: true 
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-avatars')
+        .getPublicUrl(fileName);
+
+      // Update user profile with avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          avatar_url: publicUrl,
+          first_name: user.user_metadata?.first_name,
+          last_name: user.user_metadata?.last_name,
+          display_name: user.user_metadata?.first_name,
+        });
+
+      if (updateError) throw updateError;
+
+      setUserProfile({ ...userProfile, avatar_url: publicUrl });
+      toast({
+        title: "Success",
+        description: "Profile photo uploaded successfully!",
+      });
+
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  // Handle avatar download
+  const handleAvatarDownload = async () => {
+    if (!userProfile?.avatar_url) {
+      toast({
+        title: "No Photo",
+        description: "No profile photo to download.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(userProfile.avatar_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${user?.user_metadata?.first_name || 'profile'}-photo.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "Profile photo downloaded successfully!",
+      });
+    } catch (error) {
+      console.error('Error downloading avatar:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download photo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formData = form.watch();
   const autoSaveHook = useAutoSave({ 
     key: "host-profile", 
@@ -165,12 +281,64 @@ const HostProfile = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
+      {/* Header with Logout */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Profile Settings</h1>
+        <Button variant="outline" onClick={signOut} className="flex items-center space-x-2">
+          <LogOut className="h-4 w-4" />
+          <span>Logout</span>
+        </Button>
+      </div>
+
+      {/* Avatar Section */}
       <Card className="mb-6">
         <CardHeader className="text-center pb-6">
-          <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
-            <User className="h-8 w-8 text-primary" />
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage 
+                src={userProfile?.avatar_url} 
+                alt={user?.user_metadata?.first_name || "Profile"} 
+              />
+              <AvatarFallback className="text-2xl">
+                {user?.user_metadata?.first_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+                className="flex items-center space-x-2"
+              >
+                <Upload className="h-4 w-4" />
+                <span>{avatarUploading ? "Uploading..." : "Upload Photo"}</span>
+              </Button>
+              
+              {userProfile?.avatar_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAvatarDownload}
+                  className="flex items-center space-x-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download</span>
+                </Button>
+              )}
+            </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
-          <CardTitle className="text-3xl font-bold">Host Member Profile</CardTitle>
+          
+          <CardTitle className="text-3xl font-bold mt-4">Host Member Profile</CardTitle>
           <p className="text-muted-foreground">
             Update your personal information for your family group
           </p>
