@@ -39,6 +39,12 @@ export default function ReservationSetup() {
   // Setup method selection
   const [setupMethod, setSetupMethod] = useState("rotation");
   
+  // Static Weeks configuration
+  const [staticWeeksStartDay, setStaticWeeksStartDay] = useState("Friday");
+  const [staticWeeksPeriodLength, setStaticWeeksPeriodLength] = useState("7");
+  const [staticWeeksRotationDirection, setStaticWeeksRotationDirection] = useState("first");
+  const [staticWeeksConfiguration, setStaticWeeksConfiguration] = useState<{[key: string]: number}>({});
+  
   // Property details
   const [propertyName, setPropertyName] = useState("");
   const [address, setAddress] = useState("");
@@ -90,9 +96,17 @@ export default function ReservationSetup() {
         
         if (data) {
           // Check if this is a manual setup (indicated by 'manual_mode' in rotation_order)
+          // or static weeks setup (indicated by 'static_weeks_mode' in rotation_order)
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
           if (savedOrder.length === 1 && savedOrder[0] === 'manual_mode') {
             setSetupMethod('manual');
+          } else if (savedOrder.length === 1 && savedOrder[0] === 'static_weeks_mode') {
+            setSetupMethod('static-weeks');
+            
+            // Load static weeks settings
+            setStaticWeeksStartDay(data.start_day || "Friday");
+            setStaticWeeksPeriodLength(data.max_nights?.toString() || "7");
+            setStaticWeeksRotationDirection(data.first_last_option || "first");
           } else {
             setSetupMethod('rotation');
             
@@ -146,21 +160,44 @@ export default function ReservationSetup() {
       return;
     }
 
-    const filteredRotationOrder = rotationOrder.filter(group => group !== '');
-    if (filteredRotationOrder.length === 0) {
-      toast({
-        title: "Error", 
-        description: "Please select at least one family group in the rotation order",
-        variant: "destructive",
-      });
-      return;
+    // Validation for rotation method
+    if (setupMethod === "rotation") {
+      const filteredRotationOrder = rotationOrder.filter(group => group !== '');
+      if (filteredRotationOrder.length === 0) {
+        toast({
+          title: "Error", 
+          description: "Please select at least one family group in the rotation order",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setSavingRotationOrder(true);
     try {
-      const { error } = await supabase
-        .from('rotation_orders')
-        .upsert({
+      let saveData;
+      
+      if (setupMethod === "static-weeks") {
+        // For static weeks, save configuration differently
+        saveData = {
+          organization_id: organization.id,
+          rotation_year: parseInt(rotationYear),
+          rotation_order: ['static_weeks_mode'], // Flag to identify static weeks mode
+          max_time_slots: 0, // Not used in static weeks
+          max_nights: parseInt(staticWeeksPeriodLength),
+          start_day: staticWeeksStartDay,
+          start_time: null, // Not used in static weeks
+          first_last_option: staticWeeksRotationDirection,
+          start_month: null, // Not used in static weeks
+          selection_days: 0, // Not used in static weeks
+          enable_secondary_selection: false,
+          secondary_max_periods: 0,
+          enable_post_rotation_selection: false,
+        };
+      } else {
+        // For rotation method
+        const filteredRotationOrder = rotationOrder.filter(group => group !== '');
+        saveData = {
           organization_id: organization.id,
           rotation_year: parseInt(rotationYear),
           rotation_order: filteredRotationOrder,
@@ -174,21 +211,30 @@ export default function ReservationSetup() {
           enable_secondary_selection: enableSecondarySelection,
           secondary_max_periods: parseInt(secondaryMaxPeriods),
           enable_post_rotation_selection: enablePostRotationSelection,
-        }, {
+        };
+      }
+
+      const { error } = await supabase
+        .from('rotation_orders')
+        .upsert(saveData, {
           onConflict: 'organization_id,rotation_year'
         });
 
       if (error) throw error;
 
+      const successMessage = setupMethod === "static-weeks" 
+        ? `Static weeks configuration saved for ${rotationYear}`
+        : `Rotation order saved for ${rotationYear}`;
+
       toast({
         title: "Success",
-        description: `Rotation order saved for ${rotationYear}`,
+        description: successMessage,
       });
     } catch (error) {
-      console.error('Error saving rotation order:', error);
+      console.error('Error saving configuration:', error);
       toast({
         title: "Error",
-        description: "Failed to save rotation order",
+        description: "Failed to save configuration",
         variant: "destructive",
       });
     } finally {
@@ -211,23 +257,61 @@ export default function ReservationSetup() {
     // Save setup method to rotation_orders table to track the mode
     if (organization?.id) {
       try {
-        const { error } = await supabase
-          .from('rotation_orders')
-          .upsert({
+        let setupData;
+        
+        if (setupMethod === 'manual') {
+          setupData = {
             organization_id: organization.id,
             rotation_year: parseInt(rotationYear),
-            rotation_order: setupMethod === 'manual' ? ['manual_mode'] : rotationOrder.filter(group => group !== ''),
-            max_time_slots: setupMethod === 'manual' ? 0 : parseInt(maxTimeSlots),
-            max_nights: setupMethod === 'manual' ? 0 : parseInt(maxNights),
-            start_day: setupMethod === 'manual' ? null : startDay,
-            start_time: setupMethod === 'manual' ? null : startTime,
-            first_last_option: setupMethod === 'manual' ? null : firstLastOption,
-            start_month: setupMethod === 'manual' ? null : startMonth,
-            selection_days: setupMethod === 'manual' ? 0 : parseInt(selectionDays),
-            enable_secondary_selection: setupMethod === 'manual' ? false : enableSecondarySelection,
-            secondary_max_periods: setupMethod === 'manual' ? 0 : parseInt(secondaryMaxPeriods),
-            enable_post_rotation_selection: setupMethod === 'manual' ? false : enablePostRotationSelection,
-          }, {
+            rotation_order: ['manual_mode'],
+            max_time_slots: 0,
+            max_nights: 0,
+            start_day: null,
+            start_time: null,
+            first_last_option: null,
+            start_month: null,
+            selection_days: 0,
+            enable_secondary_selection: false,
+            secondary_max_periods: 0,
+            enable_post_rotation_selection: false,
+          };
+        } else if (setupMethod === 'static-weeks') {
+          setupData = {
+            organization_id: organization.id,
+            rotation_year: parseInt(rotationYear),
+            rotation_order: ['static_weeks_mode'],
+            max_time_slots: 0,
+            max_nights: parseInt(staticWeeksPeriodLength),
+            start_day: staticWeeksStartDay,
+            start_time: null,
+            first_last_option: staticWeeksRotationDirection,
+            start_month: null,
+            selection_days: 0,
+            enable_secondary_selection: false,
+            secondary_max_periods: 0,
+            enable_post_rotation_selection: false,
+          };
+        } else {
+          setupData = {
+            organization_id: organization.id,
+            rotation_year: parseInt(rotationYear),
+            rotation_order: rotationOrder.filter(group => group !== ''),
+            max_time_slots: parseInt(maxTimeSlots),
+            max_nights: parseInt(maxNights),
+            start_day: startDay,
+            start_time: startTime,
+            first_last_option: firstLastOption,
+            start_month: startMonth,
+            selection_days: parseInt(selectionDays),
+            enable_secondary_selection: enableSecondarySelection,
+            secondary_max_periods: parseInt(secondaryMaxPeriods),
+            enable_post_rotation_selection: enablePostRotationSelection,
+          };
+        }
+
+        const { error } = await supabase
+          .from('rotation_orders')
+          .upsert(setupData, {
             onConflict: 'organization_id,rotation_year'
           });
 
@@ -285,6 +369,10 @@ export default function ReservationSetup() {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="rotation" id="rotation-method" />
                 <Label htmlFor="rotation-method" className="text-base font-medium">Rotation</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="static-weeks" id="static-weeks-method" />
+                <Label htmlFor="static-weeks-method" className="text-base font-medium">Static Weeks</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="manual" id="manual-method" />
@@ -581,6 +669,183 @@ export default function ReservationSetup() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Static Weeks Setup - Only show if static-weeks is selected */}
+        {setupMethod === "static-weeks" && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Static Weeks Configuration</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
+                <h4 className="text-lg font-semibold text-indigo-800 mb-2">How Static Weeks Work</h4>
+                <div className="space-y-2 text-indigo-700">
+                  <p className="text-sm mb-3">
+                    In the Static Weeks system, specific weeks throughout the year are assigned permanent numbers, 
+                    and family groups are assigned to those numbered weeks.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="text-indigo-600 font-bold">•</span>
+                      <span className="text-sm">First year: Family Group 1 gets weeks labeled "1", Family Group 2 gets weeks labeled "2", etc.</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-indigo-600 font-bold">•</span>
+                      <span className="text-sm">Following years: Groups rotate to the next number (Group 1 → Week 2, Group 2 → Week 3, etc.)</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-indigo-600 font-bold">•</span>
+                      <span className="text-sm">Calendar keeper assigns week numbers to specific calendar dates</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <p className="text-sm">
+                    Starting year for static weeks assignment:
+                  </p>
+                  <Select value={rotationYear} onValueChange={setRotationYear}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span>Each reservation period lasts</span>
+                  <Select value={staticWeeksPeriodLength} onValueChange={setStaticWeeksPeriodLength}>
+                    <SelectTrigger className="w-16">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
+                        <SelectItem key={num} value={num}>{num}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span>consecutive nights, starting on</span>
+                  <Select value={staticWeeksStartDay} onValueChange={setStaticWeeksStartDay}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {days.map((day) => (
+                        <SelectItem key={day} value={day}>{day}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>Each year, groups rotate with the</span>
+                  <Select value={staticWeeksRotationDirection} onValueChange={setStaticWeeksRotationDirection}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="first">First</SelectItem>
+                      <SelectItem value="last">Last</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span>group moving to {staticWeeksRotationDirection === "first" ? "the last week number" : "the first week number"}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Family Group Week Assignments for {rotationYear}:</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {familyGroups.map((group, index) => (
+                    <div key={group.id} className="flex items-center gap-2 p-2 bg-muted rounded">
+                      <span className="font-medium text-sm w-20">Week {index + 1}:</span>
+                      <span className="text-sm">{group.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Week Assignment Calendar Instructions */}
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h5 className="font-medium text-yellow-800 mb-2">Calendar Keeper Week Assignment:</h5>
+                <div className="text-sm text-yellow-700 space-y-2">
+                  <p>
+                    After saving this configuration, the Calendar Keeper can assign week numbers to specific calendar dates. 
+                    For example, they might assign:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 ml-4">
+                    <li>Week 1: Memorial Day weekend (May 24-31)</li>
+                    <li>Week 2: July 4th week (July 1-8)</li>
+                    <li>Week 3: Labor Day weekend (September 1-8)</li>
+                    <li>Week 4: Thanksgiving week (November 21-28)</li>
+                  </ul>
+                  <p className="mt-2">
+                    Family groups will then be automatically assigned to their corresponding numbered weeks based on the rotation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Show rotation preview for static weeks */}
+              {familyGroups.length > 0 && (
+                <div className="mt-6 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-3">Static Weeks Rotation Preview</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[0, 1, 2].map((yearOffset) => {
+                      const year = parseInt(rotationYear) + yearOffset;
+                      const groupNames = familyGroups.map(g => g.name);
+                      
+                      // Calculate rotation for this year
+                      let yearOrder = [...groupNames];
+                      for (let i = 0; i < yearOffset; i++) {
+                        if (staticWeeksRotationDirection === "first") {
+                          // Move first group to last position
+                          const first = yearOrder.shift();
+                          if (first) yearOrder.push(first);
+                        } else {
+                          // Move last group to first position
+                          const last = yearOrder.pop();
+                          if (last) yearOrder.unshift(last);
+                        }
+                      }
+                      
+                      return (
+                        <div key={year} className="space-y-2">
+                          <h5 className="text-sm font-medium">{year}:</h5>
+                          <div className="space-y-1">
+                            {yearOrder.map((group, index) => (
+                              <div key={index} className="text-xs p-1 bg-background rounded flex items-center gap-2">
+                                <span className="font-medium w-12">Week {index + 1}:</span>
+                                <span>{group}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    Rotation: {staticWeeksRotationDirection === "first" ? "First group moves to last week each year" : "Last group moves to first week each year"}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleSaveRotationOrder} 
+                  disabled={savingRotationOrder}
+                  className="w-full"
+                >
+                  {savingRotationOrder ? "Saving..." : "Save Static Weeks Configuration"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
