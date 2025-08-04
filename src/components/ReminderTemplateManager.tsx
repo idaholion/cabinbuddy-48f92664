@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Mail, Clock, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReminderTemplate {
   id: string;
-  template_name: string;
-  subject: string;
-  content: string;
-  is_active: boolean;
+  reminder_type: string;
+  subject_template: string;
+  custom_message: string;
+  checklist_items: string[];
 }
 
 export const ReminderTemplateManager = () => {
@@ -19,40 +18,103 @@ export const ReminderTemplateManager = () => {
   const [templates, setTemplates] = useState<ReminderTemplate[]>([
     {
       id: '1',
-      template_name: 'Upcoming Stay Reminder',
-      subject: 'Upcoming Cabin Stay - Important Information',
-      content: `Dear {{family_name}},
+      reminder_type: 'stay_7_day',
+      subject_template: 'Cabin Reservation Reminder - 7 days to go!',
+      custom_message: `Hi {{guest_name}},
 
-Your cabin stay is coming up on {{check_in_date}}. Here are some important reminders:
+Your cabin reservation is in 7 days! Time to start getting excited and prepared.
 
-• Check-in time: 3:00 PM
-• Check-out time: 11:00 AM
-• Please review the cabin rules before your arrival
-• Contact us if you have any questions
+**Reservation Details:**
+• Family Group: {{family_group_name}}
+• Check-in: {{check_in_date}}
+• Check-out: {{check_out_date}}
 
-We hope you have a wonderful stay!
+We're looking forward to your stay!
 
 Best regards,
-{{organization_name}} Calendar Keeper`,
-      is_active: true
+{{organization_name}} Team`,
+      checklist_items: [
+        'Review shopping list and coordinate with other families',
+        'Check weather forecast for packing',
+        'Share guest information packet with friends/family joining',
+        'Review cabin rules and policies',
+        'Plan transportation and confirm directions'
+      ]
     },
     {
       id: '2',
-      template_name: 'Work Weekend Reminder',
-      subject: 'Work Weekend Reminder - {{work_date}}',
-      content: `Hello {{family_name}},
+      reminder_type: 'stay_3_day',
+      subject_template: 'Cabin Reservation Reminder - 3 days to go!',
+      custom_message: `Hi {{guest_name}},
 
-This is a reminder about the upcoming work weekend on {{work_date}}.
+Your cabin stay is just 3 days away! Here are some final preparations to ensure a smooth arrival.
 
-• Start time: 9:00 AM
-• Please bring appropriate work clothes
-• Lunch will be provided
-• Contact the calendar keeper if you cannot attend
+**Reservation Details:**
+• Family Group: {{family_group_name}}
+• Check-in: {{check_in_date}}
+• Check-out: {{check_out_date}}
 
-Thank you for your participation!
+Don't forget to confirm your arrival time if needed!
 
+Best regards,
+{{organization_name}} Team`,
+      checklist_items: [
+        'Final review of shopping list',
+        'Confirm arrival time with calendar keeper if needed',
+        'Pack according to weather forecast',
+        'Double-check emergency contact information',
+        'Review check-in procedures'
+      ]
+    },
+    {
+      id: '3',
+      reminder_type: 'stay_1_day',
+      subject_template: 'Cabin Reservation Reminder - Tomorrow!',
+      custom_message: `Hi {{guest_name}},
+
+Your cabin stay is tomorrow! We hope you're all packed and ready for a wonderful time.
+
+**Reservation Details:**
+• Family Group: {{family_group_name}}
+• Check-in: {{check_in_date}}
+• Check-out: {{check_out_date}}
+
+Safe travels and enjoy your stay!
+
+Best regards,
+{{organization_name}} Team`,
+      checklist_items: [
+        'Final weather check and packing adjustments',
+        'Confirm departure time and route',
+        'Ensure all guests have cabin address and WiFi info',
+        'Last-minute coordination with other families',
+        'Emergency contacts saved in phone'
+      ]
+    },
+    {
+      id: '4',
+      reminder_type: 'selection_period_start',
+      subject_template: 'Calendar Selection Period Now Open',
+      custom_message: `Hi {{guest_name}},
+
+The calendar selection period for {{selection_year}} is now open! It's time to select your preferred cabin dates.
+
+**Selection Details:**
+• Your turn starts: {{selection_start_date}}
+• Selection deadline: {{selection_end_date}}
+• Available periods: {{available_periods}}
+
+Please log into the system to make your selections as soon as possible.
+
+Best regards,
 {{organization_name}} Calendar Keeper`,
-      is_active: true
+      checklist_items: [
+        'Review available time periods',
+        'Coordinate with family group members',
+        'Consider seasonal preferences and activities',
+        'Submit selections before deadline',
+        'Contact calendar keeper with any questions'
+      ]
     }
   ]);
 
@@ -67,6 +129,21 @@ Thank you for your participation!
     });
   };
 
+  const getTemplateIcon = (type: string) => {
+    if (type.includes('selection')) return <Calendar className="h-4 w-4" />;
+    return <Clock className="h-4 w-4" />;
+  };
+
+  const getTemplateTitle = (type: string) => {
+    switch (type) {
+      case 'stay_7_day': return '7-Day Stay Reminder';
+      case 'stay_3_day': return '3-Day Stay Reminder';
+      case 'stay_1_day': return '1-Day Stay Reminder';
+      case 'selection_period_start': return 'Selection Period Start';
+      default: return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2">
@@ -75,30 +152,17 @@ Thank you for your participation!
       </div>
       
       <div className="text-sm text-muted-foreground">
-        Customize the content of reminder notifications sent to families. Available variables: 
-        {"{{family_name}}, {{check_in_date}}, {{check_out_date}}, {{work_date}}, {{organization_name}}"}
+        Customize the content of reminder notifications. Available variables: 
+        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}"}
       </div>
 
       <div className="space-y-6">
         {templates.map((template) => (
           <Card key={template.id}>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {template.template_name.includes('Work') ? (
-                    <Calendar className="h-4 w-4" />
-                  ) : (
-                    <Clock className="h-4 w-4" />
-                  )}
-                  <CardTitle className="text-base">{template.template_name}</CardTitle>
-                </div>
-                <Button
-                  variant={template.is_active ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateTemplate(template.id, { is_active: !template.is_active })}
-                >
-                  {template.is_active ? "Active" : "Inactive"}
-                </Button>
+              <div className="flex items-center space-x-2">
+                {getTemplateIcon(template.reminder_type)}
+                <CardTitle className="text-base">{getTemplateTitle(template.reminder_type)}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -106,8 +170,8 @@ Thank you for your participation!
                 <Label htmlFor={`subject-${template.id}`}>Email Subject</Label>
                 <Textarea
                   id={`subject-${template.id}`}
-                  value={template.subject}
-                  onChange={(e) => updateTemplate(template.id, { subject: e.target.value })}
+                  value={template.subject_template}
+                  onChange={(e) => updateTemplate(template.id, { subject_template: e.target.value })}
                   className="mt-1"
                   rows={1}
                 />
@@ -117,10 +181,24 @@ Thank you for your participation!
                 <Label htmlFor={`content-${template.id}`}>Email Content</Label>
                 <Textarea
                   id={`content-${template.id}`}
-                  value={template.content}
-                  onChange={(e) => updateTemplate(template.id, { content: e.target.value })}
+                  value={template.custom_message}
+                  onChange={(e) => updateTemplate(template.id, { custom_message: e.target.value })}
                   className="mt-1"
                   rows={8}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={`checklist-${template.id}`}>Checklist Items (one per line)</Label>
+                <Textarea
+                  id={`checklist-${template.id}`}
+                  value={template.checklist_items.join('\n')}
+                  onChange={(e) => updateTemplate(template.id, { 
+                    checklist_items: e.target.value.split('\n').filter(item => item.trim()) 
+                  })}
+                  className="mt-1"
+                  rows={5}
+                  placeholder="Enter checklist items, one per line..."
                 />
               </div>
             </CardContent>

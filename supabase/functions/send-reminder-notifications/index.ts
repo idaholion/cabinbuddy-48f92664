@@ -35,15 +35,21 @@ const handler = async (req: Request): Promise<Response> => {
         .from('reservations')
         .select(`
           id,
-          check_in_date,
-          check_out_date,
+          start_date,
+          end_date,
+          family_group,
+          organization_id,
+          organizations!inner(
+            id,
+            name
+          ),
           family_groups!inner(
-            name,
-            contact_email,
-            contact_name
+            lead_email,
+            lead_name,
+            lead_phone
           )
         `)
-        .eq('check_in_date', targetDateString)
+        .eq('start_date', targetDateString)
         .eq('status', 'confirmed');
       
       if (error) {
@@ -59,38 +65,17 @@ const handler = async (req: Request): Promise<Response> => {
           const notificationResponse = await supabase.functions.invoke('send-notification', {
             body: {
               type: 'reminder',
+              organization_id: reservation.organization_id,
               reservation: {
                 id: reservation.id,
-                family_group_name: reservation.family_groups.name,
-                check_in_date: reservation.check_in_date,
-                check_out_date: reservation.check_out_date,
-                guest_email: reservation.family_groups.contact_email,
-                guest_name: reservation.family_groups.contact_name,
+                family_group_name: reservation.family_group,
+                check_in_date: reservation.start_date,
+                check_out_date: reservation.end_date,
+                guest_email: reservation.family_groups.lead_email,
+                guest_name: reservation.family_groups.lead_name,
+                guest_phone: reservation.family_groups.lead_phone,
               },
               days_until: days,
-              pre_arrival_checklist: {
-                seven_day: [
-                  'Review shopping list and coordinate with other families',
-                  'Check weather forecast for packing',
-                  'Share guest information packet with friends/family joining',
-                  'Review cabin rules and policies',
-                  'Plan transportation and confirm directions'
-                ],
-                three_day: [
-                  'Final review of shopping list',
-                  'Confirm arrival time with calendar keeper if needed',
-                  'Pack according to weather forecast',
-                  'Double-check emergency contact information',
-                  'Review check-in procedures'
-                ],
-                one_day: [
-                  'Final weather check and packing adjustments',
-                  'Confirm departure time and route',
-                  'Ensure all guests have cabin address and WiFi info',
-                  'Last-minute coordination with other families',
-                  'Emergency contacts saved in phone'
-                ]
-              }
             }
           });
           

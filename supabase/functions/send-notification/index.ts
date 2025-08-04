@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Twilio configuration
 const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -15,8 +19,8 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request';
-  reservation: {
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period';
+  reservation?: {
     id: string;
     family_group_name: string;
     check_in_date: string;
@@ -25,11 +29,22 @@ interface NotificationRequest {
     guest_name: string;
     guest_phone?: string;
   };
+  organization_id: string;
   days_until?: number;
   pre_arrival_checklist?: {
     seven_day?: string[];
     three_day?: string[];
     one_day?: string[];
+  };
+  // For selection period notifications
+  selection_data?: {
+    family_group_name: string;
+    guest_email: string;
+    guest_name: string;
+    selection_year: string;
+    selection_start_date: string;
+    selection_end_date: string;
+    available_periods: string;
   };
 }
 
@@ -73,83 +88,204 @@ async function sendSMS(to: string, message: string) {
   }
 }
 
+function replaceVariables(template: string, variables: { [key: string]: string }) {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, value);
+  }
+  return result;
+}
+
+async function getTemplate(organizationId: string, reminderType: string) {
+  try {
+    const { data, error } = await supabase
+      .from('reminder_templates')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('reminder_type', reminderType)
+      .single();
+
+    if (error) {
+      console.log(`No custom template found for ${reminderType}, using default`);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching template:', error);
+    return null;
+  }
+}
+
+async function getOrganizationName(organizationId: string): Promise<string> {
+  try {
+    const { data, error } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', organizationId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching organization name:', error);
+      return 'CabinBuddy';
+    }
+
+    return data.name || 'CabinBuddy';
+  } catch (error) {
+    console.error('Error fetching organization name:', error);
+    return 'CabinBuddy';
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, reservation, days_until, pre_arrival_checklist }: NotificationRequest = await req.json();
+    const { type, reservation, organization_id, days_until, selection_data }: NotificationRequest = await req.json();
 
     let subject = "";
     let htmlContent = "";
     let smsMessage = "";
+    
+    const organizationName = await getOrganizationName(organization_id);
 
     switch (type) {
       case 'reminder':
-        const checklistKey = days_until === 7 ? 'seven_day' : days_until === 3 ? 'three_day' : 'one_day';
-        const checklist = pre_arrival_checklist?.[checklistKey] || [];
+        if (!reservation) throw new Error('Reservation data required for reminder');
         
-        subject = `Cabin Reservation Reminder - ${days_until} day${days_until !== 1 ? 's' : ''} to go!`;
-        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for pre-arrival checklist. - CabinBuddy`;
+        // Determine reminder type based on days_until
+        let reminderType = 'stay_1_day';
+        if (days_until === 7) reminderType = 'stay_7_day';
+        else if (days_until === 3) reminderType = 'stay_3_day';
         
-        const checklistHtml = checklist.length > 0 ? `
-          <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #2d5d2d; margin-top: 0;">📋 Pre-Arrival Checklist (${days_until} day${days_until !== 1 ? 's' : ''} out)</h3>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-              ${checklist.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
-            </ul>
-            <p style="font-size: 14px; color: #666; margin-bottom: 0;"><em>💡 Tip: You can access your shopping list and documents in the cabin management system!</em></p>
-          </div>
-        ` : '';
+        const template = await getTemplate(organization_id, reminderType);
         
-        htmlContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-            <h1 style="color: #2d5d2d; text-align: center;">🏡 Your Cabin Reservation is Coming Up!</h1>
-            <p>Hi ${reservation.guest_name},</p>
-            <p>Just a friendly reminder that your cabin reservation is in <strong>${days_until} day${days_until !== 1 ? 's' : ''}</strong>! Time to start getting excited and prepared.</p>
-            
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">🏷️ Reservation Details:</h3>
-              <p><strong>Family Group:</strong> ${reservation.family_group_name}</p>
-              <p><strong>Check-in:</strong> ${new Date(reservation.check_in_date).toLocaleDateString()}</p>
-              <p><strong>Check-out:</strong> ${new Date(reservation.check_out_date).toLocaleDateString()}</p>
-              <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+        const variables = {
+          guest_name: reservation.guest_name,
+          family_group_name: reservation.family_group_name,
+          check_in_date: new Date(reservation.check_in_date).toLocaleDateString(),
+          check_out_date: new Date(reservation.check_out_date).toLocaleDateString(),
+          organization_name: organizationName,
+        };
+
+        if (template) {
+          // Use custom template
+          subject = replaceVariables(template.subject_template, variables);
+          
+          const customMessage = replaceVariables(template.custom_message, variables);
+          const checklistItems = template.checklist_items || [];
+          
+          const checklistHtml = checklistItems.length > 0 ? `
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #2d5d2d; margin-top: 0;">📋 Pre-Arrival Checklist (${days_until} day${days_until !== 1 ? 's' : ''} out)</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${checklistItems.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+              <p style="font-size: 14px; color: #666; margin-bottom: 0;"><em>💡 Tip: You can access your shopping list and documents in the cabin management system!</em></p>
             </div>
-            
-            ${checklistHtml}
-            
-            ${days_until <= 3 ? `
-              <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
-                <h4 style="margin-top: 0; color: #856404;">🚨 Important Reminders:</h4>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                  <li>Confirm your arrival time with the calendar keeper if needed</li>
-                  <li>Make sure all guests have the cabin address and WiFi information</li>
-                  <li>Save emergency contact numbers in your phone</li>
-                </ul>
+          ` : '';
+          
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${customMessage.split('\n').map(line => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+            </div>
+          `;
+        } else {
+          // Use default template (existing logic)
+          subject = `Cabin Reservation Reminder - ${days_until} day${days_until !== 1 ? 's' : ''} to go!`;
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              <h1 style="color: #2d5d2d; text-align: center;">🏡 Your Cabin Reservation is Coming Up!</h1>
+              <p>Hi ${reservation.guest_name},</p>
+              <p>Just a friendly reminder that your cabin reservation is in <strong>${days_until} day${days_until !== 1 ? 's' : ''}</strong>! Time to start getting excited and prepared.</p>
+              
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">🏷️ Reservation Details:</h3>
+                <p><strong>Family Group:</strong> ${reservation.family_group_name}</p>
+                <p><strong>Check-in:</strong> ${new Date(reservation.check_in_date).toLocaleDateString()}</p>
+                <p><strong>Check-out:</strong> ${new Date(reservation.check_out_date).toLocaleDateString()}</p>
+                <p><strong>Reservation ID:</strong> ${reservation.id}</p>
               </div>
-            ` : ''}
-            
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h4 style="margin-top: 0; color: #1565c0;">📱 Quick Access:</h4>
-              <p style="margin-bottom: 5px;">• Log into the cabin management system to:</p>
-              <ul style="margin: 5px 0; padding-left: 20px;">
-                <li>Check and coordinate on the shopping list</li>
-                <li>Access cabin rules and documents</li>
-                <li>View guest information packet</li>
-                <li>Get current weather and conditions</li>
+              
+              <p>We're looking forward to your stay and hope you have a wonderful time!</p>
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
+            </div>
+          `;
+        }
+        
+        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for details. - ${organizationName}`;
+        break;
+
+      case 'selection_period':
+        if (!selection_data) throw new Error('Selection data required for selection period notification');
+        
+        const selectionTemplate = await getTemplate(organization_id, 'selection_period_start');
+        
+        const selectionVariables = {
+          guest_name: selection_data.guest_name,
+          family_group_name: selection_data.family_group_name,
+          selection_year: selection_data.selection_year,
+          selection_start_date: selection_data.selection_start_date,
+          selection_end_date: selection_data.selection_end_date,
+          available_periods: selection_data.available_periods,
+          organization_name: organizationName,
+        };
+
+        if (selectionTemplate) {
+          subject = replaceVariables(selectionTemplate.subject_template, selectionVariables);
+          
+          const customMessage = replaceVariables(selectionTemplate.custom_message, selectionVariables);
+          const checklistItems = selectionTemplate.checklist_items || [];
+          
+          const checklistHtml = checklistItems.length > 0 ? `
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #1565c0; margin-top: 0;">📋 Selection Checklist</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${checklistItems.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
               </ul>
             </div>
-            
-            <p>We're looking forward to your stay and hope you have a wonderful time!</p>
-            <p style="margin-top: 30px;">Best regards,<br><strong>CabinBuddy Team</strong></p>
-          </div>
-        `;
+          ` : '';
+          
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${customMessage.split('\n').map(line => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+            </div>
+          `;
+        } else {
+          // Default selection period template
+          subject = `Calendar Selection Period Now Open - ${selection_data.selection_year}`;
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              <h1 style="color: #2d5d2d; text-align: center;">📅 Time to Select Your Cabin Dates!</h1>
+              <p>Hi ${selection_data.guest_name},</p>
+              <p>The calendar selection period for <strong>${selection_data.selection_year}</strong> is now open!</p>
+              
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">📋 Selection Details:</h3>
+                <p><strong>Family Group:</strong> ${selection_data.family_group_name}</p>
+                <p><strong>Selection Period:</strong> ${selection_data.selection_start_date} to ${selection_data.selection_end_date}</p>
+                <p><strong>Available Periods:</strong> ${selection_data.available_periods}</p>
+              </div>
+              
+              <p>Please log into the cabin management system to make your selections as soon as possible.</p>
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+            </div>
+          `;
+        }
+        
+        smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
         break;
       
+      // Keep existing cases for confirmation, cancellation, assistance_request...
       case 'confirmation':
+        if (!reservation) throw new Error('Reservation data required for confirmation');
         subject = `Cabin Reservation Confirmed - ${reservation.family_group_name}`;
-        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is confirmed. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. - CabinBuddy`;
+        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is confirmed. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. - ${organizationName}`;
         htmlContent = `
           <h1>Your Cabin Reservation is Confirmed!</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -162,13 +298,14 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Reservation ID:</strong> ${reservation.id}</p>
           </div>
           <p>You'll receive reminder notifications as your stay approaches.</p>
-          <p>Best regards,<br>CabinBuddy Team</p>
+          <p>Best regards,<br>${organizationName} Team</p>
         `;
         break;
       
       case 'cancellation':
+        if (!reservation) throw new Error('Reservation data required for cancellation');
         subject = `Cabin Reservation Cancelled - ${reservation.family_group_name}`;
-        smsMessage = `Hi ${reservation.guest_name}. Your cabin reservation (${reservation.family_group_name}) for ${new Date(reservation.check_in_date).toLocaleDateString()} has been cancelled. - CabinBuddy`;
+        smsMessage = `Hi ${reservation.guest_name}. Your cabin reservation (${reservation.family_group_name}) for ${new Date(reservation.check_in_date).toLocaleDateString()} has been cancelled. - ${organizationName}`;
         htmlContent = `
           <h1>Reservation Cancellation Notice</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -181,13 +318,14 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Reservation ID:</strong> ${reservation.id}</p>
           </div>
           <p>If you have any questions, please don't hesitate to contact us.</p>
-          <p>Best regards,<br>CabinBuddy Team</p>
+          <p>Best regards,<br>${organizationName} Team</p>
         `;
         break;
       
       case 'assistance_request':
+        if (!reservation) throw new Error('Reservation data required for assistance request');
         subject = `Calendar Keeper Assistance Request - ${reservation.family_group_name}`;
-        smsMessage = `New assistance request from ${reservation.family_group_name}. Please check the cabin management system. - CabinBuddy`;
+        smsMessage = `New assistance request from ${reservation.family_group_name}. Please check the cabin management system. - ${organizationName}`;
         htmlContent = `
           <h1>New Assistance Request</h1>
           <p>Hi ${reservation.guest_name},</p>
@@ -199,15 +337,15 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <p>Please log into the cabin management system to view the full details and respond to the request.</p>
           <p>This is an automated notification from the cabin reservation system.</p>
-          <p>Best regards,<br>CabinBuddy Team</p>
+          <p>Best regards,<br>${organizationName} Team</p>
         `;
         break;
     }
 
     // Send email notification
     const emailResponse = await resend.emails.send({
-      from: "CabinBuddy <noreply@yourdomainhere.com>",
-      to: [reservation.guest_email],
+      from: `${organizationName} <noreply@yourdomainhere.com>`,
+      to: [reservation?.guest_email || selection_data?.guest_email || ''],
       subject: subject,
       html: htmlContent,
     });
@@ -216,7 +354,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send SMS notification if phone number is provided
     let smsResponse = null;
-    if (reservation.guest_phone && smsMessage) {
+    if (reservation?.guest_phone && smsMessage) {
       smsResponse = await sendSMS(reservation.guest_phone, smsMessage);
       if (smsResponse && !smsResponse.error) {
         console.log(`${type} SMS sent successfully`);
