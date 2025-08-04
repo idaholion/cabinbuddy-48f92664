@@ -10,6 +10,7 @@ interface ReceiptData {
   date: string;
   family_group?: string;
   image_url?: string;
+  image?: File;
 }
 
 export const useReceipts = () => {
@@ -43,6 +44,25 @@ export const useReceipts = () => {
     }
   };
 
+  const uploadReceiptImage = async (file: File): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    
+    const { data, error } = await supabase.storage
+      .from('receipt-images')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('receipt-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const createReceipt = async (receiptData: ReceiptData) => {
     if (!user || !organization?.id) {
       toast({
@@ -55,10 +75,20 @@ export const useReceipts = () => {
 
     setLoading(true);
     try {
+      let imageUrl: string | undefined = receiptData.image_url;
+      
+      if (receiptData.image) {
+        imageUrl = await uploadReceiptImage(receiptData.image);
+      }
+
       const { data: newReceipt, error } = await supabase
         .from('receipts')
         .insert({
-          ...receiptData,
+          description: receiptData.description,
+          amount: receiptData.amount,
+          date: receiptData.date,
+          family_group: receiptData.family_group,
+          image_url: imageUrl,
           organization_id: organization.id,
           user_id: user.id
         })
@@ -108,6 +138,18 @@ export const useReceipts = () => {
 
     setLoading(true);
     try {
+      const receipt = receipts.find(r => r.id === receiptId);
+      
+      // Delete image from storage if exists
+      if (receipt?.image_url) {
+        const fileName = receipt.image_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('receipt-images')
+            .remove([`${user.id}/${fileName}`]);
+        }
+      }
+
       const { error } = await supabase
         .from('receipts')
         .delete()
@@ -154,5 +196,6 @@ export const useReceipts = () => {
     createReceipt,
     deleteReceipt,
     refetchReceipts: fetchReceipts,
+    uploadReceiptImage,
   };
 };

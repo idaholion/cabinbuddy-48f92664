@@ -8,59 +8,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone, Download, CheckSquare, Square } from "lucide-react";
+import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone, Download, CheckSquare, Square, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
-
-interface Photo {
-  id: string;
-  url: string;
-  caption: string;
-  uploadedBy: string;
-  uploadedAt: string;
-  likes: number;
-  comments: string[];
-  isSample?: boolean;
-}
+import { usePhotos } from "@/hooks/usePhotos";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PhotoSharing() {
-  const [photos, setPhotos] = useState<Photo[]>([
-    {
-      id: "1",
-      url: "https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400",
-      caption: "Beautiful sunset from the cabin deck last evening",
-      uploadedBy: "Sarah Johnson",
-      uploadedAt: "2024-01-15",
-      likes: 12,
-      comments: ["Gorgeous view!", "Love this place"],
-      isSample: true
-    },
-    {
-      id: "2", 
-      url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400",
-      caption: "Fresh berries we picked during our morning hike",
-      uploadedBy: "Mike Davis",
-      uploadedAt: "2024-01-14",
-      likes: 8,
-      comments: ["Yummy!", "Great find!"],
-      isSample: true
-    },
-    {
-      id: "3",
-      url: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=400", 
-      caption: "Our cabin cat making new friends",
-      uploadedBy: "Emily Wilson",
-      uploadedAt: "2024-01-13",
-      likes: 15,
-      comments: ["So cute!", "Best cabin mascot ever"],
-      isSample: true
-    }
-  ]);
+  const { photos, loading, uploadPhoto, likePhoto, deletePhoto } = usePhotos();
+  const { user } = useAuth();
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [newPhoto, setNewPhoto] = useState({
     caption: "",
     file: null as File | null
@@ -93,44 +55,37 @@ export default function PhotoSharing() {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (newPhoto.file && newPhoto.caption) {
-      const url = URL.createObjectURL(newPhoto.file);
-      const photo: Photo = {
-        id: Date.now().toString(),
-        url,
-        caption: newPhoto.caption,
-        uploadedBy: "You",
-        uploadedAt: new Date().toISOString().split('T')[0],
-        likes: 0,
-        comments: []
-      };
-      setPhotos([photo, ...photos]);
-      setNewPhoto({ caption: "", file: null });
-      setIsUploadOpen(false);
+      setUploading(true);
+      try {
+        await uploadPhoto(newPhoto.file, newPhoto.caption);
+        setNewPhoto({ caption: "", file: null });
+        setIsUploadOpen(false);
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
   const handleLike = (photoId: string) => {
-    setPhotos(photos.map(photo => 
-      photo.id === photoId 
-        ? { ...photo, likes: photo.likes + 1 }
-        : photo
-    ));
+    likePhoto(photoId);
   };
 
   const handleDelete = (photoId: string) => {
-    setPhotos(photos.filter(photo => photo.id !== photoId));
+    deletePhoto(photoId);
   };
 
-  const handleDownload = async (photo: Photo) => {
+  const handleDownload = async (photo: any) => {
     try {
-      const response = await fetch(photo.url);
+      const response = await fetch(photo.image_url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${photo.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${photo.uploadedAt}.jpg`;
+      link.download = `${photo.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${photo.created_at}.jpg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -172,8 +127,13 @@ export default function PhotoSharing() {
     setSelectedPhotos(new Set());
   };
 
-  // Check if there are any user photos (non-sample photos)
-  const hasUserPhotos = photos.some(photo => !photo.isSample);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -289,9 +249,13 @@ export default function PhotoSharing() {
                 <Button variant="outline" onClick={() => setIsUploadOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleUpload} disabled={!newPhoto.file || !newPhoto.caption}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Photo
+                <Button onClick={handleUpload} disabled={!newPhoto.file || !newPhoto.caption || uploading}>
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  {uploading ? 'Uploading...' : 'Upload Photo'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -317,11 +281,11 @@ export default function PhotoSharing() {
                   </Button>
                 )}
                 <img
-                  src={photo.url}
+                  src={photo.image_url}
                   alt={photo.caption}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
-                {photo.isSample && (
+                {user?.id === photo.user_id && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -335,16 +299,18 @@ export default function PhotoSharing() {
               <CardContent className="p-4">
                 <div className="flex items-start space-x-3 mb-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${photo.uploadedBy}`} />
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${photo.user_id}`} />
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{photo.uploadedBy}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {photo.user_id === user?.id ? 'You' : 'Family Member'}
+                    </p>
                     <div className="flex items-center text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3 mr-1" />
-                      {photo.uploadedAt}
+                      {new Date(photo.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -357,10 +323,16 @@ export default function PhotoSharing() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleLike(photo.id)}
-                      className="flex items-center space-x-1 text-muted-foreground hover:text-red-500"
+                      className={`flex items-center space-x-1 ${
+                        photo.liked_by_users?.includes(user?.id || '') 
+                          ? 'text-red-500' 
+                          : 'text-muted-foreground hover:text-red-500'
+                      }`}
                     >
-                      <Heart className="h-4 w-4" />
-                      <span className="text-xs">{photo.likes}</span>
+                      <Heart className={`h-4 w-4 ${
+                        photo.liked_by_users?.includes(user?.id || '') ? 'fill-current' : ''
+                      }`} />
+                      <span className="text-xs">{photo.likes_count}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -368,7 +340,7 @@ export default function PhotoSharing() {
                       className="flex items-center space-x-1 text-muted-foreground"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      <span className="text-xs">{photo.comments.length}</span>
+                      <span className="text-xs">0</span>
                     </Button>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -386,18 +358,6 @@ export default function PhotoSharing() {
                     </Button>
                   </div>
                 </div>
-                
-                {photo.comments.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <div className="space-y-1">
-                      {photo.comments.slice(0, 2).map((comment, index) => (
-                        <p key={index} className="text-xs text-muted-foreground">
-                          "{comment}"
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}

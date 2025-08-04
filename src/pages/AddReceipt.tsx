@@ -6,48 +6,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
+import { useReceipts } from "@/hooks/useReceipts";
 
 const AddReceipt = () => {
+  const { receipts, loading, createReceipt, deleteReceipt } = useReceipts();
   const [amount, setAmount] = useState("");
   const [uploadAmount, setUploadAmount] = useState("");
   const [description, setDescription] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [receipts, setReceipts] = useState([
-    {
-      id: 1,
-      amount: 45.67,
-      description: "Grocery store receipt",
-      thumbnail: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=100&h=100&fit=crop",
-      isSample: true
-    },
-    {
-      id: 2,
-      amount: 23.45,
-      description: "Gas station",
-      thumbnail: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=100&h=100&fit=crop",
-      isSample: true
-    },
-    {
-      id: 3,
-      amount: 156.78,
-      description: "Hardware store supplies",
-      thumbnail: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop",
-      isSample: true
-    }
-  ]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && uploadAmount) {
+      setUploadingFile(true);
+      try {
+        await createReceipt({
+          amount: parseFloat(uploadAmount),
+          description: `Receipt uploaded: ${file.name}`,
+          date: new Date().toISOString().split('T')[0],
+          image: file
+        });
+        setUploadAmount("");
+        event.target.value = "";
+        toast({
+          title: "Receipt uploaded",
+          description: `${file.name} has been uploaded successfully.`,
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploadingFile(false);
+      }
+    } else {
+      setCurrentFile(file || null);
       toast({
-        title: "Receipt uploaded",
-        description: `${file.name} has been uploaded successfully.`,
+        title: "File selected",
+        description: `${file?.name} selected. Please enter amount to upload.`,
       });
     }
   };
@@ -62,14 +64,34 @@ const AddReceipt = () => {
     setDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
+    if (files.length > 0 && uploadAmount) {
+      setUploadingFile(true);
+      try {
+        await createReceipt({
+          amount: parseFloat(uploadAmount),
+          description: `Receipt uploaded: ${files[0].name}`,
+          date: new Date().toISOString().split('T')[0],
+          image: files[0]
+        });
+        setUploadAmount("");
+        toast({
+          title: "Receipt uploaded",
+          description: `${files[0].name} has been uploaded successfully.`,
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploadingFile(false);
+      }
+    } else {
+      setCurrentFile(files[0] || null);
       toast({
-        title: "Receipt dropped",
-        description: `${files[0].name} has been uploaded successfully.`,
+        title: "File dropped",
+        description: `${files[0]?.name} dropped. Please enter amount to upload.`,
       });
     }
   };
@@ -83,10 +105,40 @@ const AddReceipt = () => {
         source: source
       });
       
-      if (image.dataUrl) {
+      if (image.dataUrl && uploadAmount) {
+        setUploadingFile(true);
+        try {
+          // Convert data URL to File object
+          const response = await fetch(image.dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          
+          await createReceipt({
+            amount: parseFloat(uploadAmount),
+            description: `Receipt photo ${source === CameraSource.Camera ? 'taken' : 'selected'}`,
+            date: new Date().toISOString().split('T')[0],
+            image: file
+          });
+          
+          setUploadAmount("");
+          toast({
+            title: "Receipt captured",
+            description: `Receipt photo has been ${source === CameraSource.Camera ? 'taken' : 'selected'} and uploaded successfully.`,
+          });
+        } catch (error) {
+          console.error('Upload failed:', error);
+        } finally {
+          setUploadingFile(false);
+        }
+      } else if (image.dataUrl) {
+        // Convert data URL to File object and store for later
+        const response = await fetch(image.dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        setCurrentFile(file);
         toast({
-          title: "Receipt captured",
-          description: `Receipt photo has been ${source === CameraSource.Camera ? 'taken' : 'selected'} successfully.`,
+          title: "Photo captured",
+          description: "Photo captured. Please enter amount to upload.",
         });
       }
     } catch (error) {
@@ -103,25 +155,54 @@ const AddReceipt = () => {
     handleNativePhotoSelection(CameraSource.Camera);
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (amount && description) {
-      toast({
-        title: "Receipt added",
-        description: `Manual receipt for $${amount} has been added.`,
-      });
-      setAmount("");
-      setDescription("");
+      try {
+        await createReceipt({
+          amount: parseFloat(amount),
+          description,
+          date: new Date().toISOString().split('T')[0]
+        });
+        setAmount("");
+        setDescription("");
+      } catch (error) {
+        console.error('Manual receipt creation failed:', error);
+      }
     }
   };
 
-  const handleDeleteReceipt = (id: number) => {
-    setReceipts(receipts.filter(receipt => receipt.id !== id));
-    toast({
-      title: "Receipt deleted",
-      description: "Receipt has been removed from the list.",
-    });
+  const handleDeleteReceipt = (id: string) => {
+    deleteReceipt(id);
   };
+
+  const handleUploadWithAmount = async () => {
+    if (currentFile && uploadAmount) {
+      setUploadingFile(true);
+      try {
+        await createReceipt({
+          amount: parseFloat(uploadAmount),
+          description: `Receipt uploaded: ${currentFile.name}`,
+          date: new Date().toISOString().split('T')[0],
+          image: currentFile
+        });
+        setUploadAmount("");
+        setCurrentFile(null);
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploadingFile(false);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat relative flex items-center justify-center" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -219,14 +300,36 @@ const AddReceipt = () => {
 
                 <div className="pt-4 border-t">
                   <Label htmlFor="upload-amount">Receipt Amount</Label>
-                  <Input
-                    id="upload-amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={uploadAmount}
-                    onChange={(e) => setUploadAmount(e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="upload-amount"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={uploadAmount}
+                      onChange={(e) => setUploadAmount(e.target.value)}
+                      className="flex-1"
+                    />
+                    {currentFile && uploadAmount && (
+                      <Button 
+                        onClick={handleUploadWithAmount}
+                        disabled={uploadingFile}
+                        className="flex items-center space-x-2"
+                      >
+                        {uploadingFile ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        <span>{uploadingFile ? 'Uploading...' : 'Upload'}</span>
+                      </Button>
+                    )}
+                  </div>
+                  {currentFile && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      File ready: {currentFile.name}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -287,14 +390,23 @@ const AddReceipt = () => {
                 <div className="space-y-3">
                   {receipts.map((receipt) => (
                     <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
-                      <img 
-                        src={receipt.thumbnail} 
-                        alt="Receipt thumbnail"
-                        className="w-12 h-12 object-cover rounded"
-                      />
+                      {receipt.image_url ? (
+                        <img 
+                          src={receipt.image_url} 
+                          alt="Receipt thumbnail"
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                          <Receipt className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{receipt.description}</p>
                         <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(receipt.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                       <Button
                         variant="ghost"
@@ -304,11 +416,6 @@ const AddReceipt = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      {receipt.isSample && (
-                        <div className="absolute top-1 right-1">
-                          <span className="text-xs bg-muted text-muted-foreground px-1 rounded">Sample</span>
-                        </div>
-                      )}
                     </div>
                   ))}
                   {receipts.length === 0 && (
