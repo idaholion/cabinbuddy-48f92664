@@ -1,20 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, Thermometer, Droplets, Zap, Users } from "lucide-react";
+import { Clock, Thermometer, Droplets, Zap, Users, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useCheckinSessions } from "@/hooks/useChecklistData";
+import { useReservations } from "@/hooks/useReservations";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DailyCheckIn = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { createSession } = useCheckinSessions();
+  const { reservations } = useReservations();
+  const { familyGroups } = useFamilyGroups();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [readings, setReadings] = useState({
     temperature: "",
@@ -24,16 +30,56 @@ const DailyCheckIn = () => {
   const [notes, setNotes] = useState("");
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentReservation, setCurrentReservation] = useState<any>(null);
 
-  // Generate days for the current stay (example: 7 days)
-  const stayDays = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() + i);
-    return {
-      key: `day-${i + 1}`,
-      label: `Day ${i + 1} (${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
-    };
-  });
+  // Find user's family group
+  const userFamilyGroup = familyGroups.find(fg => 
+    fg.host_members?.some((member: any) => member.email === user?.email)
+  )?.name;
+
+  // Find current active reservation for the user
+  useEffect(() => {
+    if (!userFamilyGroup || !reservations.length) {
+      setCurrentReservation(null);
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const activeReservation = reservations.find(reservation => {
+      const startDate = new Date(reservation.start_date);
+      const endDate = new Date(reservation.end_date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+      
+      return reservation.family_group === userFamilyGroup &&
+             today >= startDate && today <= endDate;
+    });
+
+    setCurrentReservation(activeReservation);
+  }, [userFamilyGroup, reservations]);
+
+  // Generate days for the current reservation (or empty if no reservation)
+  const stayDays = currentReservation ? (() => {
+    const startDate = new Date(currentReservation.start_date);
+    const endDate = new Date(currentReservation.end_date);
+    const days = [];
+    
+    const currentDate = new Date(startDate);
+    let dayNumber = 1;
+    
+    while (currentDate <= endDate) {
+      days.push({
+        key: `day-${dayNumber}`,
+        label: `Day ${dayNumber} (${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+      dayNumber++;
+    }
+    
+    return days;
+  })() : [];
 
   const handleOccupancyChange = (dayKey: string, value: string) => {
     setDailyOccupancy(prev => ({ ...prev, [dayKey]: value }));
@@ -76,8 +122,8 @@ const DailyCheckIn = () => {
         check_date: new Date().toISOString().split('T')[0],
         checklist_responses: checklistResponses,
         notes: notes || null,
-        user_id: null,
-        family_group: null,
+        user_id: user?.id || null,
+        family_group: userFamilyGroup || null,
         guest_names: null,
         completed_at: new Date().toISOString()
       });
@@ -116,33 +162,74 @@ const DailyCheckIn = () => {
         </PageHeader>
 
         <div className="grid gap-6">
+          {/* Current Reservation Status */}
           <Card className="bg-card/95">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Number of people at the cabin
+                <Calendar className="h-5 w-5 mr-2" />
+                Current Reservation Status
               </CardTitle>
-              <CardDescription>Enter the number of people staying each day</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
-              {stayDays.map((day) => (
-                <div key={day.key} className="space-y-2">
-                  <Label htmlFor={day.key}>
-                    {day.label}
-                  </Label>
-                  <Input
-                    id={day.key}
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    className="w-20"
-                    value={dailyOccupancy[day.key] || ""}
-                    onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
-                  />
+            <CardContent>
+              {currentReservation ? (
+                <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
+                  <div>
+                    <div className="font-semibold text-primary">
+                      Active Reservation: {userFamilyGroup}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(currentReservation.start_date).toLocaleDateString()} - {new Date(currentReservation.end_date).toLocaleDateString()}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {stayDays.length} day{stayDays.length !== 1 ? 's' : ''} total
+                    </div>
+                  </div>
                 </div>
-              ))}
+              ) : (
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div>
+                    <div className="font-semibold text-muted-foreground">
+                      No Active Reservation
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      You don't have an active reservation for today. Daily check-in is only available during your reservation period.
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Only show occupancy tracking if there's an active reservation */}
+          {currentReservation && stayDays.length > 0 && (
+            <Card className="bg-card/95">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-5 w-5 mr-2" />
+                  Number of people at the cabin
+                </CardTitle>
+                <CardDescription>Enter the number of people staying each day of your reservation</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
+                {stayDays.map((day) => (
+                  <div key={day.key} className="space-y-2">
+                    <Label htmlFor={day.key}>
+                      {day.label}
+                    </Label>
+                    <Input
+                      id={day.key}
+                      type="number"
+                      placeholder="0"
+                      min="0"
+                      className="w-20"
+                      value={dailyOccupancy[day.key] || ""}
+                      onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="bg-card/95">
             <CardHeader>
