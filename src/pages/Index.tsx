@@ -15,7 +15,7 @@ import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="flex items-center space-x-2">
@@ -25,15 +25,6 @@ const UserInfo = () => {
           {user?.user_metadata?.first_name || user?.email}
         </span>
       </div>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={signOut}
-        className="text-sm font-medium"
-      >
-        <LogOut className="h-4 w-4 mr-2" />
-        Logout
-      </Button>
     </div>
   );
 };
@@ -42,6 +33,7 @@ const Index = () => {
   const { isSupervisor } = useSupervisor();
   const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
   const { activeOrganization } = useMultiOrganization();
+  const { signOut } = useAuth();
   
   // Monitor performance
   usePerformanceMonitoring();
@@ -104,7 +96,6 @@ const Index = () => {
               )}
             </div>
             <div className="flex items-center space-x-4">
-              <OrganizationSwitcher />
               <UserInfo />
             </div>
           </div>
@@ -231,6 +222,11 @@ const Index = () => {
                     <CreditCard className="h-4 w-4 mr-2" />
                     Financial Review
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
