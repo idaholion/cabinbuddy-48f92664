@@ -258,19 +258,26 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   // Date selection handlers
   const handleDateClick = (date: Date) => {
+    console.log('Date clicked:', date, 'isDragging:', isDragging);
     if (isDragging) return;
     
     setSelectedDates(prev => {
       const isSelected = prev.some(d => d.toDateString() === date.toDateString());
+      console.log('Date is selected:', isSelected, 'Current selection:', prev.length);
       if (isSelected) {
-        return prev.filter(d => d.toDateString() !== date.toDateString());
+        const newSelection = prev.filter(d => d.toDateString() !== date.toDateString());
+        console.log('Removing date, new selection:', newSelection.length);
+        return newSelection;
       } else {
-        return [...prev, date];
+        const newSelection = [...prev, date];
+        console.log('Adding date, new selection:', newSelection.length);
+        return newSelection;
       }
     });
   };
 
   const handleDateMouseDown = (date: Date) => {
+    console.log('Mouse down on date:', date);
     setIsDragging(true);
     setDragStartDate(date);
     setSelectedDates([date]);
@@ -356,8 +363,18 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   }, []);
 
   const isDateSelected = (date: Date) => {
-    return selectedDates.some(d => d.toDateString() === date.toDateString());
+    const selected = selectedDates.some(d => d.toDateString() === date.toDateString());
+    // Only log occasionally to avoid spam
+    if (date.getDate() === 28 && date.getMonth() === 6) { // July 28th
+      console.log('Checking if date is selected:', date, selected, 'Total selected:', selectedDates.length);
+    }
+    return selected;
   };
+
+  // Debug effect to log selection changes
+  useEffect(() => {
+    console.log('Selected dates changed:', selectedDates.length, selectedDates.map(d => d.toDateString()));
+  }, [selectedDates]);
 
   return (
     <div className="space-y-6">
