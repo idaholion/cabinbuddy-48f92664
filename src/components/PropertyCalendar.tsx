@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { SearchInput } from "@/components/ui/search-input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as DatePicker } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservations } from "@/hooks/useReservations";
 import { useTimePeriods } from "@/hooks/useTimePeriods";
@@ -26,6 +29,8 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -82,6 +87,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
+  
+  // Manual date entry state
+  const [manualStartDate, setManualStartDate] = useState<Date | undefined>();
+  const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
 
   // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
@@ -303,6 +312,43 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     setShowBookingForm(true);
   };
 
+  // Manual date entry handlers
+  const addManualDateRange = () => {
+    if (!manualStartDate) return;
+    
+    const endDate = manualEndDate || manualStartDate;
+    const startDate = manualStartDate < endDate ? manualStartDate : endDate;
+    const finalEndDate = manualStartDate < endDate ? endDate : manualStartDate;
+    
+    const datesInRange: Date[] = [];
+    const current = new Date(startDate);
+    while (current <= finalEndDate) {
+      datesInRange.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    // Add to existing selection, avoiding duplicates
+    const existingDateStrings = selectedDates.map(d => d.toDateString());
+    const newDates = datesInRange.filter(d => !existingDateStrings.includes(d.toDateString()));
+    
+    setSelectedDates(prev => [...prev, ...newDates]);
+    setManualStartDate(undefined);
+    setManualEndDate(undefined);
+  };
+
+  const addSingleManualDate = () => {
+    if (!manualStartDate) return;
+    
+    const dateString = manualStartDate.toDateString();
+    const isAlreadySelected = selectedDates.some(d => d.toDateString() === dateString);
+    
+    if (!isAlreadySelected) {
+      setSelectedDates(prev => [...prev, manualStartDate]);
+    }
+    
+    setManualStartDate(undefined);
+  };
+
   // Add mouse up event listener
   useEffect(() => {
     document.addEventListener('mouseup', handleMouseUp);
@@ -315,7 +361,104 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   return (
     <div className="space-y-6">
-      {/* Date Selection Controls */}
+      {/* Manual Date Entry */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Manual Date Entry</CardTitle>
+          <CardDescription>Select specific dates using the date picker</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Start Date Picker */}
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !manualStartDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {manualStartDate ? format(manualStartDate, "PPP") : "Pick a start date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <DatePicker
+                    mode="single"
+                    selected={manualStartDate}
+                    onSelect={setManualStartDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* End Date Picker (Optional) */}
+            <div className="space-y-2">
+              <Label>End Date (Optional)</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !manualEndDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {manualEndDate ? format(manualEndDate, "PPP") : "Pick an end date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <DatePicker
+                    mode="single"
+                    selected={manualEndDate}
+                    onSelect={setManualEndDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Add Buttons */}
+            <div className="space-y-2">
+              <Label className="opacity-0">Actions</Label>
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={addSingleManualDate}
+                  disabled={!manualStartDate}
+                  size="sm"
+                  className="w-full"
+                >
+                  Add Single Date
+                </Button>
+                <Button
+                  onClick={addManualDateRange}
+                  disabled={!manualStartDate}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                >
+                  Add Date Range
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p>• <strong>Single Date:</strong> Select start date only and click "Add Single Date"</p>
+            <p>• <strong>Date Range:</strong> Select both start and end dates, then click "Add Date Range"</p>
+            <p>• <strong>Visual Selection:</strong> You can also click and drag on the calendar below</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Date Selection Status */}
       {selectedDates.length > 0 && (
         <Card className="border-primary bg-primary/5">
           <CardContent className="pt-4">
