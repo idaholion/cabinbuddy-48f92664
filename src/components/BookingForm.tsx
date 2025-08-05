@@ -33,7 +33,6 @@ interface BookingFormProps {
     start_date: string;
     end_date: string;
     family_group: string;
-    guest_count: number;
     total_cost?: number;
     allocated_start_date?: string;
     allocated_end_date?: string;
@@ -45,7 +44,6 @@ interface BookingFormData {
   startDate: Date;
   endDate: Date;
   familyGroup: string;
-  guestCount: number;
   totalCost?: number;
   hostAssignments: HostAssignment[];
 }
@@ -87,7 +85,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       startDate: new Date(),
       endDate: new Date(),
       familyGroup: '',
-      guestCount: 1,
       totalCost: 0,
       hostAssignments: []
     }
@@ -110,7 +107,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         startDate: new Date(editingReservation.start_date),
         endDate: new Date(editingReservation.end_date),
         familyGroup: editingReservation.family_group,
-        guestCount: editingReservation.guest_count,
         totalCost: editingReservation.total_cost || 0,
         hostAssignments: parsedAssignments
       });
@@ -181,7 +177,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         startDate: defaultStartDate,
         endDate: defaultEndDate,
         familyGroup: defaultFamilyGroup,
-        guestCount: 1,
         totalCost: 0,
         hostAssignments: defaultHostAssignments
       });
@@ -284,7 +279,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         const updatedReservation = await updateReservation(editingReservation.id, {
           start_date: data.startDate.toISOString().split('T')[0],
           end_date: data.endDate.toISOString().split('T')[0],
-          guest_count: data.guestCount,
           total_cost: data.totalCost,
           nights_used: nights,
           host_assignments: hostAssignmentsData
@@ -319,7 +313,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           start_date: data.startDate.toISOString().split('T')[0],
           end_date: data.endDate.toISOString().split('T')[0],
           family_group: data.familyGroup,
-          guest_count: data.guestCount,
           total_cost: data.totalCost,
           allocated_start_date: window?.startDate.toISOString().split('T')[0],
           allocated_end_date: window?.endDate.toISOString().split('T')[0],
@@ -542,26 +535,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               />
             </div>
 
-            {/* Guest Count */}
-            <FormField
-              control={form.control}
-              name="guestCount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Number of Guests</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      max="20"
-                      {...field} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Time Period Info */}
             {relevantWindow && (
