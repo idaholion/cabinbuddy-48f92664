@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -134,9 +134,9 @@ export function CalendarKeeperManualReservation({ onReservationCreated }: Calend
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Manual Reservation</DialogTitle>
-              <p className="text-sm text-muted-foreground">
+              <DialogDescription>
                 As a calendar keeper, you can create reservations for any family group outside the normal rotation process.
-              </p>
+              </DialogDescription>
             </DialogHeader>
 
             <Form {...form}>
