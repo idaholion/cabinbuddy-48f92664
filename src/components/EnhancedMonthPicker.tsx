@@ -88,6 +88,7 @@ export const EnhancedMonthPicker = ({
     const newDate = new Date(pickerDate);
     newDate.setMonth(newDate.getMonth() + direction);
     setPickerDate(newDate);
+    onDateChange(newDate);
   };
 
   const handleDateClick = (date: Date) => {
