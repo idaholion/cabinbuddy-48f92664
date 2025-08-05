@@ -235,7 +235,13 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const allBookings = reservations.filter(reservation => {
       const startDate = new Date(reservation.start_date);
       const endDate = new Date(reservation.end_date);
-      return date >= startDate && date <= endDate;
+      
+      // Normalize dates to avoid timezone issues
+      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return checkDate >= reservationStart && checkDate <= reservationEnd;
     });
 
     // Apply filtering from both the internal filter options and the external family group filter
