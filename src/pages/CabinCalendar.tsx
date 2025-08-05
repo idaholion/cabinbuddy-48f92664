@@ -35,6 +35,7 @@ const CabinCalendar = () => {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [manualReservationOpen, setManualReservationOpen] = useState(false);
+  const [manualDateSelectionOpen, setManualDateSelectionOpen] = useState(false);
 
   // Get user role information
   const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
@@ -284,6 +285,11 @@ const CabinCalendar = () => {
                     <DropdownMenuItem>
                       Work Weekend
                     </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => setManualDateSelectionOpen(true)}
+                    >
+                      Manual Date Selection
+                    </DropdownMenuItem>
                     {isCalendarKeeper && (
                       <DropdownMenuItem 
                         onClick={() => setManualReservationOpen(true)}
@@ -434,6 +440,19 @@ const CabinCalendar = () => {
                 <CalendarKeeperManualReservation 
                   onReservationCreated={() => setManualReservationOpen(false)}
                 />
+              </DialogContent>
+            </Dialog>
+
+            {/* Manual Date Selection Dialog */}
+            <Dialog open={manualDateSelectionOpen} onOpenChange={setManualDateSelectionOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Manual Date Selection</DialogTitle>
+                </DialogHeader>
+                <div className="text-center text-muted-foreground">
+                  <p>This feature will allow you to manually select dates for booking.</p>
+                  <p className="mt-2">Click on the calendar below to select dates visually, or use the date selection tools that appear when you select dates.</p>
+                </div>
               </DialogContent>
             </Dialog>
           </CardContent>
