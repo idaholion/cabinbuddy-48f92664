@@ -1058,9 +1058,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   const monthReservations = reservations.filter(reservation => {
                     const startDate = new Date(reservation.start_date);
                     const endDate = new Date(reservation.end_date);
+                    const monthStart = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth(), 1);
+                    const monthEnd = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0);
+                    
+                    // Include reservations that:
+                    // 1. Start in this month
+                    // 2. End in this month  
+                    // 3. Span across this month (start before and end after)
                     return (startDate.getMonth() === quarterMonth.getMonth() && startDate.getFullYear() === quarterMonth.getFullYear()) ||
                            (endDate.getMonth() === quarterMonth.getMonth() && endDate.getFullYear() === quarterMonth.getFullYear()) ||
-                           (startDate <= quarterMonth && endDate >= new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0));
+                           (startDate <= monthEnd && endDate >= monthStart);
                   });
 
                   // Create calendar grid
