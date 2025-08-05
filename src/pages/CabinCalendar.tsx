@@ -31,9 +31,10 @@ const CabinCalendar = () => {
   const { tradeRequests } = useTradeRequests();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
+  const [selectedHost, setSelectedHost] = useState<string>("");
 
   // Get user role information
-  const { isCalendarKeeper, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
+  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
   
   // Get user's family group and pending trade requests
   const userFamilyGroupName = userGroup?.name;
@@ -48,6 +49,71 @@ const CabinCalendar = () => {
       setSelectedFamilyGroup(userFamilyGroupName);
     }
   }, [userFamilyGroupName, selectedFamilyGroup]);
+  
+  // Set default selected host
+  useEffect(() => {
+    if (userHostInfo && !selectedHost) {
+      setSelectedHost(userHostInfo.name);
+    } else if (isGroupLead && userGroup?.lead_name && !selectedHost) {
+      setSelectedHost(userGroup.lead_name);
+    }
+  }, [userHostInfo, isGroupLead, userGroup, selectedHost]);
+  
+  // Get available hosts based on selected family group and user role
+  const getAvailableHosts = () => {
+    const currentGroup = familyGroups.find(fg => fg.name === selectedFamilyGroup);
+    if (!currentGroup) return [];
+    
+    const hosts = [];
+    
+    // Add group lead if exists
+    if (currentGroup.lead_name) {
+      hosts.push({ name: currentGroup.lead_name, email: currentGroup.lead_email });
+    }
+    
+    // Add host members
+    if (currentGroup.host_members) {
+      const hostMembers = currentGroup.host_members.map((member: any) => ({
+        name: member.name,
+        email: member.email
+      }));
+      hosts.push(...hostMembers);
+    }
+    
+    return hosts;
+  };
+  
+  const availableHosts = getAvailableHosts();
+  
+  // Handle family group change
+  const handleFamilyGroupChange = (value: string) => {
+    setSelectedFamilyGroup(value);
+    
+    // Reset host selection when changing family group
+    setSelectedHost("");
+    
+    // Auto-select host based on role
+    if (value !== "all") {
+      const newGroup = familyGroups.find(fg => fg.name === value);
+      if (newGroup) {
+        // If calendar keeper, try to find their host info in the new group
+        if (isCalendarKeeper && user?.email) {
+          const userHost = newGroup.host_members?.find((member: any) => 
+            member.email?.toLowerCase() === user.email.toLowerCase()
+          );
+          if (userHost) {
+            setSelectedHost(userHost.name);
+          } else if (newGroup.lead_email?.toLowerCase() === user.email.toLowerCase()) {
+            setSelectedHost(newGroup.lead_name || "");
+          }
+        }
+        // If group lead, they can only select their own group and they are the default host
+        else if (isGroupLead && newGroup.name === userFamilyGroupName) {
+          setSelectedHost(userGroup?.lead_name || "");
+        }
+      }
+    }
+  };
   
   // Assign default colors to family groups if they don't have colors
   useEffect(() => {
@@ -266,13 +332,13 @@ const CabinCalendar = () => {
                   {/* Family Group Selector */}
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
-                    <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                    <Select value={selectedFamilyGroup} onValueChange={handleFamilyGroupChange}>
                       <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
                         <SelectValue placeholder="Select Family Group" />
                       </SelectTrigger>
                     <SelectContent className="bg-background border border-border shadow-lg z-50">
-                      <SelectItem value="all">All Family Groups</SelectItem>
-                      {familyGroups.map((familyGroup) => (
+                      {isCalendarKeeper && <SelectItem value="all">All Family Groups</SelectItem>}
+                      {(isCalendarKeeper ? familyGroups : familyGroups.filter(fg => fg.name === userFamilyGroupName)).map((familyGroup) => (
                         <SelectItem key={familyGroup.id} value={familyGroup.name}>
                           <div className="flex items-center gap-2">
                             {familyGroup.color && (
@@ -288,6 +354,25 @@ const CabinCalendar = () => {
                     </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Host Selector */}
+                  {selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <Select value={selectedHost} onValueChange={setSelectedHost}>
+                        <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
+                          <SelectValue placeholder="Select Host" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border shadow-lg z-50">
+                          {availableHosts.map((host, index) => (
+                            <SelectItem key={index} value={host.name}>
+                              {host.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   
                   {/* Property Selector */}
                   <div className="flex items-center gap-2">
