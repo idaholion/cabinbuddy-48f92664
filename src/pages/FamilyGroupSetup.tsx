@@ -349,11 +349,6 @@ const FamilyGroupSetup = () => {
               </Button>
             </div>
             
-            {watchedData.selectedGroup && (
-              <p className="text-xs text-muted-foreground text-center mt-2 pr-48">
-                📝 Auto-saving your changes...
-              </p>
-            )}
           </CardHeader>
           <CardContent className="space-y-6 py-2">
             <Form {...form}>
