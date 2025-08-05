@@ -348,7 +348,7 @@ const FamilyGroupSetup = () => {
                 {loading ? "Saving..." : "Save Family Group Setup"}
               </Button>
             </div>
-            <CardTitle className="text-2xl text-center pr-48">Family Groups</CardTitle>
+            
             {watchedData.selectedGroup && (
               <p className="text-xs text-muted-foreground text-center mt-2 pr-48">
                 📝 Auto-saving your changes...
