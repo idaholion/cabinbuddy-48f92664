@@ -713,6 +713,47 @@ export type Database = {
           },
         ]
       }
+      reminder_templates: {
+        Row: {
+          checklist_items: Json
+          created_at: string
+          custom_message: string | null
+          id: string
+          organization_id: string
+          reminder_type: string
+          subject_template: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_items?: Json
+          created_at?: string
+          custom_message?: string | null
+          id?: string
+          organization_id: string
+          reminder_type: string
+          subject_template: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_items?: Json
+          created_at?: string
+          custom_message?: string | null
+          id?: string
+          organization_id?: string
+          reminder_type?: string
+          subject_template?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservation_periods: {
         Row: {
           created_at: string
