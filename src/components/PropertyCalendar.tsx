@@ -85,7 +85,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     showTradeRequests: true,
     familyGroupFilter: 'all'
   });
-  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline' | 'quarter'>('calendar');
   const [searchQuery, setSearchQuery] = useState("");
   
   // Date selection state
@@ -547,6 +547,15 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               >
                 <ArrowLeftRight className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Timeline</span>
+              </Button>
+              <Button 
+                variant={viewMode === 'quarter' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setViewMode('quarter')}
+                className="rounded-r-lg"
+              >
+                <Calendar className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Quarter</span>
               </Button>
             </div>
             
@@ -1032,6 +1041,134 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Quarter View */}
+          {viewMode === 'quarter' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }, (_, monthOffset) => {
+                  const quarterMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + monthOffset, 1);
+                  const monthName = quarterMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                  const daysInMonth = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0).getDate();
+                  const firstDayOfWeek = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth(), 1).getDay();
+                  
+                  // Get reservations for this month
+                  const monthReservations = reservations.filter(reservation => {
+                    const startDate = new Date(reservation.start_date);
+                    const endDate = new Date(reservation.end_date);
+                    return (startDate.getMonth() === quarterMonth.getMonth() && startDate.getFullYear() === quarterMonth.getFullYear()) ||
+                           (endDate.getMonth() === quarterMonth.getMonth() && endDate.getFullYear() === quarterMonth.getFullYear()) ||
+                           (startDate <= quarterMonth && endDate >= new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0));
+                  });
+
+                  // Create calendar grid
+                  const calendarDays = [];
+                  // Add empty cells for days before the first day of the month
+                  for (let i = 0; i < firstDayOfWeek; i++) {
+                    calendarDays.push(null);
+                  }
+                  // Add days of the month
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    calendarDays.push(new Date(quarterMonth.getFullYear(), quarterMonth.getMonth(), day));
+                  }
+
+                  const isCurrentMonth = quarterMonth.getMonth() === new Date().getMonth() && quarterMonth.getFullYear() === new Date().getFullYear();
+
+                  return (
+                    <div 
+                      key={monthOffset} 
+                      className={`p-3 border rounded-lg cursor-pointer hover:border-primary transition-colors ${
+                        isCurrentMonth ? 'border-primary bg-primary/5' : 'border-border'
+                      }`}
+                      onClick={() => {
+                        setCurrentMonth(quarterMonth);
+                        setViewMode('calendar');
+                        onMonthChange?.(quarterMonth);
+                      }}
+                    >
+                      <div className="text-center mb-2">
+                        <h3 className="text-sm font-medium">{monthName}</h3>
+                      </div>
+                      
+                      {/* Mini calendar header */}
+                      <div className="grid grid-cols-7 gap-1 mb-1">
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                          <div key={index} className="text-xs text-center text-muted-foreground">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {/* Mini calendar grid */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {calendarDays.map((day, index) => {
+                          if (!day) {
+                            return <div key={index} className="h-6"></div>;
+                          }
+                          
+                          // Check if this day has any reservations
+                          const dayReservations = monthReservations.filter(reservation => {
+                            const startDate = new Date(reservation.start_date);
+                            const endDate = new Date(reservation.end_date);
+                            return day >= startDate && day <= endDate;
+                          });
+                          
+                          // Get the primary reservation color for this day
+                          let backgroundColor = '';
+                          if (dayReservations.length > 0) {
+                            const familyGroup = familyGroups.find(fg => fg.name === dayReservations[0].family_group);
+                            backgroundColor = familyGroup?.color || '#e5e7eb';
+                          }
+                          
+                          const isToday = day.toDateString() === new Date().toDateString();
+                          
+                          return (
+                            <div
+                              key={index}
+                              className={`h-6 w-6 flex items-center justify-center text-xs rounded ${
+                                isToday ? 'ring-1 ring-primary' : ''
+                              }`}
+                              style={{
+                                backgroundColor: backgroundColor || 'transparent',
+                                color: backgroundColor ? '#ffffff' : 'inherit'
+                              }}
+                            >
+                              {day.getDate()}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Legend for this month */}
+                      <div className="mt-2 space-y-1">
+                        {[...new Set(monthReservations.map(r => r.family_group))].slice(0, 3).map(familyGroupName => {
+                          const familyGroup = familyGroups.find(fg => fg.name === familyGroupName);
+                          return (
+                            <div key={familyGroupName} className="flex items-center gap-1 text-xs">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: familyGroup?.color || '#e5e7eb' }}
+                              />
+                              <span className="truncate">{familyGroupName}</span>
+                            </div>
+                          );
+                        })}
+                        {[...new Set(monthReservations.map(r => r.family_group))].length > 3 && (
+                          <div className="text-xs text-muted-foreground">
+                            +{[...new Set(monthReservations.map(r => r.family_group))].length - 3} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="text-center text-sm text-muted-foreground">
+                Click on any month to view detailed calendar
+              </div>
             </div>
           )}
         </CardContent>
