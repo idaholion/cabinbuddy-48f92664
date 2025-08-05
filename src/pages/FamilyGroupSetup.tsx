@@ -24,13 +24,16 @@ import { HostMemberCard } from "@/components/HostMemberCard";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { OrganizationRoleReminder } from "@/components/OrganizationRoleReminder";
+import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { organization, loading: organizationLoading } = useOrganization();
-  const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading } = useFamilyGroups();
+  const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading, refetchFamilyGroups } = useFamilyGroups();
+  const { isGroupLead, userFamilyGroup } = useUserRole();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
@@ -455,6 +458,25 @@ const FamilyGroupSetup = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Color Picker Section - Only visible to group leads */}
+                {selectedFamilyGroup && isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name && (
+                  <div className="p-4 bg-muted/10 rounded-lg border">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-medium mb-1">Group Color</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Choose a unique color for your family group's reservations
+                        </p>
+                      </div>
+                      <FamilyGroupColorPicker
+                        familyGroup={selectedFamilyGroup}
+                        onColorUpdate={refetchFamilyGroups}
+                        isGroupLead={isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Family Group Lead Section */}
                 <div className="space-y-4">
