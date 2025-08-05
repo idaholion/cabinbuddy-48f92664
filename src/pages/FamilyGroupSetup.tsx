@@ -104,7 +104,12 @@ const FamilyGroupSetup = () => {
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "");
       setValue("leadEmail", selectedFamilyGroup.lead_email || "");
       
-      setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none");
+      // Force override alternate lead from database (don't let auto-save interfere)
+      setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none", { 
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true 
+      });
       
       // Populate host members
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
