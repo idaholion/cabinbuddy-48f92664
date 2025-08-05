@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { MessageSquare, CheckCircle, Clock, AlertTriangle, X, Send, Bell, Calendar, Mail } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -310,7 +311,7 @@ export const CalendarKeeperManagement = () => {
       {/* Navigate to Calendar Button */}
       <div className="flex justify-center pt-6">
         <Button asChild>
-          <a href="/cabin-calendar">Go to Calendar</a>
+          <Link to="/calendar">Go to Calendar</Link>
         </Button>
       </div>
     </div>
