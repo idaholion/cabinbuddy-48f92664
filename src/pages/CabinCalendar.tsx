@@ -80,10 +80,29 @@ const CabinCalendar = () => {
       hosts.push(...hostMembers);
     }
     
+    console.log('Available hosts debug:', {
+      selectedFamilyGroup,
+      currentGroup: currentGroup?.name,
+      hosts,
+      leadName: currentGroup?.lead_name,
+      hostMembers: currentGroup?.host_members
+    });
+    
     return hosts;
   };
   
   const availableHosts = getAvailableHosts();
+  
+  // Debug logging
+  console.log('Host dropdown debug:', {
+    selectedFamilyGroup,
+    selectedHost,
+    availableHostsCount: availableHosts.length,
+    isCalendarKeeper,
+    isGroupLead,
+    userGroup: userGroup?.name,
+    shouldShowDropdown: selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0
+  });
   
   // Handle family group change
   const handleFamilyGroupChange = (value: string) => {
