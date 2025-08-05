@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -191,14 +192,14 @@ const CabinCalendar = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-7xl mx-auto">
         <Card className="bg-card/95 mb-8 min-h-screen">
-          <CardHeader className="pb-2 pt-4">
+          <CardHeader className="pb-2 pt-2">
             <div className="text-center mb-2">
-              <h1 className="text-4xl md:text-6xl mb-2 font-kaushan text-primary drop-shadow-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 md:h-10 md:w-10 mr-2 md:mr-3" />
+              <h1 className="text-2xl md:text-4xl mb-1 font-kaushan text-primary drop-shadow-lg flex items-center justify-center">
+                <Calendar className="h-5 w-5 md:h-6 md:w-6 mr-2" />
                 Cabin Calendar
               </h1>
               <div className="relative flex items-center justify-center">
-                <p className="text-lg md:text-2xl text-primary font-medium">View and manage cabin reservations and availability</p>
+                <p className="text-sm md:text-lg text-primary font-medium">View and manage cabin reservations and availability</p>
                 <div className="absolute left-0">
                   <NavigationHeader backLabel="Home" className="mb-0" />
                 </div>
@@ -386,12 +387,45 @@ const CabinCalendar = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            {/* Calendar - Main focus */}
+            <div className="grid grid-cols-1 gap-4">
               <PropertyCalendar 
                 onMonthChange={setCurrentCalendarMonth}
                 selectedFamilyGroupFilter={selectedFamilyGroup}
               />
             </div>
+
+            {/* Collapsible Manual Entry Sections */}
+            <Accordion type="multiple" className="mt-4 space-y-2">
+              {isCalendarKeeper && (
+                <AccordionItem value="manual-reservation" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
+                    Manual Reservation Entry
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 animate-accordion-down">
+                    <CalendarKeeperManualReservation />
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+
+              <AccordionItem value="secondary-selection" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
+                  Secondary Selection Management
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 animate-accordion-down">
+                  <SecondarySelectionManager currentMonth={currentCalendarMonth} />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="work-weekend" className="border rounded-lg">
+                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
+                  Work Weekend Proposals
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 animate-accordion-down">
+                  <WorkWeekendProposalForm />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </CardContent>
         </Card>
       </div>
