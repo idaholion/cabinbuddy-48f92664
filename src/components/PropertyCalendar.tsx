@@ -101,6 +101,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [manualStartDate, setManualStartDate] = useState<Date | undefined>();
   const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [showManualDateDialog, setShowManualDateDialog] = useState(false);
   
   // Test override toggle
   const [testOverrideMode, setTestOverrideMode] = useState(false);
@@ -494,119 +495,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
         </Card>
       )}
 
-      {/* Manual Date Entry - Collapsible */}
-      <Card className="border-dashed">
-        <CardHeader 
-          className="pb-2 cursor-pointer"
-          onClick={() => setShowManualEntry(!showManualEntry)}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Manual Date Entry</CardTitle>
-              <CardDescription className="text-sm">Click to {showManualEntry ? 'hide' : 'show'} date picker options</CardDescription>
-            </div>
-            {showManualEntry ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-        </CardHeader>
-        {showManualEntry && (
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Start Date Picker */}
-              <div className="space-y-1">
-                <Label className="text-xs">Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !manualStartDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {manualStartDate ? format(manualStartDate, "MMM d") : "Pick date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <DatePicker
-                      mode="single"
-                      selected={manualStartDate}
-                      onSelect={setManualStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* End Date Picker (Optional) */}
-              <div className="space-y-1">
-                <Label className="text-xs">End Date (Optional)</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !manualEndDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3 w-3" />
-                      {manualEndDate ? format(manualEndDate, "MMM d") : "Pick date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <DatePicker
-                      mode="single"
-                      selected={manualEndDate}
-                      onSelect={setManualEndDate}
-                      initialFocus
-                      defaultMonth={manualStartDate || new Date()}
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Add Buttons */}
-              <div className="space-y-1">
-                <Label className="text-xs opacity-0">Actions</Label>
-                <div className="flex gap-1">
-                  <Button
-                    onClick={addSingleManualDate}
-                    disabled={!manualStartDate}
-                    size="sm"
-                    className="flex-1 text-xs"
-                  >
-                    Add Single
-                  </Button>
-                  <Button
-                    onClick={addManualDateRange}
-                    disabled={!manualStartDate}
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 text-xs"
-                  >
-                    Add Range
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-3 text-xs text-muted-foreground space-y-1">
-              <p>• <strong>Single:</strong> Pick start date and click "Add Single"</p>
-              <p>• <strong>Range:</strong> Pick both dates and click "Add Range"</p>
-              <p>• <strong>Visual:</strong> Click and drag on the calendar below</p>
-            </div>
-          </CardContent>
-        )}
-      </Card>
 
       {/* Date Selection Status */}
       {selectedDates.length > 0 && (
@@ -624,10 +512,30 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button size="sm" onClick={createReservationFromSelection}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Create Reservation
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Create Booking
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background border shadow-lg z-50">
+                    <DropdownMenuItem onClick={createReservationFromSelection}>
+                      Create Reservation from Selection
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowMultiPeriodForm(true)}>
+                      Multi-Period Booking
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowWorkWeekendForm(true)}>
+                      Work Weekend Proposal
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setShowManualDateDialog(true)}>
+                      Manual Date Selection
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button size="sm" variant="outline" onClick={clearSelection}>
                   Clear Selection
                 </Button>
@@ -1297,6 +1205,105 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
         onOpenChange={setShowTradeForm}
         onTradeComplete={handleBookingComplete}
       />
+
+      {/* Manual Date Selection Dialog */}
+      <Dialog open={showManualDateDialog} onOpenChange={setShowManualDateDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manual Date Selection</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              {/* Start Date Picker */}
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !manualStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {manualStartDate ? format(manualStartDate, "PPP") : "Pick a start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={manualStartDate}
+                      onSelect={setManualStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* End Date Picker (Optional) */}
+              <div className="space-y-2">
+                <Label>End Date (Optional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !manualEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {manualEndDate ? format(manualEndDate, "PPP") : "Pick an end date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={manualEndDate}
+                      onSelect={setManualEndDate}
+                      initialFocus
+                      defaultMonth={manualStartDate || new Date()}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  addSingleManualDate();
+                  setShowManualDateDialog(false);
+                }}
+                disabled={!manualStartDate}
+                className="w-full"
+              >
+                Add Single Date
+              </Button>
+              <Button
+                onClick={() => {
+                  addManualDateRange();
+                  setShowManualDateDialog(false);
+                }}
+                disabled={!manualStartDate}
+                variant="outline"
+                className="w-full"
+              >
+                Add Date Range
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>• <strong>Single Date:</strong> Select start date only</p>
+              <p>• <strong>Date Range:</strong> Select both start and end dates</p>
+              <p>• <strong>Visual Selection:</strong> Click and drag on the calendar</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Work Weekend Proposal Form Dialog */}
       <Dialog open={showWorkWeekendForm} onOpenChange={setShowWorkWeekendForm}>
