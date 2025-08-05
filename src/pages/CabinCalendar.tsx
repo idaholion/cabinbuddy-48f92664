@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useEffect } from "react";
 
 const CabinCalendar = () => {
@@ -31,24 +32,22 @@ const CabinCalendar = () => {
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
 
-  // Check if user is calendar keeper
-  const isCalendarKeeper = organization?.calendar_keeper_email === user?.email;
+  // Get user role information
+  const { isCalendarKeeper, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
   
   // Get user's family group and pending trade requests
-  const userFamilyGroup = familyGroups.find(fg => 
-    fg.host_members?.some((member: any) => member.email === user?.email)
-  )?.name;
+  const userFamilyGroupName = userGroup?.name;
 
   const pendingTradeRequests = tradeRequests.filter(tr => 
-    tr.target_family_group === userFamilyGroup && tr.status === 'pending'
+    tr.target_family_group === userFamilyGroupName && tr.status === 'pending'
   ).length;
   
   // Set default selected family group to user's group
   useEffect(() => {
-    if (userFamilyGroup && !selectedFamilyGroup) {
-      setSelectedFamilyGroup(userFamilyGroup);
+    if (userFamilyGroupName && !selectedFamilyGroup) {
+      setSelectedFamilyGroup(userFamilyGroupName);
     }
-  }, [userFamilyGroup, selectedFamilyGroup]);
+  }, [userFamilyGroupName, selectedFamilyGroup]);
   
   // Assign default colors to family groups if they don't have colors
   useEffect(() => {
@@ -123,6 +122,28 @@ const CabinCalendar = () => {
           </CardHeader>
           
           <CardContent>
+            {/* Calendar Keeper User Info */}
+            {isCalendarKeeper && userGroup && (
+              <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2 text-sm">
+                  <Badge variant="outline" className="text-primary border-primary">
+                    Calendar Keeper
+                  </Badge>
+                  <span className="text-muted-foreground">Logged in as:</span>
+                  <span className="font-medium">{userGroup.name}</span>
+                  {userHostInfo && (
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="font-medium">{userHostInfo.name}</span>
+                    </>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    (You can make reservations for any family group)
+                  </span>
+                </div>
+              </div>
+            )}
+            
             {/* Responsive toolbar above calendar */}
             <div className="mb-1 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
               <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">

@@ -52,7 +52,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
-  const { isGroupLead, isHostMember, userFamilyGroup, userHostInfo } = useUserRole();
+  const { isGroupLead, isHostMember, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
   const { createReservation, updateReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
@@ -74,9 +74,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
     ? familyGroups // Show all groups in test mode
-    : isHostMember || isGroupLead
-      ? familyGroups.filter(fg => fg.name === userFamilyGroupName) // Show only their group
-      : familyGroups; // Calendar keepers can see all groups
+    : isHostMember
+      ? familyGroups.filter(fg => fg.name === userFamilyGroupName) // Host members only see their group
+      : familyGroups; // Group leads and calendar keepers can see all groups
   
   const [submitting, setSubmitting] = useState(false);
 
@@ -130,11 +130,20 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           start_date: defaultStartDate,
           end_date: defaultEndDate
         }];
-      } else if (isGroupLead && userFamilyGroup) {
-        // For group leads: default to their family group
+      } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
+        // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
+        
+        // If calendar keeper has host info, add themselves as default host
+        if (isCalendarKeeper && userHostInfo) {
+          defaultHostAssignments = [{
+            host_name: userHostInfo.name,
+            host_email: userHostInfo.email,
+            start_date: defaultStartDate,
+            end_date: defaultEndDate
+          }];
+        }
       }
-      // Calendar keepers get no defaults (can select any group)
       
       form.reset({
         startDate: defaultStartDate,
@@ -145,7 +154,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         hostAssignments: defaultHostAssignments
       });
     }
-  }, [editingReservation, form, selectedStartDate, selectedEndDate, isHostMember, isGroupLead, userFamilyGroup, userHostInfo]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate, isHostMember, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
@@ -383,8 +392,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               )}
             />
 
-            {/* Host Selection for Group Leads */}
-            {isGroupLead && watchedFamilyGroup && selectedFamilyGroup && (
+            {/* Host Selection for Group Leads and Calendar Keepers */}
+            {(isGroupLead || isCalendarKeeper) && watchedFamilyGroup && selectedFamilyGroup && (
               <FormField
                 control={form.control}
                 name="hostAssignments"
@@ -560,7 +569,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             )}
 
             {/* Host Assignments - Only show for calendar keepers or if not already set by role defaults */}
-            {watchedFamilyGroup && watchedStartDate && watchedEndDate && !isHostMember && !isGroupLead && (
+            {watchedFamilyGroup && watchedStartDate && watchedEndDate && !isHostMember && !isGroupLead && !isCalendarKeeper && (
               <HostAssignmentForm
                 reservationStartDate={watchedStartDate}
                 reservationEndDate={watchedEndDate}
