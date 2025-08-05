@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,6 +77,11 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   });
   const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline'>('calendar');
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Date selection state
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
 
   // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
@@ -242,8 +247,103 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     );
   };
 
+  // Date selection handlers
+  const handleDateClick = (date: Date) => {
+    if (isDragging) return;
+    
+    setSelectedDates(prev => {
+      const isSelected = prev.some(d => d.toDateString() === date.toDateString());
+      if (isSelected) {
+        return prev.filter(d => d.toDateString() !== date.toDateString());
+      } else {
+        return [...prev, date];
+      }
+    });
+  };
+
+  const handleDateMouseDown = (date: Date) => {
+    setIsDragging(true);
+    setDragStartDate(date);
+    setSelectedDates([date]);
+  };
+
+  const handleDateMouseEnter = (date: Date) => {
+    if (!isDragging || !dragStartDate) return;
+    
+    const startDate = dragStartDate < date ? dragStartDate : date;
+    const endDate = dragStartDate < date ? date : dragStartDate;
+    const datesInRange: Date[] = [];
+    
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      datesInRange.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    setSelectedDates(datesInRange);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDragStartDate(null);
+  };
+
+  const clearSelection = () => {
+    setSelectedDates([]);
+  };
+
+  const createReservationFromSelection = () => {
+    if (selectedDates.length === 0) return;
+    
+    const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+    const startDate = sortedDates[0];
+    const endDate = sortedDates[sortedDates.length - 1];
+    
+    // Open booking form with pre-selected dates
+    setShowBookingForm(true);
+  };
+
+  // Add mouse up event listener
+  useEffect(() => {
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, []);
+
+  const isDateSelected = (date: Date) => {
+    return selectedDates.some(d => d.toDateString() === date.toDateString());
+  };
+
   return (
     <div className="space-y-6">
+      {/* Date Selection Controls */}
+      {selectedDates.length > 0 && (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-sm">
+                  <strong>{selectedDates.length} date{selectedDates.length > 1 ? 's' : ''} selected</strong>
+                  {selectedDates.length > 1 && (
+                    <span className="text-muted-foreground ml-2">
+                      {selectedDates[0].toLocaleDateString()} - {selectedDates[selectedDates.length - 1].toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={createReservationFromSelection}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create Reservation
+                </Button>
+                <Button size="sm" variant="outline" onClick={clearSelection}>
+                  Clear Selection
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <Card>
         <CardHeader className="pb-2">
           {/* Move controls to top of container */}
@@ -446,11 +546,12 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 const isToday = day.toDateString() === new Date().toDateString();
                 const hasMyBooking = dayBookings.some(b => b.family_group === userFamilyGroup);
                 const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
+                const isSelected = isDateSelected(day);
                 
                 return (
                   <div
                     key={index}
-                    className={`min-h-16 sm:min-h-20 md:min-h-24 p-1 border border-border relative transition-all duration-200 ${
+                    className={`min-h-16 sm:min-h-20 md:min-h-24 p-1 border border-border relative transition-all duration-200 select-none ${
                       !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
                     } ${isToday ? 'ring-2 ring-primary shadow-warm' : ''} ${
                       timePeriod && filterOptions.showTimePeriods ? 'border-l-4 border-l-accent' : ''
@@ -458,7 +559,12 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                       hasMyBooking ? 'bg-primary/5 border-primary/20' : ''
                     } ${
                       hasPendingTrade ? 'bg-destructive/5 border-destructive/20' : ''
+                    } ${
+                      isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
                     } hover:bg-accent/10 hover:shadow-cabin cursor-pointer group`}
+                    onClick={() => handleDateClick(day)}
+                    onMouseDown={() => handleDateMouseDown(day)}
+                    onMouseEnter={() => handleDateMouseEnter(day)}
                   >
                     <div className={`text-sm font-medium ${
                       !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
