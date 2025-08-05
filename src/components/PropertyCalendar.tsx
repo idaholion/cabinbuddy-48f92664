@@ -1143,7 +1143,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                       
                       {/* Legend for this month */}
                       <div className="mt-2 space-y-1">
-                        {[...new Set(monthReservations.map(r => r.family_group))].slice(0, 3).map(familyGroupName => {
+                        {[...new Set(monthReservations.map(r => r.family_group))].map(familyGroupName => {
                           const familyGroup = familyGroups.find(fg => fg.name === familyGroupName);
                           return (
                             <div key={familyGroupName} className="flex items-center gap-1 text-xs">
@@ -1155,11 +1155,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                             </div>
                           );
                         })}
-                        {[...new Set(monthReservations.map(r => r.family_group))].length > 3 && (
-                          <div className="text-xs text-muted-foreground">
-                            +{[...new Set(monthReservations.map(r => r.family_group))].length - 3} more
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
