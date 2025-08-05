@@ -91,6 +91,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
   
+  // Selected date range for booking form
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  
   // Manual date entry state
   const [manualStartDate, setManualStartDate] = useState<Date | undefined>();
   const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
@@ -307,6 +311,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
     const startDate = sortedDates[0];
     const endDate = sortedDates[sortedDates.length - 1];
+    
+    // Set the calculated dates for the booking form
+    setSelectedStartDate(startDate);
+    setSelectedEndDate(endDate);
     
     // Open booking form with pre-selected dates and test override
     setShowBookingForm(true);
@@ -1074,12 +1082,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           setShowBookingForm(open);
           if (!open) {
             setEditingReservation(null);
+            setSelectedStartDate(null);
+            setSelectedEndDate(null);
           }
         }}
         currentMonth={currentMonth}
         onBookingComplete={handleBookingComplete}
         editingReservation={editingReservation}
         testOverrideMode={testOverrideMode}
+        selectedStartDate={selectedStartDate}
+        selectedEndDate={selectedEndDate}
       />
 
       {/* Multi-Period Booking Form Dialog */}

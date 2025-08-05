@@ -23,6 +23,8 @@ interface BookingFormProps {
   currentMonth: Date;
   onBookingComplete?: () => void;
   testOverrideMode?: boolean;
+  selectedStartDate?: Date | null;
+  selectedEndDate?: Date | null;
   editingReservation?: {
     id: string;
     start_date: string;
@@ -45,7 +47,7 @@ interface BookingFormData {
   hostAssignments: HostAssignment[];
 }
 
-export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false }: BookingFormProps) {
+export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false, selectedStartDate, selectedEndDate }: BookingFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
@@ -111,16 +113,20 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         hostAssignments: parsedAssignments
       });
     } else {
+      // Use selected dates from calendar if provided, otherwise default to today
+      const defaultStartDate = selectedStartDate || new Date();
+      const defaultEndDate = selectedEndDate || new Date();
+      
       form.reset({
-        startDate: new Date(),
-        endDate: new Date(),
+        startDate: defaultStartDate,
+        endDate: defaultEndDate,
         familyGroup: '',
         guestCount: 1,
         totalCost: 0,
         hostAssignments: []
       });
     }
-  }, [editingReservation, form]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
