@@ -276,19 +276,13 @@ const CabinCalendar = () => {
                       </Button>
                     </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>
-                      Single Period Booking
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Multi-Period Booking
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Work Weekend
-                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => setManualDateSelectionOpen(true)}
                     >
                       Manual Date Selection
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      Work Weekend
                     </DropdownMenuItem>
                     {isCalendarKeeper && (
                       <DropdownMenuItem 
