@@ -175,6 +175,17 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   const calendarDays = generateCalendarDays();
+  
+  // Debug: Log all reservations for July 2026
+  if (currentMonth.getMonth() === 6 && currentMonth.getFullYear() === 2026) {
+    console.log('All reservations for July 2026 calendar:', reservations.filter(r => {
+      const start = new Date(r.start_date);
+      const end = new Date(r.end_date);
+      return (start.getFullYear() === 2026 && start.getMonth() === 6) || 
+             (end.getFullYear() === 2026 && end.getMonth() === 6) ||
+             (start < new Date(2026, 6, 1) && end > new Date(2026, 7, 0));
+    }));
+  }
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
 
@@ -241,7 +252,22 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
       const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       
-      return checkDate >= reservationStart && checkDate <= reservationEnd;
+      const isInRange = checkDate >= reservationStart && checkDate <= reservationEnd;
+      
+      // Debug logging for July 2026 dates
+      if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+        console.log(`Debug getBookingsForDate for ${date.toDateString()}:`, {
+          checkDate: checkDate.toDateString(),
+          reservation: {
+            family_group: reservation.family_group,
+            start: reservationStart.toDateString(),
+            end: reservationEnd.toDateString(),
+            isInRange
+          }
+        });
+      }
+      
+      return isInRange;
     });
 
     // Apply filtering from both the internal filter options and the external family group filter
@@ -745,6 +771,11 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   <div className="grid grid-cols-7 gap-1">
                     {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
+                
+                // Debug logging for July 2026 
+                if (day.getMonth() === 6 && day.getFullYear() === 2026 && day.getDate() >= 2 && day.getDate() <= 10) {
+                  console.log(`Full calendar dayBookings for ${day.toDateString()}:`, dayBookings);
+                }
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
