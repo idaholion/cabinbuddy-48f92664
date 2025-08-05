@@ -122,24 +122,28 @@ const CabinCalendar = () => {
           </CardHeader>
           
           <CardContent>
-            {/* Calendar Keeper User Info */}
-            {isCalendarKeeper && userGroup && (
+            {/* User Info */}
+            {userGroup && (
               <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <div className="flex items-center gap-2 text-sm">
-                  <Badge variant="outline" className="text-primary border-primary">
-                    Calendar Keeper
-                  </Badge>
-                  <span className="text-muted-foreground">Logged in as:</span>
-                  <span className="font-medium">{userGroup.name}</span>
-                  {userHostInfo && (
-                    <>
-                      <span className="text-muted-foreground">•</span>
-                      <span className="font-medium">{userHostInfo.name}</span>
-                    </>
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  {isCalendarKeeper && (
+                    <Badge variant="outline" className="text-primary border-primary">
+                      Calendar Keeper
+                    </Badge>
                   )}
-                  <span className="text-xs text-muted-foreground ml-auto">
-                    (You can make reservations for any family group)
-                  </span>
+                  <span className="text-muted-foreground">Logged in as:</span>
+                  {userHostInfo && (
+                    <span className="font-medium">{userHostInfo.name}</span>
+                  )}
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-medium">{userGroup.name}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="font-medium">{organization?.name}</span>
+                  {isCalendarKeeper && (
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      (You can make reservations for any family group)
+                    </span>
+                  )}
                 </div>
               </div>
             )}
