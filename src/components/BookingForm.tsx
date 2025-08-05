@@ -22,6 +22,7 @@ interface BookingFormProps {
   onOpenChange: (open: boolean) => void;
   currentMonth: Date;
   onBookingComplete?: () => void;
+  testOverrideMode?: boolean;
   editingReservation?: {
     id: string;
     start_date: string;
@@ -44,7 +45,7 @@ interface BookingFormData {
   hostAssignments: HostAssignment[];
 }
 
-export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation }: BookingFormProps) {
+export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false }: BookingFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
@@ -68,10 +69,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const currentTurnIndex = Math.floor((currentMonth.getMonth()) / (rotationData?.max_time_slots || 2)) % rotationOrder.length;
   const currentTurnGroup = rotationOrder[currentTurnIndex];
 
-  // Filter family groups - only show user's group if it's their turn, or all groups if user is admin
-  const availableFamilyGroups = userFamilyGroup === currentTurnGroup 
-    ? familyGroups.filter(fg => fg.name === userFamilyGroup)
-    : familyGroups; // Allow admins to book for any group
+  // Filter family groups - bypass turn restrictions in test mode
+  const availableFamilyGroups = testOverrideMode 
+    ? familyGroups // Show all groups in test mode
+    : userFamilyGroup === currentTurnGroup 
+      ? familyGroups.filter(fg => fg.name === userFamilyGroup)
+      : familyGroups; // Allow admins to book for any group
   
   const [submitting, setSubmitting] = useState(false);
 
@@ -162,11 +165,13 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     return { isValid: errors.length === 0, errors };
   };
 
-  // Validate current form state
+  // Validate current form state - bypass validation in test mode
   const currentValidation = watchedStartDate && watchedEndDate && watchedFamilyGroup
-    ? editingReservation 
-      ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-      : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
+    ? testOverrideMode 
+      ? { isValid: true, errors: [] } // Always valid in test mode
+      : editingReservation 
+        ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
+        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -181,10 +186,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const canMakeBooking = !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
-    // Final validation
-    const validation = editingReservation 
-      ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
-      : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
+    // Final validation - bypass in test mode
+    const validation = testOverrideMode 
+      ? { isValid: true, errors: [] } // Always valid in test mode
+      : editingReservation 
+        ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
+        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
     
     if (!validation.isValid) {
       toast({
@@ -285,7 +292,17 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
-          {userFamilyGroup && (
+          
+          {/* Test Override Mode Indicator */}
+          {testOverrideMode && (
+            <div className="mt-2 p-3 bg-orange-100 border border-orange-200 rounded-lg">
+              <p className="text-sm font-medium text-orange-700">
+                🧪 Test Mode Active - All time window restrictions bypassed
+              </p>
+            </div>
+          )}
+          
+          {userFamilyGroup && !testOverrideMode && (
             <div className="mt-2 p-3 bg-primary/10 rounded-lg">
               <p className="text-sm font-medium">
                 {userFamilyGroup === currentTurnGroup ? (

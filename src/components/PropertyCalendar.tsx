@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +91,9 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   // Manual date entry state
   const [manualStartDate, setManualStartDate] = useState<Date | undefined>();
   const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
+  
+  // Test override toggle
+  const [testOverrideMode, setTestOverrideMode] = useState(false);
 
   // Get user's family group and pending trade requests
   const userFamilyGroup = familyGroups.find(fg => 
@@ -315,7 +318,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const startDate = sortedDates[0];
     const endDate = sortedDates[sortedDates.length - 1];
     
-    // Open booking form with pre-selected dates
+    // Open booking form with pre-selected dates and test override
     setShowBookingForm(true);
   };
 
@@ -378,6 +381,38 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   return (
     <div className="space-y-6">
+      {/* Test Override Toggle */}
+      {isCalendarKeeper && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2 text-orange-700">
+              <TestTube className="h-5 w-5" />
+              Test Mode
+            </CardTitle>
+            <CardDescription className="text-orange-600">
+              Calendar keeper testing controls - bypasses time window restrictions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <Button
+                variant={testOverrideMode ? "default" : "outline"}
+                onClick={() => setTestOverrideMode(!testOverrideMode)}
+                className={testOverrideMode ? "bg-orange-600 hover:bg-orange-700" : "border-orange-300 text-orange-700 hover:bg-orange-100"}
+              >
+                {testOverrideMode ? "Test Mode ON" : "Enable Test Mode"}
+              </Button>
+              {testOverrideMode && (
+                <span className="text-sm text-orange-600 font-medium">
+                  ⚠️ Time window restrictions bypassed for testing
+                </span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Manual Date Entry */}
       {/* Manual Date Entry */}
       <Card>
         <CardHeader className="pb-3">
@@ -1064,6 +1099,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
         currentMonth={currentMonth}
         onBookingComplete={handleBookingComplete}
         editingReservation={editingReservation}
+        testOverrideMode={testOverrideMode}
       />
 
       {/* Multi-Period Booking Form Dialog */}
