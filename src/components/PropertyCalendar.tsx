@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -579,6 +579,12 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 <span className="hidden sm:inline">Timeline</span>
               </Button>
             </div>
+            
+            {/* Save Reservations Button */}
+            <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
+              <Save className="h-4 w-4 mr-1" />
+              Save Reservations
+            </Button>
             
             {/* Phase 4: Filter Dropdown - positioned in center */}
             <DropdownMenu>

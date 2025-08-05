@@ -303,9 +303,6 @@ const CabinCalendar = () => {
                       Calendar Keeper Tools
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      Booking Complete
-                    </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="relative">
                         Edit Booking
