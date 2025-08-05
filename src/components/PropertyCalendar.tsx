@@ -464,21 +464,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   return (
     <div className="space-y-6">
-      {/* Test Override Toggle */}
-      {isCalendarKeeper && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="py-3">
-            <Button
-              variant={testOverrideMode ? "default" : "outline"}
-              onClick={() => setTestOverrideMode(!testOverrideMode)}
-              size="sm"
-              className={testOverrideMode ? "bg-orange-600 hover:bg-orange-700" : "border-orange-300 text-orange-700 hover:bg-orange-100"}
-            >
-              {testOverrideMode ? "Test Mode ON" : "Enable Test Mode"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
 
       {/* Date Selection Status */}
@@ -570,6 +555,18 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               <Save className="h-4 w-4 mr-1" />
               Save Reservations
             </Button>
+            
+            {/* Test Mode Button */}
+            {isCalendarKeeper && (
+              <Button
+                variant={testOverrideMode ? "default" : "outline"}
+                onClick={() => setTestOverrideMode(!testOverrideMode)}
+                size="sm"
+                className={testOverrideMode ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-300 text-orange-700 hover:bg-orange-100"}
+              >
+                Test
+              </Button>
+            )}
             
             {/* Phase 4: Filter Dropdown - positioned in center */}
             <DropdownMenu>
