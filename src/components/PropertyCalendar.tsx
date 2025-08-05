@@ -31,6 +31,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -46,6 +47,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
+  const { toast } = useToast();
   
   // Check if user is calendar keeper (case-insensitive email comparison)
   const isCalendarKeeper = organization?.calendar_keeper_email?.toLowerCase() === user?.email?.toLowerCase();
@@ -261,8 +263,76 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   // Date selection handlers
+  // Validate if a date is selectable based on time period constraints
+  const isDateSelectable = (date: Date): { selectable: boolean; reason?: string } => {
+    if (!rotationData) return { selectable: true };
+    
+    const monthYear = date.getFullYear();
+    const timePeriodWindows = calculateTimePeriodWindows(monthYear, date);
+    
+    // Check if date falls within any valid time period window
+    const validWindow = timePeriodWindows.find(window => {
+      const windowStart = new Date(window.startDate);
+      const windowEnd = new Date(window.endDate);
+      return date >= windowStart && date <= windowEnd;
+    });
+    
+    if (!validWindow) {
+      return { 
+        selectable: false, 
+        reason: `Dates must be within ${rotationData.start_day || 'Friday'} to ${rotationData.start_day || 'Friday'} time periods` 
+      };
+    }
+    
+    return { selectable: true };
+  };
+
+  // Validate if a date range is selectable
+  const isDateRangeSelectable = (startDate: Date, endDate: Date): { selectable: boolean; reason?: string } => {
+    if (!rotationData) return { selectable: true };
+    
+    const maxNights = rotationData.max_nights || 7;
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    if (daysDiff > maxNights) {
+      return { 
+        selectable: false, 
+        reason: `Selection cannot exceed ${maxNights} nights` 
+      };
+    }
+    
+    // Check if the entire range falls within a single time period window
+    const monthYear = startDate.getFullYear();
+    const timePeriodWindows = calculateTimePeriodWindows(monthYear, startDate);
+    
+    const validWindow = timePeriodWindows.find(window => {
+      const windowStart = new Date(window.startDate);
+      const windowEnd = new Date(window.endDate);
+      return startDate >= windowStart && endDate <= windowEnd;
+    });
+    
+    if (!validWindow) {
+      return { 
+        selectable: false, 
+        reason: `Selection must fall within a single ${rotationData.start_day || 'Friday'} to ${rotationData.start_day || 'Friday'} time period` 
+      };
+    }
+    
+    return { selectable: true };
+  };
+
   const handleDateClick = (date: Date) => {
     if (isDragging) return;
+    
+    const validation = isDateSelectable(date);
+    if (!validation.selectable) {
+      toast({
+        title: "Invalid Date Selection",
+        description: validation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
     
     setSelectedDates(prev => {
       const isSelected = prev.some(d => d.toDateString() === date.toDateString());
@@ -275,6 +345,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   const handleDateMouseDown = (date: Date) => {
+    const validation = isDateSelectable(date);
+    if (!validation.selectable) {
+      toast({
+        title: "Invalid Date Selection",
+        description: validation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsDragging(true);
     setDragStartDate(date);
     setSelectedDates([date]);
@@ -297,6 +377,22 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   const handleMouseUp = () => {
+    if (isDragging && dragStartDate && selectedDates.length > 0) {
+      const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+      const startDate = sortedDates[0];
+      const endDate = sortedDates[sortedDates.length - 1];
+      
+      const rangeValidation = isDateRangeSelectable(startDate, endDate);
+      if (!rangeValidation.selectable) {
+        toast({
+          title: "Invalid Date Range",
+          description: rangeValidation.reason,
+          variant: "destructive",
+        });
+        setSelectedDates([]);
+      }
+    }
+    
     setIsDragging(false);
     setDragStartDate(null);
   };
@@ -328,6 +424,17 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const startDate = manualStartDate < endDate ? manualStartDate : endDate;
     const finalEndDate = manualStartDate < endDate ? endDate : manualStartDate;
     
+    // Validate the date range
+    const rangeValidation = isDateRangeSelectable(startDate, finalEndDate);
+    if (!rangeValidation.selectable) {
+      toast({
+        title: "Invalid Date Range",
+        description: rangeValidation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const datesInRange: Date[] = [];
     const current = new Date(startDate);
     while (current <= finalEndDate) {
@@ -346,6 +453,17 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   const addSingleManualDate = () => {
     if (!manualStartDate) return;
+    
+    // Validate the single date
+    const validation = isDateSelectable(manualStartDate);
+    if (!validation.selectable) {
+      toast({
+        title: "Invalid Date Selection",
+        description: validation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
     
     const dateString = manualStartDate.toDateString();
     const isAlreadySelected = selectedDates.some(d => d.toDateString() === dateString);
