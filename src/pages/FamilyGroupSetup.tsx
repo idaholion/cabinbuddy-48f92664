@@ -460,15 +460,6 @@ const FamilyGroupSetup = () => {
                 />
 
                 {/* Color Picker Section - Only visible to group leads */}
-                {(() => {
-                  console.log('Color picker debug:', { 
-                    selectedFamilyGroup: selectedFamilyGroup?.name, 
-                    isGroupLead, 
-                    userFamilyGroupName: userFamilyGroup?.name,
-                    showColorPicker: selectedFamilyGroup && isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name 
-                  });
-                  return null;
-                })()}
                 {selectedFamilyGroup && isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name && (
                   <div className="p-4 bg-muted/10 rounded-lg border">
                     <div className="flex items-center justify-between">
