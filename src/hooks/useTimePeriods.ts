@@ -263,31 +263,54 @@ export const useTimePeriods = () => {
         .eq('organization_id', organization.id)
         .eq('family_group', familyGroup)
         .eq('rotation_year', year)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single
 
       if (fetchError) {
         console.error('Error fetching current usage:', fetchError);
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from('time_period_usage')
-        .update({
-          time_periods_used: currentUsage.time_periods_used + 1,
-          last_selection_date: new Date().toISOString()
-        })
-        .eq('id', currentUsage.id);
+      // If no usage record exists, create one
+      if (!currentUsage) {
+        const { error: insertError } = await supabase
+          .from('time_period_usage')
+          .insert({
+            organization_id: organization.id,
+            family_group: familyGroup,
+            rotation_year: year,
+            time_periods_used: 1,
+            time_periods_allowed: rotationData?.max_time_slots || 2,
+            last_selection_date: new Date().toISOString()
+          });
 
-      if (updateError) {
-        console.error('Error updating time period usage:', updateError);
-        toast({
-          title: "Warning",
-          description: "Booking created but usage tracking failed",
-          variant: "destructive",
-        });
+        if (insertError) {
+          console.error('Error creating time period usage:', insertError);
+          toast({
+            title: "Warning",
+            description: "Booking created but usage tracking failed",
+            variant: "destructive",
+          });
+        }
       } else {
-        await fetchTimePeriodUsage(year);
+        const { error: updateError } = await supabase
+          .from('time_period_usage')
+          .update({
+            time_periods_used: currentUsage.time_periods_used + 1,
+            last_selection_date: new Date().toISOString()
+          })
+          .eq('id', currentUsage.id);
+
+        if (updateError) {
+          console.error('Error updating time period usage:', updateError);
+          toast({
+            title: "Warning",
+            description: "Booking created but usage tracking failed",
+            variant: "destructive",
+          });
+        }
       }
+      
+      await fetchTimePeriodUsage(year);
     } catch (error) {
       console.error('Error in updateTimePeriodUsage:', error);
     }
