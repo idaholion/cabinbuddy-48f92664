@@ -26,6 +26,8 @@ interface BookingFormProps {
   testOverrideMode?: boolean;
   selectedStartDate?: Date | null;
   selectedEndDate?: Date | null;
+  prefilledFamilyGroup?: string;
+  prefilledHost?: string;
   editingReservation?: {
     id: string;
     start_date: string;
@@ -48,7 +50,7 @@ interface BookingFormData {
   hostAssignments: HostAssignment[];
 }
 
-export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false, selectedStartDate, selectedEndDate }: BookingFormProps) {
+export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false, selectedStartDate, selectedEndDate, prefilledFamilyGroup, prefilledHost }: BookingFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
@@ -117,7 +119,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       const defaultStartDate = selectedStartDate || new Date();
       const defaultEndDate = selectedEndDate || new Date();
       
-      // Determine default family group based on user role
+      // Determine default family group based on user role and prefilled values
       let defaultFamilyGroup = '';
       let defaultHostAssignments: HostAssignment[] = [];
       
@@ -126,10 +128,30 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         isGroupLead,
         isCalendarKeeper,
         userFamilyGroup: userFamilyGroup?.name,
-        userHostInfo: userHostInfo?.name
+        userHostInfo: userHostInfo?.name,
+        prefilledFamilyGroup,
+        prefilledHost
       });
       
-      if (isHostMember && userHostInfo && userFamilyGroup) {
+      // Use prefilled values if provided, otherwise fall back to user defaults
+      if (prefilledFamilyGroup) {
+        defaultFamilyGroup = prefilledFamilyGroup;
+        
+        // Add prefilled host if provided
+        if (prefilledHost) {
+          const selectedGroup = familyGroups.find(fg => fg.name === prefilledFamilyGroup);
+          const hostMember = selectedGroup?.host_members?.find((h: any) => h.name === prefilledHost);
+          
+          if (hostMember) {
+            defaultHostAssignments = [{
+              host_name: hostMember.name,
+              host_email: hostMember.email,
+              start_date: defaultStartDate,
+              end_date: defaultEndDate
+            }];
+          }
+        }
+      } else if (isHostMember && userHostInfo && userFamilyGroup) {
         // For host members: default to their family group and add themselves as host
         defaultFamilyGroup = userFamilyGroup.name;
         defaultHostAssignments = [{
@@ -138,7 +160,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           start_date: defaultStartDate,
           end_date: defaultEndDate
         }];
-        console.log('Set host member defaults:', { defaultFamilyGroup, defaultHostAssignments });
       } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
         // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
@@ -152,7 +173,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             end_date: defaultEndDate
           }];
         }
-        console.log('Set group lead/calendar keeper defaults:', { defaultFamilyGroup, defaultHostAssignments });
       }
       
       console.log('Final form defaults:', { defaultFamilyGroup, defaultHostAssignments });
@@ -166,7 +186,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         hostAssignments: defaultHostAssignments
       });
     }
-  }, [editingReservation, form, selectedStartDate, selectedEndDate, isHostMember, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate, isHostMember, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
@@ -379,22 +399,18 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               name="familyGroup"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {isHostMember ? "Host Name" : "Family Group"}
-                  </FormLabel>
+                  <FormLabel>Family Group</FormLabel>
                   <FormControl>
                     <select 
                       {...field} 
                       className="w-full p-2 border rounded-md bg-background"
                       required
-                      disabled={isHostMember} // Host members can't change their group
+                      disabled={isHostMember && !isGroupLead && !isCalendarKeeper} // Only regular host members can't change family group
                     >
-                      <option value="">
-                        {isHostMember ? userHostInfo?.name || "Your Host Name" : "Select Family Group"}
-                      </option>
+                      <option value="">Select Family Group</option>
                       {availableFamilyGroups.map((group) => (
                         <option key={group.id} value={group.name}>
-                          {isHostMember && group.name === userFamilyGroup?.name ? userHostInfo?.name : group.name}
+                          {group.name}
                         </option>
                       ))}
                     </select>
@@ -404,8 +420,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               )}
             />
 
-            {/* Host Selection for Group Leads and Calendar Keepers */}
-            {(isGroupLead || isCalendarKeeper) && watchedFamilyGroup && selectedFamilyGroup && (
+            {/* Host Selection */}
+            {watchedFamilyGroup && selectedFamilyGroup && (
               <FormField
                 control={form.control}
                 name="hostAssignments"
@@ -427,6 +443,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                             }]);
                           }
                         }}
+                        disabled={isHostMember && !isGroupLead && !isCalendarKeeper} // Regular host members can't change host
                       >
                         <option value="">Select Host</option>
                         {familyGroupHosts.map((host: any) => (
