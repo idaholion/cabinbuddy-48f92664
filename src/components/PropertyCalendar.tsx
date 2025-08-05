@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,6 +100,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   // Manual date entry state
   const [manualStartDate, setManualStartDate] = useState<Date | undefined>();
   const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
+  const [showManualEntry, setShowManualEntry] = useState(false);
   
   // Test override toggle
   const [testOverrideMode, setTestOverrideMode] = useState(false);
@@ -493,103 +494,118 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
         </Card>
       )}
 
-      {/* Manual Date Entry */}
-      {/* Manual Date Entry */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Manual Date Entry</CardTitle>
-          <CardDescription>Select specific dates using the date picker</CardDescription>
+      {/* Manual Date Entry - Collapsible */}
+      <Card className="border-dashed">
+        <CardHeader 
+          className="pb-2 cursor-pointer"
+          onClick={() => setShowManualEntry(!showManualEntry)}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Manual Date Entry</CardTitle>
+              <CardDescription className="text-sm">Click to {showManualEntry ? 'hide' : 'show'} date picker options</CardDescription>
+            </div>
+            {showManualEntry ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Start Date Picker */}
-            <div className="space-y-2">
-              <Label>Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !manualStartDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {manualStartDate ? format(manualStartDate, "PPP") : "Pick a start date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <DatePicker
-                    mode="single"
-                    selected={manualStartDate}
-                    onSelect={setManualStartDate}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+        {showManualEntry && (
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Start Date Picker */}
+              <div className="space-y-1">
+                <Label className="text-xs">Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !manualStartDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3 w-3" />
+                      {manualStartDate ? format(manualStartDate, "MMM d") : "Pick date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={manualStartDate}
+                      onSelect={setManualStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            {/* End Date Picker (Optional) */}
-            <div className="space-y-2">
-              <Label>End Date (Optional)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !manualEndDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {manualEndDate ? format(manualEndDate, "PPP") : "Pick an end date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <DatePicker
-                    mode="single"
-                    selected={manualEndDate}
-                    onSelect={setManualEndDate}
-                    initialFocus
-                    defaultMonth={manualStartDate || new Date()}
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              {/* End Date Picker (Optional) */}
+              <div className="space-y-1">
+                <Label className="text-xs">End Date (Optional)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !manualEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3 w-3" />
+                      {manualEndDate ? format(manualEndDate, "MMM d") : "Pick date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <DatePicker
+                      mode="single"
+                      selected={manualEndDate}
+                      onSelect={setManualEndDate}
+                      initialFocus
+                      defaultMonth={manualStartDate || new Date()}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            {/* Add Buttons */}
-            <div className="space-y-2">
-              <Label className="opacity-0">Actions</Label>
-              <div className="flex flex-col gap-2">
-                <Button
-                  onClick={addSingleManualDate}
-                  disabled={!manualStartDate}
-                  size="sm"
-                  className="w-full"
-                >
-                  Add Single Date
-                </Button>
-                <Button
-                  onClick={addManualDateRange}
-                  disabled={!manualStartDate}
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                >
-                  Add Date Range
-                </Button>
+              {/* Add Buttons */}
+              <div className="space-y-1">
+                <Label className="text-xs opacity-0">Actions</Label>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={addSingleManualDate}
+                    disabled={!manualStartDate}
+                    size="sm"
+                    className="flex-1 text-xs"
+                  >
+                    Add Single
+                  </Button>
+                  <Button
+                    onClick={addManualDateRange}
+                    disabled={!manualStartDate}
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs"
+                  >
+                    Add Range
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="mt-4 text-sm text-muted-foreground">
-            <p>• <strong>Single Date:</strong> Select start date only and click "Add Single Date"</p>
-            <p>• <strong>Date Range:</strong> Select both start and end dates, then click "Add Date Range"</p>
-            <p>• <strong>Visual Selection:</strong> You can also click and drag on the calendar below</p>
-          </div>
-        </CardContent>
+            
+            <div className="mt-3 text-xs text-muted-foreground space-y-1">
+              <p>• <strong>Single:</strong> Pick start date and click "Add Single"</p>
+              <p>• <strong>Range:</strong> Pick both dates and click "Add Range"</p>
+              <p>• <strong>Visual:</strong> Click and drag on the calendar below</p>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Date Selection Status */}
