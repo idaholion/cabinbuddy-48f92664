@@ -102,6 +102,7 @@ export const EnhancedMonthPicker = ({
     newDate.setMonth(parseInt(monthIndex));
     // Set to first day of selected month for cleaner navigation
     newDate.setDate(1);
+    console.log('EnhancedMonthPicker: Month changed to', newDate);
     setPickerDate(newDate);
     onDateChange(newDate);
     // Auto-close after selector change for immediate feedback
@@ -113,6 +114,7 @@ export const EnhancedMonthPicker = ({
     newDate.setFullYear(parseInt(year));
     // Set to first day of selected month for cleaner navigation
     newDate.setDate(1);
+    console.log('EnhancedMonthPicker: Year changed to', newDate);
     setPickerDate(newDate);
     onDateChange(newDate);
     // Auto-close after selector change for immediate feedback
