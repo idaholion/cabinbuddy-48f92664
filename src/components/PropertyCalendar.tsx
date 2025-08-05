@@ -721,8 +721,9 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-7 gap-1">
-                  {calendarDays.map((day, index) => {
+                <div className="relative">
+                  <div className="grid grid-cols-7 gap-1">
+                    {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
@@ -843,6 +844,72 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   </div>
                 );
                   })}
+                </div>
+                
+                {/* Floating Create Reservation Button */}
+                {selectedDates.length > 0 && (
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="relative h-full">
+                      {(() => {
+                        // Calculate position for floating button based on selected dates
+                        const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+                        const firstDate = sortedDates[0];
+                        const lastDate = sortedDates[sortedDates.length - 1];
+                        
+                        // Find the index of the first selected date to calculate position
+                        const firstDateIndex = calendarDays.findIndex(day => 
+                          day.toDateString() === firstDate.toDateString()
+                        );
+                        const lastDateIndex = calendarDays.findIndex(day => 
+                          day.toDateString() === lastDate.toDateString()
+                        );
+                        
+                        if (firstDateIndex === -1) return null;
+                        
+                        // Calculate grid position
+                        const startRow = Math.floor(firstDateIndex / 7);
+                        const endRow = Math.floor(lastDateIndex / 7);
+                        const centerRow = Math.floor((startRow + endRow) / 2);
+                        
+                        // Position the button in the center of the selection
+                        const topPosition = centerRow * 100 + 50; // Approximate center of the row
+                        
+                        return (
+                          <div 
+                            className="absolute left-1/2 transform -translate-x-1/2 z-10 pointer-events-auto animate-scale-in"
+                            style={{ 
+                              top: `${topPosition}px`,
+                            }}
+                          >
+                            <div className="bg-primary text-primary-foreground px-4 py-2 rounded-lg shadow-lg border border-primary/20 backdrop-blur-sm">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={createReservationFromSelection}
+                                  className="bg-background/10 hover:bg-background/20 text-primary-foreground border-0"
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Create Reservation
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={clearSelection}
+                                  className="bg-background/10 hover:bg-background/20 text-primary-foreground border-0"
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                              <div className="text-xs text-center mt-1 opacity-90">
+                                {selectedDates.length} day{selectedDates.length > 1 ? 's' : ''} selected
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
                 </div>
               )}
             </>
