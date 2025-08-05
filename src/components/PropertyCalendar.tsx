@@ -271,23 +271,62 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     });
 
     // Apply filtering from both the internal filter options and the external family group filter
-    return allBookings.filter(booking => {
+    const filteredBookings = allBookings.filter(booking => {
       // Apply external family group filter from parent component
       if (selectedFamilyGroupFilter && selectedFamilyGroupFilter !== '' && booking.family_group !== selectedFamilyGroupFilter) {
+        // Debug logging for July 2026 filtering
+        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+          console.log(`Filtered out by selectedFamilyGroupFilter for ${date.toDateString()}:`, {
+            booking: booking.family_group,
+            selectedFilter: selectedFamilyGroupFilter
+          });
+        }
         return false;
       }
       
       // Apply internal filter options
       if (filterOptions.familyGroupFilter !== 'all' && booking.family_group !== filterOptions.familyGroupFilter) {
+        // Debug logging for July 2026 filtering
+        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+          console.log(`Filtered out by internal familyGroupFilter for ${date.toDateString()}:`, {
+            booking: booking.family_group,
+            internalFilter: filterOptions.familyGroupFilter
+          });
+        }
         return false;
       }
       
       const isMyBooking = booking.family_group === userFamilyGroup;
-      if (isMyBooking && !filterOptions.showMyBookings) return false;
-      if (!isMyBooking && !filterOptions.showOtherBookings) return false;
+      if (isMyBooking && !filterOptions.showMyBookings) {
+        // Debug logging for July 2026 filtering
+        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+          console.log(`Filtered out showMyBookings for ${date.toDateString()}:`, {
+            booking: booking.family_group,
+            showMyBookings: filterOptions.showMyBookings
+          });
+        }
+        return false;
+      }
+      if (!isMyBooking && !filterOptions.showOtherBookings) {
+        // Debug logging for July 2026 filtering
+        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+          console.log(`Filtered out showOtherBookings for ${date.toDateString()}:`, {
+            booking: booking.family_group,
+            showOtherBookings: filterOptions.showOtherBookings
+          });
+        }
+        return false;
+      }
       
       return true;
     });
+    
+    // Debug: Show final filtered bookings for July 2026
+    if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
+      console.log(`Final filtered bookings for ${date.toDateString()}:`, filteredBookings);
+    }
+    
+    return filteredBookings;
   };
 
   const getTimePeriodForDate = (date: Date) => {
