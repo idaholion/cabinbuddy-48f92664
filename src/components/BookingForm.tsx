@@ -121,6 +121,14 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       let defaultFamilyGroup = '';
       let defaultHostAssignments: HostAssignment[] = [];
       
+      console.log('BookingForm form reset - user role data:', {
+        isHostMember,
+        isGroupLead,
+        isCalendarKeeper,
+        userFamilyGroup: userFamilyGroup?.name,
+        userHostInfo: userHostInfo?.name
+      });
+      
       if (isHostMember && userHostInfo && userFamilyGroup) {
         // For host members: default to their family group and add themselves as host
         defaultFamilyGroup = userFamilyGroup.name;
@@ -130,6 +138,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           start_date: defaultStartDate,
           end_date: defaultEndDate
         }];
+        console.log('Set host member defaults:', { defaultFamilyGroup, defaultHostAssignments });
       } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
         // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
@@ -143,7 +152,10 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             end_date: defaultEndDate
           }];
         }
+        console.log('Set group lead/calendar keeper defaults:', { defaultFamilyGroup, defaultHostAssignments });
       }
+      
+      console.log('Final form defaults:', { defaultFamilyGroup, defaultHostAssignments });
       
       form.reset({
         startDate: defaultStartDate,

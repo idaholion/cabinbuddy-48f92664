@@ -20,31 +20,61 @@ export const useUserRole = () => {
         return;
       }
 
+      console.log('useUserRole debug:', {
+        userEmail: user.email,
+        familyGroupsCount: familyGroups.length,
+        organizationLoaded: !!organization
+      });
+
       // Check if user is a calendar keeper
       const isCalKeeper = organization?.calendar_keeper_email?.toLowerCase() === user.email.toLowerCase();
       setIsCalendarKeeper(isCalKeeper);
+
+      console.log('Calendar keeper check:', {
+        organizationEmail: organization?.calendar_keeper_email,
+        userEmail: user.email,
+        isCalendarKeeper: isCalKeeper,
+        organization: !!organization,
+        user: !!user
+      });
 
       // Check if user is a group lead by matching their email to lead_email in any family group
       const leadGroup = familyGroups.find(group => group.lead_email === user.email);
       setIsGroupLead(!!leadGroup);
       
       if (leadGroup) {
+        console.log('User is group lead:', leadGroup.name);
         setUserFamilyGroup(leadGroup);
         setUserHostInfo(null);
       } else {
         // Check if user is a host member in any family group
+        let foundGroup = null;
+        let foundHost = null;
+        
         for (const group of familyGroups) {
+          console.log('Checking group:', group.name, 'host_members:', group.host_members);
           if (group.host_members) {
             const hostMember = group.host_members.find((member: any) => 
-              member.email === user.email
+              member.email?.toLowerCase() === user.email.toLowerCase()
             );
             if (hostMember) {
-              setUserFamilyGroup(group);
-              setUserHostInfo(hostMember);
+              console.log('Found user as host member:', hostMember.name, 'in group:', group.name);
+              foundGroup = group;
+              foundHost = hostMember;
               break;
             }
           }
         }
+        
+        setUserFamilyGroup(foundGroup);
+        setUserHostInfo(foundHost);
+        
+        console.log('Final user role state:', {
+          isCalendarKeeper: isCalKeeper,
+          isGroupLead: !!leadGroup,
+          userFamilyGroup: foundGroup?.name,
+          userHostInfo: foundHost?.name
+        });
       }
       
       setLoading(false);
