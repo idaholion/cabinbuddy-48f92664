@@ -23,6 +23,7 @@ import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/val
 import { HostMemberCard } from "@/components/HostMemberCard";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
+import { OrganizationRoleReminder } from "@/components/OrganizationRoleReminder";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
@@ -656,6 +657,9 @@ const FamilyGroupSetup = () => {
             </Form>
           </CardContent>
         </Card>
+        
+        {/* Organization Role Reminder */}
+        <OrganizationRoleReminder />
         
         {/* Save and Continue Section */}
         <Card className="bg-card/95">
