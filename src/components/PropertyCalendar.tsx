@@ -50,12 +50,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   // Check if user is calendar keeper
   const isCalendarKeeper = organization?.calendar_keeper_email === user?.email;
   
-  // Debug calendar keeper status
-  console.log('Calendar keeper check:', {
-    organizationEmail: organization?.calendar_keeper_email,
-    userEmail: user?.email,
-    isCalendarKeeper
-  });
+  // Debug calendar keeper status in useEffect to avoid re-render loops
+  useEffect(() => {
+    console.log('Calendar keeper check:', {
+      organizationEmail: organization?.calendar_keeper_email,
+      userEmail: user?.email,
+      isCalendarKeeper,
+      organization: !!organization,
+      user: !!user
+    });
+  }, [organization?.calendar_keeper_email, user?.email, isCalendarKeeper]);
   
   // Force refresh on component mount to ensure we get latest data
   useEffect(() => {
