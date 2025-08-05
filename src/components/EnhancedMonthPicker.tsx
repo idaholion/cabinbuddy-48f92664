@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,12 @@ export const EnhancedMonthPicker = ({
 }: EnhancedMonthPickerProps) => {
   const [pickerDate, setPickerDate] = useState(currentDate);
   const [viewMode, setViewMode] = useState<'calendar' | 'selectors'>('calendar');
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Sync picker date with current date when it changes externally
+  useEffect(() => {
+    setPickerDate(currentDate);
+  }, [currentDate]);
   
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -88,20 +94,29 @@ export const EnhancedMonthPicker = ({
     // Set to the clicked date and switch to that month
     onDateChange(date);
     setPickerDate(date);
+    setIsOpen(false);
   };
 
   const handleMonthChange = (monthIndex: string) => {
     const newDate = new Date(pickerDate);
     newDate.setMonth(parseInt(monthIndex));
+    // Set to first day of selected month for cleaner navigation
+    newDate.setDate(1);
     setPickerDate(newDate);
     onDateChange(newDate);
+    // Auto-close after selector change for immediate feedback
+    setTimeout(() => setIsOpen(false), 100);
   };
 
   const handleYearChange = (year: string) => {
     const newDate = new Date(pickerDate);
     newDate.setFullYear(parseInt(year));
+    // Set to first day of selected month for cleaner navigation
+    newDate.setDate(1);
     setPickerDate(newDate);
     onDateChange(newDate);
+    // Auto-close after selector change for immediate feedback
+    setTimeout(() => setIsOpen(false), 100);
   };
 
   const isToday = (date: Date) => {
@@ -117,8 +132,8 @@ export const EnhancedMonthPicker = ({
     return date.toDateString() === currentDate.toDateString();
   };
 
-  return (
-    <Popover>
+    return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button 
           variant="ghost" 
