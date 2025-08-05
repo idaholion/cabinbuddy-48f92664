@@ -397,7 +397,7 @@ const CabinCalendar = () => {
             <div className="grid grid-cols-1 gap-4">
               <PropertyCalendar 
                 onMonthChange={setCurrentCalendarMonth}
-                selectedFamilyGroupFilter={selectedFamilyGroup}
+                selectedFamilyGroupFilter=""
               />
             </div>
 

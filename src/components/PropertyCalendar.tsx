@@ -80,7 +80,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   // Phase 4: Enhanced filtering and view options
   const [filterOptions, setFilterOptions] = useState({
     showMyBookings: true,
-    showOtherBookings: true,
+    showOtherBookings: true, // Make sure other bookings are shown by default
     showTimePeriods: false, // Hidden by default to avoid confusion with actual reservations
     showTradeRequests: true,
     familyGroupFilter: 'all'
@@ -185,6 +185,11 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
              (end.getFullYear() === 2026 && end.getMonth() === 6) ||
              (start < new Date(2026, 6, 1) && end > new Date(2026, 7, 0));
     }));
+    console.log('Current filter settings:', {
+      filterOptions,
+      selectedFamilyGroupFilter,
+      userFamilyGroup
+    });
   }
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
