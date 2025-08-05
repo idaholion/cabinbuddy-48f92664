@@ -54,6 +54,15 @@ export const useUserRole = () => {
         for (const group of familyGroups) {
           console.log('Checking group:', group.name, 'host_members:', group.host_members);
           if (group.host_members) {
+            // Log each host member's email for debugging
+            group.host_members.forEach((member: any, index: number) => {
+              console.log(`Host member ${index}:`, {
+                name: member.name,
+                email: member.email,
+                emailMatch: member.email?.toLowerCase() === user.email.toLowerCase()
+              });
+            });
+            
             const hostMember = group.host_members.find((member: any) => 
               member.email?.toLowerCase() === user.email.toLowerCase()
             );
@@ -63,6 +72,8 @@ export const useUserRole = () => {
               foundHost = hostMember;
               break;
             }
+          } else {
+            console.log('Group has no host_members:', group.name);
           }
         }
         
