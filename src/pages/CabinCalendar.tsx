@@ -22,6 +22,7 @@ import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -33,6 +34,7 @@ const CabinCalendar = () => {
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
+  const [manualReservationOpen, setManualReservationOpen] = useState(false);
 
   // Get user role information
   const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
@@ -282,6 +284,13 @@ const CabinCalendar = () => {
                     <DropdownMenuItem>
                       Work Weekend
                     </DropdownMenuItem>
+                    {isCalendarKeeper && (
+                      <DropdownMenuItem 
+                        onClick={() => setManualReservationOpen(true)}
+                      >
+                        Manual Reservation Entry
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem 
                       disabled={!isCalendarKeeper}
                       className={!isCalendarKeeper ? "text-muted-foreground" : ""}
@@ -395,19 +404,8 @@ const CabinCalendar = () => {
               />
             </div>
 
-            {/* Collapsible Manual Entry Sections */}
+            {/* Collapsible sections for secondary tools */}
             <Accordion type="multiple" className="mt-4 space-y-2">
-              {isCalendarKeeper && (
-                <AccordionItem value="manual-reservation" className="border rounded-lg">
-                  <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                    Manual Reservation Entry
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 animate-accordion-down">
-                    <CalendarKeeperManualReservation />
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
               <AccordionItem value="secondary-selection" className="border rounded-lg">
                 <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
                   Secondary Selection Management
@@ -426,6 +424,18 @@ const CabinCalendar = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+
+            {/* Manual Reservation Dialog */}
+            <Dialog open={manualReservationOpen} onOpenChange={setManualReservationOpen}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Manual Reservation Entry</DialogTitle>
+                </DialogHeader>
+                <CalendarKeeperManualReservation 
+                  onReservationCreated={() => setManualReservationOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
       </div>
