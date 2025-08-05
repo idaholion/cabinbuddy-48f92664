@@ -345,16 +345,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   const handleDateMouseDown = (date: Date) => {
-    const validation = isDateSelectable(date);
-    if (!validation.selectable) {
-      toast({
-        title: "Invalid Date Selection",
-        description: validation.reason,
-        variant: "destructive",
-      });
-      return;
-    }
-    
+    // Allow initial selection - validation happens on range completion
     setIsDragging(true);
     setDragStartDate(date);
     setSelectedDates([date]);
