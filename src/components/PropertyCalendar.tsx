@@ -47,8 +47,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
   
-  // Check if user is calendar keeper
-  const isCalendarKeeper = organization?.calendar_keeper_email === user?.email;
+  // Check if user is calendar keeper (case-insensitive email comparison)
+  const isCalendarKeeper = organization?.calendar_keeper_email?.toLowerCase() === user?.email?.toLowerCase();
   
   // Debug calendar keeper status in useEffect to avoid re-render loops
   useEffect(() => {
