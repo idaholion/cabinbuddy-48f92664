@@ -125,6 +125,23 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     });
   };
 
+  // Function to determine text color based on background color for better contrast
+  const getContrastTextColor = (backgroundColor: string) => {
+    if (!backgroundColor) return '';
+    
+    // Convert hex to RGB
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calculate luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return dark text for light backgrounds, light text for dark backgrounds
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  };
+
   // Get property name from database or use fallback
   const propertyName = reservationSettings?.property_name || "Property";
   
@@ -882,32 +899,35 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                         const familyGroup = familyGroups.find(fg => fg.name === booking.family_group);
                         const groupColor = familyGroup?.color;
                         
-                        return (
-                          <div
-                            key={i}
-                            className={`text-xs px-1 py-0.5 rounded truncate transition-colors border ${
-                              groupColor 
-                                ? 'text-white' 
-                                : isMyBooking 
-                                  ? 'bg-primary/20 text-primary-foreground border-primary/30' 
-                                  : booking.status === 'confirmed' 
-                                    ? 'bg-secondary/50 text-secondary-foreground border-secondary/30' 
-                                    : 'bg-muted/60 text-muted-foreground border-muted/30'
-                            } ${
-                              booking.time_period_number ? 'border-l-2 border-l-accent' : ''
-                            }`}
-                            style={{
-                              backgroundColor: groupColor || undefined,
-                              borderColor: groupColor ? `${groupColor}66` : undefined,
-                              textShadow: groupColor ? '0 1px 2px rgba(0,0,0,0.8)' : undefined
-                            }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="truncate font-medium">{booking.family_group}</span>
-                              {booking.time_period_number && (
-                                <span className="ml-1 text-xs opacity-80">P{booking.time_period_number}</span>
-                              )}
-                            </div>
+                         return (
+                           <div
+                             key={i}
+                             className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold ${
+                               groupColor 
+                                 ? '' // We'll handle color via style for custom colors
+                                 : isMyBooking 
+                                   ? 'bg-primary/20 text-primary-foreground border-primary/30' 
+                                   : booking.status === 'confirmed' 
+                                     ? 'bg-secondary/50 text-secondary-foreground border-secondary/30' 
+                                     : 'bg-muted/60 text-muted-foreground border-muted/30'
+                             } ${
+                               booking.time_period_number ? 'border-l-2 border-l-accent' : ''
+                             }`}
+                             style={{
+                               backgroundColor: groupColor || undefined,
+                               borderColor: groupColor ? `${groupColor}66` : undefined,
+                               color: groupColor ? getContrastTextColor(groupColor) : undefined,
+                               textShadow: groupColor ? 
+                                 getContrastTextColor(groupColor) === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' 
+                                 : undefined
+                             }}
+                           >
+                             <div className="flex items-center justify-between">
+                               <span className="truncate font-bold text-sm">{booking.family_group}</span>
+                               {booking.time_period_number && (
+                                 <span className="ml-1 text-xs opacity-80">P{booking.time_period_number}</span>
+                               )}
+                             </div>
                           </div>
                         );
                       })}
