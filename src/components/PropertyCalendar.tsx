@@ -85,7 +85,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     showTradeRequests: true,
     familyGroupFilter: 'all'
   });
-  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline' | 'quarter'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline' | 'mini'>('calendar');
   const [searchQuery, setSearchQuery] = useState("");
   
   // Date selection state
@@ -549,13 +549,13 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                 <span className="hidden sm:inline">Timeline</span>
               </Button>
               <Button 
-                variant={viewMode === 'quarter' ? 'default' : 'ghost'} 
+                variant={viewMode === 'mini' ? 'default' : 'ghost'} 
                 size="sm"
-                onClick={() => setViewMode('quarter')}
+                onClick={() => setViewMode('mini')}
                 className="rounded-r-lg"
               >
                 <Calendar className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Quarter</span>
+                <span className="hidden sm:inline">Mini</span>
               </Button>
             </div>
             
@@ -1044,8 +1044,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
             </div>
           )}
 
-          {/* Quarter View */}
-          {viewMode === 'quarter' && (
+          {/* Mini View */}
+          {viewMode === 'mini' && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 4 }, (_, monthOffset) => {
