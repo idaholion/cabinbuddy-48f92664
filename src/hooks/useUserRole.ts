@@ -38,8 +38,10 @@ export const useUserRole = () => {
         user: !!user
       });
 
-      // Check if user is a group lead by matching their email to lead_email in any family group
-      const leadGroup = familyGroups.find(group => group.lead_email === user.email);
+      // Check if user is a group lead by matching their email to lead_email in any family group (case-insensitive)
+      const leadGroup = familyGroups.find(group => 
+        group.lead_email?.toLowerCase() === user.email.toLowerCase()
+      );
       setIsGroupLead(!!leadGroup);
       
       if (leadGroup) {
