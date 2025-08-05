@@ -92,7 +92,7 @@ const HostProfile = () => {
       for (const group of familyGroups) {
         if (group.host_members) {
           const foundMember = group.host_members.find((member: any) => 
-            member.email === userEmail || 
+            member.email?.toLowerCase() === userEmail?.toLowerCase() || 
             (userFirstName && member.name?.toLowerCase().includes(userFirstName.toLowerCase()))
           );
           

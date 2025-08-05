@@ -44,7 +44,7 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
-    fg.host_members?.some((member: any) => member.email === user?.email)
+    fg.host_members?.some((member: any) => member.email?.toLowerCase() === user?.email?.toLowerCase())
   )?.name;
 
   // Filter out user's own family group from target options

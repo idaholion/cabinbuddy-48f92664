@@ -60,7 +60,7 @@ export const useFinancialData = () => {
       if (group.host_members && Array.isArray(group.host_members)) {
         const isInGroup = group.host_members.some((member: any) => 
           member.user_id === user?.id || 
-          member.email === user?.email
+          member.email?.toLowerCase() === user?.email?.toLowerCase()
         );
         if (isInGroup) {
           return group.name;
@@ -83,7 +83,7 @@ export const useFinancialData = () => {
     const userFamilyGroup = getUserFamilyGroup();
     if (userFamilyGroup) {
       const group = familyGroups.find(g => g.name === userFamilyGroup);
-      if (group && group.lead_email === user?.email) {
+      if (group && group.lead_email?.toLowerCase() === user?.email?.toLowerCase()) {
         return 'group_lead';
       }
     }

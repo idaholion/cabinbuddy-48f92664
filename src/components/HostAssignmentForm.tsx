@@ -63,7 +63,7 @@ export function HostAssignmentForm({
   };
 
   const selectHost = (index: number, hostEmail: string) => {
-    const selectedHost = familyGroupHosts.find(h => h.email === hostEmail);
+    const selectedHost = familyGroupHosts.find(h => h.email?.toLowerCase() === hostEmail?.toLowerCase());
     if (selectedHost) {
       updateAssignment(index, 'host_name', selectedHost.name);
       updateAssignment(index, 'host_email', selectedHost.email);

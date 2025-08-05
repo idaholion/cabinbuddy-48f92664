@@ -51,8 +51,8 @@ export const useWorkWeekends = () => {
     try {
       // Get family group for current user
       const userFamilyGroup = familyGroups.find(fg => 
-        fg.lead_email === user.email || 
-        fg.host_members?.some((member: any) => member.email === user.email)
+        fg.lead_email?.toLowerCase() === user.email?.toLowerCase() || 
+        fg.host_members?.some((member: any) => member.email?.toLowerCase() === user.email?.toLowerCase())
       );
 
       if (!userFamilyGroup) return;

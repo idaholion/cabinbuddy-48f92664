@@ -69,7 +69,7 @@ export const useCalendarKeeperAssistance = () => {
 
     // Get user's family group
     const userFamilyGroup = familyGroups.find(fg => 
-      fg.host_members?.some((member: any) => member.email === user.email)
+      fg.host_members?.some((member: any) => member.email?.toLowerCase() === user.email?.toLowerCase())
     );
 
     if (!userFamilyGroup) {

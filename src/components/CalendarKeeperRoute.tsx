@@ -40,9 +40,9 @@ export const CalendarKeeperRoute = ({ children }: CalendarKeeperRouteProps) => {
       
       console.log('Calendar Keeper Access Result:', {
         isKeeper,
-        matchesCalendarKeeper: organization.calendar_keeper_email === user.email,
-        matchesAdmin: organization.admin_email === user.email,
-        matchesTreasurer: organization.treasurer_email === user.email
+        matchesCalendarKeeper: organization.calendar_keeper_email?.toLowerCase() === user.email?.toLowerCase(),
+        matchesAdmin: organization.admin_email?.toLowerCase() === user.email?.toLowerCase(),
+        matchesTreasurer: organization.treasurer_email?.toLowerCase() === user.email?.toLowerCase()
       });
       
       setIsCalendarKeeper(isKeeper);
