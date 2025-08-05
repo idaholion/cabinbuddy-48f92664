@@ -399,6 +399,18 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const startDate = sortedDates[0];
     const endDate = sortedDates[sortedDates.length - 1];
     
+    // Validate the selected range before creating reservation
+    const rangeValidation = isDateRangeSelectable(startDate, endDate);
+    if (!rangeValidation.selectable) {
+      toast({
+        title: "Invalid Date Range",
+        description: rangeValidation.reason,
+        variant: "destructive",
+      });
+      setSelectedDates([]);
+      return;
+    }
+    
     // Set the calculated dates for the booking form
     setSelectedStartDate(startDate);
     setSelectedEndDate(endDate);
