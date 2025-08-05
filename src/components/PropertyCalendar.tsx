@@ -28,10 +28,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -63,10 +64,31 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     });
   }, [organization?.calendar_keeper_email, user?.email, isCalendarKeeper]);
   
-  // Force refresh on component mount to ensure we get latest data
+  // Auto-refresh and focus handling for better UX
   useEffect(() => {
     refetchReservations();
+    
+    // Auto-refresh when window regains focus
+    const handleFocus = () => {
+      console.log('Window focused - refreshing calendar data');
+      refetchReservations();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
+  
+  // Error recovery mechanism
+  useEffect(() => {
+    if (!reservationsLoading && reservations.length === 0) {
+      const timer = setTimeout(() => {
+        console.log('No reservations found - attempting refresh');
+        refetchReservations();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [reservationsLoading, reservations.length]);
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -87,11 +109,13 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   });
   const [viewMode, setViewMode] = useState<'calendar' | 'list' | 'timeline' | 'mini'>('calendar');
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   
   // Date selection state
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
+  const [dragPreviewDates, setDragPreviewDates] = useState<Date[]>([]);
   
   // Selected date range for booking form
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
@@ -758,32 +782,56 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           </div>
           
           {/* Month Navigation and Family Group Color Legend - moved up with minimal spacing */}
-          <div className="mt-1 p-2 bg-muted/30 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(-1)}>
-                  ←
-                </Button>
-                <EnhancedMonthPicker 
-                  currentDate={currentMonth} 
-                  onDateChange={(newDate) => {
-                    setCurrentMonth(newDate);
-                    onMonthChange?.(newDate);
-                  }}
-                  reservations={reservations}
-                />
-                <Button variant="outline" size="sm" onClick={() => navigateMonth(1)}>
-                  →
-                </Button>
+          <div className="mt-1 p-3 bg-background/95 rounded-lg border border-border/20 backdrop-blur-sm shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+              <div className="flex items-center justify-center sm:justify-start gap-3">
                 <Button 
                   variant="outline" 
                   size="sm" 
+                  onClick={() => navigateMonth(-1)}
+                  className="h-8 w-8 p-0 transition-all hover:scale-110"
+                  aria-label="Previous month"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90" />
+                </Button>
+                
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold min-w-[140px] text-center animate-fade-in">
+                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                  </h2>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateMonth(1)}
+                  className="h-8 w-8 p-0 transition-all hover:scale-110"
+                  aria-label="Next month"
+                >
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
+                </Button>
+                
+                <div className="hidden sm:block">
+                  <EnhancedMonthPicker 
+                    currentDate={currentMonth} 
+                    onDateChange={(newDate) => {
+                      setCurrentMonth(newDate);
+                      onMonthChange?.(newDate);
+                    }}
+                    reservations={reservations}
+                  />
+                </div>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
                   onClick={jumpToToday}
-                  className="ml-2 font-medium"
+                  className="hover-scale text-xs"
                   title="Jump to today (Press T)"
                 >
-                  <CalendarDays className="h-4 w-4 mr-1" />
-                  Today
+                  <CalendarDays className="h-3 w-3 mr-1" />
+                  <span className="hidden sm:inline">Today</span>
+                  <span className="sm:hidden">T</span>
                 </Button>
               </div>
               {familyGroups.some(fg => fg.color) && (
@@ -808,11 +856,12 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           </div>
         </CardHeader>
         <CardContent>
-          {/* Calendar Header */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-                <span className="hidden sm:inline">{day}</span>
+          {/* Enhanced Mobile-Responsive Calendar Header */}
+          <div className="grid grid-cols-7 gap-1 mb-4 bg-muted/30 rounded-lg p-2">
+            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
+              <div key={day} className="p-2 text-center text-sm font-semibold text-foreground hover:bg-muted/50 rounded transition-colors">
+                <span className="hidden md:inline">{day}</span>
+                <span className="hidden sm:inline md:hidden">{day.substring(0, 3)}</span>
                 <span className="sm:hidden">{day.charAt(0)}</span>
               </div>
             ))}

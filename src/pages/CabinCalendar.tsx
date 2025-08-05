@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -212,162 +212,176 @@ const CabinCalendar = () => {
           
           <CardContent>
             
-            {/* Responsive toolbar above calendar */}
-            <div className="mb-1 p-3 bg-background/50 rounded-lg border border-border/20 backdrop-blur-sm">
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                {/* First row - Rotation Order */}
+            {/* Enhanced Mobile-Responsive Toolbar */}
+            <div className="mb-4 p-3 bg-background/95 rounded-lg border border-border/20 backdrop-blur-sm shadow-sm">
+              {/* Mobile-First Layout */}
+              <div className="space-y-4">
+                {/* Top Row - Rotation Order (Desktop) / Collapsible (Mobile) */}
                 {currentRotationOrder.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4 text-primary" />
-                    <Select>
-                      <SelectTrigger className="w-full md:w-56 bg-background/90 backdrop-blur-sm border-border">
-                        <SelectValue placeholder={`${rotationYear} Rotation Order`} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border border-border shadow-lg z-50">
-                        <div className="p-3">
-                          <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
-                          <div className="space-y-1">
-                            {currentRotationOrder.map((familyGroup, index) => {
-                              const selections = getSelectionIndicators(familyGroup);
-                              return (
-                                <div key={index} className="flex items-center gap-2 text-sm">
-                                  <span className="font-semibold w-6">{index + 1}.</span>
-                                  <span className="flex-1">{familyGroup}</span>
-                                  <div className="flex items-center gap-1">
-                                    {selections.primary && (
-                                      <div title="Primary selection made">
-                                        <CheckCircle className="h-3 w-3 text-success" />
-                                      </div>
-                                    )}
-                                    {selections.secondary && (
-                                      <div title="Secondary selection made">
-                                        <Clock className="h-3 w-3 text-info" />
-                                      </div>
-                                    )}
+                  <div className="w-full">
+                    <div className="flex items-center gap-2 md:hidden mb-2">
+                      <RotateCcw className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm font-medium">{rotationYear} Rotation</span>
+                    </div>
+                    <div className="hidden md:flex items-center gap-2">
+                      <RotateCcw className="h-4 w-4 text-primary" />
+                      <Select>
+                        <SelectTrigger className="w-56 bg-background/90 backdrop-blur-sm border-border">
+                          <SelectValue placeholder={`${rotationYear} Rotation Order`} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border shadow-lg z-50">
+                          <div className="p-3">
+                            <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
+                            <div className="space-y-1">
+                              {currentRotationOrder.map((familyGroup, index) => {
+                                const selections = getSelectionIndicators(familyGroup);
+                                return (
+                                  <div key={index} className="flex items-center gap-2 text-sm">
+                                    <span className="font-semibold w-6">{index + 1}.</span>
+                                    <span className="flex-1">{familyGroup}</span>
+                                    <div className="flex items-center gap-1">
+                                      {selections.primary && (
+                                        <div title="Primary selection made">
+                                          <CheckCircle className="h-3 w-3 text-success" />
+                                        </div>
+                                      )}
+                                      {selections.secondary && (
+                                        <div title="Secondary selection made">
+                                          <Clock className="h-3 w-3 text-info" />
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {rotationData && (
-                            <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-                              <p>Based on {rotationData.rotation_year} rotation</p>
-                              <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
-                              {rotationData.start_month && (
-                                <p>Rotation year starts in {rotationData.start_month}</p>
-                              )}
+                                );
+                              })}
                             </div>
-                          )}
-                        </div>
-                      </SelectContent>
-                    </Select>
+                            {rotationData && (
+                              <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                                <p>Based on {rotationData.rotation_year} rotation</p>
+                                <p>Rotation: {rotationData.first_last_option === "first" ? "First to last" : "Last to first"}</p>
+                                {rotationData.start_month && (
+                                  <p>Rotation year starts in {rotationData.start_month}</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
                 
-                {/* Second row - Controls */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1">
-                  {/* Booking Dropdown */}
+                {/* Main Controls Row - Responsive Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3 lg:gap-4">
+                  {/* Enhanced Mobile-Responsive Booking Controls */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button size="sm" className="w-full md:w-auto">
+                      <Button size="sm" className="w-full lg:w-auto hover-scale">
+                        <Calendar className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">Booking</span>
                         <span className="sm:hidden">Book</span>
                         <ChevronDown className="h-4 w-4 ml-1" />
                       </Button>
                     </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem 
-                      onClick={() => setManualDateSelectionOpen(true)}
-                    >
-                      Manual Date Selection
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      Work Weekend
-                    </DropdownMenuItem>
-                    {isCalendarKeeper && (
+                    <DropdownMenuContent align="start" className="w-56">
                       <DropdownMenuItem 
-                        onClick={() => setManualReservationOpen(true)}
+                        onClick={() => setManualDateSelectionOpen(true)}
+                        className="hover-scale"
                       >
-                        Manual Reservation Entry
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Manual Date Selection
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem 
-                      disabled={!isCalendarKeeper}
-                      className={!isCalendarKeeper ? "text-muted-foreground" : ""}
-                      onClick={() => {
-                        if (isCalendarKeeper) {
-                          window.location.href = '/calendar-keeper-management';
-                        }
-                      }}
-                    >
-                      Calendar Keeper Tools
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="relative">
-                        Edit Booking
-                        {pendingTradeRequests > 0 && (
-                          <Badge 
-                            variant="destructive" 
-                            className="ml-2 h-5 w-5 p-0 text-xs"
-                          >
-                            {pendingTradeRequests}
-                          </Badge>
-                        )}
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        <DropdownMenuItem>
-                          Edit my bookings
+                      <DropdownMenuItem>
+                        <Clock className="h-4 w-4 mr-2" />
+                        Work Weekend
+                      </DropdownMenuItem>
+                      {isCalendarKeeper && (
+                        <DropdownMenuItem 
+                          onClick={() => setManualReservationOpen(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Manual Reservation Entry
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Request trade with another group
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Request Calendar Keeper assistance
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuContent>
+                      )}
+                      <DropdownMenuItem 
+                        disabled={!isCalendarKeeper}
+                        className={!isCalendarKeeper ? "text-muted-foreground" : ""}
+                        onClick={() => {
+                          if (isCalendarKeeper) {
+                            window.location.href = '/calendar-keeper-management';
+                          }
+                        }}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Calendar Keeper Tools
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="relative">
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit Booking
+                          {pendingTradeRequests > 0 && (
+                            <Badge 
+                              variant="destructive" 
+                              className="ml-auto h-5 w-5 p-0 text-xs animate-pulse"
+                            >
+                              {pendingTradeRequests}
+                            </Badge>
+                          )}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                          <DropdownMenuItem>
+                            Edit my bookings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            Request trade with another group
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            Request Calendar Keeper assistance
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Family Group Selector */}
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
+                  {/* Enhanced Family Group Selector */}
+                  <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial">
+                    <Users className="h-4 w-4 text-primary flex-shrink-0" />
                     <Select value={selectedFamilyGroup} onValueChange={handleFamilyGroupChange}>
-                      <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
+                      <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
                         <SelectValue placeholder="Select Family Group" />
                       </SelectTrigger>
-                    <SelectContent className="bg-background border border-border shadow-lg z-50">
-                      {isCalendarKeeper && <SelectItem value="all">All Family Groups</SelectItem>}
-                      {(isCalendarKeeper ? familyGroups : familyGroups.filter(fg => fg.name === userFamilyGroupName)).map((familyGroup) => (
-                        <SelectItem key={familyGroup.id} value={familyGroup.name}>
-                          <div className="flex items-center gap-2">
-                            {familyGroup.color && (
-                              <div
-                                className="w-3 h-3 rounded-full border border-border"
-                                style={{ backgroundColor: familyGroup.color }}
-                              />
-                            )}
-                            {familyGroup.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                      <SelectContent className="bg-background border border-border shadow-lg z-50">
+                        {isCalendarKeeper && <SelectItem value="all">All Family Groups</SelectItem>}
+                        {(isCalendarKeeper ? familyGroups : familyGroups.filter(fg => fg.name === userFamilyGroupName)).map((familyGroup) => (
+                          <SelectItem key={familyGroup.id} value={familyGroup.name}>
+                            <div className="flex items-center gap-2">
+                              {familyGroup.color && (
+                                <div
+                                  className="w-3 h-3 rounded-full border border-border animate-scale-in"
+                                  style={{ backgroundColor: familyGroup.color }}
+                                />
+                              )}
+                              <span className="truncate">{familyGroup.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                   
-                  {/* Host Selector */}
+                  {/* Enhanced Host Selector */}
                   {selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
+                    <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial animate-fade-in">
+                      <User className="h-4 w-4 text-primary flex-shrink-0" />
                       <Select value={selectedHost} onValueChange={setSelectedHost}>
-                        <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
+                        <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
                           <SelectValue placeholder="Select Host" />
                         </SelectTrigger>
                         <SelectContent className="bg-background border border-border shadow-lg z-50">
                           {availableHosts.map((host, index) => (
                             <SelectItem key={index} value={host.name}>
-                              {host.name}
+                              <span className="truncate">{host.name}</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
