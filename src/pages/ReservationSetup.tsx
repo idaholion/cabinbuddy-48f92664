@@ -971,8 +971,8 @@ export default function ReservationSetup() {
             <Button variant="outline" onClick={handleSaveReservationSetup} disabled={loading}>
               {loading ? "Saving..." : "Save Setup"}
             </Button>
-            <Button onClick={() => navigate("/calendar")}>
-              Continue to Calendar
+            <Button onClick={() => navigate("/calendar-keeper-management")}>
+              Continue to Calendar Keeper Management
             </Button>
           </div>
         </div>

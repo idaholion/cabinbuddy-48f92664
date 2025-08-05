@@ -306,6 +306,13 @@ export const CalendarKeeperManagement = () => {
           </CardContent>
         </Card>
       )}
+      
+      {/* Navigate to Calendar Button */}
+      <div className="flex justify-center pt-6">
+        <Button asChild>
+          <a href="/cabin-calendar">Go to Calendar</a>
+        </Button>
+      </div>
     </div>
   );
 };
