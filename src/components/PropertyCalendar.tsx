@@ -436,6 +436,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                     selected={manualEndDate}
                     onSelect={setManualEndDate}
                     initialFocus
+                    defaultMonth={manualStartDate || new Date()}
                     className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
