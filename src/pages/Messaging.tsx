@@ -93,7 +93,7 @@ const Messaging = () => {
     <div className="container mx-auto py-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Messaging Center</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 text-base">
           Send messages to administrators, calendar keepers, group leads, or all users
         </p>
       </div>
@@ -104,7 +104,7 @@ const Messaging = () => {
             <MessageSquare className="h-5 w-5" />
             Compose Message
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Choose your recipients and delivery method below
           </CardDescription>
         </CardHeader>
@@ -112,31 +112,31 @@ const Messaging = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Recipient Group Selection */}
             <div className="space-y-3">
-              <Label htmlFor="recipient-group">Send to</Label>
+              <Label htmlFor="recipient-group" className="text-base">Send to</Label>
               <Select value={recipientGroup} onValueChange={(value: RecipientGroup) => setRecipientGroup(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-base">
                   <SelectValue placeholder="Select recipient group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="administrator">
+                  <SelectItem value="administrator" className="text-base">
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
                       Administrator
                     </div>
                   </SelectItem>
-                  <SelectItem value="calendar_keeper">
+                  <SelectItem value="calendar_keeper" className="text-base">
                     <div className="flex items-center gap-2">
                       <UserCog className="h-4 w-4" />
                       Calendar Keeper
                     </div>
                   </SelectItem>
-                  <SelectItem value="group_leads">
+                  <SelectItem value="group_leads" className="text-base">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       All Group Leads
                     </div>
                   </SelectItem>
-                  <SelectItem value="all_users">
+                  <SelectItem value="all_users" className="text-base">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4" />
                       All Users
@@ -144,7 +144,7 @@ const Messaging = () => {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <p className="text-base text-muted-foreground flex items-center gap-2">
                 {getRecipientIcon(recipientGroup)}
                 {getRecipientDescription(recipientGroup)}
               </p>
@@ -152,25 +152,25 @@ const Messaging = () => {
 
             {/* Message Type Selection */}
             <div className="space-y-3">
-              <Label htmlFor="message-type">Delivery method</Label>
+              <Label htmlFor="message-type" className="text-base">Delivery method</Label>
               <Select value={messageType} onValueChange={(value: MessageType) => setMessageType(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-base">
                   <SelectValue placeholder="Select delivery method" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email">
+                  <SelectItem value="email" className="text-base">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       Email only
                     </div>
                   </SelectItem>
-                  <SelectItem value="sms">
+                  <SelectItem value="sms" className="text-base">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
                       Text message only
                     </div>
                   </SelectItem>
-                  <SelectItem value="both">
+                  <SelectItem value="both" className="text-base">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       <MessageSquare className="h-4 w-4" />
@@ -183,24 +183,26 @@ const Messaging = () => {
 
             {/* Subject */}
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject" className="text-base">Subject</Label>
               <Input
                 id="subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Enter message subject"
+                className="text-base"
                 required
               />
             </div>
 
             {/* Message */}
             <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
+              <Label htmlFor="message" className="text-base">Message</Label>
               <Textarea
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter your message here..."
+                className="text-base"
                 rows={6}
                 required
               />
@@ -213,13 +215,13 @@ const Messaging = () => {
                 checked={urgent}
                 onCheckedChange={(checked) => setUrgent(checked as boolean)}
               />
-              <Label htmlFor="urgent" className="text-sm font-medium">
+              <Label htmlFor="urgent" className="text-base font-medium">
                 Mark as urgent
               </Label>
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full text-base">
               <Send className="h-4 w-4 mr-2" />
               {loading ? 'Sending...' : 'Send Message'}
             </Button>
