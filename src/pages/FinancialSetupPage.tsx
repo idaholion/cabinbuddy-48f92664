@@ -451,7 +451,7 @@ const FinancialSetupPage = () => {
             >
               {loading ? "Saving..." : "Save settings and go to Reservation Setup"}
             </Button>
-            <Button variant="outline" className="flex-1">Preview Invoice</Button>
+            <Button variant="outline" className="flex-1 text-lg">Preview Invoice</Button>
           </div>
         </div>
       </div>
