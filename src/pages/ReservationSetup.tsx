@@ -392,86 +392,86 @@ export default function ReservationSetup() {
               <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="rotate" id="rotate" />
-                  <Label htmlFor="rotate" className="text-sm text-muted-foreground">Group Order Rotates</Label>
+                  <Label htmlFor="rotate" className="text-base text-muted-foreground">Group Order Rotates</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="fixed" id="fixed" />
-                  <Label htmlFor="fixed" className="text-sm text-muted-foreground">Group Order Constant</Label>
+                  <Label htmlFor="fixed" className="text-base text-muted-foreground">Group Order Constant</Label>
                 </div>
               </RadioGroup>
               
               <div className="flex items-center gap-4">
-                <p className="text-sm">
+                <p className="text-base">
                   Rotation order starting in 
                 </p>
                 <Select value={rotationYear} onValueChange={setRotationYear}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
+                  <SelectTrigger className="w-24 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {years.map((year) => (
-                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                      <SelectItem key={year} value={year} className="text-lg">{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-base">
                 <span>Each Family Group can select</span>
                 <Select value={maxTimeSlots} onValueChange={setMaxTimeSlots}>
-                  <SelectTrigger className="w-16">
-                    <SelectValue />
+                  <SelectTrigger className="w-16 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {Array.from({ length: 5 }, (_, i) => (i + 1).toString()).map((num) => (
-                      <SelectItem key={num} value={num}>{num}</SelectItem>
+                      <SelectItem key={num} value={num} className="text-lg">{num}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <span>time periods, each time period up to</span>
                 <Select value={maxNights} onValueChange={setMaxNights}>
-                  <SelectTrigger className="w-16">
-                    <SelectValue />
+                  <SelectTrigger className="w-16 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
-                      <SelectItem key={num} value={num}>{num}</SelectItem>
+                      <SelectItem key={num} value={num} className="text-lg">{num}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <span>consecutive nights, starting on</span>
                 <Select value={startDay} onValueChange={setStartDay}>
-                  <SelectTrigger className="w-28">
-                    <SelectValue />
+                  <SelectTrigger className="w-28 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {days.map((day) => (
-                      <SelectItem key={day} value={day}>{day}</SelectItem>
+                      <SelectItem key={day} value={day} className="text-lg">{day}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <span>at</span>
                 <Select value={startTime} onValueChange={setStartTime}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
+                  <SelectTrigger className="w-24 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {times.map((time) => (
-                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                      <SelectItem key={time} value={time} className="text-lg">{time}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-base">
                 <span>Each person will have</span>
                 <Select value={selectionDays} onValueChange={setSelectionDays}>
-                  <SelectTrigger className="w-16">
-                    <SelectValue />
+                  <SelectTrigger className="w-16 text-lg">
+                    <SelectValue className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="text-lg">
                     {[3, 5, 7, 10, 14, 21, 30].map((days) => (
-                      <SelectItem key={days} value={days.toString()}>{days}</SelectItem>
+                      <SelectItem key={days} value={days.toString()} className="text-lg">{days}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -479,30 +479,30 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-3">
-                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                 <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                    <span>If Group Order Rotates selected, this order will rotate each year, with the person who selected</span>
                    <Select value={firstLastOption} onValueChange={setFirstLastOption}>
-                     <SelectTrigger className="w-20">
-                       <SelectValue />
+                     <SelectTrigger className="w-20 text-lg">
+                       <SelectValue className="text-lg" />
                      </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="first">First</SelectItem>
-                       <SelectItem value="last">Last</SelectItem>
+                     <SelectContent className="text-lg">
+                       <SelectItem value="first" className="text-lg">First</SelectItem>
+                       <SelectItem value="last" className="text-lg">Last</SelectItem>
                      </SelectContent>
                    </Select>
                    <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
                  </div>
                  
-                 <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                 <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                    <span>The selection will start the first day of</span>
                    <Select value={startMonth} onValueChange={setStartMonth}>
-                     <SelectTrigger className="w-24">
-                       <SelectValue />
+                     <SelectTrigger className="w-24 text-lg">
+                       <SelectValue className="text-lg" />
                      </SelectTrigger>
-                     <SelectContent>
+                     <SelectContent className="text-lg">
                        {["January", "February", "March", "April", "May", "June", 
                          "July", "August", "September", "October", "November", "December"].map((month) => (
-                         <SelectItem key={month} value={month}>{month}</SelectItem>
+                         <SelectItem key={month} value={month} className="text-lg">{month}</SelectItem>
                        ))}
                      </SelectContent>
                    </Select>
@@ -511,19 +511,19 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Family Group Rotation Order:</Label>
+                <Label className="text-base font-medium">Family Group Rotation Order:</Label>
                 {rotationOrder.map((selectedGroup, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <span className="font-medium w-6">{index + 1}.</span>
-                    <Select value={selectedGroup} onValueChange={(value) => handleRotationOrderChange(index, value)}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select Family Group" />
-                      </SelectTrigger>
-                       <SelectContent>
+                   <Select value={selectedGroup} onValueChange={(value) => handleRotationOrderChange(index, value)}>
+                     <SelectTrigger className="flex-1 text-lg">
+                       <SelectValue placeholder="Select Family Group" className="text-lg" />
+                     </SelectTrigger>
+                       <SelectContent className="text-lg">
                     {familyGroups
                       .filter(group => !rotationOrder.includes(group.name) || rotationOrder[index] === group.name)
                       .map((group) => (
-                        <SelectItem key={group.id} value={group.name}>{group.name}</SelectItem>
+                        <SelectItem key={group.id} value={group.name} className="text-lg">{group.name}</SelectItem>
                       ))}
                        </SelectContent>
                     </Select>
@@ -539,7 +539,7 @@ export default function ReservationSetup() {
                     checked={enableSecondarySelection}
                     onCheckedChange={(checked) => setEnableSecondarySelection(checked === true)}
                   />
-                  <Label htmlFor="enableSecondarySelection" className="text-sm font-medium">
+                  <Label htmlFor="enableSecondarySelection" className="text-base font-medium">
                     Enable Secondary Week Selection
                   </Label>
                 </div>
@@ -547,10 +547,10 @@ export default function ReservationSetup() {
                 {enableSecondarySelection && (
                   <div className="pl-6 space-y-3">
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-base text-muted-foreground mb-2">
                         <strong>How Secondary Selection Works:</strong>
                       </p>
-                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                         <li>After all family groups complete their primary selections ({maxTimeSlots} periods each)</li>
                         <li>A secondary round automatically begins</li>
                         <li>Selection order follows <strong>reverse order</strong> from the last person who selected in the primary round</li>
@@ -558,15 +558,15 @@ export default function ReservationSetup() {
                       </ul>
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <div className="flex flex-wrap items-center gap-2 text-base">
                       <span>In the secondary round, each family group can select up to</span>
                       <Select value={secondaryMaxPeriods} onValueChange={setSecondaryMaxPeriods}>
-                        <SelectTrigger className="w-16">
-                          <SelectValue />
+                        <SelectTrigger className="w-16 text-lg">
+                          <SelectValue className="text-lg" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="text-lg">
                           {Array.from({ length: 3 }, (_, i) => (i + 1).toString()).map((num) => (
-                            <SelectItem key={num} value={num}>{num}</SelectItem>
+                            <SelectItem key={num} value={num} className="text-lg">{num}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -584,7 +584,7 @@ export default function ReservationSetup() {
                     checked={enablePostRotationSelection}
                     onCheckedChange={(checked) => setEnablePostRotationSelection(checked === true)}
                   />
-                  <Label htmlFor="enablePostRotationSelection" className="text-sm font-medium">
+                  <Label htmlFor="enablePostRotationSelection" className="text-base font-medium">
                     Enable Post Rotation Selection
                   </Label>
                 </div>
@@ -592,10 +592,10 @@ export default function ReservationSetup() {
                 {enablePostRotationSelection && (
                   <div className="pl-6 space-y-3">
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-base text-muted-foreground mb-2">
                         <strong>How Post Rotation Selection Works:</strong>
                       </p>
-                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                         <li>After secondary selection completes (or primary if secondary is disabled)</li>
                         <li>Open first-come, first-served booking for all available dates</li>
                         <li>Any family group or authorized host member can make reservations</li>
@@ -603,10 +603,10 @@ export default function ReservationSetup() {
                       </ul>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-base text-muted-foreground">
                       <p className="mb-2">Additional limits and restrictions can be configured here:</p>
                       <div className="p-2 bg-background rounded border border-dashed">
-                        <p className="text-xs text-muted-foreground italic">
+                        <p className="text-sm text-muted-foreground italic">
                           Future configuration options (e.g., max additional periods per group, booking windows, etc.) 
                           will be added here as needed.
                         </p>
@@ -651,10 +651,10 @@ export default function ReservationSetup() {
                       
                       return (
                         <div key={year} className="space-y-2">
-                          <h5 className="text-sm font-medium">{year}:</h5>
+                          <h5 className="text-base font-medium">{year}:</h5>
                           <div className="space-y-1">
                             {yearOrder.map((group, index) => (
-                              <div key={index} className="text-xs p-1 bg-background rounded flex items-center gap-2">
+                              <div key={index} className="text-sm p-1 bg-background rounded flex items-center gap-2">
                                 <span className="font-medium w-4">{index + 1}.</span>
                                 <span>{group}</span>
                               </div>
@@ -664,7 +664,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
+                  <div className="mt-3 text-sm text-muted-foreground">
                     Rotation: {firstLastOption === "first" ? "First person moves to last position each year" : "Last person moves to first position each year"}
                   </div>
                 </div>
@@ -683,22 +683,22 @@ export default function ReservationSetup() {
               <div className="p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded-r-lg">
                 <h4 className="text-lg font-semibold text-indigo-800 mb-2">How Static Weeks Work</h4>
                 <div className="space-y-2 text-indigo-700">
-                  <p className="text-sm mb-3">
+                  <p className="text-base mb-3">
                     In the Static Weeks system, specific weeks throughout the year are assigned permanent numbers, 
                     and family groups are assigned to those numbered weeks.
                   </p>
                   <div className="space-y-2">
                     <div className="flex items-start gap-2">
                       <span className="text-indigo-600 font-bold">•</span>
-                      <span className="text-sm">First year: Family Group 1 gets weeks labeled "1", Family Group 2 gets weeks labeled "2", etc.</span>
+                      <span className="text-base">First year: Family Group 1 gets weeks labeled "1", Family Group 2 gets weeks labeled "2", etc.</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-indigo-600 font-bold">•</span>
-                      <span className="text-sm">Following years: Groups rotate to the next number (Group 1 → Week 2, Group 2 → Week 3, etc.)</span>
+                      <span className="text-base">Following years: Groups rotate to the next number (Group 1 → Week 2, Group 2 → Week 3, etc.)</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-indigo-600 font-bold">•</span>
-                      <span className="text-sm">Calendar keeper assigns week numbers to specific calendar dates</span>
+                      <span className="text-base">Calendar keeper assigns week numbers to specific calendar dates</span>
                     </div>
                   </div>
                 </div>
@@ -706,55 +706,55 @@ export default function ReservationSetup() {
 
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <p className="text-sm">
+                  <p className="text-base">
                     Starting year for static weeks assignment:
                   </p>
                   <Select value={rotationYear} onValueChange={setRotationYear}>
-                    <SelectTrigger className="w-24">
-                      <SelectValue />
+                    <SelectTrigger className="w-24 text-lg">
+                      <SelectValue className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-lg">
                       {years.map((year) => (
-                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                        <SelectItem key={year} value={year} className="text-lg">{year}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-base">
                   <span>Each reservation period lasts</span>
                   <Select value={staticWeeksPeriodLength} onValueChange={setStaticWeeksPeriodLength}>
-                    <SelectTrigger className="w-16">
-                      <SelectValue />
+                    <SelectTrigger className="w-16 text-lg">
+                      <SelectValue className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-lg">
                       {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
-                        <SelectItem key={num} value={num}>{num}</SelectItem>
+                        <SelectItem key={num} value={num} className="text-lg">{num}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <span>consecutive nights, starting on</span>
                   <Select value={staticWeeksStartDay} onValueChange={setStaticWeeksStartDay}>
-                    <SelectTrigger className="w-28">
-                      <SelectValue />
+                    <SelectTrigger className="w-28 text-lg">
+                      <SelectValue className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-lg">
                       {days.map((day) => (
-                        <SelectItem key={day} value={day}>{day}</SelectItem>
+                        <SelectItem key={day} value={day} className="text-lg">{day}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                   <span>Each year, groups rotate with the</span>
                   <Select value={staticWeeksRotationDirection} onValueChange={setStaticWeeksRotationDirection}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
+                    <SelectTrigger className="w-20 text-lg">
+                      <SelectValue className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="first">First</SelectItem>
-                      <SelectItem value="last">Last</SelectItem>
+                    <SelectContent className="text-lg">
+                      <SelectItem value="first" className="text-lg">First</SelectItem>
+                      <SelectItem value="last" className="text-lg">Last</SelectItem>
                     </SelectContent>
                   </Select>
                   <span>group moving to {staticWeeksRotationDirection === "first" ? "the last week number" : "the first week number"}</span>
@@ -762,12 +762,12 @@ export default function ReservationSetup() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Family Group Week Assignments for {rotationYear}:</Label>
+                <Label className="text-base font-medium">Family Group Week Assignments for {rotationYear}:</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {familyGroups.map((group, index) => (
                     <div key={group.id} className="flex items-center gap-2 p-2 bg-muted rounded">
-                      <span className="font-medium text-sm w-20">Week {index + 1}:</span>
-                      <span className="text-sm">{group.name}</span>
+                      <span className="font-medium text-base w-20">Week {index + 1}:</span>
+                      <span className="text-base">{group.name}</span>
                     </div>
                   ))}
                 </div>
@@ -776,7 +776,7 @@ export default function ReservationSetup() {
               {/* Week Assignment Calendar Instructions */}
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <h5 className="font-medium text-yellow-800 mb-2">Calendar Keeper Week Assignment:</h5>
-                <div className="text-sm text-yellow-700 space-y-2">
+                <div className="text-base text-yellow-700 space-y-2">
                   <p>
                     After saving this configuration, the Calendar Keeper can assign week numbers to specific calendar dates. 
                     For example, they might assign:
@@ -818,10 +818,10 @@ export default function ReservationSetup() {
                       
                       return (
                         <div key={year} className="space-y-2">
-                          <h5 className="text-sm font-medium">{year}:</h5>
+                          <h5 className="text-base font-medium">{year}:</h5>
                           <div className="space-y-1">
                             {yearOrder.map((group, index) => (
-                              <div key={index} className="text-xs p-1 bg-background rounded flex items-center gap-2">
+                              <div key={index} className="text-sm p-1 bg-background rounded flex items-center gap-2">
                                 <span className="font-medium w-12">Week {index + 1}:</span>
                                 <span>{group}</span>
                               </div>
@@ -831,7 +831,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
+                  <div className="mt-3 text-sm text-muted-foreground">
                     Rotation: {staticWeeksRotationDirection === "first" ? "First group moves to last week each year" : "Last group moves to first week each year"}
                   </div>
                 </div>
@@ -865,26 +865,26 @@ export default function ReservationSetup() {
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
                     <span className="text-green-600 font-bold">✓</span>
-                    <span className="text-sm text-amber-700">Calendar Keeper can manually input all reservation data</span>
+                    <span className="text-base text-amber-700">Calendar Keeper can manually input all reservation data</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-green-600 font-bold">✓</span>
-                    <span className="text-sm text-amber-700">Calendar Keeper can assign reservations to any family group</span>
+                    <span className="text-base text-amber-700">Calendar Keeper can assign reservations to any family group</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-red-600 font-bold">✗</span>
-                    <span className="text-sm text-amber-700">Family groups cannot make their own reservations</span>
+                    <span className="text-base text-amber-700">Family groups cannot make their own reservations</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="text-red-600 font-bold">✗</span>
-                    <span className="text-sm text-amber-700">No automated rotation or selection process</span>
+                    <span className="text-base text-amber-700">No automated rotation or selection process</span>
                   </div>
                 </div>
               </div>
               
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h5 className="font-medium text-blue-800 mb-2">How Manual Calendar Works:</h5>
-                <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                <ol className="text-base text-blue-700 space-y-1 list-decimal list-inside">
                   <li>Calendar Keeper receives booking requests via email, phone, or other communication</li>
                   <li>Calendar Keeper manually enters reservation details in the calendar</li>
                   <li>Family groups can view the calendar but cannot create or modify reservations</li>
@@ -893,7 +893,7 @@ export default function ReservationSetup() {
               </div>
               
               <div className="text-center py-4">
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-base">
                   This setup is ideal for organizations that prefer centralized booking management 
                   or have specific approval processes for reservations.
                 </p>
@@ -912,51 +912,56 @@ export default function ReservationSetup() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="propertyName">Property Name</Label>
+                <Label htmlFor="propertyName" className="text-base">Property Name</Label>
                 <Input 
                   id="propertyName"
                   placeholder="Enter property name"
                   value={propertyName}
                   onChange={(e) => setPropertyName(e.target.value)}
+                  className="text-lg placeholder:text-lg md:text-lg"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address" className="text-base">Address</Label>
                 <Input 
                   id="address"
                   placeholder="Enter property address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  className="text-lg placeholder:text-lg md:text-lg"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bedrooms">Bedrooms</Label>
+                <Label htmlFor="bedrooms" className="text-base">Bedrooms</Label>
                 <Input 
                   id="bedrooms"
                   type="number"
                   placeholder="Number of bedrooms"
                   value={bedrooms}
                   onChange={(e) => setBedrooms(e.target.value)}
+                  className="text-lg placeholder:text-lg md:text-lg"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bathrooms">Bathrooms</Label>
+                <Label htmlFor="bathrooms" className="text-base">Bathrooms</Label>
                 <Input 
                   id="bathrooms"
                   type="number"
                   placeholder="Number of bathrooms"
                   value={bathrooms}
                   onChange={(e) => setBathrooms(e.target.value)}
+                  className="text-lg placeholder:text-lg md:text-lg"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxGuests">Maximum Guests</Label>
+                <Label htmlFor="maxGuests" className="text-base">Maximum Guests</Label>
                 <Input 
                   id="maxGuests"
                   type="number"
                   placeholder="Maximum number of guests"
                   value={maxGuests}
                   onChange={(e) => setMaxGuests(e.target.value)}
+                  className="text-lg placeholder:text-lg md:text-lg"
                 />
               </div>
             </div>
