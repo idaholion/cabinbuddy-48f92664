@@ -72,11 +72,12 @@ const FinancialReview = () => {
             variant="outline"
             size="sm"
             onClick={() => window.open(record.image_url, '_blank')}
+            className="text-base"
           >
             <Receipt className="h-4 w-4" />
           </Button>
         ) : (
-          <span className="text-muted-foreground text-sm">No image</span>
+          <span className="text-muted-foreground text-base">No image</span>
         )
       ),
     },
@@ -100,16 +101,16 @@ const FinancialReview = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Review</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-base">
             Review financial data and receipts
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge className={accessDisplay.color}>
+          <Badge className={`${accessDisplay.color} text-base`}>
             {accessDisplay.label}
           </Badge>
           {userFamilyGroup && (
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-base">
               <Users className="h-3 w-3 mr-1" />
               {userFamilyGroup}
             </Badge>
@@ -121,19 +122,19 @@ const FinancialReview = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               Year
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-              <SelectTrigger>
+              <SelectTrigger className="text-base">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {availableYears.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
+                  <SelectItem key={year} value={year.toString()} className="text-base">
                     {year}
                   </SelectItem>
                 ))}
@@ -144,7 +145,7 @@ const FinancialReview = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
               <Receipt className="h-4 w-4" />
               Total Records
             </CardTitle>
@@ -156,7 +157,7 @@ const FinancialReview = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Total Amount
             </CardTitle>
@@ -168,14 +169,14 @@ const FinancialReview = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-medium">
               Export Data
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Button 
               variant="outline" 
-              className="w-full"
+              className="w-full text-base"
               onClick={() => {
                 // Simple CSV export
                 const csvContent = [
@@ -208,7 +209,7 @@ const FinancialReview = () => {
       <Card>
         <CardHeader>
           <CardTitle>Financial Records - {selectedYear}</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             {accessLevel === 'admin' && 'Showing all financial records for the organization'}
             {accessLevel === 'group_lead' && `Showing financial records for ${userFamilyGroup}`}
             {accessLevel === 'host' && 'Showing your financial records'}

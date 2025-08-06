@@ -33,11 +33,11 @@ export const EmptyState = ({
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">{title}</h3>
         {description && (
-          <p className="text-muted-foreground max-w-sm">{description}</p>
+          <p className="text-muted-foreground max-w-sm text-base">{description}</p>
         )}
       </div>
       {action && (
-        <Button onClick={action.onClick} variant="outline">
+        <Button onClick={action.onClick} variant="outline" className="text-base">
           {action.label}
         </Button>
       )}

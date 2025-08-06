@@ -38,7 +38,7 @@ export const LoadingState = ({
   return (
     <div className={cn("flex items-center justify-center gap-3 p-6", className)}>
       <LoadingSpinner size={size} />
-      <span className="text-muted-foreground">{message}</span>
+      <span className="text-muted-foreground text-base">{message}</span>
     </div>
   );
 };
