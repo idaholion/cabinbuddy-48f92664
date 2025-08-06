@@ -680,7 +680,7 @@ const FamilyGroupSetup = () => {
         {/* Save and Continue Section */}
         <Card className="bg-card/95">
           <CardContent className="space-y-4 py-6">
-            <div className="text-sm text-muted-foreground text-center">
+            <div className="text-lg text-muted-foreground text-center">
               <p>Ready to proceed to the next step? Make sure you've selected an alternate group lead.</p>
             </div>
             
@@ -689,7 +689,7 @@ const FamilyGroupSetup = () => {
               <Button 
                 onClick={saveAndContinue} 
                 disabled={loading || !isValid}
-                className="w-full max-w-md"
+                className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground"
                 size="lg"
               >
                 {loading ? "Saving..." : "Save and Go to Financial Setup"}
