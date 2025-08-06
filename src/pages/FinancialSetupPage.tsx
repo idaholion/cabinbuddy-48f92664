@@ -445,7 +445,7 @@ const FinancialSetupPage = () => {
 
           <div className="flex gap-3">
             <Button 
-              className="flex-1" 
+              className="flex-1 text-lg" 
               onClick={handleSaveSettings}
               disabled={loading || !useFeeMethod || !feeAmount}
             >
