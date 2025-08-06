@@ -151,7 +151,7 @@ Best regards,
         <h3 className="text-lg font-semibold">Reminder Templates</h3>
       </div>
       
-      <div className="text-sm text-muted-foreground">
+      <div className="text-base text-muted-foreground">
         Customize the content of reminder notifications. Available variables: 
         {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}"}
       </div>
@@ -167,36 +167,36 @@ Best regards,
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor={`subject-${template.id}`}>Email Subject</Label>
+                <Label htmlFor={`subject-${template.id}`} className="text-base">Email Subject</Label>
                 <Textarea
                   id={`subject-${template.id}`}
                   value={template.subject_template}
                   onChange={(e) => updateTemplate(template.id, { subject_template: e.target.value })}
-                  className="mt-1"
+                  className="mt-1 text-base"
                   rows={1}
                 />
               </div>
               
               <div>
-                <Label htmlFor={`content-${template.id}`}>Email Content</Label>
+                <Label htmlFor={`content-${template.id}`} className="text-base">Email Content</Label>
                 <Textarea
                   id={`content-${template.id}`}
                   value={template.custom_message}
                   onChange={(e) => updateTemplate(template.id, { custom_message: e.target.value })}
-                  className="mt-1"
+                  className="mt-1 text-base"
                   rows={8}
                 />
               </div>
 
               <div>
-                <Label htmlFor={`checklist-${template.id}`}>Checklist Items (one per line)</Label>
+                <Label htmlFor={`checklist-${template.id}`} className="text-base">Checklist Items (one per line)</Label>
                 <Textarea
                   id={`checklist-${template.id}`}
                   value={template.checklist_items.join('\n')}
                   onChange={(e) => updateTemplate(template.id, { 
                     checklist_items: e.target.value.split('\n').filter(item => item.trim()) 
                   })}
-                  className="mt-1"
+                  className="mt-1 text-base"
                   rows={5}
                   placeholder="Enter checklist items, one per line..."
                 />

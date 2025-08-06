@@ -223,7 +223,7 @@ export const NotificationManagement = () => {
               <Bell className="h-5 w-5" />
               <div>
                 <CardTitle>Notification Management</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-base">
                   Send manual reminders and manage the automatic notification system
                 </CardDescription>
               </div>
@@ -231,7 +231,7 @@ export const NotificationManagement = () => {
             <Button 
               onClick={runAutomaticReminders}
               disabled={sendingReminders}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 text-base"
             >
               <Send className="h-4 w-4" />
               <span>{sendingReminders ? "Processing..." : "Run All Reminders"}</span>
@@ -245,9 +245,9 @@ export const NotificationManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm font-medium">7-Day Reminders</span>
+                    <span className="text-base font-medium">7-Day Reminders</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-base text-muted-foreground mt-1">
                     Pre-planning checklist
                   </p>
                 </CardContent>
@@ -256,9 +256,9 @@ export const NotificationManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
                     <AlertCircle className="h-4 w-4 text-orange-600" />
-                    <span className="text-sm font-medium">3-Day Reminders</span>
+                    <span className="text-base font-medium">3-Day Reminders</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-base text-muted-foreground mt-1">
                     Final preparations
                   </p>
                 </CardContent>
@@ -267,9 +267,9 @@ export const NotificationManagement = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-red-600" />
-                    <span className="text-sm font-medium">1-Day Reminders</span>
+                    <span className="text-base font-medium">1-Day Reminders</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-base text-muted-foreground mt-1">
                     Last-minute details
                   </p>
                 </CardContent>
@@ -282,19 +282,19 @@ export const NotificationManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Send manual reminders to families with upcoming stays
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading upcoming reservations...</p>
+              <p className="text-muted-foreground text-base">Loading upcoming reservations...</p>
             </div>
           ) : upcomingReservations.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No upcoming reservations in the next 30 days</p>
+              <p className="text-muted-foreground text-base">No upcoming reservations in the next 30 days</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -309,10 +309,10 @@ export const NotificationManagement = () => {
                             {reservation.days_until} day{reservation.days_until !== 1 ? 's' : ''} away
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-base text-muted-foreground mt-1">
                           {new Date(reservation.start_date).toLocaleDateString()} - {new Date(reservation.end_date).toLocaleDateString()}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           {reservation.guest_name} • {reservation.guest_email}
                         </p>
                       </div>
@@ -323,7 +323,7 @@ export const NotificationManagement = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => sendManualReminder(reservation, days)}
-                            className="flex items-center space-x-1"
+                            className="flex items-center space-x-1 text-base"
                           >
                             <Send className="h-3 w-3" />
                             <span>{days}d</span>
