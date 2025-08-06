@@ -689,7 +689,7 @@ const FamilyGroupSetup = () => {
               <Button 
                 onClick={saveAndContinue} 
                 disabled={loading || !isValid}
-                className="w-full max-w-md bg-primary hover:bg-primary/90 text-white text-xl font-bold"
+                className="w-full max-w-md bg-primary hover:bg-primary/90 text-red-500 text-xl font-bold"
                 size="lg"
               >
                 {loading ? "Saving..." : "Save and Go to Financial Setup"}
