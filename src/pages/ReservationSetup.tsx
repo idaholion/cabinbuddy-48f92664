@@ -969,14 +969,14 @@ export default function ReservationSetup() {
         </Card>
 
         <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={() => navigate("/financial-setup")}>
+          <Button variant="outline" onClick={() => navigate("/financial-setup")} className="text-base">
             Back
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSaveReservationSetup} disabled={loading}>
+            <Button variant="outline" onClick={handleSaveReservationSetup} disabled={loading} className="text-base">
               {loading ? "Saving..." : "Save Setup"}
             </Button>
-            <Button onClick={() => navigate("/calendar-keeper-management")}>
+            <Button onClick={() => navigate("/calendar-keeper-management")} className="text-base">
               Continue to Calendar Keeper Management
             </Button>
           </div>
