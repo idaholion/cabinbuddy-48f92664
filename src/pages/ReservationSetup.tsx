@@ -606,7 +606,7 @@ export default function ReservationSetup() {
                     <div className="text-base text-muted-foreground">
                       <p className="mb-2">Additional limits and restrictions can be configured here:</p>
                       <div className="p-2 bg-background rounded border border-dashed">
-                        <p className="text-sm text-muted-foreground italic">
+                        <p className="text-base text-muted-foreground italic">
                           Future configuration options (e.g., max additional periods per group, booking windows, etc.) 
                           will be added here as needed.
                         </p>
