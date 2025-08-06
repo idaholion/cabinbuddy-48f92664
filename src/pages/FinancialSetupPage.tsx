@@ -260,7 +260,7 @@ const FinancialSetupPage = () => {
                       value={venmoHandle}
                       onChange={(e) => setVenmoHandle(e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Include the @ symbol (e.g., @CabinPayments)
                     </p>
                   </div>
@@ -297,7 +297,7 @@ const FinancialSetupPage = () => {
                         placeholder="123 Mountain View Drive&#10;Yellowstone, MT 59718"
                         value={checkMailingAddress}
                         onChange={(e) => setCheckMailingAddress(e.target.value)}
-                        className="w-full min-h-[80px] px-3 py-2 text-sm border border-input bg-background rounded-md resize-none"
+                        className="w-full min-h-[80px] px-3 py-2 text-base border border-input bg-background rounded-md resize-none"
                       />
                     </div>
                   </div>
@@ -320,7 +320,7 @@ const FinancialSetupPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Automatic Invoicing</Label>
-                  <p className="text-sm text-muted-foreground">Send invoices automatically upon booking</p>
+                  <p className="text-base text-muted-foreground">Send invoices automatically upon booking</p>
                 </div>
                 <Switch checked={autoInvoicing} onCheckedChange={setAutoInvoicing} />
               </div>
@@ -340,7 +340,7 @@ const FinancialSetupPage = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Late Payment Fees</Label>
-                  <p className="text-sm text-muted-foreground">Charge late fees for overdue payments</p>
+                  <p className="text-base text-muted-foreground">Charge late fees for overdue payments</p>
                 </div>
                 <Switch checked={lateFeesEnabled} onCheckedChange={setLateFeesEnabled} />
               </div>
