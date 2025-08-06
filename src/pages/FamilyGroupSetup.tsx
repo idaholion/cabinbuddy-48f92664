@@ -481,9 +481,9 @@ const FamilyGroupSetup = () => {
                     name="leadName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          Lead Name <span className="text-destructive">*</span>
-                        </FormLabel>
+                         <FormLabel className="text-lg">
+                           Lead Name <span className="text-destructive">*</span>
+                         </FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="Family Group Lead's full name"
@@ -501,7 +501,7 @@ const FamilyGroupSetup = () => {
                       name="leadPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
+                          <FormLabel className="text-lg">Phone Number</FormLabel>
                           <FormControl>
                             <PhoneInput 
                               value={field.value}
@@ -518,7 +518,7 @@ const FamilyGroupSetup = () => {
                       name="leadEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                          <FormLabel className="text-lg">Email Address</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
