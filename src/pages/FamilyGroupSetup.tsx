@@ -360,7 +360,7 @@ const FamilyGroupSetup = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-3xl font-semibold text-center block">
-                        Family Group Name <span className="text-destructive">*</span>
+                        Family Group Name
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
@@ -651,7 +651,7 @@ const FamilyGroupSetup = () => {
                       <FormControl>
                         <Select value={field.value} onValueChange={field.onChange}>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select alternate lead (optional)" />
+                            <SelectValue placeholder="Select alternate lead" />
                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
                             <SelectItem value="none">None selected</SelectItem>
