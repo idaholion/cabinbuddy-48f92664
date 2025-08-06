@@ -123,7 +123,7 @@ export const CalendarKeeperManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Calendar Keeper Dashboard</h2>
-          <p className="text-muted-foreground">Manage assistance requests and notification system</p>
+          <p className="text-muted-foreground text-base">Manage assistance requests and notification system</p>
         </div>
         <div className="flex items-center space-x-2">
           <Badge variant="destructive">{openRequests.length} Open</Badge>
@@ -134,15 +134,15 @@ export const CalendarKeeperManagement = () => {
 
       <Tabs defaultValue="notifications" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="notifications" className="flex items-center space-x-2">
+          <TabsTrigger value="notifications" className="flex items-center space-x-2 text-base">
             <Bell className="h-4 w-4" />
             <span>Notifications</span>
           </TabsTrigger>
-          <TabsTrigger value="requests" className="flex items-center space-x-2">
+          <TabsTrigger value="requests" className="flex items-center space-x-2 text-base">
             <MessageSquare className="h-4 w-4" />
             <span>Assistance Requests</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center space-x-2">
+          <TabsTrigger value="templates" className="flex items-center space-x-2 text-base">
             <Mail className="h-4 w-4" />
             <span>Reminder Templates</span>
           </TabsTrigger>
@@ -170,16 +170,16 @@ export const CalendarKeeperManagement = () => {
 
           <Tabs defaultValue="open" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="open">Open ({openRequests.length})</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress ({inProgressRequests.length})</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved ({resolvedRequests.length})</TabsTrigger>
+              <TabsTrigger value="open" className="text-base">Open ({openRequests.length})</TabsTrigger>
+              <TabsTrigger value="in_progress" className="text-base">In Progress ({inProgressRequests.length})</TabsTrigger>
+              <TabsTrigger value="resolved" className="text-base">Resolved ({resolvedRequests.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="open" className="space-y-4">
               {openRequests.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">No open requests</p>
+                    <p className="text-center text-muted-foreground text-base">No open requests</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -200,7 +200,7 @@ export const CalendarKeeperManagement = () => {
               {inProgressRequests.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">No requests in progress</p>
+                    <p className="text-center text-muted-foreground text-base">No requests in progress</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -221,7 +221,7 @@ export const CalendarKeeperManagement = () => {
               {resolvedRequests.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-center text-muted-foreground">No resolved requests</p>
+                    <p className="text-center text-muted-foreground text-base">No resolved requests</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -251,42 +251,43 @@ export const CalendarKeeperManagement = () => {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setSelectedRequest(null)}
+                className="text-base"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <CardDescription>
+            <CardDescription className="text-base">
               From {selectedRequest.requester_family_group} • {selectedRequest.subject}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted p-4 rounded">
-              <p className="text-sm font-medium mb-2">Request Details:</p>
-              <p className="text-sm">{selectedRequest.description}</p>
+              <p className="text-base font-medium mb-2">Request Details:</p>
+              <p className="text-base">{selectedRequest.description}</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status Update</Label>
+              <Label htmlFor="status" className="text-base">Status Update</Label>
               <Select value={newStatus} onValueChange={(value: any) => setNewStatus(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="in_progress">Mark as In Progress</SelectItem>
-                  <SelectItem value="resolved">Mark as Resolved</SelectItem>
-                  <SelectItem value="closed">Close Request</SelectItem>
+                  <SelectItem value="in_progress" className="text-base">Mark as In Progress</SelectItem>
+                  <SelectItem value="resolved" className="text-base">Mark as Resolved</SelectItem>
+                  <SelectItem value="closed" className="text-base">Close Request</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="response">Your Response</Label>
+              <Label htmlFor="response" className="text-base">Your Response</Label>
               <Textarea
                 id="response"
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
                 placeholder="Type your response to the family group..."
-                className="min-h-24"
+                className="min-h-24 text-base"
               />
             </div>
 
@@ -294,12 +295,14 @@ export const CalendarKeeperManagement = () => {
               <Button 
                 variant="outline" 
                 onClick={() => setSelectedRequest(null)}
+                className="text-base"
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleRespond}
                 disabled={loading || !response.trim()}
+                className="text-base"
               >
                 {loading ? "Sending..." : "Send Response"}
               </Button>
@@ -310,7 +313,7 @@ export const CalendarKeeperManagement = () => {
       
       {/* Navigate to Calendar Button */}
       <div className="flex justify-center pt-6">
-        <Button asChild>
+        <Button asChild className="text-base">
           <Link to="/calendar">Go to Calendar</Link>
         </Button>
       </div>
@@ -345,17 +348,17 @@ const RequestCard = ({
           <Badge variant={getStatusColor(request.status) as any}>{request.status}</Badge>
         </div>
       </div>
-      <CardDescription>
+      <CardDescription className="text-base">
         From {request.requester_family_group} • {new Date(request.created_at).toLocaleDateString()}
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <p className="text-sm text-muted-foreground line-clamp-2">
+      <p className="text-base text-muted-foreground line-clamp-2">
         {request.description}
       </p>
       {request.calendar_keeper_response && (
-        <div className="mt-3 p-3 bg-muted rounded text-sm">
-          <p className="font-medium text-xs text-muted-foreground mb-1">Previous Response:</p>
+        <div className="mt-3 p-3 bg-muted rounded text-base">
+          <p className="font-medium text-base text-muted-foreground mb-1">Previous Response:</p>
           <p>{request.calendar_keeper_response}</p>
         </div>
       )}
