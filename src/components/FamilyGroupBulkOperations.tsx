@@ -32,7 +32,7 @@ export const FamilyGroupBulkOperations = () => {
             <Users className="h-5 w-5" />
             Bulk Operations
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Bulk operations require supervisor privileges.
           </CardDescription>
         </CardHeader>
@@ -48,7 +48,7 @@ export const FamilyGroupBulkOperations = () => {
             <Users className="h-5 w-5" />
             Family Group Bulk Operations
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Perform operations across multiple family groups at once. These actions affect all groups in the organization.
           </CardDescription>
         </CardHeader>
@@ -59,33 +59,35 @@ export const FamilyGroupBulkOperations = () => {
               <Mail className="h-4 w-4" />
               <h3 className="text-lg font-medium">Update Lead Contact Information</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Update phone or email for all family group leads in this organization.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="leadPhone">New Lead Phone (optional)</Label>
+                <Label htmlFor="leadPhone" className="text-base">New Lead Phone (optional)</Label>
                 <Input
                   id="leadPhone"
                   placeholder="Enter new phone number"
                   value={leadPhone}
                   onChange={(e) => setLeadPhone(e.target.value)}
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="leadEmail">New Lead Email (optional)</Label>
+                <Label htmlFor="leadEmail" className="text-base">New Lead Email (optional)</Label>
                 <Input
                   id="leadEmail"
                   placeholder="Enter new email address"
                   value={leadEmail}
                   onChange={(e) => setLeadEmail(e.target.value)}
+                  className="text-base"
                 />
               </div>
             </div>
             <Button
               onClick={() => bulkUpdateLeads(leadPhone || undefined, leadEmail || undefined)}
               disabled={!leadPhone && !leadEmail}
-              className="w-full"
+              className="w-full text-base"
             >
               <Phone className="h-4 w-4 mr-2" />
               Update All Lead Information
@@ -100,23 +102,24 @@ export const FamilyGroupBulkOperations = () => {
               <UserMinus className="h-4 w-4" />
               <h3 className="text-lg font-medium">Remove Host Member</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Remove a specific host member from all family groups where they exist.
             </p>
             <div className="space-y-2">
-              <Label htmlFor="hostName">Host Member Name</Label>
+              <Label htmlFor="hostName" className="text-base">Host Member Name</Label>
               <Input
                 id="hostName"
                 placeholder="Enter exact host member name"
                 value={hostNameToRemove}
                 onChange={(e) => setHostNameToRemove(e.target.value)}
+                className="text-base"
               />
             </div>
             <Button
               onClick={() => bulkRemoveHostMember(hostNameToRemove)}
               disabled={!hostNameToRemove.trim()}
               variant="destructive"
-              className="w-full"
+              className="w-full text-base"
             >
               <UserMinus className="h-4 w-4 mr-2" />
               Remove Host Member from All Groups
@@ -131,13 +134,13 @@ export const FamilyGroupBulkOperations = () => {
               <Shield className="h-4 w-4" />
               <h3 className="text-lg font-medium">Reservation Permissions</h3>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Enable or disable reservation permissions for all host members across all family groups.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button
                 onClick={() => bulkUpdateReservationPermissions(true)}
-                className="w-full"
+                className="w-full text-base"
               >
                 <Shield className="h-4 w-4 mr-2" />
                 Enable All Host Reservations
@@ -145,7 +148,7 @@ export const FamilyGroupBulkOperations = () => {
               <Button
                 onClick={() => bulkUpdateReservationPermissions(false)}
                 variant="outline"
-                className="w-full"
+                className="w-full text-base"
               >
                 <ShieldOff className="h-4 w-4 mr-2" />
                 Disable All Host Reservations

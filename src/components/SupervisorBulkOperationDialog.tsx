@@ -63,7 +63,7 @@ export const SupervisorBulkOperationDialog = ({
               <DialogTitle className="text-lg font-semibold">
                 Supervisor Authorization Required
               </DialogTitle>
-              <Badge variant="secondary" className="mt-1">
+              <Badge variant="secondary" className="mt-1 text-base">
                 <Shield className="h-3 w-3 mr-1" />
                 Bulk Operation
               </Badge>
@@ -74,13 +74,13 @@ export const SupervisorBulkOperationDialog = ({
         <div className="space-y-4">
           <Alert className="border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">
+            <AlertDescription className="text-orange-800 text-base">
               <strong>Warning:</strong> This operation will affect multiple records simultaneously.
             </AlertDescription>
           </Alert>
 
           <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-2 gap-2 text-base">
               <span className="font-medium">Operation:</span>
               <span className="capitalize">{operationType}</span>
               
@@ -92,14 +92,14 @@ export const SupervisorBulkOperationDialog = ({
             </div>
           </div>
 
-          <DialogDescription className="text-sm text-gray-600">
+          <DialogDescription className="text-base text-gray-600">
             This operation will modify multiple family groups at once. Only supervisors 
             can perform bulk operations to prevent accidental data loss.
           </DialogDescription>
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="confirmation" className="text-sm font-medium">
+              <Label htmlFor="confirmation" className="text-base font-medium">
                 Type <code className="px-1 py-0.5 bg-gray-100 rounded text-xs">{requiredText}</code> to confirm:
               </Label>
               <Input
@@ -107,7 +107,7 @@ export const SupervisorBulkOperationDialog = ({
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
                 placeholder="Type confirmation text"
-                className="font-mono text-sm"
+                className="font-mono text-base"
               />
             </div>
 
@@ -119,7 +119,7 @@ export const SupervisorBulkOperationDialog = ({
                 onChange={(e) => setAcknowledged(e.target.checked)}
                 className="h-4 w-4"
               />
-              <Label htmlFor="acknowledge" className="text-sm">
+              <Label htmlFor="acknowledge" className="text-base">
                 I understand this action affects multiple records and cannot be easily undone
               </Label>
             </div>
@@ -132,14 +132,14 @@ export const SupervisorBulkOperationDialog = ({
               variant="outline"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 text-base"
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirm}
               disabled={!isConfirmationValid || loading}
-              className="flex-1 bg-orange-600 hover:bg-orange-700"
+              className="flex-1 bg-orange-600 hover:bg-orange-700 text-base"
             >
               {loading ? (
                 "Processing..."
@@ -153,7 +153,7 @@ export const SupervisorBulkOperationDialog = ({
           </div>
           
           {!isConfirmationValid && (confirmationText || acknowledged) && (
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-base text-gray-500 text-center">
               Both confirmation text and acknowledgment are required
             </p>
           )}

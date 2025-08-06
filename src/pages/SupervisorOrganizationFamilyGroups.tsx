@@ -269,7 +269,7 @@ const SupervisorOrganizationFamilyGroups = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/supervisor')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/supervisor')} className="text-base">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Organizations
           </Button>
@@ -277,14 +277,14 @@ const SupervisorOrganizationFamilyGroups = () => {
 
         <div className="text-center space-y-2">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Groups Management</h1>
-          <p className="text-muted-foreground">Manage family groups for this organization</p>
+          <p className="text-muted-foreground text-base">Manage family groups for this organization</p>
         </div>
 
         {/* Create New Group */}
         <Card>
           <CardHeader>
             <CardTitle>Create New Family Group</CardTitle>
-            <CardDescription>Add a new family group to this organization</CardDescription>
+            <CardDescription className="text-base">Add a new family group to this organization</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-2">
@@ -292,8 +292,9 @@ const SupervisorOrganizationFamilyGroups = () => {
                 placeholder="Enter family group name"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
+                className="text-base"
               />
-              <Button onClick={createFamilyGroup} disabled={loading}>
+              <Button onClick={createFamilyGroup} disabled={loading} className="text-base">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Group
               </Button>
@@ -305,25 +306,25 @@ const SupervisorOrganizationFamilyGroups = () => {
         <Card>
           <CardHeader>
             <CardTitle>Edit Family Group</CardTitle>
-            <CardDescription>Update details for an existing family group</CardDescription>
+            <CardDescription className="text-base">Update details for an existing family group</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Family Group Selection */}
             <div className="space-y-2">
-              <Label htmlFor="groupName">Select Family Group</Label>
+              <Label htmlFor="groupName" className="text-base">Select Family Group</Label>
               <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                <SelectTrigger>
+                <SelectTrigger className="text-base">
                   <SelectValue placeholder="Select a family group" />
                 </SelectTrigger>
                 <SelectContent>
                   {familyGroups.length > 0 ? (
                     familyGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.name}>
+                      <SelectItem key={group.id} value={group.name} className="text-base">
                         {group.name}
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="no-groups" disabled>
+                    <SelectItem value="no-groups" disabled className="text-base">
                       No family groups found
                     </SelectItem>
                   )}
@@ -338,16 +339,17 @@ const SupervisorOrganizationFamilyGroups = () => {
                   <h3 className="text-lg font-semibold">Family Group Lead</h3>
                   <div className="grid gap-2 md:grid-cols-3">
                     <div className="space-y-1">
-                      <Label htmlFor="leadName">Name</Label>
+                      <Label htmlFor="leadName" className="text-base">Name</Label>
                       <Input 
                         id="leadName" 
                         placeholder="Lead's full name"
                         value={leadName}
                         onChange={(e) => setLeadName(e.target.value)}
+                        className="text-base"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="leadPhone">Phone Number</Label>
+                      <Label htmlFor="leadPhone" className="text-base">Phone Number</Label>
                       <PhoneInput 
                         id="leadPhone" 
                         value={leadPhone}
@@ -355,13 +357,14 @@ const SupervisorOrganizationFamilyGroups = () => {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="leadEmail">Email Address</Label>
+                      <Label htmlFor="leadEmail" className="text-base">Email Address</Label>
                       <Input 
                         id="leadEmail" 
                         type="email" 
                         placeholder="lead@example.com"
                         value={leadEmail}
                         onChange={(e) => setLeadEmail(e.target.value)}
+                        className="text-base"
                       />
                     </div>
                   </div>
@@ -371,13 +374,13 @@ const SupervisorOrganizationFamilyGroups = () => {
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold">Group Color</h3>
                   <div className="space-y-1">
-                    <Label htmlFor="groupColor">Calendar Color</Label>
+                    <Label htmlFor="groupColor" className="text-base">Calendar Color</Label>
                     <ColorPicker
                       value={groupColor}
                       onChange={setGroupColor}
                       availableColors={availableColors}
                     />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       This color will be used to identify this family group's reservations on the calendar.
                     </p>
                   </div>
@@ -388,19 +391,20 @@ const SupervisorOrganizationFamilyGroups = () => {
                   <h3 className="text-lg font-semibold">Additional Host Members</h3>
                   {hostMembers.map((member, index) => (
                     <div key={index} className="p-3 border rounded-lg space-y-3">
-                      <div className="text-sm font-medium text-muted-foreground">Host Member {index + 1}</div>
+                      <div className="text-base font-medium text-muted-foreground">Host Member {index + 1}</div>
                       <div className="grid gap-2 md:grid-cols-3">
                         <div className="space-y-1">
-                          <Label htmlFor={`hostName${index}`}>Name</Label>
+                          <Label htmlFor={`hostName${index}`} className="text-base">Name</Label>
                           <Input 
                             id={`hostName${index}`}
                             placeholder="Full name"
                             value={member.name}
                             onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                            className="text-base"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor={`hostPhone${index}`}>Phone Number</Label>
+                          <Label htmlFor={`hostPhone${index}`} className="text-base">Phone Number</Label>
                           <PhoneInput 
                             id={`hostPhone${index}`}
                             value={member.phone}
@@ -408,13 +412,14 @@ const SupervisorOrganizationFamilyGroups = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor={`hostEmail${index}`}>Email Address</Label>
+                          <Label htmlFor={`hostEmail${index}`} className="text-base">Email Address</Label>
                           <Input 
                             id={`hostEmail${index}`}
                             type="email"
                             placeholder="email@example.com"
                             value={member.email}
                             onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
+                            className="text-base"
                           />
                         </div>
                       </div>
@@ -422,14 +427,14 @@ const SupervisorOrganizationFamilyGroups = () => {
                   ))}
                   
                   <div className="flex justify-center pt-2">
-                    <Button variant="outline" onClick={addHostMember}>
+                    <Button variant="outline" onClick={addHostMember} className="text-base">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Host Member
                     </Button>
                   </div>
                 </div>
 
-                <Button onClick={updateFamilyGroup} disabled={loading} className="w-full">
+                <Button onClick={updateFamilyGroup} disabled={loading} className="w-full text-base">
                   {loading ? "Saving..." : "Update Family Group"}
                 </Button>
               </>
@@ -447,7 +452,7 @@ const SupervisorOrganizationFamilyGroups = () => {
               <AlertTriangle className="h-5 w-5 text-orange-600" />
               Color Assignment
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Assign default colors to family groups that don't have one.
             </CardDescription>
           </CardHeader>
@@ -457,7 +462,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                 variant="outline" 
                 onClick={handleBulkAssignColors}
                 disabled={bulkLoading}
-                className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                className="border-orange-300 text-orange-700 hover:bg-orange-100 text-base"
               >
                 <Palette className="h-4 w-4 mr-2" />
                 Assign Default Colors to All Groups
@@ -470,7 +475,7 @@ const SupervisorOrganizationFamilyGroups = () => {
         <Card>
           <CardHeader>
             <CardTitle>Existing Family Groups ({familyGroups.length})</CardTitle>
-            <CardDescription>Overview of all family groups in this organization</CardDescription>
+            <CardDescription className="text-base">Overview of all family groups in this organization</CardDescription>
           </CardHeader>
           <CardContent>
             {familyGroups.length > 0 ? (
@@ -487,13 +492,13 @@ const SupervisorOrganizationFamilyGroups = () => {
                       <div className="font-medium">{group.name}</div>
                     </div>
                     {group.lead_name && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         Lead: {group.lead_name}
                         {group.lead_email && ` (${group.lead_email})`}
                       </div>
                     )}
                     {group.host_members && group.host_members.length > 0 && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         Host Members: {group.host_members.filter(m => m.name.trim()).length}
                       </div>
                     )}
@@ -501,7 +506,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-4">
+              <p className="text-muted-foreground text-center py-4 text-base">
                 No family groups found. Create one above to get started.
               </p>
             )}
