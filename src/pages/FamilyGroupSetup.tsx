@@ -632,7 +632,7 @@ const FamilyGroupSetup = () => {
 
                   {/* Add Host Member Button */}
                   <div className="flex justify-center pt-2">
-                    <Button type="button" variant="outline" onClick={addHostMember}>
+                    <Button type="button" variant="outline" onClick={addHostMember} className="text-lg">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Host Member
                     </Button>
