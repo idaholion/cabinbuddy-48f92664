@@ -149,10 +149,11 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                 <FormItem>
                   <FormLabel className="text-xl">Phone</FormLabel>
                   <FormControl>
-                    <PhoneInput 
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
+                     <PhoneInput 
+                       value={field.value}
+                       onChange={field.onChange}
+                       className="text-lg"
+                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

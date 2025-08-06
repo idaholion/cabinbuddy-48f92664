@@ -368,19 +368,19 @@ const FamilyGroupSetup = () => {
                             <SelectTrigger className="w-full text-lg">
                               <SelectValue placeholder="Select a family group" className="text-lg" />
                             </SelectTrigger>
-                            <SelectContent className="bg-background z-50">
-                              {allGroups.length > 0 ? (
-                                allGroups.map((group, index) => (
-                                  <SelectItem key={index} value={group}>
-                                    {group}
-                                  </SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="no-groups" disabled>
-                                  No family groups found - Please set them up in Family Setup first
-                                </SelectItem>
-                              )}
-                            </SelectContent>
+                             <SelectContent className="bg-background z-50 text-lg">
+                               {allGroups.length > 0 ? (
+                                 allGroups.map((group, index) => (
+                                   <SelectItem key={index} value={group} className="text-lg">
+                                     {group}
+                                   </SelectItem>
+                                 ))
+                               ) : (
+                                 <SelectItem value="no-groups" disabled className="text-lg">
+                                   No family groups found - Please set them up in Family Setup first
+                                 </SelectItem>
+                               )}
+                             </SelectContent>
                           </Select>
                           
                           {/* Rename Group Section */}
@@ -504,10 +504,11 @@ const FamilyGroupSetup = () => {
                         <FormItem>
                           <FormLabel className="text-xl">Phone Number</FormLabel>
                           <FormControl>
-                            <PhoneInput 
-                              value={field.value}
-                              onChange={field.onChange}
-                            />
+                             <PhoneInput 
+                               value={field.value}
+                               onChange={field.onChange}
+                               className="text-lg"
+                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -655,16 +656,16 @@ const FamilyGroupSetup = () => {
                            <SelectTrigger className="w-full text-lg">
                              <SelectValue placeholder="Select alternate lead" className="text-lg" />
                            </SelectTrigger>
-                          <SelectContent className="bg-background z-50">
-                            <SelectItem value="none">None selected</SelectItem>
-                            {watchedData.hostMembers
-                              ?.filter(member => member.name && member.name.trim() !== '')
-                              .map((member, index) => (
-                                <SelectItem key={index} value={member.name || ""}>
-                                  {member.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
+                           <SelectContent className="bg-background z-50 text-lg">
+                             <SelectItem value="none" className="text-lg">None selected</SelectItem>
+                             {watchedData.hostMembers
+                               ?.filter(member => member.name && member.name.trim() !== '')
+                               .map((member, index) => (
+                                 <SelectItem key={index} value={member.name || ""} className="text-lg">
+                                   {member.name}
+                                 </SelectItem>
+                               ))}
+                           </SelectContent>
                         </Select>
                       </FormControl>
                       <FormMessage />
