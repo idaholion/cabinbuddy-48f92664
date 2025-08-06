@@ -107,7 +107,7 @@ export const SupervisorBulkOperationDialog = ({
                 value={confirmationText}
                 onChange={(e) => setConfirmationText(e.target.value)}
                 placeholder="Type confirmation text"
-                className="font-mono text-base"
+                className="font-mono text-base placeholder:text-base"
               />
             </div>
 

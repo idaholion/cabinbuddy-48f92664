@@ -70,7 +70,7 @@ export const FamilyGroupBulkOperations = () => {
                   placeholder="Enter new phone number"
                   value={leadPhone}
                   onChange={(e) => setLeadPhone(e.target.value)}
-                  className="text-base"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -80,7 +80,7 @@ export const FamilyGroupBulkOperations = () => {
                   placeholder="Enter new email address"
                   value={leadEmail}
                   onChange={(e) => setLeadEmail(e.target.value)}
-                  className="text-base"
+                  className="text-base placeholder:text-base"
                 />
               </div>
             </div>
@@ -112,7 +112,7 @@ export const FamilyGroupBulkOperations = () => {
                 placeholder="Enter exact host member name"
                 value={hostNameToRemove}
                 onChange={(e) => setHostNameToRemove(e.target.value)}
-                className="text-base"
+                className="text-base placeholder:text-base"
               />
             </div>
             <Button

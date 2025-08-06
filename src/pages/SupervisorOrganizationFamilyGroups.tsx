@@ -292,7 +292,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                 placeholder="Enter family group name"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                className="text-base"
+                className="text-base placeholder:text-base"
               />
               <Button onClick={createFamilyGroup} disabled={loading} className="text-base">
                 <Plus className="h-4 w-4 mr-2" />
@@ -345,7 +345,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                         placeholder="Lead's full name"
                         value={leadName}
                         onChange={(e) => setLeadName(e.target.value)}
-                        className="text-base"
+                        className="text-base placeholder:text-base"
                       />
                     </div>
                     <div className="space-y-1">
@@ -364,7 +364,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                         placeholder="lead@example.com"
                         value={leadEmail}
                         onChange={(e) => setLeadEmail(e.target.value)}
-                        className="text-base"
+                        className="text-base placeholder:text-base"
                       />
                     </div>
                   </div>
@@ -400,7 +400,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                             placeholder="Full name"
                             value={member.name}
                             onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
-                            className="text-base"
+                            className="text-base placeholder:text-base"
                           />
                         </div>
                         <div className="space-y-1">
@@ -419,7 +419,7 @@ const SupervisorOrganizationFamilyGroups = () => {
                             placeholder="email@example.com"
                             value={member.email}
                             onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
-                            className="text-base"
+                            className="text-base placeholder:text-base"
                           />
                         </div>
                       </div>
