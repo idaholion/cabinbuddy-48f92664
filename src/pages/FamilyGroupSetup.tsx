@@ -365,8 +365,8 @@ const FamilyGroupSetup = () => {
                       <FormControl>
                         <div className="space-y-4">
                           <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select a family group" />
+                            <SelectTrigger className="w-full text-lg">
+                              <SelectValue placeholder="Select a family group" className="text-lg" />
                             </SelectTrigger>
                             <SelectContent className="bg-background z-50">
                               {allGroups.length > 0 ? (
@@ -409,8 +409,8 @@ const FamilyGroupSetup = () => {
                                   <Input
                                     value={editingGroupName}
                                     onChange={(e) => setEditingGroupName(e.target.value)}
-                                    placeholder="Enter new group name"
-                                    className="flex-1"
+                                     placeholder="Enter new group name"
+                                     className="flex-1 text-lg"
                                   />
                                   <Button
                                     type="button"
@@ -481,14 +481,15 @@ const FamilyGroupSetup = () => {
                     name="leadName"
                     render={({ field }) => (
                       <FormItem>
-                         <FormLabel className="text-lg">
-                           Lead Name <span className="text-destructive">*</span>
-                         </FormLabel>
+                          <FormLabel className="text-xl">
+                            Lead Name <span className="text-destructive">*</span>
+                          </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Family Group Lead's full name"
-                            {...field}
-                          />
+                           <Input 
+                             placeholder="Family Group Lead's full name"
+                             className="text-lg"
+                             {...field}
+                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -501,7 +502,7 @@ const FamilyGroupSetup = () => {
                       name="leadPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg">Phone Number</FormLabel>
+                          <FormLabel className="text-xl">Phone Number</FormLabel>
                           <FormControl>
                             <PhoneInput 
                               value={field.value}
@@ -518,13 +519,14 @@ const FamilyGroupSetup = () => {
                       name="leadEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg">Email Address</FormLabel>
+                          <FormLabel className="text-xl">Email Address</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="email" 
-                              placeholder="lead@example.com"
-                              {...field}
-                            />
+                             <Input 
+                               type="email" 
+                               placeholder="lead@example.com"
+                               className="text-lg"
+                               {...field}
+                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -645,14 +647,14 @@ const FamilyGroupSetup = () => {
                        <FormLabel className="text-3xl font-semibold text-center block">
                          Alternate Group Lead
                        </FormLabel>
-                      <p className="text-sm text-muted-foreground text-center mb-3">
-                        Select which host member serves as the alternate group lead
-                      </p>
+                       <p className="text-lg text-muted-foreground text-center mb-3">
+                         Select which host member serves as the alternate group lead
+                       </p>
                       <FormControl>
                         <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select alternate lead" />
-                          </SelectTrigger>
+                           <SelectTrigger className="w-full text-lg">
+                             <SelectValue placeholder="Select alternate lead" className="text-lg" />
+                           </SelectTrigger>
                           <SelectContent className="bg-background z-50">
                             <SelectItem value="none">None selected</SelectItem>
                             {watchedData.hostMembers
