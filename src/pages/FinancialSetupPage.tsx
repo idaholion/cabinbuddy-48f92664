@@ -126,40 +126,40 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Use Fee Method (Required)</Label>
+                  <Label className="text-base">Use Fee Method (Required)</Label>
                   <RadioGroup value={useFeeMethod} onValueChange={setUseFeeMethod} className="mt-3">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-per-day" id="per-person-per-day" />
-                      <Label htmlFor="per-person-per-day">Per Person Per Day</Label>
+                      <Label htmlFor="per-person-per-day" className="text-base">Per Person Per Day</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-per-week" id="per-person-per-week" />
-                      <Label htmlFor="per-person-per-week">Per Person Per Week</Label>
+                      <Label htmlFor="per-person-per-week" className="text-base">Per Person Per Week</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-entire-stay" id="per-person-entire-stay" />
-                      <Label htmlFor="per-person-entire-stay">Per Person per Entire Stay</Label>
+                      <Label htmlFor="per-person-entire-stay" className="text-base">Per Person per Entire Stay</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-day" id="flat-rate-per-day" />
-                      <Label htmlFor="flat-rate-per-day">Flat Rate Per Day</Label>
+                      <Label htmlFor="flat-rate-per-day" className="text-base">Flat Rate Per Day</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-week" id="flat-rate-per-week" />
-                      <Label htmlFor="flat-rate-per-week">Flat Rate Per Week</Label>
+                      <Label htmlFor="flat-rate-per-week" className="text-base">Flat Rate Per Week</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-entire-stay" id="flat-rate-entire-stay" />
-                      <Label htmlFor="flat-rate-entire-stay">Flat Rate per Entire Stay</Label>
+                      <Label htmlFor="flat-rate-entire-stay" className="text-base">Flat Rate per Entire Stay</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-season" id="flat-rate-per-season" />
-                      <Label htmlFor="flat-rate-per-season">Flat Rate Per Season</Label>
+                      <Label htmlFor="flat-rate-per-season" className="text-base">Flat Rate Per Season</Label>
                     </div>
                   </RadioGroup>
                 </div>
                 <div>
-                  <Label htmlFor="fee-amount">Use Fee Amount</Label>
+                  <Label htmlFor="fee-amount" className="text-base">Use Fee Amount</Label>
                   <div className="relative mt-3">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                     <Input 
@@ -178,7 +178,7 @@ const FinancialSetupPage = () => {
               {/* Additional Fee Settings */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div>
-                  <Label htmlFor="cleaning-fee">Cleaning Fee</Label>
+                  <Label htmlFor="cleaning-fee" className="text-base">Cleaning Fee</Label>
                   <div className="relative mt-2">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                     <Input 
@@ -193,7 +193,7 @@ const FinancialSetupPage = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="pet-fee">Pet Fee</Label>
+                  <Label htmlFor="pet-fee" className="text-base">Pet Fee</Label>
                   <div className="relative mt-2">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                     <Input 
@@ -208,7 +208,7 @@ const FinancialSetupPage = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="damage-deposit">Damage Deposit</Label>
+                  <Label htmlFor="damage-deposit" className="text-base">Damage Deposit</Label>
                   <div className="relative mt-2">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                     <Input 
@@ -237,7 +237,7 @@ const FinancialSetupPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="payment-method">Preferred Payment Method</Label>
+                  <Label htmlFor="payment-method" className="text-base">Preferred Payment Method</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select payment method" />
@@ -253,7 +253,7 @@ const FinancialSetupPage = () => {
                 {/* Payment Account Information */}
                 {paymentMethod === 'venmo' && (
                   <div>
-                    <Label htmlFor="venmo-handle">Venmo Handle</Label>
+                    <Label htmlFor="venmo-handle" className="text-base">Venmo Handle</Label>
                     <Input 
                       id="venmo-handle" 
                       placeholder="@your-venmo-handle" 
@@ -268,7 +268,7 @@ const FinancialSetupPage = () => {
                 
                 {paymentMethod === 'paypal' && (
                   <div>
-                    <Label htmlFor="paypal-email">PayPal Email</Label>
+                    <Label htmlFor="paypal-email" className="text-base">PayPal Email</Label>
                     <Input 
                       id="paypal-email" 
                       placeholder="payments@example.com" 
@@ -282,7 +282,7 @@ const FinancialSetupPage = () => {
                 {paymentMethod === 'send-check' && (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="check-payable-to">Check Payable To</Label>
+                      <Label htmlFor="check-payable-to" className="text-base">Check Payable To</Label>
                       <Input 
                         id="check-payable-to" 
                         placeholder="Cabin Management LLC" 
@@ -291,7 +291,7 @@ const FinancialSetupPage = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="check-mailing-address">Mailing Address</Label>
+                      <Label htmlFor="check-mailing-address" className="text-base">Mailing Address</Label>
                       <textarea 
                         id="check-mailing-address" 
                         placeholder="123 Mountain View Drive&#10;Yellowstone, MT 59718"
@@ -319,7 +319,7 @@ const FinancialSetupPage = () => {
                 </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Automatic Invoicing</Label>
+                  <Label className="text-base">Automatic Invoicing</Label>
                   <p className="text-base text-muted-foreground">Send invoices automatically upon booking</p>
                 </div>
                 <Switch checked={autoInvoicing} onCheckedChange={setAutoInvoicing} />
@@ -339,7 +339,7 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Late Payment Fees</Label>
+                  <Label className="text-base">Late Payment Fees</Label>
                   <p className="text-base text-muted-foreground">Charge late fees for overdue payments</p>
                 </div>
                 <Switch checked={lateFeesEnabled} onCheckedChange={setLateFeesEnabled} />
@@ -347,7 +347,7 @@ const FinancialSetupPage = () => {
               {lateFeesEnabled && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="late-fee-amount">Late Fee Amount</Label>
+                    <Label htmlFor="late-fee-amount" className="text-base">Late Fee Amount</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                       <Input 
@@ -362,7 +362,7 @@ const FinancialSetupPage = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="late-fee-days">Grace Period (Days)</Label>
+                    <Label htmlFor="late-fee-days" className="text-base">Grace Period (Days)</Label>
                     <Input 
                       id="late-fee-days" 
                       placeholder="3" 
@@ -374,7 +374,7 @@ const FinancialSetupPage = () => {
                 </div>
               )}
               <div>
-                <Label htmlFor="cancellation-policy">Cancellation Policy</Label>
+                <Label htmlFor="cancellation-policy" className="text-base">Cancellation Policy</Label>
                 <Select value={cancellationPolicy} onValueChange={setCancellationPolicy}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select cancellation policy" />
@@ -402,7 +402,7 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="tax-rate">Tax Rate (%)</Label>
+                  <Label htmlFor="tax-rate" className="text-base">Tax Rate (%)</Label>
                   <Input 
                     id="tax-rate" 
                     placeholder="8.5" 
@@ -413,7 +413,7 @@ const FinancialSetupPage = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="tax-id">Tax ID Number</Label>
+                  <Label htmlFor="tax-id" className="text-base">Tax ID Number</Label>
                   <Input 
                     id="tax-id" 
                     placeholder="12-3456789" 
@@ -423,7 +423,7 @@ const FinancialSetupPage = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="tax-jurisdiction">Tax Jurisdiction</Label>
+                <Label htmlFor="tax-jurisdiction" className="text-base">Tax Jurisdiction</Label>
                 <Input 
                   id="tax-jurisdiction" 
                   placeholder="City, State" 
