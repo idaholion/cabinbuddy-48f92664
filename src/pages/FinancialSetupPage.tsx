@@ -260,7 +260,7 @@ const FinancialSetupPage = () => {
                       value={venmoHandle}
                       onChange={(e) => setVenmoHandle(e.target.value)}
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-base text-muted-foreground mt-1">
                       Include the @ symbol (e.g., @CabinPayments)
                     </p>
                   </div>
