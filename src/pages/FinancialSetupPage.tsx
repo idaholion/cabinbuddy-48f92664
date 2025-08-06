@@ -304,7 +304,7 @@ const FinancialSetupPage = () => {
                 )}
                 
                 <div>
-                  <Label htmlFor="payment-terms">Payment Terms</Label>
+                  <Label htmlFor="payment-terms" className="text-base">Payment Terms</Label>
                   <Select value={paymentTerms} onValueChange={setPaymentTerms}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select payment terms" />
