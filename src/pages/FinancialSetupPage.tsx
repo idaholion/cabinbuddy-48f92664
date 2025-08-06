@@ -169,7 +169,7 @@ const FinancialSetupPage = () => {
                       onChange={(e) => setFeeAmount(e.target.value)}
                       type="number"
                       step="0.01"
-                      className="pl-8"
+                      className="pl-8 text-lg placeholder:text-lg"
                     />
                   </div>
                 </div>
@@ -188,7 +188,7 @@ const FinancialSetupPage = () => {
                       onChange={(e) => setCleaningFee(e.target.value)}
                       type="number"
                       step="0.01"
-                      className="pl-8"
+                      className="pl-8 text-lg placeholder:text-lg"
                     />
                   </div>
                 </div>
@@ -203,7 +203,7 @@ const FinancialSetupPage = () => {
                       onChange={(e) => setPetFee(e.target.value)}
                       type="number"
                       step="0.01"
-                      className="pl-8"
+                      className="pl-8 text-lg placeholder:text-lg"
                     />
                   </div>
                 </div>
@@ -218,7 +218,7 @@ const FinancialSetupPage = () => {
                       onChange={(e) => setDamageDeposit(e.target.value)}
                       type="number"
                       step="0.01"
-                      className="pl-8"
+                      className="pl-8 text-lg placeholder:text-lg"
                     />
                   </div>
                 </div>
@@ -239,13 +239,13 @@ const FinancialSetupPage = () => {
                 <div>
                   <Label htmlFor="payment-method" className="text-base">Preferred Payment Method</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select payment method" />
+                    <SelectTrigger className="text-lg">
+                      <SelectValue placeholder="Select payment method" className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="venmo">Venmo</SelectItem>
-                      <SelectItem value="paypal">PayPal</SelectItem>
-                      <SelectItem value="send-check">Send check</SelectItem>
+                    <SelectContent className="text-lg">
+                      <SelectItem value="venmo" className="text-lg">Venmo</SelectItem>
+                      <SelectItem value="paypal" className="text-lg">PayPal</SelectItem>
+                      <SelectItem value="send-check" className="text-lg">Send check</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -259,6 +259,7 @@ const FinancialSetupPage = () => {
                       placeholder="@your-venmo-handle" 
                       value={venmoHandle}
                       onChange={(e) => setVenmoHandle(e.target.value)}
+                      className="text-lg placeholder:text-lg"
                     />
                     <p className="text-base text-muted-foreground mt-1">
                       Include the @ symbol (e.g., @CabinPayments)
@@ -275,6 +276,7 @@ const FinancialSetupPage = () => {
                       type="email"
                       value={paypalEmail}
                       onChange={(e) => setPaypalEmail(e.target.value)}
+                      className="text-lg placeholder:text-lg"
                     />
                   </div>
                 )}
@@ -288,6 +290,7 @@ const FinancialSetupPage = () => {
                         placeholder="Cabin Management LLC" 
                         value={checkPayableTo}
                         onChange={(e) => setCheckPayableTo(e.target.value)}
+                        className="text-lg placeholder:text-lg"
                       />
                     </div>
                     <div>
@@ -306,14 +309,14 @@ const FinancialSetupPage = () => {
                 <div>
                   <Label htmlFor="payment-terms" className="text-base">Payment Terms</Label>
                   <Select value={paymentTerms} onValueChange={setPaymentTerms}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select payment terms" />
+                    <SelectTrigger className="text-lg">
+                      <SelectValue placeholder="Select payment terms" className="text-lg" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pay-in-advance">Pay in Advance</SelectItem>
-                      <SelectItem value="pay-at-checkout">Pay at Checkout</SelectItem>
-                      <SelectItem value="pay-within-7-days">Pay within 7 days</SelectItem>
-                      <SelectItem value="pay-within-30-days">Pay within 30 days</SelectItem>
+                    <SelectContent className="text-lg">
+                      <SelectItem value="pay-in-advance" className="text-lg">Pay in Advance</SelectItem>
+                      <SelectItem value="pay-at-checkout" className="text-lg">Pay at Checkout</SelectItem>
+                      <SelectItem value="pay-within-7-days" className="text-lg">Pay within 7 days</SelectItem>
+                      <SelectItem value="pay-within-30-days" className="text-lg">Pay within 30 days</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -357,7 +360,7 @@ const FinancialSetupPage = () => {
                         onChange={(e) => setLateFeeAmount(e.target.value)}
                         type="number"
                         step="0.01"
-                        className="pl-8"
+                        className="pl-8 text-lg placeholder:text-lg"
                       />
                     </div>
                   </div>
@@ -369,6 +372,7 @@ const FinancialSetupPage = () => {
                       type="number" 
                       value={lateFeeDays}
                       onChange={(e) => setLateFeeDays(e.target.value)}
+                      className="text-lg placeholder:text-lg"
                     />
                   </div>
                 </div>
@@ -376,14 +380,14 @@ const FinancialSetupPage = () => {
               <div>
                 <Label htmlFor="cancellation-policy" className="text-base">Cancellation Policy</Label>
                 <Select value={cancellationPolicy} onValueChange={setCancellationPolicy}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select cancellation policy" />
+                  <SelectTrigger className="text-lg">
+                    <SelectValue placeholder="Select cancellation policy" className="text-lg" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="flexible">Flexible (24hrs before)</SelectItem>
-                    <SelectItem value="moderate">Moderate (5 days before)</SelectItem>
-                    <SelectItem value="strict">Strict (14 days before)</SelectItem>
-                    <SelectItem value="super-strict">Super Strict (30 days before)</SelectItem>
+                  <SelectContent className="text-lg">
+                    <SelectItem value="flexible" className="text-lg">Flexible (24hrs before)</SelectItem>
+                    <SelectItem value="moderate" className="text-lg">Moderate (5 days before)</SelectItem>
+                    <SelectItem value="strict" className="text-lg">Strict (14 days before)</SelectItem>
+                    <SelectItem value="super-strict" className="text-lg">Super Strict (30 days before)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -410,6 +414,7 @@ const FinancialSetupPage = () => {
                     step="0.1" 
                     value={taxRate}
                     onChange={(e) => setTaxRate(e.target.value)}
+                    className="text-lg placeholder:text-lg"
                   />
                 </div>
                 <div>
@@ -419,6 +424,7 @@ const FinancialSetupPage = () => {
                     placeholder="12-3456789" 
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value)}
+                    className="text-lg placeholder:text-lg"
                   />
                 </div>
               </div>
@@ -429,6 +435,7 @@ const FinancialSetupPage = () => {
                   placeholder="City, State" 
                   value={taxJurisdiction}
                   onChange={(e) => setTaxJurisdiction(e.target.value)}
+                  className="text-lg placeholder:text-lg"
                 />
               </div>
             </CardContent>
