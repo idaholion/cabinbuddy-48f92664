@@ -688,7 +688,7 @@ const FamilyGroupSetup = () => {
             <div className="flex justify-center">
               <Button 
                 onClick={saveAndContinue} 
-                disabled={loading || !isValid}
+                disabled={loading}
                 className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold"
                 size="lg"
               >
