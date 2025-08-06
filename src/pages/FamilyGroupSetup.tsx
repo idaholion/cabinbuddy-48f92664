@@ -406,11 +406,11 @@ const FamilyGroupSetup = () => {
                               
                               {isEditingName ? (
                                 <div className="flex items-center gap-2">
-                                  <Input
+                                   <Input
                                     value={editingGroupName}
                                     onChange={(e) => setEditingGroupName(e.target.value)}
                                      placeholder="Enter new group name"
-                                     className="flex-1 text-lg"
+                                     className="flex-1 text-lg placeholder:text-lg"
                                   />
                                   <Button
                                     type="button"
@@ -487,7 +487,7 @@ const FamilyGroupSetup = () => {
                         <FormControl>
                            <Input 
                              placeholder="Family Group Lead's full name"
-                             className="text-lg"
+                             className="text-lg placeholder:text-lg"
                              {...field}
                            />
                         </FormControl>
@@ -507,7 +507,7 @@ const FamilyGroupSetup = () => {
                              <PhoneInput 
                                value={field.value}
                                onChange={field.onChange}
-                               className="text-lg"
+                               className="text-lg placeholder:text-lg"
                              />
                           </FormControl>
                           <FormMessage />
@@ -525,7 +525,7 @@ const FamilyGroupSetup = () => {
                              <Input 
                                type="email" 
                                placeholder="lead@example.com"
-                               className="text-lg"
+                               className="text-lg placeholder:text-lg"
                                {...field}
                              />
                           </FormControl>

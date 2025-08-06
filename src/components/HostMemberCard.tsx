@@ -120,7 +120,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
               <FormItem>
                  <FormLabel className="text-xl">Name</FormLabel>
                  <FormControl>
-                   <Input {...field} placeholder="Enter name" className="text-lg" />
+                   <Input {...field} placeholder="Enter name" className="text-lg placeholder:text-lg" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -135,7 +135,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                 <FormItem>
                    <FormLabel className="text-xl">Email</FormLabel>
                    <FormControl>
-                     <Input {...field} type="email" placeholder="Enter email" className="text-lg" />
+                     <Input {...field} type="email" placeholder="Enter email" className="text-lg placeholder:text-lg" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,7 +152,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                      <PhoneInput 
                        value={field.value}
                        onChange={field.onChange}
-                       className="text-lg"
+                       className="text-lg placeholder:text-lg"
                      />
                   </FormControl>
                   <FormMessage />
