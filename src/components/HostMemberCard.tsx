@@ -118,7 +118,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             name={`hostMembers.${index}.name`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel className="text-lg">Name</FormLabel>
                 <FormControl>
                   <Input {...field} placeholder="Enter name" />
                 </FormControl>
@@ -133,7 +133,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
               name={`hostMembers.${index}.email`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-lg">Email</FormLabel>
                   <FormControl>
                     <Input {...field} type="email" placeholder="Enter email" />
                   </FormControl>
@@ -147,7 +147,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
               name={`hostMembers.${index}.phone`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel className="text-lg">Phone</FormLabel>
                   <FormControl>
                     <PhoneInput 
                       value={field.value}
@@ -175,7 +175,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                       className="h-4 w-4"
                     />
                   </FormControl>
-                  <label htmlFor={`reservation-${index}`} className="text-sm">
+                  <label htmlFor={`reservation-${index}`} className="text-lg">
                     Can make reservations
                   </label>
                 </div>
