@@ -233,7 +233,7 @@ const FinancialSetupPage = () => {
                 <CreditCard className="h-4 w-4" />
                 Payment Settings
               </CardTitle>
-              <CardDescription>Configure payment methods and terms</CardDescription>
+              <CardDescription className="text-base">Configure payment methods and terms</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
@@ -334,7 +334,7 @@ const FinancialSetupPage = () => {
                 <FileText className="h-4 w-4" />
                 Fees & Policies
               </CardTitle>
-              <CardDescription>Configure additional fees and cancellation policies</CardDescription>
+              <CardDescription className="text-base">Configure additional fees and cancellation policies</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -397,7 +397,7 @@ const FinancialSetupPage = () => {
                 <Settings className="h-4 w-4" />
                 Tax Settings
               </CardTitle>
-              <CardDescription>Configure tax rates and reporting</CardDescription>
+              <CardDescription className="text-base">Configure tax rates and reporting</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
