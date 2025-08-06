@@ -75,7 +75,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             </div>
             <h4 className="font-medium text-sm">
               Host Member {index + 1}
-              {isEmpty && <span className="text-muted-foreground ml-1">(Optional)</span>}
+              
             </h4>
           </div>
           

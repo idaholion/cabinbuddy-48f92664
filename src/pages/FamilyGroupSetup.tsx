@@ -537,13 +537,13 @@ const FamilyGroupSetup = () => {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
-                        <Users className="h-5 w-5" />
-                        Host Members ({filledMembersCount} filled)
-                      </h3>
-                       <p className="text-sm text-muted-foreground mt-1">
-                         Additional family members who can use the property. Check the box to indicate who can make reservations.
-                       </p>
+                       <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
+                         <Users className="h-5 w-5" />
+                         Host Members ({filledMembersCount} filled)
+                       </h3>
+                        <p className="text-lg text-muted-foreground mt-1">
+                          Additional family members who can use the property. Check the box to indicate who can make reservations.
+                        </p>
                     </div>
                     
                     {fields.length > 3 && (
