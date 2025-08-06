@@ -259,7 +259,7 @@ const FinancialSetupPage = () => {
                       placeholder="@your-venmo-handle" 
                       value={venmoHandle}
                       onChange={(e) => setVenmoHandle(e.target.value)}
-                      className="text-lg placeholder:text-lg text-lg"
+                      className="text-lg placeholder:text-lg md:text-lg"
                     />
                     <p className="text-base text-muted-foreground mt-1">
                       Include the @ symbol (e.g., @CabinPayments)
