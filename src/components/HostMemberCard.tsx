@@ -73,7 +73,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             >
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </div>
-            <h4 className="font-medium text-sm">
+            <h4 className="font-medium text-lg">
               Host Member {index + 1}
               
             </h4>
