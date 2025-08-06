@@ -126,9 +126,9 @@ export const CalendarKeeperManagement = () => {
           <p className="text-muted-foreground text-base">Manage assistance requests and notification system</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="destructive">{openRequests.length} Open</Badge>
-          <Badge variant="default">{inProgressRequests.length} In Progress</Badge>
-          <Badge variant="secondary">{resolvedRequests.length} Resolved</Badge>
+          <Badge variant="destructive" className="text-base">{openRequests.length} Open</Badge>
+          <Badge variant="default" className="text-base">{inProgressRequests.length} In Progress</Badge>
+          <Badge variant="secondary" className="text-base">{resolvedRequests.length} Resolved</Badge>
         </div>
       </div>
 
