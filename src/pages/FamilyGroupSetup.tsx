@@ -359,7 +359,7 @@ const FamilyGroupSetup = () => {
                   name="selectedGroup"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xl font-semibold text-center block">
+                      <FormLabel className="text-3xl font-semibold text-center block">
                         Family Group Name <span className="text-destructive">*</span>
                       </FormLabel>
                       <FormControl>
@@ -474,7 +474,7 @@ const FamilyGroupSetup = () => {
 
                 {/* Family Group Lead Section */}
                 <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-center">Family Group Lead</h3>
+                  <h3 className="text-3xl font-semibold text-center">Family Group Lead</h3>
                   
                   <FormField
                     control={control}
@@ -537,7 +537,7 @@ const FamilyGroupSetup = () => {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
-                      <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                      <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
                         <Users className="h-5 w-5" />
                         Host Members ({filledMembersCount} filled)
                       </h3>
@@ -642,9 +642,9 @@ const FamilyGroupSetup = () => {
                   name="alternateLeadId"
                   render={({ field }) => (
                     <FormItem className="p-4 border rounded-lg bg-muted/20">
-                      <FormLabel className="text-md font-semibold text-center block">
-                        Alternate Group Lead
-                      </FormLabel>
+                       <FormLabel className="text-3xl font-semibold text-center block">
+                         Alternate Group Lead
+                       </FormLabel>
                       <p className="text-sm text-muted-foreground text-center mb-3">
                         Select which host member serves as the alternate group lead
                       </p>
