@@ -550,7 +550,7 @@ export default function ReservationSetup() {
                       <p className="text-base text-muted-foreground mb-2">
                         <strong>How Secondary Selection Works:</strong>
                       </p>
-                      <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-base text-muted-foreground space-y-1 list-disc list-inside">
                         <li>After all family groups complete their primary selections ({maxTimeSlots} periods each)</li>
                         <li>A secondary round automatically begins</li>
                         <li>Selection order follows <strong>reverse order</strong> from the last person who selected in the primary round</li>
@@ -595,7 +595,7 @@ export default function ReservationSetup() {
                       <p className="text-base text-muted-foreground mb-2">
                         <strong>How Post Rotation Selection Works:</strong>
                       </p>
-                      <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-base text-muted-foreground space-y-1 list-disc list-inside">
                         <li>After secondary selection completes (or primary if secondary is disabled)</li>
                         <li>Open first-come, first-served booking for all available dates</li>
                         <li>Any family group or authorized host member can make reservations</li>
@@ -654,7 +654,7 @@ export default function ReservationSetup() {
                           <h5 className="text-base font-medium">{year}:</h5>
                           <div className="space-y-1">
                             {yearOrder.map((group, index) => (
-                              <div key={index} className="text-sm p-1 bg-background rounded flex items-center gap-2">
+                              <div key={index} className="text-base p-1 bg-background rounded flex items-center gap-2">
                                 <span className="font-medium w-4">{index + 1}.</span>
                                 <span>{group}</span>
                               </div>
@@ -664,7 +664,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-sm text-muted-foreground">
+                  <div className="mt-3 text-base text-muted-foreground">
                     Rotation: {firstLastOption === "first" ? "First person moves to last position each year" : "Last person moves to first position each year"}
                   </div>
                 </div>
@@ -821,7 +821,7 @@ export default function ReservationSetup() {
                           <h5 className="text-base font-medium">{year}:</h5>
                           <div className="space-y-1">
                             {yearOrder.map((group, index) => (
-                              <div key={index} className="text-sm p-1 bg-background rounded flex items-center gap-2">
+                              <div key={index} className="text-base p-1 bg-background rounded flex items-center gap-2">
                                 <span className="font-medium w-12">Week {index + 1}:</span>
                                 <span>{group}</span>
                               </div>
@@ -831,7 +831,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-sm text-muted-foreground">
+                  <div className="mt-3 text-base text-muted-foreground">
                     Rotation: {staticWeeksRotationDirection === "first" ? "First group moves to last week each year" : "Last group moves to first week each year"}
                   </div>
                 </div>
