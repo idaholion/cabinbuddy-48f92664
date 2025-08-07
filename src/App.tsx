@@ -104,6 +104,7 @@ const AppContent = () => {
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-group-setup" element={<ProtectedRoute><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></ProtectedRoute>} />
         <Route path="/host-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/financial-dashboard" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
