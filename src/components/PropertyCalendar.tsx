@@ -785,42 +785,15 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           <div className="mt-1 p-3 bg-background/95 rounded-lg border border-border/20 backdrop-blur-sm shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
               <div className="flex items-center justify-center sm:justify-start gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateMonth(-1)}
-                  className="h-8 w-8 p-0 transition-all hover:scale-110"
-                  aria-label="Previous month"
-                >
-                  <ChevronDown className="h-4 w-4 rotate-90" />
-                </Button>
-                
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold min-w-[140px] text-center animate-fade-in">
-                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                  </h2>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigateMonth(1)}
-                  className="h-8 w-8 p-0 transition-all hover:scale-110"
-                  aria-label="Next month"
-                >
-                  <ChevronDown className="h-4 w-4 -rotate-90" />
-                </Button>
-                
-                <div className="hidden sm:block">
-                  <EnhancedMonthPicker 
-                    currentDate={currentMonth} 
-                    onDateChange={(newDate) => {
-                      setCurrentMonth(newDate);
-                      onMonthChange?.(newDate);
-                    }}
-                    reservations={reservations}
-                  />
-                </div>
+                <EnhancedMonthPicker 
+                  currentDate={currentMonth} 
+                  onDateChange={(newDate) => {
+                    setCurrentMonth(newDate);
+                    onMonthChange?.(newDate);
+                  }}
+                  reservations={reservations}
+                  onNavigateMonth={navigateMonth}
+                />
                 
                 <Button 
                   variant="ghost" 

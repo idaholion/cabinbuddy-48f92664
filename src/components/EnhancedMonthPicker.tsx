@@ -10,6 +10,7 @@ interface EnhancedMonthPickerProps {
   onDateChange: (date: Date) => void;
   reservations?: any[];
   className?: string;
+  onNavigateMonth?: (direction: number) => void;
 }
 
 const monthNames = [
@@ -26,7 +27,8 @@ export const EnhancedMonthPicker = ({
   currentDate, 
   onDateChange, 
   reservations = [],
-  className 
+  className,
+  onNavigateMonth 
 }: EnhancedMonthPickerProps) => {
   const [pickerDate, setPickerDate] = useState(currentDate);
   const [viewMode, setViewMode] = useState<'calendar' | 'selectors'>('calendar');
@@ -135,17 +137,28 @@ export const EnhancedMonthPicker = ({
     return date.toDateString() === currentDate.toDateString();
   };
 
-    return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          className={cn("text-xl font-semibold hover:bg-accent", className)}
-        >
-          {monthNames[currentMonth]} {currentYear}
-          <ChevronDown className="h-4 w-4 ml-2" />
-        </Button>
-      </PopoverTrigger>
+  return (
+    <div className="flex items-center gap-2">
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => onNavigateMonth?.(-1)}
+        className="h-8 w-8 p-0 transition-all hover:scale-110"
+        aria-label="Previous month"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <Button 
+            variant="ghost" 
+            className={cn("text-lg font-semibold hover:bg-accent min-w-[140px]", className)}
+          >
+            {monthNames[currentMonth]} {currentYear}
+            <ChevronDown className="h-4 w-4 ml-2" />
+          </Button>
+        </PopoverTrigger>
       <PopoverContent className="w-80 p-4" align="start">
         <div className="space-y-4">
           {/* View Mode Toggle */}
@@ -294,5 +307,16 @@ export const EnhancedMonthPicker = ({
         </div>
       </PopoverContent>
     </Popover>
+    
+    <Button 
+      variant="outline" 
+      size="sm" 
+      onClick={() => onNavigateMonth?.(1)}
+      className="h-8 w-8 p-0 transition-all hover:scale-110"
+      aria-label="Next month"
+    >
+      <ChevronRight className="h-4 w-4" />
+    </Button>
+  </div>
   );
 };
