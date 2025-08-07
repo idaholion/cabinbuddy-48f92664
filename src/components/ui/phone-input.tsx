@@ -122,26 +122,27 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
 
     return (
       <>
-        <Input
-          {...props}
-          ref={ref}
-          type="tel"
-          value={displayValue}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onFocus={handleFocus}
-          onClick={handleClick}
-          disabled={disabled}
-          readOnly={!hasConsented}
-          placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
-          className={cn(className)}
-        />
+        {console.log('PhoneInput render - hasConsented:', hasConsented, 'showConsentDialog:', showConsentDialog, 'value:', value)}
+        <div onClick={handleClick} style={{ width: '100%' }}>
+          <Input
+            {...props}
+            ref={ref}
+            type="tel"
+            value={displayValue}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
+            disabled={disabled}
+            readOnly={!hasConsented}
+            placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
+            className={cn(className)}
+          />
+        </div>
         <PhoneConsentDialog
           open={showConsentDialog}
           onAccept={handleConsentAccept}
           onDecline={handleConsentDecline}
         />
-        {console.log('Rendering PhoneConsentDialog - open:', showConsentDialog)}
       </>
     );
   }
