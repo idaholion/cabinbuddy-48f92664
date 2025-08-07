@@ -54,7 +54,11 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!hasConsented) return;
+      if (!hasConsented) {
+        // Prevent typing until consent is given
+        e.preventDefault();
+        return;
+      }
       
       const inputValue = e.target.value;
       
@@ -118,7 +122,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          disabled={disabled || !hasConsented}
+          disabled={disabled}
+          readOnly={!hasConsented}
           placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
           className={cn(className)}
         />
