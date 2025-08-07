@@ -485,6 +485,80 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          amount_paid: number | null
+          balance_due: number | null
+          created_at: string
+          created_by_user_id: string | null
+          description: string | null
+          due_date: string | null
+          family_group: string
+          id: string
+          notes: string | null
+          organization_id: string
+          paid_date: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          amount: number
+          amount_paid?: number | null
+          balance_due?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          family_group: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          paid_date?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_paid?: number | null
+          balance_due?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          description?: string | null
+          due_date?: string | null
+          family_group?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_date?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_payments_reservation"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photo_comments: {
         Row: {
           comment: string
@@ -1629,6 +1703,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_reservation_payment: {
+        Args: {
+          p_reservation_id: string
+          p_split_deposit?: boolean
+          p_deposit_percentage?: number
+        }
+        Returns: string
+      }
       get_available_colors: {
         Args: { p_organization_id: string; p_current_group_id?: string }
         Returns: string[]
@@ -1716,7 +1798,31 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      payment_method:
+        | "cash"
+        | "check"
+        | "venmo"
+        | "paypal"
+        | "bank_transfer"
+        | "stripe"
+        | "other"
+      payment_status:
+        | "pending"
+        | "paid"
+        | "partial"
+        | "overdue"
+        | "cancelled"
+        | "refunded"
+      payment_type:
+        | "reservation_deposit"
+        | "reservation_balance"
+        | "full_payment"
+        | "cleaning_fee"
+        | "damage_deposit"
+        | "pet_fee"
+        | "late_fee"
+        | "refund"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1843,6 +1949,35 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_method: [
+        "cash",
+        "check",
+        "venmo",
+        "paypal",
+        "bank_transfer",
+        "stripe",
+        "other",
+      ],
+      payment_status: [
+        "pending",
+        "paid",
+        "partial",
+        "overdue",
+        "cancelled",
+        "refunded",
+      ],
+      payment_type: [
+        "reservation_deposit",
+        "reservation_balance",
+        "full_payment",
+        "cleaning_fee",
+        "damage_deposit",
+        "pet_fee",
+        "late_fee",
+        "refund",
+        "other",
+      ],
+    },
   },
 } as const
