@@ -50,8 +50,8 @@ const setupItems = [
     icon: Users,
   },
   {
-    title: "Financial Setup",
-    url: "/financial-setup",
+    title: "Financial Dashboard",
+    url: "/finance-reports",
     icon: DollarSign,
   },
   {
@@ -137,11 +137,6 @@ const managementItems = [
     title: "Calendar Keeper",
     url: "/calendar-keeper-management",
     icon: HeadphonesIcon,
-  },
-  {
-    title: "Financial Review",
-    url: "/financial-review",
-    icon: DollarSign,
   },
 ];
 
