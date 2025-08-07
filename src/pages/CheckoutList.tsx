@@ -1,45 +1,22 @@
-import { ArrowLeft, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Edit3, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const CheckoutList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
-  const [surveyData, setSurveyData] = useState({
-    shopped: "",
-    homeRepair: "",
-    dinedOut: "",
-    hiredGuide: "",
-    tickets: "",
-    yellowstone: "",
-    fishingLicense: "",
-    other: ""
-  });
-
-  const handleSurveyChange = (field: string, value: string) => {
-    // Only allow digits and limit to 6 characters
-    const numericValue = value.replace(/\D/g, "").slice(0, 6);
-    setSurveyData(prev => ({
-      ...prev,
-      [field]: numericValue
-    }));
-  };
-
-  const toggleTask = (taskId: string) => {
-    const newCheckedTasks = new Set(checkedTasks);
-    if (newCheckedTasks.has(taskId)) {
-      newCheckedTasks.delete(taskId);
-    } else {
-      newCheckedTasks.add(taskId);
-    }
-    setCheckedTasks(newCheckedTasks);
-  };
-
-  const checklistSections = [
+  const [isEditing, setIsEditing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [newTaskLabel, setNewTaskLabel] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const [checklistSections, setChecklistSections] = useState([
     {
       title: "Lower Level Inside",
       tasks: [
@@ -92,7 +69,111 @@ const CheckoutList = () => {
         "Empty washer and dryer"
       ]
     }
-  ];
+  ]);
+  const [surveyData, setSurveyData] = useState({
+    shopped: "",
+    homeRepair: "",
+    dinedOut: "",
+    hiredGuide: "",
+    tickets: "",
+    yellowstone: "",
+    fishingLicense: "",
+    other: ""
+  });
+
+  // Check admin status and load saved checkout checklist
+  useEffect(() => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode, adminEmail } = JSON.parse(familyData);
+      
+      // Check if current user is admin (simplified check)
+      setIsAdmin(adminEmail && adminEmail.trim() !== "");
+      
+      const savedCheckoutList = localStorage.getItem(`checkout_checklist_${organizationCode}`);
+      if (savedCheckoutList) {
+        setChecklistSections(JSON.parse(savedCheckoutList));
+      }
+    }
+  }, []);
+
+  const handleSurveyChange = (field: string, value: string) => {
+    // Only allow digits and limit to 6 characters
+    const numericValue = value.replace(/\D/g, "").slice(0, 6);
+    setSurveyData(prev => ({
+      ...prev,
+      [field]: numericValue
+    }));
+  };
+
+  const toggleTask = (taskId: string) => {
+    const newCheckedTasks = new Set(checkedTasks);
+    if (newCheckedTasks.has(taskId)) {
+      newCheckedTasks.delete(taskId);
+    } else {
+      newCheckedTasks.add(taskId);
+    }
+    setCheckedTasks(newCheckedTasks);
+  };
+
+  const saveCheckoutList = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      localStorage.setItem(`checkout_checklist_${organizationCode}`, JSON.stringify(checklistSections));
+      toast({
+        title: "Checkout Checklist Saved",
+        description: "Checkout checklist has been saved for your organization.",
+      });
+    }
+  };
+
+  const addNewTask = (sectionIndex: number) => {
+    if (newTaskLabel.trim()) {
+      const updatedSections = [...checklistSections];
+      updatedSections[sectionIndex].tasks.push(newTaskLabel.trim());
+      setChecklistSections(updatedSections);
+      setNewTaskLabel("");
+      saveCheckoutList();
+    }
+  };
+
+  const deleteTask = (sectionIndex: number, taskIndex: number) => {
+    const updatedSections = [...checklistSections];
+    updatedSections[sectionIndex].tasks.splice(taskIndex, 1);
+    setChecklistSections(updatedSections);
+    saveCheckoutList();
+    toast({
+      title: "Task Deleted",
+      description: "Checkout task has been removed.",
+    });
+  };
+
+  const startEditTask = (sectionIndex: number, taskIndex: number, taskLabel: string) => {
+    setEditingTaskId(`${sectionIndex}-${taskIndex}`);
+    setEditingLabel(taskLabel);
+  };
+
+  const saveEditTask = () => {
+    if (editingLabel.trim() && editingTaskId) {
+      const [sectionIndex, taskIndex] = editingTaskId.split('-').map(Number);
+      const updatedSections = [...checklistSections];
+      updatedSections[sectionIndex].tasks[taskIndex] = editingLabel.trim();
+      setChecklistSections(updatedSections);
+      setEditingTaskId(null);
+      setEditingLabel("");
+      saveCheckoutList();
+      toast({
+        title: "Task Updated",
+        description: "Checkout task has been updated.",
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingTaskId(null);
+    setEditingLabel("");
+  };
 
   const totalTasks = checklistSections.reduce((total, section) => total + section.tasks.length, 0);
   const completedTasks = checkedTasks.size;
@@ -159,33 +240,117 @@ const CheckoutList = () => {
                   {section.tasks.map((task, taskIndex) => {
                     const taskId = `${sectionIndex}-${task}`;
                     const isChecked = checkedTasks.has(taskId);
+                    const editId = `${sectionIndex}-${taskIndex}`;
                     
                     return (
                       <div 
                         key={taskIndex}
-                        className="flex items-start gap-3 p-1 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() => toggleTask(taskId)}
+                        className="flex items-start gap-3 p-1 rounded-lg hover:bg-muted/50 transition-colors group"
                       >
                         <div className="mt-0.5">
                           {isChecked ? (
                             <CheckCircle2 className="h-5 w-5 text-primary" />
                           ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground" />
+                            <Circle 
+                              className="h-5 w-5 text-muted-foreground cursor-pointer" 
+                              onClick={() => toggleTask(taskId)}
+                            />
                           )}
                         </div>
-                        <span 
-                          className={`text-sm ${
-                            isChecked 
-                              ? 'line-through text-muted-foreground' 
-                              : 'text-foreground'
-                          }`}
-                        >
-                          {task}
-                        </span>
+                        {editingTaskId === editId ? (
+                          <div className="flex items-center space-x-2 flex-1">
+                            <Input
+                              value={editingLabel}
+                              onChange={(e) => setEditingLabel(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') saveEditTask();
+                                if (e.key === 'Escape') cancelEdit();
+                              }}
+                              className="flex-1"
+                              autoFocus
+                            />
+                            <Button onClick={saveEditTask} size="sm" variant="outline">
+                              Save
+                            </Button>
+                            <Button onClick={cancelEdit} size="sm" variant="outline">
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span 
+                              className={`text-sm flex-1 ${
+                                isChecked 
+                                  ? 'line-through text-muted-foreground' 
+                                  : 'text-foreground'
+                              } ${!isChecked ? 'cursor-pointer' : ''}`}
+                              onClick={() => !isChecked && toggleTask(taskId)}
+                            >
+                              {task}
+                            </span>
+                            {isAdmin && isEditing && (
+                              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button 
+                                  onClick={() => startEditTask(sectionIndex, taskIndex, task)} 
+                                  size="sm" 
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Edit3 className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  onClick={() => deleteTask(sectionIndex, taskIndex)} 
+                                  size="sm" 
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     );
                   })}
+                  
+                  {isEditing && (
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Input
+                        placeholder="Add new task..."
+                        value={newTaskLabel}
+                        onChange={(e) => setNewTaskLabel(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addNewTask(sectionIndex)}
+                      />
+                      <Button onClick={() => addNewTask(sectionIndex)} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
+                
+                {isAdmin && (
+                  <div className="flex items-center space-x-2 pt-4 border-t mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      {isEditing ? "Done Editing" : "Edit Tasks"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Tasks
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
