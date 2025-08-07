@@ -70,18 +70,19 @@ const CheckoutList = () => {
       ]
     }
   ]);
-  const [surveyData, setSurveyData] = useState({
-    shopped: "",
-    homeRepair: "",
-    dinedOut: "",
-    hiredGuide: "",
-    tickets: "",
-    yellowstone: "",
-    fishingLicense: "",
-    other: ""
-  });
+  const [surveyItems, setSurveyItems] = useState([
+    { id: "shopped", label: "Shopped - Groceries, Sporting Goods, Home Improvements/Lumber" },
+    { id: "homeRepair", label: "Home Repair" },
+    { id: "dinedOut", label: "Dined Out" },
+    { id: "hiredGuide", label: "Hired Guide" },
+    { id: "tickets", label: "Tickets - Entertainment" },
+    { id: "yellowstone", label: "Went - Yellowstone Park" },
+    { id: "fishingLicense", label: "Bought Fishing/Hunting License" },
+    { id: "other", label: "Other" }
+  ]);
+  const [surveyData, setSurveyData] = useState<Record<string, string>>({});
 
-  // Check admin status and load saved checkout checklist
+  // Check admin status and load saved checkout checklist and survey
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
@@ -94,6 +95,18 @@ const CheckoutList = () => {
       if (savedCheckoutList) {
         setChecklistSections(JSON.parse(savedCheckoutList));
       }
+      
+      const savedSurveyItems = localStorage.getItem(`survey_items_${organizationCode}`);
+      if (savedSurveyItems) {
+        setSurveyItems(JSON.parse(savedSurveyItems));
+      }
+      
+      // Initialize survey data based on current survey items
+      const initialSurveyData: Record<string, string> = {};
+      surveyItems.forEach(item => {
+        initialSurveyData[item.id] = "";
+      });
+      setSurveyData(initialSurveyData);
     }
   }, []);
 
@@ -124,6 +137,68 @@ const CheckoutList = () => {
       toast({
         title: "Checkout Checklist Saved",
         description: "Checkout checklist has been saved for your organization.",
+      });
+    }
+  };
+
+  const saveSurveyItems = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      localStorage.setItem(`survey_items_${organizationCode}`, JSON.stringify(surveyItems));
+      toast({
+        title: "Survey Items Saved",
+        description: "Survey items have been saved for your organization.",
+      });
+    }
+  };
+
+  const addNewSurveyItem = () => {
+    if (newTaskLabel.trim()) {
+      const newItem = {
+        id: `custom_${Date.now()}`,
+        label: newTaskLabel.trim()
+      };
+      setSurveyItems(prev => [...prev, newItem]);
+      setSurveyData(prev => ({ ...prev, [newItem.id]: "" }));
+      setNewTaskLabel("");
+      saveSurveyItems();
+    }
+  };
+
+  const deleteSurveyItem = (itemId: string) => {
+    setSurveyItems(prev => prev.filter(item => item.id !== itemId));
+    setSurveyData(prev => {
+      const { [itemId]: deleted, ...rest } = prev;
+      return rest;
+    });
+    saveSurveyItems();
+    toast({
+      title: "Survey Item Deleted",
+      description: "Survey item has been removed.",
+    });
+  };
+
+  const startEditSurveyItem = (item: any) => {
+    setEditingTaskId(item.id);
+    setEditingLabel(item.label);
+  };
+
+  const saveEditSurveyItem = () => {
+    if (editingLabel.trim() && editingTaskId) {
+      setSurveyItems(prev => 
+        prev.map(item => 
+          item.id === editingTaskId 
+            ? { ...item, label: editingLabel.trim() }
+            : item
+        )
+      );
+      setEditingTaskId(null);
+      setEditingLabel("");
+      saveSurveyItems();
+      toast({
+        title: "Survey Item Updated",
+        description: "Survey item has been updated.",
       });
     }
   };
@@ -381,138 +456,112 @@ const CheckoutList = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-1">
-              <div className="flex items-center gap-4">
-                <Label htmlFor="shopped" className="text-sm font-medium">
-                  Shopped - Groceries, Sporting Goods, Home Improvements/Lumber
-                </Label>
-                <Input
-                  id="shopped"
-                  type="text"
-                  value={surveyData.shopped}
-                  onChange={(e) => handleSurveyChange("shopped", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Label htmlFor="homeRepair" className="text-sm font-medium">
-                  Home Repair
-                </Label>
-                <Input
-                  id="homeRepair"
-                  type="text"
-                  value={surveyData.homeRepair}
-                  onChange={(e) => handleSurveyChange("homeRepair", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium">
-                  How many people did the following? How Many Times? (If 6 people dined out 2 times, that&apos;s 12)
-                </Label>
-                <div className="flex items-center gap-4 mt-2">
-                  <Label htmlFor="dinedOut" className="text-sm font-medium">
-                    Dined Out
-                  </Label>
-                  <Input
-                    id="dinedOut"
-                    type="text"
-                    value={surveyData.dinedOut}
-                    onChange={(e) => handleSurveyChange("dinedOut", e.target.value)}
-                    placeholder="Total"
-                    maxLength={6}
-                    className="w-24"
-                    style={{ width: "1in" }}
-                  />
+              {surveyItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 group">
+                  {editingTaskId === item.id ? (
+                    <div className="flex items-center space-x-2 flex-1">
+                      <Input
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveEditSurveyItem();
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button onClick={saveEditSurveyItem} size="sm" variant="outline">
+                        Save
+                      </Button>
+                      <Button onClick={cancelEdit} size="sm" variant="outline">
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Label htmlFor={item.id} className="text-sm font-medium flex-1">
+                        {item.label}
+                      </Label>
+                      {isAdmin && isEditing && (
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            onClick={() => startEditSurveyItem(item)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            onClick={() => deleteSurveyItem(item.id)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <Input
+                        id={item.id}
+                        type="text"
+                        value={surveyData[item.id] || ""}
+                        onChange={(e) => handleSurveyChange(item.id, e.target.value)}
+                        placeholder="Total"
+                        maxLength={6}
+                        className="w-24"
+                        style={{ width: "1in" }}
+                      />
+                    </>
+                  )}
                 </div>
-              </div>
+              ))}
 
-              <div className="flex items-center gap-4">
-                <Label htmlFor="hiredGuide" className="text-sm font-medium">
-                  Hired Guide
-                </Label>
-                <Input
-                  id="hiredGuide"
-                  type="text"
-                  value={surveyData.hiredGuide}
-                  onChange={(e) => handleSurveyChange("hiredGuide", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
+              {/* Special note for dined out - this could be made dynamic later */}
+              {surveyItems.some(item => item.id === "dinedOut") && (
+                <div className="mb-2">
+                  <Label className="text-sm font-medium">
+                    How many people did the following? How Many Times? (If 6 people dined out 2 times, that's 12)
+                  </Label>
+                </div>
+              )}
 
-              <div className="flex items-center gap-4">
-                <Label htmlFor="tickets" className="text-sm font-medium">
-                  Tickets - Entertainment
-                </Label>
-                <Input
-                  id="tickets"
-                  type="text"
-                  value={surveyData.tickets}
-                  onChange={(e) => handleSurveyChange("tickets", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
+              {isEditing && (
+                <div className="flex items-center space-x-2 mt-4">
+                  <Input
+                    placeholder="Add new survey item..."
+                    value={newTaskLabel}
+                    onChange={(e) => setNewTaskLabel(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addNewSurveyItem()}
+                  />
+                  <Button onClick={addNewSurveyItem} size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
 
-              <div className="flex items-center gap-4">
-                <Label htmlFor="yellowstone" className="text-sm font-medium">
-                  Went - Yellowstone Park
-                </Label>
-                <Input
-                  id="yellowstone"
-                  type="text"
-                  value={surveyData.yellowstone}
-                  onChange={(e) => handleSurveyChange("yellowstone", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Label htmlFor="fishingLicense" className="text-sm font-medium">
-                  Bought Fishing/Hunting License
-                </Label>
-                <Input
-                  id="fishingLicense"
-                  type="text"
-                  value={surveyData.fishingLicense}
-                  onChange={(e) => handleSurveyChange("fishingLicense", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Label htmlFor="other" className="text-sm font-medium">
-                  Other
-                </Label>
-                <Input
-                  id="other"
-                  type="text"
-                  value={surveyData.other}
-                  onChange={(e) => handleSurveyChange("other", e.target.value)}
-                  placeholder="Total"
-                  maxLength={6}
-                  className="w-24"
-                  style={{ width: "1in" }}
-                />
-              </div>
+              {isAdmin && (
+                <div className="flex items-center space-x-2 pt-4 border-t mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {isEditing ? "Done Editing" : "Edit Survey"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Items
+                  </Button>
+                </div>
+              )}
 
               {/* Approximate $ spent section */}
               <div className="flex items-center gap-4 mt-6 pt-4 border-t">
