@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,43 @@ export const PhoneConsentDialog = ({
   onAccept,
   onDecline,
 }: PhoneConsentDialogProps) => {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleAccept = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmationContinue = () => {
+    setShowConfirmation(false);
+    onAccept();
+  };
+
+  const handleDecline = () => {
+    setShowConfirmation(false);
+    onDecline();
+  };
+
+  if (showConfirmation) {
+    return (
+      <AlertDialog open={true}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base">Opt-in Confirmation</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              You have successfully opted in to receive messages from Richard Andrew via our website. 
+              Message and data rates may apply. Reply to administrator HELP for support or STOP to unsubscribe.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleConfirmationContinue} className="text-base">
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent>
@@ -33,10 +70,10 @@ export const PhoneConsentDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onDecline} className="text-base">
+          <AlertDialogCancel onClick={handleDecline} className="text-base">
             DECLINE
           </AlertDialogCancel>
-          <AlertDialogAction onClick={onAccept} className="text-base">
+          <AlertDialogAction onClick={handleAccept} className="text-base">
             ACCEPT
           </AlertDialogAction>
         </AlertDialogFooter>
