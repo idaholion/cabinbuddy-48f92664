@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, Thermometer, Droplets, Zap, Users, Calendar } from "lucide-react";
+import { Clock, Thermometer, Droplets, Zap, Users, Calendar, Edit3, Plus, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,11 +32,40 @@ const DailyCheckIn = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentReservation, setCurrentReservation] = useState<any>(null);
   const [existingSession, setExistingSession] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [newItemLabel, setNewItemLabel] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+  const [dailyTasks, setDailyTasks] = useState([
+    { id: "security", label: "Checked all doors and windows locked", category: "security" },
+    { id: "cleanliness", label: "Maintained cleanliness standards", category: "maintenance" },
+    { id: "appliances", label: "All appliances functioning properly", category: "maintenance" },
+    { id: "heating", label: "Heating/cooling system operational", category: "utilities" },
+    { id: "plumbing", label: "No plumbing issues detected", category: "utilities" },
+    { id: "wifi", label: "Internet connection stable", category: "utilities" },
+  ]);
 
   // Find user's family group
   const userFamilyGroup = familyGroups.find(fg => 
     fg.host_members?.some((member: any) => member.email?.toLowerCase() === user?.email?.toLowerCase())
   )?.name;
+
+  // Check admin status and load saved daily tasks
+  useEffect(() => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode, adminEmail } = JSON.parse(familyData);
+      
+      // Check if current user is admin (simplified check)
+      setIsAdmin(adminEmail && adminEmail.trim() !== "");
+      
+      const savedDailyTasks = localStorage.getItem(`daily_tasks_${organizationCode}`);
+      if (savedDailyTasks) {
+        setDailyTasks(JSON.parse(savedDailyTasks));
+      }
+    }
+  }, []);
 
   // Find current active reservation for the user
   useEffect(() => {
@@ -114,14 +143,68 @@ const DailyCheckIn = () => {
     setDailyOccupancy(prev => ({ ...prev, [dayKey]: value }));
   };
 
-  const dailyTasks = [
-    { id: "security", label: "Checked all doors and windows locked", category: "security" },
-    { id: "cleanliness", label: "Maintained cleanliness standards", category: "maintenance" },
-    { id: "appliances", label: "All appliances functioning properly", category: "maintenance" },
-    { id: "heating", label: "Heating/cooling system operational", category: "utilities" },
-    { id: "plumbing", label: "No plumbing issues detected", category: "utilities" },
-    { id: "wifi", label: "Internet connection stable", category: "utilities" },
-  ];
+  const saveDailyTasks = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      localStorage.setItem(`daily_tasks_${organizationCode}`, JSON.stringify(dailyTasks));
+      toast({
+        title: "Daily Tasks Saved",
+        description: "Daily task list has been saved for your organization.",
+      });
+    }
+  };
+
+  const addNewTask = () => {
+    if (newItemLabel.trim()) {
+      const newTask = {
+        id: `custom_${Date.now()}`,
+        label: newItemLabel.trim(),
+        category: "custom"
+      };
+      setDailyTasks(prev => [...prev, newTask]);
+      setNewItemLabel("");
+      saveDailyTasks();
+    }
+  };
+
+  const deleteTask = (taskId: string) => {
+    setDailyTasks(prev => prev.filter(task => task.id !== taskId));
+    saveDailyTasks();
+    toast({
+      title: "Task Deleted",
+      description: "Daily task has been removed.",
+    });
+  };
+
+  const startEditTask = (task: any) => {
+    setEditingItemId(task.id);
+    setEditingLabel(task.label);
+  };
+
+  const saveEditTask = () => {
+    if (editingLabel.trim() && editingItemId) {
+      setDailyTasks(prev => 
+        prev.map(task => 
+          task.id === editingItemId 
+            ? { ...task, label: editingLabel.trim() }
+            : task
+        )
+      );
+      setEditingItemId(null);
+      setEditingLabel("");
+      saveDailyTasks();
+      toast({
+        title: "Task Updated",
+        description: "Daily task has been updated.",
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditingLabel("");
+  };
 
   const handleCheckChange = (itemId: string, checked: boolean) => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
@@ -301,17 +384,97 @@ const DailyCheckIn = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {dailyTasks.map((task) => (
-                <div key={task.id} className="flex items-center space-x-3">
+                <div key={task.id} className="flex items-center space-x-3 group">
                   <Checkbox
                     id={task.id}
                     checked={checkedItems[task.id] || false}
                     onCheckedChange={(checked) => handleCheckChange(task.id, checked as boolean)}
                   />
-                  <label htmlFor={task.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {task.label}
-                  </label>
+                  {editingItemId === task.id ? (
+                    <div className="flex items-center space-x-2 flex-1">
+                      <Input
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveEditTask();
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button onClick={saveEditTask} size="sm" variant="outline">
+                        Save
+                      </Button>
+                      <Button onClick={cancelEdit} size="sm" variant="outline">
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <label htmlFor={task.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                        {task.label}
+                      </label>
+                      {isAdmin && isEditing && (
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            onClick={() => startEditTask(task)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            onClick={() => deleteTask(task.id)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               ))}
+              
+              {isEditing && (
+                <div className="flex items-center space-x-2 mt-4">
+                  <Input
+                    placeholder="Add new daily task..."
+                    value={newItemLabel}
+                    onChange={(e) => setNewItemLabel(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addNewTask()}
+                  />
+                  <Button onClick={addNewTask} size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              
+              {isAdmin && (
+                <div className="flex items-center space-x-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    {isEditing ? "Done Editing" : "Edit Daily Tasks"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Tasks
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

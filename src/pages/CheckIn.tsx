@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { CheckCircle, Clock, AlertTriangle, Plus, Edit3 } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, Plus, Edit3, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
@@ -25,6 +25,8 @@ const CheckIn = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
 
   // Load organization-specific checklist and check admin status on mount
   useEffect(() => {
@@ -69,6 +71,44 @@ const CheckIn = () => {
       setNewItemLabel("");
       saveChecklist();
     }
+  };
+
+  const deleteItem = (itemId: string) => {
+    setChecklistItems(prev => prev.filter(item => item.id !== itemId));
+    saveChecklist();
+    toast({
+      title: "Item Deleted",
+      description: "Checklist item has been removed.",
+    });
+  };
+
+  const startEditItem = (item: any) => {
+    setEditingItemId(item.id);
+    setEditingLabel(item.label);
+  };
+
+  const saveEditItem = () => {
+    if (editingLabel.trim() && editingItemId) {
+      setChecklistItems(prev => 
+        prev.map(item => 
+          item.id === editingItemId 
+            ? { ...item, label: editingLabel.trim() }
+            : item
+        )
+      );
+      setEditingItemId(null);
+      setEditingLabel("");
+      saveChecklist();
+      toast({
+        title: "Item Updated",
+        description: "Checklist item has been updated.",
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingItemId(null);
+    setEditingLabel("");
   };
 
   const handleSubmit = () => {
@@ -117,15 +157,58 @@ const CheckIn = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {checklistItems.map((item) => (
-                <div key={item.id} className="flex items-center space-x-3">
+                <div key={item.id} className="flex items-center space-x-3 group">
                   <Checkbox
                     id={item.id}
                     checked={checkedItems[item.id] || false}
                     onCheckedChange={(checked) => handleCheckChange(item.id, checked as boolean)}
                   />
-                  <label htmlFor={item.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {item.label}
-                  </label>
+                  {editingItemId === item.id ? (
+                    <div className="flex items-center space-x-2 flex-1">
+                      <Input
+                        value={editingLabel}
+                        onChange={(e) => setEditingLabel(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveEditItem();
+                          if (e.key === 'Escape') cancelEdit();
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button onClick={saveEditItem} size="sm" variant="outline">
+                        Save
+                      </Button>
+                      <Button onClick={cancelEdit} size="sm" variant="outline">
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <label htmlFor={item.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                        {item.label}
+                      </label>
+                      {isAdmin && isEditing && (
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            onClick={() => startEditItem(item)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            onClick={() => deleteItem(item.id)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               ))}
               
