@@ -175,6 +175,12 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link to="/payment-tracking">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Tracking
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link to="/financial-review">
                     <DollarSign className="h-4 w-4 mr-2" />
                     Finance Report

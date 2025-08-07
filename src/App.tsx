@@ -51,6 +51,7 @@ const DataBackup = React.lazy(() => import("./pages/DataBackup"));
 const FinancialReview = React.lazy(() => import("./pages/FinancialReview"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
 const Demo = React.lazy(() => import("./pages/Demo"));
+const PaymentTracking = React.lazy(() => import("./pages/PaymentTracking"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -122,6 +123,7 @@ const AppContent = () => {
         <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/financial-review" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialReview /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/payment-tracking" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PaymentTracking /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/demo" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagementPage /></Suspense></MainLayout></CalendarKeeperRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
