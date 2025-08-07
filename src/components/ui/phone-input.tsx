@@ -2,6 +2,7 @@ import * as React from "react"
 import { Input } from "@/components/ui/input"
 import { formatPhoneNumber, unformatPhoneNumber } from "@/lib/phone-utils"
 import { cn } from "@/lib/utils"
+import { PhoneConsentDialog } from "@/components/ui/phone-consent-dialog"
 
 interface PhoneInputProps extends Omit<React.ComponentProps<"input">, "onChange" | "type"> {
   value?: string;
@@ -15,6 +16,9 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     const [displayValue, setDisplayValue] = React.useState(
       autoFormat ? formatPhoneNumber(value) : value
     );
+    const [showConsentDialog, setShowConsentDialog] = React.useState(false);
+    const [hasConsented, setHasConsented] = React.useState(false);
+    const [inputFocused, setInputFocused] = React.useState(false);
 
     // Update display value when prop value changes
     React.useEffect(() => {
@@ -25,7 +29,28 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       }
     }, [value, autoFormat]);
 
+    const handleFocus = () => {
+      if (!hasConsented && !value) {
+        setShowConsentDialog(true);
+      } else {
+        setInputFocused(true);
+      }
+    };
+
+    const handleConsentAccept = () => {
+      setHasConsented(true);
+      setShowConsentDialog(false);
+      setInputFocused(true);
+    };
+
+    const handleConsentDecline = () => {
+      setShowConsentDialog(false);
+      setInputFocused(false);
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!hasConsented) return;
+      
       const inputValue = e.target.value;
       
       if (!autoFormat) {
@@ -65,17 +90,25 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     };
 
     return (
-      <Input
-        {...props}
-        ref={ref}
-        type="tel"
-        value={displayValue}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
-        className={cn(className)}
-      />
+      <>
+        <Input
+          {...props}
+          ref={ref}
+          type="tel"
+          value={displayValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          disabled={disabled || !hasConsented}
+          placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
+          className={cn(className)}
+        />
+        <PhoneConsentDialog
+          open={showConsentDialog}
+          onAccept={handleConsentAccept}
+          onDecline={handleConsentDecline}
+        />
+      </>
     );
   }
 );
