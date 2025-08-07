@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { apiCache, cacheKeys } from '@/lib/cache';
 
 interface UserOrganization {
   organization_id: string;
@@ -33,8 +34,18 @@ export const useMultiOrganization = () => {
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
   const [activeOrganization, setActiveOrganization] = useState<UserOrganization | null>(null);
 
-  const fetchUserOrganizations = async () => {
+  const fetchUserOrganizations = useCallback(async () => {
     if (!user) return;
+
+    // Check cache first
+    const cachedOrgs = apiCache.get<UserOrganization[]>(cacheKeys.userOrganizations(user.id));
+    if (cachedOrgs) {
+      setOrganizations(cachedOrgs);
+      const primary = cachedOrgs.find(org => org.is_primary);
+      const activeOrg = primary || cachedOrgs[0] || null;
+      setActiveOrganization(activeOrg);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -47,6 +58,9 @@ export const useMultiOrganization = () => {
 
       setOrganizations(data || []);
       
+      // Cache the results
+      apiCache.set(cacheKeys.userOrganizations(user.id), data || []);
+      
       // Set primary organization as active, or first one if no primary
       const primary = data?.find(org => org.is_primary);
       const activeOrg = primary || data?.[0] || null;
@@ -57,7 +71,7 @@ export const useMultiOrganization = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const switchToOrganization = async (organizationId: string) => {
     const org = organizations.find(o => o.organization_id === organizationId);
@@ -68,12 +82,14 @@ export const useMultiOrganization = () => {
       try {
         await supabase.rpc('set_primary_organization', { org_id: organizationId });
         // Update local state to reflect primary change
-        setOrganizations(orgs => 
-          orgs.map(o => ({
-            ...o,
-            is_primary: o.organization_id === organizationId
-          }))
-        );
+        const updatedOrgs = organizations.map(o => ({
+          ...o,
+          is_primary: o.organization_id === organizationId
+        }));
+        setOrganizations(updatedOrgs);
+        
+        // Update cache
+        apiCache.set(cacheKeys.userOrganizations(user.id), updatedOrgs);
       } catch (error) {
         console.error('Error setting primary organization:', error);
       }
@@ -139,7 +155,8 @@ export const useMultiOrganization = () => {
         return false;
       }
 
-      // Refresh organizations list
+      // Invalidate cache and refresh organizations list
+      apiCache.invalidate(cacheKeys.userOrganizations(user.id));
       await fetchUserOrganizations();
       
       toast({
@@ -205,7 +222,8 @@ export const useMultiOrganization = () => {
         // Still show success since org was created
       }
 
-      // Refresh organizations list
+      // Invalidate cache and refresh organizations list
+      apiCache.invalidate(cacheKeys.userOrganizations(user.id));
       await fetchUserOrganizations();
       
       toast({
@@ -248,7 +266,8 @@ export const useMultiOrganization = () => {
         return false;
       }
 
-      // Refresh organizations list
+      // Invalidate cache and refresh organizations list
+      apiCache.invalidate(cacheKeys.userOrganizations(user.id));
       await fetchUserOrganizations();
       
       toast({

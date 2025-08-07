@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { apiCache, cacheKeys } from '@/lib/cache';
 
 interface OrganizationData {
   name: string;
@@ -23,8 +24,15 @@ export const useOrganization = () => {
   const [loading, setLoading] = useState(false);
   const [organization, setOrganization] = useState<any>(null);
 
-  const fetchUserOrganization = async () => {
+  const fetchUserOrganization = useCallback(async () => {
     if (!user) return;
+
+    // Check cache first
+    const cachedOrg = apiCache.get(cacheKeys.primaryOrganization(user.id));
+    if (cachedOrg) {
+      setOrganization(cachedOrg);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -39,6 +47,16 @@ export const useOrganization = () => {
       }
 
       if (primaryOrgId) {
+        // Check if organization details are cached
+        const cachedOrgDetails = apiCache.get(cacheKeys.organization(primaryOrgId));
+        if (cachedOrgDetails) {
+          setOrganization(cachedOrgDetails);
+          // Cache as primary organization
+          apiCache.set(cacheKeys.primaryOrganization(user.id), cachedOrgDetails);
+          setLoading(false);
+          return;
+        }
+
         // Fetch the organization details
         const { data: org, error: orgError } = await supabase
           .from('organizations')
@@ -50,6 +68,9 @@ export const useOrganization = () => {
           console.error('Error fetching organization:', orgError);
         } else {
           setOrganization(org);
+          // Cache both the organization and as primary
+          apiCache.set(cacheKeys.organization(primaryOrgId), org);
+          apiCache.set(cacheKeys.primaryOrganization(user.id), org);
         }
       }
     } catch (error) {
@@ -57,7 +78,7 @@ export const useOrganization = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const createOrganization = async (orgData: OrganizationData) => {
     if (!user) {
@@ -104,6 +125,11 @@ export const useOrganization = () => {
       }
 
       setOrganization(newOrg);
+      
+      // Invalidate relevant caches
+      apiCache.invalidateByPrefix(`user_organizations_${user.id}`);
+      apiCache.invalidate(cacheKeys.primaryOrganization(user.id));
+      apiCache.set(cacheKeys.organization(newOrg.id), newOrg);
       
       toast({
         title: "Success",
@@ -154,6 +180,10 @@ export const useOrganization = () => {
       }
 
       setOrganization(updatedOrg);
+      
+      // Update cache
+      apiCache.set(cacheKeys.organization(organization.id), updatedOrg);
+      apiCache.set(cacheKeys.primaryOrganization(user.id), updatedOrg);
       
       toast({
         title: "Success",
