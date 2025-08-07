@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useReservationConflicts } from '@/hooks/useReservationConflicts';
 
 interface ReservationData {
   start_date: string;
@@ -23,6 +24,7 @@ export const useReservations = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const { validateReservationDates } = useReservationConflicts();
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
@@ -58,6 +60,31 @@ export const useReservations = () => {
         variant: "destructive",
       });
       return null;
+    }
+
+    // Validate dates and check for conflicts
+    const validation = await validateReservationDates(
+      reservationData.start_date,
+      reservationData.end_date,
+      reservationData.family_group,
+      reservationData.property_name
+    );
+
+    if (!validation.isValid) {
+      toast({
+        title: "Reservation Conflict",
+        description: validation.errors.join('. '),
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    if (validation.warnings.length > 0) {
+      toast({
+        title: "Booking Warning",
+        description: validation.warnings.join('. '),
+        variant: "default",
+      });
     }
 
     setLoading(true);
@@ -115,6 +142,39 @@ export const useReservations = () => {
       return null;
     }
 
+    // If updating dates, validate for conflicts
+    if (updates.start_date || updates.end_date) {
+      const currentReservation = reservations.find(r => r.id === reservationId);
+      const startDate = updates.start_date || currentReservation?.start_date;
+      const endDate = updates.end_date || currentReservation?.end_date;
+      const familyGroup = updates.family_group || currentReservation?.family_group;
+
+      const validation = await validateReservationDates(
+        startDate,
+        endDate,
+        familyGroup,
+        updates.property_name || currentReservation?.property_name,
+        reservationId // Exclude current reservation from conflict check
+      );
+
+      if (!validation.isValid) {
+        toast({
+          title: "Update Conflict",
+          description: validation.errors.join('. '),
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      if (validation.warnings.length > 0) {
+        toast({
+          title: "Update Warning",
+          description: validation.warnings.join('. '),
+          variant: "default",
+        });
+      }
+    }
+
     setLoading(true);
     try {
       const { data: updatedReservation, error } = await supabase
@@ -170,5 +230,6 @@ export const useReservations = () => {
     createReservation,
     updateReservation,
     refetchReservations: fetchReservations,
+    validateReservationDates,
   };
 };

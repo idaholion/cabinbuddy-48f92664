@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { useReservationConflicts } from '@/hooks/useReservationConflicts';
 
 export interface MultiPeriodReservationData {
   periods: {
@@ -34,6 +35,7 @@ export const useMultiPeriodReservations = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
   const { updateTimePeriodUsage, timePeriodUsage } = useTimePeriods();
+  const { validateReservationDates } = useReservationConflicts();
   const [loading, setLoading] = useState(false);
 
   // Calculate available allocations across multiple periods for a family group
@@ -121,6 +123,26 @@ export const useMultiPeriodReservations = () => {
 
     setLoading(true);
     try {
+      // Validate each period for conflicts before creating any reservations
+      for (const period of reservationData.periods) {
+        const validation = await validateReservationDates(
+          period.startDate,
+          period.endDate,
+          reservationData.familyGroup,
+          reservationData.propertyName
+        );
+
+        if (!validation.isValid) {
+          toast({
+            title: "Multi-Period Conflict",
+            description: `Period ${period.periodNumber}: ${validation.errors.join('. ')}`,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return null;
+        }
+      }
+
       const reservations = [];
       
       // Create individual reservations for each period
