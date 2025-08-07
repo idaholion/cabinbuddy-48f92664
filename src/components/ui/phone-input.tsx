@@ -30,20 +30,25 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     }, [value, autoFormat]);
 
     const handleFocus = () => {
+      console.log('PhoneInput focused - hasConsented:', hasConsented, 'value:', value);
       if (!hasConsented && !value) {
+        console.log('Showing consent dialog');
         setShowConsentDialog(true);
       } else {
+        console.log('Setting input focused');
         setInputFocused(true);
       }
     };
 
     const handleConsentAccept = () => {
+      console.log('Consent accepted');
       setHasConsented(true);
       setShowConsentDialog(false);
       setInputFocused(true);
     };
 
     const handleConsentDecline = () => {
+      console.log('Consent declined');
       setShowConsentDialog(false);
       setInputFocused(false);
     };
@@ -122,6 +127,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           onAccept={handleConsentAccept}
           onDecline={handleConsentDecline}
         />
+        {console.log('Rendering PhoneConsentDialog - open:', showConsentDialog)}
       </>
     );
   }
