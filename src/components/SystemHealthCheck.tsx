@@ -23,26 +23,26 @@ export const SystemHealthCheck = ({ metrics, onRefresh, loading = false }: Syste
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+        return <AlertTriangle className="h-4 w-4 text-warning" />;
       case 'critical':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success/10 text-success border-success/20';
       case 'warning':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning/10 text-warning border-warning/20';
       case 'critical':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-destructive/10 text-destructive border-destructive/20';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -89,9 +89,9 @@ export const SystemHealthCheck = ({ metrics, onRefresh, loading = false }: Syste
             <div className="flex items-center space-x-1">
               <p className="text-lg font-semibold">{metrics.responseTime}ms</p>
               {metrics.responseTime < 200 ? (
-                <TrendingDown className="h-3 w-3 text-green-500" />
+                <TrendingDown className="h-3 w-3 text-success" />
               ) : (
-                <TrendingUp className="h-3 w-3 text-yellow-500" />
+                <TrendingUp className="h-3 w-3 text-warning" />
               )}
             </div>
           </div>
@@ -101,9 +101,9 @@ export const SystemHealthCheck = ({ metrics, onRefresh, loading = false }: Syste
             <div className="flex items-center space-x-1">
               <p className="text-lg font-semibold">{(metrics.errorRate * 100).toFixed(2)}%</p>
               {metrics.errorRate < 0.01 ? (
-                <TrendingDown className="h-3 w-3 text-green-500" />
+                <TrendingDown className="h-3 w-3 text-success" />
               ) : (
-                <TrendingUp className="h-3 w-3 text-red-500" />
+                <TrendingUp className="h-3 w-3 text-destructive" />
               )}
             </div>
           </div>
