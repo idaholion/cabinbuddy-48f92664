@@ -181,9 +181,9 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/financial-review">
+                  <Link to="/finance-reports">
                     <DollarSign className="h-4 w-4 mr-2" />
-                    Finance Report
+                    Financial Dashboard
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -205,9 +205,9 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/financial-review">
+                  <Link to="/finance-reports">
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Financial Review
+                    Financial Dashboard
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

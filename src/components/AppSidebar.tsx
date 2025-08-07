@@ -129,7 +129,7 @@ const managementItems = [
     icon: Monitor,
   },
   {
-    title: "Finance Reports",
+    title: "Financial Dashboard",
     url: "/finance-reports",
     icon: DollarSign,
   },

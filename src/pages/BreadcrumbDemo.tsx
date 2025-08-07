@@ -57,7 +57,7 @@ const BreadcrumbDemo = () => {
       icon: Receipt,
       routes: [
         { path: "/add-receipt", title: "Add Receipt", description: "Dashboard › Add Receipt" },
-        { path: "/finance-reports", title: "Financial Reports", description: "Dashboard › Financial Reports" },
+        { path: "/finance-reports", title: "Financial Dashboard", description: "Dashboard › Financial Dashboard" },
         { path: "/shopping-list", title: "Shopping List", description: "Dashboard › Shopping List" },
       ]
     },

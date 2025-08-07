@@ -264,9 +264,9 @@ const StayHistory = () => {
             
             {/* Action Buttons */}
             <div className="flex gap-3 justify-center pt-6">
-              <Button variant="outline" onClick={() => navigate("/financial-review")}>
+              <Button variant="outline" onClick={() => navigate("/finance-reports")}>
                 <FileText className="h-4 w-4 mr-2" />
-                View Financial Reports
+                View Financial Dashboard
               </Button>
               <Button onClick={() => navigate("/calendar")}>
                 <Calendar className="h-4 w-4 mr-2" />
