@@ -40,6 +40,14 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       }
     };
 
+    const handleClick = () => {
+      console.log('PhoneInput clicked - hasConsented:', hasConsented, 'value:', value);
+      if (!hasConsented && !value) {
+        console.log('Showing consent dialog via click');
+        setShowConsentDialog(true);
+      }
+    };
+
     const handleConsentAccept = () => {
       console.log('Consent accepted');
       setHasConsented(true);
@@ -122,6 +130,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
+          onClick={handleClick}
           disabled={disabled}
           readOnly={!hasConsented}
           placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
