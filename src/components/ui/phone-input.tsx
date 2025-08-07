@@ -6,7 +6,7 @@ import { PhoneConsentDialog } from "@/components/ui/phone-consent-dialog"
 
 interface PhoneInputProps extends Omit<React.ComponentProps<"input">, "onChange" | "type"> {
   value?: string;
-  onChange?: (value: string, rawValue: string) => void;
+  onChange?: ((value: string) => void) | ((value: string, rawValue: string) => void);
   disabled?: boolean;
   autoFormat?: boolean;
 }
@@ -55,7 +55,14 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       
       if (!autoFormat) {
         setDisplayValue(inputValue);
-        onChange?.(inputValue, unformatPhoneNumber(inputValue));
+        // Handle both single-parameter onChange (React Hook Form) and two-parameter onChange
+        if (onChange) {
+          try {
+            (onChange as (value: string, rawValue: string) => void)(inputValue, unformatPhoneNumber(inputValue));
+          } catch {
+            (onChange as (value: string) => void)(inputValue);
+          }
+        }
         return;
       }
 
@@ -66,7 +73,14 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       if (rawValue.length <= 10) {
         const formatted = formatPhoneNumber(inputValue);
         setDisplayValue(formatted);
-        onChange?.(formatted, rawValue);
+        // Handle both single-parameter onChange (React Hook Form) and two-parameter onChange
+        if (onChange) {
+          try {
+            (onChange as (value: string, rawValue: string) => void)(formatted, rawValue);
+          } catch {
+            (onChange as (value: string) => void)(formatted);
+          }
+        }
       }
     };
 
