@@ -455,6 +455,11 @@ const CheckoutList = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <Label className="text-sm font-medium">
+                How many people did the following? How Many Times? (If 6 people dined out 2 times, that's 12)
+              </Label>
+            </div>
             <div className="grid gap-1">
               {surveyItems.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 group">
@@ -517,14 +522,6 @@ const CheckoutList = () => {
                 </div>
               ))}
 
-              {/* Special note for dined out - this could be made dynamic later */}
-              {surveyItems.some(item => item.id === "dinedOut") && (
-                <div className="mb-2">
-                  <Label className="text-sm font-medium">
-                    How many people did the following? How Many Times? (If 6 people dined out 2 times, that's 12)
-                  </Label>
-                </div>
-              )}
 
               {isEditing && (
                 <div className="flex items-center space-x-2 mt-4">
