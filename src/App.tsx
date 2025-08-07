@@ -49,7 +49,6 @@ const PhotoSharing = React.lazy(() => import("./pages/PhotoSharing"));
 const DataBackup = React.lazy(() => import("./pages/DataBackup"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
 const Demo = React.lazy(() => import("./pages/Demo"));
-const PaymentTracking = React.lazy(() => import("./pages/PaymentTracking"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -99,15 +98,29 @@ const AppContent = () => {
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route path="/select-organization" element={<ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute>} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
+        <Route path="/check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckIn /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DailyCheckIn /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutList /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutFinal /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ShoppingList /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AddReceipt /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/stay-history" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistory /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSeasonalDocs /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />
         
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-group-setup" element={<ProtectedRoute><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></ProtectedRoute>} />
         <Route path="/host-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/finance-reports" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/financial-setup" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/payment-tracking" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PaymentTracking /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/demo" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagementPage /></Suspense></MainLayout></CalendarKeeperRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />

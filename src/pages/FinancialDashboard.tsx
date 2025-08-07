@@ -9,7 +9,8 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings } from "lucide-react";
+import PaymentTracker from "@/components/PaymentTracker";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
@@ -118,14 +119,18 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
                 </TabsTrigger>
+                <TabsTrigger value="payments" className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Payment Tracking
+                </TabsTrigger>
                 <TabsTrigger value="reports" className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  View Reports
+                  Financial Reports
                 </TabsTrigger>
               </TabsList>
 
@@ -140,6 +145,17 @@ const FinancialDashboard = () => {
                 </div>
               </TabsContent>
 
+              {/* Payment Tracking Tab */}
+              <TabsContent value="payments" className="p-6 pt-4">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-2">Payment Tracking</h2>
+                    <p className="text-muted-foreground">Monitor and manage all cabin-related payments</p>
+                  </div>
+                  <PaymentTracker />
+                </div>
+              </TabsContent>
+
               {/* Reports Tab */}
               <TabsContent value="reports" className="p-6 pt-4">
                 {loading ? (
@@ -150,7 +166,7 @@ const FinancialDashboard = () => {
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Financial Reports</h2>
-                      <p className="text-muted-foreground">Review financial data and generate reports</p>
+                      <p className="text-muted-foreground">Complete financial overview including expenses and payment collections</p>
                     </div>
 
                     {/* Year Selector and Summary */}
