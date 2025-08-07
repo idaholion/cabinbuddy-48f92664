@@ -16,16 +16,7 @@ export const CalendarKeeperRoute = ({ children }: CalendarKeeperRouteProps) => {
 
   useEffect(() => {
     const checkCalendarKeeperStatus = () => {
-      console.log('Calendar Keeper Access Check:', {
-        userEmail: user?.email,
-        organization: organization,
-        calendarKeeperEmail: organization?.calendar_keeper_email,
-        adminEmail: organization?.admin_email,
-        treasurerEmail: organization?.treasurer_email
-      });
-
       if (!user?.email || !organization) {
-        console.log('Access denied: Missing user email or organization');
         setIsCalendarKeeper(false);
         setLoading(false);
         return;
@@ -37,13 +28,6 @@ export const CalendarKeeperRoute = ({ children }: CalendarKeeperRouteProps) => {
       const isKeeper = organization.calendar_keeper_email?.toLowerCase() === userEmail ||
                        organization.admin_email?.toLowerCase() === userEmail ||
                        organization.treasurer_email?.toLowerCase() === userEmail;
-      
-      console.log('Calendar Keeper Access Result:', {
-        isKeeper,
-        matchesCalendarKeeper: organization.calendar_keeper_email?.toLowerCase() === user.email?.toLowerCase(),
-        matchesAdmin: organization.admin_email?.toLowerCase() === user.email?.toLowerCase(),
-        matchesTreasurer: organization.treasurer_email?.toLowerCase() === user.email?.toLowerCase()
-      });
       
       setIsCalendarKeeper(isKeeper);
       setLoading(false);

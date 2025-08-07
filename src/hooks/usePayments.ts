@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from './useOrganization';
 import { useToast } from '@/hooks/use-toast';
@@ -40,22 +40,34 @@ export interface CreatePaymentData {
 export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0 });
   const { organization } = useOrganization();
   const { toast } = useToast();
 
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async (page = 1, limit = 50) => {
     if (!organization?.id) return;
 
     try {
       setLoading(true);
+      
+      // Get total count
+      const { count } = await supabase
+        .from('payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organization.id);
+
+      // Get paginated data
       const { data, error } = await supabase
         .from('payments')
         .select('*')
         .eq('organization_id', organization.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range((page - 1) * limit, page * limit - 1);
 
       if (error) throw error;
+      
       setPayments(data || []);
+      setPagination({ page, limit, total: count || 0 });
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
@@ -66,12 +78,55 @@ export const usePayments = () => {
     } finally {
       setLoading(false);
     }
+  }, [organization?.id, toast]);
+
+  const validatePaymentData = (paymentData: CreatePaymentData): string | null => {
+    if (!paymentData.family_group.trim()) {
+      return "Family group is required";
+    }
+    if (paymentData.amount <= 0) {
+      return "Amount must be greater than zero";
+    }
+    if (paymentData.amount > 50000) {
+      return "Amount cannot exceed $50,000";
+    }
+    return null;
   };
 
   const createPayment = async (paymentData: CreatePaymentData) => {
     if (!organization?.id) return null;
 
+    // Validate input
+    const validationError = validatePaymentData(paymentData);
+    if (validationError) {
+      toast({
+        title: "Validation Error",
+        description: validationError,
+        variant: "destructive",
+      });
+      return null;
+    }
+
     try {
+      // Check for duplicate payments if reservation_id is provided
+      if (paymentData.reservation_id) {
+        const { data: existingPayments } = await supabase
+          .from('payments')
+          .select('id, payment_type, amount')
+          .eq('organization_id', organization.id)
+          .eq('reservation_id', paymentData.reservation_id)
+          .eq('payment_type', paymentData.payment_type);
+
+        if (existingPayments && existingPayments.length > 0) {
+          toast({
+            title: "Duplicate Payment",
+            description: `A ${paymentData.payment_type.replace('_', ' ')} payment already exists for this reservation`,
+            variant: "destructive",
+          });
+          return null;
+        }
+      }
+
       const { data, error } = await supabase
         .from('payments')
         .insert({
@@ -88,7 +143,7 @@ export const usePayments = () => {
         description: "Payment record created successfully",
       });
 
-      fetchPayments(); // Refresh the list
+      fetchPayments(pagination.page, pagination.limit); // Refresh current page
       return data;
     } catch (error) {
       console.error('Error creating payment:', error);
@@ -103,27 +158,47 @@ export const usePayments = () => {
 
   const updatePayment = async (id: string, updates: Partial<Omit<Payment, 'id' | 'organization_id' | 'created_at' | 'balance_due'>>) => {
     try {
+      // Get current payment for optimistic locking
+      const { data: currentPayment } = await supabase
+        .from('payments')
+        .select('updated_at')
+        .eq('id', id)
+        .single();
+
+      if (!currentPayment) {
+        throw new Error('Payment not found');
+      }
+
       const { data, error } = await supabase
         .from('payments')
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
+        .eq('updated_at', currentPayment.updated_at) // Optimistic locking
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Payment was modified by another user. Please refresh and try again.');
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",
         description: "Payment updated successfully",
       });
 
-      fetchPayments(); // Refresh the list
+      fetchPayments(pagination.page, pagination.limit); // Refresh current page
       return data;
     } catch (error) {
       console.error('Error updating payment:', error);
       toast({
         title: "Error",
-        description: "Failed to update payment",
+        description: error instanceof Error ? error.message : "Failed to update payment",
         variant: "destructive",
       });
       return null;
@@ -135,7 +210,31 @@ export const usePayments = () => {
       const payment = payments.find(p => p.id === id);
       if (!payment) throw new Error('Payment not found');
 
+      // Validation
+      if (amountPaid <= 0) {
+        throw new Error('Payment amount must be greater than zero');
+      }
+
       const newAmountPaid = (payment.amount_paid || 0) + amountPaid;
+      if (newAmountPaid > payment.amount) {
+        throw new Error(`Payment amount ($${amountPaid.toFixed(2)}) would exceed total due ($${payment.balance_due.toFixed(2)})`);
+      }
+
+      // Get current payment for optimistic locking
+      const { data: currentPayment } = await supabase
+        .from('payments')
+        .select('updated_at, amount_paid')
+        .eq('id', id)
+        .single();
+
+      if (!currentPayment) {
+        throw new Error('Payment not found');
+      }
+
+      // Check if payment was modified by another user
+      if (currentPayment.amount_paid !== payment.amount_paid) {
+        throw new Error('Payment was modified by another user. Please refresh and try again.');
+      }
       
       const { data, error } = await supabase
         .from('payments')
@@ -144,25 +243,32 @@ export const usePayments = () => {
           payment_method: paymentMethod || payment.payment_method,
           payment_reference: paymentReference || payment.payment_reference,
           paid_date: newAmountPaid >= payment.amount ? new Date().toISOString().split('T')[0] : payment.paid_date,
+          updated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('updated_at', currentPayment.updated_at) // Optimistic locking
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('Payment was modified by another user. Please refresh and try again.');
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",
         description: `Payment of $${amountPaid.toFixed(2)} recorded successfully`,
       });
 
-      fetchPayments(); // Refresh the list
+      fetchPayments(pagination.page, pagination.limit); // Refresh current page
       return data;
     } catch (error) {
       console.error('Error recording payment:', error);
       toast({
         title: "Error",
-        description: "Failed to record payment",
+        description: error instanceof Error ? error.message : "Failed to record payment",
         variant: "destructive",
       });
       return null;
@@ -184,7 +290,7 @@ export const usePayments = () => {
         description: "Payment records created for reservation",
       });
 
-      fetchPayments(); // Refresh the list
+      fetchPayments(pagination.page, pagination.limit); // Refresh current page
       return data;
     } catch (error) {
       console.error('Error creating reservation payment:', error);
@@ -231,11 +337,12 @@ export const usePayments = () => {
 
   useEffect(() => {
     fetchPayments();
-  }, [organization?.id]);
+  }, [fetchPayments]);
 
   return {
     payments,
     loading,
+    pagination,
     createPayment,
     updatePayment,
     recordPayment,

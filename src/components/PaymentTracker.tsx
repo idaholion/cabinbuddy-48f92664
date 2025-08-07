@@ -25,8 +25,10 @@ const PaymentTracker = () => {
   const { 
     payments, 
     loading, 
+    pagination,
     createPayment, 
     recordPayment, 
+    fetchPayments,
     getPaymentsSummary, 
     getOverduePayments 
   } = usePayments();
@@ -60,7 +62,10 @@ const PaymentTracker = () => {
     if (!selectedPayment || !recordAmount) return;
 
     const amount = parseFloat(recordAmount);
-    if (isNaN(amount) || amount <= 0) return;
+    if (isNaN(amount) || amount <= 0) {
+      alert('Please enter a valid amount greater than zero');
+      return;
+    }
 
     await recordPayment(
       selectedPayment.id, 
@@ -89,7 +94,10 @@ const PaymentTracker = () => {
       e.preventDefault();
       
       const amount = parseFloat(formData.amount);
-      if (isNaN(amount) || amount <= 0) return;
+      if (isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid amount greater than zero');
+        return;
+      }
 
       await createPayment({
         family_group: formData.family_group,
@@ -336,6 +344,33 @@ const PaymentTracker = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {pagination.total > pagination.limit && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} payments
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchPayments(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchPayments(pagination.page + 1)}
+              disabled={pagination.page * pagination.limit >= pagination.total}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Record Payment Dialog */}
       <Dialog open={showRecordDialog} onOpenChange={setShowRecordDialog}>
