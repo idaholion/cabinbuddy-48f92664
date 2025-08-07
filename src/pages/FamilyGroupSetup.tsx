@@ -504,11 +504,11 @@ const FamilyGroupSetup = () => {
                         <FormItem>
                           <FormLabel className="text-xl">Phone Number</FormLabel>
                           <FormControl>
-                             <PhoneInput 
-                               value={field.value}
-                               onChange={field.onChange}
-                               className="text-lg placeholder:text-lg"
-                             />
+                              <PhoneInput 
+                                value={field.value}
+                                onChange={field.onChange}
+                                className="text-lg placeholder:text-lg"
+                              />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
