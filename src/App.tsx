@@ -123,7 +123,7 @@ const AppContent = () => {
         <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/financial-review" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialReview /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/payment-tracking" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PaymentTracking /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/payment-tracking" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PaymentTracking /></Suspense></MainLayout></CalendarKeeperRoute>} />
         <Route path="/demo" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagementPage /></Suspense></MainLayout></CalendarKeeperRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
