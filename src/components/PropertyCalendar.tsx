@@ -20,7 +20,7 @@ import { TradeRequestForm } from "@/components/TradeRequestForm";
 import { TradeRequestsManager } from "@/components/TradeRequestsManager";
 import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
-import { CalendarKeeperAssistanceDialog } from "@/components/CalendarKeeperAssistanceDialog";
+
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { EnhancedMonthPicker } from "@/components/EnhancedMonthPicker";
@@ -190,8 +190,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
       // This functionality already exists with the Edit buttons on individual reservations
       console.log('Edit my bookings - use the Edit buttons on individual reservations');
     } else if (action === 'request-assistance') {
-      // Assistance dialog is now handled by the CalendarKeeperAssistanceDialog component
-      console.log('Request calendar keeper assistance - handled by dialog component');
+      console.log('Calendar keeper assistance functionality has been removed');
     }
   };
 

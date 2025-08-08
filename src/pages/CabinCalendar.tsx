@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar } from "@/components/PropertyCalendar";
 import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
-import { CalendarKeeperManualReservation } from "@/components/CalendarKeeperManualReservation";
+
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -34,7 +34,7 @@ const CabinCalendar = () => {
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
-  const [manualReservationOpen, setManualReservationOpen] = useState(false);
+  
   const [manualDateSelectionOpen, setManualDateSelectionOpen] = useState(false);
 
   // Get user role information
@@ -295,26 +295,6 @@ const CabinCalendar = () => {
                         <Clock className="h-4 w-4 mr-2" />
                         Work Weekend
                       </DropdownMenuItem>
-                      {isCalendarKeeper && (
-                        <DropdownMenuItem 
-                          onClick={() => setManualReservationOpen(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Manual Reservation Entry
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem 
-                        disabled={!isCalendarKeeper}
-                        className={!isCalendarKeeper ? "text-muted-foreground" : ""}
-                        onClick={() => {
-                          if (isCalendarKeeper) {
-                            window.location.href = '/calendar-keeper-management';
-                          }
-                        }}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Calendar Keeper Tools
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger className="relative">
@@ -436,17 +416,6 @@ const CabinCalendar = () => {
               </AccordionItem>
             </Accordion>
 
-            {/* Manual Reservation Dialog */}
-            <Dialog open={manualReservationOpen} onOpenChange={setManualReservationOpen}>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Manual Reservation Entry</DialogTitle>
-                </DialogHeader>
-                <CalendarKeeperManualReservation 
-                  onReservationCreated={() => setManualReservationOpen(false)}
-                />
-              </DialogContent>
-            </Dialog>
 
             {/* Manual Date Selection Dialog */}
             <Dialog open={manualDateSelectionOpen} onOpenChange={setManualDateSelectionOpen}>

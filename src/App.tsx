@@ -55,14 +55,14 @@ const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const SupervisorOrganizationFinancial = React.lazy(() => import("./pages/SupervisorOrganizationFinancial"));
 const SupervisorOrganizationReservation = React.lazy(() => import("./pages/SupervisorOrganizationReservation"));
-const CalendarKeeperManagementPage = React.lazy(() => import("./pages/CalendarKeeperManagement"));
+
 
 // Lazy load utility pages
 const FontShowcase = React.lazy(() => import("./pages/FontShowcase"));
 const BreadcrumbDemo = React.lazy(() => import("./pages/BreadcrumbDemo"));
 
 import { SupervisorRoute } from "./components/SupervisorRoute";
-import { CalendarKeeperRoute } from "./components/CalendarKeeperRoute";
+
 import { AdminTreasurerRoute } from "./components/AdminTreasurerRoute";
 
 import { MainLayout } from "./components/MainLayout";
@@ -121,9 +121,7 @@ const AppContent = () => {
         <Route path="/financial-setup" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
-        <Route path="/calendar-keeper" element={<Navigate to="/calendar-keeper-management" replace />} />
         <Route path="/demo" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/calendar-keeper-management" element={<CalendarKeeperRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagementPage /></Suspense></MainLayout></CalendarKeeperRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/financial" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFinancial /></Suspense></MainLayout></SupervisorRoute>} />
