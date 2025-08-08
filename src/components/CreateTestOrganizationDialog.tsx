@@ -196,7 +196,7 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 text-base">
           <Beaker className="h-4 w-4" />
           Create Complete Test Organization
         </Button>
@@ -209,7 +209,7 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
           </DialogTitle>
           <DialogDescription>
             This will create a test organization with sample data including:
-            <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+            <ul className="list-disc list-inside mt-2 space-y-1 text-base">
               <li>Organization contacts (admin, treasurer, calendar keeper)</li>
               <li>4 family groups with leads and host members</li>
               <li>8 sample receipts with various expenses</li>
@@ -219,7 +219,7 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="orgName">Organization Name</Label>
+            <Label htmlFor="orgName" className="text-base">Organization Name</Label>
             <Input
               id="orgName"
               placeholder="Enter test organization name"
@@ -230,13 +230,14 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
                   createCompleteTestOrganization();
                 }
               }}
+              className="text-base placeholder:text-base"
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="text-base">
               Cancel
             </Button>
-            <Button onClick={createCompleteTestOrganization} disabled={loading}>
+            <Button onClick={createCompleteTestOrganization} disabled={loading} className="text-base">
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

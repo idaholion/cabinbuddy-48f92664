@@ -56,12 +56,12 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Supervisor Management</h2>
-          <p className="text-muted-foreground">Manage system supervisors and their permissions</p>
+          <p className="text-muted-foreground text-base">Manage system supervisors and their permissions</p>
         </div>
         
         <Dialog open={isAddingOpen} onOpenChange={setIsAddingOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="text-base">
               <UserPlus className="h-4 w-4 mr-2" />
               Add Supervisor
             </Button>
@@ -75,7 +75,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
+                <Label htmlFor="email" className="text-right text-base">
                   Email *
                 </Label>
                 <Input
@@ -84,11 +84,11 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
                   onChange={(e) => setNewSupervisorEmail(e.target.value)}
                   placeholder="supervisor@example.com"
                   type="email"
-                  className="col-span-3"
+                  className="col-span-3 text-base placeholder:text-base"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
+                <Label htmlFor="name" className="text-right text-base">
                   Name
                 </Label>
                 <Input
@@ -96,7 +96,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
                   value={newSupervisorName}
                   onChange={(e) => setNewSupervisorName(e.target.value)}
                   placeholder="Optional display name"
-                  className="col-span-3"
+                  className="col-span-3 text-base placeholder:text-base"
                 />
               </div>
             </div>
@@ -105,6 +105,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
                 type="submit" 
                 onClick={handleAddSupervisor}
                 disabled={!newSupervisorEmail.trim() || loading}
+                className="text-base"
               >
                 {loading ? 'Adding...' : 'Add Supervisor'}
               </Button>
@@ -120,7 +121,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
             <Shield className="h-5 w-5" />
             Current Supervisors
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             All users with supervisor privileges
           </CardDescription>
         </CardHeader>
@@ -129,7 +130,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
             <div className="text-center py-8">
               <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No supervisors found</h3>
-              <p className="text-muted-foreground">Add your first supervisor to get started.</p>
+              <p className="text-muted-foreground text-base">Add your first supervisor to get started.</p>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -178,6 +179,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
                           size="sm"
                           variant={supervisor.is_active ? "destructive" : "default"}
                           onClick={() => handleToggleStatus(supervisor.id, supervisor.is_active)}
+                          className="text-base"
                         >
                           {supervisor.is_active ? (
                             <>
@@ -206,7 +208,7 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
         <CardHeader>
           <CardTitle className="text-lg">Important Notes</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-2 text-base text-muted-foreground">
           <div>• Supervisors have full access to all organization data across the system</div>
           <div>• Deactivated supervisors lose all supervisor privileges immediately</div>
           <div>• Organizations can also have alternate supervisors set individually</div>

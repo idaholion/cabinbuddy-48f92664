@@ -139,7 +139,7 @@ export const CreateOrganizationDialog = ({
         </DialogTrigger>
       ) : (
         <DialogTrigger asChild>
-          <Button>
+          <Button className="text-base">
             <Plus className="h-4 w-4 mr-2" />
             Create Test Organization
           </Button>
@@ -156,18 +156,19 @@ export const CreateOrganizationDialog = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <Label htmlFor="name">Organization Name *</Label>
+              <Label htmlFor="name" className="text-base">Organization Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Enter organization name"
                 required
+                className="text-base placeholder:text-base"
               />
             </div>
             
             <div className="col-span-2">
-              <Label htmlFor="code">Organization Code *</Label>
+              <Label htmlFor="code" className="text-base">Organization Code *</Label>
               <div className="flex gap-2">
                 <Input
                   id="code"
@@ -176,8 +177,9 @@ export const CreateOrganizationDialog = ({
                   placeholder="Enter 6-letter code"
                   maxLength={6}
                   required
+                  className="text-base placeholder:text-base"
                 />
-                <Button type="button" variant="outline" onClick={handleGenerateCode}>
+                <Button type="button" variant="outline" onClick={handleGenerateCode} className="text-base">
                   Generate
                 </Button>
               </div>
@@ -188,26 +190,28 @@ export const CreateOrganizationDialog = ({
             <h3 className="text-lg font-semibold">Administrator</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="admin_name">Name</Label>
+                <Label htmlFor="admin_name" className="text-base">Name</Label>
                 <Input
                   id="admin_name"
                   value={formData.admin_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, admin_name: e.target.value }))}
                   placeholder="Administrator name"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="admin_email">Email</Label>
+                <Label htmlFor="admin_email" className="text-base">Email</Label>
                 <Input
                   id="admin_email"
                   type="email"
                   value={formData.admin_email}
                   onChange={(e) => setFormData(prev => ({ ...prev, admin_email: e.target.value }))}
                   placeholder="admin@example.com"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="admin_phone">Phone</Label>
+                <Label htmlFor="admin_phone" className="text-base">Phone</Label>
                 <PhoneInput
                   id="admin_phone"
                   value={formData.admin_phone}
@@ -221,26 +225,28 @@ export const CreateOrganizationDialog = ({
             <h3 className="text-lg font-semibold">Treasurer</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="treasurer_name">Name</Label>
+                <Label htmlFor="treasurer_name" className="text-base">Name</Label>
                 <Input
                   id="treasurer_name"
                   value={formData.treasurer_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, treasurer_name: e.target.value }))}
                   placeholder="Treasurer name"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="treasurer_email">Email</Label>
+                <Label htmlFor="treasurer_email" className="text-base">Email</Label>
                 <Input
                   id="treasurer_email"
                   type="email"
                   value={formData.treasurer_email}
                   onChange={(e) => setFormData(prev => ({ ...prev, treasurer_email: e.target.value }))}
                   placeholder="treasurer@example.com"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="treasurer_phone">Phone</Label>
+                <Label htmlFor="treasurer_phone" className="text-base">Phone</Label>
                 <PhoneInput
                   id="treasurer_phone"
                   value={formData.treasurer_phone}
@@ -254,26 +260,28 @@ export const CreateOrganizationDialog = ({
             <h3 className="text-lg font-semibold">Calendar Keeper</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="calendar_keeper_name">Name</Label>
+                <Label htmlFor="calendar_keeper_name" className="text-base">Name</Label>
                 <Input
                   id="calendar_keeper_name"
                   value={formData.calendar_keeper_name}
                   onChange={(e) => setFormData(prev => ({ ...prev, calendar_keeper_name: e.target.value }))}
                   placeholder="Calendar keeper name"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div>
-                <Label htmlFor="calendar_keeper_email">Email</Label>
+                <Label htmlFor="calendar_keeper_email" className="text-base">Email</Label>
                 <Input
                   id="calendar_keeper_email"
                   type="email"
                   value={formData.calendar_keeper_email}
                   onChange={(e) => setFormData(prev => ({ ...prev, calendar_keeper_email: e.target.value }))}
                   placeholder="calendar@example.com"
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="col-span-2">
-                <Label htmlFor="calendar_keeper_phone">Phone</Label>
+                <Label htmlFor="calendar_keeper_phone" className="text-base">Phone</Label>
                 <PhoneInput
                   id="calendar_keeper_phone"
                   value={formData.calendar_keeper_phone}
@@ -284,10 +292,10 @@ export const CreateOrganizationDialog = ({
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} className="text-base">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="text-base">
               {loading ? "Creating..." : "Create Organization"}
             </Button>
           </div>

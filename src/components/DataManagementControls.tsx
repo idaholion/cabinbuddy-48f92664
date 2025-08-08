@@ -170,7 +170,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
             <Database className="h-5 w-5" />
             Data Management Controls
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Dangerous operations for managing organizational data. Use with extreme caution.
           </CardDescription>
         </CardHeader>
@@ -201,15 +201,15 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
             <h4 className="font-medium mb-3">Current Organizations ({organizations.length})</h4>
             <div className="grid gap-3">
               {organizations.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No organizations found</p>
+                <p className="text-muted-foreground text-base">No organizations found</p>
               ) : (
                 organizations.map((org) => (
                   <div key={org.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
-                      <div className="font-medium">{org.name}</div>
-                      <div className="text-sm text-muted-foreground">Code: {org.code}</div>
+                      <div className="font-medium text-base">{org.name}</div>
+                      <div className="text-base text-muted-foreground">Code: {org.code}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-base text-muted-foreground">
                       Created: {new Date(org.created_at).toLocaleDateString()}
                     </div>
                   </div>
@@ -221,13 +221,13 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
           {/* Reset All Data */}
           <div className="space-y-3">
             <h4 className="font-medium text-destructive">Reset All Data</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Completely clears all organizational data while preserving supervisor accounts. 
               This gives you a clean slate for testing.
             </p>
             <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full">
+                <Button variant="destructive" className="w-full text-base">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Reset All Data
                 </Button>
@@ -240,7 +240,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                   </AlertDialogTitle>
                   <AlertDialogDescription className="space-y-3">
                     <p>This will permanently delete ALL organizational data including:</p>
-                    <ul className="list-disc list-inside text-sm space-y-1">
+                    <ul className="list-disc list-inside text-base space-y-1">
                       <li>All organizations and their settings</li>
                       <li>All family groups and members</li>
                       <li>All reservations and calendar data</li>
@@ -249,7 +249,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                     </ul>
                     <p className="font-medium">Supervisor accounts will be preserved.</p>
                     <div className="space-y-2">
-                      <Label htmlFor="reset-confirmation">
+                      <Label htmlFor="reset-confirmation" className="text-base">
                         Type "RESET_ALL_DATA" to confirm:
                       </Label>
                       <Input
@@ -258,16 +258,17 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                         onChange={(e) => setConfirmationInput(e.target.value)}
                         placeholder="RESET_ALL_DATA"
                         disabled={isLoading}
+                        className="text-base placeholder:text-base"
                       />
                     </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel disabled={isLoading} className="text-base">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleResetAllData}
                     disabled={isLoading || confirmationInput !== "RESET_ALL_DATA"}
-                    className="bg-destructive hover:bg-destructive/90"
+                    className="bg-destructive hover:bg-destructive/90 text-base"
                   >
                     {isLoading ? (
                       <>
@@ -286,20 +287,20 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
           {/* Delete Individual Organization */}
           <div className="space-y-3">
             <h4 className="font-medium text-destructive">Delete Individual Organization</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Delete a specific organization and all its associated data without affecting other organizations.
             </p>
             
             <div className="space-y-3">
               <div>
-                <Label htmlFor="org-select">Select Organization to Delete:</Label>
+                <Label htmlFor="org-select" className="text-base">Select Organization to Delete:</Label>
                 <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-base">
                     <SelectValue placeholder="Choose an organization" />
                   </SelectTrigger>
                   <SelectContent>
                     {organizations.map((org) => (
-                      <SelectItem key={org.id} value={org.id}>
+                      <SelectItem key={org.id} value={org.id} className="text-base">
                         {org.name} ({org.code})
                       </SelectItem>
                     ))}
@@ -309,14 +310,14 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
 
               <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    className="w-full"
-                    disabled={!selectedOrgId || organizations.length === 0}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Selected Organization
-                  </Button>
+                <Button 
+                  variant="destructive" 
+                  className="w-full text-base"
+                  disabled={!selectedOrgId || organizations.length === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Selected Organization
+                </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -326,7 +327,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                     </AlertDialogTitle>
                     <AlertDialogDescription className="space-y-3">
                       <p>This will permanently delete the organization "{selectedOrg?.name}" and ALL its data including:</p>
-                      <ul className="list-disc list-inside text-sm space-y-1">
+                      <ul className="list-disc list-inside text-base space-y-1">
                         <li>Family groups and members</li>
                         <li>Reservations and calendar entries</li>
                         <li>Financial records and receipts</li>
@@ -336,7 +337,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                       <p className="font-medium text-destructive">This action cannot be undone.</p>
                       {selectedOrg && (
                         <div className="space-y-2">
-                          <Label htmlFor="delete-confirmation">
+                          <Label htmlFor="delete-confirmation" className="text-base">
                             Type "{expectedDeleteConfirmation}" to confirm:
                           </Label>
                           <Input
@@ -345,17 +346,18 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                             onChange={(e) => setConfirmationInput(e.target.value)}
                             placeholder={expectedDeleteConfirmation}
                             disabled={isLoading}
+                            className="text-base placeholder:text-base"
                           />
                         </div>
                       )}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel disabled={isLoading} className="text-base">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDeleteOrganization}
                       disabled={isLoading || confirmationInput !== expectedDeleteConfirmation}
-                      className="bg-destructive hover:bg-destructive/90"
+                      className="bg-destructive hover:bg-destructive/90 text-base"
                     >
                       {isLoading ? (
                         <>
@@ -375,12 +377,12 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
           {/* User Account Management */}
           <div className="space-y-3">
             <h4 className="font-medium text-destructive">User Account Management</h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Instructions for deleting user authentication accounts from Supabase Dashboard.
             </p>
             <AlertDialog open={isUserGuideDialogOpen} onOpenChange={setIsUserGuideDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground text-base">
                   <Users className="h-4 w-4 mr-2" />
                   How to Delete Users
                 </Button>
@@ -465,7 +467,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Close</AlertDialogCancel>
+                  <AlertDialogCancel className="text-base">Close</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

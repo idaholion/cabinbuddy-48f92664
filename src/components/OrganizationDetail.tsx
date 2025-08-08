@@ -118,16 +118,16 @@ export const OrganizationDetail = ({
     phone?: string; 
   }) => (
     <div className="space-y-1">
-      <div className="font-medium text-sm text-muted-foreground">{label}</div>
-      {name && <div className="font-medium">{name}</div>}
+      <div className="font-medium text-base text-muted-foreground">{label}</div>
+      {name && <div className="font-medium text-base">{name}</div>}
       {email && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-base text-muted-foreground">
           <Mail className="h-3 w-3" />
           {email}
         </div>
       )}
       {phone && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-base text-muted-foreground">
           <Phone className="h-3 w-3" />
           {phone}
         </div>
@@ -140,7 +140,7 @@ export const OrganizationDetail = ({
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack}>
+          <Button variant="ghost" size="sm" onClick={onBack} className="text-base">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Organizations
           </Button>
@@ -149,9 +149,9 @@ export const OrganizationDetail = ({
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold">{organization.name}</h1>
-            <p className="text-muted-foreground font-mono">Code: {organization.code}</p>
+            <p className="text-muted-foreground font-mono text-base">Code: {organization.code}</p>
           </div>
-          <Badge variant="outline" className="text-sm">
+          <Badge variant="outline" className="text-base">
             Created: {new Date(organization.created_at).toLocaleDateString()}
           </Badge>
         </div>
@@ -160,7 +160,7 @@ export const OrganizationDetail = ({
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Family Groups</CardTitle>
+              <CardTitle className="text-base font-medium">Family Groups</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -170,7 +170,7 @@ export const OrganizationDetail = ({
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receipts</CardTitle>
+              <CardTitle className="text-base font-medium">Receipts</CardTitle>
               <Receipt className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -180,7 +180,7 @@ export const OrganizationDetail = ({
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Check-in Sessions</CardTitle>
+              <CardTitle className="text-base font-medium">Check-in Sessions</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -190,7 +190,7 @@ export const OrganizationDetail = ({
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Survey Responses</CardTitle>
+              <CardTitle className="text-base font-medium">Survey Responses</CardTitle>
               <Settings className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -203,38 +203,38 @@ export const OrganizationDetail = ({
         <Card>
           <CardHeader>
             <CardTitle>Organization Setup</CardTitle>
-            <CardDescription>Manage setup data for this organization</CardDescription>
+            <CardDescription className="text-base">Manage setup data for this organization</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-3">
               <Button 
                 variant="outline" 
-                className="h-20 flex flex-col gap-2"
+                className="h-20 flex flex-col gap-2 text-base"
                 onClick={() => navigate(`/supervisor/organization/${organization.id}/family-groups`)}
               >
                 <Users className="h-5 w-5" />
-                <span className="text-sm">Family Groups</span>
-                <span className="text-xs text-muted-foreground">{stats.familyGroups} groups</span>
+                <span className="text-base">Family Groups</span>
+                <span className="text-base text-muted-foreground">{stats.familyGroups} groups</span>
               </Button>
               
               <Button 
                 variant="outline" 
-                className="h-20 flex flex-col gap-2"
+                className="h-20 flex flex-col gap-2 text-base"
                 onClick={() => navigate(`/supervisor/organization/${organization.id}/financial`)}
               >
                 <DollarSign className="h-5 w-5" />
-                <span className="text-sm">Financial Setup</span>
-                <span className="text-xs text-muted-foreground">{stats.receipts} receipts</span>
+                <span className="text-base">Financial Setup</span>
+                <span className="text-base text-muted-foreground">{stats.receipts} receipts</span>
               </Button>
               
               <Button 
                 variant="outline" 
-                className="h-20 flex flex-col gap-2"
+                className="h-20 flex flex-col gap-2 text-base"
                 onClick={() => navigate(`/supervisor/organization/${organization.id}/reservation`)}
               >
                 <Home className="h-5 w-5" />
-                <span className="text-sm">Reservation Setup</span>
-                <span className="text-xs text-muted-foreground">Property details</span>
+                <span className="text-base">Reservation Setup</span>
+                <span className="text-base text-muted-foreground">Property details</span>
               </Button>
             </div>
           </CardContent>
@@ -246,7 +246,7 @@ export const OrganizationDetail = ({
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
-              <CardDescription>Key contacts for this organization</CardDescription>
+              <CardDescription className="text-base">Key contacts for this organization</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <ContactInfo
@@ -280,23 +280,25 @@ export const OrganizationDetail = ({
           <Card>
             <CardHeader>
               <CardTitle>Management</CardTitle>
-              <CardDescription>Supervisor and organization management</CardDescription>
+              <CardDescription className="text-base">Supervisor and organization management</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Alternate Supervisor */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Alternate Supervisor Email</label>
+                <label className="text-base font-medium">Alternate Supervisor Email</label>
                 <div className="flex gap-2">
                   <Input
                     value={newAlternateSupervisor}
                     onChange={(e) => setNewAlternateSupervisor(e.target.value)}
                     placeholder="Enter supervisor email"
                     type="email"
+                    className="text-base placeholder:text-base"
                   />
                   <Button 
                     size="sm" 
                     onClick={handleUpdateAlternateSupervisor}
                     disabled={newAlternateSupervisor === organization.alternate_supervisor_email}
+                    className="text-base"
                   >
                     <UserPlus className="h-4 w-4" />
                   </Button>
@@ -307,10 +309,10 @@ export const OrganizationDetail = ({
 
               {/* Delete Organization */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-destructive">Danger Zone</label>
+                <label className="text-base font-medium text-destructive">Danger Zone</label>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full">
+                    <Button variant="destructive" className="w-full text-base">
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete Organization Data
                     </Button>
@@ -325,22 +327,23 @@ export const OrganizationDetail = ({
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">
+                      <label className="text-base font-medium">
                         Type "{organization.name}" to confirm:
                       </label>
                       <Input
                         value={deleteConfirmation}
                         onChange={(e) => setDeleteConfirmation(e.target.value)}
                         placeholder={organization.name}
+                        className="text-base placeholder:text-base"
                       />
                     </div>
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setDeleteConfirmation('')}>
+                      <AlertDialogCancel onClick={() => setDeleteConfirmation('')} className="text-base">
                         Cancel
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-base"
                         disabled={deleteConfirmation !== organization.name}
                       >
                         Delete Organization

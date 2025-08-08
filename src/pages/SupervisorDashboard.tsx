@@ -86,13 +86,13 @@ export const SupervisorDashboard = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Cabin Buddy Supervisor</h1>
-          <p className="text-muted-foreground">Manage organizations and supervisors</p>
+          <p className="text-muted-foreground text-base">Manage organizations and supervisors</p>
         </div>
         <div className="flex justify-end items-center gap-2 mb-6">
           <div className="flex items-center gap-2">
             <CreateTestOrganizationDialog onOrganizationCreated={refetchOrganizations} />
             <CreateOrganizationDialog onOrganizationCreated={refetchOrganizations} />
-            <Badge variant="secondary" className="text-sm">
+            <Badge variant="secondary" className="text-base">
               <Shield className="w-4 h-4 mr-2" />
               Supervisor Access
             </Badge>
@@ -103,7 +103,7 @@ export const SupervisorDashboard = () => {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Organizations</CardTitle>
+              <CardTitle className="text-base font-medium">Total Organizations</CardTitle>
               <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -113,7 +113,7 @@ export const SupervisorDashboard = () => {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Supervisors</CardTitle>
+              <CardTitle className="text-base font-medium">Active Supervisors</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -125,7 +125,7 @@ export const SupervisorDashboard = () => {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Organizations with Alt. Supervisors</CardTitle>
+              <CardTitle className="text-base font-medium">Organizations with Alt. Supervisors</CardTitle>
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -139,9 +139,9 @@ export const SupervisorDashboard = () => {
         {/* Main Content */}
         <Tabs defaultValue="organizations" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="organizations">Organizations</TabsTrigger>
-            <TabsTrigger value="supervisors">Supervisors</TabsTrigger>
-            <TabsTrigger value="data-management">Data Management</TabsTrigger>
+            <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
+            <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
+            <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="organizations" className="space-y-6">
@@ -153,7 +153,7 @@ export const SupervisorDashboard = () => {
                   placeholder="Search organizations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-base placeholder:text-base"
                 />
               </div>
             </div>
@@ -166,12 +166,12 @@ export const SupervisorDashboard = () => {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">{org.name}</CardTitle>
-                        <CardDescription className="font-mono text-sm">
+                        <CardDescription className="font-mono text-base">
                           Code: {org.code}
                         </CardDescription>
                       </div>
                       {org.alternate_supervisor_email && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-base">
                           Alt. Supervisor
                         </Badge>
                       )}
@@ -179,12 +179,12 @@ export const SupervisorDashboard = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {org.admin_name && (
-                      <div className="text-sm">
+                      <div className="text-base">
                         <span className="font-medium">Admin:</span> {org.admin_name}
                       </div>
                     )}
                     {org.admin_email && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         {org.admin_email}
                       </div>
                     )}
@@ -192,7 +192,7 @@ export const SupervisorDashboard = () => {
                       <Button 
                         size="sm" 
                         onClick={() => setSelectedOrganization(org.id)}
-                        className="flex-1"
+                        className="flex-1 text-base"
                       >
                         View Details
                       </Button>
@@ -200,6 +200,7 @@ export const SupervisorDashboard = () => {
                         size="sm" 
                         variant="destructive"
                         onClick={() => deleteOrganizationData(org.id)}
+                        className="text-base"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -214,7 +215,7 @@ export const SupervisorDashboard = () => {
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Building className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-medium mb-2">No organizations found</h3>
-                  <p className="text-muted-foreground text-center">
+                  <p className="text-muted-foreground text-center text-base">
                     {searchTerm ? 'Try adjusting your search terms.' : 'No organizations have been created yet.'}
                   </p>
                 </CardContent>
