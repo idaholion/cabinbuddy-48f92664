@@ -144,7 +144,7 @@ const CheckIn = () => {
           <div className="relative flex items-center justify-center">
             <p className="text-lg md:text-2xl text-primary text-center font-medium">Complete your arrival checklist</p>
             <div className="absolute left-0">
-              <NavigationHeader backLabel="Home" className="mb-0" />
+              <NavigationHeader backLabel="Home" className="mb-0 text-base" />
             </div>
           </div>
         </div>
@@ -152,8 +152,8 @@ const CheckIn = () => {
         <div className="grid gap-6">
           <Card className="bg-card/95">
             <CardHeader>
-              <CardTitle>Arrival Checklist</CardTitle>
-              <CardDescription>Please complete all items to finalize your check-in</CardDescription>
+              <CardTitle className="text-2xl">Arrival Checklist</CardTitle>
+              <CardDescription className="text-base">Please complete all items to finalize your check-in</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {checklistItems.map((item) => (
@@ -165,26 +165,26 @@ const CheckIn = () => {
                   />
                   {editingItemId === item.id ? (
                     <div className="flex items-center space-x-2 flex-1">
-                      <Input
+                       <Input
                         value={editingLabel}
                         onChange={(e) => setEditingLabel(e.target.value)}
                         onKeyPress={(e) => {
                           if (e.key === 'Enter') saveEditItem();
                           if (e.key === 'Escape') cancelEdit();
                         }}
-                        className="flex-1"
+                        className="flex-1 text-base placeholder:text-base"
                         autoFocus
                       />
-                      <Button onClick={saveEditItem} size="sm" variant="outline">
+                      <Button onClick={saveEditItem} size="sm" variant="outline" className="text-base">
                         Save
                       </Button>
-                      <Button onClick={cancelEdit} size="sm" variant="outline">
+                      <Button onClick={cancelEdit} size="sm" variant="outline" className="text-base">
                         Cancel
                       </Button>
                     </div>
                   ) : (
                     <>
-                      <label htmlFor={item.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                      <label htmlFor={item.id} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
                         {item.label}
                       </label>
                       {isAdmin && isEditing && (
@@ -193,7 +193,7 @@ const CheckIn = () => {
                             onClick={() => startEditItem(item)} 
                             size="sm" 
                             variant="ghost"
-                            className="h-6 w-6 p-0"
+                            className="h-6 w-6 p-0 text-base"
                           >
                             <Edit3 className="h-3 w-3" />
                           </Button>
@@ -201,7 +201,7 @@ const CheckIn = () => {
                             onClick={() => deleteItem(item.id)} 
                             size="sm" 
                             variant="ghost"
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive text-base"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -219,8 +219,9 @@ const CheckIn = () => {
                     value={newItemLabel}
                     onChange={(e) => setNewItemLabel(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addNewItem()}
+                    className="text-base placeholder:text-base"
                   />
-                  <Button onClick={addNewItem} size="sm">
+                  <Button onClick={addNewItem} size="sm" className="text-base">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -230,11 +231,11 @@ const CheckIn = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-base text-muted-foreground">
                       Check-in time: {new Date().toLocaleString()}
                     </span>
                   </div>
-                  <Button onClick={handleSubmit} className="bg-primary">
+                  <Button onClick={handleSubmit} className="bg-primary text-base">
                     Complete Check-In
                   </Button>
                 </div>
@@ -245,7 +246,7 @@ const CheckIn = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(!isEditing)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-base"
                     >
                       <Edit3 className="h-4 w-4" />
                       {isEditing ? "Done Editing" : "Edit Checklist"}
@@ -254,7 +255,7 @@ const CheckIn = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-base"
                     >
                       <Plus className="h-4 w-4" />
                       Add Items
@@ -267,15 +268,15 @@ const CheckIn = () => {
 
           <Card className="bg-card/95">
             <CardHeader>
-              <CardTitle>Additional Notes</CardTitle>
-              <CardDescription>Any issues or observations to report?</CardDescription>
+              <CardTitle className="text-2xl">Additional Notes</CardTitle>
+              <CardDescription className="text-base">Any issues or observations to report?</CardDescription>
             </CardHeader>
             <CardContent>
               <Textarea
                 placeholder="Enter any notes, issues, or observations..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[100px] text-base placeholder:text-base"
               />
             </CardContent>
           </Card>
