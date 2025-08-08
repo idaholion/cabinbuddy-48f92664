@@ -233,23 +233,23 @@ const AddReceipt = () => {
             <CardContent className="space-y-4">
               <div className="space-y-4">
                 <div>
-                  <Label>Choose Photo Source</Label>
+                  <Label className="text-base">Choose Photo Source</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <Button
                       variant="outline"
                       onClick={() => handleNativePhotoSelection(CameraSource.Photos)}
-                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                      className="flex flex-col items-center space-y-2 h-auto py-4 text-base"
                     >
                       <Image className="h-6 w-6" />
-                      <span className="text-sm">Photo Library</span>
+                      <span className="text-base">Photo Library</span>
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => handleNativePhotoSelection(CameraSource.Camera)}
-                      className="flex flex-col items-center space-y-2 h-auto py-4"
+                      className="flex flex-col items-center space-y-2 h-auto py-4 text-base"
                     >
                       <Camera className="h-6 w-6" />
-                      <span className="text-sm">Take Photo</span>
+                      <span className="text-base">Take Photo</span>
                     </Button>
                   </div>
                 </div>
@@ -258,14 +258,14 @@ const AddReceipt = () => {
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
+                  <div className="relative flex justify-center text-base uppercase">
                     <span className="bg-background px-2 text-muted-foreground">Or</span>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="file-upload" className="cursor-pointer">
-                    <Button asChild className="w-full" variant="outline">
+                  <Label htmlFor="file-upload" className="cursor-pointer text-base">
+                    <Button asChild className="w-full text-base" variant="outline">
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
                         Choose File
@@ -290,16 +290,16 @@ const AddReceipt = () => {
                   onDrop={handleDrop}
                 >
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base text-muted-foreground">
                     Drag and drop your receipt here
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-base text-muted-foreground mt-1">
                     Supports images and PDF files
                   </p>
                 </div>
 
                 <div className="pt-4 border-t">
-                  <Label htmlFor="upload-amount">Receipt Amount</Label>
+                  <Label htmlFor="upload-amount" className="text-base">Receipt Amount</Label>
                   <div className="flex gap-2">
                     <Input
                       id="upload-amount"
@@ -308,13 +308,13 @@ const AddReceipt = () => {
                       placeholder="0.00"
                       value={uploadAmount}
                       onChange={(e) => setUploadAmount(e.target.value)}
-                      className="flex-1"
+                      className="flex-1 text-base placeholder:text-base"
                     />
                     {currentFile && uploadAmount && (
                       <Button 
                         onClick={handleUploadWithAmount}
                         disabled={uploadingFile}
-                        className="flex items-center space-x-2"
+                        className="flex items-center space-x-2 text-base"
                       >
                         {uploadingFile ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -326,7 +326,7 @@ const AddReceipt = () => {
                     )}
                   </div>
                   {currentFile && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-base text-muted-foreground mt-1">
                       File ready: {currentFile.name}
                     </p>
                   )}
@@ -346,7 +346,7 @@ const AddReceipt = () => {
             <CardContent>
               <form onSubmit={handleManualSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="amount">Amount</Label>
+                  <Label htmlFor="amount" className="text-base">Amount</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -355,11 +355,12 @@ const AddReceipt = () => {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     required
+                    className="text-base placeholder:text-base"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="text-base">Description</Label>
                   <Textarea
                     id="description"
                     placeholder="Enter receipt description..."
@@ -367,10 +368,11 @@ const AddReceipt = () => {
                     onChange={(e) => setDescription(e.target.value)}
                     required
                     rows={4}
+                    className="text-base placeholder:text-base"
                   />
                 </div>
                 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full text-base">
                   Add Receipt Manually
                 </Button>
               </form>
@@ -402,9 +404,9 @@ const AddReceipt = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{receipt.description}</p>
+                        <p className="text-base font-medium truncate">{receipt.description}</p>
                         <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           {new Date(receipt.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -412,14 +414,14 @@ const AddReceipt = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteReceipt(receipt.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 text-base"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
                   {receipts.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-muted-foreground text-base">
                       No receipts added yet
                     </div>
                   )}
