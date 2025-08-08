@@ -85,6 +85,36 @@ export type Database = {
           },
         ]
       }
+      cabin_rules: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          organization_id: string
+          section_title: string
+          section_type: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          organization_id: string
+          section_title: string
+          section_type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          organization_id?: string
+          section_title?: string
+          section_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       calendar_keeper_requests: {
         Row: {
           calendar_keeper_response: string | null
