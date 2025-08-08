@@ -153,7 +153,7 @@ const SupervisorOrganizationFinancial = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/supervisor')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/supervisor')} className="text-base">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Organizations
           </Button>
@@ -161,7 +161,7 @@ const SupervisorOrganizationFinancial = () => {
 
         <div className="text-center space-y-2">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Management</h1>
-          <p className="text-muted-foreground">Manage receipts and expenses for this organization</p>
+          <p className="text-muted-foreground text-base">Manage receipts and expenses for this organization</p>
         </div>
 
         {/* Summary Card */}
@@ -176,11 +176,11 @@ const SupervisorOrganizationFinancial = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold">{receipts.length}</div>
-                <div className="text-sm text-muted-foreground">Total Receipts</div>
+                <div className="text-base text-muted-foreground">Total Receipts</div>
               </div>
               <div className="text-center p-4 border rounded-lg">
                 <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
-                <div className="text-sm text-muted-foreground">Total Expenses</div>
+                <div className="text-base text-muted-foreground">Total Expenses</div>
               </div>
             </div>
           </CardContent>
@@ -190,21 +190,22 @@ const SupervisorOrganizationFinancial = () => {
         <Card>
           <CardHeader>
             <CardTitle>Add New Receipt</CardTitle>
-            <CardDescription>Record a new expense for this organization</CardDescription>
+            <CardDescription className="text-base">Record a new expense for this organization</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-base">Description</Label>
                 <Input
                   id="description"
                   placeholder="Enter expense description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount ($)</Label>
+                <Label htmlFor="amount" className="text-base">Amount ($)</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -212,27 +213,29 @@ const SupervisorOrganizationFinancial = () => {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  className="text-base placeholder:text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date" className="text-base">Date</Label>
                 <Input
                   id="date"
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="familyGroup">Family Group (Optional)</Label>
+                <Label htmlFor="familyGroup" className="text-base">Family Group (Optional)</Label>
                 <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select family group" />
+                  <SelectTrigger className="text-base">
+                    <SelectValue placeholder="Select family group" className="text-base" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No family group</SelectItem>
+                    <SelectItem value="none" className="text-base">No family group</SelectItem>
                     {familyGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.name}>
+                      <SelectItem key={group.id} value={group.name} className="text-base">
                         {group.name}
                       </SelectItem>
                     ))}
@@ -240,7 +243,7 @@ const SupervisorOrganizationFinancial = () => {
                 </Select>
               </div>
             </div>
-            <Button onClick={createReceipt} disabled={loading} className="w-full">
+            <Button onClick={createReceipt} disabled={loading} className="w-full text-base">
               <Plus className="h-4 w-4 mr-2" />
               {loading ? "Adding..." : "Add Receipt"}
             </Button>
@@ -251,7 +254,7 @@ const SupervisorOrganizationFinancial = () => {
         <Card>
           <CardHeader>
             <CardTitle>Recent Receipts ({receipts.length})</CardTitle>
-            <CardDescription>All receipts and expenses for this organization</CardDescription>
+            <CardDescription className="text-base">All receipts and expenses for this organization</CardDescription>
           </CardHeader>
           <CardContent>
             {receipts.length > 0 ? (
@@ -260,7 +263,7 @@ const SupervisorOrganizationFinancial = () => {
                   <div key={receipt.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <div className="font-medium">{receipt.description}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         {new Date(receipt.date).toLocaleDateString()}
                         {receipt.family_group && ` • ${receipt.family_group}`}
                       </div>
@@ -269,22 +272,22 @@ const SupervisorOrganizationFinancial = () => {
                       <div className="font-bold">${receipt.amount.toFixed(2)}</div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="text-base">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Receipt</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogDescription className="text-base">
                               Are you sure you want to delete this receipt? This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel className="text-base">Cancel</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => deleteReceipt(receipt.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-base"
                             >
                               Delete
                             </AlertDialogAction>
@@ -296,7 +299,7 @@ const SupervisorOrganizationFinancial = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-4">
+              <p className="text-muted-foreground text-center py-4 text-base">
                 No receipts found. Add one above to get started.
               </p>
             )}
