@@ -82,7 +82,7 @@ const StayHistory = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-muted-foreground">Loading stay history...</p>
+                <p className="text-muted-foreground text-base">Loading stay history...</p>
               </div>
             </CardContent>
           </Card>
@@ -98,7 +98,7 @@ const StayHistory = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="text-center">
             <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Stay History</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-base">
               Review your past cabin stays and checkout information
             </p>
           </div>
@@ -113,10 +113,10 @@ const StayHistory = () => {
               <div className="text-center space-y-3">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
                 <h3 className="text-lg font-semibold">No Past Stays Found</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   You haven't completed any stays yet. Your stay history will appear here after your first cabin visit.
                 </p>
-                <Button onClick={() => navigate("/calendar")}>
+                <Button onClick={() => navigate("/calendar")} className="text-base">
                   View Calendar
                 </Button>
               </div>
@@ -132,7 +132,7 @@ const StayHistory = () => {
                     <Calendar className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-2xl font-bold">{pastReservations.length}</p>
-                      <p className="text-sm text-muted-foreground">Total Stays</p>
+                      <p className="text-base text-muted-foreground">Total Stays</p>
                     </div>
                   </div>
                 </CardContent>
@@ -149,7 +149,7 @@ const StayHistory = () => {
                           return total + nights;
                         }, 0)}
                       </p>
-                      <p className="text-sm text-muted-foreground">Total Nights</p>
+                      <p className="text-base text-muted-foreground">Total Nights</p>
                     </div>
                   </div>
                 </CardContent>
@@ -168,7 +168,7 @@ const StayHistory = () => {
                           }, 0)
                         )}
                       </p>
-                      <p className="text-sm text-muted-foreground">Total Paid</p>
+                      <p className="text-base text-muted-foreground">Total Paid</p>
                     </div>
                   </div>
                 </CardContent>
@@ -192,12 +192,12 @@ const StayHistory = () => {
                             <h3 className="font-semibold">
                               {reservation.property_name || 'Cabin Stay'}
                             </h3>
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="text-base">
                               {formatDistanceToNow(stayData.checkOutDate, { addSuffix: true })}
                             </Badge>
                           </div>
                           
-                          <div className="grid gap-2 md:grid-cols-4 text-sm">
+                          <div className="grid gap-2 md:grid-cols-4 text-base">
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-muted-foreground" />
                               <span>
@@ -224,7 +224,7 @@ const StayHistory = () => {
                           </div>
                           
                           {stayData.receiptsTotal > 0 && (
-                            <div className="mt-2 text-sm text-muted-foreground">
+                            <div className="mt-2 text-base text-muted-foreground">
                               Receipts submitted: {BillingCalculator.formatCurrency(stayData.receiptsTotal)}
                               ({stayData.stayReceipts.length} receipt{stayData.stayReceipts.length !== 1 ? 's' : ''})
                             </div>
@@ -238,6 +238,7 @@ const StayHistory = () => {
                             // Navigate to a detailed view (we could create this later)
                             // For now, just show they can expand for details
                           }}
+                          className="text-base"
                         >
                           <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -246,11 +247,11 @@ const StayHistory = () => {
                       {/* Expandable details section - could be implemented later */}
                       <div className="mt-4 pt-4 border-t">
                         <div className="flex gap-2">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-base">
                             {reservation.family_group}
                           </Badge>
                           {reservation.status && (
-                            <Badge variant="default" className="text-xs">
+                            <Badge variant="default" className="text-base">
                               {reservation.status}
                             </Badge>
                           )}
@@ -264,11 +265,11 @@ const StayHistory = () => {
             
             {/* Action Buttons */}
             <div className="flex gap-3 justify-center pt-6">
-              <Button variant="outline" onClick={() => navigate("/finance-reports")}>
+              <Button variant="outline" onClick={() => navigate("/finance-reports")} className="text-base">
                 <FileText className="h-4 w-4 mr-2" />
                 View Financial Dashboard
               </Button>
-              <Button onClick={() => navigate("/calendar")}>
+              <Button onClick={() => navigate("/calendar")} className="text-base">
                 <Calendar className="h-4 w-4 mr-2" />
                 Book New Stay
               </Button>
