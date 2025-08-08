@@ -93,7 +93,7 @@ const FinancialDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="outline" asChild className="mb-4">
+          <Button variant="outline" asChild className="mb-4 text-base">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -120,15 +120,15 @@ const FinancialDashboard = () => {
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
-                <TabsTrigger value="manage" className="flex items-center gap-2">
+                <TabsTrigger value="manage" className="flex items-center gap-2 text-base">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
                 </TabsTrigger>
-                <TabsTrigger value="payments" className="flex items-center gap-2">
+                <TabsTrigger value="payments" className="flex items-center gap-2 text-base">
                   <CreditCard className="h-4 w-4" />
                   Payment Tracking
                 </TabsTrigger>
-                <TabsTrigger value="reports" className="flex items-center gap-2">
+                <TabsTrigger value="reports" className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4" />
                   Financial Reports
                 </TabsTrigger>
@@ -139,7 +139,7 @@ const FinancialDashboard = () => {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold mb-2">Expense Management</h2>
-                    <p className="text-muted-foreground">Add and manage cabin-related expenses</p>
+                    <p className="text-muted-foreground text-base">Add and manage cabin-related expenses</p>
                   </div>
                   <ExpenseTracker />
                 </div>
@@ -150,7 +150,7 @@ const FinancialDashboard = () => {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-semibold mb-2">Payment Tracking</h2>
-                    <p className="text-muted-foreground">Monitor and manage all cabin-related payments</p>
+                    <p className="text-muted-foreground text-base">Monitor and manage all cabin-related payments</p>
                   </div>
                   <PaymentTracker />
                 </div>
@@ -166,7 +166,7 @@ const FinancialDashboard = () => {
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-xl font-semibold mb-2">Financial Reports</h2>
-                      <p className="text-muted-foreground">Complete financial overview including expenses and payment collections</p>
+                      <p className="text-muted-foreground text-base">Complete financial overview including expenses and payment collections</p>
                     </div>
 
                     {/* Year Selector and Summary */}
@@ -290,7 +290,7 @@ const FinancialDashboard = () => {
 
         {/* Navigation to Next Setup Step */}
         <div className="mt-8 text-center">
-          <Button asChild size="lg" className="text-lg px-8 py-6">
+          <Button asChild size="lg" className="text-lg px-8 py-6 text-base">
             <Link to="/reservation-setup">Continue to Reservation Setup</Link>
           </Button>
         </div>

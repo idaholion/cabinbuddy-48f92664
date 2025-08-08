@@ -120,39 +120,40 @@ const PaymentTracker = () => {
     return (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="family_group">Family Group</Label>
+          <Label htmlFor="family_group" className="text-base">Family Group</Label>
           <Input
             id="family_group"
             value={formData.family_group}
             onChange={(e) => setFormData({ ...formData, family_group: e.target.value })}
             required
+            className="text-base placeholder:text-base"
           />
         </div>
         
         <div>
-          <Label htmlFor="payment_type">Payment Type</Label>
+          <Label htmlFor="payment_type" className="text-base">Payment Type</Label>
           <Select 
             value={formData.payment_type} 
             onValueChange={(value) => setFormData({ ...formData, payment_type: value as PaymentType })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="full_payment">Full Payment</SelectItem>
-              <SelectItem value="reservation_deposit">Reservation Deposit</SelectItem>
-              <SelectItem value="reservation_balance">Reservation Balance</SelectItem>
-              <SelectItem value="cleaning_fee">Cleaning Fee</SelectItem>
-              <SelectItem value="damage_deposit">Damage Deposit</SelectItem>
-              <SelectItem value="pet_fee">Pet Fee</SelectItem>
-              <SelectItem value="late_fee">Late Fee</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="full_payment" className="text-base">Full Payment</SelectItem>
+              <SelectItem value="reservation_deposit" className="text-base">Reservation Deposit</SelectItem>
+              <SelectItem value="reservation_balance" className="text-base">Reservation Balance</SelectItem>
+              <SelectItem value="cleaning_fee" className="text-base">Cleaning Fee</SelectItem>
+              <SelectItem value="damage_deposit" className="text-base">Damage Deposit</SelectItem>
+              <SelectItem value="pet_fee" className="text-base">Pet Fee</SelectItem>
+              <SelectItem value="late_fee" className="text-base">Late Fee</SelectItem>
+              <SelectItem value="other" className="text-base">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount" className="text-base">Amount</Label>
           <Input
             id="amount"
             type="number"
@@ -160,35 +161,38 @@ const PaymentTracker = () => {
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
             required
+            className="text-base placeholder:text-base"
           />
         </div>
 
         <div>
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description" className="text-base">Description</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="text-base placeholder:text-base"
           />
         </div>
 
         <div>
-          <Label htmlFor="due_date">Due Date (Optional)</Label>
+          <Label htmlFor="due_date" className="text-base">Due Date (Optional)</Label>
           <Input
             id="due_date"
             type="date"
             value={formData.due_date}
             onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+            className="text-base"
           />
         </div>
 
-        <Button type="submit" className="w-full">Create Payment</Button>
+        <Button type="submit" className="w-full text-base">Create Payment</Button>
       </form>
     );
   };
 
   if (loading) {
-    return <div className="p-6">Loading payments...</div>;
+    return <div className="p-6 text-base">Loading payments...</div>;
   }
 
   return (
@@ -197,12 +201,12 @@ const PaymentTracker = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
+            <CardTitle className="text-base font-medium">Total Outstanding</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${summary.totalOutstanding.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {summary.pending + summary.partial + summary.overdue} payments pending
             </p>
           </CardContent>
@@ -210,12 +214,12 @@ const PaymentTracker = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
+            <CardTitle className="text-base font-medium">Total Collected</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${summary.totalPaid.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               {summary.paid} payments completed
             </p>
           </CardContent>
@@ -223,12 +227,12 @@ const PaymentTracker = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+            <CardTitle className="text-base font-medium">Overdue</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">{summary.overdue}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Payments past due date
             </p>
           </CardContent>
@@ -236,14 +240,14 @@ const PaymentTracker = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Collection Rate</CardTitle>
+            <CardTitle className="text-base font-medium">Collection Rate</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {summary.totalAmount > 0 ? ((summary.totalPaid / summary.totalAmount) * 100).toFixed(1) : 0}%
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               Of total amount due
             </p>
           </CardContent>
@@ -254,7 +258,7 @@ const PaymentTracker = () => {
       <div className="flex gap-2">
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="text-base">
               <Plus className="h-4 w-4 mr-2" />
               Add Payment
             </Button>
@@ -272,7 +276,7 @@ const PaymentTracker = () => {
       <Card>
         <CardHeader>
           <CardTitle>Payment Records</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base">
             Track and manage all payments for your organization
           </CardDescription>
         </CardHeader>
@@ -338,7 +342,7 @@ const PaymentTracker = () => {
           </Table>
 
           {payments.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground text-base">
               No payment records found. Create your first payment record to get started.
             </div>
           )}
@@ -348,7 +352,7 @@ const PaymentTracker = () => {
       {/* Pagination */}
       {pagination.total > pagination.limit && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-base text-muted-foreground">
             Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} payments
           </p>
           <div className="flex gap-2">
@@ -357,6 +361,7 @@ const PaymentTracker = () => {
               size="sm"
               onClick={() => fetchPayments(pagination.page - 1)}
               disabled={pagination.page <= 1}
+              className="text-base"
             >
               Previous
             </Button>
@@ -365,6 +370,7 @@ const PaymentTracker = () => {
               size="sm"
               onClick={() => fetchPayments(pagination.page + 1)}
               disabled={pagination.page * pagination.limit >= pagination.total}
+              className="text-base"
             >
               Next
             </Button>
@@ -387,7 +393,7 @@ const PaymentTracker = () => {
               </div>
 
               <div>
-                <Label htmlFor="record_amount">Payment Amount</Label>
+                <Label htmlFor="record_amount" className="text-base">Payment Amount</Label>
                 <Input
                   id="record_amount"
                   type="number"
@@ -395,44 +401,47 @@ const PaymentTracker = () => {
                   value={recordAmount}
                   onChange={(e) => setRecordAmount(e.target.value)}
                   placeholder="0.00"
+                  className="text-base placeholder:text-base"
                 />
               </div>
 
               <div>
-                <Label htmlFor="record_method">Payment Method</Label>
+                <Label htmlFor="record_method" className="text-base">Payment Method</Label>
                 <Select value={recordMethod} onValueChange={(value) => setRecordMethod(value as PaymentMethod)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-base">
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="check">Check</SelectItem>
-                    <SelectItem value="venmo">Venmo</SelectItem>
-                    <SelectItem value="paypal">PayPal</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="cash" className="text-base">Cash</SelectItem>
+                    <SelectItem value="check" className="text-base">Check</SelectItem>
+                    <SelectItem value="venmo" className="text-base">Venmo</SelectItem>
+                    <SelectItem value="paypal" className="text-base">PayPal</SelectItem>
+                    <SelectItem value="bank_transfer" className="text-base">Bank Transfer</SelectItem>
+                    <SelectItem value="stripe" className="text-base">Stripe</SelectItem>
+                    <SelectItem value="other" className="text-base">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="record_reference">Reference/Transaction ID</Label>
+                <Label htmlFor="record_reference" className="text-base">Reference/Transaction ID</Label>
                 <Input
                   id="record_reference"
                   value={recordReference}
                   onChange={(e) => setRecordReference(e.target.value)}
                   placeholder="Check #, Transaction ID, etc."
+                  className="text-base placeholder:text-base"
                 />
               </div>
 
               <div className="flex gap-2">
-                <Button onClick={handleRecordPayment} className="flex-1">
+                <Button onClick={handleRecordPayment} className="flex-1 text-base">
                   Record Payment
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowRecordDialog(false)}
+                  className="text-base"
                 >
                   Cancel
                 </Button>
