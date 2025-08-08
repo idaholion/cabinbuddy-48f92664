@@ -264,13 +264,13 @@ const CheckoutList = () => {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/home")}
-              className="shrink-0"
+              className="shrink-0 text-base"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
               <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Checkout Checklist</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Complete all tasks before leaving the cabin
               </p>
             </div>
@@ -278,7 +278,7 @@ const CheckoutList = () => {
               <div className="text-2xl font-bold text-primary">
                 {completedTasks}/{totalTasks}
               </div>
-              <div className="text-xs text-muted-foreground">Tasks Complete</div>
+              <div className="text-base text-muted-foreground">Tasks Complete</div>
             </div>
           </div>
         </div>
@@ -293,7 +293,7 @@ const CheckoutList = () => {
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1">
             {progressPercentage.toFixed(0)}% Complete
           </p>
         </div>
@@ -306,7 +306,7 @@ const CheckoutList = () => {
             <Card key={section.title}>
               <CardHeader>
                 <CardTitle className="text-xl">{section.title}</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-base">
                   {section.tasks.filter(task => checkedTasks.has(`${sectionIndex}-${task}`)).length} of {section.tasks.length} tasks completed
                 </CardDescription>
               </CardHeader>
@@ -341,20 +341,20 @@ const CheckoutList = () => {
                                 if (e.key === 'Enter') saveEditTask();
                                 if (e.key === 'Escape') cancelEdit();
                               }}
-                              className="flex-1"
+                              className="flex-1 text-base placeholder:text-base"
                               autoFocus
                             />
-                            <Button onClick={saveEditTask} size="sm" variant="outline">
+                            <Button onClick={saveEditTask} size="sm" variant="outline" className="text-base">
                               Save
                             </Button>
-                            <Button onClick={cancelEdit} size="sm" variant="outline">
+                            <Button onClick={cancelEdit} size="sm" variant="outline" className="text-base">
                               Cancel
                             </Button>
                           </div>
                         ) : (
                           <>
                             <span 
-                              className={`text-sm flex-1 ${
+                              className={`text-base flex-1 ${
                                 isChecked 
                                   ? 'line-through text-muted-foreground' 
                                   : 'text-foreground'
@@ -369,7 +369,7 @@ const CheckoutList = () => {
                                   onClick={() => startEditTask(sectionIndex, taskIndex, task)} 
                                   size="sm" 
                                   variant="ghost"
-                                  className="h-6 w-6 p-0"
+                                  className="h-6 w-6 p-0 text-base"
                                 >
                                   <Edit3 className="h-3 w-3" />
                                 </Button>
@@ -377,7 +377,7 @@ const CheckoutList = () => {
                                   onClick={() => deleteTask(sectionIndex, taskIndex)} 
                                   size="sm" 
                                   variant="ghost"
-                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                  className="h-6 w-6 p-0 text-destructive hover:text-destructive text-base"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -396,8 +396,9 @@ const CheckoutList = () => {
                         value={newTaskLabel}
                         onChange={(e) => setNewTaskLabel(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && addNewTask(sectionIndex)}
+                        className="text-base placeholder:text-base"
                       />
-                      <Button onClick={() => addNewTask(sectionIndex)} size="sm">
+                      <Button onClick={() => addNewTask(sectionIndex)} size="sm" className="text-base">
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
@@ -410,7 +411,7 @@ const CheckoutList = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(!isEditing)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-base"
                     >
                       <Edit3 className="h-4 w-4" />
                       {isEditing ? "Done Editing" : "Edit Tasks"}
@@ -419,7 +420,7 @@ const CheckoutList = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 text-base"
                     >
                       <Plus className="h-4 w-4" />
                       Add Tasks
@@ -439,7 +440,7 @@ const CheckoutList = () => {
               <h3 className="text-lg font-semibold text-primary mb-2">
                 All Tasks Complete!
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Thank you for taking care of our cabin. Have a safe trip home!
               </p>
             </CardContent>
@@ -450,13 +451,13 @@ const CheckoutList = () => {
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-xl">Cabin Coalition Economic Survey</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Cabin Coalition is a lobbying group that works on the lease amounts. They periodically send us a long survey to help them show that the cabin holders benefit the community economically. To help fill out the survey, mark how many times you did the following within 50 miles of the Cabin.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <Label className="text-sm font-medium">
+              <Label className="text-base font-medium">
                 How many people did the following? How Many Times? (If 6 people dined out 2 times, that's 12)
               </Label>
             </div>
@@ -472,19 +473,19 @@ const CheckoutList = () => {
                           if (e.key === 'Enter') saveEditSurveyItem();
                           if (e.key === 'Escape') cancelEdit();
                         }}
-                        className="flex-1"
+                        className="flex-1 text-base placeholder:text-base"
                         autoFocus
                       />
-                      <Button onClick={saveEditSurveyItem} size="sm" variant="outline">
+                      <Button onClick={saveEditSurveyItem} size="sm" variant="outline" className="text-base">
                         Save
                       </Button>
-                      <Button onClick={cancelEdit} size="sm" variant="outline">
+                      <Button onClick={cancelEdit} size="sm" variant="outline" className="text-base">
                         Cancel
                       </Button>
                     </div>
                   ) : (
                     <>
-                      <Label htmlFor={item.id} className="text-sm font-medium flex-1">
+                      <Label htmlFor={item.id} className="text-base font-medium flex-1">
                         {item.label}
                       </Label>
                       {isAdmin && isEditing && (
@@ -493,7 +494,7 @@ const CheckoutList = () => {
                             onClick={() => startEditSurveyItem(item)} 
                             size="sm" 
                             variant="ghost"
-                            className="h-6 w-6 p-0"
+                            className="h-6 w-6 p-0 text-base"
                           >
                             <Edit3 className="h-3 w-3" />
                           </Button>
@@ -501,7 +502,7 @@ const CheckoutList = () => {
                             onClick={() => deleteSurveyItem(item.id)} 
                             size="sm" 
                             variant="ghost"
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive text-base"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -514,7 +515,7 @@ const CheckoutList = () => {
                         onChange={(e) => handleSurveyChange(item.id, e.target.value)}
                         placeholder="Total"
                         maxLength={6}
-                        className="w-24"
+                        className="w-24 text-base placeholder:text-base"
                         style={{ width: "1in" }}
                       />
                     </>
@@ -530,8 +531,9 @@ const CheckoutList = () => {
                     value={newTaskLabel}
                     onChange={(e) => setNewTaskLabel(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addNewSurveyItem()}
+                    className="text-base placeholder:text-base"
                   />
-                  <Button onClick={addNewSurveyItem} size="sm">
+                  <Button onClick={addNewSurveyItem} size="sm" className="text-base">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -543,7 +545,7 @@ const CheckoutList = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-base"
                   >
                     <Edit3 className="h-4 w-4" />
                     {isEditing ? "Done Editing" : "Edit Survey"}
@@ -552,7 +554,7 @@ const CheckoutList = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-base"
                   >
                     <Plus className="h-4 w-4" />
                     Add Items
@@ -562,19 +564,19 @@ const CheckoutList = () => {
 
               {/* Approximate $ spent section */}
               <div className="flex items-center gap-4 mt-6 pt-4 border-t">
-                <Label className="text-sm font-medium">
+                <Label className="text-base font-medium">
                   Approximate $ spent in area
                 </Label>
                 <Input
                   type="text"
                   placeholder="Total $"
                   maxLength={6}
-                  className="w-24"
+                  className="w-24 text-base placeholder:text-base"
                   style={{ width: "1in" }}
                 />
               </div>
 
-              <Button className="mt-4" asChild>
+              <Button className="mt-4 text-base" asChild>
                 <Link to="/checkout-final">
                   Proceed to Final Checkout
                 </Link>
