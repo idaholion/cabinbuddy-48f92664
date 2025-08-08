@@ -269,7 +269,7 @@ export default function DataBackup() {
           </PageHeader>
           <div className="text-center py-12">
             <RefreshCw className="h-16 w-16 mx-auto mb-4 text-muted-foreground animate-spin" />
-            <p className="text-muted-foreground">Checking permissions...</p>
+            <p className="text-muted-foreground text-base">Checking permissions...</p>
           </div>
         </div>
       </div>
@@ -292,10 +292,10 @@ export default function DataBackup() {
             <CardContent className="text-center py-12">
               <Database className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-medium mb-2">Administrator Access Required</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-4 text-base">
                 Data backup and recovery features are restricted to organization administrators only.
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Contact your organization administrator if you need access to backup data.
               </p>
             </CardContent>
@@ -330,7 +330,7 @@ export default function DataBackup() {
                 <Button 
                   onClick={createManualBackup}
                   disabled={creating}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-base"
                 >
                   {creating ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -344,14 +344,14 @@ export default function DataBackup() {
                   variant="outline"
                   onClick={fetchBackups}
                   disabled={loading}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-base"
                 >
                   <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   Refresh List
                 </Button>
               </div>
               
-              <div className="text-sm text-muted-foreground">
+              <div className="text-base text-muted-foreground">
                 <p>• Automatic backups are created weekly</p>
                 <p>• Only the 3 most recent backups are kept</p>
                 <p>• Manual backups can be created anytime</p>
@@ -372,14 +372,14 @@ export default function DataBackup() {
               {loading ? (
                 <div className="text-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">Loading backups...</p>
+                  <p className="text-muted-foreground text-base">Loading backups...</p>
                 </div>
               ) : backups.length === 0 ? (
                 <div className="text-center py-8">
                   <Database className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">No Backups Available</h3>
-                  <p className="text-muted-foreground mb-4">Create your first backup to get started</p>
-                  <Button onClick={createManualBackup} disabled={creating}>
+                  <p className="text-muted-foreground mb-4 text-base">Create your first backup to get started</p>
+                  <Button onClick={createManualBackup} disabled={creating} className="text-base">
                     Create First Backup
                   </Button>
                 </div>
@@ -399,11 +399,11 @@ export default function DataBackup() {
                             <h4 className="font-medium">
                               {backup.backup_type === 'manual' ? 'Manual Backup' : 'Scheduled Backup'}
                             </h4>
-                            <Badge variant={backup.backup_type === 'manual' ? 'default' : 'secondary'}>
+                            <Badge variant={backup.backup_type === 'manual' ? 'default' : 'secondary'} className="text-base">
                               {backup.backup_type}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-4 text-base text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
                               {format(new Date(backup.created_at), 'MMM d, yyyy h:mm a')}
@@ -418,7 +418,7 @@ export default function DataBackup() {
                           variant="outline"
                           size="sm"
                           onClick={() => previewRestore(backup)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 text-base"
                         >
                           <Upload className="h-4 w-4" />
                           Restore
@@ -427,7 +427,7 @@ export default function DataBackup() {
                           variant="outline"
                           size="sm"
                           onClick={() => downloadBackup(backup)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 text-base"
                         >
                           <Download className="h-4 w-4" />
                           Download
@@ -436,7 +436,7 @@ export default function DataBackup() {
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteBackup(backup)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 text-base"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -466,7 +466,7 @@ export default function DataBackup() {
               <div className="space-y-4">
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Backup Information</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-base">
                     <div>
                       <span className="text-muted-foreground">Backup Date:</span>
                       <p className="font-medium">
@@ -482,7 +482,7 @@ export default function DataBackup() {
 
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                   <h4 className="font-medium mb-2 text-amber-800">⚠️ Important Notice</h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
+                  <ul className="text-base text-amber-700 space-y-1">
                     <li>• A backup of your current data will be created before restore</li>
                     <li>• All current organization data will be replaced with backup data</li>
                     <li>• This action cannot be undone (except by restoring another backup)</li>
@@ -492,7 +492,7 @@ export default function DataBackup() {
 
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Data to be Restored</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-base">
                     <div className="flex justify-between">
                       <span>Family Groups:</span>
                       <span className="font-medium">{restoreDialog.preview.data_summary.family_groups}</span>
@@ -527,6 +527,7 @@ export default function DataBackup() {
                 variant="outline" 
                 onClick={() => setRestoreDialog({open: false})}
                 disabled={restoring}
+                className="text-base"
               >
                 Cancel
               </Button>
@@ -534,7 +535,7 @@ export default function DataBackup() {
                 variant="destructive" 
                 onClick={confirmRestore}
                 disabled={restoring}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 text-base"
               >
                 {restoring ? (
                   <RefreshCw className="h-4 w-4 animate-spin" />
