@@ -189,7 +189,7 @@ const Messaging = () => {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Enter message subject"
-                className="text-base"
+                className="text-base placeholder:text-base"
                 required
               />
             </div>
@@ -202,7 +202,7 @@ const Messaging = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Enter your message here..."
-                className="text-base"
+                className="text-base placeholder:text-base"
                 rows={6}
                 required
               />
