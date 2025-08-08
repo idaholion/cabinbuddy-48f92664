@@ -4,6 +4,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AppBreadcrumbs } from '@/components/AppBreadcrumbs';
 import { ContextualHelp } from '@/components/ContextualHelp';
+import { AiHelpAssistant } from '@/components/AiHelpAssistant';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -31,6 +32,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             {children}
           </div>
         </main>
+        <AiHelpAssistant />
       </div>
     </SidebarProvider>
   );
