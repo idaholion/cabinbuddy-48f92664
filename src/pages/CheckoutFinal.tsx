@@ -128,13 +128,13 @@ const CheckoutFinal = () => {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/checkout-list")}
-              className="shrink-0"
+              className="shrink-0 text-base"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Final Checkout</h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Review your stay and complete payment
               </p>
             </div>
@@ -149,7 +149,7 @@ const CheckoutFinal = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-muted-foreground">Loading checkout data...</p>
+                <p className="text-muted-foreground text-base">Loading checkout data...</p>
               </div>
             </CardContent>
           </Card>
@@ -158,10 +158,10 @@ const CheckoutFinal = () => {
             <CardContent className="pt-6">
               <div className="text-center space-y-3">
                 <h3 className="text-lg font-semibold">No Stay Data Available</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   No recent reservations found. Please ensure you have completed a stay to view checkout details.
                 </p>
-                <Button onClick={() => navigate("/")}>
+                <Button onClick={() => navigate("/")} className="text-base">
                   Return to Home
                 </Button>
               </div>
@@ -207,7 +207,7 @@ const CheckoutFinal = () => {
                 <FileText className="h-5 w-5" />
                 Comprehensive Stay Report
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 Complete record of your stay activities and observations
               </CardDescription>
             </CardHeader>
@@ -215,17 +215,17 @@ const CheckoutFinal = () => {
               {/* Arrival Check-in */}
               {arrivalSessions.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                  <h4 className="font-medium text-base text-muted-foreground mb-3 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
                     Arrival Check-In
                   </h4>
                   {arrivalSessions.map((session, index) => (
                     <div key={session.id} className="bg-muted rounded p-3 mb-2">
-                      <div className="text-xs text-muted-foreground mb-2">
+                      <div className="text-base text-muted-foreground mb-2">
                         {new Date(session.check_date).toLocaleDateString()}
                       </div>
                       {session.notes && (
-                        <p className="text-sm whitespace-pre-wrap">{session.notes}</p>
+                        <p className="text-base whitespace-pre-wrap">{session.notes}</p>
                       )}
                     </div>
                   ))}
@@ -235,7 +235,7 @@ const CheckoutFinal = () => {
               {/* Daily Check-ins */}
               {dailySessions.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                  <h4 className="font-medium text-base text-muted-foreground mb-3 flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     Daily Check-Ins ({dailySessions.length} sessions)
                   </h4>
@@ -249,22 +249,22 @@ const CheckoutFinal = () => {
                       return (
                         <div key={session.id} className="bg-muted rounded p-3">
                           <div className="flex justify-between items-center mb-2">
-                            <div className="text-sm font-medium">
+                            <div className="text-base font-medium">
                               {new Date(session.check_date).toLocaleDateString()}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-base text-muted-foreground">
                               {completedTasks} tasks completed
                             </div>
                           </div>
                           
                            {(totalOccupancy as number) > 0 && (
-                            <div className="text-xs text-muted-foreground mb-2">
+                            <div className="text-base text-muted-foreground mb-2">
                               Daily occupancy: {totalOccupancy as number} guests
                             </div>
                           )}
                           
                           {responses?.readings && Object.values(responses.readings).some((v: any) => v) && (
-                            <div className="text-xs text-muted-foreground mb-2">
+                            <div className="text-base text-muted-foreground mb-2">
                               Readings recorded: {Object.entries(responses.readings)
                                 .filter(([_, v]) => v)
                                 .map(([k, v]) => `${k}: ${v}`)
@@ -273,7 +273,7 @@ const CheckoutFinal = () => {
                           )}
                           
                           {session.notes && (
-                            <p className="text-sm whitespace-pre-wrap mt-2">{session.notes}</p>
+                            <p className="text-base whitespace-pre-wrap mt-2">{session.notes}</p>
                           )}
                         </div>
                       );
@@ -285,13 +285,13 @@ const CheckoutFinal = () => {
               {/* Survey Responses */}
               {surveyResponses.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-3">Survey Responses:</h4>
+                  <h4 className="font-medium text-base text-muted-foreground mb-3">Survey Responses:</h4>
                   {surveyResponses.map((response, index) => (
                     <div key={response.id} className="bg-muted rounded p-3 mb-2">
-                      <div className="text-xs text-muted-foreground mb-2">
+                      <div className="text-base text-muted-foreground mb-2">
                         {new Date().toLocaleDateString()}
                       </div>
-                      <p className="text-sm">Survey data recorded</p>
+                      <p className="text-base">Survey data recorded</p>
                     </div>
                   ))}
                 </div>
@@ -314,7 +314,7 @@ const CheckoutFinal = () => {
                 <span className="text-muted-foreground">Base rate:</span>
                 <span className="font-medium">{BillingCalculator.formatCurrency(billing.baseAmount)}</span>
               </div>
-              <div className="text-xs text-muted-foreground mb-2">
+              <div className="text-base text-muted-foreground mb-2">
                 {billing.details}
               </div>
               
@@ -370,7 +370,7 @@ const CheckoutFinal = () => {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Payment Options</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Choose your preferred payment method
             </CardDescription>
           </CardHeader>
@@ -383,18 +383,18 @@ const CheckoutFinal = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Venmo Payment</h3>
-                  <p className="text-sm text-muted-foreground">Send payment directly via Venmo</p>
+                  <p className="text-base text-muted-foreground">Send payment directly via Venmo</p>
                 </div>
               </div>
               <div className="bg-muted rounded p-3 mb-3">
-                <p className="text-sm font-medium">Venmo Handle:</p>
+                <p className="text-base font-medium">Venmo Handle:</p>
                 <p className="text-lg font-mono">{checkoutData.venmoHandle}</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-base text-muted-foreground mt-1">
                   Amount: ${totalAmount}
                 </p>
               </div>
               <Button 
-                className="w-full"
+                className="w-full text-base"
                 onClick={() => {
                   const venmoUrl = `https://venmo.com/${checkoutData.venmoHandle.replace('@', '')}?txn=pay&amount=${totalAmount}&note=Cabin Stay ${checkoutData.checkInDate} to ${checkoutData.checkOutDate}`;
                   window.open(venmoUrl, '_blank');
@@ -412,22 +412,22 @@ const CheckoutFinal = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Check Payment</h3>
-                  <p className="text-sm text-muted-foreground">Mail a check to the address below</p>
+                  <p className="text-base text-muted-foreground">Mail a check to the address below</p>
                 </div>
               </div>
               <div className="bg-muted rounded p-3">
-                <p className="text-sm font-medium mb-2">Mail check to:</p>
-                <div className="text-sm space-y-1">
+                <p className="text-base font-medium mb-2">Mail check to:</p>
+                <div className="text-base space-y-1">
                   <p className="font-medium">{checkoutData.checkAddress.name}</p>
                   <div className="whitespace-pre-line">
                     {checkoutData.checkAddress.address}
                   </div>
                 </div>
                 <div className="mt-3 pt-2 border-t">
-                  <p className="text-sm">
+                  <p className="text-base">
                     <span className="font-medium">Amount:</span> {BillingCalculator.formatCurrency(totalAmount)}
                   </p>
-                  <p className="text-sm">
+                  <p className="text-base">
                     <span className="font-medium">Memo:</span> Cabin Stay {checkoutData.checkInDate} to {checkoutData.checkOutDate}
                   </p>
                 </div>
@@ -441,18 +441,18 @@ const CheckoutFinal = () => {
           <CardContent className="pt-6">
             <div className="text-center space-y-3">
               <h3 className="text-lg font-semibold">Thank You for Your Stay!</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-base text-muted-foreground">
                 Please complete payment within 7 days. You will receive a confirmation email once payment is processed.
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
-                <Button variant="outline" onClick={() => navigate("/home")}>
+                <Button variant="outline" onClick={() => navigate("/home")} className="text-base">
                   Return to Home
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/stay-history")}>
+                <Button variant="outline" onClick={() => navigate("/stay-history")} className="text-base">
                   <History className="h-4 w-4 mr-2" />
                   View Stay History
                 </Button>
-                <Button onClick={() => window.print()}>
+                <Button onClick={() => window.print()} className="text-base">
                   Print Summary
                 </Button>
               </div>
