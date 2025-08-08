@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import PaymentTracker from "@/components/PaymentTracker";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard } from "lucide-react";
+import { RecurringBills } from "@/components/RecurringBills";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 
@@ -119,10 +120,14 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-4 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-2 text-base">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
+                </TabsTrigger>
+                <TabsTrigger value="recurring" className="flex items-center gap-2 text-base">
+                  <RotateCcw className="h-4 w-4" />
+                  Recurring Bills
                 </TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2 text-base">
                   <CreditCard className="h-4 w-4" />
@@ -143,6 +148,11 @@ const FinancialDashboard = () => {
                   </div>
                   <ExpenseTracker />
                 </div>
+              </TabsContent>
+
+              {/* Recurring Bills Tab */}
+              <TabsContent value="recurring" className="p-6 pt-4">
+                <RecurringBills />
               </TabsContent>
 
               {/* Payment Tracking Tab */}
