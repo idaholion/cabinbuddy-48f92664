@@ -284,7 +284,7 @@ const HostProfile = () => {
       {/* Header with Logout */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Profile Settings</h1>
-        <Button variant="outline" onClick={signOut} className="flex items-center space-x-2">
+        <Button variant="outline" onClick={signOut} className="flex items-center space-x-2 text-base">
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
         </Button>
@@ -310,7 +310,7 @@ const HostProfile = () => {
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={avatarUploading}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 text-base"
               >
                 <Upload className="h-4 w-4" />
                 <span>{avatarUploading ? "Uploading..." : "Upload Photo"}</span>
@@ -321,7 +321,7 @@ const HostProfile = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleAvatarDownload}
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 text-base"
                 >
                   <Download className="h-4 w-4" />
                   <span>Download</span>
@@ -339,7 +339,7 @@ const HostProfile = () => {
           </div>
           
           <CardTitle className="text-3xl font-bold mt-4">Host Member Profile</CardTitle>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-base">
             Update your personal information for your family group
           </p>
         </CardHeader>
@@ -352,11 +352,11 @@ const HostProfile = () => {
                 name="selectedFamilyGroup"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select Your Family Group</FormLabel>
+                    <FormLabel className="text-base">Select Your Family Group</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose your family group" />
+                        <SelectTrigger className="text-base">
+                          <SelectValue placeholder="Choose your family group" className="text-base" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -379,11 +379,11 @@ const HostProfile = () => {
                   name="selectedHostName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Select Your Name</FormLabel>
+                      <FormLabel className="text-base">Select Your Name</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose your name from the list" />
+                          <SelectTrigger className="text-base">
+                            <SelectValue placeholder="Choose your name from the list" className="text-base" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -407,15 +407,16 @@ const HostProfile = () => {
                     control={form.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            type="email" 
-                            placeholder="Enter your email address"
-                          />
-                        </FormControl>
+                    <FormItem>
+                      <FormLabel className="text-base">Email Address</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="email" 
+                          placeholder="Enter your email address"
+                          className="text-base placeholder:text-base"
+                        />
+                      </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -426,15 +427,16 @@ const HostProfile = () => {
                     control={form.control}
                     name="phone"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <PhoneInput
-                            value={field.value || ""}
-                            onChange={(formatted, raw) => field.onChange(formatted)}
-                            autoFormat
-                          />
-                        </FormControl>
+                    <FormItem>
+                      <FormLabel className="text-base">Phone Number</FormLabel>
+                      <FormControl>
+                        <PhoneInput
+                          value={field.value || ""}
+                          onChange={(formatted, raw) => field.onChange(formatted)}
+                          autoFormat
+                          className="text-base placeholder:text-base"
+                        />
+                      </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -448,7 +450,7 @@ const HostProfile = () => {
                   type="submit"
                   disabled={loading || !isValid || !selectedHostMember}
                   size="lg"
-                  className="min-w-48"
+                  className="min-w-48 text-base"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {loading ? "Saving..." : "Update Profile"}
@@ -465,7 +467,7 @@ const HostProfile = () => {
         <CardHeader>
           <CardTitle className="text-lg">Information</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-2 text-base text-muted-foreground">
           <p>• Select your family group from the dropdown menu</p>
           <p>• Choose your name from the list of host members</p>
           <p>• Update your email and phone number as needed</p>

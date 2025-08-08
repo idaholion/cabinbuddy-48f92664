@@ -127,7 +127,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
             disabled={disabled}
             readOnly={!hasConsented}
             placeholder={autoFormat ? "(555) 123-4567" : props.placeholder}
-            className={cn(className)}
+            className={cn("text-base placeholder:text-base", className)}
           />
         </div>
         <PhoneConsentDialog
