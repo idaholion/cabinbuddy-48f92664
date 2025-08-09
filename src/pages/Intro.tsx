@@ -91,7 +91,7 @@ const Intro = () => {
         style={{
           backgroundImage: 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center center',
+          backgroundPosition: 'center -1in',
           backgroundRepeat: 'no-repeat'
         }}
         ref={(el) => {
@@ -100,7 +100,7 @@ const Intro = () => {
             // Set initial styles via JavaScript to match inline styles
             el.style.setProperty('background-image', 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)');
             el.style.setProperty('background-size', 'cover');
-            el.style.setProperty('background-position', 'center center');
+            el.style.setProperty('background-position', 'center -1in');
             el.style.setProperty('background-repeat', 'no-repeat');
           }
         }}
@@ -110,22 +110,22 @@ const Intro = () => {
       </div>
       
       {/* Main Title */}
-      <div className="absolute z-20 top-8 left-0 right-0 text-center">
-        <h1 className="text-6xl sm:text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
+      <div className="absolute z-20 top-1 left-0 right-0 text-center">
+        <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
           Welcome to Cabin Buddy
         </h1>
       </div>
 
       {/* Content */}
-      <div className="absolute z-20 top-40 sm:top-44 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-240px)]">
-        <div className="mb-8 mt-auto">
-          <p className="text-2xl sm:text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
+      <div className="absolute z-20 top-28 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(100vh-152px)]">
+        <div className="mb-4">
+          <p className="text-4xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-0 justify-center">
           <Button 
             onClick={() => navigate("/signup")}
             size="lg" 
