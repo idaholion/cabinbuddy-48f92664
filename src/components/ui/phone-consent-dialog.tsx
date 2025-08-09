@@ -64,9 +64,9 @@ export const PhoneConsentDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="text-base">Phone Number Consent</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            Pressing ACCEPT shows you agree to have your phone receive text messages from other users or Cabinbuddy managers. 
+            Pressing ACCEPT shows you agree to have your phone receive text messages from Richard Andrew. 
             If you do not wish to have your phone receive messages, press DECLINE. 
-            Mobile information will not be shared with third parties for marketing/promotional purposes.
+            Mobile information will not be shared with third parties for marketing/promotional purposes
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
