@@ -110,14 +110,14 @@ const Intro = () => {
       </div>
       
       {/* Main Title */}
-      <div className="absolute z-20 left-0 right-0 text-center" style={{ top: 'calc(2vh - 30px)' }}>
-        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-kaushan text-primary drop-shadow-lg leading-tight">
+      <div className="absolute z-20 top-[2vh] sm:top-[4vh] lg:top-[6vh] left-0 right-0 text-center">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl mb-4 font-kaushan text-primary drop-shadow-lg leading-tight">
           Welcome to Cabin Buddy
         </h1>
       </div>
 
       {/* Content */}
-      <div className="absolute z-20 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(75vh-152px)]" style={{ top: 'calc(2vh + 1.2em + 20px)' }}>
+      <div className="absolute z-20 top-[25vh] sm:top-[30vh] lg:top-[35vh] left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(75vh-152px)]">
         <div className="mb-4">
           <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto leading-relaxed">
             Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
