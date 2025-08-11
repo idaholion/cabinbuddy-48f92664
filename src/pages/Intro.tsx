@@ -89,40 +89,26 @@ const Intro = () => {
         data-background="true"
         className="absolute inset-0"
         style={{
-          backgroundImage: 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)',
+          backgroundImage: 'url(/lovable-uploads/9fcf8aa3-1690-42f0-8103-226aed03eb6c.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center -1in',
+          backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
         ref={(el) => {
           if (el && !el.dataset.initialized) {
             el.dataset.initialized = 'true';
             // Set initial styles via JavaScript to match inline styles
-            el.style.setProperty('background-image', 'url(/lovable-uploads/fcdc1ee2-fe83-4a6d-8a20-d72c6b7431eb.png)');
+            el.style.setProperty('background-image', 'url(/lovable-uploads/9fcf8aa3-1690-42f0-8103-226aed03eb6c.png)');
             el.style.setProperty('background-size', 'cover');
-            el.style.setProperty('background-position', 'center -1in');
+            el.style.setProperty('background-position', 'center');
             el.style.setProperty('background-repeat', 'no-repeat');
           }
         }}
       >
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-forest/40"></div>
-      </div>
-      
-      {/* Main Title */}
-      <div className="absolute z-20 top-[2vh] sm:top-[4vh] lg:top-[6vh] left-0 right-0 text-center">
-        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl mb-4 font-kaushan text-primary drop-shadow-lg leading-tight">
-          Welcome to Cabin Buddy
-        </h1>
       </div>
 
       {/* Content */}
-      <div className="absolute z-20 top-[25vh] sm:top-[30vh] lg:top-[35vh] left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col min-h-[calc(75vh-152px)]">
-        <div className="mb-4">
-          <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-red-600 text-center font-medium font-kaushan max-w-3xl mx-auto leading-relaxed">
-            Perfect for families and friends sharing a vacation property - coordinate bookings, track expenses, and manage everything together.
-          </p>
-        </div>
+      <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-0 justify-center">
