@@ -10,17 +10,18 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
-import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { NotificationTest } from "@/components/NotificationTest";
+import { supabase } from "@/integrations/supabase/client";
 
 const FamilySetup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
-  const { createFamilyGroup } = useFamilyGroups();
+  
   const [searchParams] = useSearchParams();
   
   // Check if this is a "create new" operation
@@ -270,32 +271,38 @@ const FamilySetup = () => {
       const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
       const currentOrgId = (organization || newOrganization)?.id;
       
-      console.log('🔄 Creating family groups:', { nonEmptyGroups, currentOrgId });
+      console.log('🔄 Creating family groups via direct insert:', { nonEmptyGroups, currentOrgId });
       
       if (nonEmptyGroups.length > 0 && currentOrgId) {
-        console.log(`📝 Attempting to create ${nonEmptyGroups.length} family groups in organization ${currentOrgId}`);
-        for (const groupName of nonEmptyGroups) {
-          try {
-            console.log(`🔄 Creating family group: "${groupName}"`);
-            const result = await createFamilyGroup({
-              name: groupName.trim(),
-              lead_name: "",
-              lead_phone: "",
-              lead_email: "",
-              host_members: [],
-              color: null,
-              alternate_lead_id: null
-            });
-            console.log(`✅ Created family group "${groupName}":`, result);
-          } catch (error) {
-            console.error(`❌ Failed to create family group ${groupName}:`, error);
-            toast({
-              title: "Family Group Creation Error",
-              description: `Failed to create family group "${groupName}". Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              variant: "destructive",
-            });
-            // Continue with other groups even if one fails
+        try {
+          const payload = nonEmptyGroups.map(groupName => ({
+            organization_id: currentOrgId,
+            name: groupName.trim(),
+            lead_name: null,
+            lead_phone: null,
+            lead_email: null,
+            host_members: [],
+            color: null,
+            alternate_lead_id: null,
+          }));
+
+          const { data, error } = await supabase
+            .from('family_groups')
+            .insert(payload)
+            .select();
+
+          if (error) {
+            throw error;
           }
+
+          console.log(`✅ Created ${data?.length || 0} family groups`);
+        } catch (error) {
+          console.error('❌ Failed to create initial family groups:', error);
+          toast({
+            title: "Family Group Creation Error",
+            description: error instanceof Error ? error.message : 'Failed to create initial family groups.',
+            variant: "destructive",
+          });
         }
       } else {
         console.log('⚠️ No family groups to create or no organization ID:', { nonEmptyGroupsCount: nonEmptyGroups.length, currentOrgId });
