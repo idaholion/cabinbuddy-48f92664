@@ -275,3 +275,24 @@ All colors MUST be HSL.
   font-style: normal !important;
   font-weight: 400 !important;
 }
+
+/* Orientation-based background sizing for Intro background */
+[data-background="true"] {
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Portrait: shrink to fit (may letterbox) */
+@media (orientation: portrait) {
+  [data-background="true"] {
+    background-size: contain;
+    background-color: hsl(var(--background));
+  }
+}
+
+/* Landscape: fill the screen */
+@media (orientation: landscape) {
+  [data-background="true"] {
+    background-size: cover;
+  }
+}

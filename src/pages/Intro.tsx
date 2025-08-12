@@ -29,16 +29,9 @@ const Intro = () => {
       console.log("🔍 Background element found:", !!bgElement);
       
       if (bgElement) {
-        console.log("🧹 Clearing previous styles...");
-        bgElement.style.backgroundColor = '';
-        
         console.log("🖼️ Setting background image:", blobUrl);
-        bgElement.style.setProperty('background-image', `url("${blobUrl}")`, 'important');
-        bgElement.style.setProperty('background-size', 'cover', 'important');
-        bgElement.style.setProperty('background-position', 'center', 'important');
-        bgElement.style.setProperty('background-repeat', 'no-repeat', 'important');
-        
-        console.log("✅ All styles applied");
+        bgElement.style.setProperty('background-image', `url("${blobUrl}")`);
+        console.log("✅ Background image set (size/position handled by CSS)");
         console.log("🔍 Current backgroundImage value:", bgElement.style.backgroundImage);
       } else {
         console.error("❌ Background element not found");
@@ -85,23 +78,17 @@ const Intro = () => {
     <div className="min-h-screen relative">
       
       {/* Background image container */}
-      <div 
+      <div
         data-background="true"
-        className="absolute inset-0"
+        className="absolute inset-0 bg-center bg-no-repeat"
         style={{
           backgroundImage: 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
         }}
         ref={(el) => {
           if (el && !el.dataset.initialized) {
             el.dataset.initialized = 'true';
-            // Set initial styles via JavaScript to match inline styles
+            // Only set the image; let CSS control sizing/position/repeat
             el.style.setProperty('background-image', 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)');
-            el.style.setProperty('background-size', 'cover');
-            el.style.setProperty('background-position', 'center');
-            el.style.setProperty('background-repeat', 'no-repeat');
           }
         }}
       >
