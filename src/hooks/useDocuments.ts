@@ -26,7 +26,11 @@ export const useDocuments = () => {
   const { toast } = useToast();
 
   const fetchDocuments = async () => {
-    if (!organization?.id) return;
+    if (!organization?.id) {
+      setDocuments([]);
+      setLoading(false);
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -215,9 +219,7 @@ export const useDocuments = () => {
   };
 
   useEffect(() => {
-    if (organization?.id) {
-      fetchDocuments();
-    }
+    fetchDocuments();
   }, [organization?.id]);
 
   return {

@@ -9,11 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useNavigate } from "react-router-dom";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { EmptyState } from "@/components/ui/empty-state";
+import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 const Documents = () => {
   const navigate = useNavigate();
   const { documents, loading, uploadDocument, addDocumentLink, deleteDocument } = useDocuments();
   const { user } = useAuth();
+  const { activeOrganization, loading: orgLoading } = useMultiOrganization();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
@@ -82,7 +84,7 @@ const Documents = () => {
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  if (loading) {
+  if (loading || orgLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -90,6 +92,17 @@ const Documents = () => {
     );
   }
 
+  if (!activeOrganization) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <EmptyState
+          title="No organization selected"
+          description="Select or create an organization to manage documents."
+          action={{ label: "Manage organizations", onClick: () => navigate("/select-organization") }}
+        />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
