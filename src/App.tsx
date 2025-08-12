@@ -33,6 +33,7 @@ const FamilyGroupSetup = React.lazy(() => import("./pages/FamilyGroupSetup"));
 const HostProfile = React.lazy(() => import("./pages/HostProfile"));
 const FinancialDashboard = React.lazy(() => import("./pages/FinancialDashboard"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
+const FinancialSetupPage = React.lazy(() => import("./pages/FinancialSetupPage"));
 
 // Lazy load other complex pages
 const CheckIn = React.lazy(() => import("./pages/CheckIn"));
@@ -118,7 +119,7 @@ const AppContent = () => {
         <Route path="/family-group-setup" element={<ProtectedRoute><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></ProtectedRoute>} />
         <Route path="/host-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        <Route path="/financial-setup" element={<Navigate to="/finance-reports" replace />} />
+        <Route path="/financial-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/admin-treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/admin/treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
