@@ -6,13 +6,13 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 const CheckoutList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useOrgAdmin();
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
@@ -86,10 +86,7 @@ const CheckoutList = () => {
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
-      const { organizationCode, adminEmail } = JSON.parse(familyData);
-      
-      // Check if current user is admin (simplified check)
-      setIsAdmin(adminEmail && adminEmail.trim() !== "");
+      const { organizationCode } = JSON.parse(familyData);
       
       const savedCheckoutList = localStorage.getItem(`checkout_checklist_${organizationCode}`);
       if (savedCheckoutList) {
@@ -109,7 +106,6 @@ const CheckoutList = () => {
       setSurveyData(initialSurveyData);
     }
   }, []);
-
   const handleSurveyChange = (field: string, value: string) => {
     // Only allow digits and limit to 6 characters
     const numericValue = value.replace(/\D/g, "").slice(0, 6);

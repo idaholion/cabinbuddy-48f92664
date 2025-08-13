@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
-
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 const CheckIn = () => {
   const { toast } = useToast();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
@@ -24,26 +24,21 @@ const CheckIn = () => {
   ]);
   const [isEditing, setIsEditing] = useState(false);
   const [newItemLabel, setNewItemLabel] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useOrgAdmin();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
-  // Load organization-specific checklist and check admin status on mount
+  // Load organization-specific checklist on mount
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
-      const { organizationCode, adminEmail } = JSON.parse(familyData);
-      
-      // Check if current user is admin (simplified check)
-      setIsAdmin(adminEmail && adminEmail.trim() !== "");
-      
+      const { organizationCode } = JSON.parse(familyData);
       const savedChecklist = localStorage.getItem(`checklist_${organizationCode}`);
       if (savedChecklist) {
         setChecklistItems(JSON.parse(savedChecklist));
       }
     }
   }, []);
-
   const handleCheckChange = (itemId: string, checked: boolean) => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
   };

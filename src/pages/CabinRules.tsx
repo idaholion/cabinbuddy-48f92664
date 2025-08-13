@@ -8,22 +8,12 @@ import { Link } from "react-router-dom";
 import { useCabinRules } from "@/hooks/useCabinRules";
 import { CabinRulesEditor } from "@/components/CabinRulesEditor";
 import { useOrganization } from "@/hooks/useOrganization";
-
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 const CabinRules = () => {
   const { cabinRules, loading, updateCabinRule } = useCabinRules();
   const { organization } = useOrganization();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useOrgAdmin();
   const [editingSection, setEditingSection] = useState<string | null>(null);
-
-  // Check if current user is admin
-  useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { adminEmail } = JSON.parse(familyData);
-      setIsAdmin(adminEmail && adminEmail.trim() !== "");
-    }
-  }, []);
-
   // Show loading state
   if (loading) {
     return (

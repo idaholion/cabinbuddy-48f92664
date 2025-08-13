@@ -14,7 +14,7 @@ import { useCheckinSessions } from "@/hooks/useChecklistData";
 import { useReservations } from "@/hooks/useReservations";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 const DailyCheckIn = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -33,7 +33,7 @@ const DailyCheckIn = () => {
   const [currentReservation, setCurrentReservation] = useState<any>(null);
   const [existingSession, setExistingSession] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAdmin } = useOrgAdmin();
   const [newItemLabel, setNewItemLabel] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
@@ -55,18 +55,13 @@ const DailyCheckIn = () => {
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
-      const { organizationCode, adminEmail } = JSON.parse(familyData);
-      
-      // Check if current user is admin (simplified check)
-      setIsAdmin(adminEmail && adminEmail.trim() !== "");
-      
+      const { organizationCode } = JSON.parse(familyData);
       const savedDailyTasks = localStorage.getItem(`daily_tasks_${organizationCode}`);
       if (savedDailyTasks) {
         setDailyTasks(JSON.parse(savedDailyTasks));
       }
     }
   }, []);
-
   // Find current active reservation for the user
   useEffect(() => {
     if (!userFamilyGroup || !reservations.length) {
