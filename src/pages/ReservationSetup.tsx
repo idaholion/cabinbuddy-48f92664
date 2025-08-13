@@ -511,7 +511,7 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-2">
-                <Label className="text-base font-medium">Family Group Rotation Order:</Label>
+                <Label className="text-base font-medium">Family Group Rotation Order in {rotationYear}:</Label>
                 {rotationOrder.map((selectedGroup, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <span className="font-medium w-6">{index + 1}.</span>
