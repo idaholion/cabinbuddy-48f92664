@@ -480,18 +480,18 @@ export default function ReservationSetup() {
               
               <div className="space-y-3">
                  <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
-                   <span>If Group Order Rotates selected, this order will rotate each year, with the person who selected</span>
-                   <Select value={firstLastOption} onValueChange={setFirstLastOption}>
-                     <SelectTrigger className="w-20 text-lg">
-                       <SelectValue className="text-lg" />
-                     </SelectTrigger>
-                     <SelectContent className="text-lg">
-                       <SelectItem value="first" className="text-lg">First</SelectItem>
-                       <SelectItem value="last" className="text-lg">Last</SelectItem>
-                     </SelectContent>
-                   </Select>
-                   <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year</span>
-                 </div>
+                    <span>If Group Order Rotates selected, this order will rotate each year, with the person who selected</span>
+                    <Select value={firstLastOption} onValueChange={setFirstLastOption}>
+                      <SelectTrigger className="w-20 text-lg">
+                        <SelectValue className="text-lg" />
+                      </SelectTrigger>
+                      <SelectContent className="text-lg">
+                        <SelectItem value="first" className="text-lg">First</SelectItem>
+                        <SelectItem value="last" className="text-lg">Last</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year.</span>
+                  </div>
                  
                  <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                    <span>The selection will start the first day of</span>
