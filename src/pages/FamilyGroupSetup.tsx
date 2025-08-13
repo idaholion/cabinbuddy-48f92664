@@ -126,8 +126,16 @@ const FamilyGroupSetup = () => {
         setValue("hostMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
+        // Automatically copy Group Lead info to Host Member 1
+        const leadAsHostMember = {
+          name: selectedFamilyGroup.lead_name || "",
+          phone: selectedFamilyGroup.lead_phone || "",
+          email: selectedFamilyGroup.lead_email || "",
+          canReserve: true // Group leads can always reserve
+        };
+        
         setValue("hostMembers", [
-          { name: "", phone: "", email: "", canReserve: false },
+          leadAsHostMember,
           { name: "", phone: "", email: "", canReserve: false },
           { name: "", phone: "", email: "", canReserve: false }
         ]);
@@ -136,6 +144,22 @@ const FamilyGroupSetup = () => {
       form.reset();
     }
   }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup]);
+
+  // Auto-update Host Member 1 when Group Lead info changes
+  useEffect(() => {
+    const currentHostMembers = getValues("hostMembers");
+    if (currentHostMembers && currentHostMembers.length > 0 && watchedData.leadName) {
+      // Update first host member with Group Lead info
+      const updatedHostMembers = [...currentHostMembers];
+      updatedHostMembers[0] = {
+        name: watchedData.leadName || "",
+        phone: watchedData.leadPhone || "",
+        email: watchedData.leadEmail || "",
+        canReserve: true // Group leads can always reserve
+      };
+      setValue("hostMembers", updatedHostMembers);
+    }
+  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues]);
 
   const onSubmit = async (data: FamilyGroupSetupFormData) => {
     if (!data.selectedGroup) {
@@ -656,16 +680,17 @@ const FamilyGroupSetup = () => {
                            <SelectTrigger className="w-full text-lg">
                              <SelectValue placeholder="Select alternate lead" className="text-lg" />
                            </SelectTrigger>
-                           <SelectContent className="bg-background z-50 text-lg">
-                             <SelectItem value="none" className="text-lg">None selected</SelectItem>
-                             {watchedData.hostMembers
-                               ?.filter(member => member.name && member.name.trim() !== '')
-                               .map((member, index) => (
-                                 <SelectItem key={index} value={member.name || ""} className="text-lg">
-                                   {member.name}
-                                 </SelectItem>
-                               ))}
-                           </SelectContent>
+                            <SelectContent className="bg-background z-50 text-lg">
+                              <SelectItem value="none" className="text-lg">None selected</SelectItem>
+                              {watchedData.hostMembers
+                                ?.filter(member => member.name && member.name.trim() !== '')
+                                .filter(member => member.name !== watchedData.leadName) // Exclude Group Lead
+                                .map((member, index) => (
+                                  <SelectItem key={index} value={member.name || ""} className="text-lg">
+                                    {member.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                       </FormControl>
                       <FormMessage />
