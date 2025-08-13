@@ -101,6 +101,13 @@ const CheckoutList = () => {
         setSurveyItems(JSON.parse(savedSurveyItems));
       }
       
+      // Load saved checklist completion state
+      const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
+      if (savedCompletion) {
+        const completionData = JSON.parse(savedCompletion);
+        setCheckedTasks(new Set(completionData.checkedTasks || []));
+      }
+      
       const initialSurveyData: Record<string, string> = {};
       surveyItems.forEach(item => {
         initialSurveyData[item.id] = "";
@@ -302,6 +309,27 @@ const CheckoutList = () => {
   const totalTasks = checklistSections.reduce((total, section) => total + section.tasks.length, 0);
   const completedTasks = checkedTasks.size;
   const progressPercentage = (completedTasks / totalTasks) * 100;
+  const isChecklistComplete = totalTasks > 0 && completedTasks === totalTasks;
+
+  // Save checklist completion status
+  const saveChecklistCompletion = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      const completionData = {
+        checkedTasks: Array.from(checkedTasks),
+        isComplete: isChecklistComplete,
+        completedAt: isChecklistComplete ? new Date().toISOString() : null,
+        totalTasks,
+        completedTasks
+      };
+      localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
+      toast({
+        title: "Checklist Saved",
+        description: `Checkout checklist saved (${completedTasks}/${totalTasks} tasks completed)`,
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -685,11 +713,57 @@ const CheckoutList = () => {
                 />
               </div>
 
-              <Button className="mt-4 text-base" asChild>
-                <Link to="/checkout-final">
-                  Proceed to Final Checkout
-                </Link>
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-6">
+              <Button
+                onClick={saveChecklistCompletion}
+                variant="outline"
+                className="text-base"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Checklist
               </Button>
+              
+              {isAdmin && (
+                <Button
+                  onClick={() => {
+                    setIsEditing(!isEditing);
+                    setEditingTaskId(null);
+                    setEditingLabel("");
+                    setEditingSectionId(null);
+                    setEditingSectionTitle("");
+                    setNewTaskLabel("");
+                  }}
+                  variant="outline"
+                  className="text-base"
+                >
+                  {isEditing ? "Done Editing" : "Edit Lists"}
+                </Button>
+              )}
+              
+              <Button
+                onClick={() => {
+                  if (isChecklistComplete) {
+                    saveChecklistCompletion();
+                    toast({
+                      title: "Checkout Complete!",
+                      description: "All tasks completed. Proceeding to final checkout.",
+                    });
+                    navigate("/checkout-final");
+                  } else {
+                    toast({
+                      title: "Checklist Incomplete",
+                      description: `Please complete all ${totalTasks} tasks before proceeding to final checkout.`,
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="flex-1 text-base"
+                disabled={!isChecklistComplete}
+              >
+                {isChecklistComplete ? "Proceed to Final Checkout" : `Complete All Tasks (${completedTasks}/${totalTasks})`}
+              </Button>
+            </div>
             </div>
           </CardContent>
         </Card>

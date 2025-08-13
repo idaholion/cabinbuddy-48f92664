@@ -18,6 +18,25 @@ const CheckoutFinal = () => {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { reservations, loading: reservationsLoading } = useReservations();
 
+  // Check checkout list completion
+  const [checklistStatus, setChecklistStatus] = useState<{
+    isComplete: boolean;
+    completedAt: string | null;
+    totalTasks: number;
+    completedTasks: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (familyData) {
+      const { organizationCode } = JSON.parse(familyData);
+      const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
+      if (savedCompletion) {
+        setChecklistStatus(JSON.parse(savedCompletion));
+      }
+    }
+  }, []);
+
   // Get the most recent reservation for checkout data
   const currentReservation = reservations
     .filter(r => r.status === 'confirmed')
@@ -163,6 +182,25 @@ const CheckoutFinal = () => {
                 </p>
                 <Button onClick={() => navigate("/")} className="text-base">
                   Return to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : !checklistStatus?.isComplete ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center space-y-3">
+                <h3 className="text-lg font-semibold text-destructive">Checkout List Not Complete</h3>
+                <p className="text-base text-muted-foreground">
+                  Please complete the checkout checklist before proceeding with final checkout.
+                </p>
+                {checklistStatus && (
+                  <p className="text-base text-muted-foreground">
+                    Progress: {checklistStatus.completedTasks}/{checklistStatus.totalTasks} tasks completed
+                  </p>
+                )}
+                <Button onClick={() => navigate("/checkout-list")} className="text-base">
+                  Complete Checkout List
                 </Button>
               </div>
             </CardContent>
