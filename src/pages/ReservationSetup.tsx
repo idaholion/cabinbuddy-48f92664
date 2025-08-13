@@ -122,15 +122,9 @@ export default function ReservationSetup() {
             setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
             setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
             
-            // Load the rotation order
+            // Load the rotation order - use saved order directly
             if (savedOrder.length > 0) {
-              const fullOrder = new Array(familyGroups.length).fill('');
-              savedOrder.forEach((group, index) => {
-                if (index < fullOrder.length) {
-                  fullOrder[index] = group;
-                }
-              });
-              setRotationOrder(fullOrder);
+              setRotationOrder(savedOrder.map(String));
             }
           }
         }
@@ -139,10 +133,10 @@ export default function ReservationSetup() {
       }
     };
     
-    if (organization?.id && familyGroups.length > 0) {
+    if (organization?.id) {
       loadExistingRotationOrder();
     }
-  }, [organization?.id, familyGroups.length, rotationYear]);
+  }, [organization?.id, rotationYear]);
 
   const handleRotationOrderChange = (index: number, value: string) => {
     const newOrder = [...rotationOrder];
