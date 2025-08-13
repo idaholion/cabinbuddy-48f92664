@@ -479,8 +479,8 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-3">
-                 <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
-                    <span>If Group Order Rotates selected, this order will rotate each year, with the</span>
+                 <div className="flex items-baseline gap-2 text-base text-muted-foreground">
+                    <span>If Group Order Rotates selected, this order will rotate each year, with the person who selected</span>
                     <Select value={firstLastOption} onValueChange={setFirstLastOption}>
                       <SelectTrigger className="w-20 text-lg">
                         <SelectValue className="text-lg" />
@@ -490,7 +490,7 @@ export default function ReservationSetup() {
                         <SelectItem value="last" className="text-lg">Last</SelectItem>
                       </SelectContent>
                     </Select>
-                    <span>selector moving to {firstLastOption === "first" ? "last" : "first"} position the following year.</span>
+                    <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year.</span>
                   </div>
                  
                  <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
