@@ -80,25 +80,36 @@ const Intro = () => {
       {/* Background image container */}
       <div
         data-background="true"
-        className="absolute inset-0 bg-center bg-no-repeat"
+        className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 bg-center bg-cover bg-no-repeat"
         style={{
-          backgroundImage: 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
+          backgroundImage: 'url(https://cabinbuddy.lovable.app/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
         }}
         ref={(el) => {
           if (el && !el.dataset.initialized) {
             el.dataset.initialized = 'true';
-            // Only set the image; let CSS control sizing/position/repeat
-            el.style.setProperty('background-image', 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)');
+            // Use full URL for custom domain compatibility
+            el.style.setProperty('background-image', 'url(https://cabinbuddy.lovable.app/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)');
           }
         }}
       >
       </div>
 
       {/* Content */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
+            Cabin Buddy
+          </h1>
+          <p className="text-xl sm:text-2xl text-white/90 mb-12 drop-shadow-md max-w-3xl mx-auto">
+            Manage shared property bookings, expenses, and billing with ease
+          </p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
       <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-auto mb-0 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 
             onClick={() => navigate("/signup")}
             size="lg" 
