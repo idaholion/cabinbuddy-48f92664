@@ -316,7 +316,22 @@ const FinancialSetupPage = () => {
                 )}
                 
                 <div>
-                  <Label htmlFor="payment-terms" className="text-base">Payment Terms</Label>
+                  <Label htmlFor="annual-fee-terms" className="text-base">Annual Fee Terms</Label>
+                  <Select>
+                    <SelectTrigger className="text-lg">
+                      <SelectValue placeholder="When is annual fee due?" className="text-lg" />
+                    </SelectTrigger>
+                    <SelectContent className="text-lg">
+                      <SelectItem value="january-1" className="text-lg">Due January 1st</SelectItem>
+                      <SelectItem value="membership-anniversary" className="text-lg">Due on Membership Anniversary</SelectItem>
+                      <SelectItem value="season-start" className="text-lg">Due at Season Start</SelectItem>
+                      <SelectItem value="quarterly" className="text-lg">Quarterly Payments</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="payment-terms" className="text-base">Use Fee Payment Terms</Label>
                   <Select value={paymentTerms} onValueChange={setPaymentTerms}>
                     <SelectTrigger className="text-lg">
                       <SelectValue placeholder="Select payment terms" className="text-lg" />

@@ -132,7 +132,21 @@ export const FinancialSetupSheet = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="payment-terms">Payment Terms</Label>
+                  <Label htmlFor="annual-fee-terms">Annual Fee Terms</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="When is annual fee due?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="january-1">Due January 1st</SelectItem>
+                      <SelectItem value="membership-anniversary">Due on Membership Anniversary</SelectItem>
+                      <SelectItem value="season-start">Due at Season Start</SelectItem>
+                      <SelectItem value="quarterly">Quarterly Payments</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="payment-terms">Use Fee Payment Terms</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Select payment terms" />
