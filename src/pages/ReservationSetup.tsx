@@ -495,10 +495,10 @@ export default function ReservationSetup() {
                  
                  <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                    <span>The selection will start the first day of</span>
-                   <Select value={startMonth} onValueChange={setStartMonth}>
-                     <SelectTrigger className="w-24 text-lg">
-                       <SelectValue className="text-lg" />
-                     </SelectTrigger>
+                    <Select value={startMonth} onValueChange={setStartMonth}>
+                      <SelectTrigger className="w-36 text-lg">
+                        <SelectValue className="text-lg" />
+                      </SelectTrigger>
                      <SelectContent className="text-lg">
                        {["January", "February", "March", "April", "May", "June", 
                          "July", "August", "September", "October", "November", "December"].map((month) => (
