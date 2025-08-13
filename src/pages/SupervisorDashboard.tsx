@@ -12,6 +12,7 @@ import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
+import { DebugModePanel } from '@/components/DebugModePanel';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -142,6 +143,7 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
+            <TabsTrigger value="debug" className="text-base">Debug Mode</TabsTrigger>
           </TabsList>
 
           <TabsContent value="organizations" className="space-y-6">
@@ -232,6 +234,10 @@ export const SupervisorDashboard = () => {
               organizations={organizations} 
               onDataChanged={refetchOrganizations}
             />
+          </TabsContent>
+
+          <TabsContent value="debug">
+            <DebugModePanel />
           </TabsContent>
         </Tabs>
       </div>
