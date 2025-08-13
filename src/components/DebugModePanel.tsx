@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Play, ArrowLeft, Bug, Eye } from 'lucide-react';
+import { Search, Play, ArrowLeft, Bug, Eye, Activity } from 'lucide-react';
+import { SystemHealthCheck } from '@/components/SystemHealthCheck';
 
 interface DebugScreen {
   name: string;
@@ -72,6 +73,22 @@ export const DebugModePanel = () => {
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [showSystemHealth, setShowSystemHealth] = useState(false);
+
+  // Mock system health metrics for demo
+  const mockMetrics = {
+    status: 'healthy' as const,
+    uptime: 86400, // 1 day in seconds
+    responseTime: 150,
+    errorRate: 0.005,
+    activeUsers: 42,
+    databaseConnections: 8
+  };
+
+  const handleHealthRefresh = () => {
+    // In a real implementation, this would fetch actual metrics
+    console.log('Refreshing system health metrics...');
+  };
 
   const categories = ['All', ...Array.from(new Set(debugScreens.map(screen => screen.category)))];
 
@@ -121,6 +138,14 @@ export const DebugModePanel = () => {
         </CardHeader>
       </Card>
 
+      {/* System Health Check */}
+      {showSystemHealth && (
+        <SystemHealthCheck
+          metrics={mockMetrics}
+          onRefresh={handleHealthRefresh}
+        />
+      )}
+
       {/* Search and Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -132,6 +157,14 @@ export const DebugModePanel = () => {
             className="pl-10"
           />
         </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowSystemHealth(!showSystemHealth)}
+          className="flex items-center gap-2"
+        >
+          <Activity className="h-4 w-4" />
+          {showSystemHealth ? 'Hide' : 'Show'} System Health
+        </Button>
         <div className="flex gap-2 flex-wrap">
           {categories.map((category) => (
             <Button
