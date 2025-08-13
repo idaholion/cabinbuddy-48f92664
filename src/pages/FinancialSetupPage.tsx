@@ -126,7 +126,28 @@ const FinancialSetupPage = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label className="text-base">Use Fee Method (Required)</Label>
+                  <Label className="text-base">Annual Fee</Label>
+                  <div className="relative mt-3">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input 
+                      id="annual-fee-amount" 
+                      placeholder="0.00" 
+                      type="number"
+                      step="0.01"
+                      className="pl-8 text-lg placeholder:text-lg"
+                    />
+                  </div>
+                </div>
+                <div></div>
+              </div>
+              
+              <div className="text-center my-4">
+                <Label className="text-base font-medium">And/Or</Label>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-base">Use Fee</Label>
                   <RadioGroup value={useFeeMethod} onValueChange={setUseFeeMethod} className="mt-3">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-per-day" id="per-person-per-day" />
@@ -143,10 +164,6 @@ const FinancialSetupPage = () => {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-week" id="flat-rate-per-week" />
                       <Label htmlFor="flat-rate-per-week" className="text-base">Flat Rate Per Week</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="flat-rate-per-season" id="flat-rate-per-season" />
-                      <Label htmlFor="flat-rate-per-season" className="text-base">Flat Rate Per Season</Label>
                     </div>
                   </RadioGroup>
                 </div>

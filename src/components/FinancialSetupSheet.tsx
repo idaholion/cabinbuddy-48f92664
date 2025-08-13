@@ -54,7 +54,25 @@ export const FinancialSetupSheet = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label>Use Fee Method (Required)</Label>
+                  <Label>Annual Fee</Label>
+                  <Input 
+                    id="annual-fee-amount" 
+                    placeholder="Enter amount" 
+                    type="number"
+                    step="0.01"
+                    className="mt-3"
+                  />
+                </div>
+                <div></div>
+              </div>
+              
+              <div className="text-center my-4">
+                <Label className="font-medium">And/Or</Label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <Label>Use Fee</Label>
                   <RadioGroup value={useFeeMethod} onValueChange={setUseFeeMethod} className="mt-3">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-per-day" id="per-person-per-day" />
@@ -71,10 +89,6 @@ export const FinancialSetupSheet = () => {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-week" id="flat-rate-per-week" />
                       <Label htmlFor="flat-rate-per-week">Flat Rate Per Week</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="flat-rate-per-season" id="flat-rate-per-season" />
-                      <Label htmlFor="flat-rate-per-season">Flat Rate Per Season</Label>
                     </div>
                   </RadioGroup>
                 </div>

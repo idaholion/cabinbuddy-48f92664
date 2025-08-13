@@ -1,6 +1,6 @@
 export interface BillingConfig {
   method: 'per-person-per-day' | 'per-person-per-week' | 
-          'flat-rate-per-day' | 'flat-rate-per-week' | 'flat-rate-per-season';
+          'flat-rate-per-day' | 'flat-rate-per-week';
   amount: number;
   taxRate?: number;
   cleaningFee?: number;
@@ -73,22 +73,6 @@ export class BillingCalculator {
         const weeksFlat = stay.weeks || Math.ceil(stay.nights / 7);
         return weeksFlat * config.amount;
         
-        
-      case 'flat-rate-per-season':
-        if (!stay.seasonStartDate || !stay.seasonEndDate) {
-          throw new Error('Season dates required for seasonal billing');
-        }
-        // Check if stay overlaps with season
-        const stayStart = stay.checkInDate.getTime();
-        const stayEnd = stay.checkOutDate.getTime();
-        const seasonStart = stay.seasonStartDate.getTime();
-        const seasonEnd = stay.seasonEndDate.getTime();
-        
-        if (stayStart >= seasonStart && stayEnd <= seasonEnd) {
-          return config.amount;
-        }
-        throw new Error('Stay dates fall outside of season billing period');
-        
       default:
         throw new Error(`Unknown billing method: ${config.method}`);
     }
@@ -110,10 +94,6 @@ export class BillingCalculator {
       case 'flat-rate-per-week':
         const weeksFlat = stay.weeks || Math.ceil(stay.nights / 7);
         return `${weeksFlat} weeks × $${config.amount}/week = $${baseAmount}`;
-        
-        
-      case 'flat-rate-per-season':
-        return `Seasonal flat rate = $${baseAmount}`;
         
       default:
         return `Base amount = $${baseAmount}`;
