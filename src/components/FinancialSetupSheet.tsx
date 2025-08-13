@@ -15,7 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { DollarSign, CreditCard, Calendar, Settings, Users, FileText } from "lucide-react";
+import { DollarSign, CreditCard, Calendar as CalendarIcon, Settings, Users, FileText } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export const FinancialSetupSheet = () => {
   const [autoInvoicing, setAutoInvoicing] = useState(false);
@@ -46,7 +49,7 @@ export const FinancialSetupSheet = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
                 Billing Rates
               </CardTitle>
               <CardDescription>Set your cabin rental rates and pricing</CardDescription>
@@ -132,18 +135,69 @@ export const FinancialSetupSheet = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="annual-fee-terms">Annual Fee Terms</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="When is annual fee due?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="january-1">Due January 1st</SelectItem>
-                      <SelectItem value="membership-anniversary">Due on Membership Anniversary</SelectItem>
-                      <SelectItem value="season-start">Due at Season Start</SelectItem>
-                      <SelectItem value="quarterly">Quarterly Payments</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Annual Fee Terms</Label>
+                  <div className="space-y-3 mt-3">
+                    <RadioGroup defaultValue="single-date" className="space-y-3">
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="single-date" id="single-date-sheet" />
+                          <Label htmlFor="single-date-sheet">Single Date</Label>
+                        </div>
+                        <div className="ml-6">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <span>Pick annual fee due date</span>
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="quarterly" id="quarterly-sheet" />
+                          <Label htmlFor="quarterly-sheet">Quarterly Payments starting</Label>
+                        </div>
+                        <div className="ml-6">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                <span>Pick quarterly start date</span>
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="payment-terms">Use Fee Payment Terms</Label>
