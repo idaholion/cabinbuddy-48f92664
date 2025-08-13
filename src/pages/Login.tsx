@@ -122,24 +122,6 @@ const Login = () => {
                   <LogIn className="h-4 w-4 mr-2" />
                   {loading ? "Signing In..." : "Sign In"}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full" 
-                  disabled={loading}
-                  onClick={async () => {
-                    setLoading(true);
-                    const { error } = await signIn('', '');
-                    if (error) {
-                      console.error('Anonymous login error:', error);
-                    } else {
-                      navigate("/home");
-                    }
-                    setLoading(false);
-                  }}
-                >
-                  Continue as Guest (Temporary)
-                </Button>
                 <div className="text-center">
                   <button 
                     type="button"
