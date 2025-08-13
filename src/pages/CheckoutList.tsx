@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Circle, Edit3, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Edit3, Plus, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+
 const CheckoutList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -16,6 +17,8 @@ const CheckoutList = () => {
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState("");
   const [checklistSections, setChecklistSections] = useState([
     {
       title: "Lower Level Inside",
@@ -70,6 +73,7 @@ const CheckoutList = () => {
       ]
     }
   ]);
+
   const [surveyItems, setSurveyItems] = useState([
     { id: "shopped", label: "Shopped - Groceries, Sporting Goods, Home Improvements/Lumber" },
     { id: "homeRepair", label: "Home Repair" },
@@ -82,7 +86,6 @@ const CheckoutList = () => {
   ]);
   const [surveyData, setSurveyData] = useState<Record<string, string>>({});
 
-  // Check admin status and load saved checkout checklist and survey
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
@@ -98,7 +101,6 @@ const CheckoutList = () => {
         setSurveyItems(JSON.parse(savedSurveyItems));
       }
       
-      // Initialize survey data based on current survey items
       const initialSurveyData: Record<string, string> = {};
       surveyItems.forEach(item => {
         initialSurveyData[item.id] = "";
@@ -106,8 +108,8 @@ const CheckoutList = () => {
       setSurveyData(initialSurveyData);
     }
   }, []);
+
   const handleSurveyChange = (field: string, value: string) => {
-    // Only allow digits and limit to 6 characters
     const numericValue = value.replace(/\D/g, "").slice(0, 6);
     setSurveyData(prev => ({
       ...prev,
@@ -145,6 +147,57 @@ const CheckoutList = () => {
       toast({
         title: "Survey Items Saved",
         description: "Survey items have been saved for your organization.",
+      });
+    }
+  };
+
+  const startEditSectionTitle = (sectionIndex: number, currentTitle: string) => {
+    setEditingSectionId(sectionIndex);
+    setEditingSectionTitle(currentTitle);
+  };
+
+  const saveEditSectionTitle = () => {
+    if (editingSectionTitle.trim() && editingSectionId !== null) {
+      const updatedSections = [...checklistSections];
+      updatedSections[editingSectionId].title = editingSectionTitle.trim();
+      setChecklistSections(updatedSections);
+      setEditingSectionId(null);
+      setEditingSectionTitle("");
+      saveCheckoutList();
+      toast({
+        title: "Section Title Updated",
+        description: "Section title has been updated.",
+      });
+    }
+  };
+
+  const cancelEditSectionTitle = () => {
+    setEditingSectionId(null);
+    setEditingSectionTitle("");
+  };
+
+  const deleteSection = (sectionIndex: number) => {
+    const updatedSections = checklistSections.filter((_, index) => index !== sectionIndex);
+    setChecklistSections(updatedSections);
+    saveCheckoutList();
+    toast({
+      title: "Section Deleted",
+      description: "Checkout section has been removed.",
+    });
+  };
+
+  const addNewSection = () => {
+    if (newTaskLabel.trim()) {
+      const newSection = {
+        title: newTaskLabel.trim(),
+        tasks: []
+      };
+      setChecklistSections(prev => [...prev, newSection]);
+      setNewTaskLabel("");
+      saveCheckoutList();
+      toast({
+        title: "Section Added",
+        description: "New checkout section has been added.",
       });
     }
   };
@@ -252,7 +305,6 @@ const CheckoutList = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -280,7 +332,6 @@ const CheckoutList = () => {
         </div>
       </div>
 
-      {/* Progress Bar */}
       <div className="bg-card border-b">
         <div className="container mx-auto px-4 py-3">
           <div className="w-full bg-secondary rounded-full h-2">
@@ -295,16 +346,62 @@ const CheckoutList = () => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid gap-6">
           {checklistSections.map((section, sectionIndex) => (
-            <Card key={section.title}>
+            <Card key={sectionIndex}>
               <CardHeader>
-                <CardTitle className="text-xl">{section.title}</CardTitle>
-                <CardDescription className="text-base">
-                  {section.tasks.filter(task => checkedTasks.has(`${sectionIndex}-${task}`)).length} of {section.tasks.length} tasks completed
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  {editingSectionId === sectionIndex ? (
+                    <div className="flex items-center space-x-2 flex-1">
+                      <Input
+                        value={editingSectionTitle}
+                        onChange={(e) => setEditingSectionTitle(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') saveEditSectionTitle();
+                          if (e.key === 'Escape') cancelEditSectionTitle();
+                        }}
+                        className="text-xl font-semibold text-base placeholder:text-base"
+                        autoFocus
+                      />
+                      <Button onClick={saveEditSectionTitle} size="sm" variant="outline" className="text-base">
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      <Button onClick={cancelEditSectionTitle} size="sm" variant="outline" className="text-base">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <CardTitle className="text-xl">{section.title}</CardTitle>
+                        <CardDescription className="text-base">
+                          {section.tasks.filter(task => checkedTasks.has(`${sectionIndex}-${task}`)).length} of {section.tasks.length} tasks completed
+                        </CardDescription>
+                      </div>
+                      {isAdmin && isEditing && (
+                        <div className="flex items-center space-x-1">
+                          <Button 
+                            onClick={() => startEditSectionTitle(sectionIndex, section.title)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-base"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            onClick={() => deleteSection(sectionIndex)} 
+                            size="sm" 
+                            variant="ghost"
+                            className="text-destructive hover:text-destructive text-base"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-0.5">
@@ -426,9 +523,28 @@ const CheckoutList = () => {
               </CardContent>
             </Card>
           ))}
+
+          {isAdmin && isEditing && (
+            <Card className="border-dashed">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Add new section..."
+                    value={newTaskLabel}
+                    onChange={(e) => setNewTaskLabel(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addNewSection()}
+                    className="text-base placeholder:text-base"
+                  />
+                  <Button onClick={addNewSection} size="sm" className="text-base">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Section
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Completion Message */}
         {completedTasks === totalTasks && (
           <Card className="mt-6 bg-primary/10 border-primary/20">
             <CardContent className="p-6 text-center">
@@ -443,7 +559,6 @@ const CheckoutList = () => {
           </Card>
         )}
 
-        {/* Cabin Coalition Survey */}
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-xl">Cabin Coalition Economic Survey</CardTitle>
@@ -519,7 +634,6 @@ const CheckoutList = () => {
                 </div>
               ))}
 
-
               {isEditing && (
                 <div className="flex items-center space-x-2 mt-4">
                   <Input
@@ -558,7 +672,6 @@ const CheckoutList = () => {
                 </div>
               )}
 
-              {/* Approximate $ spent section */}
               <div className="flex items-center gap-4 mt-6 pt-4 border-t">
                 <Label className="text-base font-medium">
                   Approximate $ spent in area
