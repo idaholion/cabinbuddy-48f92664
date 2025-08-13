@@ -1,6 +1,6 @@
 export interface BillingConfig {
   method: 'per-person-per-day' | 'per-person-per-week' | 'per-person-entire-stay' | 
-          'flat-rate-per-day' | 'flat-rate-per-week' | 'flat-rate-entire-stay' | 'flat-rate-per-season';
+          'flat-rate-per-day' | 'flat-rate-per-week' | 'flat-rate-per-season';
   amount: number;
   taxRate?: number;
   cleaningFee?: number;
@@ -75,8 +75,6 @@ export class BillingCalculator {
         const weeksFlat = stay.weeks || Math.ceil(stay.nights / 7);
         return weeksFlat * config.amount;
         
-      case 'flat-rate-entire-stay':
-        return config.amount;
         
       case 'flat-rate-per-season':
         if (!stay.seasonStartDate || !stay.seasonEndDate) {
@@ -117,8 +115,6 @@ export class BillingCalculator {
         const weeksFlat = stay.weeks || Math.ceil(stay.nights / 7);
         return `${weeksFlat} weeks × $${config.amount}/week = $${baseAmount}`;
         
-      case 'flat-rate-entire-stay':
-        return `Flat rate for entire stay = $${baseAmount}`;
         
       case 'flat-rate-per-season':
         return `Seasonal flat rate = $${baseAmount}`;

@@ -77,10 +77,6 @@ export const FinancialSetupSheet = () => {
                       <Label htmlFor="flat-rate-per-week">Flat Rate Per Week</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="flat-rate-entire-stay" id="flat-rate-entire-stay" />
-                      <Label htmlFor="flat-rate-entire-stay">Flat Rate per Entire Stay</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-season" id="flat-rate-per-season" />
                       <Label htmlFor="flat-rate-per-season">Flat Rate Per Season</Label>
                     </div>
