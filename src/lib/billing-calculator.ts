@@ -1,5 +1,5 @@
 export interface BillingConfig {
-  method: 'per-person-per-day' | 'per-person-per-week' | 'per-person-entire-stay' | 
+  method: 'per-person-per-day' | 'per-person-per-week' | 
           'flat-rate-per-day' | 'flat-rate-per-week' | 'flat-rate-per-season';
   amount: number;
   taxRate?: number;
@@ -65,8 +65,6 @@ export class BillingCalculator {
         const weeks = stay.weeks || Math.ceil(stay.nights / 7);
         return stay.guests * weeks * config.amount;
         
-      case 'per-person-entire-stay':
-        return stay.guests * config.amount;
         
       case 'flat-rate-per-day':
         return stay.nights * config.amount;
@@ -105,8 +103,6 @@ export class BillingCalculator {
         const weeks = stay.weeks || Math.ceil(stay.nights / 7);
         return `${stay.guests} guests × ${weeks} weeks × $${config.amount}/person/week = $${baseAmount}`;
         
-      case 'per-person-entire-stay':
-        return `${stay.guests} guests × $${config.amount}/person for entire stay = $${baseAmount}`;
         
       case 'flat-rate-per-day':
         return `${stay.nights} nights × $${config.amount}/day = $${baseAmount}`;

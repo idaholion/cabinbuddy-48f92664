@@ -137,10 +137,6 @@ const FinancialSetupPage = () => {
                       <Label htmlFor="per-person-per-week" className="text-base">Per Person Per Week</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="per-person-entire-stay" id="per-person-entire-stay" />
-                      <Label htmlFor="per-person-entire-stay" className="text-base">Per Person per Entire Stay</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
                       <RadioGroupItem value="flat-rate-per-day" id="flat-rate-per-day" />
                       <Label htmlFor="flat-rate-per-day" className="text-base">Flat Rate Per Day</Label>
                     </div>
