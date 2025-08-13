@@ -21,13 +21,14 @@ export const SelectOrganization = () => {
     }
   }, [loading, organizations, activeOrganization, navigate]);
 
-  const showBackButton = activeOrganization !== null;
-
   // If no organizations and not loading, redirect to onboarding
-  if (!loading && organizations.length === 0) {
-    navigate('/onboarding');
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && organizations.length === 0) {
+      navigate('/onboarding');
+    }
+  }, [loading, organizations, navigate]);
+
+  const showBackButton = activeOrganization !== null;
 
   // If multiple organizations, show selector with navigation
   if (!loading && organizations.length > 0) {
