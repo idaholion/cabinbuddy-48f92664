@@ -179,6 +179,29 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Logout Section */}
+        <SidebarGroup className="border-b pb-2">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  tooltip="Logout"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  <button 
+                    onClick={() => signOut()}
+                    className="flex items-center gap-2 w-full"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Organizations */}
         <SidebarGroup>
           <SidebarGroupLabel>Organizations</SidebarGroupLabel>
@@ -371,28 +394,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Logout Section - Always at bottom */}
-        <SidebarGroup className="mt-auto border-t pt-2">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton 
-                  asChild 
-                  tooltip="Logout"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <button 
-                    onClick={() => signOut()}
-                    className="flex items-center gap-2 w-full"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
