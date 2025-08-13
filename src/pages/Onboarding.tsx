@@ -8,7 +8,7 @@ export const Onboarding = () => {
 
   const handleOrganizationSelected = () => {
     // Navigate to the main app after organization is selected
-    navigate('/');
+    navigate('/home');
   };
 
   return (
