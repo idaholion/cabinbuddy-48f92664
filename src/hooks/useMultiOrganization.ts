@@ -37,15 +37,8 @@ export const useMultiOrganization = () => {
   const fetchUserOrganizations = useCallback(async () => {
     if (!user) return;
 
-    // Check cache first
-    const cachedOrgs = apiCache.get<UserOrganization[]>(cacheKeys.userOrganizations(user.id));
-    if (cachedOrgs) {
-      setOrganizations(cachedOrgs);
-      const primary = cachedOrgs.find(org => org.is_primary);
-      const activeOrg = primary || cachedOrgs[0] || null;
-      setActiveOrganization(activeOrg);
-      return;
-    }
+    // Clear cache first to ensure fresh data
+    apiCache.invalidate(cacheKeys.userOrganizations(user.id));
 
     setLoading(true);
     try {
