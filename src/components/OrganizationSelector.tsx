@@ -159,7 +159,7 @@ export const OrganizationSelector = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-lg">{org.organization_name}</CardTitle>
-                      <CardDescription>Code: {org.organization_code}</CardDescription>
+                      <CardDescription>Member since {new Date(org.joined_at).toLocaleDateString()}</CardDescription>
                     </div>
                     <div className="flex flex-col gap-2">
                       {org.is_primary && (
@@ -174,7 +174,7 @@ export const OrganizationSelector = ({
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">
-                      Joined {new Date(org.joined_at).toLocaleDateString()}
+                      Role: {org.role}
                     </p>
                     <Button
                       variant="ghost"
