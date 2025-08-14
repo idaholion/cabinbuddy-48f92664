@@ -73,6 +73,22 @@ const HostProfile = () => {
   // Update form fields when host name changes
   useEffect(() => {
     if (watchedHostName && availableHosts.length > 0) {
+      if (watchedHostName === "NOT_FOUND") {
+        // Handle "I don't see my name" selection
+        setSelectedHostMember(null);
+        setValue("selectedFamilyGroup", "");
+        setValue("email", "");
+        setValue("phone", "");
+        setSelectedGroup(null);
+        setAvailableHosts([]);
+        toast({
+          title: "Family Group Reset",
+          description: "Please verify you selected the correct family group above.",
+          variant: "default",
+        });
+        return;
+      }
+      
       const hostMember = availableHosts.find(h => h.name === watchedHostName);
       if (hostMember) {
         setSelectedHostMember(hostMember);
@@ -80,7 +96,7 @@ const HostProfile = () => {
         setValue("phone", hostMember.phone || "");
       }
     }
-  }, [watchedHostName, availableHosts, setValue]);
+  }, [watchedHostName, availableHosts, setValue, toast]);
 
   // Auto-populate user information when family groups load
   useEffect(() => {
@@ -392,6 +408,9 @@ const HostProfile = () => {
                               {host.name}
                             </SelectItem>
                           ))}
+                          <SelectItem value="NOT_FOUND" className="text-muted-foreground">
+                            I don't see my name
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
