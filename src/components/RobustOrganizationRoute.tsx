@@ -121,18 +121,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   }
 
   // Handle case where organization exists but user might not be properly associated
-  console.log('Debug organizations state:', { 
-    organizationsLength: organizations.length, 
-    orgLoading, 
-    error, 
-    currentPath: location.pathname,
-    organizations: organizations 
-  });
-  
-  if (organizations.length === 0 && !orgLoading && !error) {
-    console.log('No organizations found for user, redirecting to setup. Current path:', location.pathname);
-    console.log('Is exempt route?', isExemptRoute);
-    
+  if (organizations.length === 0 && !orgLoading && !error) {    
     // Check if this is a setup-related route first
     if (isExemptRoute) {
       return <>{children}</>;
