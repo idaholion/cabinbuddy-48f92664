@@ -76,17 +76,6 @@ const SelectFamilyGroup = () => {
     >
       <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-2xl">
-          {/* Back button */}
-          <div className="mb-6 pt-6 -mb-12">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="text-white hover:bg-white/20"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
-            </Button>
-          </div>
 
           {/* Page title - moved higher for better visibility */}
           <div className="text-center mb-8 pt-8">
@@ -151,6 +140,18 @@ const SelectFamilyGroup = () => {
               )}
             </CardContent>
           </Card>
+          
+          {/* Back button moved to bottom */}
+          <div className="mt-8 text-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+          </div>
         </div>
       </div>
     </div>
