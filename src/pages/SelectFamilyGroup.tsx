@@ -87,12 +87,8 @@ const SelectFamilyGroup = () => {
           {/* Selection card */}
           <Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
             <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center gap-2 text-2xl">
-                <Users className="h-6 w-6" />
-                Family Groups
-              </CardTitle>
-              <CardDescription>
-                Select the family group you belong to in {organization?.name || 'this organization'}
+              <CardDescription className="text-2xl font-kaushan text-green-600 font-medium">
+                Select the family group you belong to in {organization?.name || "this organization"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
