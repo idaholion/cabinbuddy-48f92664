@@ -19,9 +19,34 @@ const SelectFamilyGroup = () => {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
 
   const handleFamilyGroupSelection = async () => {
-    if (!selectedFamilyGroup || !user) return;
+    if (!selectedFamilyGroup || !user) {
+      console.error('Missing required data:', { selectedFamilyGroup, user: !!user });
+      return;
+    }
+
+    console.log('Starting family group selection process:', {
+      selectedFamilyGroup,
+      userEmail: user.email,
+      organizationId: organization?.id
+    });
 
     try {
+      // Find the selected family group first to validate it exists
+      const selectedGroup = familyGroups.find(group => group.name === selectedFamilyGroup);
+      
+      console.log('Selected group data:', selectedGroup);
+      console.log('All family groups:', familyGroups);
+
+      if (!selectedGroup) {
+        console.error('Selected family group not found in available groups');
+        toast({
+          title: "Error",
+          description: "Selected family group could not be found. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Update the user's profile with the selected family group
       const { error } = await supabase
         .from('profiles')
@@ -42,26 +67,50 @@ const SelectFamilyGroup = () => {
         return;
       }
 
+      console.log('Profile updated successfully');
+
       toast({
         title: "Success!",
         description: `You've been added to ${selectedFamilyGroup}`,
       });
 
-      // Find the selected family group to check the user's role within it
-      const selectedGroup = familyGroups.find(group => group.name === selectedFamilyGroup);
+      // Check if user is the group lead of this specific family group
+      const isGroupLead = selectedGroup.lead_email && user.email === selectedGroup.lead_email;
       
-      if (!selectedGroup) {
-        console.error('Selected family group not found');
-        navigate("/host-profile"); // Default fallback
-        return;
+      console.log('Role determination:', {
+        userEmail: user.email,
+        groupLeadEmail: selectedGroup.lead_email,
+        isGroupLead
+      });
+
+      // If no lead email is set, check if user is in host members
+      let shouldGoToSetup = isGroupLead;
+      
+      if (!selectedGroup.lead_email && selectedGroup.host_members) {
+        // If no lead is set, check if user is a host member who can make reservations
+        const hostMember = selectedGroup.host_members.find(
+          (member: any) => member.email === user.email
+        );
+        
+        console.log('Checking host members for user:', {
+          hostMember,
+          canMakeReservations: hostMember?.canMakeReservations
+        });
+        
+        // If user is a host member with reservation permissions, they might be the effective lead
+        if (hostMember?.canMakeReservations) {
+          shouldGoToSetup = true;
+        }
       }
 
-      // Check if user is the group lead of this specific family group
-      const isGroupLead = user.email === selectedGroup.lead_email;
+      console.log('Final navigation decision:', {
+        shouldGoToSetup,
+        destination: shouldGoToSetup ? "/family-group-setup" : "/host-profile"
+      });
       
       // Small delay to allow profile update to propagate, then navigate based on actual role
       setTimeout(() => {
-        if (isGroupLead) {
+        if (shouldGoToSetup) {
           navigate("/family-group-setup");
         } else {
           navigate("/host-profile");
