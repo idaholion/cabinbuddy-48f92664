@@ -10,7 +10,7 @@ import { useSupervisor } from "@/hooks/useSupervisor";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { usePerformanceMonitoring } from "@/hooks/usePerformanceMonitoring";
-import { useMultiOrganization } from "@/hooks/useMultiOrganization";
+import { useRobustMultiOrganization } from "@/hooks/useRobustMultiOrganization";
 import cabinDashboard from "@/assets/cabin-dashboard.jpg";
 
 const UserInfo = () => {
@@ -31,21 +31,12 @@ const UserInfo = () => {
 const Index = () => {
   const { isSupervisor } = useSupervisor();
   const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
-  const { activeOrganization } = useMultiOrganization();
+  const { activeOrganization } = useRobustMultiOrganization();
   const { user, signOut } = useAuth();
   
   // Monitor performance
   usePerformanceMonitoring();
 
-  useEffect(() => {
-    console.log("Index component mounted, checking font");
-    const titleElement = document.querySelector('h1');
-    if (titleElement) {
-      console.log("Title element found:", titleElement);
-      console.log("Current font family:", window.getComputedStyle(titleElement).fontFamily);
-      console.log("Font style:", window.getComputedStyle(titleElement).fontStyle);
-    }
-  }, []);
 
   return (
     <div className="min-h-screen relative">
