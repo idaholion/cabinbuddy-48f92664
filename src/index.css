@@ -301,5 +301,5 @@ All colors MUST be HSL.
 .min-h-screen.hero-background {
   background-repeat: no-repeat !important;
   background-size: cover !important;
-  background-position: center 15% !important;
+  background-position: center top !important;
 }
