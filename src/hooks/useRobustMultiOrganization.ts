@@ -68,6 +68,7 @@ export const useRobustMultiOrganization = () => {
     if (!user?.id) {
       setOrganizations([]);
       setActiveOrganization(null);
+      setInitialLoad(false);
       return;
     }
 
@@ -85,11 +86,16 @@ export const useRobustMultiOrganization = () => {
           cacheKeys.userOrganizations(user.id)
         );
         
-        if (cachedData && !offline) {
+        if (cachedData) {
           setOrganizations(cachedData);
           const primary = cachedData.find(org => org.is_primary);
           setActiveOrganization(primary || cachedData[0] || null);
-          return cachedData;
+          setInitialLoad(false); // Set initial load to false immediately when cache is found
+          
+          if (!offline) {
+            // Continue to fetch fresh data in background but don't block UI
+            return cachedData;
+          }
         }
 
         // If offline and no cache, show offline message
