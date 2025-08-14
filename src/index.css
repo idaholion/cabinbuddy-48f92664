@@ -297,8 +297,8 @@ All colors MUST be HSL.
   }
 }
 
-/* Index page hero with custom positioning - high specificity */
-.min-h-screen.hero-background {
+/* Background positioning for both Index and Intro pages */
+.hero-background {
   background-repeat: no-repeat !important;
   background-size: cover !important;
   background-position: center 30% !important;
