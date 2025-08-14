@@ -347,8 +347,10 @@ export const useRobustMultiOrganization = () => {
 
   // Fetch organizations when user changes
   useEffect(() => {
-    fetchUserOrganizations();
-  }, [fetchUserOrganizations]);
+    if (user?.id) {
+      fetchUserOrganizations();
+    }
+  }, [user?.id]); // Only depend on user.id, not the fetchUserOrganizations function
 
   // Auto-retry when coming back online
   useEffect(() => {
