@@ -137,7 +137,7 @@ const SelectFamilyGroup = () => {
                       className="w-full"
                       size="lg"
                     >
-                      Continue to {organization?.name || 'Cabin'} Management
+                      Continue to Setup
                     </Button>
                   )}
                 </>
