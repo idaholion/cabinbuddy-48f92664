@@ -70,7 +70,7 @@ const Index = () => {
           </Button>
 
           {/* Right side buttons cluster */}
-          <div className="absolute right-32 top-32 md:top-36 space-y-4 w-64">
+          <div className="absolute right-4 md:right-8 lg:right-32 top-32 md:top-36 space-y-4 w-64 max-w-[calc(100vw-2rem)]">
             {/* Main action buttons - all same width */}
             <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/check-in">
