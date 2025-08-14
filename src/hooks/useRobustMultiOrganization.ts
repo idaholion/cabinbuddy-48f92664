@@ -34,6 +34,7 @@ export const useRobustMultiOrganization = () => {
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
   const [activeOrganization, setActiveOrganization] = useState<UserOrganization | null>(null);
   const [offline, setOffline] = useState(!navigator.onLine);
+  const [initialLoad, setInitialLoad] = useState(true);
   const { trackAsyncError } = useEnhancedErrorTracking();
   const lastFetchRef = useRef<string>('');
   
@@ -142,6 +143,7 @@ export const useRobustMultiOrganization = () => {
       }
     } finally {
       lastFetchRef.current = '';
+      setInitialLoad(false);
     }
   }, [user?.id, executeRobust, trackAsyncError, offline]);
 
@@ -359,7 +361,7 @@ export const useRobustMultiOrganization = () => {
   return {
     organizations,
     activeOrganization,
-    loading,
+    loading: loading || initialLoad,
     error,
     offline,
     switchToOrganization,
