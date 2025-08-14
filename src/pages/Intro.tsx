@@ -1,20 +1,24 @@
 import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Intro = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Redirect authenticated users to their dashboard
+  // Check if we're in debug mode
+  const isDebugMode = location.search.includes('debug=true');
+
+  // Redirect authenticated users to their dashboard (unless in debug mode)
   useEffect(() => {
-    if (user) {
+    if (user && !isDebugMode) {
       navigate("/home", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, isDebugMode]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();

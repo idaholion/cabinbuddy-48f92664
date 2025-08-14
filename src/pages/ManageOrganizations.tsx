@@ -1,5 +1,5 @@
 import { OrganizationSelector } from '@/components/OrganizationSelector';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Building, Eye, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
@@ -7,11 +7,15 @@ import { useEffect } from 'react';
 
 export const ManageOrganizations = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { organizations, loading, error, offline, retry } = useRobustMultiOrganization();
 
-  // Redirect logic - users with 0 or 1 organizations shouldn't be here
+  // Check if we're in debug mode
+  const isDebugMode = location.search.includes('debug=true');
+
+  // Redirect logic - users with 0 or 1 organizations shouldn't be here (unless in debug mode)
   useEffect(() => {
-    if (!loading && !error) {
+    if (!loading && !error && !isDebugMode) {
       if (organizations.length === 0) {
         // Users with no organizations should go to setup, not signup
         navigate('/setup');
@@ -19,7 +23,7 @@ export const ManageOrganizations = () => {
         navigate('/home');
       }
     }
-  }, [organizations, loading, error, navigate]);
+  }, [organizations, loading, error, navigate, isDebugMode]);
 
   const handleOrganizationSelected = () => {
     // Navigate to the main app after organization is selected

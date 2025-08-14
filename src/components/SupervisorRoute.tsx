@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,8 +10,12 @@ interface SupervisorRouteProps {
 
 export const SupervisorRoute = ({ children }: SupervisorRouteProps) => {
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [isSupervisor, setIsSupervisor] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Check if we're in debug mode
+  const isDebugMode = location.search.includes('debug=true');
 
   useEffect(() => {
     const checkSupervisorStatus = async () => {
@@ -43,10 +47,17 @@ export const SupervisorRoute = ({ children }: SupervisorRouteProps) => {
       }
     };
 
+    // In debug mode, allow access if user exists (DebugRoute will verify supervisor status)
+    if (isDebugMode && user) {
+      setIsSupervisor(true);
+      setLoading(false);
+      return;
+    }
+
     if (!authLoading) {
       checkSupervisorStatus();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, isDebugMode]);
 
   if (authLoading || loading) {
     return (

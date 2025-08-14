@@ -1,7 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useSupervisor } from '@/hooks/useSupervisor';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface AdminTreasurerRouteProps {
@@ -11,13 +12,25 @@ interface AdminTreasurerRouteProps {
 export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
   const { user, loading: authLoading } = useAuth();
   const { organization } = useOrganization();
+  const { isSupervisor } = useSupervisor();
+  const location = useLocation();
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Check if we're in debug mode
+  const isDebugMode = location.search.includes('debug=true');
 
   useEffect(() => {
     const checkAccess = () => {
       if (!user?.email || !organization) {
         setHasAccess(false);
+        setLoading(false);
+        return;
+      }
+
+      // Allow access in debug mode if user is a supervisor
+      if (isDebugMode && isSupervisor) {
+        setHasAccess(true);
         setLoading(false);
         return;
       }
@@ -34,7 +47,7 @@ export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
     if (!authLoading && organization) {
       checkAccess();
     }
-  }, [user, organization, authLoading]);
+  }, [user, organization, authLoading, isDebugMode, isSupervisor]);
 
   if (authLoading || loading) {
     return (
