@@ -42,6 +42,8 @@ export const useMultiOrganization = () => {
 
     setLoading(true);
     try {
+      console.log('🔍 Fetching organizations for user:', user.id);
+      
       // Direct query instead of RPC function that might be broken
       const { data, error } = await supabase
         .from('user_organizations')
@@ -56,6 +58,8 @@ export const useMultiOrganization = () => {
           )
         `)
         .eq('user_id', user.id);
+      
+      console.log('🔍 Raw query result:', { data, error });
       
       if (error) {
         console.error('Error fetching user organizations:', error);
@@ -72,6 +76,8 @@ export const useMultiOrganization = () => {
         joined_at: item.joined_at
       })) || [];
 
+      console.log('🔍 Transformed data:', transformedData);
+
       setOrganizations(transformedData);
       
       // Cache the results
@@ -80,6 +86,7 @@ export const useMultiOrganization = () => {
       // Set primary organization as active, or first one if no primary
       const primary = transformedData?.find(org => org.is_primary);
       const activeOrg = primary || transformedData?.[0] || null;
+      console.log('🔍 Setting active org:', activeOrg);
       setActiveOrganization(activeOrg);
       
     } catch (error) {
