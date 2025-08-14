@@ -41,10 +41,11 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
-      <div className="relative min-h-screen bg-no-repeat" style={{
+      <div className="relative min-h-screen" style={{
         backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
         backgroundSize: 'cover',
-        backgroundPosition: 'center 50%'
+        backgroundPosition: 'center bottom',
+        backgroundRepeat: 'no-repeat'
       }}>
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
