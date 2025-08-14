@@ -83,14 +83,7 @@ const Intro = () => {
         data-background="true"
         className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 bg-center bg-cover bg-no-repeat"
         style={{
-          backgroundImage: 'url(https://cabinbuddy.lovable.app/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
-        }}
-        ref={(el) => {
-          if (el && !el.dataset.initialized) {
-            el.dataset.initialized = 'true';
-            // Use full URL for custom domain compatibility
-            el.style.setProperty('background-image', 'url(https://cabinbuddy.lovable.app/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)');
-          }
+          backgroundImage: 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
         }}
       >
       </div>
