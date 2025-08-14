@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useRobustUserRole } from "@/hooks/useRobustUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
@@ -30,7 +30,7 @@ const UserInfo = () => {
 
 const Index = () => {
   const { isSupervisor } = useSupervisor();
-  const { isGroupLead, isHostMember, loading: roleLoading } = useUserRole();
+  const { isGroupLead, isHostMember, loading: roleLoading } = useRobustUserRole();
   const { activeOrganization } = useRobustMultiOrganization();
   const { user, signOut } = useAuth();
   
