@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
@@ -19,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 const FamilySetup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
   
@@ -66,6 +68,7 @@ const FamilySetup = () => {
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
   const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
+  const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
   const hasShownToastRef = useRef(false);
 
   // Auto-save all form data
@@ -82,7 +85,8 @@ const FamilySetup = () => {
     calendarKeeperPhone,
     calendarKeeperEmail,
     familyGroups,
-    organizationCode
+    organizationCode,
+    adminFamilyGroup
   };
 
   const { loadSavedData, clearSavedData } = useAutoSave({
@@ -138,6 +142,7 @@ const FamilySetup = () => {
           setFamilyGroups(savedData.familyGroups);
         }
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
+        if (savedData.adminFamilyGroup) setAdminFamilyGroup(savedData.adminFamilyGroup);
         
         if (!hasShownToastRef.current) {
           hasShownToastRef.current = true;
@@ -181,6 +186,7 @@ const FamilySetup = () => {
         setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
         setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
+        if (savedData.adminFamilyGroup) setAdminFamilyGroup(savedData.adminFamilyGroup);
         
         if (!hasShownToastRef.current) {
           hasShownToastRef.current = true;
@@ -219,12 +225,22 @@ const FamilySetup = () => {
 
   // Save organization setup
   const saveOrganizationSetup = async () => {
-    console.log('🔄 Starting saveOrganizationSetup with data:', { orgName, organizationCode, familyGroups });
+    console.log('🔄 Starting saveOrganizationSetup with data:', { orgName, organizationCode, familyGroups, adminFamilyGroup });
     if (!orgName.trim() || !organizationCode.trim()) {
       console.log('❌ Validation failed:', { orgName: orgName.trim(), organizationCode: organizationCode.trim() });
       toast({
         title: "Missing required fields",
         description: "Please provide at least organization name and code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate admin family group selection if creating new organization
+    if (isCreatingNew && !adminFamilyGroup.trim()) {
+      toast({
+        title: "Missing administrator family group",
+        description: "Please select which family group you belong to.",
         variant: "destructive",
       });
       return;
@@ -296,6 +312,28 @@ const FamilySetup = () => {
           }
 
           console.log(`✅ Created ${data?.length || 0} family groups`);
+
+          // If this is a new organization and admin selected a family group, update their profile
+          if (isCreatingNew && adminFamilyGroup.trim()) {
+            try {
+              const { error: profileError } = await supabase
+                .from('profiles')
+                .upsert({ 
+                  user_id: user?.id,
+                  family_group: adminFamilyGroup.trim(),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user?.id);
+
+              if (profileError) {
+                console.error('❌ Failed to update admin profile with family group:', profileError);
+              } else {
+                console.log(`✅ Updated admin profile with family group: ${adminFamilyGroup}`);
+              }
+            } catch (error) {
+              console.error('❌ Error updating admin profile:', error);
+            }
+          }
         } catch (error) {
           console.error('❌ Failed to create initial family groups:', error);
           toast({
@@ -322,7 +360,8 @@ const FamilySetup = () => {
         calendarKeeperName,
         calendarKeeperPhone,
         calendarKeeperEmail,
-        familyGroups
+        familyGroups,
+        adminFamilyGroup
       };
       
       localStorage.setItem('familySetupData', JSON.stringify(setupData));
@@ -344,16 +383,33 @@ const FamilySetup = () => {
     }
   };
 
-  // Save organization setup and navigate to family groups
+  // Save organization setup and navigate based on admin role
   const saveAndContinueToFamilyGroups = async () => {
     try {
       await saveOrganizationSetup();
       // Clear auto-saved data since we're navigating away
       clearSavedData();
-      // Small delay to ensure organization context is updated
-      setTimeout(() => {
-        navigate("/family-group-setup");
-      }, 100);
+      
+      // If this is a new organization and admin selected a family group, 
+      // route them based on their role in that group
+      if (isCreatingNew && adminFamilyGroup.trim()) {
+        // Check if admin is setting themselves as group lead
+        const isGroupLead = adminEmail && adminEmail.trim() !== "";
+        
+        // Small delay to ensure organization context is updated
+        setTimeout(() => {
+          if (isGroupLead) {
+            navigate("/family-group-setup");
+          } else {
+            navigate("/host-profile");
+          }
+        }, 100);
+      } else {
+        // Default to family group setup for existing organizations
+        setTimeout(() => {
+          navigate("/family-group-setup");
+        }, 100);
+      }
     } catch (error) {
       console.error('Error in save and continue:', error);
       // Still navigate even if there was an error, user can retry later
@@ -694,6 +750,36 @@ const FamilySetup = () => {
               <div className="text-sm text-muted-foreground text-center mt-4">
                 <p>After saving, you can add more details like lead contacts and host members for each family group in the next step.</p>
               </div>
+
+              {/* Administrator Family Group Selection - Only for new organizations */}
+              {isCreatingNew && familyGroups.some(g => g.trim()) && (
+                <div className="space-y-3 border-t border-border pt-4">
+                  <h3 className="text-lg font-semibold text-center">Select Your Family Group</h3>
+                  <p className="text-sm text-muted-foreground text-center">
+                    As the administrator, which family group do you belong to?
+                  </p>
+                  <div className="max-w-md mx-auto">
+                    <select
+                      value={adminFamilyGroup}
+                      onChange={(e) => setAdminFamilyGroup(e.target.value)}
+                      className="w-full p-2 border border-border rounded-md bg-background text-foreground"
+                      required
+                    >
+                      <option value="">Choose your family group...</option>
+                      {familyGroups
+                        .filter(group => group.trim() !== "")
+                        .map((group, index) => (
+                          <option key={index} value={group.trim()}>
+                            {group.trim()}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    This helps us route you to the correct setup pages after saving.
+                  </p>
+                </div>
+              )}
               
               {/* Save and Continue Button */}
               <div className="flex justify-center pt-6 border-t border-border">

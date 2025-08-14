@@ -22,27 +22,51 @@ const SelectFamilyGroup = () => {
     if (!selectedFamilyGroup || !user) return;
 
     try {
-      // Update user's profile with selected family group
+      // Update the user's profile with the selected family group
       const { error } = await supabase
         .from('profiles')
-        .update({ family_role: selectedFamilyGroup })
+        .upsert({ 
+          user_id: user.id,
+          family_group: selectedFamilyGroup,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save family group selection. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
-        title: "Success",
-        description: `Selected ${selectedFamilyGroup} as your family group.`
+        title: "Success!",
+        description: `You've been added to ${selectedFamilyGroup}`,
       });
 
-      // Navigate to main application
-      navigate("/");
+      // After selection, determine role and navigate appropriately
+      // Check if user has organizational roles that might indicate they're a group lead
+      const hasAdminRole = user.email === organization?.admin_email || 
+                          user.email === organization?.calendar_keeper_email ||
+                          user.email === organization?.treasurer_email;
+      
+      // Small delay to allow profile update to propagate, then navigate based on likely role
+      setTimeout(() => {
+        if (hasAdminRole) {
+          navigate("/family-group-setup");
+        } else {
+          navigate("/host-profile");
+        }
+      }, 500);
     } catch (error) {
-      console.error('Error updating family group:', error);
+      console.error('Error in family group selection:', error);
       toast({
         title: "Error",
-        description: "Failed to select family group. Please try again.",
-        variant: "destructive"
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     }
   };

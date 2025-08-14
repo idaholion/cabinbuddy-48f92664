@@ -98,8 +98,10 @@ export const useUserRole = () => {
 
   return {
     isGroupLead,
-    isHostMember: !isGroupLead && !!userHostInfo && !isCalendarKeeper,
+    isHostMember: !isGroupLead && !!userHostInfo,
     isCalendarKeeper,
+    isTreasurer: organization?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase(),
+    isAdmin: organization?.admin_email?.toLowerCase() === user?.email?.toLowerCase(),
     userFamilyGroup,
     userHostInfo,
     loading,
