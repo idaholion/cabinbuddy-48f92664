@@ -300,6 +300,20 @@ All colors MUST be HSL.
 /* Background positioning for both Index and Intro pages */
 .hero-background {
   background-repeat: no-repeat !important;
-  background-size: cover !important;
   background-position: center 30% !important;
+}
+
+/* Portrait: shrink to fit (may letterbox) */
+@media (orientation: portrait) {
+  .hero-background {
+    background-size: contain !important;
+    background-color: hsl(var(--background));
+  }
+}
+
+/* Landscape: fill the screen with custom positioning */
+@media (orientation: landscape) {
+  .hero-background {
+    background-size: cover !important;
+  }
 }
