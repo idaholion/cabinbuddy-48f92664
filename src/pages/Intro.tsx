@@ -6,15 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Intro = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Redirect authenticated users to home
-  useEffect(() => {
-    if (!loading && user) {
-      navigate("/home");
-    }
-  }, [user, loading, navigate]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -83,15 +75,6 @@ const Intro = () => {
     }
   };
 
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen relative">
       
@@ -112,17 +95,7 @@ const Intro = () => {
       >
       </div>
 
-      {/* Content */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-            Cabin Buddy
-          </h1>
-          <p className="text-xl sm:text-2xl text-white/90 mb-12 drop-shadow-md max-w-3xl mx-auto">
-            Manage shared property bookings, expenses, and billing with ease
-          </p>
-        </div>
-      </div>
+      {/* Remove overlaid text to show background image with built-in text */}
 
       {/* Action Buttons */}
       <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
