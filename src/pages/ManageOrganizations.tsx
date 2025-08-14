@@ -9,28 +9,22 @@ export const ManageOrganizations = () => {
   const navigate = useNavigate();
   const { organizations, loading } = useMultiOrganization();
 
-  // Check if in debug mode
-  const urlParams = new URLSearchParams(window.location.search);
-  const isDebugMode = urlParams.has('debug') || process.env.NODE_ENV === 'development';
-
-  // Redirect if user has 0 or 1 organizations (shouldn't be on onboarding) - but not in debug mode
+  // Redirect logic - simple and direct
   useEffect(() => {
-    console.log('🔄 ManageOrganizations useEffect - loading:', loading, 'organizations:', organizations.length, 'isDebugMode:', isDebugMode);
+    console.log('🔄 ManageOrganizations useEffect - loading:', loading, 'organizations:', organizations.length);
     
-    if (!loading && !isDebugMode) {
+    if (!loading) {
       if (organizations.length === 0) {
         console.log('🔄 No organizations - redirecting to signup');
-        // No organizations - redirect to signup
         navigate('/signup');
       } else if (organizations.length === 1) {
         console.log('🔄 Only one organization - redirecting to home');
-        // Only one organization - go straight to home
         navigate('/home');
       } else {
         console.log('🔄 Multiple organizations - staying on manage page');
       }
     }
-  }, [organizations, loading, navigate, isDebugMode]);
+  }, [organizations, loading, navigate]);
 
   const handleOrganizationSelected = () => {
     // Navigate to the main app after organization is selected
@@ -49,8 +43,8 @@ export const ManageOrganizations = () => {
     );
   }
 
-  // If we get here, user has 2+ organizations OR we're in debug mode
-  if (!isDebugMode && organizations.length < 2) {
+  // If we get here, user has 2+ organizations
+  if (organizations.length < 2) {
     return null; // Will redirect via useEffect
   }
 
