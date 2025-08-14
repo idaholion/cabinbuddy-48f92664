@@ -32,7 +32,12 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/manage-organizations', 
     '/select-family-group',
     '/auth',
-    '/reset-password'
+    '/reset-password',
+    '/family-setup',
+    '/family-group-setup',
+    '/host-profile',
+    '/financial-setup',
+    '/reservation-setup'
   ];
   
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
@@ -115,8 +120,16 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     );
   }
 
-  // Authenticated user with no organizations - redirect to setup
+  // Handle case where organization exists but user might not be properly associated
   if (organizations.length === 0) {
+    console.log('No organizations found for user, redirecting to setup. Current path:', location.pathname);
+    console.log('Is exempt route?', isExemptRoute);
+    
+    // Check if this is a setup-related route first
+    if (isExemptRoute) {
+      return <>{children}</>;
+    }
+    // For non-exempt routes with no organizations, redirect to setup
     return <Navigate to="/setup" replace />;
   }
 

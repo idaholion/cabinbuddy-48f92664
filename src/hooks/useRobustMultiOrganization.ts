@@ -98,7 +98,10 @@ export const useRobustMultiOrganization = () => {
 
         const { data, error: fetchError } = await supabase.rpc('get_user_organizations');
         
+        console.log('Fetched organizations data:', data);
+        
         if (fetchError) {
+          console.error('Organization fetch error:', fetchError);
           throw new Error(`Failed to fetch organizations: ${fetchError.message}`);
         }
 
