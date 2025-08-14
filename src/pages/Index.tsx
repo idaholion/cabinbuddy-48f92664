@@ -47,8 +47,9 @@ const Index = () => {
           alt="Cabin background"
           className="absolute top-0 left-0 w-full h-full object-cover"
           style={{
-            objectPosition: 'center 20%'
+            objectPosition: '50% 15%'
           }}
+          onLoad={() => console.log('Image positioning test - should show 15% from top')}
         />
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
