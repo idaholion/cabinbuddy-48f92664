@@ -7,12 +7,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { OrganizationRoute } from "@/components/OrganizationRoute";
+import { RobustOrganizationRoute } from "@/components/RobustOrganizationRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
 import { useEnhancedErrorTracking } from '@/hooks/useEnhancedErrorTracking';
 import { useLaunchAnalytics, usePageTracking } from '@/hooks/useLaunchAnalytics';
+import { NetworkStatusProvider } from '@/components/NetworkStatusProvider';
 
 // Eager load frequently used pages
 import Intro from "./pages/Intro";
@@ -95,7 +96,7 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
-        <Route path="/home" element={<DebugRoute><ProtectedRoute><OrganizationRoute><MainLayout><Index /></MainLayout></OrganizationRoute></ProtectedRoute></DebugRoute>} />
+        <Route path="/home" element={<DebugRoute><ProtectedRoute><RobustOrganizationRoute><MainLayout><Index /></MainLayout></RobustOrganizationRoute></ProtectedRoute></DebugRoute>} />
         <Route path="/manage-organizations" element={<DebugRoute><ProtectedRoute><ManageOrganizations /></ProtectedRoute></DebugRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
         <Route path="/setup" element={<DebugRoute><ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute></DebugRoute>} />
@@ -143,13 +144,15 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <ErrorBoundary>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </ErrorBoundary>
-      </AuthProvider>
+      <NetworkStatusProvider>
+        <AuthProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            <AppContent />
+          </ErrorBoundary>
+        </AuthProvider>
+      </NetworkStatusProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

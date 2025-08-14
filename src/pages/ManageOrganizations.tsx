@@ -2,36 +2,62 @@ import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { useNavigate } from 'react-router-dom';
 import { Home, Building, Eye, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMultiOrganization } from '@/hooks/useMultiOrganization';
+import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
 import { useEffect } from 'react';
 
 export const ManageOrganizations = () => {
   const navigate = useNavigate();
-  const { organizations, loading } = useMultiOrganization();
+  const { organizations, loading, error, offline, retry } = useRobustMultiOrganization();
 
   // Redirect logic - users with 0 or 1 organizations shouldn't be here
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !error) {
       if (organizations.length === 0) {
         navigate('/signup');
       } else if (organizations.length === 1) {
         navigate('/home');
       }
     }
-  }, [organizations, loading, navigate]);
+  }, [organizations, loading, error, navigate]);
 
   const handleOrganizationSelected = () => {
     // Navigate to the main app after organization is selected
     navigate('/home');
   };
 
-  // Show loading while checking organizations
+  // Show loading or error state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading your organizations...</p>
+        <div className="space-y-4 w-full max-w-sm">
+          <div className="h-12 w-full bg-muted animate-pulse rounded" />
+          <div className="h-12 w-full bg-muted animate-pulse rounded" />
+          <div className="h-12 w-full bg-muted animate-pulse rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error states
+  if (error && organizations.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-md">
+          <h1 className="text-2xl font-bold text-destructive">
+            {offline ? "You're Offline" : "Loading Error"}
+          </h1>
+          <p className="text-muted-foreground">
+            {offline 
+              ? "Please check your internet connection and try again."
+              : "We couldn't load your organizations. Please try again."
+            }
+          </p>
+          <button 
+            onClick={retry}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
