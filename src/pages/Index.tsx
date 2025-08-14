@@ -61,7 +61,7 @@ const Index = () => {
             Welcome to Cabin Buddy
           </h1>
           <p className="text-4xl font-kaushan text-primary/80 drop-shadow-md">
-            {user?.user_metadata?.first_name || user?.email}
+            {activeOrganization?.organization_name || 'Loading...'}
           </p>
         </div>
 
