@@ -30,7 +30,7 @@ interface OrganizationData {
 export const useMultiOrganization = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true to prevent premature redirects
   const [organizations, setOrganizations] = useState<UserOrganization[]>([]);
   const [activeOrganization, setActiveOrganization] = useState<UserOrganization | null>(null);
 
