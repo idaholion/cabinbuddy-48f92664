@@ -98,7 +98,7 @@ const Documents = () => {
         <EmptyState
           title="No organization selected"
           description="Select or create an organization to manage documents."
-          action={{ label: "Manage organizations", onClick: () => navigate("/select-organization") }}
+          action={{ label: "Manage organizations", onClick: () => navigate("/manage-organizations") }}
         />
       </div>
     );

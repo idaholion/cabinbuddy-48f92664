@@ -50,7 +50,7 @@ const SelectFamilyGroup = () => {
   // Redirect if no organization selected
   useEffect(() => {
     if (!loading && !organization) {
-      navigate("/select-organization");
+      navigate("/manage-organizations");
     }
   }, [organization, loading, navigate]);
 

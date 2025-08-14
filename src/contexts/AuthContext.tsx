@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const currentPath = window.location.pathname;
     
     // Don't check organization status if user is on setup pages or onboarding
-    if (currentPath === '/setup' || currentPath === '/onboarding' || currentPath === '/select-organization' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
+    if (currentPath === '/setup' || currentPath === '/onboarding' || currentPath === '/manage-organizations' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
       return;
     }
     
@@ -60,8 +60,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       } else if (organizations.length > 1) {
         // Multiple organizations - redirect to selection
-        if (currentPath !== '/select-organization') {
-          window.location.href = '/select-organization';
+        if (currentPath !== '/manage-organizations') {
+          window.location.href = '/manage-organizations';
         }
       }
     } catch (error) {
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // Only redirect if user is not already navigating to setup or organization pages
           const currentPath = window.location.pathname;
-          if (currentPath !== '/setup' && currentPath !== '/onboarding' && currentPath !== '/select-organization' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
+          if (currentPath !== '/setup' && currentPath !== '/onboarding' && currentPath !== '/manage-organizations' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
             setTimeout(() => {
               checkOrganizationStatus();
             }, 500);

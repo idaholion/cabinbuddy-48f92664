@@ -84,7 +84,7 @@ const Signup = () => {
             description: joinError.message || "Invalid organization code. Please try again.",
             variant: "destructive"
           });
-          navigate("/select-organization");
+          navigate("/manage-organizations");
         }
       } else if (organizationType === "start") {
         // Store signup data and redirect to organization setup
