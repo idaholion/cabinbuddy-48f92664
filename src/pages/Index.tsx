@@ -51,10 +51,10 @@ const Index = () => {
         
         {/* Main Title */}
         <div className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-16 text-center">
-          <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl lg:text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
             Welcome to Cabin Buddy
           </h1>
-          <p className="text-4xl font-kaushan text-primary/80 drop-shadow-md">
+          <p className="text-xl md:text-2xl lg:text-4xl font-kaushan text-primary/80 drop-shadow-md">
             {activeOrganization?.organization_name || 'Loading...'}
           </p>
         </div>
