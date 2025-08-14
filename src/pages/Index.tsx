@@ -43,7 +43,7 @@ const Index = () => {
       {/* Full Screen Hero with Action Buttons */}
       <div className="relative min-h-screen overflow-hidden">
         <div 
-          className="absolute inset-0 w-full h-full"
+          className="absolute top-0 left-0 w-full h-[120%]"
           style={{
             backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
             backgroundSize: 'cover',
