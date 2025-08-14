@@ -17,7 +17,7 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
   const exemptRoutes = ['/setup', '/signup', '/login', '/manage-organizations', '/select-family-group'];
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
 
-  // Show loading during auth and org checks
+  // Show loading during auth and org checks - CRITICAL: Don't redirect while loading
   if (authLoading || orgLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
