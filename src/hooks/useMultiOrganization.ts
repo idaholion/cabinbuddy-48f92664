@@ -44,7 +44,7 @@ export const useMultiOrganization = () => {
     try {
       console.log('🔍 Fetching organizations for user:', user.id);
       
-      // Direct query instead of RPC function that might be broken
+      // Direct query with explicit relationship specification
       const { data, error } = await supabase
         .from('user_organizations')
         .select(`
@@ -52,7 +52,7 @@ export const useMultiOrganization = () => {
           role,
           is_primary,
           joined_at,
-          organizations!inner (
+          organizations!user_organizations_organization_id_fkey (
             name,
             code
           )
