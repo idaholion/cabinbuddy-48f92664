@@ -62,7 +62,7 @@ const Index = () => {
         {/* Action Buttons Overlay */}
         <div className="relative z-10 px-8">
           {/* Right side buttons cluster */}
-          <div className="absolute right-4 md:right-8 lg:right-32 top-20 md:top-24 space-y-4 w-64 max-w-[calc(100vw-2rem)]">
+          <div className="absolute right-4 md:right-8 lg:right-32 top-32 md:top-36 space-y-4 w-64 max-w-[calc(100vw-2rem)]">
             {/* Cabin Calendar - Green for visibility */}
             <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="default" asChild>
               <Link to="/calendar">
