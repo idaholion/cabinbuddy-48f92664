@@ -47,15 +47,21 @@ const SelectFamilyGroup = () => {
         description: `You've been added to ${selectedFamilyGroup}`,
       });
 
-      // After selection, determine role and navigate appropriately
-      // Check if user has organizational roles that might indicate they're a group lead
-      const hasAdminRole = user.email === organization?.admin_email || 
-                          user.email === organization?.calendar_keeper_email ||
-                          user.email === organization?.treasurer_email;
+      // Find the selected family group to check the user's role within it
+      const selectedGroup = familyGroups.find(group => group.name === selectedFamilyGroup);
       
-      // Small delay to allow profile update to propagate, then navigate based on likely role
+      if (!selectedGroup) {
+        console.error('Selected family group not found');
+        navigate("/host-profile"); // Default fallback
+        return;
+      }
+
+      // Check if user is the group lead of this specific family group
+      const isGroupLead = user.email === selectedGroup.lead_email;
+      
+      // Small delay to allow profile update to propagate, then navigate based on actual role
       setTimeout(() => {
-        if (hasAdminRole) {
+        if (isGroupLead) {
           navigate("/family-group-setup");
         } else {
           navigate("/host-profile");
