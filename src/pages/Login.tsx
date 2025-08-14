@@ -16,8 +16,12 @@ const Login = () => {
   const { signIn, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
+  // Only redirect if not in debug mode (check for debug query param or debug mode indicator)
   useEffect(() => {
-    if (user) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDebugMode = urlParams.has('debug') || window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
+    
+    if (user && !isDebugMode) {
       navigate("/home");
     }
   }, [user, navigate]);
