@@ -46,7 +46,7 @@ const Index = () => {
         style={{
           background: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png) no-repeat',
           backgroundSize: 'cover',
-          backgroundPosition: '50% 0px',
+          backgroundPosition: '50% 100%',
           backgroundAttachment: 'scroll'
         }}
       >
