@@ -11,7 +11,7 @@ export const ManageOrganizations = () => {
 
   // Check if in debug mode
   const urlParams = new URLSearchParams(window.location.search);
-  const isDebugMode = urlParams.has('debug') || window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
+  const isDebugMode = urlParams.has('debug') || process.env.NODE_ENV === 'development';
 
   // Redirect if user has 0 or 1 organizations (shouldn't be on onboarding) - but not in debug mode
   useEffect(() => {
