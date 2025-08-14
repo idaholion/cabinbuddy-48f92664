@@ -73,7 +73,6 @@ export const useMultiOrganization = () => {
       })) || [];
 
       setOrganizations(transformedData);
-      console.log('🔧 Organizations set in state:', transformedData);
       
       // Cache the results
       apiCache.set(cacheKeys.userOrganizations(user.id), transformedData);

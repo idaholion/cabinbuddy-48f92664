@@ -9,19 +9,13 @@ export const ManageOrganizations = () => {
   const navigate = useNavigate();
   const { organizations, loading } = useMultiOrganization();
 
-  // Redirect logic - simple and direct
+  // Redirect logic - users with 0 or 1 organizations shouldn't be here
   useEffect(() => {
-    console.log('🔄 ManageOrganizations useEffect - loading:', loading, 'organizations:', organizations.length);
-    
     if (!loading) {
       if (organizations.length === 0) {
-        console.log('🔄 No organizations - redirecting to signup');
         navigate('/signup');
       } else if (organizations.length === 1) {
-        console.log('🔄 Only one organization - redirecting to home');
         navigate('/home');
-      } else {
-        console.log('🔄 Multiple organizations - staying on manage page');
       }
     }
   }, [organizations, loading, navigate]);
