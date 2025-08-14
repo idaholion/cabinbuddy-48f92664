@@ -212,22 +212,6 @@ const Index = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Role-based Setup Options */}
-            {!roleLoading && (
-              <>
-                {isGroupLead && (
-                  <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-64 bg-primary/10 text-primary border-primary" variant="outline" asChild>
-                    <Link to="/family-group-setup">
-                      <Users className="h-5 w-5 mr-3" />
-                      Family Group Setup
-                    </Link>
-                  </Button>
-                )}
-                {isHostMember && (
-                  <></>
-                )}
-              </>
-            )}
 
           </div>
 
