@@ -15,13 +15,19 @@ export const ManageOrganizations = () => {
 
   // Redirect if user has 0 or 1 organizations (shouldn't be on onboarding) - but not in debug mode
   useEffect(() => {
+    console.log('🔄 ManageOrganizations useEffect - loading:', loading, 'organizations:', organizations.length, 'isDebugMode:', isDebugMode);
+    
     if (!loading && !isDebugMode) {
       if (organizations.length === 0) {
+        console.log('🔄 No organizations - redirecting to signup');
         // No organizations - redirect to signup
         navigate('/signup');
       } else if (organizations.length === 1) {
+        console.log('🔄 Only one organization - redirecting to home');
         // Only one organization - go straight to home
         navigate('/home');
+      } else {
+        console.log('🔄 Multiple organizations - staying on manage page');
       }
     }
   }, [organizations, loading, navigate, isDebugMode]);
