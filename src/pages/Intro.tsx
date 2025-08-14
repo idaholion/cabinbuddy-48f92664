@@ -91,7 +91,7 @@ const Intro = () => {
         className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 bg-center bg-cover bg-no-repeat hero-background"
         style={{
           backgroundImage: 'url(/lovable-uploads/d6d60442-2bb7-47fd-8782-98611fc53830.png)',
-          backgroundPosition: 'center 10%'
+          backgroundPosition: 'center top'
         }}
       >
       </div>
