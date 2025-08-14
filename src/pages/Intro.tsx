@@ -6,7 +6,15 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Intro = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (user) {
+      navigate("/home", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
