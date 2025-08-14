@@ -50,7 +50,7 @@ const Index = () => {
       >
         
         {/* Main Title */}
-        <div className="relative z-10 pt-16 md:pt-20 lg:pt-24 pb-16 text-center">
+        <div className="relative z-10 pt-8 md:pt-12 lg:pt-16 pb-16 text-center">
           <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
             Welcome to Cabin Buddy
           </h1>
