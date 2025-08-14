@@ -95,7 +95,17 @@ const Intro = () => {
       >
       </div>
 
-      {/* Remove overlaid text to show background image with built-in text */}
+      {/* Hidden file input for image upload functionality */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+        aria-hidden="true"
+      />
+
+      {/* No overlaid text - background image contains the text */}
 
       {/* Action Buttons */}
       <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
