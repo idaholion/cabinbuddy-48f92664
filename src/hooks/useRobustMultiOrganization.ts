@@ -365,7 +365,7 @@ export const useRobustMultiOrganization = () => {
   return {
     organizations,
     activeOrganization,
-    loading: loading || initialLoad,
+    loading: false, // Temporarily disable loading to prevent flashing
     error,
     offline,
     switchToOrganization,
