@@ -40,9 +40,9 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
     return <>{children}</>;
   }
 
-  // Authenticated user with no organizations - redirect to signup
+  // Authenticated user with no organizations - redirect to manage organizations
   if (organizations.length === 0) {
-    return <Navigate to="/signup" replace />;
+    return <Navigate to="/manage-organizations" replace />;
   }
 
   // Authenticated user with 2+ organizations but not selected one - redirect to manage organizations
