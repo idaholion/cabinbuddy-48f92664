@@ -77,14 +77,11 @@ const SelectFamilyGroup = () => {
       <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-2xl">
 
-          {/* Page title - moved higher for better visibility */}
+          {/* Page title */}
           <div className="text-center mb-8 pt-8">
             <h1 className="text-4xl md:text-6xl font-kaushan text-primary mb-4 drop-shadow-lg">
               Select Your Family Group
             </h1>
-            <p className="text-xl text-primary drop-shadow-md bg-white/80 rounded-lg px-4 py-2 mx-auto max-w-2xl">
-              Choose your family group in {organization?.name || "this organization"}
-            </p>
           </div>
 
           {/* Selection card */}
@@ -141,12 +138,12 @@ const SelectFamilyGroup = () => {
             </CardContent>
           </Card>
           
-          {/* Back button moved to bottom */}
+          {/* Back button moved to bottom - made green for visibility */}
           <div className="mt-8 text-center">
             <Button
-              variant="outline"
+              variant="default"
               onClick={() => navigate(-1)}
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              className="bg-green-600 text-white hover:bg-green-700 shadow-lg px-6 py-3"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
