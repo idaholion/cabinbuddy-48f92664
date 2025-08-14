@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { useEffect } from 'react';
 
-export const Onboarding = () => {
+export const ManageOrganizations = () => {
   const navigate = useNavigate();
   const { organizations, loading } = useMultiOrganization();
 

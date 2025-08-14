@@ -25,8 +25,7 @@ import SelectFamilyGroup from "./pages/SelectFamilyGroup";
 import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
-import { SelectOrganization } from "./pages/SelectOrganization";
-import { Onboarding } from "./pages/Onboarding";
+import { ManageOrganizations } from "./pages/ManageOrganizations";
 
 // Lazy load setup pages (used less frequently)
 const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
@@ -97,8 +96,7 @@ const AppContent = () => {
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
         <Route path="/home" element={<DebugRoute><ProtectedRoute><OrganizationRoute><MainLayout><Index /></MainLayout></OrganizationRoute></ProtectedRoute></DebugRoute>} />
-        <Route path="/onboarding" element={<DebugRoute><ProtectedRoute><Onboarding /></ProtectedRoute></DebugRoute>} />
-        <Route path="/select-organization" element={<DebugRoute><ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute></DebugRoute>} />
+        <Route path="/manage-organizations" element={<DebugRoute><ProtectedRoute><ManageOrganizations /></ProtectedRoute></DebugRoute>} />
         <Route path="/setup" element={<DebugRoute><ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/calendar" element={<DebugRoute><ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/check-in" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckIn /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />

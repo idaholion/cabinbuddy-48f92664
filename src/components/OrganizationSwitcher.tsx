@@ -35,7 +35,7 @@ export const OrganizationSwitcher = ({ compact = false }: OrganizationSwitcherPr
   };
 
   const handleManageOrganizations = () => {
-    navigate('/select-organization');
+    navigate('/manage-organizations');
   };
 
   const handleCreateOrganization = () => {

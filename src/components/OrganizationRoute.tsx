@@ -14,7 +14,7 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
   const location = useLocation();
 
   // Skip org check for certain routes
-  const exemptRoutes = ['/setup', '/signup', '/login', '/onboarding', '/select-organization'];
+  const exemptRoutes = ['/setup', '/signup', '/login', '/manage-organizations'];
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
 
   // Show loading during auth and org checks
@@ -45,9 +45,9 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
     return <Navigate to="/signup" replace />;
   }
 
-  // Authenticated user with 2+ organizations but not selected one - redirect to onboarding
+  // Authenticated user with 2+ organizations but not selected one - redirect to manage organizations
   if (organizations.length > 1 && !organizations.find(org => org.is_primary)) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/manage-organizations" replace />;
   }
 
   // All good - render children

@@ -108,7 +108,7 @@ const Index = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem asChild>
-                  <Link to="/select-organization">
+                  <Link to="/manage-organizations">
                     <Settings className="h-4 w-4 mr-2" />
                     Manage Organizations
                   </Link>

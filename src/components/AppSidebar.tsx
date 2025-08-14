@@ -210,7 +210,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Manage Organizations">
                   <NavLink 
-                    to="/select-organization" 
+                    to="/manage-organizations" 
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Settings className="h-4 w-4" />
