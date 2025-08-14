@@ -41,17 +41,13 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
-      <div className="relative min-h-screen overflow-hidden">
-        <img 
-          src="/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png"
-          alt="Cabin background"
-          className="absolute top-0 left-0 w-full h-full object-cover"
-          style={{
-            objectPosition: '50% 15%'
-          }}
-          onLoad={() => console.log('Image positioning test - should show 15% from top')}
-        />
-        <div className="absolute inset-0 bg-gradient-forest/40"></div>
+      <div 
+        className="relative min-h-screen bg-cover bg-no-repeat" 
+        style={{
+          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          backgroundPosition: 'center 15% !important'
+        }}
+      >
         
         {/* Main Title */}
         <div className="relative z-10 pt-16 md:pt-20 lg:pt-24 pb-16 text-center">
