@@ -44,7 +44,7 @@ const Index = () => {
       <div className="relative min-h-screen bg-no-repeat" style={{
         backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
         backgroundSize: 'cover',
-        backgroundPosition: 'center 20%'
+        backgroundPosition: 'center 35%'
       }}>
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
