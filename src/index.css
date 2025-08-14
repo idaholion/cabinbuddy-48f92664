@@ -297,9 +297,9 @@ All colors MUST be HSL.
   }
 }
 
-/* Index page hero with custom positioning */
-.hero-background {
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center 15%;
+/* Index page hero with custom positioning - high specificity */
+.min-h-screen.hero-background {
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  background-position: center 15% !important;
 }

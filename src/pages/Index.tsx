@@ -44,7 +44,8 @@ const Index = () => {
       <div 
         className="relative min-h-screen hero-background"
         style={{
-          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          backgroundPosition: 'center 15%'
         }}
       >
         
