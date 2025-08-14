@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -18,43 +19,85 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [organizationType, setOrganizationType] = useState("");
   const [organizationCode, setOrganizationCode] = useState("");
-  const { signUp } = useAuth();
+  const [error, setError] = useState("");
+  const { signUp, user } = useAuth();
+  const { joinOrganization, createOrganization } = useMultiOrganization();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Check if user came from login failure
+  useEffect(() => {
+    if (searchParams.get('from') === 'login') {
+      // Optional: show a message about coming from login
+    }
+  }, [searchParams]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    const { error } = await signUp(email, password, {
-      first_name: firstName,
-      last_name: lastName,
-      display_name: `${firstName} ${lastName}`.trim(),
-    });
+    // Validate organization selection
+    if (!organizationType) {
+      setError("Please select whether you want to start or join an organization.");
+      setLoading(false);
+      return;
+    }
 
-    if (!error) {
+    if (organizationType === "join" && !organizationCode) {
+      setError("Please enter an organization code to join.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error: signUpError } = await signUp(email, password, {
+        first_name: firstName,
+        last_name: lastName,
+        display_name: `${firstName} ${lastName}`.trim(),
+      });
+
+      if (signUpError) {
+        setError(signUpError.message || "Failed to create account. Please try again.");
+        setLoading(false);
+        return;
+      }
+
       toast({
         title: "Account created successfully!",
-        description: "Please check your email to confirm your account before signing in.",
+        description: "Please check your email to confirm your account. You can continue with organization setup now.",
       });
-      
-      // Store signup data for organization creation if starting new org
-      if (organizationType === "start") {
+
+      // Handle organization operations after successful signup
+      if (organizationType === "join") {
+        try {
+          await joinOrganization(organizationCode);
+          toast({
+            title: "Successfully joined organization!",
+            description: "Welcome to your new cabin sharing group.",
+          });
+          navigate("/home");
+        } catch (joinError: any) {
+          // If join fails, redirect to select org page with error context
+          toast({
+            title: "Organization join failed",
+            description: joinError.message || "Invalid organization code. Please try again.",
+            variant: "destructive"
+          });
+          navigate("/select-organization");
+        }
+      } else if (organizationType === "start") {
+        // Store signup data and redirect to organization setup
         localStorage.setItem('signupData', JSON.stringify({
           firstName,
           lastName,
           email,
           timestamp: Date.now()
         }));
-      }
-      
-      // Redirect based on organization selection
-      if (organizationType === "join") {
-        navigate("/select-family-group");
-      } else if (organizationType === "start") {
         navigate("/setup");
-      } else {
-        navigate("/login");
       }
+    } catch (error: any) {
+      setError(error.message || "An unexpected error occurred. Please try again.");
     }
     
     setLoading(false);
@@ -68,6 +111,16 @@ const Signup = () => {
           <CardDescription>Create your account to get started</CardDescription>
         </CardHeader>
         <CardContent>
+          {searchParams.get('from') === 'login' && (
+            <div className="mb-4 p-3 text-sm bg-blue-50 border border-blue-200 rounded-md text-blue-800">
+              We don't see your email in our system. Create a new account below.
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 p-3 text-sm bg-destructive/10 border border-destructive/20 rounded-md text-destructive">
+              {error}
+            </div>
+          )}
           <div className="space-y-4 mb-6">
             <div className="space-y-3">
               <Label className="text-base font-medium">What would you like to do?</Label>
@@ -162,7 +215,7 @@ const Signup = () => {
                 </Button>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading || !organizationType}>
               <UserPlus className="h-4 w-4 mr-2" />
               {loading ? "Creating Account..." : "Create Account"}
             </Button>

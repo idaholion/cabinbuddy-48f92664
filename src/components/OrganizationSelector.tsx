@@ -14,12 +14,14 @@ interface OrganizationSelectorProps {
   onOrganizationSelected?: () => void;
   showBackButton?: boolean;
   onBack?: () => void;
+  mode?: "onboarding" | "selection";
 }
 
 export const OrganizationSelector = ({ 
   onOrganizationSelected, 
   showBackButton = false, 
-  onBack 
+  onBack,
+  mode = "onboarding"
 }: OrganizationSelectorProps) => {
   const navigate = useNavigate();
   const { 
@@ -88,7 +90,7 @@ export const OrganizationSelector = ({
         )}
       </div>
 
-      {organizations.length === 0 ? (
+      {(mode === "onboarding") || (mode === "selection" && organizations.length === 0) ? (
         <Card>
           <CardHeader className="text-center">
             <Building className="h-12 w-12 mx-auto text-muted-foreground" />

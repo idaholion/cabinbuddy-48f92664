@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { OrganizationRoute } from "@/components/OrganizationRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
@@ -95,7 +96,7 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
-        <Route path="/home" element={<DebugRoute><ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute></DebugRoute>} />
+        <Route path="/home" element={<DebugRoute><ProtectedRoute><OrganizationRoute><MainLayout><Index /></MainLayout></OrganizationRoute></ProtectedRoute></DebugRoute>} />
         <Route path="/onboarding" element={<DebugRoute><ProtectedRoute><Onboarding /></ProtectedRoute></DebugRoute>} />
         <Route path="/select-organization" element={<DebugRoute><ProtectedRoute><MainLayout><SelectOrganization /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/setup" element={<DebugRoute><ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute></DebugRoute>} />

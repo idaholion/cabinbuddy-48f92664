@@ -13,6 +13,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetMode, setResetMode] = useState(false);
+  const [error, setError] = useState("");
   const { signIn, resetPassword, user } = useAuth();
   const navigate = useNavigate();
 
@@ -29,12 +30,23 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     console.log('Attempting login...');
     const { error } = await signIn(email, password);
     
     if (error) {
       console.error('Login error:', error);
+      // Provide specific error messages
+      if (error.message.includes('Invalid login credentials') || error.message.includes('Email not confirmed')) {
+        setError("Invalid email or password. Please check your credentials and try again.");
+      } else if (error.message.includes('Email not confirmed')) {
+        setError("Please check your email and confirm your account before signing in.");
+      } else if (error.message.includes('signups not allowed')) {
+        setError("Account creation is currently disabled. Please contact support.");
+      } else {
+        setError(error.message || "Unable to sign in. Please try again.");
+      }
     } else {
       console.log('Login successful');
       navigate("/home");
@@ -66,6 +78,11 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && !resetMode && (
+            <div className="mb-4 p-3 text-sm bg-destructive/10 border border-destructive/20 rounded-md text-destructive">
+              {error}
+            </div>
+          )}
           <form onSubmit={resetMode ? handleReset : handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
