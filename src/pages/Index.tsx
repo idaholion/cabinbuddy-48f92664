@@ -61,16 +61,16 @@ const Index = () => {
 
         {/* Action Buttons Overlay */}
         <div className="relative z-10 px-8">
-          {/* Cabin Calendar - Large button on left */}
-          <Button className="absolute left-8 top-40 md:top-44 px-8 py-6 text-xl font-semibold shadow-warm" variant="default" size="lg" asChild>
-            <Link to="/calendar">
-              <Calendar className="h-6 w-6 mr-3" />
-              Cabin Calendar
-            </Link>
-          </Button>
-
           {/* Right side buttons cluster */}
           <div className="absolute right-4 md:right-8 lg:right-32 top-32 md:top-36 space-y-4 w-64 max-w-[calc(100vw-2rem)]">
+            {/* Cabin Calendar - Green for visibility */}
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="default" asChild>
+              <Link to="/calendar">
+                <Calendar className="h-5 w-5 mr-3" />
+                Cabin Calendar
+              </Link>
+            </Button>
+
             {/* Main action buttons - all same width */}
             <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/check-in">
