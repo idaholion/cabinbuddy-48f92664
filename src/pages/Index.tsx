@@ -42,12 +42,12 @@ const Index = () => {
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
       <div 
-        className="relative min-h-screen" 
+        className="relative min-h-screen"
+        data-background="true"
         style={{
-          background: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png) no-repeat',
+          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
           backgroundSize: 'cover',
-          backgroundPosition: '50% 100%',
-          backgroundAttachment: 'scroll'
+          backgroundPosition: 'center 15% !important'
         }}
       >
         
