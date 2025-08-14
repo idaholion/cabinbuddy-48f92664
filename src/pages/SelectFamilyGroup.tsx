@@ -47,12 +47,16 @@ const SelectFamilyGroup = () => {
     }
   };
 
-  // Redirect if no organization selected
+  // Check if in debug mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const isDebugMode = urlParams.has('debug') || window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
+
+  // Redirect if no organization selected - but not in debug mode
   useEffect(() => {
-    if (!loading && !organization) {
+    if (!loading && !organization && !isDebugMode) {
       navigate("/manage-organizations");
     }
-  }, [organization, loading, navigate]);
+  }, [organization, loading, navigate, isDebugMode]);
 
   if (loading) {
     return (
