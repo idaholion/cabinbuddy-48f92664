@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RobustOrganizationRoute } from "@/components/RobustOrganizationRoute";
+import { UnifiedAuthRoute } from "@/components/UnifiedAuthRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 import { useProductionAnalytics } from '@/hooks/useProductionAnalytics';
@@ -96,8 +97,8 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
-        <Route path="/home" element={<DebugRoute><ProtectedRoute><RobustOrganizationRoute><MainLayout><Index /></MainLayout></RobustOrganizationRoute></ProtectedRoute></DebugRoute>} />
-        <Route path="/manage-organizations" element={<DebugRoute><ProtectedRoute><ManageOrganizations /></ProtectedRoute></DebugRoute>} />
+        <Route path="/home" element={<DebugRoute><UnifiedAuthRoute><MainLayout><Index /></MainLayout></UnifiedAuthRoute></DebugRoute>} />
+        <Route path="/manage-organizations" element={<DebugRoute><UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute></DebugRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
         <Route path="/setup" element={<DebugRoute><ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/calendar" element={<DebugRoute><ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute></DebugRoute>} />

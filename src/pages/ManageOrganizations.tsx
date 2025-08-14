@@ -13,7 +13,8 @@ export const ManageOrganizations = () => {
   useEffect(() => {
     if (!loading && !error) {
       if (organizations.length === 0) {
-        navigate('/signup');
+        // Users with no organizations should go to setup, not signup
+        navigate('/setup');
       } else if (organizations.length === 1) {
         navigate('/home');
       }

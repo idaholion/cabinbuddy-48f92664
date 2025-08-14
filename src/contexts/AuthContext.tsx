@@ -35,41 +35,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   const checkOrganizationStatus = async () => {
-    const currentUser = user || session?.user;
-    if (!currentUser) return;
-    
-    const currentPath = window.location.pathname;
-    
-    // Don't check organization status if user is on setup pages or onboarding
-    if (currentPath === '/setup' || currentPath === '/onboarding' || currentPath === '/manage-organizations' || currentPath.startsWith('/family-') || currentPath.startsWith('/financial-') || currentPath.startsWith('/reservation-')) {
-      return;
-    }
-    
-    try {
-      const { data: organizations, error } = await supabase.rpc('get_user_organizations');
-      
-      if (error) {
-        return;
-      }
-
-      // Handle different organization scenarios
-      if (!organizations || organizations.length === 0) {
-        // No organizations - redirect to onboarding
-        if (currentPath !== '/onboarding') {
-          window.location.href = '/onboarding';
-        }
-      } else if (organizations.length > 1) {
-        // Multiple organizations - redirect to selection
-        if (currentPath !== '/manage-organizations') {
-          window.location.href = '/manage-organizations';
-        }
-      }
-    } catch (error) {
-      // Silently handle error in production
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error checking organization status:', error);
-      }
-    }
+    // AuthContext should only handle authentication, not organization routing
+    // Organization-based routing is now handled by RobustOrganizationRoute
+    return;
   };
 
   useEffect(() => {
@@ -83,17 +51,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        // Don't trigger organization check immediately on page load
-        // Only check when explicitly signing in
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Only redirect if user is not already navigating to setup or organization pages
-          const currentPath = window.location.pathname;
-          if (currentPath !== '/setup' && currentPath !== '/onboarding' && currentPath !== '/manage-organizations' && !currentPath.startsWith('/family-') && !currentPath.startsWith('/financial-') && !currentPath.startsWith('/reservation-')) {
-            setTimeout(() => {
-              checkOrganizationStatus();
-            }, 500);
-          }
-        }
+        // Organization routing is now handled by RobustOrganizationRoute
       }
     );
 
@@ -158,10 +116,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: "Successfully signed in.",
         });
         
-        // Check organization status after successful login
-        setTimeout(() => {
-          checkOrganizationStatus();
-        }, 500);
+        // Organization routing is now handled by RobustOrganizationRoute
         
         return { error: null };
       }

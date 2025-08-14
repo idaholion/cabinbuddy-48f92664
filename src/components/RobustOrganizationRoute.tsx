@@ -115,9 +115,9 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     );
   }
 
-  // Authenticated user with no organizations - redirect to manage organizations
+  // Authenticated user with no organizations - redirect to setup
   if (organizations.length === 0) {
-    return <Navigate to="/manage-organizations" replace />;
+    return <Navigate to="/setup" replace />;
   }
 
   // Authenticated user with multiple organizations but no primary - redirect to manage
