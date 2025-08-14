@@ -42,15 +42,14 @@ const Index = () => {
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
       <div className="relative min-h-screen overflow-hidden">
-        <div 
-          className="absolute top-0 left-0 w-full h-[120%]"
+        <img 
+          src="/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png"
+          alt="Cabin background"
+          className="absolute top-0 left-0 w-full h-full object-cover"
           style={{
-            backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 20%',
-            backgroundRepeat: 'no-repeat'
+            objectPosition: 'center 20%'
           }}
-        ></div>
+        />
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
         {/* Main Title */}
