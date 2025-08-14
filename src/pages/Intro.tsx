@@ -1,11 +1,20 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Intro = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Redirect authenticated users to home
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/home");
+    }
+  }, [user, loading, navigate]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -73,6 +82,15 @@ const Intro = () => {
       console.error("❌ File input ref is null");
     }
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
