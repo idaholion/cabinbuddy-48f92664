@@ -296,3 +296,10 @@ All colors MUST be HSL.
     background-size: cover;
   }
 }
+
+/* Index page hero with custom positioning */
+.hero-background {
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center 15%;
+}
