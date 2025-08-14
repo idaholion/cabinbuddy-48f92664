@@ -35,6 +35,7 @@ export const useRobustMultiOrganization = () => {
   const [activeOrganization, setActiveOrganization] = useState<UserOrganization | null>(null);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
   const { trackAsyncError } = useEnhancedErrorTracking();
   const lastFetchRef = useRef<string>('');
   
@@ -72,12 +73,12 @@ export const useRobustMultiOrganization = () => {
       return;
     }
 
-    // Prevent duplicate requests
-    const requestKey = `fetch_${user.id}`;
-    if (lastFetchRef.current === requestKey) {
+    // Strong deduplication - prevent multiple concurrent requests
+    if (isRequestInProgress) {
       return;
     }
-    lastFetchRef.current = requestKey;
+    
+    setIsRequestInProgress(true);
 
     try {
       await executeRobust(async () => {
@@ -148,10 +149,10 @@ export const useRobustMultiOrganization = () => {
         setActiveOrganization(primary || cachedData[0] || null);
       }
     } finally {
-      lastFetchRef.current = '';
+      setIsRequestInProgress(false);
       setInitialLoad(false);
     }
-  }, [user?.id, executeRobust, trackAsyncError, offline]);
+  }, [user?.id, executeRobust, trackAsyncError, offline, isRequestInProgress]);
 
   const switchToOrganization = useCallback(async (organizationId: string) => {
     if (!user?.id) return false;
