@@ -49,21 +49,44 @@ export const useMultiOrganization = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_organizations');
+      // Direct query instead of RPC function that might be broken
+      const { data, error } = await supabase
+        .from('user_organizations')
+        .select(`
+          organization_id,
+          role,
+          is_primary,
+          joined_at,
+          organizations!inner (
+            name,
+            code
+          )
+        `)
+        .eq('user_id', user.id);
       
       if (error) {
         console.error('Error fetching user organizations:', error);
         return;
       }
 
-      setOrganizations(data || []);
+      // Transform the data to match expected format
+      const transformedData = data?.map(item => ({
+        organization_id: item.organization_id,
+        organization_name: (item.organizations as any).name || '',
+        organization_code: (item.organizations as any).code || '',
+        role: item.role,
+        is_primary: item.is_primary,
+        joined_at: item.joined_at
+      })) || [];
+
+      setOrganizations(transformedData);
       
       // Cache the results
-      apiCache.set(cacheKeys.userOrganizations(user.id), data || []);
+      apiCache.set(cacheKeys.userOrganizations(user.id), transformedData);
       
       // Set primary organization as active, or first one if no primary
-      const primary = data?.find(org => org.is_primary);
-      const activeOrg = primary || data?.[0] || null;
+      const primary = transformedData?.find(org => org.is_primary);
+      const activeOrg = primary || transformedData?.[0] || null;
       setActiveOrganization(activeOrg);
       
     } catch (error) {
