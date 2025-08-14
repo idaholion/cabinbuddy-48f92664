@@ -41,13 +41,15 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
-      <div className="relative min-h-screen bg-cover bg-center bg-no-repeat" style={{
-        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+      <div className="relative min-h-screen bg-no-repeat" style={{
+        backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center 20%'
       }}>
         <div className="absolute inset-0 bg-gradient-forest/40"></div>
         
         {/* Main Title */}
-        <div className="relative z-10 pt-8 pb-16 text-center">
+        <div className="relative z-10 pt-16 md:pt-20 lg:pt-24 pb-16 text-center">
           <h1 className="text-8xl mb-4 font-kaushan text-primary drop-shadow-lg">
             Welcome to Cabin Buddy
           </h1>
@@ -59,7 +61,7 @@ const Index = () => {
         {/* Action Buttons Overlay */}
         <div className="relative z-10 px-8">
           {/* Cabin Calendar - Large button on left */}
-          <Button className="absolute left-8 top-32 px-8 py-6 text-xl font-semibold shadow-warm" variant="default" size="lg" asChild>
+          <Button className="absolute left-8 top-40 md:top-44 px-8 py-6 text-xl font-semibold shadow-warm" variant="default" size="lg" asChild>
             <Link to="/calendar">
               <Calendar className="h-6 w-6 mr-3" />
               Cabin Calendar
@@ -67,7 +69,7 @@ const Index = () => {
           </Button>
 
           {/* Right side buttons cluster */}
-          <div className="absolute right-32 top-24 space-y-4 w-64">
+          <div className="absolute right-32 top-32 md:top-36 space-y-4 w-64">
             {/* Main action buttons - all same width */}
             <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
               <Link to="/check-in">
