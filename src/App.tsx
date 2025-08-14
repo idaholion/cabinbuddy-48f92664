@@ -97,6 +97,7 @@ const AppContent = () => {
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
         <Route path="/home" element={<DebugRoute><ProtectedRoute><OrganizationRoute><MainLayout><Index /></MainLayout></OrganizationRoute></ProtectedRoute></DebugRoute>} />
         <Route path="/manage-organizations" element={<DebugRoute><ProtectedRoute><ManageOrganizations /></ProtectedRoute></DebugRoute>} />
+        <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
         <Route path="/setup" element={<DebugRoute><ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/calendar" element={<DebugRoute><ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/check-in" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckIn /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
