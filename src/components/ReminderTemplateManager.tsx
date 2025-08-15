@@ -115,6 +115,35 @@ Best regards,
         'Submit selections before deadline',
         'Contact calendar keeper with any questions'
       ]
+    },
+    {
+      id: '5',
+      reminder_type: 'selection_period_ending',
+      subject_template: 'Selection Period Ends Tomorrow - Final Reminder',
+      custom_message: `Hi {{guest_name}},
+
+Your calendar selection period for {{selection_year}} ends TOMORROW! 
+
+**Important Deadline Information:**
+• Selection deadline: {{selection_end_date}}
+• You have until end of day to complete your selections
+• Currently selected periods: {{current_selections}}
+• Remaining selections allowed: {{remaining_selections}}
+
+If you don't complete your selections by the deadline, you'll miss your opportunity for this rotation year.
+
+**Action Required:** Please log in immediately to finalize your cabin date selections.
+
+Best regards,
+{{organization_name}} Calendar Keeper`,
+      checklist_items: [
+        'Log into the system immediately',
+        'Review your current selections',
+        'Complete any remaining time period selections',
+        'Confirm all selections are submitted',
+        'Contact calendar keeper if you need assistance',
+        'Remember: deadline is end of day tomorrow'
+      ]
     }
   ]);
 
@@ -140,6 +169,7 @@ Best regards,
       case 'stay_3_day': return '3-Day Stay Reminder';
       case 'stay_1_day': return '1-Day Stay Reminder';
       case 'selection_period_start': return 'Selection Period Start';
+      case 'selection_period_ending': return 'Selection Period Ending Tomorrow';
       default: return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
@@ -153,7 +183,7 @@ Best regards,
       
       <div className="text-base text-muted-foreground">
         Customize the content of reminder notifications. Available variables: 
-        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}"}
+        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}, {{current_selections}}, {{remaining_selections}}"}
       </div>
 
       <div className="space-y-6">
