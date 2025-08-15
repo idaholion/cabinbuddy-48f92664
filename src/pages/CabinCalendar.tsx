@@ -75,24 +75,27 @@ const CabinCalendar = () => {
       hosts.push({ name: currentGroup.lead_name, email: currentGroup.lead_email });
     }
     
-    // Add host members
+    // Add host members (avoid duplicates with lead)
     if (currentGroup.host_members) {
-      const hostMembers = currentGroup.host_members.map((member: any) => ({
-        name: member.name,
-        email: member.email
-      }));
+      const hostMembers = currentGroup.host_members
+        .filter((member: any) => {
+          // Filter out duplicates with group lead
+          return member.name !== currentGroup.lead_name && 
+                 member.email !== currentGroup.lead_email;
+        })
+        .map((member: any) => ({
+          name: member.name,
+          email: member.email
+        }));
       hosts.push(...hostMembers);
     }
     
-    console.log('Available hosts debug:', {
-      selectedFamilyGroup,
-      currentGroup: currentGroup?.name,
-      hosts,
-      leadName: currentGroup?.lead_name,
-      hostMembers: currentGroup?.host_members
-    });
+    // Remove any remaining duplicates by name
+    const uniqueHosts = hosts.filter((host, index, self) => 
+      index === self.findIndex(h => h.name === host.name)
+    );
     
-    return hosts;
+    return uniqueHosts;
   };
   
   const availableHosts = getAvailableHosts();
