@@ -64,31 +64,28 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     });
   }, [organization?.calendar_keeper_email, user?.email, isCalendarKeeper]);
   
-  // Auto-refresh and focus handling for better UX
+  // Auto-refresh and focus handling for better UX - stabilized
   useEffect(() => {
     refetchReservations();
     
-    // Auto-refresh when window regains focus
+    // Auto-refresh when window regains focus - debounced
+    let focusTimeout: NodeJS.Timeout;
     const handleFocus = () => {
-      console.log('Window focused - refreshing calendar data');
-      refetchReservations();
+      clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        console.log('Window focused - refreshing calendar data');
+        refetchReservations();
+      }, 1000); // Debounce focus events
     };
     
     window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearTimeout(focusTimeout);
+    };
   }, []);
   
-  // Error recovery mechanism
-  useEffect(() => {
-    if (!reservationsLoading && reservations.length === 0) {
-      const timer = setTimeout(() => {
-        console.log('No reservations found - attempting refresh');
-        refetchReservations();
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [reservationsLoading, reservations.length]);
+  // Removed aggressive error recovery that was causing flashing
   
   const [selectedProperty, setSelectedProperty] = useState("property");
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -215,22 +212,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   };
 
   const calendarDays = generateCalendarDays();
-  
-  // Debug: Log all reservations for July 2026
-  if (currentMonth.getMonth() === 6 && currentMonth.getFullYear() === 2026) {
-    console.log('All reservations for July 2026 calendar:', reservations.filter(r => {
-      const start = new Date(r.start_date);
-      const end = new Date(r.end_date);
-      return (start.getFullYear() === 2026 && start.getMonth() === 6) || 
-             (end.getFullYear() === 2026 && end.getMonth() === 6) ||
-             (start < new Date(2026, 6, 1) && end > new Date(2026, 7, 0));
-    }));
-    console.log('Current filter settings:', {
-      filterOptions,
-      selectedFamilyGroupFilter,
-      userFamilyGroup
-    });
-  }
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
 
@@ -299,19 +280,6 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
       
       const isInRange = checkDate >= reservationStart && checkDate <= reservationEnd;
       
-      // Debug logging for July 2026 dates
-      if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-        console.log(`Debug getBookingsForDate for ${date.toDateString()}:`, {
-          checkDate: checkDate.toDateString(),
-          reservation: {
-            family_group: reservation.family_group,
-            start: reservationStart.toDateString(),
-            end: reservationEnd.toDateString(),
-            isInRange
-          }
-        });
-      }
-      
       return isInRange;
     });
 
@@ -319,57 +287,24 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     const filteredBookings = allBookings.filter(booking => {
       // Apply external family group filter from parent component
       if (selectedFamilyGroupFilter && selectedFamilyGroupFilter !== '' && booking.family_group !== selectedFamilyGroupFilter) {
-        // Debug logging for July 2026 filtering
-        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-          console.log(`Filtered out by selectedFamilyGroupFilter for ${date.toDateString()}:`, {
-            booking: booking.family_group,
-            selectedFilter: selectedFamilyGroupFilter
-          });
-        }
         return false;
       }
       
       // Apply internal filter options
       if (filterOptions.familyGroupFilter !== 'all' && booking.family_group !== filterOptions.familyGroupFilter) {
-        // Debug logging for July 2026 filtering
-        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-          console.log(`Filtered out by internal familyGroupFilter for ${date.toDateString()}:`, {
-            booking: booking.family_group,
-            internalFilter: filterOptions.familyGroupFilter
-          });
-        }
         return false;
       }
       
       const isMyBooking = booking.family_group === userFamilyGroup;
       if (isMyBooking && !filterOptions.showMyBookings) {
-        // Debug logging for July 2026 filtering
-        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-          console.log(`Filtered out showMyBookings for ${date.toDateString()}:`, {
-            booking: booking.family_group,
-            showMyBookings: filterOptions.showMyBookings
-          });
-        }
         return false;
       }
       if (!isMyBooking && !filterOptions.showOtherBookings) {
-        // Debug logging for July 2026 filtering
-        if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-          console.log(`Filtered out showOtherBookings for ${date.toDateString()}:`, {
-            booking: booking.family_group,
-            showOtherBookings: filterOptions.showOtherBookings
-          });
-        }
         return false;
       }
       
       return true;
     });
-    
-    // Debug: Show final filtered bookings for July 2026
-    if (date.getMonth() === 6 && date.getFullYear() === 2026 && date.getDate() >= 2 && date.getDate() <= 10) {
-      console.log(`Final filtered bookings for ${date.toDateString()}:`, filteredBookings);
-    }
     
     return filteredBookings;
   };
@@ -853,13 +788,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               ) : (
                 <div className="relative">
                   <div className="grid grid-cols-7 gap-1">
-                    {calendarDays.map((day, index) => {
+                     {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
-                
-                // Debug logging for July 2026 
-                if (day.getMonth() === 6 && day.getFullYear() === 2026 && day.getDate() >= 2 && day.getDate() <= 10) {
-                  console.log(`Full calendar dayBookings for ${day.toDateString()}:`, dayBookings);
-                }
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
