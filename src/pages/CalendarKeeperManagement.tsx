@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { NotificationManagement } from "@/components/NotificationManagement";
+import { ReminderTemplateManager } from "@/components/ReminderTemplateManager";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CalendarKeeperManagement = () => {
   useEffect(() => {
@@ -18,7 +20,18 @@ const CalendarKeeperManagement = () => {
           subtitle="Send manual reminders, run automatic notifications, and manage reservation communications."
         />
         <section aria-label="Notification tools" className="mt-4">
-          <NotificationManagement />
+          <Tabs defaultValue="notifications" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="notifications">Send Notifications</TabsTrigger>
+              <TabsTrigger value="templates">Reminder Templates</TabsTrigger>
+            </TabsList>
+            <TabsContent value="notifications" className="mt-6">
+              <NotificationManagement />
+            </TabsContent>
+            <TabsContent value="templates" className="mt-6">
+              <ReminderTemplateManager />
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
     </div>
