@@ -38,6 +38,8 @@ const Index = () => {
   usePerformanceMonitoring();
 
 
+  console.log('Index component rendering', { activeOrganization, user, roleLoading });
+  
   return (
     <div className="min-h-screen relative">
       {/* Full Screen Hero with Action Buttons */}
