@@ -22,7 +22,7 @@ const CalendarKeeperManagement = () => {
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="notifications">Send Notifications</TabsTrigger>
+              <TabsTrigger value="notifications">Upcoming Notifications</TabsTrigger>
               <TabsTrigger value="templates">Reminder Templates</TabsTrigger>
             </TabsList>
             <TabsContent value="notifications" className="mt-6">

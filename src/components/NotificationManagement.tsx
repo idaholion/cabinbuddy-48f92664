@@ -119,57 +119,6 @@ export const NotificationManagement = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center space-x-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <div>
-              <CardTitle>Automated Reminder System</CardTitle>
-              <CardDescription className="text-base">
-                Reminders are sent automatically based on your configured schedule
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-yellow-600" />
-                  <span className="text-base font-medium">7-Day Reminders</span>
-                </div>
-                <p className="text-base text-muted-foreground mt-1">
-                  Pre-planning checklist
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 text-orange-600" />
-                  <span className="text-base font-medium">3-Day Reminders</span>
-                </div>
-                <p className="text-base text-muted-foreground mt-1">
-                  Final preparations
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-red-600" />
-                  <span className="text-base font-medium">1-Day Reminders</span>
-                </div>
-                <p className="text-base text-muted-foreground mt-1">
-                  Last-minute details
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
           <CardDescription className="text-base">
             Families with upcoming stays who will receive automatic reminders
