@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -828,16 +828,18 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           </div>
         </CardHeader>
         <CardContent>
-          {/* Enhanced Mobile-Responsive Calendar Header */}
-          <div className="grid grid-cols-7 gap-1 mb-4 bg-muted/30 rounded-lg p-2">
-            {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
-              <div key={day} className="p-2 text-center text-sm font-semibold text-foreground hover:bg-muted/50 rounded transition-colors">
-                <span className="hidden md:inline">{day}</span>
-                <span className="hidden sm:inline md:hidden">{day.substring(0, 3)}</span>
-                <span className="sm:hidden">{day.charAt(0)}</span>
-              </div>
-            ))}
-          </div>
+          {/* Enhanced Mobile-Responsive Calendar Header - Only show for calendar view */}
+          {viewMode === 'calendar' && (
+            <div className="grid grid-cols-7 gap-1 mb-4 bg-muted/30 rounded-lg p-2">
+              {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => (
+                <div key={day} className="p-2 text-center text-sm font-semibold text-foreground hover:bg-muted/50 rounded transition-colors">
+                  <span className="hidden md:inline">{day}</span>
+                  <span className="hidden sm:inline md:hidden">{day.substring(0, 3)}</span>
+                  <span className="sm:hidden">{day.charAt(0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Enhanced Calendar Grid with Loading States */}
           {viewMode === 'calendar' && (
@@ -1169,6 +1171,30 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           {/* Mini View */}
           {viewMode === 'mini' && (
             <div className="space-y-4">
+              {/* Navigation controls for mini view */}
+              <div className="flex items-center justify-between">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateMonth(-4)}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous Quarter
+                </Button>
+                <div className="text-sm font-medium">
+                  {currentMonth.getFullYear()} Quarter {Math.floor(currentMonth.getMonth() / 3) + 1}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigateMonth(4)}
+                  className="flex items-center gap-2"
+                >
+                  Next Quarter
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 4 }, (_, monthOffset) => {
                   const quarterMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + monthOffset, 1);
