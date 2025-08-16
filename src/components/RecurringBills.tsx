@@ -51,6 +51,7 @@ const CATEGORIES = [
   "Security",
   "Landscaping",
   "Cleaning",
+  "Forest Service Lease",
   "Other"
 ];
 
