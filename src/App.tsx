@@ -27,6 +27,7 @@ import SelectFamilyGroup from "./pages/SelectFamilyGroup";
 import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import Textresponse from "./pages/Textresponse";
 import { ManageOrganizations } from "./pages/ManageOrganizations";
 
 // Lazy load setup pages (used less frequently)
@@ -97,6 +98,7 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
+        <Route path="/textresponse" element={<Textresponse />} />
         <Route path="/home" element={<DebugRoute><UnifiedAuthRoute><MainLayout><Index /></MainLayout></UnifiedAuthRoute></DebugRoute>} />
         <Route path="/manage-organizations" element={<DebugRoute><UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute></DebugRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
