@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
@@ -772,11 +772,16 @@ export type Database = {
           created_at: string
           due_date: string | null
           frequency: string
+          hibernation_end_date: string | null
+          hibernation_start_date: string | null
+          historical_tracking_type: string | null
+          historical_values: Json | null
           id: string
           name: string
           notes: string | null
           organization_id: string
           phone_number: string | null
+          provider_name: string | null
           updated_at: string
           website: string | null
         }
@@ -787,11 +792,16 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           frequency?: string
+          hibernation_end_date?: string | null
+          hibernation_start_date?: string | null
+          historical_tracking_type?: string | null
+          historical_values?: Json | null
           id?: string
           name: string
           notes?: string | null
           organization_id: string
           phone_number?: string | null
+          provider_name?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -802,11 +812,16 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           frequency?: string
+          hibernation_end_date?: string | null
+          hibernation_start_date?: string | null
+          historical_tracking_type?: string | null
+          historical_values?: Json | null
           id?: string
           name?: string
           notes?: string | null
           organization_id?: string
           phone_number?: string | null
+          provider_name?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -1738,14 +1753,14 @@ export type Database = {
       }
       create_reservation_payment: {
         Args: {
+          p_deposit_percentage?: number
           p_reservation_id: string
           p_split_deposit?: boolean
-          p_deposit_percentage?: number
         }
         Returns: string
       }
       get_available_colors: {
-        Args: { p_organization_id: string; p_current_group_id?: string }
+        Args: { p_current_group_id?: string; p_organization_id: string }
         Returns: string[]
       }
       get_user_organization_id: {
@@ -1755,12 +1770,12 @@ export type Database = {
       get_user_organizations: {
         Args: { user_uuid?: string }
         Returns: {
-          organization_id: string
-          organization_name: string
-          organization_code: string
-          role: string
           is_primary: boolean
           joined_at: string
+          organization_code: string
+          organization_id: string
+          organization_name: string
+          role: string
         }[]
       }
       get_user_primary_organization_id: {
@@ -1777,9 +1792,9 @@ export type Database = {
       }
       rename_family_group: {
         Args: {
-          p_organization_id: string
-          p_old_name: string
           p_new_name: string
+          p_old_name: string
+          p_organization_id: string
         }
         Returns: boolean
       }
@@ -1789,36 +1804,36 @@ export type Database = {
       }
       supervisor_bulk_remove_host_member: {
         Args: {
-          p_organization_id: string
           p_confirmation_code: string
           p_host_name: string
+          p_organization_id: string
         }
         Returns: number
       }
       supervisor_bulk_update_family_groups: {
-        Args: { p_organization_id: string; p_confirmation_code: string }
+        Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: boolean
       }
       supervisor_bulk_update_leads: {
         Args: {
-          p_organization_id: string
           p_confirmation_code: string
-          p_lead_phone?: string
           p_lead_email?: string
+          p_lead_phone?: string
+          p_organization_id: string
         }
         Returns: number
       }
       supervisor_bulk_update_reservations: {
         Args: {
-          p_organization_id: string
           p_confirmation_code: string
-          p_enable_all_hosts?: boolean
           p_disable_all_hosts?: boolean
+          p_enable_all_hosts?: boolean
+          p_organization_id: string
         }
         Returns: number
       }
       supervisor_delete_organization: {
-        Args: { p_organization_id: string; p_confirmation_code: string }
+        Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
       }
       supervisor_reset_database: {
@@ -1826,7 +1841,7 @@ export type Database = {
         Returns: string
       }
       validate_organization_access: {
-        Args: { target_org_id: string; operation_name?: string }
+        Args: { operation_name?: string; target_org_id: string }
         Returns: boolean
       }
     }
