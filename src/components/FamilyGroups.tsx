@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Users, UserPlus, Mail, Phone, Calendar, Edit, Trash2, Crown, Shield, User } from "lucide-react";
 import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
@@ -11,88 +11,98 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useOrganization } from "@/hooks/useOrganization";
+
 interface FamilyMember {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: "owner" | "admin" | "member";
+  role: "lead" | "member";
   joinDate: string;
   lastActive: string;
-  properties: string[];
+  familyGroup: string;
 }
+
 export const FamilyGroups = () => {
   console.log("FamilyGroups component is loading correctly");
-  const {
-    toast
-  } = useToast();
-  const [members, setMembers] = useState<FamilyMember[]>([{
-    id: "1",
-    name: "John Smith",
-    email: "john@example.com",
-    phone: "(555) 123-4567",
-    role: "owner",
-    joinDate: "2023-01-15",
-    lastActive: "2024-12-09",
-    properties: ["Lake House", "City Apartment"]
-  }, {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    phone: "(555) 234-5678",
-    role: "admin",
-    joinDate: "2023-03-20",
-    lastActive: "2024-12-08",
-    properties: ["Lake House", "Beach Condo"]
-  }, {
-    id: "3",
-    name: "Mike Wilson",
-    email: "mike@example.com",
-    phone: "(555) 345-6789",
-    role: "member",
-    joinDate: "2023-06-10",
-    lastActive: "2024-12-07",
-    properties: ["Beach Condo"]
-  }, {
-    id: "4",
-    name: "Lisa Chen",
-    email: "lisa@example.com",
-    phone: "(555) 456-7890",
-    role: "member",
-    joinDate: "2023-08-05",
-    lastActive: "2024-12-06",
-    properties: ["City Apartment"]
-  }]);
+  const { toast } = useToast();
+  const { organization } = useOrganization();
+  const { familyGroups, loading } = useFamilyGroups();
+  
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newMember, setNewMember] = useState({
     name: "",
     email: "",
     phone: "",
-    role: "member" as const
+    role: "member" as const,
+    familyGroup: ""
   });
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Convert family groups data to members list
+  useEffect(() => {
+    const convertedMembers: FamilyMember[] = [];
+    
+    familyGroups.forEach(group => {
+      // Add group lead as member
+      if (group.lead_name) {
+        convertedMembers.push({
+          id: `${group.id}-lead`,
+          name: group.lead_name,
+          email: group.lead_email || '',
+          phone: group.lead_phone || '',
+          role: "lead",
+          joinDate: group.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          lastActive: group.updated_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          familyGroup: group.name
+        });
+      }
+
+      // Add host members
+      if (group.host_members && Array.isArray(group.host_members)) {
+        group.host_members.forEach((hostMember: any, index: number) => {
+          if (hostMember.name && hostMember.name !== group.lead_name) {
+            convertedMembers.push({
+              id: `${group.id}-host-${index}`,
+              name: hostMember.name,
+              email: hostMember.email || '',
+              phone: hostMember.phone || '',
+              role: "member",
+              joinDate: group.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              lastActive: group.updated_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+              familyGroup: group.name
+            });
+          }
+        });
+      }
+    });
+
+    setMembers(convertedMembers);
+  }, [familyGroups]);
+
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case "owner":
+      case "lead":
         return Crown;
-      case "admin":
-        return Shield;
       default:
         return User;
     }
   };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case "owner":
+      case "lead":
         return "default";
-      case "admin":
-        return "secondary";
       default:
         return "outline";
     }
   };
+
   const handleAddMember = () => {
-    if (!newMember.name || !newMember.email) {
+    if (!newMember.name || !newMember.email || !newMember.familyGroup) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -100,43 +110,45 @@ export const FamilyGroups = () => {
       });
       return;
     }
-    const member: FamilyMember = {
-      id: Date.now().toString(),
-      ...newMember,
-      joinDate: new Date().toISOString().split('T')[0],
-      lastActive: new Date().toISOString().split('T')[0],
-      properties: []
-    };
-    setMembers([...members, member]);
-    setNewMember({
-      name: "",
-      email: "",
-      phone: "",
-      role: "member"
-    });
-    setIsAddDialogOpen(false);
+    
+    // This would need to be implemented to actually add to database
     toast({
-      title: "Member Added",
-      description: `${member.name} has been added to the family group.`
+      title: "Feature Coming Soon",
+      description: "Adding members directly is coming soon. Please use Family Group Setup page.",
     });
+    
+    setIsAddDialogOpen(false);
   };
+
   const handleRemoveMember = (memberId: string) => {
     const member = members.find(m => m.id === memberId);
-    if (member?.role === "owner") {
+    if (member?.role === "lead") {
       toast({
-        title: "Cannot Remove Owner",
-        description: "The property owner cannot be removed.",
+        title: "Cannot Remove Lead",
+        description: "The family group lead cannot be removed directly. Please use Family Group Setup page.",
         variant: "destructive"
       });
       return;
     }
-    setMembers(members.filter(m => m.id !== memberId));
+    
     toast({
-      title: "Member Removed",
-      description: "Family member has been removed from the group."
+      title: "Feature Coming Soon",
+      description: "Removing members directly is coming soon. Please use Family Group Setup page.",
     });
   };
-  return <div className="space-y-6">
+
+  const filteredMembers = members.filter(member =>
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.familyGroup.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return <div>Loading family groups...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -160,37 +172,58 @@ export const FamilyGroups = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="name">Full Name *</Label>
-                <Input id="name" value={newMember.name} onChange={e => setNewMember({
-                ...newMember,
-                name: e.target.value
-              })} placeholder="Enter full name" />
+                <Input 
+                  id="name" 
+                  value={newMember.name} 
+                  onChange={e => setNewMember({
+                    ...newMember,
+                    name: e.target.value
+                  })} 
+                  placeholder="Enter full name" 
+                />
               </div>
               <div>
                 <Label htmlFor="email">Email Address *</Label>
-                <Input id="email" type="email" value={newMember.email} onChange={e => setNewMember({
-                ...newMember,
-                email: e.target.value
-              })} placeholder="Enter email address" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={newMember.email} 
+                  onChange={e => setNewMember({
+                    ...newMember,
+                    email: e.target.value
+                  })} 
+                  placeholder="Enter email address" 
+                />
               </div>
               <div>
                 <Label htmlFor="phone">Phone Number</Label>
-                <PhoneInput id="phone" value={newMember.phone} onChange={(formatted) => setNewMember({
-                ...newMember,
-                phone: formatted
-              })} />
+                <PhoneInput 
+                  id="phone" 
+                  value={newMember.phone} 
+                  onChange={(formatted) => setNewMember({
+                    ...newMember,
+                    phone: formatted
+                  })} 
+                />
               </div>
               <div>
-                <Label htmlFor="role">Role</Label>
-                <Select value={newMember.role} onValueChange={(value: any) => setNewMember({
-                ...newMember,
-                role: value
-              })}>
+                <Label htmlFor="familyGroup">Family Group *</Label>
+                <Select 
+                  value={newMember.familyGroup} 
+                  onValueChange={(value) => setNewMember({
+                    ...newMember,
+                    familyGroup: value
+                  })}
+                >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select family group" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    {familyGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -213,19 +246,35 @@ export const FamilyGroups = () => {
           <CardContent className="flex items-center p-6">
             <Users className="h-8 w-8 text-blue-600 mr-4" />
             <div>
-              <p className="text-2xl font-bold">{members.length}</p>
-              <p className="text-gray-600 text-sm">Total Groups</p>
+              <p className="text-2xl font-bold">{familyGroups.length}</p>
+              <p className="text-gray-600 text-sm">Family Groups</p>
             </div>
           </CardContent>
         </Card>
-        
-        
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <User className="h-8 w-8 text-green-600 mr-4" />
+            <div>
+              <p className="text-2xl font-bold">{members.length}</p>
+              <p className="text-gray-600 text-sm">Total Members</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center p-6">
+            <Crown className="h-8 w-8 text-yellow-600 mr-4" />
+            <div>
+              <p className="text-2xl font-bold">{members.filter(m => m.role === 'lead').length}</p>
+              <p className="text-gray-600 text-sm">Group Leads</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Members List */}
       <Card>
         <CardHeader>
-          <CardTitle>Family Groups</CardTitle>
+          <CardTitle>Family Group Members</CardTitle>
           <CardDescription>Manage access and permissions for family members</CardDescription>
           <div className="mt-4">
             <SearchInput
@@ -237,55 +286,75 @@ export const FamilyGroups = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {members.map(member => {
-            const RoleIcon = getRoleIcon(member.role);
-            return <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-gray-900">{member.name}</h3>
-                        
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                        <div className="flex items-center">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {member.email}
+            {filteredMembers.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {members.length === 0 ? (
+                  "No family group members found. Set up your family groups first."
+                ) : (
+                  "No members match your search criteria."
+                )}
+              </div>
+            ) : (
+              filteredMembers.map(member => {
+                const RoleIcon = getRoleIcon(member.role);
+                return (
+                  <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {member.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-semibold text-gray-900">{member.name}</h3>
+                          <Badge variant={getRoleBadgeVariant(member.role)}>
+                            <RoleIcon className="h-3 w-3 mr-1" />
+                            {member.role === 'lead' ? 'Group Lead' : 'Member'}
+                          </Badge>
                         </div>
-                        {member.phone && <div className="flex items-center">
-                            <Phone className="h-3 w-3 mr-1" />
-                            {member.phone}
-                          </div>}
-                        <div className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Joined {new Date(member.joinDate).toLocaleDateString()}
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                          <div className="flex items-center">
+                            <Mail className="h-3 w-3 mr-1" />
+                            {member.email || 'No email'}
+                          </div>
+                          {member.phone && (
+                            <div className="flex items-center">
+                              <Phone className="h-3 w-3 mr-1" />
+                              {member.phone}
+                            </div>
+                          )}
+                          <div className="flex items-center">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            Joined {new Date(member.joinDate).toLocaleDateString()}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {member.properties.map((property, index) => <Badge key={index} variant="outline" className="text-xs">
-                            {property}
-                          </Badge>)}
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {member.familyGroup}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      {member.role !== "lead" && (
+                        <Button variant="outline" size="sm" onClick={() => handleRemoveMember(member.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    {member.role !== "owner" && <Button variant="outline" size="sm" onClick={() => handleRemoveMember(member.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>}
-                  </div>
-                </div>;
-          })}
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
 
 // Export as default as well for compatibility
