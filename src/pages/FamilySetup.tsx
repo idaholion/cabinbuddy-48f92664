@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
@@ -23,6 +24,7 @@ const FamilySetup = () => {
   const { user } = useAuth();
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
+  const { familyGroups: existingFamilyGroups } = useFamilyGroups();
   
   const [searchParams] = useSearchParams();
   
@@ -715,54 +717,84 @@ const FamilySetup = () => {
             <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold text-center border-b pb-2">
-                  List of Family Groups ({familyGroups.filter(g => g.trim()).length}/{familyGroups.length})
+                  Family Groups ({existingFamilyGroups.length > 0 ? 'Current Groups' : 'Setup New Groups'})
                 </h2>
               </div>
               
-              <div className="space-y-3">
-                {familyGroups.map((group, index) => (
-                  <div key={index} className="flex items-end gap-2">
-                    <div className="flex-1 space-y-1">
-                      <Label htmlFor={`familyGroup${index}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
-                      <Input
-                        id={`familyGroup${index}`}
-                        placeholder={`Enter Family Group ${index + 1} name`}
-                        value={group}
-                        onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
-                        autoFocus={index === familyGroups.length - 1 && group === ""}
-                      />
-                    </div>
-                    {familyGroups.length > 1 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeFamilyGroup(index)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+              {/* Show existing family groups if they exist */}
+              {existingFamilyGroups.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-muted-foreground text-center mb-4">
+                    <p>Current family groups in your organization:</p>
                   </div>
-                ))}
-                
-                <div className="flex justify-center pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={addFamilyGroup}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Family Group
-                  </Button>
+                  {existingFamilyGroups.map((group, index) => (
+                    <div key={group.id} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
+                      <div className="flex-1">
+                        <div className="font-medium">{group.name}</div>
+                        {group.lead_name && (
+                          <div className="text-sm text-muted-foreground">
+                            Lead: {group.lead_name} {group.lead_email && `(${group.lead_email})`}
+                          </div>
+                        )}
+                        {group.host_members && group.host_members.length > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            {group.host_members.length} host member{group.host_members.length !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="text-sm text-muted-foreground text-center mt-4">
+                    <p>To modify these family groups, use the "Family Group Setup" page after saving.</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="text-sm text-muted-foreground text-center mt-4">
-                <p>After saving, you can add more details like lead contacts and host members for each family group in the next step.</p>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  {familyGroups.map((group, index) => (
+                    <div key={index} className="flex items-end gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Label htmlFor={`familyGroup${index}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
+                        <Input
+                          id={`familyGroup${index}`}
+                          placeholder={`Enter Family Group ${index + 1} name`}
+                          value={group}
+                          onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
+                          autoFocus={index === familyGroups.length - 1 && group === ""}
+                        />
+                      </div>
+                      {familyGroups.length > 1 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeFamilyGroup(index)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={addFamilyGroup}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Family Group
+                    </Button>
+                  </div>
+                
+                  <div className="text-sm text-muted-foreground text-center mt-4">
+                    <p>After saving, you can add more details like lead contacts and host members for each family group in the next step.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Administrator Family Group Selection - Only for new organizations */}
-              {isCreatingNew && familyGroups.some(g => g.trim()) && (
+              {isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.trim())) && (
                 <div className="space-y-3 border-t border-border pt-4">
                   <h3 className="text-lg font-semibold text-center">Select Your Family Group</h3>
                   <p className="text-sm text-muted-foreground text-center">
@@ -776,13 +808,20 @@ const FamilySetup = () => {
                       required
                     >
                       <option value="">Choose your family group...</option>
-                      {familyGroups
-                        .filter(group => group.trim() !== "")
-                        .map((group, index) => (
-                          <option key={index} value={group.trim()}>
-                            {group.trim()}
-                          </option>
-                        ))}
+                      {existingFamilyGroups.length > 0 
+                        ? existingFamilyGroups.map((group) => (
+                            <option key={group.id} value={group.name}>
+                              {group.name}
+                            </option>
+                          ))
+                        : familyGroups
+                            .filter(group => group.trim() !== "")
+                            .map((group, index) => (
+                              <option key={index} value={group.trim()}>
+                                {group.trim()}
+                              </option>
+                            ))
+                      }
                     </select>
                   </div>
                   <p className="text-xs text-muted-foreground text-center">
