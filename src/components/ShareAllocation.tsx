@@ -31,13 +31,22 @@ export const ShareAllocation = () => {
     }
   }, [organization?.id, userFamilyGroup]);
 
+  const getUserFamilyGroupName = () => {
+    if (!userFamilyGroup) return null;
+    // Handle case where userFamilyGroup might be an object with a name property
+    return typeof userFamilyGroup === 'string' ? userFamilyGroup : userFamilyGroup.name;
+  };
+
   const fetchGroupShares = async () => {
     try {
+      const groupName = getUserFamilyGroupName();
+      if (!groupName) return;
+      
       const { data, error } = await supabase
         .from('family_group_shares')
         .select('allocated_shares')
         .eq('organization_id', organization?.id)
-        .eq('family_group_name', userFamilyGroup)
+        .eq('family_group_name', groupName)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -56,11 +65,14 @@ export const ShareAllocation = () => {
 
   const fetchMemberAllocations = async () => {
     try {
+      const groupName = getUserFamilyGroupName();
+      if (!groupName) return;
+      
       const { data, error } = await supabase
         .from('member_share_allocations')
         .select('*')
         .eq('organization_id', organization?.id)
-        .eq('family_group_name', userFamilyGroup);
+        .eq('family_group_name', groupName);
 
       if (error) throw error;
 
@@ -124,11 +136,14 @@ export const ShareAllocation = () => {
       }
 
       // Delete existing allocations
+      const groupName = getUserFamilyGroupName();
+      if (!groupName) return;
+      
       await supabase
         .from('member_share_allocations')
         .delete()
         .eq('organization_id', organization?.id)
-        .eq('family_group_name', userFamilyGroup);
+        .eq('family_group_name', groupName);
 
       // Insert new allocations
       for (const allocation of allocations) {
@@ -136,7 +151,7 @@ export const ShareAllocation = () => {
           .from('member_share_allocations')
           .insert({
             organization_id: organization?.id,
-            family_group_name: userFamilyGroup,
+            family_group_name: groupName,
             member_name: allocation.member_name,
             member_email: allocation.member_email || null,
             allocated_shares: allocation.allocated_shares,
@@ -168,7 +183,7 @@ export const ShareAllocation = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Share Distribution for {userFamilyGroup}</CardTitle>
+          <CardTitle>Share Distribution for {getUserFamilyGroupName()}</CardTitle>
           <p className="text-sm text-muted-foreground">
             Allocated: {totalAllocated} / {groupTotalShares} shares
           </p>
