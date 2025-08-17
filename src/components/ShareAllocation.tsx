@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 
 interface MemberAllocation {
   member_name: string;
@@ -17,17 +19,33 @@ interface MemberAllocation {
 export const ShareAllocation = () => {
   const { organization } = useOrganization();
   const { userFamilyGroup } = useUserRole();
+  const { isAdmin } = useOrgAdmin();
   const { toast } = useToast();
   const [allocations, setAllocations] = useState<MemberAllocation[]>([]);
   const [groupTotalShares, setGroupTotalShares] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [availableFamilyGroups, setAvailableFamilyGroups] = useState<string[]>([]);
+  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>('');
 
   useEffect(() => {
-    if (organization?.id && userFamilyGroup) {
+    if (organization?.id) {
+      if (isAdmin) {
+        fetchAvailableFamilyGroups();
+      } else if (userFamilyGroup) {
+        const groupName = getUserFamilyGroupName();
+        if (groupName) {
+          setSelectedFamilyGroup(groupName);
+        }
+      }
+    }
+  }, [organization?.id, userFamilyGroup, isAdmin]);
+
+  useEffect(() => {
+    if (selectedFamilyGroup) {
       fetchGroupShares();
       fetchMemberAllocations();
     }
-  }, [organization?.id, userFamilyGroup]);
+  }, [selectedFamilyGroup]);
 
   const getUserFamilyGroupName = () => {
     if (!userFamilyGroup) return null;
@@ -35,9 +53,38 @@ export const ShareAllocation = () => {
     return typeof userFamilyGroup === 'string' ? userFamilyGroup : userFamilyGroup.name;
   };
 
+  const fetchAvailableFamilyGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('family_groups')
+        .select('name')
+        .eq('organization_id', organization?.id)
+        .order('name');
+
+      if (error) throw error;
+
+      const groupNames = [...new Set(data?.map(group => group.name) || [])];
+      setAvailableFamilyGroups(groupNames);
+      
+      // Auto-select user's family group if they have one
+      const userGroup = getUserFamilyGroupName();
+      if (userGroup && groupNames.includes(userGroup)) {
+        setSelectedFamilyGroup(userGroup);
+      } else if (groupNames.length > 0) {
+        setSelectedFamilyGroup(groupNames[0]);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch family groups",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchGroupShares = async () => {
     try {
-      const groupName = getUserFamilyGroupName();
+      const groupName = isAdmin ? selectedFamilyGroup : getUserFamilyGroupName();
       if (!groupName) return;
       
       const { data, error } = await supabase
@@ -63,7 +110,7 @@ export const ShareAllocation = () => {
 
   const fetchMemberAllocations = async () => {
     try {
-      const groupName = getUserFamilyGroupName();
+      const groupName = isAdmin ? selectedFamilyGroup : getUserFamilyGroupName();
       if (!groupName) {
         console.log('No group name found');
         setLoading(false);
@@ -136,12 +183,15 @@ export const ShareAllocation = () => {
       // Build allocations list from host members + group lead
       const memberAllocations: MemberAllocation[] = [];
       
-      // Add the group lead
+      // Add the group lead with default allocation to all shares if no existing allocations
       if (familyGroup?.lead_name) {
+        const hasExistingAllocations = existingAllocations && existingAllocations.length > 0;
+        const defaultShares = hasExistingAllocations ? (allocationMap.get(familyGroup.lead_name) || 0) : groupTotalShares;
+        
         memberAllocations.push({
           member_name: familyGroup.lead_name,
           member_email: familyGroup.lead_email || '',
-          allocated_shares: allocationMap.get(familyGroup.lead_name) || 0
+          allocated_shares: defaultShares
         });
       }
 
@@ -196,7 +246,7 @@ export const ShareAllocation = () => {
       }
 
       // Delete existing allocations
-      const groupName = getUserFamilyGroupName();
+      const groupName = isAdmin ? selectedFamilyGroup : getUserFamilyGroupName();
       if (!groupName) return;
       
       await supabase
@@ -241,9 +291,34 @@ export const ShareAllocation = () => {
 
   return (
     <div className="space-y-6">
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Administrator: Select Family Group</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="family-group-select">Family Group</Label>
+              <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a family group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFamilyGroups.map((groupName) => (
+                    <SelectItem key={groupName} value={groupName}>
+                      {groupName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       <Card>
         <CardHeader>
-          <CardTitle>Share Distribution for {getUserFamilyGroupName()}</CardTitle>
+          <CardTitle>Share Distribution for {isAdmin ? selectedFamilyGroup : getUserFamilyGroupName()}</CardTitle>
           <p className="text-sm text-muted-foreground">
             Allocated: {totalAllocated} / {groupTotalShares} shares
           </p>
