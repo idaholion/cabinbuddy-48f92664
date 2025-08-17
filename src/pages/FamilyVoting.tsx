@@ -3,10 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VotingSettings } from '@/components/VotingSettings';
 import { ShareAllocation } from '@/components/ShareAllocation';
+import { AdminShareOverview } from '@/components/AdminShareOverview';
 import { VotingProposals } from '@/components/VotingProposals';
 import { VoteForm } from '@/components/VoteForm';
 import { VotingResults } from '@/components/VotingResults';
-import { Vote, Users, Settings, BarChart3 } from 'lucide-react';
+import { Vote, Users, Settings, BarChart3, Shield } from 'lucide-react';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 
@@ -29,7 +30,7 @@ export default function FamilyVoting() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : isGroupLead ? 'grid-cols-4' : 'grid-cols-2'}`}>
             <TabsTrigger value="proposals" className="flex items-center gap-2">
               <Vote className="h-4 w-4" />
               Proposals
@@ -42,6 +43,12 @@ export default function FamilyVoting() {
               <TabsTrigger value="shares" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Share Allocation
+              </TabsTrigger>
+            )}
+            {isAdmin && (
+              <TabsTrigger value="admin-overview" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Admin Overview
               </TabsTrigger>
             )}
             {isAdmin && (
@@ -105,6 +112,22 @@ export default function FamilyVoting() {
                 </CardHeader>
                 <CardContent>
                   <ShareAllocation />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {isAdmin && (
+            <TabsContent value="admin-overview" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Organization Share Overview</CardTitle>
+                  <CardDescription>
+                    View all family group share allocations and member distributions across your organization
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AdminShareOverview />
                 </CardContent>
               </Card>
             </TabsContent>
