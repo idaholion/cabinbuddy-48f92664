@@ -2009,6 +2009,10 @@ export type Database = {
         }
         Returns: number
       }
+      supervisor_cleanup_duplicate_family_groups: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       supervisor_delete_organization: {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string

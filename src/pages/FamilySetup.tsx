@@ -302,9 +302,13 @@ const FamilySetup = () => {
             alternate_lead_id: null,
           }));
 
+          // Use upsert to handle duplicates gracefully
           const { data, error } = await supabase
             .from('family_groups')
-            .insert(payload)
+            .upsert(payload, { 
+              onConflict: 'organization_id,name',
+              ignoreDuplicates: true 
+            })
             .select();
 
           if (error) {

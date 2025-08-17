@@ -87,6 +87,20 @@ export const useFamilyGroups = () => {
       return null;
     }
 
+    // Check for existing group with same name
+    const existingGroup = familyGroups.find(group => 
+      group.name.toLowerCase() === groupData.name.toLowerCase()
+    );
+    
+    if (existingGroup) {
+      toast({
+        title: "Error",
+        description: `A family group named "${groupData.name}" already exists in your organization.`,
+        variant: "destructive",
+      });
+      return null;
+    }
+
     setLoading(true);
     try {
       const { data: newGroup, error } = await supabase
@@ -101,11 +115,20 @@ export const useFamilyGroups = () => {
 
       if (error) {
         console.error('Error creating family group:', error);
-        toast({
-          title: "Error",
-          description: "Failed to create family group. Please try again.",
-          variant: "destructive",
-        });
+        // Handle unique constraint violation
+        if (error.code === '23505' && error.message.includes('family_groups_organization_name_unique')) {
+          toast({
+            title: "Error",
+            description: `A family group named "${groupData.name}" already exists in your organization.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to create family group. Please try again.",
+            variant: "destructive",
+          });
+        }
         return null;
       }
 
