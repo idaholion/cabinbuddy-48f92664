@@ -64,7 +64,13 @@ export const ShareAllocation = () => {
   const fetchMemberAllocations = async () => {
     try {
       const groupName = getUserFamilyGroupName();
-      if (!groupName) return;
+      if (!groupName) {
+        console.log('No group name found');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching data for group:', groupName);
       
       // First, get the family group with its host members - prioritize the one with actual data
       const { data: familyGroups, error: groupError } = await supabase
@@ -76,17 +82,32 @@ export const ShareAllocation = () => {
 
       if (groupError) {
         console.error('Error fetching family group:', groupError);
-        throw new Error(`Failed to fetch family group: ${groupError.message}`);
+        toast({
+          title: "Error",
+          description: `Failed to fetch family group: ${groupError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!familyGroups || familyGroups.length === 0) {
-        throw new Error('Family group not found');
+        console.error('No family group found for name:', groupName);
+        toast({
+          title: "Error",
+          description: 'Family group not found',
+          variant: "destructive",
+        });
+        return;
       }
+
+      console.log('Found family groups:', familyGroups);
 
       // Find the group with actual data (has lead_name or host_members)
       const familyGroup = familyGroups.find(group => 
         group.lead_name || (group.host_members && Array.isArray(group.host_members) && group.host_members.length > 0)
       ) || familyGroups[0]; // fallback to first if none have data
+
+      console.log('Selected family group:', familyGroup);
 
       // Get existing share allocations
       const { data: existingAllocations, error: allocError } = await supabase
@@ -95,7 +116,17 @@ export const ShareAllocation = () => {
         .eq('organization_id', organization?.id)
         .eq('family_group_name', groupName);
 
-      if (allocError) throw allocError;
+      if (allocError) {
+        console.error('Error fetching allocations:', allocError);
+        toast({
+          title: "Error",
+          description: `Failed to fetch allocations: ${allocError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Existing allocations:', existingAllocations);
 
       // Create allocation map from existing data
       const allocationMap = new Map(
@@ -127,11 +158,13 @@ export const ShareAllocation = () => {
         });
       }
 
+      console.log('Final member allocations:', memberAllocations);
       setAllocations(memberAllocations);
     } catch (error: any) {
+      console.error('Unexpected error in fetchMemberAllocations:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch host members and allocations",
+        description: `Failed to fetch host members and allocations: ${error.message}`,
         variant: "destructive",
       });
     } finally {
