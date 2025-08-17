@@ -19,7 +19,8 @@ import {
   UserPlus,
   Plus,
   MessageSquare,
-  Monitor
+  Monitor,
+  Vote
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -122,6 +123,11 @@ const managementItems = [
     title: "Messaging",
     url: "/messaging",
     icon: MessageSquare,
+  },
+  {
+    title: "Family Voting",
+    url: "/family-voting",
+    icon: Vote,
   },
   {
     title: "Demo",
