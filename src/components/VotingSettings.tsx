@@ -26,11 +26,11 @@ export const VotingSettings = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization?.id) {
+    if (organization?.id && familyGroups.length > 0) {
       fetchVotingSettings();
       fetchGroupShares();
     }
-  }, [organization?.id]);
+  }, [organization?.id, familyGroups]);
 
   const fetchVotingSettings = async () => {
     try {

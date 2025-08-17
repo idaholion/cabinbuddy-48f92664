@@ -72,9 +72,16 @@ export const ShareAllocation = () => {
         .select('host_members, lead_name, lead_email')
         .eq('organization_id', organization?.id)
         .eq('name', groupName)
-        .single();
+        .maybeSingle();
 
-      if (groupError) throw groupError;
+      if (groupError) {
+        console.error('Error fetching family group:', groupError);
+        throw new Error(`Failed to fetch family group: ${groupError.message}`);
+      }
+
+      if (!familyGroup) {
+        throw new Error('Family group not found');
+      }
 
       // Get existing share allocations
       const { data: existingAllocations, error: allocError } = await supabase
