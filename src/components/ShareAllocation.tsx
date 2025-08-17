@@ -66,22 +66,27 @@ export const ShareAllocation = () => {
       const groupName = getUserFamilyGroupName();
       if (!groupName) return;
       
-      // First, get the family group with its host members
-      const { data: familyGroup, error: groupError } = await supabase
+      // First, get the family group with its host members - prioritize the one with actual data
+      const { data: familyGroups, error: groupError } = await supabase
         .from('family_groups')
         .select('host_members, lead_name, lead_email')
         .eq('organization_id', organization?.id)
         .eq('name', groupName)
-        .maybeSingle();
+        .order('updated_at', { ascending: false }); // Get the most recently updated one
 
       if (groupError) {
         console.error('Error fetching family group:', groupError);
         throw new Error(`Failed to fetch family group: ${groupError.message}`);
       }
 
-      if (!familyGroup) {
+      if (!familyGroups || familyGroups.length === 0) {
         throw new Error('Family group not found');
       }
+
+      // Find the group with actual data (has lead_name or host_members)
+      const familyGroup = familyGroups.find(group => 
+        group.lead_name || (group.host_members && Array.isArray(group.host_members) && group.host_members.length > 0)
+      ) || familyGroups[0]; // fallback to first if none have data
 
       // Get existing share allocations
       const { data: existingAllocations, error: allocError } = await supabase
