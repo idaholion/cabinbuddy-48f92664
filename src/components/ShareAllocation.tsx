@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useUserRole } from '@/hooks/useUserRole';
-import { Plus, Trash2 } from 'lucide-react';
 
 interface MemberAllocation {
   member_name: string;
@@ -22,7 +21,6 @@ export const ShareAllocation = () => {
   const [allocations, setAllocations] = useState<MemberAllocation[]>([]);
   const [groupTotalShares, setGroupTotalShares] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [newMember, setNewMember] = useState({ name: '', email: '', shares: 0 });
 
   useEffect(() => {
     if (organization?.id && userFamilyGroup) {
@@ -68,23 +66,60 @@ export const ShareAllocation = () => {
       const groupName = getUserFamilyGroupName();
       if (!groupName) return;
       
-      const { data, error } = await supabase
+      // First, get the family group with its host members
+      const { data: familyGroup, error: groupError } = await supabase
+        .from('family_groups')
+        .select('host_members, lead_name, lead_email')
+        .eq('organization_id', organization?.id)
+        .eq('name', groupName)
+        .single();
+
+      if (groupError) throw groupError;
+
+      // Get existing share allocations
+      const { data: existingAllocations, error: allocError } = await supabase
         .from('member_share_allocations')
         .select('*')
         .eq('organization_id', organization?.id)
         .eq('family_group_name', groupName);
 
-      if (error) throw error;
+      if (allocError) throw allocError;
 
-      setAllocations(data?.map(item => ({
-        member_name: item.member_name,
-        member_email: item.member_email || '',
-        allocated_shares: item.allocated_shares
-      })) || []);
+      // Create allocation map from existing data
+      const allocationMap = new Map(
+        existingAllocations?.map(item => [item.member_name, item.allocated_shares]) || []
+      );
+
+      // Build allocations list from host members + group lead
+      const memberAllocations: MemberAllocation[] = [];
+      
+      // Add the group lead
+      if (familyGroup?.lead_name) {
+        memberAllocations.push({
+          member_name: familyGroup.lead_name,
+          member_email: familyGroup.lead_email || '',
+          allocated_shares: allocationMap.get(familyGroup.lead_name) || 0
+        });
+      }
+
+      // Add host members
+      if (familyGroup?.host_members && Array.isArray(familyGroup.host_members)) {
+        familyGroup.host_members.forEach((member: any) => {
+          if (member.name && member.name !== familyGroup.lead_name) {
+            memberAllocations.push({
+              member_name: member.name,
+              member_email: member.email || '',
+              allocated_shares: allocationMap.get(member.name) || 0
+            });
+          }
+        });
+      }
+
+      setAllocations(memberAllocations);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to fetch member allocations",
+        description: "Failed to fetch host members and allocations",
         variant: "destructive",
       });
     } finally {
@@ -92,27 +127,7 @@ export const ShareAllocation = () => {
     }
   };
 
-  const addMember = () => {
-    if (!newMember.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Member name is required",
-        variant: "destructive",
-      });
-      return;
-    }
 
-    setAllocations(prev => [...prev, {
-      member_name: newMember.name,
-      member_email: newMember.email,
-      allocated_shares: newMember.shares
-    }]);
-    setNewMember({ name: '', email: '', shares: 0 });
-  };
-
-  const removeMember = (index: number) => {
-    setAllocations(prev => prev.filter((_, i) => i !== index));
-  };
 
   const updateMemberShares = (index: number, shares: number) => {
     setAllocations(prev => 
@@ -189,56 +204,29 @@ export const ShareAllocation = () => {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {allocations.map((member, index) => (
-            <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium">{member.member_name}</p>
-                <p className="text-sm text-muted-foreground">{member.member_email}</p>
+          {allocations.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">
+              No host members found. Please add host members to your family group first.
+            </p>
+          ) : (
+            allocations.map((member, index) => (
+              <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{member.member_name}</p>
+                  <p className="text-sm text-muted-foreground">{member.member_email}</p>
+                </div>
+                <Input
+                  type="number"
+                  value={member.allocated_shares}
+                  onChange={(e) => updateMemberShares(index, parseInt(e.target.value) || 0)}
+                  min="0"
+                  max={groupTotalShares}
+                  className="w-20"
+                />
               </div>
-              <Input
-                type="number"
-                value={member.allocated_shares}
-                onChange={(e) => updateMemberShares(index, parseInt(e.target.value) || 0)}
-                min="0"
-                max={groupTotalShares}
-                className="w-20"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => removeMember(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
+            ))
+          )}
 
-          <div className="border-t pt-4">
-            <h3 className="font-medium mb-3">Add New Member</h3>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Member name"
-                value={newMember.name}
-                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-              />
-              <Input
-                placeholder="Email (optional)"
-                value={newMember.email}
-                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-              />
-              <Input
-                type="number"
-                placeholder="Shares"
-                value={newMember.shares}
-                onChange={(e) => setNewMember({ ...newMember, shares: parseInt(e.target.value) || 0 })}
-                min="0"
-                className="w-20"
-              />
-              <Button onClick={addMember}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
 
           <Button onClick={saveAllocations} className="w-full">
             Save Share Allocations
