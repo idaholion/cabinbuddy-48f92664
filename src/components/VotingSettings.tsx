@@ -1,51 +1,43 @@
-import { useState, useEffect } from 'react';
-import { useOrganization } from '@/hooks/useOrganization';
-import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Save, Settings } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/hooks/useOrganization';
+import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 
-interface VotingSettings {
-  id?: string;
+interface VotingSettingsData {
   total_shares: number;
 }
 
 interface FamilyGroupShare {
-  id?: string;
   family_group_name: string;
   allocated_shares: number;
 }
 
-export function VotingSettings() {
+export const VotingSettings = () => {
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [votingSettings, setVotingSettings] = useState<VotingSettings>({ total_shares: 100 });
-  const [familyShares, setFamilyShares] = useState<FamilyGroupShare[]>([]);
+  const [settings, setSettings] = useState<VotingSettingsData>({ total_shares: 100 });
+  const [groupShares, setGroupShares] = useState<FamilyGroupShare[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (organization?.id) {
       fetchVotingSettings();
-      fetchFamilyShares();
+      fetchGroupShares();
     }
   }, [organization?.id]);
 
   const fetchVotingSettings = async () => {
-    if (!organization?.id) return;
-    
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('organization_voting_settings')
         .select('*')
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization?.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -53,7 +45,7 @@ export function VotingSettings() {
       }
 
       if (data) {
-        setVotingSettings(data);
+        setSettings({ total_shares: data.total_shares });
       }
     } catch (error: any) {
       toast({
@@ -61,69 +53,47 @@ export function VotingSettings() {
         description: "Failed to fetch voting settings",
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchGroupShares = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('family_group_shares')
+        .select('*')
+        .eq('organization_id', organization?.id);
+
+      if (error) throw error;
+
+      const shareMap = new Map(data?.map(item => [item.family_group_name, item.allocated_shares]) || []);
+      
+      const updatedShares = familyGroups.map(group => ({
+        family_group_name: group.name,
+        allocated_shares: shareMap.get(group.name) || 0
+      }));
+
+      setGroupShares(updatedShares);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch group shares",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchFamilyShares = async () => {
-    if (!organization?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('family_group_shares')
-        .select('*')
-        .eq('organization_id', organization.id);
-
-      if (error) throw error;
-
-      // Create shares for all family groups
-      const shares = familyGroups.map(group => {
-        const existingShare = data?.find(s => s.family_group_name === group.name);
-        return {
-          id: existingShare?.id,
-          family_group_name: group.name,
-          allocated_shares: existingShare?.allocated_shares || 0
-        };
-      });
-
-      setFamilyShares(shares);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch family group shares",
-        variant: "destructive",
-      });
-    }
-  };
-
   const saveSettings = async () => {
-    if (!organization?.id) return;
-
-    setSaving(true);
     try {
-      // Save voting settings
-      const { error: settingsError } = await supabase
+      const { error } = await supabase
         .from('organization_voting_settings')
         .upsert({
-          organization_id: organization.id,
-          total_shares: votingSettings.total_shares,
+          organization_id: organization?.id,
+          total_shares: settings.total_shares,
         });
 
-      if (settingsError) throw settingsError;
-
-      // Save family group shares
-      for (const share of familyShares) {
-        const { error } = await supabase
-          .from('family_group_shares')
-          .upsert({
-            organization_id: organization.id,
-            family_group_name: share.family_group_name,
-            allocated_shares: share.allocated_shares,
-          });
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -135,13 +105,49 @@ export function VotingSettings() {
         description: "Failed to save voting settings",
         variant: "destructive",
       });
-    } finally {
-      setSaving(false);
     }
   };
 
-  const updateFamilyShares = (groupName: string, shares: number) => {
-    setFamilyShares(prev => 
+  const saveGroupShares = async () => {
+    try {
+      const totalAllocated = groupShares.reduce((sum, group) => sum + group.allocated_shares, 0);
+      
+      if (totalAllocated > settings.total_shares) {
+        toast({
+          title: "Error",
+          description: `Total allocated shares (${totalAllocated}) cannot exceed total shares (${settings.total_shares})`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      for (const groupShare of groupShares) {
+        const { error } = await supabase
+          .from('family_group_shares')
+          .upsert({
+            organization_id: organization?.id,
+            family_group_name: groupShare.family_group_name,
+            allocated_shares: groupShare.allocated_shares,
+          });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Group share allocations saved successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to save group shares",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateGroupShare = (groupName: string, shares: number) => {
+    setGroupShares(prev => 
       prev.map(group => 
         group.family_group_name === groupName 
           ? { ...group, allocated_shares: shares }
@@ -150,114 +156,59 @@ export function VotingSettings() {
     );
   };
 
-  const totalAllocatedShares = familyShares.reduce((sum, group) => sum + group.allocated_shares, 0);
-  const remainingShares = votingSettings.total_shares - totalAllocatedShares;
+  const totalAllocated = groupShares.reduce((sum, group) => sum + group.allocated_shares, 0);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Organization Voting Settings
-          </CardTitle>
-          <CardDescription>
-            Configure the total number of shares and allocate them to family groups
-          </CardDescription>
+          <CardTitle>Organization Voting Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="total-shares">Total Organization Shares</Label>
+          <div>
+            <Label htmlFor="total_shares">Total Organization Shares</Label>
             <Input
-              id="total-shares"
+              id="total_shares"
               type="number"
-              value={votingSettings.total_shares}
-              onChange={(e) => setVotingSettings(prev => ({ 
-                ...prev, 
-                total_shares: parseInt(e.target.value) || 0 
-              }))}
+              value={settings.total_shares}
+              onChange={(e) => setSettings({ ...settings, total_shares: parseInt(e.target.value) || 0 })}
+              min="1"
             />
           </div>
-
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="flex justify-between text-sm">
-              <span>Total Shares:</span>
-              <span className="font-medium">{votingSettings.total_shares}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Allocated:</span>
-              <span className="font-medium">{totalAllocatedShares}</span>
-            </div>
-            <div className="flex justify-between text-sm border-t pt-1 mt-1">
-              <span>Remaining:</span>
-              <span className={`font-medium ${remainingShares < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                {remainingShares}
-              </span>
-            </div>
-          </div>
+          <Button onClick={saveSettings}>Save Settings</Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Family Group Share Allocation</CardTitle>
-          <CardDescription>
-            Allocate shares to each family group. Group leads will distribute their shares to members.
-          </CardDescription>
+          <p className="text-sm text-muted-foreground">
+            Allocated: {totalAllocated} / {settings.total_shares} shares
+          </p>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Family Group</TableHead>
-                <TableHead>Allocated Shares</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {familyShares.map((group) => (
-                <TableRow key={group.family_group_name}>
-                  <TableCell className="font-medium">{group.family_group_name}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={group.allocated_shares}
-                      onChange={(e) => updateFamilyShares(
-                        group.family_group_name, 
-                        parseInt(e.target.value) || 0
-                      )}
-                      className="w-24"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={saveSettings} disabled={saving || remainingShares < 0}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Settings
-                </>
-              )}
-            </Button>
-          </div>
+        <CardContent className="space-y-4">
+          {groupShares.map((group) => (
+            <div key={group.family_group_name} className="flex items-center justify-between">
+              <Label className="flex-1">{group.family_group_name}</Label>
+              <Input
+                type="number"
+                value={group.allocated_shares}
+                onChange={(e) => updateGroupShare(group.family_group_name, parseInt(e.target.value) || 0)}
+                min="0"
+                max={settings.total_shares}
+                className="w-24"
+              />
+            </div>
+          ))}
+          <Button onClick={saveGroupShares} className="w-full">
+            Save Group Allocations
+          </Button>
         </CardContent>
       </Card>
     </div>
   );
-}
+};

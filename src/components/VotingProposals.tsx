@@ -1,26 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useOrganization } from '@/hooks/useOrganization';
-import { useUserRole } from '@/hooks/useUserRole';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Loader2, Plus, Vote, Calendar, User } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/hooks/useOrganization';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
+import { Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface VotingProposal {
   id: string;
   title: string;
-  description: string | null;
-  created_by_name: string | null;
-  created_by_family_group: string | null;
-  voting_deadline: string | null;
+  description: string;
+  created_by_name: string;
+  created_by_family_group: string;
+  voting_deadline: string;
   status: string;
   total_shares_voted: number;
   shares_for: number;
@@ -28,18 +27,18 @@ interface VotingProposal {
   created_at: string;
 }
 
-export function VotingProposals() {
+export const VotingProposals = () => {
   const { organization } = useOrganization();
-  const { userFamilyGroup, isGroupLead } = useUserRole();
+  const { userFamilyGroup } = useUserRole();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [proposals, setProposals] = useState<VotingProposal[]>([]);
-  const [showCreateProposal, setShowCreateProposal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [newProposal, setNewProposal] = useState({
     title: '',
     description: '',
-    deadline: '',
+    voting_deadline: ''
   });
 
   useEffect(() => {
@@ -49,14 +48,11 @@ export function VotingProposals() {
   }, [organization?.id]);
 
   const fetchProposals = async () => {
-    if (!organization?.id) return;
-
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('voting_proposals')
         .select('*')
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -74,221 +70,161 @@ export function VotingProposals() {
   };
 
   const createProposal = async () => {
-    if (!organization?.id || !userFamilyGroup) return;
-
-    setSubmitting(true);
     try {
-      const user = (await supabase.auth.getUser()).data.user;
-      const deadline = newProposal.deadline ? new Date(newProposal.deadline).toISOString() : null;
+      if (!newProposal.title.trim() || !newProposal.description.trim()) {
+        toast({
+          title: "Error",
+          description: "Title and description are required",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { error } = await supabase
         .from('voting_proposals')
         .insert({
-          organization_id: organization.id,
+          organization_id: organization?.id,
           title: newProposal.title,
-          description: newProposal.description || null,
+          description: newProposal.description,
           created_by_user_id: user?.id,
-          created_by_name: user?.user_metadata?.display_name || user?.email,
+          created_by_name: user?.email?.split('@')[0] || 'Unknown',
           created_by_family_group: userFamilyGroup,
-          voting_deadline: deadline,
-          status: 'active',
+          voting_deadline: newProposal.voting_deadline ? new Date(newProposal.voting_deadline).toISOString() : null,
+          status: 'active'
         });
 
       if (error) throw error;
-
-      setNewProposal({ title: '', description: '', deadline: '' });
-      setShowCreateProposal(false);
-      fetchProposals();
 
       toast({
         title: "Success",
         description: "Proposal created successfully",
       });
+
+      setNewProposal({ title: '', description: '', voting_deadline: '' });
+      setShowCreateForm(false);
+      fetchProposals();
     } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to create proposal",
         variant: "destructive",
       });
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  const getStatusBadge = (status: string, deadline: string | null) => {
-    if (status === 'closed') {
-      return <Badge variant="secondary">Closed</Badge>;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Clock className="h-4 w-4" />;
+      case 'passed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4" />;
     }
-    
-    if (deadline && new Date(deadline) < new Date()) {
-      return <Badge variant="destructive">Expired</Badge>;
-    }
-    
-    return <Badge variant="default">Active</Badge>;
-  };
-
-  const calculateProgress = (proposal: VotingProposal) => {
-    const total = proposal.shares_for + proposal.shares_against;
-    if (total === 0) return 0;
-    return (proposal.shares_for / total) * 100;
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Voting Proposals</h2>
-          <p className="text-muted-foreground">
-            View active proposals and cast your votes
-          </p>
-        </div>
-        {isGroupLead && (
-          <Dialog open={showCreateProposal} onOpenChange={setShowCreateProposal}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Proposal
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Create New Proposal</DialogTitle>
-                <DialogDescription>
-                  Create a new proposal for the organization to vote on.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="proposal-title">Title</Label>
-                  <Input
-                    id="proposal-title"
-                    value={newProposal.title}
-                    onChange={(e) => setNewProposal(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Enter proposal title"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="proposal-description">Description</Label>
-                  <Textarea
-                    id="proposal-description"
-                    value={newProposal.description}
-                    onChange={(e) => setNewProposal(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe the proposal in detail"
-                    rows={4}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="proposal-deadline">Voting Deadline (Optional)</Label>
-                  <Input
-                    id="proposal-deadline"
-                    type="datetime-local"
-                    value={newProposal.deadline}
-                    onChange={(e) => setNewProposal(prev => ({ ...prev, deadline: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCreateProposal(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createProposal} disabled={!newProposal.title.trim() || submitting}>
-                  {submitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    'Create Proposal'
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+        <h3 className="text-lg font-semibold">Voting Proposals</h3>
+        <Button onClick={() => setShowCreateForm(!showCreateForm)} size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          New Proposal
+        </Button>
       </div>
 
-      <div className="grid gap-6">
-        {proposals.map((proposal) => (
-          <Card key={proposal.id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">{proposal.title}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      {proposal.created_by_name} ({proposal.created_by_family_group})
+      {showCreateForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Proposal</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={newProposal.title}
+                onChange={(e) => setNewProposal({ ...newProposal, title: e.target.value })}
+                placeholder="Proposal title"
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newProposal.description}
+                onChange={(e) => setNewProposal({ ...newProposal, description: e.target.value })}
+                placeholder="Detailed description of the proposal"
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label htmlFor="deadline">Voting Deadline (optional)</Label>
+              <Input
+                id="deadline"
+                type="datetime-local"
+                value={newProposal.voting_deadline}
+                onChange={(e) => setNewProposal({ ...newProposal, voting_deadline: e.target.value })}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={createProposal}>Create Proposal</Button>
+              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        {proposals.length === 0 ? (
+          <p className="text-muted-foreground text-center py-4">
+            No proposals found. Create the first one!
+          </p>
+        ) : (
+          proposals.map((proposal) => (
+            <Card key={proposal.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getStatusIcon(proposal.status)}
+                      <h4 className="font-semibold">{proposal.title}</h4>
+                      <Badge variant={proposal.status === 'active' ? 'default' : 'secondary'}>
+                        {proposal.status}
+                      </Badge>
                     </div>
-                    {proposal.voting_deadline && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        Deadline: {format(new Date(proposal.voting_deadline), 'MMM d, yyyy h:mm a')}
-                      </div>
-                    )}
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {proposal.description}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>By {proposal.created_by_family_group}</span>
+                      <span>{format(new Date(proposal.created_at), 'MMM dd, yyyy')}</span>
+                      {proposal.voting_deadline && (
+                        <span>Deadline: {format(new Date(proposal.voting_deadline), 'MMM dd, yyyy HH:mm')}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right text-sm">
+                    <div className="text-muted-foreground">Votes Cast</div>
+                    <div className="font-semibold">{proposal.total_shares_voted} shares</div>
+                    <div className="text-xs text-muted-foreground">
+                      For: {proposal.shares_for} | Against: {proposal.shares_against}
+                    </div>
                   </div>
                 </div>
-                {getStatusBadge(proposal.status, proposal.voting_deadline)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {proposal.description && (
-                <p className="text-muted-foreground">{proposal.description}</p>
-              )}
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Voting Progress</span>
-                  <span>{proposal.total_shares_voted} shares voted</span>
-                </div>
-                <Progress value={calculateProgress(proposal)} className="h-2" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>For: {proposal.shares_for} shares</span>
-                  <span>Against: {proposal.shares_against} shares</span>
-                </div>
-              </div>
-
-              {proposal.status === 'active' && (!proposal.voting_deadline || new Date(proposal.voting_deadline) > new Date()) && (
-                <div className="flex gap-2 pt-2">
-                  <Button variant="default" size="sm" className="flex-1">
-                    <Vote className="h-4 w-4 mr-2" />
-                    Vote For
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Vote className="h-4 w-4 mr-2" />
-                    Vote Against
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-
-        {proposals.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Vote className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Proposals Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                There are no voting proposals at this time.
-              </p>
-              {isGroupLead && (
-                <Button onClick={() => setShowCreateProposal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Proposal
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
     </div>
   );
-}
+};
