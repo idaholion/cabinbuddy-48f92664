@@ -156,7 +156,7 @@ const FamilySetup = () => {
     }
     
     // First try to load from database if organization exists
-    if (organization) {
+    if (organization && !isCreatingNew) {
       setOrgName(organization.name || "");
       setOrganizationCode(organization.code || generateOrgCode());
       setAdminName(organization.admin_name || "");
@@ -168,7 +168,13 @@ const FamilySetup = () => {
       setCalendarKeeperName(organization.calendar_keeper_name || "");
       setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
       setCalendarKeeperEmail(organization.calendar_keeper_email || "");
-    } else {
+      
+      // Don't overwrite with auto-save data when loading fresh organization data
+      return;
+    }
+    
+    // Only load auto-saved data if we're not loading fresh organization data
+    if (!organization) {
       // Try to load auto-saved data first (only if there's meaningful data)
       const savedData = loadSavedData();
       if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
