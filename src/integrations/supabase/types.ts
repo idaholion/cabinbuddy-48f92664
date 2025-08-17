@@ -1940,6 +1940,10 @@ export type Database = {
         Args: { p_current_group_id?: string; p_organization_id: string }
         Returns: string[]
       }
+      get_current_user_email: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string
