@@ -324,6 +324,33 @@ export type Database = {
         }
         Relationships: []
       }
+      family_group_shares: {
+        Row: {
+          allocated_shares: number
+          created_at: string
+          family_group_name: string
+          id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          allocated_shares?: number
+          created_at?: string
+          family_group_name: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          allocated_shares?: number
+          created_at?: string
+          family_group_name?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_groups: {
         Row: {
           alternate_lead_id: string | null
@@ -380,6 +407,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      member_share_allocations: {
+        Row: {
+          allocated_by_user_id: string | null
+          allocated_shares: number
+          created_at: string
+          family_group_name: string
+          id: string
+          member_email: string | null
+          member_name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          allocated_by_user_id?: string | null
+          allocated_shares?: number
+          created_at?: string
+          family_group_name: string
+          id?: string
+          member_email?: string | null
+          member_name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          allocated_by_user_id?: string | null
+          allocated_shares?: number
+          created_at?: string
+          family_group_name?: string
+          id?: string
+          member_email?: string | null
+          member_name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       notification_log: {
         Row: {
@@ -458,6 +521,30 @@ export type Database = {
           table_name?: string
           user_id?: string | null
           user_organization_id?: string | null
+        }
+        Relationships: []
+      }
+      organization_voting_settings: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          total_shares: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          total_shares?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          total_shares?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1619,6 +1706,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      votes: {
+        Row: {
+          created_at: string
+          family_group_name: string
+          id: string
+          organization_id: string
+          proposal_id: string
+          shares_used: number
+          vote_choice: string
+          voted_by_user_id: string | null
+          voter_email: string | null
+          voter_name: string
+        }
+        Insert: {
+          created_at?: string
+          family_group_name: string
+          id?: string
+          organization_id: string
+          proposal_id: string
+          shares_used: number
+          vote_choice: string
+          voted_by_user_id?: string | null
+          voter_email?: string | null
+          voter_name: string
+        }
+        Update: {
+          created_at?: string
+          family_group_name?: string
+          id?: string
+          organization_id?: string
+          proposal_id?: string
+          shares_used?: number
+          vote_choice?: string
+          voted_by_user_id?: string | null
+          voter_email?: string | null
+          voter_name?: string
+        }
+        Relationships: []
+      }
+      voting_proposals: {
+        Row: {
+          created_at: string
+          created_by_family_group: string | null
+          created_by_name: string | null
+          created_by_user_id: string | null
+          description: string | null
+          id: string
+          organization_id: string
+          shares_against: number | null
+          shares_for: number | null
+          status: string
+          title: string
+          total_shares_voted: number | null
+          updated_at: string
+          voting_deadline: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_family_group?: string | null
+          created_by_name?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          id?: string
+          organization_id: string
+          shares_against?: number | null
+          shares_for?: number | null
+          status?: string
+          title: string
+          total_shares_voted?: number | null
+          updated_at?: string
+          voting_deadline?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_family_group?: string | null
+          created_by_name?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          id?: string
+          organization_id?: string
+          shares_against?: number | null
+          shares_for?: number | null
+          status?: string
+          title?: string
+          total_shares_voted?: number | null
+          updated_at?: string
+          voting_deadline?: string | null
+        }
+        Relationships: []
       }
       work_weekend_approvals: {
         Row: {

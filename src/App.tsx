@@ -55,6 +55,7 @@ const DataBackup = React.lazy(() => import("./pages/DataBackup"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
 const Demo = React.lazy(() => import("./pages/Demo"));
 const CalendarKeeperManagement = React.lazy(() => import("./pages/CalendarKeeperManagement"));
+const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -129,6 +130,7 @@ const AppContent = () => {
         <Route path="/admin/treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/calendar-keeper-management" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagement /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
+        <Route path="/family-voting" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyVoting /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/demo" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/supervisor" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
