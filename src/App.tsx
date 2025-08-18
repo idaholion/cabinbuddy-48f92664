@@ -61,7 +61,7 @@ const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const SupervisorOrganizationFinancial = React.lazy(() => import("./pages/SupervisorOrganizationFinancial"));
-const SupervisorOrganizationReservation = React.lazy(() => import("./pages/SupervisorOrganizationReservation"));
+
 
 
 // Lazy load utility pages
@@ -137,7 +137,7 @@ const AppContent = () => {
         <Route path="/supervisor" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
         <Route path="/supervisor/organization/:organizationId/financial" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFinancial /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
-        <Route path="/supervisor/organization/:organizationId/reservation" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationReservation /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
+        
         
         <Route path="/fonts" element={<DebugRoute><Suspense fallback={<LoadingSpinner />}><FontShowcase /></Suspense></DebugRoute>} />
         <Route path="/breadcrumbs" element={<DebugRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><BreadcrumbDemo /></Suspense></MainLayout></DebugRoute>} />
