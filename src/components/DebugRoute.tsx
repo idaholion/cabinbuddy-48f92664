@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
+import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,6 +15,7 @@ export const DebugRoute = ({ children, fallbackPath = '/' }: DebugRouteProps) =>
   const { user } = useAuth();
   const { isSupervisor, loading } = useSupervisor();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const isDebugMode = location.search.includes('debug=true');
   
@@ -45,7 +46,7 @@ export const DebugRoute = ({ children, fallbackPath = '/' }: DebugRouteProps) =>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.history.back()}
+            onClick={() => navigate('/supervisor')}
             className="ml-4 border-orange-300 text-orange-700 hover:bg-orange-100"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
