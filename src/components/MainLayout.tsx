@@ -32,7 +32,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             {children}
           </div>
         </main>
-        <AiHelpAssistant />
+        {/* AI Help Assistant temporarily disabled - requires OpenAI API setup */}
       </div>
     </SidebarProvider>
   );
