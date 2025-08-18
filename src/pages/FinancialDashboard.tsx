@@ -14,6 +14,8 @@ import { RecurringBills } from "@/components/RecurringBills";
 import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { useConversationReminders } from "@/hooks/useConversationReminders";
+import { useEffect } from "react";
 
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState("manage");
@@ -27,6 +29,14 @@ const FinancialDashboard = () => {
     accessLevel,
     userFamilyGroup,
   } = useFinancialData();
+  
+  const { addReminder } = useConversationReminders();
+
+  // Add Wave access token reminder on component mount
+  useEffect(() => {
+    const reminderText = "Get Wave access token: Visit Wave Accounting settings, create API credentials, and add the access token to integrate financial data export/import functionality.";
+    addReminder(reminderText, '/finance-reports');
+  }, [addReminder]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
