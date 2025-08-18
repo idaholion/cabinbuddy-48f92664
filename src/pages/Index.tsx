@@ -104,9 +104,9 @@ const Index = () => {
                 align="end" 
                 side="top"
                 className="w-56 max-h-[60vh] overflow-y-auto z-50 bg-background border shadow-lg"
-                sideOffset={8}
+                sideOffset={16}
                 avoidCollisions={true}
-                collisionPadding={16}
+                collisionPadding={24}
               >
                 <DropdownMenuItem asChild>
                   <Link to="/manage-organizations">
