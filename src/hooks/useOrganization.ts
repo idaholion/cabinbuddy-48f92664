@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 
 interface OrganizationData {
   name: string;
@@ -21,20 +22,27 @@ interface OrganizationData {
 export const useOrganization = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { logSecurityEvent } = useSecurityMonitoring();
   const [loading, setLoading] = useState(false);
   const [organization, setOrganization] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchUserOrganization = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setError("User not authenticated");
+      return;
+    }
 
     // Check cache first
     const cachedOrg = apiCache.get(cacheKeys.primaryOrganization(user.id));
     if (cachedOrg) {
       setOrganization(cachedOrg);
+      setError(null);
       return;
     }
 
     setLoading(true);
+    setError(null);
     try {
       // Use the new multi-organization system - get primary organization
       const { data: primaryOrgId, error: primaryError } = await supabase
@@ -42,43 +50,78 @@ export const useOrganization = () => {
 
       if (primaryError) {
         console.error('Error fetching primary organization:', primaryError);
-        setLoading(false);
+        setError("Failed to fetch organization access");
+        logSecurityEvent({
+          type: 'permission_error',
+          message: 'Failed to fetch primary organization ID',
+          details: { error: primaryError.message }
+        });
         return;
       }
 
-      if (primaryOrgId) {
-        // Check if organization details are cached
-        const cachedOrgDetails = apiCache.get(cacheKeys.organization(primaryOrgId));
-        if (cachedOrgDetails) {
-          setOrganization(cachedOrgDetails);
-          // Cache as primary organization
-          apiCache.set(cacheKeys.primaryOrganization(user.id), cachedOrgDetails);
-          setLoading(false);
-          return;
-        }
+      if (!primaryOrgId) {
+        setError("No organization access found");
+        logSecurityEvent({
+          type: 'organization_mismatch',
+          message: 'User has no primary organization',
+          details: { userId: user.id }
+        });
+        return;
+      }
 
-        // Fetch the organization details
-        const { data: org, error: orgError } = await supabase
-          .from('organizations')
-          .select('*')
-          .eq('id', primaryOrgId)
-          .single();
+      // Check if organization details are cached
+      const cachedOrgDetails = apiCache.get(cacheKeys.organization(primaryOrgId));
+      if (cachedOrgDetails) {
+        setOrganization(cachedOrgDetails);
+        // Cache as primary organization
+        apiCache.set(cacheKeys.primaryOrganization(user.id), cachedOrgDetails);
+        setError(null);
+        return;
+      }
 
-        if (orgError && orgError.code !== 'PGRST116') {
-          console.error('Error fetching organization:', orgError);
+      // Fetch the organization details
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', primaryOrgId)
+        .single();
+
+      if (orgError) {
+        if (orgError.code === 'PGRST116') {
+          setError("Organization not found");
+          logSecurityEvent({
+            type: 'organization_mismatch',
+            message: 'Organization exists in user_organizations but not in organizations table',
+            details: { organizationId: primaryOrgId, error: orgError.message }
+          });
         } else {
-          setOrganization(org);
-          // Cache both the organization and as primary
-          apiCache.set(cacheKeys.organization(primaryOrgId), org);
-          apiCache.set(cacheKeys.primaryOrganization(user.id), org);
+          console.error('Error fetching organization:', orgError);
+          setError("Failed to load organization details");
+          logSecurityEvent({
+            type: 'permission_error',
+            message: 'Failed to fetch organization details',
+            details: { organizationId: primaryOrgId, error: orgError.message }
+          });
         }
+      } else if (org) {
+        setOrganization(org);
+        setError(null);
+        // Cache both the organization and as primary
+        apiCache.set(cacheKeys.organization(primaryOrgId), org);
+        apiCache.set(cacheKeys.primaryOrganization(user.id), org);
       }
     } catch (error) {
       console.error('Error in fetchUserOrganization:', error);
+      setError("Unexpected error occurred");
+      logSecurityEvent({
+        type: 'permission_error',
+        message: 'Unexpected error in fetchUserOrganization',
+        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, logSecurityEvent]);
 
   const createOrganization = async (orgData: OrganizationData) => {
     if (!user) {
@@ -208,6 +251,7 @@ export const useOrganization = () => {
   return {
     organization,
     loading,
+    error,
     createOrganization,
     updateOrganization,
     refetchOrganization: fetchUserOrganization,

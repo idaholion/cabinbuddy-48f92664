@@ -7,6 +7,9 @@ import { ErrorWithRecovery } from '@/components/ui/error-recovery';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { SecurityAlert } from '@/components/SecurityAlert';
+import { SecurityMonitoringDashboard } from '@/components/SecurityMonitoringDashboard';
+import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 
 interface RobustOrganizationRouteProps {
   children: ReactNode;
@@ -21,6 +24,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     offline,
     retry 
   } = useRobustMultiOrganization();
+  const { securityData } = useSecurityMonitoring();
   const location = useLocation();
   const [retryAttempts, setRetryAttempts] = useState(0);
 
@@ -138,7 +142,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   // Show warning if organization data might be stale
   const showStaleDataWarning = organizations.length > 0 && error;
 
-  // All good - render children with optional stale data warning
+  // All good - render children with optional stale data warning and security monitoring
   return (
     <>
       {showStaleDataWarning && (
@@ -159,6 +163,21 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
           </div>
         </div>
       )}
+      
+      {/* Security Monitoring Dashboard */}
+      <div className="max-w-7xl mx-auto p-4">
+        <SecurityMonitoringDashboard />
+        
+        {/* Security Alerts */}
+        {!securityData.organizationAccess.hasAccess && (
+          <SecurityAlert 
+            error={securityData.organizationAccess.error || "Organization access verification failed"}
+            onRetry={handleRetry}
+            showEmergencyAccess={true}
+          />
+        )}
+      </div>
+      
       {children}
     </>
   );

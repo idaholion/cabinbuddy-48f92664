@@ -324,6 +324,39 @@ export type Database = {
         }
         Relationships: []
       }
+      emergency_access_log: {
+        Row: {
+          action_type: string
+          approved_by: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          organization_id: string | null
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          approved_by?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          organization_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          approved_by?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          organization_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       family_group_shares: {
         Row: {
           allocated_shares: number
