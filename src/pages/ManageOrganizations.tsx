@@ -13,14 +13,15 @@ export const ManageOrganizations = () => {
   // Check if we're in debug mode
   const isDebugMode = location.search.includes('debug=true');
 
-  // Allow users to access this page even with 1 organization
+  // Redirect logic - users with 0 or 1 organizations shouldn't be here (unless in debug mode)
   useEffect(() => {
     if (!loading && !error && !isDebugMode) {
       if (organizations.length === 0) {
         // Users with no organizations should go to setup, not signup
         navigate('/setup');
+      } else if (organizations.length === 1) {
+        navigate('/home');
       }
-      // Removed automatic redirect for single organization - let users manage organizations manually
     }
   }, [organizations, loading, error, navigate, isDebugMode]);
 
@@ -67,8 +68,8 @@ export const ManageOrganizations = () => {
     );
   }
 
-  // Show page for users with 1 or more organizations
-  if (organizations.length === 0) {
+  // If we get here, user has 2+ organizations
+  if (organizations.length < 2) {
     return null; // Will redirect via useEffect
   }
 
