@@ -21,17 +21,17 @@ export default function Demo() {
 
   const demoSlides: DemoSlide[] = [
     {
-      id: 'setup-overview',
-      title: 'System Setup',
-      description: 'Complete cabin management system configuration',
-      explanation: 'The setup process guides administrators through configuring family groups, financial settings, reservation rules, and communication preferences with real data entry forms.',
+      id: 'family-organization',
+      title: 'Family Organization Setup', 
+      description: 'Create and manage family groups for your cabin sharing community',
+      explanation: 'Start by setting up family groups - the foundation of your cabin sharing system. Each family has their own profile, contact information, and member details for easy coordination.',
       icon: Users,
       content: (
         <div className="p-6 bg-background min-h-[500px]">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">Family Group Setup</h1>
-              <p className="text-muted-foreground">Configure your family groups and member assignments</p>
+              <h1 className="text-4xl font-bold text-foreground mb-4">Welcome to Your Cabin Community</h1>
+              <p className="text-lg text-muted-foreground">Set up family groups to organize your cabin sharing members</p>
             </div>
             
             <div className="grid gap-8 md:grid-cols-2">
@@ -171,6 +171,109 @@ export default function Demo() {
               </Card>
 
               {/* Reservation Setup Preview */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-purple-600" />
+                    Reservation Rules
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Maximum Stay Length</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="14 days"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Booking Opens</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="1st of each month at 9:00 AM"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Rotation Method</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="Fair rotation by family"
+                        readOnly
+                      />
+                    </div>
+                    <div className="text-sm text-purple-700 bg-purple-50 p-2 rounded">
+                      ✓ Reservation system configured
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'system-configuration',
+      title: 'System Configuration',
+      description: 'Complete financial and reservation rule setup',
+      explanation: 'Configure the financial settings, reservation rules, and operational parameters that will govern how your cabin sharing system works.',
+      icon: DollarSign,
+      content: (
+        <div className="p-6 bg-background min-h-[500px]">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-4">System Configuration Dashboard</h1>
+              <p className="text-muted-foreground">Set up your financial and reservation rules</p>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-2">
+              {/* Financial Setup */}
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    Financial Configuration
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Annual Family Fee</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="$2,400"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Payment Due Date</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="January 15th"
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Late Fee</label>
+                      <input 
+                        type="text" 
+                        className="w-full mt-1 p-2 border border-input rounded-md"
+                        value="$50"
+                        readOnly
+                      />
+                    </div>
+                    <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
+                      ✓ Financial settings configured
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reservation Rules */}
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -872,7 +975,7 @@ export default function Demo() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader backTo="/home" backLabel="Exit Demo" />
+      <NavigationHeader backTo="/" backLabel="Back to Home" />
       
       <div className="max-w-7xl mx-auto p-6">
         {/* Demo Controls */}
@@ -882,7 +985,7 @@ export default function Demo() {
               <h1 className="text-3xl font-bold">Cabin Management System Demo</h1>
               <p className="text-muted-foreground">Interactive walkthrough of key features</p>
             </div>
-            <Button variant="outline" onClick={() => navigate('/home')}>
+            <Button variant="outline" onClick={() => navigate('/')}>
               <X className="mr-2 h-4 w-4" />
               Exit Demo
             </Button>
@@ -942,7 +1045,7 @@ export default function Demo() {
             </div>
 
             {/* Slide Content */}
-            <div className="pt-20">
+            <div className="pt-24">
               {currentSlideData.content}
             </div>
           </Card>
