@@ -132,7 +132,7 @@ const AppContent = () => {
         <Route path="/calendar-keeper-management" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagement /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/family-voting" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyVoting /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
-        <Route path="/demo" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
+        <Route path="/demo" element={<DebugRoute><Suspense fallback={<LoadingSpinner />}><Demo /></Suspense></DebugRoute>} />
         <Route path="/supervisor" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<DebugRoute><SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute></DebugRoute>} />
         
