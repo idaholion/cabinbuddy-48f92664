@@ -80,10 +80,8 @@ const Setup = () => {
   const isFinancialComplete = !!(
     reservationSettings?.nightly_rate &&
     reservationSettings.nightly_rate > 0 &&
-    reservationSettings?.cleaning_fee &&
-    reservationSettings.cleaning_fee > 0 &&
-    reservationSettings?.damage_deposit &&
-    reservationSettings.damage_deposit > 0
+    reservationSettings?.preferred_payment_method &&
+    reservationSettings.preferred_payment_method.trim()
   );
     
   const isReservationComplete = !!(
