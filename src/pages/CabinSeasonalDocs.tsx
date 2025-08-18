@@ -372,7 +372,7 @@ const CabinSeasonalDocs = () => {
             </CardHeader>
             <CardContent>
               <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                   dragActive 
                     ? 'border-primary bg-primary/5' 
                     : 'border-muted-foreground/25'
@@ -381,17 +381,38 @@ const CabinSeasonalDocs = () => {
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground mb-4">
                   {dragActive 
-                    ? 'Drop files here to detect them for upload'
-                    : 'Drag and drop seasonal documents here for processing'
+                    ? 'Drop files here to upload'
+                    : 'Drag and drop files or click to select'
                   }
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Use the "Add Document" buttons above to complete the upload process
+                  Supported: PDF, DOC, DOCX, TXT, JPG, PNG (max 10MB)
                 </p>
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setNewDoc({
+                        season: "opening",
+                        title: file.name.split('.')[0],
+                        description: "",
+                        external_url: "",
+                        document_type: "guide",
+                        file
+                      });
+                      setIsAddDialogOpen(true);
+                    }
+                  }}
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  className="hidden"
+                />
               </div>
             </CardContent>
           </Card>
