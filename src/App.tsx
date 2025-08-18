@@ -29,7 +29,7 @@ import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Textresponse from "./pages/Textresponse";
 import { ManageOrganizations } from "./pages/ManageOrganizations";
-import { QuickBooksSetupReminder } from "./components/QuickBooksSetupReminder";
+
 
 // Lazy load setup pages (used less frequently)
 const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
@@ -156,7 +156,7 @@ const App = () => (
           <ErrorBoundary>
             <Toaster />
             <Sonner />
-            <QuickBooksSetupReminder />
+            
             <AppContent />
           </ErrorBoundary>
         </AuthProvider>
