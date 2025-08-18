@@ -100,7 +100,14 @@ const Index = () => {
                   More
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent 
+                align="end" 
+                side="bottom"
+                className="w-56 max-h-[70vh] overflow-y-auto z-50 bg-background border shadow-lg"
+                sideOffset={4}
+                avoidCollisions={true}
+                collisionPadding={8}
+              >
                 <DropdownMenuItem asChild>
                   <Link to="/manage-organizations">
                     <Settings className="h-4 w-4 mr-2" />
