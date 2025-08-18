@@ -17,9 +17,6 @@ export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Check if we're in debug mode
-  const isDebugMode = location.search.includes('debug=true');
-
   useEffect(() => {
     const checkAccess = () => {
       if (!user?.email || !organization) {
@@ -28,12 +25,7 @@ export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
         return;
       }
 
-      // Allow access in debug mode if user is a supervisor
-      if (isDebugMode && isSupervisor) {
-        setHasAccess(true);
-        setLoading(false);
-        return;
-      }
+      // SECURITY FIX: Removed debug mode bypass - no URL parameter overrides should allow access
 
       // Only admin and treasurer have access to financial features
       const userEmail = user.email.toLowerCase();
@@ -47,7 +39,7 @@ export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
     if (!authLoading && organization) {
       checkAccess();
     }
-  }, [user, organization, authLoading, isDebugMode, isSupervisor]);
+  }, [user, organization, authLoading, isSupervisor]);
 
   if (authLoading || loading) {
     return (

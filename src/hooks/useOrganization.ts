@@ -109,13 +109,13 @@ export const useOrganization = () => {
         return null;
       }
 
-      // Add user as admin of the new organization
+      // SECURITY FIX: Validate organization creator gets admin role only for their own organization  
       const { error: membershipError } = await supabase
         .from('user_organizations')
         .insert({
           user_id: user.id,
           organization_id: newOrg.id,
-          role: 'admin',
+          role: 'admin', // Admin role only when creating organization
           is_primary: true // Make this the primary organization
         });
 

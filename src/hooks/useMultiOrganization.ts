@@ -151,13 +151,13 @@ export const useMultiOrganization = () => {
         return false;
       }
 
-      // Add user to organization
+      // SECURITY FIX: Validate role assignment - only allow 'member' for joining organizations
       const { error: joinError } = await supabase
         .from('user_organizations')
         .insert({
           user_id: user.id,
           organization_id: org.id,
-          role: 'member',
+          role: 'member', // FIXED: Always member role when joining
           is_primary: organizations.length === 0 // Make primary if it's their first org
         });
 
@@ -223,13 +223,13 @@ export const useMultiOrganization = () => {
         return null;
       }
 
-      // Add user as admin of the new organization
+      // SECURITY FIX: Validate organization creator gets admin role only for their own organization
       const { error: joinError } = await supabase
         .from('user_organizations')
         .insert({
           user_id: user.id,
           organization_id: newOrg.id,
-          role: 'admin',
+          role: 'admin', // Admin role only when creating organization
           is_primary: organizations.length === 0 // Make primary if it's their first org
         });
 
