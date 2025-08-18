@@ -1063,8 +1063,17 @@ export default function Demo() {
             Previous
           </Button>
 
-          <div className="text-sm text-muted-foreground">
-            {currentSlide + 1} of {demoSlides.length}
+          <div className="flex gap-2">
+            {demoSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentSlide ? 'bg-primary' : 'bg-muted'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
 
           <Button 
