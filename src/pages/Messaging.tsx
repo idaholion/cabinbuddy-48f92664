@@ -90,7 +90,8 @@ const Messaging = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 max-w-4xl">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <div className="container mx-auto py-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Messaging Center</h1>
         <p className="text-muted-foreground mt-2 text-base">
@@ -228,6 +229,7 @@ const Messaging = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

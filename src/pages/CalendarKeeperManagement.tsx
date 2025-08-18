@@ -10,7 +10,7 @@ const CalendarKeeperManagement = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <header className="sr-only">
         <h1>Calendar Keeper Management – Notifications & Reminders</h1>
       </header>
