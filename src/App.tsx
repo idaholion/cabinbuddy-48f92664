@@ -96,6 +96,7 @@ const AppContent = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DebugRoute><Intro /></DebugRoute>} />
+        <Route path="/intro" element={<DebugRoute><Intro /></DebugRoute>} />
         <Route path="/auth" element={<DebugRoute><Auth /></DebugRoute>} />
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
