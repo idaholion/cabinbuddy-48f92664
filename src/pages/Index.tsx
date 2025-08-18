@@ -102,11 +102,11 @@ const Index = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                side="bottom"
-                className="w-56 max-h-[70vh] overflow-y-auto z-50 bg-background border shadow-lg"
-                sideOffset={4}
+                side="top"
+                className="w-56 max-h-[60vh] overflow-y-auto z-50 bg-background border shadow-lg"
+                sideOffset={8}
                 avoidCollisions={true}
-                collisionPadding={8}
+                collisionPadding={16}
               >
                 <DropdownMenuItem asChild>
                   <Link to="/manage-organizations">
