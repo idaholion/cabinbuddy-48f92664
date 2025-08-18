@@ -6,13 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users, Building, Shield, Trash2, UserPlus } from 'lucide-react';
+import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign } from 'lucide-react';
 import { OrganizationDetail } from '@/components/OrganizationDetail';
 import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
 import { DebugModePanel } from '@/components/DebugModePanel';
+import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTab';
+import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -28,6 +31,7 @@ export const SupervisorDashboard = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
+  const [selectedOrgForTabs, setSelectedOrgForTabs] = useState<string>('');
 
   if (loading) {
     return (
@@ -141,6 +145,8 @@ export const SupervisorDashboard = () => {
         <Tabs defaultValue="organizations" className="space-y-6">
           <TabsList>
             <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
+            <TabsTrigger value="family-groups" className="text-base">Family Groups</TabsTrigger>
+            <TabsTrigger value="financial-records" className="text-base">Financial Records</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
             <TabsTrigger value="debug" className="text-base">Debug Mode</TabsTrigger>
@@ -223,6 +229,92 @@ export const SupervisorDashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="family-groups" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Family Groups Management
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Manage family groups for a specific organization. Select an organization to view and edit its family groups.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 max-w-sm">
+                    <Select value={selectedOrgForTabs} onValueChange={setSelectedOrgForTabs}>
+                      <SelectTrigger className="text-base">
+                        <SelectValue placeholder="Select an organization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id} className="text-base">
+                            {org.name} ({org.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {selectedOrgForTabs && (
+                  <div className="border rounded-lg p-4 bg-muted/20">
+                    <SupervisorFamilyGroupsTab organizationId={selectedOrgForTabs} />
+                  </div>
+                )}
+                {!selectedOrgForTabs && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-base">Select an organization above to manage its family groups</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="financial-records" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Financial Records Management
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Manage financial records and expenses for a specific organization. Select an organization to view and manage its financial data.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 max-w-sm">
+                    <Select value={selectedOrgForTabs} onValueChange={setSelectedOrgForTabs}>
+                      <SelectTrigger className="text-base">
+                        <SelectValue placeholder="Select an organization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id} className="text-base">
+                            {org.name} ({org.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {selectedOrgForTabs && (
+                  <div className="border rounded-lg p-4 bg-muted/20">
+                    <SupervisorFinancialTab organizationId={selectedOrgForTabs} />
+                  </div>
+                )}
+                {!selectedOrgForTabs && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-base">Select an organization above to manage its financial records</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="supervisors">

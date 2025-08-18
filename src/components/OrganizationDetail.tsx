@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, DollarSign, Home } from 'lucide-react';
+import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -199,43 +199,43 @@ export const OrganizationDetail = ({
           </Card>
         </div>
 
-        {/* Setup Actions */}
+        {/* Data Overview */}
         <Card>
           <CardHeader>
-            <CardTitle>Organization Setup</CardTitle>
-            <CardDescription className="text-base">Manage setup data for this organization</CardDescription>
+            <CardTitle>Organization Data Overview</CardTitle>
+            <CardDescription className="text-base">Summary of data for this organization. Management functions are available in the supervisor dashboard tabs.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-3">
-              <Button 
-                variant="outline" 
-                className="h-20 flex flex-col gap-2 text-base"
-                onClick={() => navigate(`/supervisor/organization/${organization.id}/family-groups`)}
-              >
-                <Users className="h-5 w-5" />
-                <span className="text-base">Family Groups</span>
-                <span className="text-base text-muted-foreground">{stats.familyGroups} groups</span>
-              </Button>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <Users className="h-5 w-5 text-primary" />
+                <div>
+                  <div className="font-medium text-base">Family Groups</div>
+                  <div className="text-base text-muted-foreground">{stats.familyGroups} groups</div>
+                </div>
+              </div>
               
-              <Button 
-                variant="outline" 
-                className="h-20 flex flex-col gap-2 text-base"
-                onClick={() => navigate(`/supervisor/organization/${organization.id}/financial`)}
-              >
-                <DollarSign className="h-5 w-5" />
-                <span className="text-base">Financial Setup</span>
-                <span className="text-base text-muted-foreground">{stats.receipts} receipts</span>
-              </Button>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <Receipt className="h-5 w-5 text-primary" />
+                <div>
+                  <div className="font-medium text-base">Financial Records</div>
+                  <div className="text-base text-muted-foreground">{stats.receipts} receipts</div>
+                </div>
+              </div>
               
-              <Button 
-                variant="outline" 
-                className="h-20 flex flex-col gap-2 text-base"
-                onClick={() => navigate(`/supervisor/organization/${organization.id}/reservation`)}
-              >
-                <Home className="h-5 w-5" />
-                <span className="text-base">Reservation Setup</span>
-                <span className="text-base text-muted-foreground">Property details</span>
-              </Button>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+                <Calendar className="h-5 w-5 text-primary" />
+                <div>
+                  <div className="font-medium text-base">Check-ins</div>
+                  <div className="text-base text-muted-foreground">{stats.checkinSessions} sessions</div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-base text-blue-800">
+                <strong>Management Note:</strong> To manage family groups or financial records for this organization, 
+                return to the supervisor dashboard and use the "Family Groups" or "Financial Records" tabs.
+              </p>
             </div>
           </CardContent>
         </Card>
