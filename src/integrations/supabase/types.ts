@@ -1977,6 +1977,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_safe_organization_info: {
+        Args: { org_id: string }
+        Returns: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }[]
+      }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string
