@@ -48,6 +48,35 @@ export const useSeasonalDocs = () => {
     }
   };
 
+  const uploadFile = async (file: File, season: string) => {
+    if (!user || !organization?.id) return null;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${organization.id}/${season}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   const addSeasonalDoc = async (docData: {
     season: string;
     title: string;
@@ -55,16 +84,25 @@ export const useSeasonalDocs = () => {
     file_url?: string;
     external_url?: string;
     document_type?: string;
+    file?: File;
   }) => {
     if (!user || !organization?.id) return;
 
     try {
+      let file_url = docData.file_url;
+      
+      // Upload file if provided
+      if (docData.file) {
+        file_url = await uploadFile(docData.file, docData.season);
+      }
+
       const { data, error } = await supabase
         .from('seasonal_documents')
         .insert({
           organization_id: organization.id,
           document_type: 'guide',
-          ...docData
+          ...docData,
+          file_url
         })
         .select()
         .single();
@@ -161,6 +199,7 @@ export const useSeasonalDocs = () => {
     updateSeasonalDoc,
     deleteSeasonalDoc,
     getDocumentsBySeasonPattern,
+    uploadFile,
     refetch: fetchSeasonalDocs
   };
 };

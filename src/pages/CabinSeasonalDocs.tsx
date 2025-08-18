@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 const CabinSeasonalDocs = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { seasonalDocs, loading, addSeasonalDoc, updateSeasonalDoc, deleteSeasonalDoc, getDocumentsBySeasonPattern } = useSeasonalDocs();
+  const { seasonalDocs, loading, addSeasonalDoc, updateSeasonalDoc, deleteSeasonalDoc, getDocumentsBySeasonPattern, uploadFile } = useSeasonalDocs();
   const { isSupervisor } = useSupervisor();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -28,7 +28,8 @@ const CabinSeasonalDocs = () => {
     title: "",
     description: "",
     external_url: "",
-    document_type: "guide"
+    document_type: "guide",
+    file: null as File | null
   });
 
   const openingDocuments = getDocumentsBySeasonPattern("opening");
@@ -44,6 +45,15 @@ const CabinSeasonalDocs = () => {
       return;
     }
 
+    if (!newDoc.file && !newDoc.external_url) {
+      toast({
+        title: "Error",
+        description: "Please provide either a file or external URL",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await addSeasonalDoc(newDoc);
       setNewDoc({
@@ -51,7 +61,8 @@ const CabinSeasonalDocs = () => {
         title: "",
         description: "",
         external_url: "",
-        document_type: "guide"
+        document_type: "guide",
+        file: null
       });
       setIsAddDialogOpen(false);
     } catch (error) {
@@ -86,16 +97,33 @@ const CabinSeasonalDocs = () => {
     e.stopPropagation();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      toast({
-        title: "Files detected",
-        description: `${files.length} file(s) ready for upload. Use the add document dialog to complete upload.`
+      const file = files[0]; // Handle first file
+      setNewDoc({
+        season: "opening", // Default to opening
+        title: file.name.split('.')[0], // Use filename as title
+        description: "",
+        external_url: "",
+        document_type: "guide",
+        file
+      });
+      setIsAddDialogOpen(true);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewDoc({
+        ...newDoc,
+        file,
+        title: newDoc.title || file.name.split('.')[0]
       });
     }
   };
@@ -249,6 +277,21 @@ const CabinSeasonalDocs = () => {
                             <SelectItem value="closing">Closing</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="file">Upload File</Label>
+                        <Input
+                          ref={fileInputRef}
+                          id="file"
+                          type="file"
+                          onChange={handleFileSelect}
+                          accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                        />
+                        {newDoc.file && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Selected: {newDoc.file.name}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor="external_url">External URL (optional)</Label>
