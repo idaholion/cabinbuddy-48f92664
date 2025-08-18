@@ -369,10 +369,10 @@ export const SupervisorFamilyGroupsTab = ({ organizationId }: SupervisorFamilyGr
                           onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
                           className="text-base placeholder:text-base"
                         />
-                      </div>
-                    </div>
                   </div>
-                ))
+                </div>
+              </div>
+            ))}
                 
                 <div className="flex justify-center pt-2">
                   <Button variant="outline" onClick={addHostMember} className="text-base">
@@ -421,7 +421,7 @@ export const SupervisorFamilyGroupsTab = ({ organizationId }: SupervisorFamilyGr
                   {(group.host_members?.length || 0) + 1} members
                 </p>
               </div>
-            )))}
+            ))}
           </div>
           {familyGroups.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
