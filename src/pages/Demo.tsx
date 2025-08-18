@@ -1034,10 +1034,43 @@ export default function Demo() {
             <div className="absolute top-4 left-4 right-4 z-10">
               <Card className="bg-background/95 backdrop-blur-sm border-primary/20">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <currentSlideData.icon className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">{currentSlideData.title}</h3>
-                    <Badge variant="outline">{currentSlide + 1} of {demoSlides.length}</Badge>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <currentSlideData.icon className="h-5 w-5 text-primary" />
+                      <h3 className="font-semibold">{currentSlideData.title}</h3>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
+                        disabled={currentSlide === 0}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex gap-1">
+                        {demoSlides.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentSlide(index)}
+                            className={`w-2 h-2 rounded-full transition-colors ${
+                              index === currentSlide ? 'bg-primary' : 'bg-muted'
+                            }`}
+                            aria-label={`Go to slide ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentSlide(Math.min(demoSlides.length - 1, currentSlide + 1))}
+                        disabled={currentSlide === demoSlides.length - 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{currentSlideData.explanation}</p>
                 </CardContent>
