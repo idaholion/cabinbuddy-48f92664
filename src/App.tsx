@@ -38,6 +38,7 @@ const HostProfile = React.lazy(() => import("./pages/HostProfile"));
 const FinancialDashboard = React.lazy(() => import("./pages/FinancialDashboard"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
 const FinancialSetupPage = React.lazy(() => import("./pages/FinancialSetupPage"));
+const GoogleCalendarSetup = React.lazy(() => import("./pages/GoogleCalendarSetup"));
 
 // Lazy load other complex pages
 const CheckIn = React.lazy(() => import("./pages/CheckIn"));
@@ -126,6 +127,7 @@ const AppContent = () => {
         <Route path="/host-profile" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
         <Route path="/finance-reports" element={<DebugRoute><AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute></DebugRoute>} />
         <Route path="/financial-setup" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialSetupPage /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />
+        <Route path="/google-calendar-setup" element={<DebugRoute><AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminTreasurerRoute></DebugRoute>} />
         <Route path="/admin-treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/admin/treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<DebugRoute><ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute></DebugRoute>} />

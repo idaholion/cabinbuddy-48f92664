@@ -17,6 +17,8 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
+import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
 
 const hostProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -39,6 +41,12 @@ const HostProfile = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Feature onboarding
+  const { shouldShowOnboarding, hideOnboarding, userRole, markProfileCompleted } = useFeatureOnboarding({
+    triggerKey: 'host-profile',
+    checkProfileCompletion: true
+  });
 
   const form = useForm<HostProfileFormData>({
     resolver: zodResolver(hostProfileSchema),
@@ -281,6 +289,8 @@ const HostProfile = () => {
         host_members: updatedHostMembers,
       });
 
+      markProfileCompleted();
+      
       toast({
         title: "Success",
         description: "Your profile has been updated successfully.",
@@ -480,6 +490,13 @@ const HostProfile = () => {
 
         </CardContent>
       </Card>
+
+      {/* Feature Overview Dialog */}
+      <FeatureOverviewDialog
+        open={shouldShowOnboarding}
+        onOpenChange={hideOnboarding}
+        userRole={userRole}
+      />
 
       {/* Information Card */}
       <Card>

@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
+import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
 
 const SelectFamilyGroup = () => {
   const navigate = useNavigate();
@@ -17,6 +19,11 @@ const SelectFamilyGroup = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
+  
+  // Feature onboarding
+  const { shouldShowOnboarding, hideOnboarding, userRole } = useFeatureOnboarding({
+    triggerKey: 'family-group-selection'
+  });
 
   const handleFamilyGroupSelection = async () => {
     if (!selectedFamilyGroup || !user) {
@@ -226,6 +233,13 @@ const SelectFamilyGroup = () => {
           </div>
         </div>
       </div>
+
+      {/* Feature Overview Dialog */}
+      <FeatureOverviewDialog
+        open={shouldShowOnboarding}
+        onOpenChange={hideOnboarding}
+        userRole={userRole}
+      />
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { DollarSign, CreditCard, Calendar as CalendarIcon, Settings, FileText } from "lucide-react";
+import { DollarSign, CreditCard, Calendar as CalendarIcon, Settings, FileText, CalendarPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { BillingCalculator } from "@/lib/billing-calculator";
@@ -515,6 +515,32 @@ const FinancialSetupPage = () => {
                   onChange={(e) => setTaxJurisdiction(e.target.value)}
                   className="text-lg placeholder:text-lg"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Admin Integrations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarPlus className="h-4 w-4" />
+                Admin Integrations
+              </CardTitle>
+              <CardDescription className="text-base">Set up additional admin tools and integrations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium text-base">Google Calendar Integration</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Sync CabinBuddy reservations to your family's shared Google Calendar
+                  </p>
+                </div>
+                <Button variant="outline" asChild>
+                  <Link to="/google-calendar-setup">
+                    Set Up Calendar Sync
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
