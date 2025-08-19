@@ -66,6 +66,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
 
   // Show loading state during initial auth and org checks
   if (authLoading || (orgLoading && !error)) {
+    console.log('RobustOrganizationRoute - Loading state:', { authLoading, orgLoading, pathname: location.pathname });
     return (
       <LoadingState 
         message="Loading your organizations..." 
@@ -164,11 +165,11 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
         </div>
       )}
       
-      {/* Security Monitoring Dashboard */}
+      {/* Security Monitoring Dashboard - Temporarily disabled for debugging
       <div className="max-w-7xl mx-auto p-4">
         <SecurityMonitoringDashboard />
         
-        {/* Security Alerts */}
+        Security Alerts
         {!securityData.organizationAccess.hasAccess && (
           <SecurityAlert 
             error={securityData.organizationAccess.error || "Organization access verification failed"}
@@ -177,6 +178,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
           />
         )}
       </div>
+      */}
       
       {children}
     </>
