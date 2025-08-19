@@ -154,18 +154,6 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   return (
     <div className="flex items-center space-x-2">
-      {/* Feature Guide Button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleFeaturesClick}
-        className="h-8 px-3 text-xs hover:scale-105 hover:shadow-md transition-all duration-200"
-        aria-label="View feature guide"
-      >
-        <Sparkles className="h-3 w-3 mr-1" />
-        Features
-      </Button>
-
       {/* Contextual Help Button */}
       <Button
         variant="ghost"

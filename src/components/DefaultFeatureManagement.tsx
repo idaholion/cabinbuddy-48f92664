@@ -78,14 +78,27 @@ const SortableFeatureItem = ({ feature, onEdit, onToggleActive }: SortableFeatur
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={`p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors ${
         isDragging ? 'opacity-50' : ''
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
+          {/* Drag handle */}
+          <div 
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded"
+          >
+            <div className="flex flex-col gap-0.5">
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+              <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
+            </div>
+          </div>
           <div className="p-2 rounded-lg bg-primary/10">
             <IconComponent className="h-4 w-4 text-primary" />
           </div>
@@ -111,6 +124,7 @@ const SortableFeatureItem = ({ feature, onEdit, onToggleActive }: SortableFeatur
               e.stopPropagation();
               onEdit(feature);
             }}
+            className="hover:scale-105 hover:shadow-md transition-all duration-200"
           >
             <Edit className="h-4 w-4" />
           </Button>
