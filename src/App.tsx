@@ -105,6 +105,7 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
+        <Route path="/guest-demo" element={<DebugRoute><Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense></DebugRoute>} />
         <Route path="/guest" element={<DebugRoute><Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense></DebugRoute>} />
         <Route path="/textresponse" element={<Textresponse />} />
         <Route path="/home" element={<DebugRoute><UnifiedAuthRoute><MainLayout><Index /></MainLayout></UnifiedAuthRoute></DebugRoute>} />
