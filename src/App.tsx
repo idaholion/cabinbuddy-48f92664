@@ -97,7 +97,8 @@ const AppContent = () => {
 
   return (
     <BrowserRouter>
-      <Routes>
+      <GuestAccessProvider>
+        <Routes>
         <Route path="/" element={<DebugRoute><Intro /></DebugRoute>} />
         <Route path="/intro" element={<DebugRoute><Intro /></DebugRoute>} />
         <Route path="/auth" element={<DebugRoute><Auth /></DebugRoute>} />
@@ -148,7 +149,8 @@ const AppContent = () => {
         <Route path="/breadcrumbs" element={<DebugRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><BreadcrumbDemo /></Suspense></MainLayout></DebugRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </GuestAccessProvider>
     </BrowserRouter>
   );
 };
@@ -158,14 +160,12 @@ const App = () => (
     <TooltipProvider>
       <NetworkStatusProvider>
         <AuthProvider>
-          <GuestAccessProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              
-              <AppContent />
-            </ErrorBoundary>
-          </GuestAccessProvider>
+          <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            
+            <AppContent />
+          </ErrorBoundary>
         </AuthProvider>
       </NetworkStatusProvider>
     </TooltipProvider>
