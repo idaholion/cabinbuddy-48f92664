@@ -216,7 +216,7 @@ const Index = () => {
         </div>
 
         {/* Bottom Left User Info */}
-        <div className="fixed bottom-8 left-8 z-30 flex items-center space-x-4">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-4">
           <Button 
             variant="outline" 
             className="bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-primary/10 px-6 py-3 text-lg font-semibold text-primary shadow-lg" 
