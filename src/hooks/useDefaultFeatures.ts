@@ -90,15 +90,11 @@ export const useDefaultFeatures = () => {
         if (error) throw error;
       }
 
-      // Update local state with new sort orders
-      setFeatures(prev => prev.map(feature => {
-        const reorderedFeature = reorderedFeatures.find(f => f.id === feature.id);
-        if (reorderedFeature) {
-          const newSortOrder = reorderedFeatures.indexOf(reorderedFeature) + 1;
-          return { ...feature, sort_order: newSortOrder };
-        }
-        return feature;
-      }));
+      // Update local state with the new order
+      setFeatures(reorderedFeatures.map((feature, index) => ({
+        ...feature,
+        sort_order: index + 1
+      })));
 
       toast({
         title: "Success",
