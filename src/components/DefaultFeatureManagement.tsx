@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -327,9 +327,18 @@ const FeaturePreview = ({ features, onBack }: FeaturePreviewProps) => {
 
 export const DefaultFeatureManagement = () => {
   const { features, loading, updateFeature, reorderFeatures } = useDefaultFeatures();
+  const [localFeatures, setLocalFeatures] = useState<DefaultFeature[]>([]);
   const [editingFeature, setEditingFeature] = useState<DefaultFeature | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Sync local features with hook features
+  useEffect(() => {
+    setLocalFeatures(features);
+  }, [features]);
+
+  const setFeatures = setLocalFeatures;
+  const displayFeatures = localFeatures;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -342,11 +351,14 @@ export const DefaultFeatureManagement = () => {
     const { active, over } = event;
 
     if (active.id !== over?.id && over) {
-      const oldIndex = features.findIndex((item) => item.id === active.id);
-      const newIndex = features.findIndex((item) => item.id === over.id);
+      const oldIndex = displayFeatures.findIndex((item) => item.id === active.id);
+      const newIndex = displayFeatures.findIndex((item) => item.id === over.id);
       
       if (oldIndex !== -1 && newIndex !== -1) {
-        const reorderedFeatures = arrayMove(features, oldIndex, newIndex);
+        const reorderedFeatures = arrayMove(displayFeatures, oldIndex, newIndex);
+        // Update local state immediately for UI responsiveness
+        setFeatures(reorderedFeatures);
+        // Then update database
         reorderFeatures(reorderedFeatures);
       }
     }
@@ -388,7 +400,7 @@ export const DefaultFeatureManagement = () => {
   }
 
   if (showPreview) {
-    return <FeaturePreview features={features} onBack={() => setShowPreview(false)} />;
+    return <FeaturePreview features={displayFeatures} onBack={() => setShowPreview(false)} />;
   }
 
   if (editingFeature || isAddingNew) {
@@ -429,9 +441,9 @@ export const DefaultFeatureManagement = () => {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={features.map(f => f.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={displayFeatures.map(f => f.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
-              {features.map((feature) => (
+              {displayFeatures.map((feature) => (
                 <SortableFeatureItem
                   key={feature.id}
                   feature={feature}
@@ -443,7 +455,7 @@ export const DefaultFeatureManagement = () => {
           </SortableContext>
         </DndContext>
         
-        {features.length === 0 && (
+        {displayFeatures.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
             No features found. Add some features to get started.
           </div>
