@@ -258,6 +258,19 @@ Best regards,
         {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}, {{current_selections}}, {{remaining_selections}}"}
       </div>
 
+      {/* Development Note */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center space-x-2 text-blue-800">
+          <Settings className="h-4 w-4" />
+          <span className="font-medium">Development Note</span>
+        </div>
+        <p className="text-sm text-blue-700 mt-1">
+          <strong>TODO:</strong> Apply semantic typography system to remaining components. Current implementation uses hardcoded text sizes (text-base, text-lg, etc.). 
+          Should be refactored to use semantic classes (.text-heading-primary, .text-heading-secondary, .text-body, .text-label, etc.) 
+          for consistent design hierarchy across the entire application. See CabinRulesEditor, AddReceipt, Index, and SupervisorDashboard for examples.
+        </p>
+      </div>
+
       <div className="space-y-6">
         {templates.map((template) => (
           <Card key={template.id} className={`${!template.is_active ? 'opacity-60' : ''}`}>
