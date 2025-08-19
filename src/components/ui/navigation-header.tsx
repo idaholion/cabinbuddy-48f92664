@@ -14,7 +14,7 @@ export function NavigationHeader({
   className = "mb-4" 
 }: NavigationHeaderProps) {
   return (
-    <Button variant="outline" asChild className={`text-base ${className}`}>
+    <Button variant="outline" asChild className={`hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200 ${className}`}>
       <Link to={backTo}>
         <ArrowLeft className="h-4 w-4 mr-2" />
         {backLabel}

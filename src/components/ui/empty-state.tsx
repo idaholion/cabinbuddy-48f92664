@@ -37,7 +37,7 @@ export const EmptyState = ({
         )}
       </div>
       {action && (
-        <Button onClick={action.onClick} variant="outline" className="text-base">
+        <Button onClick={action.onClick} variant="outline" className="hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200">
           {action.label}
         </Button>
       )}

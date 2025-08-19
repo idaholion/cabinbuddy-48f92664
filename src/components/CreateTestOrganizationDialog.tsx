@@ -196,7 +196,7 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 text-base">
+        <Button variant="outline" className="gap-2 hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200">
           <Beaker className="h-4 w-4" />
           Create Complete Test Organization
         </Button>
@@ -234,10 +234,10 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
             />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="text-base">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="hover:scale-105 hover:shadow-md hover:border-muted transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none">
               Cancel
             </Button>
-            <Button onClick={createCompleteTestOrganization} disabled={loading} className="text-base">
+            <Button onClick={createCompleteTestOrganization} disabled={loading} className="hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none">
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

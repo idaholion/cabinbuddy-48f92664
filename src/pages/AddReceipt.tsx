@@ -238,7 +238,7 @@ const AddReceipt = () => {
                     <Button
                       variant="outline"
                       onClick={() => handleNativePhotoSelection(CameraSource.Photos)}
-                      className="flex flex-col items-center space-y-2 h-auto py-4 text-base"
+                      className="flex flex-col items-center space-y-2 h-auto py-4 hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200"
                     >
                       <Image className="h-6 w-6" />
                       <span className="text-body">Photo Library</span>
@@ -246,7 +246,7 @@ const AddReceipt = () => {
                     <Button
                       variant="outline"
                       onClick={() => handleNativePhotoSelection(CameraSource.Camera)}
-                      className="flex flex-col items-center space-y-2 h-auto py-4 text-base"
+                      className="flex flex-col items-center space-y-2 h-auto py-4 hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200"
                     >
                       <Camera className="h-6 w-6" />
                       <span className="text-body">Take Photo</span>
@@ -265,7 +265,7 @@ const AddReceipt = () => {
 
                 <div>
                   <Label htmlFor="file-upload" className="cursor-pointer text-label">
-                    <Button asChild className="w-full" variant="outline">
+                    <Button asChild className="w-full hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200" variant="outline">
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
                         Choose File
@@ -314,7 +314,7 @@ const AddReceipt = () => {
                       <Button 
                         onClick={handleUploadWithAmount}
                         disabled={uploadingFile}
-                        className="flex items-center space-x-2"
+                        className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none"
                       >
                         {uploadingFile ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -372,7 +372,7 @@ const AddReceipt = () => {
                   />
                 </div>
                 
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
                   Add Receipt Manually
                 </Button>
               </form>
@@ -414,7 +414,7 @@ const AddReceipt = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteReceipt(receipt.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:scale-110 hover:shadow-md hover:shadow-destructive/20 transition-all duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

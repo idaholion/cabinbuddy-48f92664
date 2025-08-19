@@ -141,7 +141,7 @@ export const OrganizationDetail = ({
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onBack} className="text-base">
+          <Button variant="ghost" size="sm" onClick={onBack} className="hover:scale-105 hover:shadow-md transition-all duration-200">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Organizations
           </Button>
@@ -329,7 +329,7 @@ export const OrganizationDetail = ({
                 <label className="text-base font-medium text-destructive">Danger Zone</label>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full text-base">
+                    <Button variant="destructive" className="w-full hover:scale-105 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200">
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete Organization Data
                     </Button>

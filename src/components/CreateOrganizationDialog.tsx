@@ -139,7 +139,7 @@ export const CreateOrganizationDialog = ({
         </DialogTrigger>
       ) : (
         <DialogTrigger asChild>
-          <Button className="text-base">
+          <Button className="hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
             <Plus className="h-4 w-4 mr-2" />
             Create Test Organization
           </Button>
@@ -179,7 +179,7 @@ export const CreateOrganizationDialog = ({
                   required
                   className="text-base placeholder:text-base"
                 />
-                <Button type="button" variant="outline" onClick={handleGenerateCode} className="text-base">
+                <Button type="button" variant="outline" onClick={handleGenerateCode} className="hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200">
                   Generate
                 </Button>
               </div>
@@ -292,10 +292,10 @@ export const CreateOrganizationDialog = ({
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} className="text-base">
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} className="hover:scale-105 hover:shadow-md hover:border-muted transition-all duration-200">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="text-base">
+            <Button type="submit" disabled={loading} className="hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none">
               {loading ? "Creating..." : "Create Organization"}
             </Button>
           </div>

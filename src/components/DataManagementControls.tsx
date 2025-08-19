@@ -227,7 +227,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
             </p>
             <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full text-base">
+                <Button variant="destructive" className="w-full hover:scale-105 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Reset All Data
                 </Button>
@@ -382,7 +382,7 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
             </p>
             <AlertDialog open={isUserGuideDialogOpen} onOpenChange={setIsUserGuideDialogOpen}>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground text-base">
+                <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hover:scale-105 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200">
                   <Users className="h-4 w-4 mr-2" />
                   How to Delete Users
                 </Button>
