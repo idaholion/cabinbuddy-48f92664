@@ -13,6 +13,9 @@ export interface Feature {
   category: 'host' | 'admin';
   sort_order: number;
   is_active: boolean;
+  learn_more_text?: string;
+  learn_more_url?: string;
+  learn_more_type?: 'text' | 'internal_link' | 'external_link';
   created_at: string;
   updated_at: string;
 }

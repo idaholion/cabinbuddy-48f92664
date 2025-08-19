@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,10 @@ import {
   Shield,
   Sparkles,
   Edit,
-  GripVertical
+  GripVertical,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useFeatures, type Feature } from "@/hooks/useFeatures";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -91,6 +95,8 @@ const SortableFeatureCard = ({
   onFeatureClick, 
   isAdmin 
 }: SortableFeatureCardProps) => {
+  const [showLearnMore, setShowLearnMore] = useState(false);
+  const navigate = useNavigate();
   const {
     attributes,
     listeners,
@@ -106,6 +112,23 @@ const SortableFeatureCard = ({
   };
 
   const IconComponent = iconMap[feature.icon] || FileText;
+  
+  const handleLearnMoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (feature.learn_more_type === 'internal_link' && feature.learn_more_url) {
+      navigate(feature.learn_more_url);
+    } else if (feature.learn_more_type === 'external_link' && feature.learn_more_url) {
+      window.open(feature.learn_more_url, '_blank', 'noopener,noreferrer');
+    } else if (feature.learn_more_type === 'text') {
+      setShowLearnMore(!showLearnMore);
+    }
+  };
+
+  const hasLearnMore = feature.learn_more_type && (
+    (feature.learn_more_type === 'text' && feature.learn_more_text) ||
+    ((feature.learn_more_type === 'internal_link' || feature.learn_more_type === 'external_link') && feature.learn_more_url)
+  );
   
   return (
     <div
@@ -157,15 +180,37 @@ const SortableFeatureCard = ({
           <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
             {feature.description}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`mt-2 p-0 h-auto text-xs hover:text-primary/80 ${
-              isAdminFeature ? 'text-accent-foreground hover:text-accent-foreground/80' : 'text-primary'
-            }`}
-          >
-            Learn More →
-          </Button>
+          
+          {hasLearnMore && (
+            <div className="mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLearnMoreClick}
+                className={`p-0 h-auto text-xs hover:text-primary/80 ${
+                  isAdminFeature ? 'text-accent-foreground hover:text-accent-foreground/80' : 'text-primary'
+                }`}
+              >
+                {feature.learn_more_type === 'text' ? (
+                  <>
+                    Learn more {showLearnMore ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
+                  </>
+                ) : (
+                  <>
+                    Learn more <ExternalLink className="ml-1 h-3 w-3" />
+                  </>
+                )}
+              </Button>
+              
+              {feature.learn_more_type === 'text' && showLearnMore && feature.learn_more_text && (
+                <div className="mt-2 p-3 bg-muted/50 rounded-md">
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {feature.learn_more_text}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

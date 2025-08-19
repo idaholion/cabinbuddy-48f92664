@@ -450,6 +450,9 @@ export type Database = {
           icon: string
           id: string
           is_active: boolean
+          learn_more_text: string | null
+          learn_more_type: string | null
+          learn_more_url: string | null
           organization_id: string
           sort_order: number
           title: string
@@ -463,6 +466,9 @@ export type Database = {
           icon: string
           id?: string
           is_active?: boolean
+          learn_more_text?: string | null
+          learn_more_type?: string | null
+          learn_more_url?: string | null
           organization_id: string
           sort_order?: number
           title: string
@@ -476,6 +482,9 @@ export type Database = {
           icon?: string
           id?: string
           is_active?: boolean
+          learn_more_text?: string | null
+          learn_more_type?: string | null
+          learn_more_url?: string | null
           organization_id?: string
           sort_order?: number
           title?: string
