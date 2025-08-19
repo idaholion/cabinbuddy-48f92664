@@ -315,6 +315,7 @@ export const DefaultFeatureManagement = () => {
   const { features, loading, updateFeature, reorderFeatures } = useDefaultFeatures();
   const [editingFeature, setEditingFeature] = useState<DefaultFeature | null>(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -369,9 +370,6 @@ export const DefaultFeatureManagement = () => {
       </Card>
     );
   }
-
-  // Show preview mode if requested
-  const [showPreview, setShowPreview] = useState(false);
 
   if (showPreview) {
     return <FeaturePreview features={features} onBack={() => setShowPreview(false)} />;
