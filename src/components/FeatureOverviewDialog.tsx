@@ -29,15 +29,32 @@ import {
   BarChart3,
   Shield,
   Sparkles,
-  X
+  Edit
 } from "lucide-react";
+import { useFeatures, type Feature } from "@/hooks/useFeatures";
+import { useUserRole } from "@/hooks/useUserRole";
+import { FeatureEditDialog } from "@/components/FeatureEditDialog";
 
-interface FeatureItem {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  adminOnly?: boolean;
-}
+// Icon mapping for dynamic icon rendering
+const iconMap: Record<string, React.ElementType> = {
+  Calendar,
+  DollarSign,
+  Wrench,
+  Receipt,
+  ShoppingCart,
+  FileText,
+  Snowflake,
+  Vote,
+  Camera,
+  MessageCircle,
+  CheckSquare,
+  Users,
+  Settings,
+  Home,
+  CalendarPlus,
+  BarChart3,
+  Shield
+};
 
 interface FeatureOverviewDialogProps {
   open: boolean;
@@ -52,113 +69,74 @@ export const FeatureOverviewDialog = ({
   userRole,
   onFeatureClick
 }: FeatureOverviewDialogProps) => {
-  const [showAgain, setShowAgain] = useState(true);
-
-  const hostFeatures: FeatureItem[] = [
-    {
-      icon: Calendar,
-      title: "Calendar & Reservations",
-      description: "Book your family stays, view availability, and see everyone's scheduled visits"
-    },
-    {
-      icon: DollarSign,
-      title: "Financial Dashboard",
-      description: "Track your stay costs, view payment summaries, and monitor your family's expenses"
-    },
-    {
-      icon: Wrench,
-      title: "Work Weekends",
-      description: "Sign up for property maintenance weekends and coordinate with other families"
-    },
-    {
-      icon: Receipt,
-      title: "Receipts & Expenses",
-      description: "Upload receipt photos, track shared cabin expenses, and split costs fairly"
-    },
-    {
-      icon: ShoppingCart,
-      title: "Shopping Lists",
-      description: "Coordinate cabin supplies with other families and check off completed purchases"
-    },
-    {
-      icon: FileText,
-      title: "Documents",
-      description: "Access important cabin papers, maintenance guides, and family agreements"
-    },
-    {
-      icon: Snowflake,
-      title: "Seasonal Documents",
-      description: "View opening/closing checklists and seasonal maintenance procedures"
-    },
-    {
-      icon: Vote,
-      title: "Family Voting",
-      description: "Participate in family decisions and cast votes on important proposals"
-    },
-    {
-      icon: Camera,
-      title: "Photo Sharing",
-      description: "Upload memories from your stays and view photos shared by other families"
-    },
-    {
-      icon: MessageCircle,
-      title: "Communication",
-      description: "Stay connected with family messaging, notifications, and important updates"
-    },
-    {
-      icon: CheckSquare,
-      title: "Check-in/Check-out",
-      description: "Use digital checklists and report property conditions for each stay"
-    }
-  ];
-
-  const adminFeatures: FeatureItem[] = [
-    {
-      icon: Users,
-      title: "Family Group Management",
-      description: "Set up families, assign group leads, and manage member permissions",
-      adminOnly: true
-    },
-    {
-      icon: Settings,
-      title: "Financial Setup",
-      description: "Configure billing rates, late fees, and expense categories for the property",
-      adminOnly: true
-    },
-    {
-      icon: Home,
-      title: "Property Settings",
-      description: "Manage reservation rules, calendar settings, and property-specific configurations",
-      adminOnly: true
-    },
-    {
-      icon: CalendarPlus,
-      title: "Google Calendar Integration",
-      description: "One-way sync from CabinBuddy to your family's shared Google Calendar",
-      adminOnly: true
-    },
-    {
-      icon: BarChart3,
-      title: "Reports & Analytics",
-      description: "View usage statistics, financial reports, and family engagement metrics",
-      adminOnly: true
-    },
-    {
-      icon: Shield,
-      title: "System Administration",
-      description: "Manage user access, organization settings, and system-wide configurations",
-      adminOnly: true
-    }
-  ];
-
-  const handleDontShowAgain = () => {
-    localStorage.setItem('hideFeatureOverview', 'true');
-    onOpenChange(false);
-  };
+  const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
+  const { hostFeatures, adminFeatures, updateFeature, loading } = useFeatures();
+  const { isAdmin } = useUserRole();
 
   const handleFeatureClick = (title: string) => {
     const featureId = title.toLowerCase().replace(/[^a-z0-9]/g, '-');
     onFeatureClick?.(featureId);
+  };
+
+  const handleEditFeature = (feature: Feature) => {
+    setEditingFeature(feature);
+  };
+
+  const renderFeatureCard = (feature: Feature, isAdminFeature = false) => {
+    const IconComponent = iconMap[feature.icon] || FileText;
+    
+    return (
+      <div
+        key={feature.id}
+        className={`p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group relative ${
+          isAdminFeature ? 'bg-accent/5' : ''
+        }`}
+        onClick={() => handleFeatureClick(feature.title)}
+      >
+        {isAdmin && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditFeature(feature);
+            }}
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
+        )}
+        
+        <div className="flex items-start space-x-3">
+          <div className={`p-2 rounded-lg group-hover:bg-primary/20 transition-colors ${
+            isAdminFeature ? 'bg-accent/20' : 'bg-primary/10'
+          }`}>
+            <IconComponent className={`h-5 w-5 ${
+              isAdminFeature ? 'text-accent-foreground' : 'text-primary'
+            }`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className={`font-medium text-sm group-hover:transition-colors ${
+              isAdminFeature ? 'group-hover:text-accent-foreground' : 'group-hover:text-primary'
+            }`}>
+              {feature.title}
+            </h4>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              {feature.description}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`mt-2 p-0 h-auto text-xs hover:text-primary/80 ${
+                isAdminFeature ? 'text-accent-foreground hover:text-accent-foreground/80' : 'text-primary'
+              }`}
+            >
+              Learn More →
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const relevantFeatures = userRole === "admin" ? [...hostFeatures, ...adminFeatures] : hostFeatures;
@@ -196,34 +174,7 @@ export const FeatureOverviewDialog = ({
                 </Badge>
               </div>
               <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                {hostFeatures.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group"
-                    onClick={() => handleFeatureClick(feature.title)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <feature.icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm group-hover:text-primary transition-colors">
-                          {feature.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                          {feature.description}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-2 p-0 h-auto text-xs text-primary hover:text-primary/80"
-                        >
-                          Learn More →
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {hostFeatures.map((feature) => renderFeatureCard(feature))}
               </div>
             </div>
 
@@ -236,34 +187,7 @@ export const FeatureOverviewDialog = ({
                     <h3 className="text-lg font-semibold">Administrator Features</h3>
                   </div>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                    {adminFeatures.map((feature, index) => (
-                      <div
-                        key={index}
-                        className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group bg-accent/5"
-                        onClick={() => handleFeatureClick(feature.title)}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div className="p-2 bg-accent/20 rounded-lg group-hover:bg-accent/30 transition-colors">
-                            <feature.icon className="h-5 w-5 text-accent-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm group-hover:text-accent-foreground transition-colors">
-                              {feature.title}
-                            </h4>
-                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                              {feature.description}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="mt-2 p-0 h-auto text-xs text-accent-foreground hover:text-accent-foreground/80"
-                            >
-                              Learn More →
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    {adminFeatures.map((feature) => renderFeatureCard(feature, true))}
                   </div>
                 </div>
               </>
@@ -285,6 +209,13 @@ export const FeatureOverviewDialog = ({
           </div>
         </ScrollArea>
 
+        {/* Feature Edit Dialog */}
+        <FeatureEditDialog
+          open={!!editingFeature}
+          onOpenChange={(open) => !open && setEditingFeature(null)}
+          feature={editingFeature}
+          onSave={updateFeature}
+        />
       </DialogContent>
     </Dialog>
   );

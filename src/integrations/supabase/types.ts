@@ -441,6 +441,48 @@ export type Database = {
           },
         ]
       }
+      features: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          feature_key: string
+          icon: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          feature_key: string
+          icon: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          feature_key?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_share_allocations: {
         Row: {
           allocated_by_user_id: string | null
