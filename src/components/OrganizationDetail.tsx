@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText } from 'lucide-react';
+import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { GuestAccessSettings } from '@/components/GuestAccessSettings';
 
 interface Organization {
   id: string;
@@ -237,6 +238,22 @@ export const OrganizationDetail = ({
                 return to the supervisor dashboard and use the "Family Groups" or "Financial Records" tabs.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Guest Access Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Guest Access Settings
+            </CardTitle>
+            <CardDescription className="text-base">
+              Configure public access and demo modes for this organization
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GuestAccessSettings organizationId={organization.id} />
           </CardContent>
         </Card>
 
