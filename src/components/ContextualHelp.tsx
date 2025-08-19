@@ -143,11 +143,14 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
   const { isSupervisor } = useSupervisor();
 
   const handleFeaturesClick = () => {
+    console.log('Features button clicked - isSupervisor:', isSupervisor, 'pathname:', location.pathname);
     if (isSupervisor && location.pathname === '/supervisor') {
       // For supervisors on dashboard, trigger a custom event to switch tabs
+      console.log('Dispatching switchToFeaturesTab event');
       window.dispatchEvent(new CustomEvent('switchToFeaturesTab'));
     } else {
       // Otherwise navigate to features page
+      console.log('Navigating to /features');
       navigate('/features');
     }
   };

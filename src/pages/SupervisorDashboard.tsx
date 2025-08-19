@@ -45,6 +45,7 @@ export const SupervisorDashboard = () => {
 
     // Listen for custom event to switch to features tab
     const handleSwitchToFeatures = () => {
+      console.log('Received switchToFeaturesTab event, switching to features tab');
       setActiveTab('features');
     };
 
