@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GuestAccessProvider } from "@/contexts/GuestAccessContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RobustOrganizationRoute } from "@/components/RobustOrganizationRoute";
 import { UnifiedAuthRoute } from "@/components/UnifiedAuthRoute";
@@ -68,6 +69,7 @@ const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/Supe
 // Lazy load utility pages
 const FontShowcase = React.lazy(() => import("./pages/FontShowcase"));
 const BreadcrumbDemo = React.lazy(() => import("./pages/BreadcrumbDemo"));
+const GuestAccess = React.lazy(() => import("./pages/GuestAccess"));
 
 import { SupervisorRoute } from "./components/SupervisorRoute";
 import { AdminTreasurerRoute } from "./components/AdminTreasurerRoute";
@@ -102,6 +104,7 @@ const AppContent = () => {
         <Route path="/login" element={<DebugRoute><Login /></DebugRoute>} />
         <Route path="/signup" element={<DebugRoute><Signup /></DebugRoute>} />
         <Route path="/reset-password" element={<DebugRoute><ResetPassword /></DebugRoute>} />
+        <Route path="/guest" element={<DebugRoute><Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense></DebugRoute>} />
         <Route path="/textresponse" element={<Textresponse />} />
         <Route path="/home" element={<DebugRoute><UnifiedAuthRoute><MainLayout><Index /></MainLayout></UnifiedAuthRoute></DebugRoute>} />
         <Route path="/manage-organizations" element={<DebugRoute><UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute></DebugRoute>} />
@@ -155,12 +158,14 @@ const App = () => (
     <TooltipProvider>
       <NetworkStatusProvider>
         <AuthProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            
-            <AppContent />
-          </ErrorBoundary>
+          <GuestAccessProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner />
+              
+              <AppContent />
+            </ErrorBoundary>
+          </GuestAccessProvider>
         </AuthProvider>
       </NetworkStatusProvider>
     </TooltipProvider>

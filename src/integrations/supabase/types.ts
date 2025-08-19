@@ -634,6 +634,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          access_type: string
           admin_email: string | null
           admin_name: string | null
           admin_phone: string | null
@@ -643,6 +644,8 @@ export type Database = {
           calendar_keeper_phone: string | null
           code: string
           created_at: string
+          guest_access_token: string | null
+          guest_token_expires_at: string | null
           id: string
           name: string
           treasurer_email: string | null
@@ -651,6 +654,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_type?: string
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
@@ -660,6 +664,8 @@ export type Database = {
           calendar_keeper_phone?: string | null
           code: string
           created_at?: string
+          guest_access_token?: string | null
+          guest_token_expires_at?: string | null
           id?: string
           name: string
           treasurer_email?: string | null
@@ -668,6 +674,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_type?: string
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
@@ -677,6 +684,8 @@ export type Database = {
           calendar_keeper_phone?: string | null
           code?: string
           created_at?: string
+          guest_access_token?: string | null
+          guest_token_expires_at?: string | null
           id?: string
           name?: string
           treasurer_email?: string | null
@@ -844,6 +853,7 @@ export type Database = {
           organization_id: string | null
           updated_at: string
           user_id: string
+          user_type: string
         }
         Insert: {
           avatar_url?: string | null
@@ -857,6 +867,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           user_id: string
+          user_type?: string
         }
         Update: {
           avatar_url?: string | null
@@ -870,6 +881,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           user_id?: string
+          user_type?: string
         }
         Relationships: [
           {
@@ -2020,6 +2032,10 @@ export type Database = {
         }
         Returns: string
       }
+      generate_guest_access_token: {
+        Args: { expires_hours?: number; org_id: string }
+        Returns: string
+      }
       get_available_colors: {
         Args: { p_current_group_id?: string; p_organization_id: string }
         Returns: string[]
@@ -2073,6 +2089,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      revoke_guest_access: {
+        Args: { org_id: string }
+        Returns: boolean
+      }
       set_primary_organization: {
         Args: { org_id: string }
         Returns: boolean
@@ -2118,6 +2138,10 @@ export type Database = {
       supervisor_reset_database: {
         Args: { p_confirmation_code: string }
         Returns: string
+      }
+      validate_guest_access: {
+        Args: { org_id: string; token: string }
+        Returns: boolean
       }
       validate_organization_access: {
         Args: { operation_name?: string; target_org_id: string }
