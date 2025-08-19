@@ -42,6 +42,14 @@ export const SupervisorDashboard = () => {
     if (tab) {
       setActiveTab(tab);
     }
+
+    // Listen for custom event to switch to features tab
+    const handleSwitchToFeatures = () => {
+      setActiveTab('features');
+    };
+
+    window.addEventListener('switchToFeaturesTab', handleSwitchToFeatures);
+    return () => window.removeEventListener('switchToFeaturesTab', handleSwitchToFeatures);
   }, []);
 
   if (loading) {

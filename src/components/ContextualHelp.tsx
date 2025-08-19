@@ -144,11 +144,8 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   const handleFeaturesClick = () => {
     if (isSupervisor && location.pathname === '/supervisor') {
-      // If supervisor on dashboard, switch to features tab
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', 'features');
-      window.history.pushState({}, '', url.toString());
-      window.location.reload();
+      // For supervisors on dashboard, trigger a custom event to switch tabs
+      window.dispatchEvent(new CustomEvent('switchToFeaturesTab'));
     } else {
       // Otherwise navigate to features page
       navigate('/features');
