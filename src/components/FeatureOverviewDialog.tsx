@@ -165,16 +165,16 @@ export const FeatureOverviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="p-4 sm:p-6 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Sparkles className="h-8 w-8 text-primary" />
+              <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               <div>
-                <DialogTitle className="text-2xl font-bold">
+                <DialogTitle className="text-lg sm:text-2xl font-bold">
                   Welcome to CabinBuddy!
                 </DialogTitle>
-                <DialogDescription className="text-base mt-1">
+                <DialogDescription className="text-sm sm:text-base mt-1">
                   {userRole === "admin" 
                     ? "Here's everything you can do as an administrator and family member"
                     : "Here are all the features available to help manage your family cabin experience"
@@ -185,7 +185,7 @@ export const FeatureOverviewDialog = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 px-4 sm:px-6 min-h-0">
           <div className="space-y-6 pb-6">
             {/* Host Features Section */}
             <div>
@@ -195,7 +195,7 @@ export const FeatureOverviewDialog = ({
                   {hostFeatures.length} features
                 </Badge>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                 {hostFeatures.map((feature, index) => (
                   <div
                     key={index}
@@ -238,7 +238,7 @@ export const FeatureOverviewDialog = ({
                       Admin Only
                     </Badge>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                     {adminFeatures.map((feature, index) => (
                       <div
                         key={index}
@@ -289,7 +289,7 @@ export const FeatureOverviewDialog = ({
         </ScrollArea>
 
         {/* Footer Actions */}
-        <div className="border-t p-6 bg-muted/30">
+        <div className="border-t p-4 sm:p-6 bg-muted/30 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Button
