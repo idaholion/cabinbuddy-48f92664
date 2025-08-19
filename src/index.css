@@ -270,6 +270,35 @@ All colors MUST be HSL.
   }
 }
 
+/* Typography System */
+.text-heading-primary {
+  @apply text-4xl font-bold;
+}
+
+.text-heading-secondary {
+  @apply text-2xl font-semibold;
+}
+
+.text-heading-tertiary {
+  @apply text-xl font-semibold;
+}
+
+.text-body-large {
+  @apply text-lg;
+}
+
+.text-body {
+  @apply text-base;
+}
+
+.text-body-small {
+  @apply text-sm;
+}
+
+.text-label {
+  @apply text-sm font-medium;
+}
+
 .force-serif-font {
   font-family: cursive !important;
   font-style: normal !important;

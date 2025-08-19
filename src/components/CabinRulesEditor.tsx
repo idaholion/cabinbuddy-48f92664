@@ -61,18 +61,17 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
     <div className="space-y-2">
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
-          <Badge variant="destructive" className="text-base">{index + 1}</Badge>
+          <Badge variant="destructive">{index + 1}</Badge>
           <Textarea
             value={item}
             onChange={(e) => updateListItem(listKey, index, e.target.value)}
-            className="flex-1 text-base placeholder:text-base"
+            className="flex-1 text-body"
             rows={2}
           />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => removeListItem(listKey, index)}
-            className="text-base"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -82,7 +81,6 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
         variant="outline"
         size="sm"
         onClick={() => addListItem(listKey)}
-        className="text-base"
       >
         <Plus className="h-4 w-4 mr-2" />
         Add Item
@@ -94,8 +92,8 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
     <div className="space-y-3">
       {items.map((item, index) => (
         <div key={index} className="flex items-start gap-3">
-          <Badge variant="destructive" className="mt-1 text-base">{index + 1}</Badge>
-          <p className="text-base">{item}</p>
+          <Badge variant="destructive" className="mt-1">{index + 1}</Badge>
+          <p className="text-body">{item}</p>
         </div>
       ))}
     </div>
@@ -116,12 +114,12 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
           return (
             <div className="space-y-3">
               <div>
-                <h4 className="font-semibold text-base">Check-in: {rule.content.checkin_time}</h4>
-                <p className="text-base text-muted-foreground">{rule.content.checkin_note}</p>
+                <h4 className="text-label">Check-in: {rule.content.checkin_time}</h4>
+                <p className="text-body text-muted-foreground">{rule.content.checkin_note}</p>
               </div>
               <div>
-                <h4 className="font-semibold text-base">Check-out: {rule.content.checkout_time}</h4>
-                <p className="text-base text-muted-foreground">{rule.content.checkout_note}</p>
+                <h4 className="text-label">Check-out: {rule.content.checkout_time}</h4>
+                <p className="text-body text-muted-foreground">{rule.content.checkout_note}</p>
               </div>
             </div>
           );
@@ -131,22 +129,22 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
             <div className="space-y-4">
               <div className="grid md:grid-cols-3 gap-4 text-center">
                 <div>
-                  <h4 className="font-semibold text-base">Emergency Services</h4>
-                  <p className="text-2xl font-bold text-red-600">{rule.content.emergency_services}</p>
+                  <h4 className="text-label">Emergency Services</h4>
+                  <p className="text-heading-secondary font-bold text-red-600">{rule.content.emergency_services}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-base">Property Manager</h4>
-                  <p className="text-base">{rule.content.property_manager}</p>
+                  <h4 className="text-label">Property Manager</h4>
+                  <p className="text-body">{rule.content.property_manager}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-base">Local Hospital</h4>
-                  <p className="text-base">{rule.content.local_hospital}</p>
+                  <h4 className="text-label">Local Hospital</h4>
+                  <p className="text-body">{rule.content.local_hospital}</p>
                 </div>
               </div>
               <div className="text-center">
-                <h4 className="font-semibold mb-2 text-base">Emergency Procedures</h4>
+                <h4 className="text-label mb-2">Emergency Procedures</h4>
                 {rule.content.procedures?.map((procedure: string, index: number) => (
-                  <p key={index} className="text-base">{procedure}</p>
+                  <p key={index} className="text-body">{procedure}</p>
                 ))}
               </div>
             </div>
@@ -155,13 +153,13 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
         case 'violation_policy':
           return (
             <div className="space-y-3">
-              <p className="text-center text-base">{rule.content.policy}</p>
-              <p className="text-center text-base text-muted-foreground">{rule.content.agreement}</p>
+              <p className="text-center text-body">{rule.content.policy}</p>
+              <p className="text-center text-body text-muted-foreground">{rule.content.agreement}</p>
             </div>
           );
         
         default:
-          return <div className="text-base">Content not configured for this section type.</div>;
+          return <div className="text-body">Content not configured for this section type.</div>;
       }
     }
 
@@ -179,35 +177,35 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
         return (
           <div className="space-y-4">
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Check-in Time:</label>
+              <label className="text-label">Check-in Time:</label>
               <Input
                 value={editedRule.content.checkin_time || ''}
                 onChange={(e) => updateContent('checkin_time', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
               />
             </div>
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Check-in Note:</label>
+              <label className="text-label">Check-in Note:</label>
               <Textarea
                 value={editedRule.content.checkin_note || ''}
                 onChange={(e) => updateContent('checkin_note', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
               />
             </div>
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Check-out Time:</label>
+              <label className="text-label">Check-out Time:</label>
               <Input
                 value={editedRule.content.checkout_time || ''}
                 onChange={(e) => updateContent('checkout_time', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
               />
             </div>
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Check-out Note:</label>
+              <label className="text-label">Check-out Note:</label>
               <Textarea
                 value={editedRule.content.checkout_note || ''}
                 onChange={(e) => updateContent('checkout_note', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
               />
             </div>
           </div>
@@ -218,32 +216,32 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
           <div className="space-y-4">
             <div className="grid md:grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <label className="font-semibold text-base">Emergency Services:</label>
+                <label className="text-label">Emergency Services:</label>
                 <Input
                   value={editedRule.content.emergency_services || ''}
                   onChange={(e) => updateContent('emergency_services', e.target.value)}
-                  className="text-base placeholder:text-base"
+                  className="text-body"
                 />
               </div>
               <div className="grid gap-2">
-                <label className="font-semibold text-base">Property Manager:</label>
+                <label className="text-label">Property Manager:</label>
                 <Input
                   value={editedRule.content.property_manager || ''}
                   onChange={(e) => updateContent('property_manager', e.target.value)}
-                  className="text-base placeholder:text-base"
+                  className="text-body"
                 />
               </div>
               <div className="grid gap-2">
-                <label className="font-semibold text-base">Local Hospital:</label>
+                <label className="text-label">Local Hospital:</label>
                 <Input
                   value={editedRule.content.local_hospital || ''}
                   onChange={(e) => updateContent('local_hospital', e.target.value)}
-                  className="text-base placeholder:text-base"
+                  className="text-body"
                 />
               </div>
             </div>
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Emergency Procedures:</label>
+              <label className="text-label">Emergency Procedures:</label>
               {renderEditableList('procedures', editedRule.content.procedures || [])}
             </div>
           </div>
@@ -253,20 +251,20 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
         return (
           <div className="space-y-4">
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Policy:</label>
+              <label className="text-label">Policy:</label>
               <Textarea
                 value={editedRule.content.policy || ''}
                 onChange={(e) => updateContent('policy', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
                 rows={3}
               />
             </div>
             <div className="grid gap-2">
-              <label className="font-semibold text-base">Agreement:</label>
+              <label className="text-label">Agreement:</label>
               <Textarea
                 value={editedRule.content.agreement || ''}
                 onChange={(e) => updateContent('agreement', e.target.value)}
-                className="text-base placeholder:text-base"
+                className="text-body"
                 rows={2}
               />
             </div>
@@ -274,7 +272,7 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
         );
       
       default:
-        return <div className="text-base">Editing not configured for this section type.</div>;
+        return <div className="text-body">Editing not configured for this section type.</div>;
     }
   };
 
@@ -286,25 +284,25 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
             <Input
               value={editedRule.section_title}
               onChange={(e) => setEditedRule(prev => ({ ...prev, section_title: e.target.value }))}
-              className="text-xl font-semibold text-base placeholder:text-base"
+              className="text-heading-tertiary"
             />
           ) : (
-            <CardTitle className="text-xl">{rule.section_title}</CardTitle>
+            <CardTitle className="text-heading-tertiary">{rule.section_title}</CardTitle>
           )}
           <div className="flex gap-2">
             {isEditing ? (
               <>
-                <Button variant="outline" size="sm" onClick={handleSave} className="text-base">
+                <Button variant="outline" size="sm" onClick={handleSave}>
                   <Save className="h-4 w-4 mr-2" />
                   Save
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleCancel} className="text-base">
+                <Button variant="outline" size="sm" onClick={handleCancel}>
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={onEditToggle} className="text-base">
+              <Button variant="outline" size="sm" onClick={onEditToggle}>
                 <Edit3 className="h-4 w-4 mr-2" />
                 Edit
               </Button>
