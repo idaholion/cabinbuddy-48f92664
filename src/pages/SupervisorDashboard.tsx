@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,16 @@ export const SupervisorDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
   const [selectedOrgForTabs, setSelectedOrgForTabs] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('organizations');
+
+  // Check URL parameters for tab selection
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -143,7 +153,7 @@ export const SupervisorDashboard = () => {
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="organizations" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
             <TabsTrigger value="family-groups" className="text-base">Family Groups</TabsTrigger>

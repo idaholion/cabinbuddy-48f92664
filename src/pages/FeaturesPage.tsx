@@ -25,7 +25,11 @@ const FeaturesPage = () => {
             Explore all the features available to help manage your family cabin experience
           </p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate(-1)}
+          className="hover:scale-105 hover:shadow-md transition-all duration-200"
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -37,7 +41,7 @@ const FeaturesPage = () => {
           <Button
             onClick={() => setShowDialog(true)}
             size="lg"
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 hover:scale-105 hover:shadow-lg transition-all duration-200"
           >
             Show Feature Overview
           </Button>

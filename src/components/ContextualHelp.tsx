@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { HelpCircle, X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useSupervisor } from '@/hooks/useSupervisor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -138,6 +139,21 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
   };
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isSupervisor } = useSupervisor();
+
+  const handleFeaturesClick = () => {
+    if (isSupervisor && location.pathname === '/supervisor') {
+      // If supervisor on dashboard, switch to features tab
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'features');
+      window.history.pushState({}, '', url.toString());
+      window.location.reload();
+    } else {
+      // Otherwise navigate to features page
+      navigate('/features');
+    }
+  };
 
   return (
     <div className="flex items-center space-x-2">
@@ -145,8 +161,8 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={() => navigate('/features')}
-        className="h-8 px-3 text-xs"
+        onClick={handleFeaturesClick}
+        className="h-8 px-3 text-xs hover:scale-105 hover:shadow-md transition-all duration-200"
         aria-label="View feature guide"
       >
         <Sparkles className="h-3 w-3 mr-1" />
