@@ -82,6 +82,53 @@ export const useFeatures = () => {
     }
   };
 
+  const reorderFeatures = async (reorderedFeatures: Feature[]) => {
+    if (!currentOrganization?.id) return false;
+
+    try {
+      // Update sort_order for all features in the reordered list
+      const updates = reorderedFeatures.map((feature, index) => ({
+        id: feature.id,
+        sort_order: index + 1
+      }));
+
+      // Batch update all sort orders
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('features')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
+          .eq('organization_id', currentOrganization.id);
+
+        if (error) throw error;
+      }
+
+      // Update local state with new sort orders
+      setFeatures(prev => prev.map(feature => {
+        const reorderedFeature = reorderedFeatures.find(f => f.id === feature.id);
+        if (reorderedFeature) {
+          const newSortOrder = reorderedFeatures.indexOf(reorderedFeature) + 1;
+          return { ...feature, sort_order: newSortOrder };
+        }
+        return feature;
+      }));
+
+      toast({
+        title: "Success",
+        description: "Feature order updated successfully",
+      });
+      return true;
+    } catch (error) {
+      console.error('Error reordering features:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update feature order",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchFeatures();
   }, [currentOrganization?.id]);
@@ -95,6 +142,7 @@ export const useFeatures = () => {
     adminFeatures,
     loading,
     updateFeature,
+    reorderFeatures,
     refetch: fetchFeatures
   };
 };

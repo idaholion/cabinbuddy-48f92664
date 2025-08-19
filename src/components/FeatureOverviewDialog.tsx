@@ -29,11 +29,31 @@ import {
   BarChart3,
   Shield,
   Sparkles,
-  Edit
+  Edit,
+  GripVertical
 } from "lucide-react";
 import { useFeatures, type Feature } from "@/hooks/useFeatures";
 import { useUserRole } from "@/hooks/useUserRole";
 import { FeatureEditDialog } from "@/components/FeatureEditDialog";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Icon mapping for dynamic icon rendering
 const iconMap: Record<string, React.ElementType> = {
@@ -56,6 +76,102 @@ const iconMap: Record<string, React.ElementType> = {
   Shield
 };
 
+interface SortableFeatureCardProps {
+  feature: Feature;
+  isAdminFeature?: boolean;
+  onEdit: (feature: Feature) => void;
+  onFeatureClick: (title: string) => void;
+  isAdmin: boolean;
+}
+
+const SortableFeatureCard = ({ 
+  feature, 
+  isAdminFeature = false, 
+  onEdit, 
+  onFeatureClick, 
+  isAdmin 
+}: SortableFeatureCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: feature.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const IconComponent = iconMap[feature.icon] || FileText;
+  
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group relative ${
+        isAdminFeature ? 'bg-accent/5' : ''
+      } ${isDragging ? 'opacity-50' : ''}`}
+      onClick={() => onFeatureClick(feature.title)}
+    >
+      {isAdmin && (
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            className="absolute top-2 left-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(feature);
+            }}
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
+        </>
+      )}
+      
+      <div className="flex items-start space-x-3">
+        <div className={`p-2 rounded-lg group-hover:bg-primary/20 transition-colors ${
+          isAdminFeature ? 'bg-accent/20' : 'bg-primary/10'
+        }`}>
+          <IconComponent className={`h-5 w-5 ${
+            isAdminFeature ? 'text-accent-foreground' : 'text-primary'
+          }`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className={`font-medium text-sm group-hover:transition-colors ${
+            isAdminFeature ? 'group-hover:text-accent-foreground' : 'group-hover:text-primary'
+          }`}>
+            {feature.title}
+          </h4>
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+            {feature.description}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`mt-2 p-0 h-auto text-xs hover:text-primary/80 ${
+              isAdminFeature ? 'text-accent-foreground hover:text-accent-foreground/80' : 'text-primary'
+            }`}
+          >
+            Learn More →
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface FeatureOverviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,8 +186,15 @@ export const FeatureOverviewDialog = ({
   onFeatureClick
 }: FeatureOverviewDialogProps) => {
   const [editingFeature, setEditingFeature] = useState<Feature | null>(null);
-  const { hostFeatures, adminFeatures, updateFeature, loading } = useFeatures();
+  const { hostFeatures, adminFeatures, updateFeature, reorderFeatures, loading } = useFeatures();
   const { isAdmin } = useUserRole();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleFeatureClick = (title: string) => {
     const featureId = title.toLowerCase().replace(/[^a-z0-9]/g, '-');
@@ -82,61 +205,53 @@ export const FeatureOverviewDialog = ({
     setEditingFeature(feature);
   };
 
+  const handleDragEnd = (event: DragEndEvent, features: Feature[], isAdminSection: boolean) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = features.findIndex(f => f.id === active.id);
+      const newIndex = features.findIndex(f => f.id === over.id);
+      
+      const newOrder = arrayMove(features, oldIndex, newIndex);
+      reorderFeatures(newOrder);
+    }
+  };
+
   const renderFeatureCard = (feature: Feature, isAdminFeature = false) => {
-    const IconComponent = iconMap[feature.icon] || FileText;
-    
     return (
-      <div
+      <SortableFeatureCard
         key={feature.id}
-        className={`p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer group relative ${
-          isAdminFeature ? 'bg-accent/5' : ''
-        }`}
-        onClick={() => handleFeatureClick(feature.title)}
-      >
-        {isAdmin && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-2 right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditFeature(feature);
-            }}
-          >
-            <Edit className="h-3 w-3" />
-          </Button>
-        )}
-        
-        <div className="flex items-start space-x-3">
-          <div className={`p-2 rounded-lg group-hover:bg-primary/20 transition-colors ${
-            isAdminFeature ? 'bg-accent/20' : 'bg-primary/10'
-          }`}>
-            <IconComponent className={`h-5 w-5 ${
-              isAdminFeature ? 'text-accent-foreground' : 'text-primary'
-            }`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className={`font-medium text-sm group-hover:transition-colors ${
-              isAdminFeature ? 'group-hover:text-accent-foreground' : 'group-hover:text-primary'
-            }`}>
-              {feature.title}
-            </h4>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              {feature.description}
-            </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`mt-2 p-0 h-auto text-xs hover:text-primary/80 ${
-                isAdminFeature ? 'text-accent-foreground hover:text-accent-foreground/80' : 'text-primary'
-              }`}
-            >
-              Learn More →
-            </Button>
-          </div>
-        </div>
+        feature={feature}
+        isAdminFeature={isAdminFeature}
+        onEdit={handleEditFeature}
+        onFeatureClick={handleFeatureClick}
+        isAdmin={isAdmin}
+      />
+    );
+  };
+
+  const renderFeatureSection = (features: Feature[], title: string, isAdminSection = false) => {
+    const content = (
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+        {features.map(feature => renderFeatureCard(feature, isAdminSection))}
       </div>
     );
+
+    if (isAdmin) {
+      return (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => handleDragEnd(event, features, isAdminSection)}
+        >
+          <SortableContext items={features.map(f => f.id)} strategy={verticalListSortingStrategy}>
+            {content}
+          </SortableContext>
+        </DndContext>
+      );
+    }
+
+    return content;
   };
 
   const relevantFeatures = userRole === "admin" ? [...hostFeatures, ...adminFeatures] : hostFeatures;
@@ -173,9 +288,7 @@ export const FeatureOverviewDialog = ({
                   {hostFeatures.length} features
                 </Badge>
               </div>
-              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                {hostFeatures.map((feature) => renderFeatureCard(feature))}
-              </div>
+              {renderFeatureSection(hostFeatures, "Family Member Features")}
             </div>
 
             {/* Admin Features Section */}
@@ -186,9 +299,7 @@ export const FeatureOverviewDialog = ({
                   <div className="flex items-center space-x-2 mb-4">
                     <h3 className="text-lg font-semibold">Administrator Features</h3>
                   </div>
-                  <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-                    {adminFeatures.map((feature) => renderFeatureCard(feature, true))}
-                  </div>
+                  {renderFeatureSection(adminFeatures, "Administrator Features", true)}
                 </div>
               </>
             )}
