@@ -127,28 +127,6 @@ const helpItems = [
   },
 ];
 
-const managementItems = [
-  {
-    title: "Messaging",
-    url: "/messaging",
-    icon: MessageSquare,
-  },
-  {
-    title: "Family Voting",
-    url: "/family-voting",
-    icon: Vote,
-  },
-  {
-    title: "Demo",
-    url: "/demo",
-    icon: Monitor,
-  },
-  {
-    title: "Calendar Keeper",
-    url: "/calendar-keeper-management",
-    icon: HeadphonesIcon,
-  },
-];
 
 export function AppSidebar() {
   const location = useLocation();
@@ -212,47 +190,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Organizations */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Organizations</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Manage Organizations">
-                  <NavLink 
-                    to="/manage-organizations" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Manage Organizations</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <JoinOrganizationDialog>
-                  <SidebarMenuButton tooltip="Join Organization" className="flex items-center gap-2 w-full cursor-pointer">
-                    <UserPlus className="h-4 w-4" />
-                    <span>Join Organization</span>
-                  </SidebarMenuButton>
-                </JoinOrganizationDialog>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Create Organization">
-                  <NavLink 
-                    to="/family-setup?mode=create" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Create Organization</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Cabin */}
         <SidebarGroup>
           <SidebarGroupLabel>Cabin</SidebarGroupLabel>
@@ -293,6 +230,31 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Messaging and Family Voting moved to Resources */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Messaging">
+                  <NavLink 
+                    to="/messaging" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Messaging</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Family Voting">
+                  <NavLink 
+                    to="/family-voting" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Vote className="h-4 w-4" />
+                    <span>Family Voting</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -319,24 +281,68 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Management */}
+        {/* Organizations - moved above Setup */}
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>Organizations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {managementItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Organizations">
+                  <NavLink 
+                    to="/manage-organizations" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Manage Organizations</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <JoinOrganizationDialog>
+                  <SidebarMenuButton tooltip="Join Organization" className="flex items-center gap-2 w-full cursor-pointer">
+                    <UserPlus className="h-4 w-4" />
+                    <span>Join Organization</span>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </JoinOrganizationDialog>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Create Organization">
+                  <NavLink 
+                    to="/family-setup?mode=create" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create Organization</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              {/* Calendar Keeper and Demo moved to Organizations */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Calendar Keeper">
+                  <NavLink 
+                    to="/calendar-keeper-management" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <HeadphonesIcon className="h-4 w-4" />
+                    <span>Calendar Keeper</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Demo">
+                  <NavLink 
+                    to="/demo" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Monitor className="h-4 w-4" />
+                    <span>Demo</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
