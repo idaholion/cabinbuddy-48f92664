@@ -20,7 +20,8 @@ import {
   Plus,
   MessageSquare,
   Monitor,
-  Vote
+  Vote,
+  Sparkles
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -115,6 +116,14 @@ const resourcesItems = [
     title: "Photos",
     url: "/photos",
     icon: Image,
+  },
+];
+
+const helpItems = [
+  {
+    title: "Feature Guide",
+    url: "/features",
+    icon: Sparkles,
   },
 ];
 
@@ -277,6 +286,28 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {resourcesItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Help & Features */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Help</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {helpItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 

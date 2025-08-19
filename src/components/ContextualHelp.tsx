@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { HelpCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { HelpCircle, X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -136,8 +137,23 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
     }
   };
 
+  const navigate = useNavigate();
+
   return (
-    <>
+    <div className="flex items-center space-x-2">
+      {/* Feature Guide Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate('/features')}
+        className="h-8 px-3 text-xs"
+        aria-label="View feature guide"
+      >
+        <Sparkles className="h-3 w-3 mr-1" />
+        Features
+      </Button>
+
+      {/* Contextual Help Button */}
       <Button
         variant="ghost"
         size="sm"
@@ -262,7 +278,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 
