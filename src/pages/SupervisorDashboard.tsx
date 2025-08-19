@@ -12,6 +12,7 @@ import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
+import { DefaultFeatureManagement } from '@/components/DefaultFeatureManagement';
 
 import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTab';
 import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
@@ -147,6 +148,7 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
             <TabsTrigger value="family-groups" className="text-base">Family Groups</TabsTrigger>
             <TabsTrigger value="financial-records" className="text-base">Financial Records</TabsTrigger>
+            <TabsTrigger value="features" className="text-base">Default Features</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
           </TabsList>
@@ -314,6 +316,10 @@ export const SupervisorDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="features">
+            <DefaultFeatureManagement />
           </TabsContent>
 
           <TabsContent value="supervisors">

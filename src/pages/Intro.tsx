@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, ArrowRight, Star, CheckCircle } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { FeatureShowcase } from "@/components/FeatureShowcase";
+import { DefaultFeatureShowcase } from "@/components/DefaultFeatureShowcase";
 
 const Intro = () => {
   const navigate = useNavigate();
@@ -206,7 +206,7 @@ const Intro = () => {
             </div>
 
             {/* Feature Showcase */}
-            <FeatureShowcase variant="public" onFeatureClick={handleFeatureClick} />
+            <DefaultFeatureShowcase />
 
             {/* CTA Section */}
             <div className="text-center mt-16 p-8 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl">
