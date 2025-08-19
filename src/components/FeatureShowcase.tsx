@@ -50,15 +50,18 @@ interface FeatureCardProps {
     learn_more_type?: 'text' | 'internal_link' | 'external_link';
   };
   onLearnMore?: () => void;
+  variant?: 'public' | 'authenticated';
 }
 
-const FeatureCard = ({ feature, onLearnMore }: FeatureCardProps) => {
+const FeatureCard = ({ feature, onLearnMore, variant = 'authenticated' }: FeatureCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   
   const IconComponent = iconMap[feature.icon as keyof typeof iconMap] || FileText;
 
   const handleLearnMore = () => {
+    if (variant === 'public') return; // No interactions in public mode
+    
     if (feature.learn_more_type === 'text') {
       setExpanded(!expanded);
     } else if (feature.learn_more_type === 'internal_link' && feature.learn_more_url) {
@@ -69,7 +72,8 @@ const FeatureCard = ({ feature, onLearnMore }: FeatureCardProps) => {
     onLearnMore?.();
   };
 
-  const hasLearnMore = feature.learn_more_type && (
+
+  const hasLearnMore = variant === 'authenticated' && feature.learn_more_type && (
     (feature.learn_more_type === 'text' && feature.learn_more_text) ||
     ((feature.learn_more_type === 'internal_link' || feature.learn_more_type === 'external_link') && feature.learn_more_url)
   );
@@ -91,7 +95,7 @@ const FeatureCard = ({ feature, onLearnMore }: FeatureCardProps) => {
           {feature.description}
         </CardDescription>
         
-        {expanded && feature.learn_more_text && (
+        {expanded && feature.learn_more_text && variant === 'authenticated' && (
           <div className="mt-4 p-4 bg-muted/50 rounded-lg">
             <p className="text-sm text-foreground leading-relaxed">
               {feature.learn_more_text}
@@ -131,9 +135,10 @@ const FeatureCard = ({ feature, onLearnMore }: FeatureCardProps) => {
 
 interface FeatureShowcaseProps {
   onFeatureClick?: (featureId: string) => void;
+  variant?: 'public' | 'authenticated';
 }
 
-export const FeatureShowcase = ({ onFeatureClick }: FeatureShowcaseProps) => {
+export const FeatureShowcase = ({ onFeatureClick, variant = 'authenticated' }: FeatureShowcaseProps) => {
   const { hostFeatures, adminFeatures, loading } = useFeatures();
 
   if (loading) {
@@ -170,6 +175,7 @@ export const FeatureShowcase = ({ onFeatureClick }: FeatureShowcaseProps) => {
               <FeatureCard
                 key={feature.id}
                 feature={feature}
+                variant={variant}
                 onLearnMore={() => onFeatureClick?.(feature.id)}
               />
             ))}
@@ -198,6 +204,7 @@ export const FeatureShowcase = ({ onFeatureClick }: FeatureShowcaseProps) => {
               <FeatureCard
                 key={feature.id}
                 feature={feature}
+                variant={variant}
                 onLearnMore={() => onFeatureClick?.(feature.id)}
               />
             ))}

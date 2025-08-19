@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Always clear state and redirect
     setUser(null);
     setSession(null);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   const value = {

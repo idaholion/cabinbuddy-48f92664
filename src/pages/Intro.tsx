@@ -206,7 +206,7 @@ const Intro = () => {
             </div>
 
             {/* Feature Showcase */}
-            <FeatureShowcase onFeatureClick={handleFeatureClick} />
+            <FeatureShowcase variant="public" onFeatureClick={handleFeatureClick} />
 
             {/* CTA Section */}
             <div className="text-center mt-16 p-8 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl">
