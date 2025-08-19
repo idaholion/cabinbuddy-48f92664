@@ -24,7 +24,9 @@ import {
   Edit,
   Plus,
   Save,
-  X
+  X,
+  Eye,
+  ArrowLeft
 } from "lucide-react";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -216,6 +218,99 @@ const FeatureEditForm = ({ feature, onSave, onCancel }: FeatureEditFormProps) =>
   );
 };
 
+interface FeaturePreviewProps {
+  features: DefaultFeature[];
+  onBack: () => void;
+}
+
+const FeaturePreview = ({ features, onBack }: FeaturePreviewProps) => {
+  const activeFeatures = features.filter(f => f.is_active);
+  const hostFeatures = activeFeatures.filter(f => f.category === 'host');
+  const adminFeatures = activeFeatures.filter(f => f.category === 'admin');
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Feature Preview - Final Layout</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              This is how the features will appear to users on the intro page
+            </p>
+          </div>
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Management
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Host Features Section */}
+        {hostFeatures.length > 0 && (
+          <div>
+            <div className="flex items-center mb-4">
+              <Users className="h-5 w-5 text-primary mr-2" />
+              <h3 className="text-lg font-semibold">For All Users</h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {hostFeatures.map((feature) => {
+                const IconComponent = iconMap[feature.icon as keyof typeof iconMap] || FileText;
+                return (
+                  <Card key={feature.id} className="p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 mt-1">
+                        <IconComponent className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">{feature.title}</h4>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Admin Features Section */}
+        {adminFeatures.length > 0 && (
+          <div>
+            <div className="flex items-center mb-4">
+              <Shield className="h-5 w-5 text-primary mr-2" />
+              <h3 className="text-lg font-semibold">For Managers</h3>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {adminFeatures.map((feature) => {
+                const IconComponent = iconMap[feature.icon as keyof typeof iconMap] || FileText;
+                return (
+                  <Card key={feature.id} className="p-4 hover:shadow-md transition-shadow border-orange-200">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-orange-100 mt-1">
+                        <IconComponent className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">{feature.title}</h4>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeFeatures.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            No active features to display. Enable some features to see the preview.
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export const DefaultFeatureManagement = () => {
   const { features, loading, updateFeature, reorderFeatures } = useDefaultFeatures();
   const [editingFeature, setEditingFeature] = useState<DefaultFeature | null>(null);
@@ -275,6 +370,13 @@ export const DefaultFeatureManagement = () => {
     );
   }
 
+  // Show preview mode if requested
+  const [showPreview, setShowPreview] = useState(false);
+
+  if (showPreview) {
+    return <FeaturePreview features={features} onBack={() => setShowPreview(false)} />;
+  }
+
   if (editingFeature || isAddingNew) {
     return (
       <FeatureEditForm
@@ -295,10 +397,16 @@ export const DefaultFeatureManagement = () => {
               Manage the features shown on the public intro page
             </p>
           </div>
-          <Button onClick={() => setIsAddingNew(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Feature
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setIsAddingNew(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Feature
+            </Button>
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
+              <Eye className="h-4 w-4 mr-2" />
+              Preview Final Layout
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
