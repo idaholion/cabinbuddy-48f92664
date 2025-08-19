@@ -29,8 +29,18 @@ export const GuestAccessProvider = ({ children }: GuestAccessProviderProps) => {
   const [isGuestMode, setIsGuestMode] = useState(false);
   const [guestOrganization, setGuestOrganization] = useState<any | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
+  
+  // Safely handle router hooks
+  let location: any = null;
+  let navigate: any = null;
+  
+  try {
+    location = useLocation();
+    navigate = useNavigate();
+  } catch (error) {
+    // Router hooks not available, which is fine for guest access
+    console.warn('Router hooks not available in GuestAccessProvider');
+  }
 
   const validateGuestAccess = async (orgId: string, token: string): Promise<boolean> => {
     setIsValidating(true);
@@ -79,12 +89,18 @@ export const GuestAccessProvider = ({ children }: GuestAccessProviderProps) => {
   const exitGuestMode = () => {
     setIsGuestMode(false);
     setGuestOrganization(null);
-    navigate('/');
+    if (navigate) {
+      navigate('/');
+    } else {
+      window.location.href = '/';
+    }
     toast.info('Exited preview mode');
   };
 
-  // Check for guest access parameters in URL
+  // Check for guest access parameters in URL - only if location is available
   useEffect(() => {
+    if (!location) return;
+    
     const searchParams = new URLSearchParams(location.search);
     const token = searchParams.get('token');
     const orgId = searchParams.get('org');
@@ -92,7 +108,7 @@ export const GuestAccessProvider = ({ children }: GuestAccessProviderProps) => {
     if (token && orgId && !isGuestMode) {
       validateGuestAccess(orgId, token);
     }
-  }, [location.search]);
+  }, [location?.search, isGuestMode]);
 
   const value = {
     isGuestMode,
