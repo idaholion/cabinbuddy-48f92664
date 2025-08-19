@@ -172,12 +172,12 @@ export const FeatureOverviewDialog = ({
               <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               <div>
                 <DialogTitle className="text-lg sm:text-2xl font-bold">
-                  Welcome to CabinBuddy!
+                  CabinBuddy Feature List
                 </DialogTitle>
                 <DialogDescription className="text-sm sm:text-base mt-1">
                   {userRole === "admin" 
-                    ? "Here's everything you can do as an administrator and family member"
-                    : "Here are all the features available to help manage your family cabin experience"
+                    ? "Here's everything available to administrators and family members. You can access this feature list anytime from the sidebar."
+                    : "Here are all the features available to help manage your family cabin experience. You can access this feature list anytime from the sidebar."
                   }
                 </DialogDescription>
               </div>
@@ -234,9 +234,6 @@ export const FeatureOverviewDialog = ({
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
                     <h3 className="text-lg font-semibold">Administrator Features</h3>
-                    <Badge variant="outline" className="text-xs">
-                      Admin Only
-                    </Badge>
                   </div>
                   <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                     {adminFeatures.map((feature, index) => (
@@ -288,35 +285,6 @@ export const FeatureOverviewDialog = ({
           </div>
         </ScrollArea>
 
-        {/* Footer Actions */}
-        <div className="border-t p-4 sm:p-6 bg-muted/30 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDontShowAgain}
-                className="text-sm"
-              >
-                Don't show this again
-              </Button>
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Show me later
-              </Button>
-              <Button
-                onClick={() => onOpenChange(false)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Get Started!
-              </Button>
-            </div>
-          </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
