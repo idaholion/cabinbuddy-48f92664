@@ -219,20 +219,20 @@ Best regards,
         </div>
         <div className="flex items-center space-x-2">
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)} variant="outline" className="flex items-center space-x-2">
+            <Button onClick={() => setIsEditing(true)} variant="outline" className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:border-primary/50 transition-all duration-200 ease-in-out">
               <Edit className="h-4 w-4" />
               <span>Edit Reminders</span>
             </Button>
           ) : (
             <>
-              <Button onClick={handleCancelEdit} variant="outline" className="flex items-center space-x-2">
+              <Button onClick={handleCancelEdit} variant="outline" className="flex items-center space-x-2 hover:scale-105 hover:shadow-md hover:bg-destructive/5 hover:border-destructive/30 transition-all duration-200">
                 <X className="h-4 w-4" />
                 <span>Cancel</span>
               </Button>
               <Button 
                 onClick={handleSaveReminders} 
                 disabled={!hasUnsavedChanges}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none"
               >
                 <Save className="h-4 w-4" />
                 <span>Save Reminders</span>

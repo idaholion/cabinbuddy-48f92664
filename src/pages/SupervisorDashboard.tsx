@@ -201,7 +201,7 @@ export const SupervisorDashboard = () => {
                       <Button 
                         size="sm" 
                         onClick={() => setSelectedOrganization(org.id)}
-                        className="flex-1 text-base"
+                        className="flex-1 text-base hover:scale-105 hover:shadow-md transition-all duration-200"
                       >
                         View Details
                       </Button>
@@ -209,7 +209,7 @@ export const SupervisorDashboard = () => {
                         size="sm" 
                         variant="destructive"
                         onClick={() => deleteOrganizationData(org.id)}
-                        className="text-base"
+                        className="text-base hover:scale-110 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
