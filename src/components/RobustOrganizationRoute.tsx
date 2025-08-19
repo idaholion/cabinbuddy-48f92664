@@ -75,6 +75,16 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     );
   }
 
+  // Debug: Log all state when not loading
+  console.log('RobustOrganizationRoute - Current state:', { 
+    user: !!user, 
+    organizations: organizations.length, 
+    error: error?.message,
+    offline,
+    pathname: location.pathname,
+    isExemptRoute
+  });
+
   // Not authenticated - let ProtectedRoute handle this
   if (!user) {
     return <>{children}</>;
