@@ -74,8 +74,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </div>
             <h4 className="font-medium text-lg">
-              Host Member {index + 1}
-              
+              Group Member {index + 1}
             </h4>
           </div>
           
@@ -92,12 +91,12 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remove Host Member</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to remove this host member? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
+                 <AlertDialogHeader>
+                   <AlertDialogTitle>Remove Group Member</AlertDialogTitle>
+                   <AlertDialogDescription>
+                     Are you sure you want to remove this group member? This action cannot be undone.
+                   </AlertDialogDescription>
+                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction 
@@ -161,29 +160,55 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             />
           </div>
 
-          <FormField
-            control={control}
-            name={`hostMembers.${index}.canReserve`}
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      id={`reservation-${index}`}
-                      checked={field.value || false}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                  </FormControl>
-                   <label htmlFor={`reservation-${index}`} className="text-xl">
-                     Can make reservations
-                   </label>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name={`hostMembers.${index}.canHost`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        id={`host-${index}`}
+                        checked={field.value || false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                     <label htmlFor={`host-${index}`} className="text-xl">
+                       Can Host
+                     </label>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name={`hostMembers.${index}.canReserve`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        id={`reservation-${index}`}
+                        checked={field.value || false}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                     <label htmlFor={`reservation-${index}`} className="text-xl">
+                       Can make reservations
+                     </label>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         {hasRootError && (

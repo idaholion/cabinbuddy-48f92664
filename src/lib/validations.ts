@@ -63,22 +63,23 @@ export const familyGroupSetupSchema = z.object({
       return z.string().email().safeParse(val).success;
     }, "Please enter a valid email address"),
     canReserve: z.boolean().optional().default(false),
+    canHost: z.boolean().optional().default(false),
   }))
     .refine((members) => {
       // Check for duplicate names (non-empty only)
       const names = members.map(m => m.name.toLowerCase().trim()).filter(Boolean);
       return new Set(names).size === names.length;
-    }, "Host member names must be unique")
+    }, "Group member names must be unique")
     .refine((members) => {
       // Check for duplicate emails (non-empty only)
       const emails = members.map(m => m.email.toLowerCase().trim()).filter(Boolean);
       return new Set(emails).size === emails.length;
-    }, "Host member emails must be unique")
+    }, "Group member emails must be unique")
     .refine((members) => {
       // Check for duplicate phone numbers (non-empty only)
       const phones = members.map(m => m.phone.replace(/\D/g, '')).filter(Boolean);
       return new Set(phones).size === phones.length;
-    }, "Host member phone numbers must be unique"),
+    }, "Group member phone numbers must be unique"),
   
   alternateLeadId: z.string(),
 });

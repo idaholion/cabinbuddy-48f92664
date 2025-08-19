@@ -126,7 +126,7 @@ const FamilyGroupSetup = () => {
         setValue("hostMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
-        // Automatically copy Group Lead info to Host Member 1
+        // Automatically copy Group Lead info to Group Member 1
         const leadAsHostMember = {
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
@@ -145,11 +145,11 @@ const FamilyGroupSetup = () => {
     }
   }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup]);
 
-  // Auto-update Host Member 1 when Group Lead info changes
+  // Auto-update Group Member 1 when Group Lead info changes
   useEffect(() => {
     const currentHostMembers = getValues("hostMembers");
     if (currentHostMembers && currentHostMembers.length > 0 && watchedData.leadName) {
-      // Update first host member with Group Lead info
+      // Update first group member with Group Lead info
       const updatedHostMembers = [...currentHostMembers];
       updatedHostMembers[0] = {
         name: watchedData.leadName || "",
@@ -560,16 +560,16 @@ const FamilyGroupSetup = () => {
                   </div>
                 </div>
 
-                {/* Host Members Section */}
+                {/* Group Members Section */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="text-center flex-1">
                        <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
                          <Users className="h-5 w-5" />
-                         Host Members ({filledMembersCount} filled)
+                         Group Members ({filledMembersCount} filled)
                        </h3>
                         <p className="text-lg text-muted-foreground mt-1">
-                          Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Host Profile page. Check the box to indicate who can make reservations.
+                          Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Host Profile page. Check the boxes to indicate who can host and who can make reservations.
                         </p>
                     </div>
                     
@@ -583,9 +583,9 @@ const FamilyGroupSetup = () => {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Clear All Host Members</AlertDialogTitle>
+                              <AlertDialogTitle>Clear All Group Members</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This will clear all host member information and reset to 3 empty slots. This action cannot be undone.
+                                This will clear all group member information and reset to 3 empty slots. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -617,7 +617,7 @@ const FamilyGroupSetup = () => {
                     </div>
                   )}
 
-                  {/* Host Members List with Drag and Drop */}
+                  {/* Group Members List with Drag and Drop */}
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -649,16 +649,16 @@ const FamilyGroupSetup = () => {
                         variant="ghost" 
                         onClick={() => setShowAllMembers(true)}
                       >
-                        Show {fields.length - 3} more host members...
+                        Show {fields.length - 3} more group members...
                       </Button>
                     </div>
                   )}
 
-                  {/* Add Host Member Button */}
+                  {/* Add Group Member Button */}
                   <div className="flex justify-center pt-2">
                     <Button type="button" variant="outline" onClick={addHostMember} className="text-lg">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Host Member
+                      Add Group Member
                     </Button>
                   </div>
                 </div>
@@ -673,7 +673,7 @@ const FamilyGroupSetup = () => {
                          Alternate Group Lead
                        </FormLabel>
                        <p className="text-lg text-muted-foreground text-center mb-3">
-                         Select which host member serves as the alternate group lead
+                         Select which group member serves as the alternate group lead
                        </p>
                       <FormControl>
                         <Select value={field.value} onValueChange={field.onChange}>
