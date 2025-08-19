@@ -121,12 +121,12 @@ export const FeatureEditDialog = ({
             
             <div className="space-y-2">
               <Label htmlFor="learn-more-type">Learn More Type</Label>
-              <Select value={learnMoreType || ""} onValueChange={(value) => setLearnMoreType(value as typeof learnMoreType)}>
+              <Select value={learnMoreType || "none"} onValueChange={(value) => setLearnMoreType(value === "none" ? undefined : value as typeof learnMoreType)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select learn more type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
                   <SelectItem value="text">Expandable Text</SelectItem>
                   <SelectItem value="internal_link">Internal Link</SelectItem>
                   <SelectItem value="external_link">External Link</SelectItem>
