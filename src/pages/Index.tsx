@@ -170,12 +170,6 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/data-backup">
-                    <Database className="h-4 w-4 mr-2" />
-                    Data Restore
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
                   <Link to="/payment-tracking">
                     <CreditCard className="h-4 w-4 mr-2" />
                     Payment Tracking
@@ -191,12 +185,6 @@ const Index = () => {
                   <Link to="/messaging">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Messaging
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/demo">
-                    <Monitor className="h-4 w-4 mr-2" />
-                    System Demo
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
