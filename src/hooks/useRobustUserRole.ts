@@ -70,7 +70,7 @@ export const useRobustUserRole = () => {
     fetchFamilyGroups();
   }, [activeOrganization?.organization_id, user?.id, executeRobust]);
 
-  // Compute roles synchronously to prevent flashing
+  // Compute roles with improved memoization
   const userRoles = useMemo(() => {
     if (!user?.email || !initialized) {
       return {
@@ -87,14 +87,10 @@ export const useRobustUserRole = () => {
 
     const userEmail = user.email.toLowerCase();
     
-    // Check organization roles
-    const isCalendarKeeper = activeOrganization?.organization_name && 
-      activeOrganization.organization_name.includes('calendar_keeper_email') && 
-      activeOrganization.organization_name.toLowerCase().includes(userEmail);
-    
-    // For now, we'll use a simplified approach since we don't have organization details
-    const isTreasurer = false;
-    const isAdmin = false;
+    // Check organization roles - using simplified approach since org fields may vary
+    const isCalendarKeeper = false; // TODO: Implement when organization schema is clarified
+    const isTreasurer = false; // TODO: Implement when organization schema is clarified
+    const isAdmin = false; // TODO: Implement when organization schema is clarified
 
     // Check family group roles
     const leadGroup = familyGroups.find(group => 

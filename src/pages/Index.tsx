@@ -193,12 +193,6 @@ const Index = () => {
                     Host Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/finance-reports">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Financial Dashboard
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -207,13 +201,22 @@ const Index = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {/* Explore Features Button */}
+            <Button 
+              className="px-6 py-4 text-lg font-medium shadow-cabin w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 hover:scale-105"
+              asChild
+            >
+              <Link to="/features">
+                ✨ Explore Features
+              </Link>
+            </Button>
 
           </div>
 
         </div>
 
         {/* Bottom Left User Info */}
-        <div className="fixed bottom-8 left-44 z-30 flex items-center space-x-4">
+        <div className="fixed bottom-8 left-8 z-30 flex items-center space-x-4">
           <Button 
             variant="outline" 
             className="bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-primary/10 px-6 py-3 text-lg font-semibold text-primary shadow-lg" 

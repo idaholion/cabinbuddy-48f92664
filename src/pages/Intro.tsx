@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, ArrowRight, Star, CheckCircle, X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { DefaultFeatureShowcase } from "@/components/DefaultFeatureShowcase";
@@ -9,7 +9,6 @@ const Intro = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showFeatures, setShowFeatures] = useState(false);
 
   // Check if we're in debug mode
@@ -22,77 +21,11 @@ const Intro = () => {
     }
   }, [user, navigate, isDebugMode]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    console.log("🎯 handleImageUpload called, prevented defaults");
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log("📄 File selected:", file.name, file.size);
-      
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Please select an image smaller than 5MB");
-        return;
-      }
-      
-      console.log("🔄 Creating blob URL...");
-      const blobUrl = URL.createObjectURL(file);
-      console.log("🎯 Created blob URL:", blobUrl);
-      
-      console.log("🔍 Looking for background element...");
-      const bgElement = document.querySelector('[data-background="true"]') as HTMLElement;
-      console.log("🔍 Background element found:", !!bgElement);
-      
-      if (bgElement) {
-        console.log("🖼️ Setting background image:", blobUrl);
-        bgElement.style.setProperty('background-image', `url("${blobUrl}")`);
-        console.log("✅ Background image set (size/position handled by CSS)");
-        console.log("🔍 Current backgroundImage value:", bgElement.style.backgroundImage);
-      } else {
-        console.error("❌ Background element not found");
-      }
-    } else {
-      console.log("❌ No file selected");
-    }
-    console.log("🧹 Clearing input value");
-    event.target.value = '';
-    console.log("✅ handleImageUpload complete");
-  };
 
   const handleGetStarted = () => {
     navigate("/demo");
   };
 
-  const handleFeatureClick = (featureId: string) => {
-    console.log(`Feature clicked: ${featureId}`);
-    // Could navigate to specific demo sections or help pages
-  };
-
-  const triggerFileInput = (event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    console.log("🎯 Triggering file input click, prevented defaults");
-    const input = fileInputRef.current;
-    if (input) {
-      console.log("✅ File input found, clicking...");
-      
-      // Add event listener to detect when dialog opens
-      const handleFocus = () => {
-        console.log("🔍 File dialog opened (focus event)");
-        input.removeEventListener('focus', handleFocus);
-      };
-      
-      input.addEventListener('focus', handleFocus);
-      input.click();
-      
-      // Also check if the input has any change listeners
-      console.log("🔍 Input has change event listener:", !!input.onchange);
-    } else {
-      console.error("❌ File input ref is null");
-    }
-  };
 
   return (
     <div className="min-h-screen">
@@ -108,15 +41,6 @@ const Intro = () => {
         >
         </div>
 
-        {/* Hidden file input for image upload functionality */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-          aria-hidden="true"
-        />
 
         {/* Action Buttons */}
         <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

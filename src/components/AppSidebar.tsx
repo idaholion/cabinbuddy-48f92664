@@ -144,11 +144,6 @@ const managementItems = [
     icon: Monitor,
   },
   {
-    title: "Financial Dashboard",
-    url: "/finance-reports",
-    icon: DollarSign,
-  },
-  {
     title: "Calendar Keeper",
     url: "/calendar-keeper-management",
     icon: HeadphonesIcon,
