@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Copy, Eye, Shield, Users, Calendar, RotateCcw } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useGuestAccessManagement } from '@/hooks/useGuestAccess';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -19,6 +20,7 @@ export const GuestAccessSettings = ({ organizationId }: GuestAccessSettingsProps
   const [guestToken, setGuestToken] = useState<string | null>(null);
   const [tokenExpiry, setTokenExpiry] = useState<string | null>(null);
   const [expiresHours, setExpiresHours] = useState<number>(168); // 1 week default
+  const [noExpiration, setNoExpiration] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -67,7 +69,8 @@ export const GuestAccessSettings = ({ organizationId }: GuestAccessSettingsProps
   };
 
   const handleGenerateToken = async () => {
-    const token = await generateGuestToken(organizationId, expiresHours);
+    const hours = noExpiration ? 8760 * 10 : expiresHours; // 10 years for "no expiration"
+    const token = await generateGuestToken(organizationId, hours);
     if (token) {
       await fetchOrganizationSettings(); // Refresh to get new token data
     }
@@ -170,26 +173,41 @@ export const GuestAccessSettings = ({ organizationId }: GuestAccessSettingsProps
             </div>
 
             {/* Token Generation */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Label htmlFor="expires-hours">Token Expires In (Hours)</Label>
-                <Input
-                  id="expires-hours"
-                  type="number"
-                  value={expiresHours}
-                  onChange={(e) => setExpiresHours(Number(e.target.value))}
-                  min={1}
-                  max={8760} // 1 year
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="no-expiration"
+                  checked={noExpiration}
+                  onCheckedChange={(checked) => setNoExpiration(checked as boolean)}
                 />
+                <Label htmlFor="no-expiration" className="text-sm font-medium">
+                  No expiration
+                </Label>
               </div>
-              <Button 
-                onClick={handleGenerateToken}
-                disabled={managementLoading}
-                className="px-6"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                {hasValidToken ? 'Regenerate' : 'Generate'} Token
-              </Button>
+              
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Label htmlFor="expires-hours">Token Expires In (Hours)</Label>
+                  <Input
+                    id="expires-hours"
+                    type="number"
+                    value={expiresHours}
+                    onChange={(e) => setExpiresHours(Number(e.target.value))}
+                    min={1}
+                    max={8760} // 1 year
+                    disabled={noExpiration}
+                    className={noExpiration ? 'opacity-50' : ''}
+                  />
+                </div>
+                <Button 
+                  onClick={handleGenerateToken}
+                  disabled={managementLoading}
+                  className="px-6"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {hasValidToken ? 'Regenerate' : 'Generate'} Token
+                </Button>
+              </div>
             </div>
 
             {/* Current Token Display */}
