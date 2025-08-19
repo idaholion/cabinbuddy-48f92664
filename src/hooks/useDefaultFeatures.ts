@@ -25,7 +25,6 @@ export const useDefaultFeatures = () => {
       const { data, error } = await supabase
         .from('default_features')
         .select('*')
-        .eq('is_active', true)
         .order('category', { ascending: true })
         .order('sort_order', { ascending: true });
 
