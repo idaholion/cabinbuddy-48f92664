@@ -341,12 +341,14 @@ export const DefaultFeatureManagement = () => {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
-    if (active.id !== over?.id) {
+    if (active.id !== over?.id && over) {
       const oldIndex = features.findIndex((item) => item.id === active.id);
       const newIndex = features.findIndex((item) => item.id === over.id);
       
-      const reorderedFeatures = arrayMove(features, oldIndex, newIndex);
-      reorderFeatures(reorderedFeatures);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reorderedFeatures = arrayMove(features, oldIndex, newIndex);
+        reorderFeatures(reorderedFeatures);
+      }
     }
   };
 
