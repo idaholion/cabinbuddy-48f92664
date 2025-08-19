@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, ArrowRight, Star, CheckCircle } from "lucide-react";
+import { Upload, ArrowRight, Star, CheckCircle, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { DefaultFeatureShowcase } from "@/components/DefaultFeatureShowcase";
@@ -150,88 +150,42 @@ const Intro = () => {
           {/* Features CTA */}
           <Button 
             onClick={() => setShowFeatures(!showFeatures)}
-            variant="ghost"
-            className="text-white hover:text-white/80 hover:bg-white/10 backdrop-blur-sm"
+            variant="outline"
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 hover:from-blue-600 hover:to-purple-700 backdrop-blur-sm px-6 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
-            {showFeatures ? 'Hide Features' : 'Explore Features'}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {showFeatures ? 'Hide Features' : '✨ Explore Features'}
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* Features Overlay */}
       {showFeatures && (
-        <div className="bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            {/* Section Header */}
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Everything You Need to Manage Your Family Cabin
-              </h2>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-                CabinBuddy provides comprehensive tools for scheduling, financial management, 
-                communication, and documentation to make your shared cabin experience seamless.
-              </p>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl shadow-2xl max-w-6xl max-h-[90vh] w-full overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-primary/5 to-primary/10">
+              <div>
+                <h2 className="text-3xl font-bold text-foreground mb-2">
+                  CabinBuddy Features
+                </h2>
+                <p className="text-muted-foreground">
+                  Everything you need to manage your family cabin
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFeatures(false)}
+                className="text-muted-foreground hover:text-foreground p-2"
+              >
+                <X className="h-6 w-6" />
+              </Button>
             </div>
-
-            {/* Value Propositions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Fair & Organized</h3>
-                <p className="text-muted-foreground">
-                  Transparent scheduling and cost sharing ensures everyone gets their fair share.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Star className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Easy to Use</h3>
-                <p className="text-muted-foreground">
-                  Intuitive interface designed specifically for family cabin management.
-                </p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ArrowRight className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Complete Solution</h3>
-                <p className="text-muted-foreground">
-                  From booking to billing, photos to maintenance - all in one place.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature Showcase */}
-            <DefaultFeatureShowcase />
-
-            {/* CTA Section */}
-            <div className="text-center mt-16 p-8 bg-gradient-to-r from-primary/5 to-primary/10 rounded-2xl">
-              <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Join families already using CabinBuddy to manage their shared properties with ease.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  onClick={handleGetStarted}
-                  size="lg"
-                  className="px-8 py-3"
-                >
-                  Try Demo
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-                <Button 
-                  onClick={() => navigate("/signup")}
-                  size="lg" 
-                  variant="outline"
-                  className="px-8 py-3"
-                >
-                  Sign Up Today
-                </Button>
-              </div>
+            
+            {/* Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <DefaultFeatureShowcase />
             </div>
           </div>
         </div>
