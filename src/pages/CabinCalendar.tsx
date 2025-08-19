@@ -100,16 +100,6 @@ const CabinCalendar = () => {
   
   const availableHosts = getAvailableHosts();
   
-  // Debug logging
-  console.log('Host dropdown debug:', {
-    selectedFamilyGroup,
-    selectedHost,
-    availableHostsCount: availableHosts.length,
-    isCalendarKeeper,
-    isGroupLead,
-    userGroup: userGroup?.name,
-    shouldShowDropdown: selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0
-  });
   
   // Handle family group change
   const handleFamilyGroupChange = (value: string) => {
@@ -145,7 +135,6 @@ const CabinCalendar = () => {
   useEffect(() => {
     const hasUncoloredGroups = familyGroups.some(fg => !fg.color);
     if (hasUncoloredGroups && familyGroups.length > 0) {
-      console.log('Assigning default colors to family groups...');
       assignDefaultColorsWithProtection();
     }
   }, [familyGroups, assignDefaultColorsWithProtection]);

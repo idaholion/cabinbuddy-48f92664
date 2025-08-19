@@ -12,7 +12,7 @@ import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
-import { DebugModePanel } from '@/components/DebugModePanel';
+
 import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTab';
 import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -149,7 +149,6 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="financial-records" className="text-base">Financial Records</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
-            <TabsTrigger value="debug" className="text-base">Debug Mode</TabsTrigger>
           </TabsList>
 
           <TabsContent value="organizations" className="space-y-6">
@@ -328,9 +327,6 @@ export const SupervisorDashboard = () => {
             />
           </TabsContent>
 
-          <TabsContent value="debug">
-            <DebugModePanel />
-          </TabsContent>
         </Tabs>
       </div>
     </div>

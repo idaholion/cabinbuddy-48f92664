@@ -119,15 +119,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       let defaultFamilyGroup = '';
       let defaultHostAssignments: HostAssignment[] = [];
       
-      console.log('BookingForm form reset - user role data:', {
-        isHostMember,
-        isGroupLead,
-        isCalendarKeeper,
-        userFamilyGroup: userFamilyGroup?.name,
-        userHostInfo: userHostInfo?.name,
-        prefilledFamilyGroup,
-        prefilledHost
-      });
       
       // Use prefilled values if provided, otherwise fall back to user defaults
       if (prefilledFamilyGroup) {
@@ -171,7 +162,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       }
       
-      console.log('Final form defaults:', { defaultFamilyGroup, defaultHostAssignments });
+      
       
       form.reset({
         startDate: defaultStartDate,
@@ -335,7 +326,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       }
     } catch (error) {
-      console.error('Booking submission error:', error);
       toast({
         title: editingReservation ? "Update Failed" : "Booking Failed",
         description: "An unexpected error occurred. Please try again.",

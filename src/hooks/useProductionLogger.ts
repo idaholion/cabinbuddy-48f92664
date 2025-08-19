@@ -50,13 +50,9 @@ export const useProductionLogger = () => {
       errorType,
     };
 
-    // In development, log to console
-    if (process.env.NODE_ENV === 'development') {
-      console.group(`🚨 ${severity.toUpperCase()} Error (${errorType})`);
+    // Essential error logging only
+    if (severity === 'critical' || severity === 'high') {
       console.error('Error:', error.message);
-      console.error('Stack:', error.stack);
-      console.log('Context:', logData);
-      console.groupEnd();
     }
 
     // In production, send to monitoring service
@@ -79,14 +75,9 @@ export const useProductionLogger = () => {
       duration,
     };
 
-    // In development, log to console
-    if (process.env.NODE_ENV === 'development') {
-      const emoji = success ? '✅' : '❌';
-      console.log(`${emoji} Action: ${actionType}`, { 
-        success, 
-        duration: duration ? `${duration}ms` : 'N/A',
-        context: logData 
-      });
+    // Essential action logging only
+    if (!success) {
+      console.error(`Action failed: ${actionType}`);
     }
 
     // In production, send to analytics service
@@ -106,9 +97,9 @@ export const useProductionLogger = () => {
       value,
     };
 
-    // In development, log to console
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Performance: ${metric} = ${value}ms`, logData);
+    // Essential performance logging only
+    if (value > 5000) { // Only log slow operations
+      console.warn(`Slow performance: ${metric} = ${value}ms`);
     }
 
     // In production, send to monitoring service
@@ -128,10 +119,7 @@ export const useProductionLogger = () => {
       data,
     };
 
-    // In development, log to console
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`ℹ️ ${message}`, logData);
-    }
+    // Minimal info logging
 
     // In production, send to logging service
     if (process.env.NODE_ENV === 'production') {
@@ -160,24 +148,14 @@ export const withErrorLogging = <T extends any[]>(
       const result = await fn(...args);
       const duration = Date.now() - startTime;
       
-      // Log successful operation in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ Operation completed in ${duration}ms`, { context, args });
-      }
+      // Essential success logging only
       
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
       
-      // Use the global logger if available
-      if (process.env.NODE_ENV === 'development') {
-        console.group('🚨 Async Operation Failed');
-        console.error('Error:', error);
-        console.log('Duration:', `${duration}ms`);
-        console.log('Context:', context);
-        console.log('Arguments:', args);
-        console.groupEnd();
-      }
+      // Essential error logging only
+      console.error('Async operation failed:', error.message);
       
       throw error;
     }

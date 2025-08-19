@@ -15,7 +15,7 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
-import { NotificationTest } from "@/components/NotificationTest";
+
 import { supabase } from "@/integrations/supabase/client";
 
 const FamilySetup = () => {
@@ -101,36 +101,26 @@ const FamilySetup = () => {
   useEffect(() => {
     // If we're creating a new organization, auto-populate admin data from signup
     if (isCreatingNew) {
-      console.log('Creating new organization - checking for signup data');
       const signupData = localStorage.getItem('signupData');
-      console.log('Retrieved signup data:', signupData);
       if (signupData) {
         try {
           const data = JSON.parse(signupData);
-          console.log('Parsed signup data:', data);
           const now = Date.now();
-          console.log('Current time:', now, 'Data time:', data.timestamp, 'Age:', now - data.timestamp);
           // Only use data if it's less than 1 hour old
           if (data.timestamp && (now - data.timestamp) < 3600000) {
-            console.log('Auto-populating admin data:', data);
             setAdminName(`${data.firstName} ${data.lastName}`.trim());
             setAdminEmail(data.email);
             // Clear the signup data after using it
             localStorage.removeItem('signupData');
-          } else {
-            console.log('Signup data too old, not using');
           }
         } catch (error) {
           console.error('Error parsing signup data:', error);
         }
-      } else {
-        console.log('No signup data found in localStorage');
       }
       
       // Load auto-saved data if available
       const savedData = loadSavedData();
       if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
-        console.log('Loading auto-saved data:', savedData);
         if (savedData.orgName) setOrgName(savedData.orgName);
         if (savedData.propertyName) setPropertyName(savedData.propertyName);
         if (savedData.adminPhone) setAdminPhone(savedData.adminPhone);
@@ -180,7 +170,6 @@ const FamilySetup = () => {
       // Try to load auto-saved data first (only if there's meaningful data)
       const savedData = loadSavedData();
       if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
-        console.log('Loading auto-saved data:', savedData);
         setOrgName(savedData.orgName || "");
         setPropertyName(savedData.propertyName || "");
         setAdminName(savedData.adminName || "");
@@ -233,9 +222,7 @@ const FamilySetup = () => {
 
   // Save organization setup
   const saveOrganizationSetup = async () => {
-    console.log('🔄 Starting saveOrganizationSetup with data:', { orgName, organizationCode, familyGroups, adminFamilyGroup });
     if (!orgName.trim() || !organizationCode.trim()) {
-      console.log('❌ Validation failed:', { orgName: orgName.trim(), organizationCode: organizationCode.trim() });
       toast({
         title: "Missing required fields",
         description: "Please provide at least organization name and code.",
@@ -269,17 +256,12 @@ const FamilySetup = () => {
     };
     
     try {
-      console.log('🔄 Attempting to save organization:', orgData);
       let newOrganization;
       if (organization) {
-        console.log('📝 Updating existing organization:', organization.id);
         newOrganization = await updateOrganization(orgData);
       } else {
-        console.log('✨ Creating new organization');
         newOrganization = await createOrganization(orgData);
       }
-      
-      console.log('✅ Organization saved:', newOrganization);
       
       // Save property name to reservation settings if provided and organization exists
       if (propertyName.trim() && (organization || newOrganization)) {
@@ -294,8 +276,6 @@ const FamilySetup = () => {
       // Create family groups in the database
       const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
       const currentOrgId = (organization || newOrganization)?.id;
-      
-      console.log('🔄 Creating family groups via direct insert:', { nonEmptyGroups, currentOrgId });
       
       if (nonEmptyGroups.length > 0 && currentOrgId) {
         try {
@@ -323,7 +303,7 @@ const FamilySetup = () => {
             throw error;
           }
 
-          console.log(`✅ Created ${data?.length || 0} family groups`);
+          
 
           // If this is a new organization and admin selected a family group, update their profile
           if (isCreatingNew && adminFamilyGroup.trim()) {
@@ -339,23 +319,18 @@ const FamilySetup = () => {
 
               if (profileError) {
                 console.error('❌ Failed to update admin profile with family group:', profileError);
-              } else {
-                console.log(`✅ Updated admin profile with family group: ${adminFamilyGroup}`);
               }
             } catch (error) {
               console.error('❌ Error updating admin profile:', error);
             }
           }
         } catch (error) {
-          console.error('❌ Failed to create initial family groups:', error);
           toast({
             title: "Family Group Creation Error",
             description: error instanceof Error ? error.message : 'Failed to create initial family groups.',
             variant: "destructive",
           });
         }
-      } else {
-        console.log('⚠️ No family groups to create or no organization ID:', { nonEmptyGroupsCount: nonEmptyGroups.length, currentOrgId });
       }
       
       // Also save family groups to localStorage for backward compatibility
@@ -384,9 +359,7 @@ const FamilySetup = () => {
       // Also save just the family groups for the SelectFamilyGroup page
       localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
       
-      console.log('✅ Organization setup completed successfully');
     } catch (error) {
-      console.error('❌ Error saving organization setup:', error);
       toast({
         title: "Save Error",
         description: `Failed to save organization setup. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -845,10 +818,6 @@ const FamilySetup = () => {
           </CardContent>
         </Card>
 
-        {/* Notification Test Component */}
-        <div className="mt-6 flex justify-center">
-          <NotificationTest />
-        </div>
 
       </div>
     </div>
