@@ -29,6 +29,7 @@ export default function PhotoSharing() {
   });
   const [showQualityDialog, setShowQualityDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<any | null>(null);
 
   // Quality options for image compression
   const qualityOptions = {
@@ -367,6 +368,85 @@ export default function PhotoSharing() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Photo Viewer Dialog */}
+          <Dialog open={!!viewingPhoto} onOpenChange={() => setViewingPhoto(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+              {viewingPhoto && (
+                <div className="relative">
+                  <img
+                    src={viewingPhoto.image_url}
+                    alt={viewingPhoto.caption}
+                    className="w-full h-auto max-h-[80vh] object-contain"
+                  />
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleDownload(viewingPhoto)}
+                      className="bg-black/50 hover:bg-black/70 text-white"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    {user?.id === viewingPhoto.user_id && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          handleDelete(viewingPhoto.id);
+                          setViewingPhoto(null);
+                        }}
+                        className="bg-red-500/80 hover:bg-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="p-4 bg-background/95 backdrop-blur-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${viewingPhoto.user_id}`} />
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {viewingPhoto.user_id === user?.id ? 'You' : 'Family Member'}
+                        </p>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {new Date(viewingPhoto.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm mb-3">{viewingPhoto.caption}</p>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLike(viewingPhoto.id)}
+                        className={`flex items-center gap-1 ${
+                          viewingPhoto.liked_by_users?.includes(user?.id || '') 
+                            ? 'text-red-500' 
+                            : 'text-muted-foreground hover:text-red-500'
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${
+                          viewingPhoto.liked_by_users?.includes(user?.id || '') ? 'fill-current' : ''
+                        }`} />
+                        <span className="text-xs">{viewingPhoto.likes_count}</span>
+                      </Button>
+                      <Button variant="ghost" size="sm" className="flex items-center gap-1 text-muted-foreground">
+                        <MessageCircle className="h-4 w-4" />
+                        <span className="text-xs">0</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -390,7 +470,8 @@ export default function PhotoSharing() {
                 <img
                   src={photo.image_url}
                   alt={photo.caption}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+                  onClick={() => setViewingPhoto(photo)}
                 />
                 {user?.id === photo.user_id && (
                   <Button
