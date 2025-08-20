@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone, Download, CheckSquare, Square, Loader2 } from "lucide-react";
+import { Camera, Upload, Heart, MessageCircle, Share2, ArrowLeft, Calendar, User, Trash2, Image, Smartphone, Download, CheckSquare, Square, Loader2, Grid3X3, Grid2X2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -30,6 +30,7 @@ export default function PhotoSharing() {
   const [showQualityDialog, setShowQualityDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<any | null>(null);
+  const [isCompactView, setIsCompactView] = useState(false);
 
   // Quality options for image compression
   const qualityOptions = {
@@ -263,13 +264,23 @@ export default function PhotoSharing() {
               </>
             )}
           </div>
-          <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center space-x-2">
-                <Camera className="h-4 w-4" />
-                <span>Upload Photo</span>
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsCompactView(!isCompactView)}
+              className="flex items-center space-x-2"
+              title={isCompactView ? "Switch to normal view" : "Switch to compact view"}
+            >
+              {isCompactView ? <Grid2X2 className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
+              <span className="hidden sm:inline">{isCompactView ? "Normal" : "Compact"}</span>
+            </Button>
+            <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center space-x-2">
+                  <Camera className="h-4 w-4" />
+                  <span>Upload Photo</span>
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Upload New Photo</DialogTitle>
@@ -457,23 +468,32 @@ export default function PhotoSharing() {
               )}
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={`grid ${
+          isCompactView 
+            ? 'gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' 
+            : 'gap-6 md:grid-cols-2 lg:grid-cols-3'
+        }`}>
           {photos.map((photo) => (
-            <Card key={photo.id} className="overflow-hidden bg-card/95 hover:shadow-lg transition-shadow">
+            <Card key={photo.id} className={`overflow-hidden bg-card/95 hover:shadow-lg transition-shadow ${
+              isCompactView ? '' : ''
+            }`}>
               <div className="aspect-square overflow-hidden relative">
                 {isSelectionMode && (
                   <Button
                     variant={selectedPhotos.has(photo.id) ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleSelectPhoto(photo.id)}
-                    className="absolute top-2 left-2 h-8 w-8 p-0 z-10"
+                    className={`absolute top-2 left-2 z-10 ${
+                      isCompactView ? 'h-6 w-6 p-0' : 'h-8 w-8 p-0'
+                    }`}
                   >
                     {selectedPhotos.has(photo.id) ? (
-                      <CheckSquare className="h-4 w-4" />
+                      <CheckSquare className={isCompactView ? "h-3 w-3" : "h-4 w-4"} />
                     ) : (
-                      <Square className="h-4 w-4" />
+                      <Square className={isCompactView ? "h-3 w-3" : "h-4 w-4"} />
                     )}
                   </Button>
                 )}
@@ -488,75 +508,79 @@ export default function PhotoSharing() {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(photo.id)}
-                    className="absolute top-2 right-2 h-8 w-8 p-0 opacity-80 hover:opacity-100"
+                    className={`absolute top-2 right-2 opacity-80 hover:opacity-100 ${
+                      isCompactView ? 'h-6 w-6 p-0' : 'h-8 w-8 p-0'
+                    }`}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className={isCompactView ? "h-3 w-3" : "h-4 w-4"} />
                   </Button>
                 )}
               </div>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3 mb-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${photo.user_id}`} />
-                    <AvatarFallback>
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      {photo.user_id === user?.id ? 'You' : 'Family Member'}
-                    </p>
-                    <div className="flex items-center text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {new Date(photo.created_at).toLocaleDateString()}
+              {!isCompactView && (
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-3 mb-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${photo.user_id}`} />
+                      <AvatarFallback>
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">
+                        {photo.user_id === user?.id ? 'You' : 'Family Member'}
+                      </p>
+                      <div className="flex items-center text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {new Date(photo.created_at).toLocaleDateString()}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {photo.caption && <p className="text-sm text-foreground mb-3">{photo.caption}</p>}
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleLike(photo.id)}
-                      className={`flex items-center space-x-1 ${
-                        photo.liked_by_users?.includes(user?.id || '') 
-                          ? 'text-red-500' 
-                          : 'text-muted-foreground hover:text-red-500'
-                      }`}
-                    >
-                      <Heart className={`h-4 w-4 ${
-                        photo.liked_by_users?.includes(user?.id || '') ? 'fill-current' : ''
-                      }`} />
-                      <span className="text-xs">{photo.likes_count}</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center space-x-1 text-muted-foreground"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="text-xs">0</span>
-                    </Button>
+                  
+                  {photo.caption && <p className="text-sm text-foreground mb-3">{photo.caption}</p>}
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLike(photo.id)}
+                        className={`flex items-center space-x-1 ${
+                          photo.liked_by_users?.includes(user?.id || '') 
+                            ? 'text-red-500' 
+                            : 'text-muted-foreground hover:text-red-500'
+                        }`}
+                      >
+                        <Heart className={`h-4 w-4 ${
+                          photo.liked_by_users?.includes(user?.id || '') ? 'fill-current' : ''
+                        }`} />
+                        <span className="text-xs">{photo.likes_count}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center space-x-1 text-muted-foreground"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span className="text-xs">0</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDownload(photo)}
+                        className="text-muted-foreground hover:text-primary"
+                        title="Download photo"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground">
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleDownload(photo)}
-                      className="text-muted-foreground hover:text-primary"
-                      title="Download photo"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground">
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
           ))}
         </div>
