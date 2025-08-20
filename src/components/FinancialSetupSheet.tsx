@@ -30,17 +30,17 @@ export const FinancialSetupSheet = () => {
     <Sheet>
       <SheetTrigger asChild>
         <Button className="w-full" variant="outline">
-          Financial Setup
+          Use Fee Setup
         </Button>
       </SheetTrigger>
       <SheetContent className="w-[600px] sm:max-w-[600px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Financial Setup
+            Use Fee Setup
           </SheetTitle>
           <SheetDescription>
-            Configure your cabin's financial settings, billing rates, and payment options.
+            Configure your cabin's use fee settings, billing rates, and payment options.
           </SheetDescription>
         </SheetHeader>
 

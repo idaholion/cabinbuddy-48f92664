@@ -356,12 +356,12 @@ const Setup = () => {
 
           <StepCard
             stepNumber={3}
-            title="Step 3: Financial Setup"
-            description="Configure billing rates, payment settings, fees, and tax information for your cabin."
+            title="Step 3: Use Fee Setup"
+            description="Configure use fee rates, payment settings, and billing information for your cabin."
             icon={DollarSign}
             isComplete={isFinancialComplete}
-            linkTo="/financial-setup"
-            linkText="Configure or Change Finances"
+            linkTo="/use-fee-setup"
+            linkText="Configure or Change Use Fees"
           />
 
           <StepCard

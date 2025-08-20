@@ -58,8 +58,8 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
         breadcrumbs.push({ title: "Family Setup", isActive: true });
       } else if (path === "/family-group-setup") {
         breadcrumbs.push({ title: "Family Group Setup", isActive: true });
-      } else if (path === "/financial-setup") {
-        breadcrumbs.push({ title: "Financial Setup", isActive: true });
+      } else if (path === "/use-fee-setup") {
+        breadcrumbs.push({ title: "Use Fee Setup", isActive: true });
       } else if (path === "/reservation-setup") {
         breadcrumbs.push({ title: "Reservation Setup", isActive: true });
       } else if (path === "/setup") {

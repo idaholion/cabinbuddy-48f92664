@@ -133,7 +133,7 @@ export default function Demo() {
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-green-600" />
-                    Financial Configuration
+                    Use Fee Configuration
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -164,7 +164,7 @@ export default function Demo() {
                       />
                     </div>
                     <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
-                      ✓ Financial settings configured
+                      ✓ Use fee settings configured
                     </div>
                   </div>
                 </CardContent>
@@ -219,15 +219,15 @@ export default function Demo() {
     {
       id: 'system-configuration',
       title: 'System Configuration',
-      description: 'Complete financial and reservation rule setup',
-      explanation: 'Configure the financial settings, reservation rules, and operational parameters that will govern how your cabin sharing system works.',
+      description: 'Complete use fee and reservation rule setup',
+      explanation: 'Configure the use fee settings, reservation rules, and operational parameters that will govern how your cabin sharing system works.',
       icon: DollarSign,
       content: (
         <div className="p-6 bg-background min-h-[500px]">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-4">System Configuration Dashboard</h1>
-              <p className="text-muted-foreground">Set up your financial and reservation rules</p>
+              <p className="text-muted-foreground">Set up your use fee and reservation rules</p>
             </div>
 
             <div className="grid gap-8 md:grid-cols-2">
@@ -236,7 +236,7 @@ export default function Demo() {
                 <CardContent className="p-6">
                   <h3 className="font-semibold mb-4 flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-green-600" />
-                    Financial Configuration
+                    Use Fee Configuration
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -267,7 +267,7 @@ export default function Demo() {
                       />
                     </div>
                     <div className="text-sm text-green-700 bg-green-50 p-2 rounded">
-                      ✓ Financial settings configured
+                      ✓ Use fee settings configured
                     </div>
                   </div>
                 </CardContent>

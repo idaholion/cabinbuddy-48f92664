@@ -40,7 +40,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/family-setup',
     '/family-group-setup',
     '/host-profile',
-    '/financial-setup',
+    '/use-fee-setup',
     '/reservation-setup'
   ];
   

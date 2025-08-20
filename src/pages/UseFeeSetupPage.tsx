@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-const FinancialSetupPage = () => {
+const UseFeeSetupPage = () => {
   const { settings, loading, saveFinancialSettings } = useFinancialSettings();
   const navigate = useNavigate();
   const [autoInvoicing, setAutoInvoicing] = useState(false);
@@ -112,8 +112,8 @@ const FinancialSetupPage = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
-          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Setup</h1>
-          <p className="text-2xl text-primary text-center font-medium">Configure your cabin's financial settings, billing rates, and payment options</p>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Use Fee Setup</h1>
+          <p className="text-2xl text-primary text-center font-medium">Configure your cabin's use fee settings, billing rates, and payment options</p>
         </div>
 
         <div className="space-y-6 bg-card/95 p-6 rounded-lg">
@@ -563,4 +563,4 @@ const FinancialSetupPage = () => {
   );
 };
 
-export default FinancialSetupPage;
+export default UseFeeSetupPage;

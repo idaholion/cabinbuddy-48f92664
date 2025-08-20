@@ -402,17 +402,17 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild tooltip="Financial Setup">
-                        <NavLink 
-                          to={`/supervisor/organization/${organizationId}/financial`}
-                          className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                        >
-                          <DollarSign className="h-4 w-4" />
-                          <span>Financial Setup</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                       <SidebarMenuButton asChild tooltip="Use Fee Setup">
+                         <NavLink 
+                           to={`/supervisor/organization/${organizationId}/financial`}
+                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                         >
+                           <DollarSign className="h-4 w-4" />
+                           <span>Use Fee Setup</span>
+                         </NavLink>
+                       </SidebarMenuButton>
+                     </SidebarMenuItem>
                     
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Reservation Setup">

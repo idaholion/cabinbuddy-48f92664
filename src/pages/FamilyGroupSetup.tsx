@@ -285,13 +285,13 @@ const FamilyGroupSetup = () => {
     
     // Save the form and navigate
     await handleSubmit(onSubmit)();
-    navigate("/financial-setup");
+    navigate("/use-fee-setup");
   };
 
   const handleContinueWithoutAlternateLead = async () => {
     await handleSubmit(onSubmit)();
     setShowAlternateLeadDialog(false);
-    navigate("/financial-setup");
+    navigate("/use-fee-setup");
   };
 
   // Show loading state while auth or organization data is loading
