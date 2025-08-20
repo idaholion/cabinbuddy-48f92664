@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -21,6 +22,7 @@ const AddReceipt = () => {
   const [dragOver, setDragOver] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -396,7 +398,8 @@ const AddReceipt = () => {
                         <img 
                           src={receipt.image_url} 
                           alt="Receipt thumbnail"
-                          className="w-12 h-12 object-cover rounded"
+                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setViewingImage(receipt.image_url)}
                         />
                       ) : (
                         <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
@@ -439,6 +442,24 @@ const AddReceipt = () => {
           </Card>
         </div>
       </div>
+
+      {/* Image Viewing Modal */}
+      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Receipt Image</DialogTitle>
+          </DialogHeader>
+          {viewingImage && (
+            <div className="flex justify-center">
+              <img 
+                src={viewingImage} 
+                alt="Full size receipt" 
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
