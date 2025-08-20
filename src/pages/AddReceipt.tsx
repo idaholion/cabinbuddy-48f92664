@@ -16,7 +16,7 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { supabase } from "@/integrations/supabase/client";
 
 const AddReceipt = () => {
-  const { receipts, loading, createReceipt, deleteReceipt } = useReceipts();
+  const { receipts, loading, createReceipt, deleteReceipt, refetchReceipts } = useReceipts();
   const [amount, setAmount] = useState("");
   const [uploadAmount, setUploadAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -424,10 +424,8 @@ const AddReceipt = () => {
 
       if (error) throw error;
 
-      // Update local state
-      const updatedReceipts = receipts.map(receipt => 
-        receipt.id === id ? { ...receipt, amount: parseFloat(editAmount) } : receipt
-      );
+      // Update local state by refetching receipts to ensure consistency
+      await refetchReceipts();
       
       toast({
         title: "Amount updated",
