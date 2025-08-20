@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useReservationConflicts } from '@/hooks/useReservationConflicts';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ReservationData {
   start_date: string;
@@ -25,6 +26,7 @@ export const useReservations = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
   const { validateReservationDates } = useReservationConflicts();
+  const { isGroupLead, userFamilyGroup, userHostInfo } = useUserRole();
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
@@ -57,6 +59,27 @@ export const useReservations = () => {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to create a reservation.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    // Check if user has permission to make reservations for their family group
+    const canMakeReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+    if (!canMakeReservation) {
+      toast({
+        title: "Permission Denied",
+        description: "Only group leads and authorized hosts can make reservations.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    // Ensure user can only make reservations for their own family group
+    if (userFamilyGroup && reservationData.family_group !== userFamilyGroup.name) {
+      toast({
+        title: "Permission Denied",
+        description: "You can only make reservations for your own family group.",
         variant: "destructive",
       });
       return null;
@@ -137,6 +160,28 @@ export const useReservations = () => {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to update a reservation.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    // Check if user has permission to modify reservations
+    const canModifyReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+    if (!canModifyReservation) {
+      toast({
+        title: "Permission Denied",
+        description: "Only group leads and authorized hosts can modify reservations.",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    // Get current reservation to check family group ownership
+    const currentReservation = reservations.find(r => r.id === reservationId);
+    if (userFamilyGroup && currentReservation?.family_group !== userFamilyGroup.name) {
+      toast({
+        title: "Permission Denied",
+        description: "You can only modify reservations for your own family group.",
         variant: "destructive",
       });
       return null;

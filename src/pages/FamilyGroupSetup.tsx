@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
-import { HostMemberCard } from "@/components/HostMemberCard";
+import { GroupMemberCard } from "@/components/GroupMemberCard";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
 import { OrganizationRoleReminder } from "@/components/OrganizationRoleReminder";
@@ -629,7 +629,7 @@ const FamilyGroupSetup = () => {
                     >
                       <div className="grid gap-4">
                         {displayedMembers.map((field, index) => (
-                          <HostMemberCard
+                          <GroupMemberCard
                             key={field.id}
                             index={index}
                             control={control}

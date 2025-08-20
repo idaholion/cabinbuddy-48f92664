@@ -12,7 +12,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FamilyGroupSetupFormData } from '@/lib/validations';
 
-interface HostMemberCardProps {
+interface GroupMemberCardProps {
   index: number;
   control: Control<FamilyGroupSetupFormData>;
   onRemove: (index: number) => void;
@@ -20,7 +20,7 @@ interface HostMemberCardProps {
   isDragOver?: boolean;
 }
 
-export const HostMemberCard: React.FC<HostMemberCardProps> = ({
+export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   index,
   control,
   onRemove,
