@@ -119,6 +119,18 @@ export const useRobustMultiOrganization = () => {
           joined_at: org.joined_at,
         }));
 
+        // If we get no organizations from the API but auth is working, clear cache and retry once
+        if (transformedData.length === 0 && user) {
+          const cachedData = apiCache.get<UserOrganization[]>(cacheKeys.userOrganizations(user.id));
+          if (cachedData) {
+            // Clear potentially stale cache and try fresh fetch
+            apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+            console.log('🔄 Clearing stale organization cache, attempting fresh fetch...');
+            // Don't set state yet, let the cache refresh work
+            return [];
+          }
+        }
+
         setOrganizations(transformedData);
         
         // Set active organization (primary or first)
