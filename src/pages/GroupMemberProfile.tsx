@@ -413,7 +413,7 @@ const GroupMemberProfile = () => {
             </p>
             {isGroupLead && (
               <Button
-                onClick={() => navigate('/family-setup')}
+                onClick={() => navigate('/family-group-setup')}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
               >
                 <ArrowRight className="h-4 w-4" />

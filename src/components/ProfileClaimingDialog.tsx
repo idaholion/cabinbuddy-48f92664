@@ -57,7 +57,7 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
       const searchTerm = searchName.trim().toLowerCase();
 
       for (const group of familyGroups || []) {
-        // Check group lead
+        // Check group lead first
         if (group.lead_name) {
           const leadName = group.lead_name.toLowerCase().trim();
           if (leadName.includes(searchTerm) || searchTerm.includes(leadName)) {
@@ -69,13 +69,17 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
           }
         }
 
-        // Check host members
+        // Check host members (but skip if they're already added as group lead)
         if (group.host_members && Array.isArray(group.host_members)) {
           for (const member of group.host_members) {
             const memberData = member as any;
             if (memberData.name) {
               const memberName = memberData.name.toLowerCase().trim();
-              if (memberName.includes(searchTerm) || searchTerm.includes(memberName)) {
+              // Skip if this member is already listed as group lead
+              const isAlreadyGroupLead = group.lead_name && 
+                group.lead_name.toLowerCase().trim() === memberName;
+              
+              if (!isAlreadyGroupLead && (memberName.includes(searchTerm) || searchTerm.includes(memberName))) {
                 profiles.push({
                   family_group_name: group.name,
                   member_name: memberData.name,
