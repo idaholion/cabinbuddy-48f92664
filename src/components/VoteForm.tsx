@@ -16,10 +16,9 @@ interface VotingProposal {
   status: string;
 }
 
-interface MemberAllocation {
-  member_name: string;
-  member_email: string;
+interface UserAllocation {
   allocated_shares: number;
+  family_group_name: string;
 }
 
 export const VoteForm = () => {
@@ -28,19 +27,19 @@ export const VoteForm = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [proposals, setProposals] = useState<VotingProposal[]>([]);
-  const [memberAllocations, setMemberAllocations] = useState<MemberAllocation[]>([]);
+  const [userAllocation, setUserAllocation] = useState<UserAllocation | null>(null);
   const [selectedProposal, setSelectedProposal] = useState('');
-  const [selectedMember, setSelectedMember] = useState('');
   const [votingShares, setVotingShares] = useState(0);
   const [voteChoice, setVoteChoice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (organization?.id) {
+    if (organization?.id && user?.id) {
       fetchActiveProposals();
-      fetchMemberAllocations();
+      fetchUserAllocation();
     }
-  }, [organization?.id, userFamilyGroup]);
+  }, [organization?.id, user?.id]);
 
   const fetchActiveProposals = async () => {
     try {
@@ -62,38 +61,59 @@ export const VoteForm = () => {
     }
   };
 
-  const fetchMemberAllocations = async () => {
+  const fetchUserAllocation = async () => {
     try {
       const { data, error } = await supabase
-        .from('member_share_allocations')
+        .from('user_share_allocations')
         .select('*')
         .eq('organization_id', organization?.id)
-        .eq('family_group_name', userFamilyGroup);
+        .eq('user_id', user?.id)
+        .single();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
 
-      setMemberAllocations(data?.map(item => ({
-        member_name: item.member_name,
-        member_email: item.member_email || '',
-        allocated_shares: item.allocated_shares
-      })) || []);
+      if (data) {
+        setUserAllocation({
+          allocated_shares: data.allocated_shares,
+          family_group_name: data.family_group_name
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to fetch member allocations",
+        description: "Failed to fetch your share allocation",
         variant: "destructive",
       });
     }
   };
 
-  const getSelectedMemberShares = () => {
-    const member = memberAllocations.find(m => m.member_name === selectedMember);
-    return member?.allocated_shares || 0;
+  const checkExistingVotes = async () => {
+    if (!selectedProposal || !user?.id) return;
+    
+    const { data, error } = await supabase
+      .from('votes')
+      .select('proposal_id')
+      .eq('proposal_id', selectedProposal)
+      .eq('user_id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking existing vote:', error);
+      return;
+    }
+
+    setHasVoted(prev => ({ ...prev, [selectedProposal]: !!data }));
   };
+
+  useEffect(() => {
+    if (selectedProposal) {
+      checkExistingVotes();
+    }
+  }, [selectedProposal, user?.id]);
 
   const castVote = async () => {
     try {
-      if (!selectedProposal || !selectedMember || !voteChoice || votingShares <= 0) {
+      if (!selectedProposal || !voteChoice || votingShares <= 0 || !user?.id || !userAllocation) {
         toast({
           title: "Error",
           description: "Please fill in all fields",
@@ -102,11 +122,19 @@ export const VoteForm = () => {
         return;
       }
 
-      const maxShares = getSelectedMemberShares();
-      if (votingShares > maxShares) {
+      if (votingShares > userAllocation.allocated_shares) {
         toast({
           title: "Error",
-          description: `Cannot vote with more shares than allocated (${maxShares})`,
+          description: `Cannot vote with more shares than allocated (${userAllocation.allocated_shares})`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (hasVoted[selectedProposal]) {
+        toast({
+          title: "Error",
+          description: "You have already voted on this proposal",
           variant: "destructive",
         });
         return;
@@ -114,43 +142,16 @@ export const VoteForm = () => {
 
       setLoading(true);
 
-      // Check if this member has already voted on this proposal
-      const { data: existingVote, error: checkError } = await supabase
-        .from('votes')
-        .select('*')
-        .eq('proposal_id', selectedProposal)
-        .eq('organization_id', organization?.id)
-        .eq('family_group_name', userFamilyGroup)
-        .eq('voter_name', selectedMember)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingVote) {
-        toast({
-          title: "Error",
-          description: "This member has already voted on this proposal",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const selectedMemberData = memberAllocations.find(m => m.member_name === selectedMember);
-
       // Insert the vote
       const { error: voteError } = await supabase
         .from('votes')
         .insert({
           proposal_id: selectedProposal,
           organization_id: organization?.id,
-          family_group_name: userFamilyGroup,
-          voter_name: selectedMember,
-          voter_email: selectedMemberData?.member_email || null,
+          user_id: user.id,
+          family_group_name: userAllocation.family_group_name,
           shares_used: votingShares,
           vote_choice: voteChoice,
-          voted_by_user_id: user?.id
         });
 
       if (voteError) throw voteError;
@@ -188,9 +189,9 @@ export const VoteForm = () => {
         description: "Vote cast successfully",
       });
 
-      // Reset form
+      // Update local state and reset form
+      setHasVoted(prev => ({ ...prev, [selectedProposal]: true }));
       setSelectedProposal('');
-      setSelectedMember('');
       setVotingShares(0);
       setVoteChoice('');
 
@@ -205,8 +206,24 @@ export const VoteForm = () => {
     }
   };
 
+  if (!userAllocation) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-muted-foreground">
+          No share allocation found. Contact your family group lead or organization admin to get voting shares allocated.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      <div className="bg-muted/50 p-3 rounded-lg">
+        <div className="text-sm font-medium">Your Voting Allocation</div>
+        <div className="text-lg font-bold">{userAllocation.allocated_shares} shares</div>
+        <div className="text-xs text-muted-foreground">Family Group: {userAllocation.family_group_name}</div>
+      </div>
+
       <div>
         <Label htmlFor="proposal">Select Proposal</Label>
         <Select value={selectedProposal} onValueChange={setSelectedProposal}>
@@ -217,22 +234,9 @@ export const VoteForm = () => {
             {proposals.map((proposal) => (
               <SelectItem key={proposal.id} value={proposal.id}>
                 {proposal.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="member">Voting Member</Label>
-        <Select value={selectedMember} onValueChange={setSelectedMember}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose member to vote as" />
-          </SelectTrigger>
-          <SelectContent>
-            {memberAllocations.map((member) => (
-              <SelectItem key={member.member_name} value={member.member_name}>
-                {member.member_name} ({member.allocated_shares} shares)
+                {hasVoted[proposal.id] && (
+                  <span className="ml-2 text-green-600">✓ Voted</span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -247,14 +251,12 @@ export const VoteForm = () => {
           value={votingShares}
           onChange={(e) => setVotingShares(parseInt(e.target.value) || 0)}
           min="1"
-          max={getSelectedMemberShares()}
+          max={userAllocation.allocated_shares}
           placeholder="Enter number of shares"
         />
-        {selectedMember && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Available: {getSelectedMemberShares()} shares
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          Available: {userAllocation.allocated_shares} shares
+        </p>
       </div>
 
       <div>
@@ -270,12 +272,20 @@ export const VoteForm = () => {
         </Select>
       </div>
 
+      {selectedProposal && hasVoted[selectedProposal] && (
+        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+          <p className="text-sm text-yellow-800">
+            You have already voted on this proposal.
+          </p>
+        </div>
+      )}
+
       <Button 
         onClick={castVote} 
-        disabled={loading || !selectedProposal || !selectedMember || !voteChoice || votingShares <= 0}
+        disabled={loading || !selectedProposal || !voteChoice || votingShares <= 0 || hasVoted[selectedProposal]}
         className="w-full"
       >
-        {loading ? "Casting Vote..." : "Cast Vote"}
+        {loading ? "Casting Vote..." : hasVoted[selectedProposal] ? "Already Voted" : "Cast Vote"}
       </Button>
     </div>
   );

@@ -968,6 +968,36 @@ export type Database = {
           },
         ]
       }
+      proposal_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          organization_id: string
+          proposal_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          proposal_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          proposal_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       receipts: {
         Row: {
           amount: number
@@ -1877,6 +1907,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_share_allocations: {
+        Row: {
+          allocated_by_user_id: string | null
+          allocated_shares: number
+          created_at: string
+          family_group_name: string
+          id: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allocated_by_user_id?: string | null
+          allocated_shares?: number
+          created_at?: string
+          family_group_name: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allocated_by_user_id?: string | null
+          allocated_shares?: number
+          created_at?: string
+          family_group_name?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       votes: {
         Row: {
