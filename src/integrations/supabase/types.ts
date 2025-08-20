@@ -2098,7 +2098,7 @@ export type Database = {
         Returns: string
       }
       get_user_organizations: {
-        Args: { user_uuid?: string }
+        Args: Record<PropertyKey, never> | { user_uuid?: string }
         Returns: {
           is_primary: boolean
           joined_at: string

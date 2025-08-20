@@ -377,6 +377,10 @@ export const useRobustMultiOrganization = () => {
     refetch: fetchUserOrganizations,
     retry: () => {
       reset();
+      // Clear the cache to force fresh data fetch
+      if (user) {
+        apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+      }
       fetchUserOrganizations();
     }
   };
