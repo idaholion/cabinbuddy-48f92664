@@ -18,6 +18,7 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 // Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
@@ -45,7 +46,16 @@ const GroupMemberProfile = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [showClaimingDialog, setShowClaimingDialog] = useState(false);
+  const [showQualityDialog, setShowQualityDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Quality options for image compression
+  const qualityOptions = {
+    high: { maxWidth: 2400, maxHeight: 1600, quality: 0.95, label: "High Quality", description: "Best quality, larger file size" },
+    balanced: { maxWidth: 1920, maxHeight: 1080, quality: 0.8, label: "Balanced", description: "Good quality, moderate file size" },
+    small: { maxWidth: 1280, maxHeight: 720, quality: 0.6, label: "Small File", description: "Lower quality, smallest file size" }
+  };
   
   // Removed feature onboarding as it's not appropriate for this page
 
@@ -211,11 +221,78 @@ const GroupMemberProfile = () => {
     fetchUserProfile();
   }, [user]);
 
+  // Image compression function
+  const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = document.createElement('img');
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }
+        }, 'image/jpeg', quality);
+        
+        URL.revokeObjectURL(img.src);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   // Handle avatar upload
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
+    // Check if it's a large image that might benefit from quality selection
+    if (file.size > 100 * 1024) { // > 100KB
+      setPendingFile(file);
+      setShowQualityDialog(true);
+      event.target.value = "";
+      return;
+    }
+
+    // For small images, upload directly
+    await uploadAvatar(file);
+  };
+
+  const handleQualitySelection = async (qualityKey: keyof typeof qualityOptions) => {
+    if (!pendingFile) return;
+
+    setShowQualityDialog(false);
+    const options = qualityOptions[qualityKey];
+    
+    try {
+      const processedFile = await compressImage(pendingFile, options.maxWidth, options.maxHeight, options.quality);
+      await uploadAvatar(processedFile);
+      setPendingFile(null);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setPendingFile(null);
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
     setAvatarUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
@@ -607,6 +684,39 @@ const GroupMemberProfile = () => {
         onOpenChange={setShowClaimingDialog}
         onProfileClaimed={refreshClaimedProfile}
       />
+
+      {/* Quality Selection Dialog */}
+      <Dialog open={showQualityDialog} onOpenChange={setShowQualityDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Image Quality</DialogTitle>
+            <DialogDescription>
+              This image is large ({pendingFile ? Math.round(pendingFile.size / 1024 / 1024 * 100) / 100 : 0}MB). Select compression quality:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {(Object.keys(qualityOptions) as Array<keyof typeof qualityOptions>).map((key) => {
+              const option = qualityOptions[key];
+              return (
+                <Button
+                  key={key}
+                  variant="outline"
+                  className="w-full justify-start text-left h-auto p-4"
+                  onClick={() => handleQualitySelection(key)}
+                >
+                  <div className="flex flex-col items-start">
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm text-muted-foreground">{option.description}</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Max: {option.maxWidth}×{option.maxHeight}px, Quality: {Math.round(option.quality * 100)}%
+                    </div>
+                  </div>
+                </Button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Information Card */}
       <Card>

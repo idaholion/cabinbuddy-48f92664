@@ -31,6 +31,53 @@ const CabinSeasonalDocs = () => {
     document_type: "guide",
     file: null as File | null
   });
+  const [showQualityDialog, setShowQualityDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Quality options for image compression
+  const qualityOptions = {
+    high: { maxWidth: 2400, maxHeight: 1600, quality: 0.95, label: "High Quality", description: "Best quality, larger file size" },
+    balanced: { maxWidth: 1920, maxHeight: 1080, quality: 0.8, label: "Balanced", description: "Good quality, moderate file size" },
+    small: { maxWidth: 1280, maxHeight: 720, quality: 0.6, label: "Small File", description: "Lower quality, smallest file size" }
+  };
+
+  // Image compression function
+  const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = document.createElement('img');
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }
+        }, 'image/jpeg', quality);
+        
+        URL.revokeObjectURL(img.src);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   const openingDocuments = getDocumentsBySeasonPattern("opening");
   const closingDocuments = getDocumentsBySeasonPattern("closing");
@@ -119,12 +166,41 @@ const CabinSeasonalDocs = () => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Check if it's a large image that might benefit from quality selection
+    if (file.type.startsWith('image/') && file.size > 100 * 1024) { // > 100KB
+      setPendingFile(file);
+      setShowQualityDialog(true);
+      e.target.value = "";
+      return;
+    }
+
+    // For small images or non-images, use directly
+    setNewDoc({
+      ...newDoc,
+      file,
+      title: newDoc.title || file.name.split('.')[0]
+    });
+  };
+
+  const handleQualitySelection = async (qualityKey: keyof typeof qualityOptions) => {
+    if (!pendingFile) return;
+
+    setShowQualityDialog(false);
+    const options = qualityOptions[qualityKey];
+    
+    try {
+      const processedFile = await compressImage(pendingFile, options.maxWidth, options.maxHeight, options.quality);
       setNewDoc({
         ...newDoc,
-        file,
-        title: newDoc.title || file.name.split('.')[0]
+        file: processedFile,
+        title: newDoc.title || processedFile.name.split('.')[0]
       });
+      setPendingFile(null);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setPendingFile(null);
     }
   };
 
@@ -398,17 +474,26 @@ const CabinSeasonalDocs = () => {
                   type="file"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) {
-                      setNewDoc({
-                        season: "opening",
-                        title: file.name.split('.')[0],
-                        description: "",
-                        external_url: "",
-                        document_type: "guide",
-                        file
-                      });
-                      setIsAddDialogOpen(true);
+                    if (!file) return;
+
+                    // Check if it's a large image that might benefit from quality selection
+                    if (file.type.startsWith('image/') && file.size > 100 * 1024) { // > 100KB
+                      setPendingFile(file);
+                      setShowQualityDialog(true);
+                      e.target.value = "";
+                      return;
                     }
+
+                    // For small images or non-images, use directly
+                    setNewDoc({
+                      season: "opening",
+                      title: file.name.split('.')[0],
+                      description: "",
+                      external_url: "",
+                      document_type: "guide",
+                      file
+                    });
+                    setIsAddDialogOpen(true);
                   }}
                   accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
                   className="hidden"
@@ -417,6 +502,39 @@ const CabinSeasonalDocs = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Quality Selection Dialog */}
+        <Dialog open={showQualityDialog} onOpenChange={setShowQualityDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Choose Image Quality</DialogTitle>
+            </DialogHeader>
+            <div className="text-sm text-muted-foreground mb-4">
+              This image is large ({pendingFile ? Math.round(pendingFile.size / 1024 / 1024 * 100) / 100 : 0}MB). Select compression quality:
+            </div>
+            <div className="space-y-3">
+              {(Object.keys(qualityOptions) as Array<keyof typeof qualityOptions>).map((key) => {
+                const option = qualityOptions[key];
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto p-4"
+                    onClick={() => handleQualitySelection(key)}
+                  >
+                    <div className="flex flex-col items-start">
+                      <div className="font-medium">{option.label}</div>
+                      <div className="text-sm text-muted-foreground">{option.description}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Max: {option.maxWidth}×{option.maxHeight}px, Quality: {Math.round(option.quality * 100)}%
+                      </div>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
