@@ -185,15 +185,35 @@ export const useDocuments = () => {
       // If the file_url is a file path (not a full URL), generate a signed URL
       if (url && !url.startsWith('http')) {
         console.log('Generating signed URL for file path:', url);
-        url = await getSignedUrl(url);
-        console.log('Generated signed URL:', url);
+        try {
+          url = await getSignedUrl(url);
+          console.log('Generated signed URL:', url);
+        } catch (signedUrlError) {
+          console.error('Failed to generate signed URL:', signedUrlError);
+          toast({
+            title: "Error",
+            description: "Failed to generate access URL for document",
+            variant: "destructive"
+          });
+          return;
+        }
       } else if (url && url.includes('/storage/v1/object/public/documents/')) {
         // Handle legacy public URLs - extract file path and generate signed URL
         console.log('Converting legacy public URL to signed URL');
         const filePath = url.split('/storage/v1/object/public/documents/')[1];
         console.log('Extracted file path:', filePath);
-        url = await getSignedUrl(filePath);
-        console.log('Generated signed URL for legacy document:', url);
+        try {
+          url = await getSignedUrl(filePath);
+          console.log('Generated signed URL for legacy document:', url);
+        } catch (signedUrlError) {
+          console.error('Failed to generate signed URL for legacy document:', signedUrlError);
+          toast({
+            title: "Error",
+            description: "Failed to generate access URL for legacy document",
+            variant: "destructive"
+          });
+          return;
+        }
       }
       
       if (url) {
@@ -201,6 +221,11 @@ export const useDocuments = () => {
         window.open(url, '_blank');
       } else {
         console.error('No URL available to open');
+        toast({
+          title: "Error",
+          description: "No file URL available for this document",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error viewing document:', error);
