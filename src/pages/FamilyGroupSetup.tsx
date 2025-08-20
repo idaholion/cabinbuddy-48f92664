@@ -48,9 +48,9 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       hostMembers: [
-        { name: "", phone: "", email: "", canReserve: false },
-        { name: "", phone: "", email: "", canReserve: false },
-        { name: "", phone: "", email: "", canReserve: false }
+        { name: "", phone: "", email: "", canHost: false },
+        { name: "", phone: "", email: "", canHost: false },
+        { name: "", phone: "", email: "", canHost: false }
       ],
       alternateLeadId: "none",
     },
@@ -121,7 +121,7 @@ const FamilyGroupSetup = () => {
           name: member.name || "",
           phone: member.phone || "",
           email: member.email || "",
-          canReserve: member.canReserve || false,
+          canHost: member.canHost || false,
         }));
         setValue("hostMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
@@ -131,13 +131,13 @@ const FamilyGroupSetup = () => {
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
           email: selectedFamilyGroup.lead_email || "",
-          canReserve: true // Group leads can always reserve
+          canHost: true // Group leads can always host
         };
         
         setValue("hostMembers", [
           leadAsHostMember,
-          { name: "", phone: "", email: "", canReserve: false },
-          { name: "", phone: "", email: "", canReserve: false }
+          { name: "", phone: "", email: "", canHost: false },
+          { name: "", phone: "", email: "", canHost: false }
         ]);
       }
     } else if (watchedData.selectedGroup === "") {
@@ -155,7 +155,7 @@ const FamilyGroupSetup = () => {
         name: watchedData.leadName || "",
         phone: watchedData.leadPhone || "",
         email: watchedData.leadEmail || "",
-        canReserve: true // Group leads can always reserve
+        canHost: true // Group leads can always host
       };
       setValue("hostMembers", updatedHostMembers);
     }
@@ -177,7 +177,7 @@ const FamilyGroupSetup = () => {
         name: member.name || "",
         phone: member.phone || "",
         email: member.email || "",
-        canReserve: member.canReserve || false,
+        canHost: member.canHost || false,
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
@@ -220,7 +220,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addHostMember = () => {
-    append({ name: "", phone: "", email: "", canReserve: false });
+    append({ name: "", phone: "", email: "", canHost: false });
     setShowAllMembers(true);
   };
 
@@ -234,9 +234,9 @@ const FamilyGroupSetup = () => {
 
   const clearAllHostMembers = () => {
     setValue("hostMembers", [
-      { name: "", phone: "", email: "", canReserve: false },
-      { name: "", phone: "", email: "", canReserve: false },
-      { name: "", phone: "", email: "", canReserve: false }
+      { name: "", phone: "", email: "", canHost: false },
+      { name: "", phone: "", email: "", canHost: false },
+      { name: "", phone: "", email: "", canHost: false }
     ]);
     setShowAllMembers(false);
   };
@@ -249,7 +249,7 @@ const FamilyGroupSetup = () => {
     
     // Ensure at least 3 slots
     while (filledMembers.length < 3) {
-      filledMembers.push({ name: "", phone: "", email: "", canReserve: false });
+      filledMembers.push({ name: "", phone: "", email: "", canHost: false });
     }
     
     setValue("hostMembers", filledMembers);

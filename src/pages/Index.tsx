@@ -30,7 +30,7 @@ const UserInfo = () => {
 
 const Index = () => {
   const { isSupervisor } = useSupervisor();
-  const { isGroupLead, isHostMember, loading: roleLoading } = useRobustUserRole();
+  const { isGroupLead, isGroupMember, loading: roleLoading } = useRobustUserRole();
   const { activeOrganization } = useRobustMultiOrganization();
   const { user, signOut } = useAuth();
   

@@ -75,7 +75,7 @@ export const useRobustUserRole = () => {
     if (!user?.email || !initialized) {
       return {
         isGroupLead: false,
-        isHostMember: false,
+        isGroupMember: false,
         isCalendarKeeper: false,
         isTreasurer: false,
         isAdmin: false,
@@ -100,7 +100,7 @@ export const useRobustUserRole = () => {
     if (leadGroup) {
       return {
         isGroupLead: true,
-        isHostMember: false,
+        isGroupMember: false,
         isCalendarKeeper,
         isTreasurer,
         isAdmin,
@@ -129,7 +129,7 @@ export const useRobustUserRole = () => {
 
     return {
       isGroupLead: false,
-      isHostMember: !!userHostInfo,
+      isGroupMember: !!userHostInfo,
       isCalendarKeeper,
       isTreasurer,
       isAdmin,

@@ -160,7 +160,7 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
             />
           </div>
 
-          <div className="flex flex-wrap gap-4">
+           <div className="flex flex-wrap gap-4">
             <FormField
               control={control}
               name={`hostMembers.${index}.canHost`}
@@ -178,30 +178,6 @@ export const HostMemberCard: React.FC<HostMemberCardProps> = ({
                     </FormControl>
                      <label htmlFor={`host-${index}`} className="text-xl">
                        Can Host
-                     </label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name={`hostMembers.${index}.canReserve`}
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
-                    <FormControl>
-                      <input
-                        type="checkbox"
-                        id={`reservation-${index}`}
-                        checked={field.value || false}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                        className="h-4 w-4"
-                      />
-                    </FormControl>
-                     <label htmlFor={`reservation-${index}`} className="text-xl">
-                       Can make reservations
                      </label>
                   </div>
                   <FormMessage />

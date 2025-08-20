@@ -62,7 +62,6 @@ export const familyGroupSetupSchema = z.object({
       if (!val || val === "") return true;
       return z.string().email().safeParse(val).success;
     }, "Please enter a valid email address"),
-    canReserve: z.boolean().optional().default(false),
     canHost: z.boolean().optional().default(false),
   }))
     .refine((members) => {

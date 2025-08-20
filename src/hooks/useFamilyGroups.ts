@@ -9,7 +9,7 @@ interface HostMember {
   name: string;
   phone: string;
   email: string;
-  canReserve?: boolean;
+  canHost?: boolean;
 }
 
 interface FamilyGroupData {

@@ -52,7 +52,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
-  const { isGroupLead, isHostMember, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
+  const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
   const { createReservation, updateReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
@@ -74,8 +74,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
     ? familyGroups // Show all groups in test mode
-    : isHostMember
-      ? familyGroups.filter(fg => fg.name === userFamilyGroupName) // Host members only see their group
+    : isGroupMember
+      ? familyGroups.filter(fg => fg.name === userFamilyGroupName) // Group members only see their group
       : familyGroups; // Group leads and calendar keepers can see all groups
   
   const [submitting, setSubmitting] = useState(false);
@@ -138,16 +138,18 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             }];
           }
         }
-      } else if (isHostMember && userHostInfo && userFamilyGroup) {
-        // For host members: default to their family group and add themselves as host
+      } else if (isGroupMember && userHostInfo && userFamilyGroup) {
+        // For group members: default to their family group and add themselves as host if they can host
         defaultFamilyGroup = userFamilyGroup.name;
-        defaultHostAssignments = [{
-          host_name: userHostInfo.name,
-          host_email: userHostInfo.email,
-          start_date: defaultStartDate,
-          end_date: defaultEndDate
-        }];
-      } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
+        if (isHost) {
+           defaultHostAssignments = [{
+             host_name: userHostInfo.name,
+             host_email: userHostInfo.email,
+             start_date: defaultStartDate,
+             end_date: defaultEndDate
+           }];
+         }
+       } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
         // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
         
@@ -172,7 +174,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         hostAssignments: defaultHostAssignments
       });
     }
-  }, [editingReservation, form, selectedStartDate, selectedEndDate, isHostMember, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
@@ -388,7 +390,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                       {...field} 
                       className="w-full p-2 border rounded-md bg-background"
                       required
-                      disabled={isHostMember && !isGroupLead && !isCalendarKeeper} // Only regular host members can't change family group
+                      disabled={isGroupMember && !isGroupLead && !isCalendarKeeper} // Only regular group members can't change family group
                     >
                       <option value="">Select Family Group</option>
                       {availableFamilyGroups.map((group) => (
@@ -426,7 +428,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                             }]);
                           }
                         }}
-                        disabled={isHostMember && !isGroupLead && !isCalendarKeeper} // Regular host members can't change host
+                        disabled={isGroupMember && !isGroupLead && !isCalendarKeeper} // Regular group members can't change host
                       >
                         <option value="">Select Host</option>
                         {familyGroupHosts.map((host: any) => (
@@ -561,7 +563,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             )}
 
             {/* Host Assignments - Only show for calendar keepers or if not already set by role defaults */}
-            {watchedFamilyGroup && watchedStartDate && watchedEndDate && !isHostMember && !isGroupLead && !isCalendarKeeper && (
+            {watchedFamilyGroup && watchedStartDate && watchedEndDate && !isGroupMember && !isGroupLead && !isCalendarKeeper && (
               <HostAssignmentForm
                 reservationStartDate={watchedStartDate}
                 reservationEndDate={watchedEndDate}
