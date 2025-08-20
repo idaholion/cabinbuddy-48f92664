@@ -66,7 +66,14 @@ export const useRobustMultiOrganization = () => {
   }, []);
 
   const fetchUserOrganizations = useCallback(async () => {
+    console.log('🔍 fetchUserOrganizations called:', { 
+      userId: user?.id, 
+      hasUser: !!user,
+      isRequestInProgress 
+    });
+    
     if (!user?.id) {
+      console.log('⚠️ No user ID, clearing organization state');
       setOrganizations([]);
       setActiveOrganization(null);
       setInitialLoad(false);
@@ -119,16 +126,17 @@ export const useRobustMultiOrganization = () => {
           joined_at: org.joined_at,
         }));
 
-        // If we get no organizations from the API but auth is working, clear cache and retry once
+        // Add detailed logging for debugging
+        console.log('🔍 Organization fetch result:', {
+          userId: user.id,
+          dataLength: transformedData.length,
+          hasAuth: !!user,
+          fetchError: !!fetchError
+        });
+        
+        // If we get no organizations and auth is working, this could be a new user
         if (transformedData.length === 0 && user) {
-          const cachedData = apiCache.get<UserOrganization[]>(cacheKeys.userOrganizations(user.id));
-          if (cachedData) {
-            // Clear potentially stale cache and try fresh fetch
-            apiCache.invalidate(cacheKeys.userOrganizations(user.id));
-            console.log('🔄 Clearing stale organization cache, attempting fresh fetch...');
-            // Don't set state yet, let the cache refresh work
-            return [];
-          }
+          console.log('⚠️ No organizations found for authenticated user');
         }
 
         setOrganizations(transformedData);
