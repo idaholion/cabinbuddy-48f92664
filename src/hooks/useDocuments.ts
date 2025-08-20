@@ -65,22 +65,26 @@ export const useDocuments = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${organization.id}/${user.id}/${Date.now()}.${fileExt}`;
       
+      console.log('Uploading document with fileName:', fileName);
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
-      // For private buckets, store the file path instead of public URL
-      const filePath = fileName;
+      console.log('Upload successful, storing file path:', fileName);
 
-      // Insert document record
+      // Insert document record with file path only
       const { data, error } = await supabase
         .from('documents')
         .insert({
           organization_id: organization.id,
           uploaded_by_user_id: user.id,
-          file_url: filePath, // Store file path for private bucket
+          file_url: fileName, // Store only file path for private bucket
           file_size: file.size,
           file_type: file.type,
           ...documentData
@@ -88,7 +92,12 @@ export const useDocuments = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
+
+      console.log('Document created in database:', data);
 
       setDocuments(prev => [data, ...prev]);
       toast({
@@ -162,20 +171,30 @@ export const useDocuments = () => {
   };
 
   const viewDocument = async (document: Document) => {
+    console.log('Viewing document:', document);
     try {
       let url = document.file_url;
+      console.log('Original file_url:', url);
       
       // If the file_url is a file path (not a full URL), generate a signed URL
       if (url && !url.startsWith('http')) {
+        console.log('Generating signed URL for file path:', url);
         url = await getSignedUrl(url);
+        console.log('Generated signed URL:', url);
       } else if (url && url.includes('/storage/v1/object/public/documents/')) {
         // Handle legacy public URLs - extract file path and generate signed URL
+        console.log('Converting legacy public URL to signed URL');
         const filePath = url.split('/storage/v1/object/public/documents/')[1];
+        console.log('Extracted file path:', filePath);
         url = await getSignedUrl(filePath);
+        console.log('Generated signed URL for legacy document:', url);
       }
       
       if (url) {
+        console.log('Opening URL:', url);
         window.open(url, '_blank');
+      } else {
+        console.error('No URL available to open');
       }
     } catch (error) {
       console.error('Error viewing document:', error);
