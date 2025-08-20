@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload, UserPlus } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
@@ -36,6 +37,7 @@ const GroupMemberProfile = () => {
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
   const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
+  const navigate = useNavigate();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedGroupMember, setSelectedGroupMember] = useState<any>(null);
@@ -405,10 +407,19 @@ const GroupMemberProfile = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-green-700">
-            <p className="text-base">
+            <p className="text-base mb-4">
               You are linked to <strong>{claimedProfile.member_name}</strong> in the <strong>{claimedProfile.family_group_name}</strong> family group
               {isGroupLead && ' as the Group Lead'}.
             </p>
+            {isGroupLead && (
+              <Button
+                onClick={() => navigate('/family-setup')}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Proceed to Group Setup
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
