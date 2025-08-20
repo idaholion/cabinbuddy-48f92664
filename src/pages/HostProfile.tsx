@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,8 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
 import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
-import { ProfileClaimDialog } from "@/components/ProfileClaimDialog";
-import { useProfileClaim } from "@/hooks/useProfileClaim";
+import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
+import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 
 const hostProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -36,12 +36,14 @@ const HostProfile = () => {
   const { user, signOut } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
+  const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableHosts, setAvailableHosts] = useState<any[]>([]);
   const [selectedHostMember, setSelectedHostMember] = useState<any>(null);
   const [autoPopulated, setAutoPopulated] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [showClaimingDialog, setShowClaimingDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Feature onboarding
@@ -50,15 +52,6 @@ const HostProfile = () => {
     checkProfileCompletion: true
   });
 
-  // Profile claiming
-  const { 
-    claimedProfile, 
-    hasClaimedProfile, 
-    isGroupLead, 
-    getClaimedGroupName,
-    getClaimedMemberName,
-    refetch: refetchClaimedProfile 
-  } = useProfileClaim(organization?.id);
 
   const form = useForm<HostProfileFormData>({
     resolver: zodResolver(hostProfileSchema),
@@ -511,11 +504,11 @@ const HostProfile = () => {
       />
 
       {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet */}
-      {!hasClaimedProfile() && familyGroups.length > 0 && (
+      {!hasClaimedProfile && familyGroups.length > 0 && (
         <Card className="mb-6 border-primary/50 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <UserPlus className="h-5 w-5" />
               Claim Your Group Member Profile
             </CardTitle>
           </CardHeader>
@@ -523,17 +516,19 @@ const HostProfile = () => {
             <p className="text-base text-muted-foreground mb-4">
               Link your account to your family group member profile using your name as it appears in the system.
             </p>
-            <ProfileClaimDialog
-              organizationId={organization?.id || ''}
-              familyGroups={familyGroups}
-              onSuccess={refetchClaimedProfile}
-            />
+            <Button
+              onClick={() => setShowClaimingDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Claim Profile
+            </Button>
           </CardContent>
         </Card>
       )}
 
       {/* Show claimed profile info */}
-      {hasClaimedProfile() && (
+      {hasClaimedProfile && claimedProfile && (
         <Card className="mb-6 border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-green-800">
@@ -543,12 +538,19 @@ const HostProfile = () => {
           </CardHeader>
           <CardContent className="text-green-700">
             <p className="text-base">
-              You are linked to <strong>{getClaimedMemberName()}</strong> in the <strong>{getClaimedGroupName()}</strong> family group
-              {isGroupLead() && ' as the Group Lead'}.
+              You are linked to <strong>{claimedProfile.member_name}</strong> in the <strong>{claimedProfile.family_group_name}</strong> family group
+              {isGroupLead && ' as the Group Lead'}.
             </p>
           </CardContent>
         </Card>
       )}
+
+      {/* Profile Claiming Dialog */}
+      <ProfileClaimingDialog
+        open={showClaimingDialog}
+        onOpenChange={setShowClaimingDialog}
+        onProfileClaimed={refreshClaimedProfile}
+      />
 
       {/* Information Card */}
       <Card>
