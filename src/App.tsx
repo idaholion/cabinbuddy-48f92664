@@ -35,7 +35,7 @@ import { ManageOrganizations } from "./pages/ManageOrganizations";
 // Lazy load setup pages (used less frequently)
 const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
 const FamilyGroupSetup = React.lazy(() => import("./pages/FamilyGroupSetup"));
-const HostProfile = React.lazy(() => import("./pages/HostProfile"));
+const GroupMemberProfile = React.lazy(() => import("./pages/GroupMemberProfile"));
 const FinancialDashboard = React.lazy(() => import("./pages/FinancialDashboard"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
 const UseFeeSetupPage = React.lazy(() => import("./pages/UseFeeSetupPage"));
@@ -126,7 +126,7 @@ const AppContent = () => {
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
         <Route path="/family-group-setup" element={<ProtectedRoute><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></ProtectedRoute>} />
-        <Route path="/host-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><HostProfile /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/group-member-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GroupMemberProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/google-calendar-setup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminTreasurerRoute>} />

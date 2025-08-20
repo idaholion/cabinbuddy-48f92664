@@ -182,9 +182,9 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/host-profile">
+                  <Link to="/group-member-profile">
                     <User className="h-4 w-4 mr-2" />
-                    Host Profile
+                    Group Member Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -216,7 +216,7 @@ const Index = () => {
             className="bg-background/90 backdrop-blur-sm border-primary/30 hover:bg-primary/10 px-6 py-3 text-lg font-semibold text-primary shadow-lg" 
             asChild
           >
-            <Link to="/host-profile" className="flex items-center space-x-3">
+            <Link to="/group-member-profile" className="flex items-center space-x-3">
               <User className="h-5 w-5" />
               <span className="font-kaushan text-xl">
                 {user?.user_metadata?.first_name || user?.email}

@@ -22,24 +22,24 @@ import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 
-const hostProfileSchema = z.object({
+const groupMemberProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
-  selectedHostName: z.string().min(1, "Please select your name"),
+  selectedMemberName: z.string().min(1, "Please select your name"),
   email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
   phone: z.string().optional(),
 });
 
-type HostProfileFormData = z.infer<typeof hostProfileSchema>;
+type GroupMemberProfileFormData = z.infer<typeof groupMemberProfileSchema>;
 
-const HostProfile = () => {
+const GroupMemberProfile = () => {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
   const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
-  const [availableHosts, setAvailableHosts] = useState<any[]>([]);
-  const [selectedHostMember, setSelectedHostMember] = useState<any>(null);
+  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+  const [selectedGroupMember, setSelectedGroupMember] = useState<any>(null);
   const [autoPopulated, setAutoPopulated] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -48,16 +48,15 @@ const HostProfile = () => {
   
   // Feature onboarding
   const { shouldShowOnboarding, hideOnboarding, userRole, markProfileCompleted } = useFeatureOnboarding({
-    triggerKey: 'host-profile',
+    triggerKey: 'group-member-profile',
     checkProfileCompletion: true
   });
 
-
-  const form = useForm<HostProfileFormData>({
-    resolver: zodResolver(hostProfileSchema),
+  const form = useForm<GroupMemberProfileFormData>({
+    resolver: zodResolver(groupMemberProfileSchema),
     defaultValues: {
       selectedFamilyGroup: "",
-      selectedHostName: "",
+      selectedMemberName: "",
       email: "",
       phone: "",
     },
@@ -66,34 +65,48 @@ const HostProfile = () => {
 
   const { watch, setValue, formState: { isValid } } = form;
   const watchedFamilyGroup = watch("selectedFamilyGroup");
-  const watchedHostName = watch("selectedHostName");
+  const watchedMemberName = watch("selectedMemberName");
 
-  // Update available hosts when family group changes
+  // Update available members when family group changes
   useEffect(() => {
     if (watchedFamilyGroup) {
       const group = familyGroups.find(g => g.name === watchedFamilyGroup);
       setSelectedGroup(group);
-      if (group?.host_members) {
-        setAvailableHosts(group.host_members);
+      if (group) {
+        const members = [
+          ...(group.lead_name ? [{ 
+            name: group.lead_name, 
+            email: group.lead_email, 
+            phone: group.lead_phone,
+            isLead: true 
+          }] : []),
+          ...(group.host_members || []).map((member: any) => ({ 
+            name: member.name, 
+            email: member.email, 
+            phone: member.phone,
+            isLead: false 
+          }))
+        ];
+        setAvailableMembers(members);
       } else {
-        setAvailableHosts([]);
+        setAvailableMembers([]);
       }
-      setValue("selectedHostName", "");
-      setSelectedHostMember(null);
+      setValue("selectedMemberName", "");
+      setSelectedGroupMember(null);
     }
   }, [watchedFamilyGroup, familyGroups, setValue]);
 
-  // Update form fields when host name changes
+  // Update form fields when member name changes
   useEffect(() => {
-    if (watchedHostName && availableHosts.length > 0) {
-      if (watchedHostName === "NOT_FOUND") {
+    if (watchedMemberName && availableMembers.length > 0) {
+      if (watchedMemberName === "NOT_FOUND") {
         // Handle "I don't see my name" selection
-        setSelectedHostMember(null);
+        setSelectedGroupMember(null);
         setValue("selectedFamilyGroup", "");
         setValue("email", "");
         setValue("phone", "");
         setSelectedGroup(null);
-        setAvailableHosts([]);
+        setAvailableMembers([]);
         toast({
           title: "Family Group Reset",
           description: "Please verify you selected the correct family group above.",
@@ -102,14 +115,14 @@ const HostProfile = () => {
         return;
       }
       
-      const hostMember = availableHosts.find(h => h.name === watchedHostName);
-      if (hostMember) {
-        setSelectedHostMember(hostMember);
-        setValue("email", hostMember.email || "");
-        setValue("phone", hostMember.phone || "");
+      const member = availableMembers.find(m => m.name === watchedMemberName);
+      if (member) {
+        setSelectedGroupMember(member);
+        setValue("email", member.email || "");
+        setValue("phone", member.phone || "");
       }
     }
-  }, [watchedHostName, availableHosts, setValue, toast]);
+  }, [watchedMemberName, availableMembers, setValue, toast]);
 
   // Auto-populate user information when family groups load
   useEffect(() => {
@@ -119,6 +132,33 @@ const HostProfile = () => {
       
       // Try to find user by email or name in family groups
       for (const group of familyGroups) {
+        // Check group lead
+        if (group.lead_email?.toLowerCase() === userEmail?.toLowerCase() || 
+            (userFirstName && group.lead_name?.toLowerCase().includes(userFirstName.toLowerCase()))) {
+          setValue("selectedFamilyGroup", group.name);
+          setValue("selectedMemberName", group.lead_name);
+          setValue("email", group.lead_email || userEmail || "");
+          setValue("phone", group.lead_phone || "");
+          
+          setSelectedGroup(group);
+          const members = [
+            { name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true },
+            ...(group.host_members || []).map((member: any) => ({ 
+              name: member.name, email: member.email, phone: member.phone, isLead: false 
+            }))
+          ];
+          setAvailableMembers(members);
+          setSelectedGroupMember({ name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true });
+          setAutoPopulated(true);
+          
+          toast({
+            title: "Profile Found",
+            description: `Auto-populated your profile from ${group.name} as Group Lead`,
+          });
+          break;
+        }
+        
+        // Check host members
         if (group.host_members) {
           const foundMember = group.host_members.find((member: any) => 
             member.email?.toLowerCase() === userEmail?.toLowerCase() || 
@@ -126,22 +166,28 @@ const HostProfile = () => {
           );
           
           if (foundMember) {
-            // Auto-populate the form
             setValue("selectedFamilyGroup", group.name);
-            setValue("selectedHostName", foundMember.name);
+            setValue("selectedMemberName", foundMember.name);
             setValue("email", foundMember.email || userEmail || "");
             setValue("phone", foundMember.phone || "");
             
             setSelectedGroup(group);
-            setAvailableHosts(group.host_members);
-            setSelectedHostMember(foundMember);
+            const members = [
+              ...(group.lead_name ? [{ 
+                name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true 
+              }] : []),
+              ...group.host_members.map((member: any) => ({ 
+                name: member.name, email: member.email, phone: member.phone, isLead: false 
+              }))
+            ];
+            setAvailableMembers(members);
+            setSelectedGroupMember(foundMember);
             setAutoPopulated(true);
             
             toast({
               title: "Profile Found",
               description: `Auto-populated your profile from ${group.name}`,
             });
-            
             break;
           }
         }
@@ -262,13 +308,13 @@ const HostProfile = () => {
 
   const formData = form.watch();
   const autoSaveHook = useAutoSave({ 
-    key: "host-profile", 
+    key: "group-member-profile", 
     data: formData, 
     delay: 2000 
   });
 
-  const onSubmit = async (data: HostProfileFormData) => {
-    if (!selectedGroup || !selectedHostMember) {
+  const onSubmit = async (data: GroupMemberProfileFormData) => {
+    if (!selectedGroup || !selectedGroupMember) {
       toast({
         title: "Error",
         description: "Please select your family group and name.",
@@ -278,21 +324,30 @@ const HostProfile = () => {
     }
 
     try {
-      // Update the host member in the selected family group
-      const updatedHostMembers = selectedGroup.host_members.map((member: any) => {
-        if (member.name === data.selectedHostName) {
-          return {
-            ...member,
-            email: data.email || "",
-            phone: data.phone ? unformatPhoneNumber(data.phone) : "",
-          };
-        }
-        return member;
-      });
+      if (selectedGroupMember.isLead) {
+        // Update group lead information
+        await updateFamilyGroup(selectedGroup.id, {
+          lead_email: data.email || "",
+          lead_phone: data.phone ? unformatPhoneNumber(data.phone) : "",
+        });
+      } else {
+        // Update the host member in the selected family group
+        const hostMembersArray = selectedGroup.host_members || [];
+        const updatedHostMembers = hostMembersArray.map((member: any) => {
+          if (member.name === selectedGroupMember.name) {
+            return {
+              ...member,
+              email: data.email || member.email,
+              phone: data.phone ? unformatPhoneNumber(data.phone) : member.phone,
+            };
+          }
+          return member;
+        });
 
-      await updateFamilyGroup(selectedGroup.id, {
-        host_members: updatedHostMembers,
-      });
+        await updateFamilyGroup(selectedGroup.id, {
+          host_members: updatedHostMembers
+        });
+      }
 
       markProfileCompleted();
       
@@ -301,7 +356,7 @@ const HostProfile = () => {
         description: "Your profile has been updated successfully.",
       });
     } catch (error) {
-      console.error("Error updating host profile:", error);
+      console.error("Error updating group member profile:", error);
       toast({
         title: "Error",
         description: "Failed to update your profile. Please try again.",
@@ -320,6 +375,48 @@ const HostProfile = () => {
           <span>Logout</span>
         </Button>
       </div>
+
+      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet */}
+      {!hasClaimedProfile && familyGroups.length > 0 && (
+        <Card className="mb-6 border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Claim Your Group Member Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base text-muted-foreground mb-4">
+              Link your account to your family group member profile using your name as it appears in the system.
+            </p>
+            <Button
+              onClick={() => setShowClaimingDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Claim Profile
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show claimed profile info */}
+      {hasClaimedProfile && claimedProfile && (
+        <Card className="mb-6 border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-green-800">
+              <User className="h-5 w-5" />
+              Profile Claimed Successfully
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-green-700">
+            <p className="text-base">
+              You are linked to <strong>{claimedProfile.member_name}</strong> in the <strong>{claimedProfile.family_group_name}</strong> family group
+              {isGroupLead && ' as the Group Lead'}.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Avatar Section */}
       <Card className="mb-6">
@@ -369,7 +466,7 @@ const HostProfile = () => {
             />
           </div>
           
-          <CardTitle className="text-3xl font-bold mt-4">Host Member Profile</CardTitle>
+          <CardTitle className="text-3xl font-bold mt-4">Group Member Profile</CardTitle>
           <p className="text-muted-foreground text-base">
             Update your personal information for your family group
           </p>
@@ -403,11 +500,11 @@ const HostProfile = () => {
                 )}
               />
 
-              {/* Host Name Selection */}
-              {availableHosts.length > 0 && (
+              {/* Member Name Selection */}
+              {availableMembers.length > 0 && (
                 <FormField
                   control={form.control}
-                  name="selectedHostName"
+                  name="selectedMemberName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Select Your Name</FormLabel>
@@ -418,9 +515,9 @@ const HostProfile = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableHosts.map((host, index) => (
-                            <SelectItem key={index} value={host.name}>
-                              {host.name}
+                          {availableMembers.map((member, index) => (
+                            <SelectItem key={index} value={member.name}>
+                              {member.name} {member.isLead && '(Group Lead)'}
                             </SelectItem>
                           ))}
                           <SelectItem value="NOT_FOUND" className="text-muted-foreground">
@@ -435,7 +532,7 @@ const HostProfile = () => {
               )}
 
               {/* Email Field */}
-              {selectedHostMember && (
+              {selectedGroupMember && (
                 <>
                   <FormField
                     control={form.control}
@@ -482,7 +579,7 @@ const HostProfile = () => {
               <div className="flex justify-center pt-6">
                 <Button
                   type="submit"
-                  disabled={loading || !isValid || !selectedHostMember}
+                  disabled={loading || !isValid || !selectedGroupMember}
                   size="lg"
                   className="min-w-48 text-base"
                 >
@@ -503,48 +600,6 @@ const HostProfile = () => {
         userRole={userRole}
       />
 
-      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet */}
-      {!hasClaimedProfile && familyGroups.length > 0 && (
-        <Card className="mb-6 border-primary/50 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Claim Your Group Member Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-base text-muted-foreground mb-4">
-              Link your account to your family group member profile using your name as it appears in the system.
-            </p>
-            <Button
-              onClick={() => setShowClaimingDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Claim Profile
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Show claimed profile info */}
-      {hasClaimedProfile && claimedProfile && (
-        <Card className="mb-6 border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2 text-green-800">
-              <User className="h-5 w-5" />
-              Profile Claimed Successfully
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-green-700">
-            <p className="text-base">
-              You are linked to <strong>{claimedProfile.member_name}</strong> in the <strong>{claimedProfile.family_group_name}</strong> family group
-              {isGroupLead && ' as the Group Lead'}.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Profile Claiming Dialog */}
       <ProfileClaimingDialog
         open={showClaimingDialog}
@@ -560,7 +615,7 @@ const HostProfile = () => {
         <CardContent className="space-y-2 text-base text-muted-foreground">
           <p>• First claim your group member profile if you haven't already</p>
           <p>• Select your family group from the dropdown menu</p>
-          <p>• Choose your name from the list of host members</p>
+          <p>• Choose your name from the list of group members</p>
           <p>• Update your email and phone number as needed</p>
           <p>• Your changes will be saved automatically</p>
         </CardContent>
@@ -569,4 +624,4 @@ const HostProfile = () => {
   );
 };
 
-export default HostProfile;
+export default GroupMemberProfile;

@@ -117,7 +117,7 @@ export const AdminSetupGuide = () => {
               <div>
                 <p className="font-medium">Claim their profile</p>
                 <p className="text-sm text-muted-foreground">
-                  On the Host Profile page, they click "Claim Profile" and search for their name to link to their group
+                  On the Group Member Profile page, they click "Claim Profile" and search for their name to link to their group
                 </p>
               </div>
             </div>

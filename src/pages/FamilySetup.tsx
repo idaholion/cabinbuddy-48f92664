@@ -386,7 +386,7 @@ const FamilySetup = () => {
           if (isGroupLead) {
             navigate("/family-group-setup");
           } else {
-            navigate("/host-profile");
+            navigate("/group-member-profile");
           }
         }, 100);
       } else {

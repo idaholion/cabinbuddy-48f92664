@@ -112,7 +112,7 @@ const SelectFamilyGroup = () => {
 
       console.log('Final navigation decision:', {
         shouldGoToSetup,
-        destination: shouldGoToSetup ? "/family-group-setup" : "/host-profile"
+        destination: shouldGoToSetup ? "/family-group-setup" : "/group-member-profile"
       });
       
       // Small delay to allow profile update to propagate, then navigate based on actual role
@@ -120,7 +120,7 @@ const SelectFamilyGroup = () => {
         if (shouldGoToSetup) {
           navigate("/family-group-setup");
         } else {
-          navigate("/host-profile");
+          navigate("/group-member-profile");
         }
       }, 500);
     } catch (error) {
