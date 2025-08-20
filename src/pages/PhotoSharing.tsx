@@ -81,7 +81,7 @@ export default function PhotoSharing() {
       const file = e.target.files[0];
       
       // Check if it's a large image that might benefit from quality selection
-      if (file.type.startsWith('image/') && file.size > 500 * 1024) { // > 500KB
+      if (file.type.startsWith('image/') && file.size > 100 * 1024) { // > 100KB (lowered threshold)
         setPendingFile(file);
         setShowQualityDialog(true);
         e.target.value = "";
@@ -123,7 +123,14 @@ export default function PhotoSharing() {
         const response = await fetch(image.dataUrl);
         const blob = await response.blob();
         const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setNewPhoto({ ...newPhoto, file });
+        
+        // Check if it's a large image that might benefit from quality selection
+        if (file.size > 100 * 1024) { // > 100KB (lowered threshold)
+          setPendingFile(file);
+          setShowQualityDialog(true);
+        } else {
+          setNewPhoto({ ...newPhoto, file });
+        }
       }
     } catch (error) {
       console.error('Error selecting photo:', error);
