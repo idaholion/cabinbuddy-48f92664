@@ -24,10 +24,11 @@ export const useGuestOrganization = () => {
 
     try {
       // Fetch basic organization data, family groups, and features
+      // Only select safe fields for guest access - no sensitive contact information
       const [orgResult, familyGroupsResult, featuresResult] = await Promise.all([
         supabase
           .from('organizations')
-          .select('*')
+          .select('id, name, code, access_type, created_at, updated_at')
           .eq('id', guestOrganization.id)
           .single(),
         
