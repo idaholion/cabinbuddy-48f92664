@@ -31,6 +31,9 @@ const AddReceipt = () => {
     dimensions: { width: number; height: number } | null;
   } | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
+  const [imagePan, setImagePan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [editingReceipt, setEditingReceipt] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [showQualityDialog, setShowQualityDialog] = useState(false);
@@ -350,6 +353,31 @@ const AddReceipt = () => {
     const qualityMap = { high: 95, balanced: 85, small: 70 };
     handleNativePhotoSelection(CameraSource.Camera, qualityMap[qualityKey]);
     setShowQualityDialog(false);
+  };
+
+  const handleImageMouseDown = (e: React.MouseEvent) => {
+    if (imageZoom > 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - imagePan.x, y: e.clientY - imagePan.y });
+    }
+  };
+
+  const handleImageMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && imageZoom > 1) {
+      setImagePan({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleImageMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const resetImageView = () => {
+    setImageZoom(1);
+    setImagePan({ x: 0, y: 0 });
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -751,8 +779,8 @@ const AddReceipt = () => {
         </div>
       </div>
 
-      {/* Image Viewing Modal with Zoom */}
-      <Dialog open={!!viewingImage} onOpenChange={() => { setViewingImage(null); setImageZoom(1); }}>
+      {/* Image Viewing Modal with Zoom and Pan */}
+      <Dialog open={!!viewingImage} onOpenChange={() => { setViewingImage(null); resetImageView(); }}>
         <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
@@ -761,11 +789,15 @@ const AddReceipt = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setImageZoom(Math.max(0.25, imageZoom - 0.25))}
+                  onClick={() => {
+                    const newZoom = Math.max(0.25, imageZoom - 0.25);
+                    setImageZoom(newZoom);
+                    if (newZoom === 1) setImagePan({ x: 0, y: 0 });
+                  }}
                 >
                   <ZoomOut className="h-4 w-4" />
                 </Button>
-                <span className="text-sm font-mono">{Math.round(imageZoom * 100)}%</span>
+                <span className="text-sm font-mono min-w-[50px] text-center">{Math.round(imageZoom * 100)}%</span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -776,7 +808,8 @@ const AddReceipt = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setImageZoom(1)}
+                  onClick={resetImageView}
+                  title="Reset zoom and position"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -784,22 +817,39 @@ const AddReceipt = () => {
             </DialogTitle>
           </DialogHeader>
           {viewingImage && (
-            <div className="flex justify-center overflow-auto max-h-[75vh]">
-              <img 
-                src={viewingImage} 
-                alt="Full size receipt" 
-                className="object-contain rounded-lg cursor-move"
-                style={{ 
-                  transform: `scale(${imageZoom})`,
-                  transformOrigin: 'center',
-                  transition: 'transform 0.2s ease'
-                }}
-                onWheel={(e) => {
-                  e.preventDefault();
-                  const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                  setImageZoom(Math.max(0.25, Math.min(4, imageZoom + delta)));
-                }}
-              />
+            <div className="relative overflow-hidden max-h-[75vh] bg-muted/10 rounded-lg">
+              <div 
+                className="w-full h-full flex items-center justify-center"
+                style={{ minHeight: '60vh' }}
+                onMouseMove={handleImageMouseMove}
+                onMouseUp={handleImageMouseUp}
+                onMouseLeave={handleImageMouseUp}
+              >
+                <img 
+                  src={viewingImage} 
+                  alt="Full size receipt" 
+                  className={`max-w-none rounded-lg select-none ${imageZoom > 1 ? 'cursor-grab' : 'cursor-default'} ${isDragging ? 'cursor-grabbing' : ''}`}
+                  style={{ 
+                    transform: `scale(${imageZoom}) translate(${imagePan.x / imageZoom}px, ${imagePan.y / imageZoom}px)`,
+                    transformOrigin: 'center',
+                    transition: isDragging ? 'none' : 'transform 0.2s ease'
+                  }}
+                  onMouseDown={handleImageMouseDown}
+                  onWheel={(e) => {
+                    e.preventDefault();
+                    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                    const newZoom = Math.max(0.25, Math.min(4, imageZoom + delta));
+                    setImageZoom(newZoom);
+                    if (newZoom === 1) setImagePan({ x: 0, y: 0 });
+                  }}
+                  draggable={false}
+                />
+              </div>
+              {imageZoom > 1 && (
+                <div className="absolute bottom-4 left-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-md text-sm text-muted-foreground">
+                  Click and drag to pan around the image
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
