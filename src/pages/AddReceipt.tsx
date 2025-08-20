@@ -33,8 +33,17 @@ const AddReceipt = () => {
   const [imageZoom, setImageZoom] = useState(1);
   const [editingReceipt, setEditingReceipt] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [showQualityDialog, setShowQualityDialog] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { toast } = useToast();
+
+  // Quality options
+  const qualityOptions = {
+    high: { maxWidth: 2400, maxHeight: 1600, quality: 0.95, label: "High Quality", description: "Best quality, larger file size" },
+    balanced: { maxWidth: 1920, maxHeight: 1080, quality: 0.8, label: "Balanced", description: "Good quality, moderate file size" },
+    small: { maxWidth: 1280, maxHeight: 720, quality: 0.6, label: "Small File", description: "Lower quality, smallest file size" }
+  };
 
   // Image compression/resizing function
   const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
@@ -94,27 +103,85 @@ const AddReceipt = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const processImageWithQuality = async (file: File, qualityKey: keyof typeof qualityOptions) => {
+    const options = qualityOptions[qualityKey];
+    const processedFile = await compressImage(file, options.maxWidth, options.maxHeight, options.quality);
+    
+    // Get file info
+    const dimensions = await getImageDimensions(processedFile);
+    setFileInfo({
+      name: processedFile.name,
+      size: processedFile.size,
+      originalSize: file.size !== processedFile.size ? file.size : undefined,
+      dimensions
+    });
+
+    return processedFile;
+  };
+
+  const handleQualitySelection = async (qualityKey: keyof typeof qualityOptions) => {
+    if (!pendingFile) return;
+
+    setShowQualityDialog(false);
+    toast({
+      title: "Processing image...",
+      description: `Optimizing image with ${qualityOptions[qualityKey].label.toLowerCase()} settings.`,
+    });
+
+    const processedFile = await processImageWithQuality(pendingFile, qualityKey);
+
+    if (uploadAmount) {
+      setUploadingFile(true);
+      try {
+        await createReceipt({
+          amount: parseFloat(uploadAmount),
+          description: `Receipt uploaded: ${processedFile.name}`,
+          date: new Date().toISOString().split('T')[0],
+          image: processedFile
+        });
+        setUploadAmount("");
+        setFileInfo(null);
+        toast({
+          title: "Receipt uploaded",
+          description: `${processedFile.name} has been uploaded successfully.`,
+        });
+      } catch (error) {
+        console.error('Upload failed:', error);
+      } finally {
+        setUploadingFile(false);
+      }
+    } else {
+      setCurrentFile(processedFile);
+      toast({
+        title: "File processed",
+        description: `${processedFile.name} processed. Please enter amount to upload.`,
+      });
+    }
+
+    setPendingFile(null);
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Compress image if it's large
-      let processedFile = file;
-      if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // > 1MB
-        toast({
-          title: "Compressing image...",
-          description: "Optimizing image size for faster upload.",
-        });
-        processedFile = await compressImage(file);
+      // Check if it's an image that might benefit from quality selection
+      if (file.type.startsWith('image/') && file.size > 500 * 1024) { // > 500KB
+        setPendingFile(file);
+        setShowQualityDialog(true);
+        event.target.value = "";
+        return;
       }
 
-      // Get file info
-      const dimensions = processedFile.type.startsWith('image/') ? await getImageDimensions(processedFile) : null;
-      setFileInfo({
-        name: processedFile.name,
-        size: processedFile.size,
-        originalSize: file.size !== processedFile.size ? file.size : undefined,
-        dimensions
-      });
+      // For small images or non-images, process normally
+      let processedFile = file;
+      if (file.type.startsWith('image/')) {
+        const dimensions = await getImageDimensions(file);
+        setFileInfo({
+          name: file.name,
+          size: file.size,
+          dimensions
+        });
+      }
 
       if (uploadAmount) {
         setUploadingFile(true);
@@ -164,7 +231,14 @@ const AddReceipt = () => {
     if (files.length > 0) {
       const file = files[0];
       
-      // Get file info
+      // Check if it's an image that might benefit from quality selection
+      if (file.type.startsWith('image/') && file.size > 500 * 1024) { // > 500KB
+        setPendingFile(file);
+        setShowQualityDialog(true);
+        return;
+      }
+      
+      // For small images or non-images, process normally
       const dimensions = file.type.startsWith('image/') ? await getImageDimensions(file) : null;
       setFileInfo({
         name: file.name,
@@ -202,10 +276,10 @@ const AddReceipt = () => {
     }
   };
 
-  const handleNativePhotoSelection = async (source: CameraSource) => {
+  const handleNativePhotoSelection = async (source: CameraSource, quality = 90) => {
     try {
       const image = await CapacitorCamera.getPhoto({
-        quality: 90,
+        quality: quality,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: source
@@ -267,7 +341,15 @@ const AddReceipt = () => {
   };
 
   const handleTakePicture = () => {
-    handleNativePhotoSelection(CameraSource.Camera);
+    // Show quality dialog for camera photos too
+    setPendingFile(null); // Special flag for camera
+    setShowQualityDialog(true);
+  };
+
+  const handleCameraWithQuality = (qualityKey: keyof typeof qualityOptions) => {
+    const qualityMap = { high: 95, balanced: 85, small: 70 };
+    handleNativePhotoSelection(CameraSource.Camera, qualityMap[qualityKey]);
+    setShowQualityDialog(false);
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -720,6 +802,41 @@ const AddReceipt = () => {
               />
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Quality Selection Dialog */}
+      <Dialog open={showQualityDialog} onOpenChange={setShowQualityDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Image Quality</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {pendingFile ? 'Select image quality for upload' : 'Select camera quality for photo'}
+            </p>
+            <div className="space-y-3">
+              {(Object.keys(qualityOptions) as Array<keyof typeof qualityOptions>).map((key) => {
+                const option = qualityOptions[key];
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto p-4"
+                    onClick={() => pendingFile ? handleQualitySelection(key) : handleCameraWithQuality(key)}
+                  >
+                    <div className="flex flex-col items-start">
+                      <div className="font-medium">{option.label}</div>
+                      <div className="text-sm text-muted-foreground">{option.description}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Max: {option.maxWidth}×{option.maxHeight}px, Quality: {Math.round(option.quality * 100)}%
+                      </div>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
