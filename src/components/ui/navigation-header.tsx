@@ -19,11 +19,13 @@ export function NavigationHeader({
     <Button variant="outline" asChild className={`hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200 ${className}`}>
       <Link to={backTo}>
         {isHome ? (
-          <Home className="h-4 w-4 mr-2" />
+          <Home className="h-4 w-4" />
         ) : (
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {backLabel}
+          </>
         )}
-        {isHome ? "Home" : backLabel}
       </Link>
     </Button>
   );
