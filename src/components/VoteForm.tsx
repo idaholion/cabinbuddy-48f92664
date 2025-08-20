@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +17,6 @@ interface VotingProposal {
 
 interface UserAllocation {
   allocated_shares: number;
-  family_group_name: string;
 }
 
 export const VoteForm = () => {
@@ -32,7 +30,7 @@ export const VoteForm = () => {
   const [votingShares, setVotingShares] = useState(0);
   const [voteChoice, setVoteChoice] = useState('');
   const [loading, setLoading] = useState(false);
-  const [hasVoted, setHasVoted] = useState<Record<string, boolean>>({});
+  const [existingVote, setExistingVote] = useState<any>(null);
 
   useEffect(() => {
     if (organization?.id && user?.id) {
@@ -40,6 +38,12 @@ export const VoteForm = () => {
       fetchUserAllocation();
     }
   }, [organization?.id, user?.id]);
+
+  useEffect(() => {
+    if (selectedProposal && user?.id) {
+      checkExistingVote();
+    }
+  }, [selectedProposal, user?.id]);
 
   const fetchActiveProposals = async () => {
     try {
@@ -65,19 +69,14 @@ export const VoteForm = () => {
     try {
       const { data, error } = await supabase
         .from('user_share_allocations')
-        .select('*')
+        .select('allocated_shares')
         .eq('organization_id', organization?.id)
         .eq('user_id', user?.id)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      if (data) {
-        setUserAllocation({
-          allocated_shares: data.allocated_shares,
-          family_group_name: data.family_group_name
-        });
-      }
+      setUserAllocation(data ? { allocated_shares: data.allocated_shares } : null);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -87,33 +86,30 @@ export const VoteForm = () => {
     }
   };
 
-  const checkExistingVotes = async () => {
-    if (!selectedProposal || !user?.id) return;
-    
-    const { data, error } = await supabase
-      .from('votes')
-      .select('proposal_id')
-      .eq('proposal_id', selectedProposal)
-      .eq('user_id', user.id)
-      .single();
+  const checkExistingVote = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('proposal_id', selectedProposal)
+        .eq('voted_by_user_id', user?.id)
+        .single();
 
-    if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== 'PGRST116') throw error;
+
+      setExistingVote(data);
+    } catch (error: any) {
       console.error('Error checking existing vote:', error);
-      return;
     }
-
-    setHasVoted(prev => ({ ...prev, [selectedProposal]: !!data }));
   };
 
-  useEffect(() => {
-    if (selectedProposal) {
-      checkExistingVotes();
-    }
-  }, [selectedProposal, user?.id]);
+  const getUserShares = () => {
+    return userAllocation?.allocated_shares || 0;
+  };
 
   const castVote = async () => {
     try {
-      if (!selectedProposal || !voteChoice || votingShares <= 0 || !user?.id || !userAllocation) {
+      if (!selectedProposal || !voteChoice || votingShares <= 0) {
         toast({
           title: "Error",
           description: "Please fill in all fields",
@@ -122,16 +118,26 @@ export const VoteForm = () => {
         return;
       }
 
-      if (votingShares > userAllocation.allocated_shares) {
+      if (!userAllocation) {
         toast({
-          title: "Error",
-          description: `Cannot vote with more shares than allocated (${userAllocation.allocated_shares})`,
+          title: "Error", 
+          description: "You don't have any voting shares allocated",
           variant: "destructive",
         });
         return;
       }
 
-      if (hasVoted[selectedProposal]) {
+      const maxShares = getUserShares();
+      if (votingShares > maxShares) {
+        toast({
+          title: "Error",
+          description: `Cannot vote with more shares than allocated (${maxShares})`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (existingVote) {
         toast({
           title: "Error",
           description: "You have already voted on this proposal",
@@ -148,10 +154,12 @@ export const VoteForm = () => {
         .insert({
           proposal_id: selectedProposal,
           organization_id: organization?.id,
-          user_id: user.id,
-          family_group_name: userAllocation.family_group_name,
+          voter_name: user?.email || 'Unknown',
+          voter_email: user?.email,
+          family_group_name: userFamilyGroup,
           shares_used: votingShares,
           vote_choice: voteChoice,
+          voted_by_user_id: user?.id
         });
 
       if (voteError) throw voteError;
@@ -189,11 +197,11 @@ export const VoteForm = () => {
         description: "Vote cast successfully",
       });
 
-      // Update local state and reset form
-      setHasVoted(prev => ({ ...prev, [selectedProposal]: true }));
+      // Reset form
       setSelectedProposal('');
       setVotingShares(0);
       setVoteChoice('');
+      setExistingVote(null);
 
     } catch (error: any) {
       toast({
@@ -208,9 +216,9 @@ export const VoteForm = () => {
 
   if (!userAllocation) {
     return (
-      <div className="text-center p-4">
-        <p className="text-muted-foreground">
-          No share allocation found. Contact your family group lead or organization admin to get voting shares allocated.
+      <div className="space-y-4">
+        <p className="text-muted-foreground text-center py-4">
+          You don't have any voting shares allocated. Contact your family group lead or organization admin.
         </p>
       </div>
     );
@@ -218,11 +226,13 @@ export const VoteForm = () => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-muted/50 p-3 rounded-lg">
-        <div className="text-sm font-medium">Your Voting Allocation</div>
-        <div className="text-lg font-bold">{userAllocation.allocated_shares} shares</div>
-        <div className="text-xs text-muted-foreground">Family Group: {userAllocation.family_group_name}</div>
-      </div>
+      {existingVote && (
+        <div className="p-3 bg-muted rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            You have already voted on this proposal with {existingVote.shares_used} shares ({existingVote.vote_choice}).
+          </p>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="proposal">Select Proposal</Label>
@@ -234,9 +244,6 @@ export const VoteForm = () => {
             {proposals.map((proposal) => (
               <SelectItem key={proposal.id} value={proposal.id}>
                 {proposal.title}
-                {hasVoted[proposal.id] && (
-                  <span className="ml-2 text-green-600">✓ Voted</span>
-                )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -251,17 +258,18 @@ export const VoteForm = () => {
           value={votingShares}
           onChange={(e) => setVotingShares(parseInt(e.target.value) || 0)}
           min="1"
-          max={userAllocation.allocated_shares}
+          max={getUserShares()}
           placeholder="Enter number of shares"
+          disabled={!!existingVote}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Available: {userAllocation.allocated_shares} shares
+          Available: {getUserShares()} shares
         </p>
       </div>
 
       <div>
         <Label htmlFor="choice">Vote Choice</Label>
-        <Select value={voteChoice} onValueChange={setVoteChoice}>
+        <Select value={voteChoice} onValueChange={setVoteChoice} disabled={!!existingVote}>
           <SelectTrigger>
             <SelectValue placeholder="Select your vote" />
           </SelectTrigger>
@@ -272,20 +280,12 @@ export const VoteForm = () => {
         </Select>
       </div>
 
-      {selectedProposal && hasVoted[selectedProposal] && (
-        <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            You have already voted on this proposal.
-          </p>
-        </div>
-      )}
-
       <Button 
         onClick={castVote} 
-        disabled={loading || !selectedProposal || !voteChoice || votingShares <= 0 || hasVoted[selectedProposal]}
+        disabled={loading || !selectedProposal || !voteChoice || votingShares <= 0 || !!existingVote}
         className="w-full"
       >
-        {loading ? "Casting Vote..." : hasVoted[selectedProposal] ? "Already Voted" : "Cast Vote"}
+        {loading ? "Casting Vote..." : existingVote ? "Already Voted" : "Cast Vote"}
       </Button>
     </div>
   );

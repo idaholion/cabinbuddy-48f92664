@@ -5,12 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { ProposalComments } from './ProposalComments';
+import { Plus, Clock, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface VotingProposal {
@@ -35,6 +37,7 @@ export const VotingProposals = () => {
   const [proposals, setProposals] = useState<VotingProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<VotingProposal | null>(null);
   const [newProposal, setNewProposal] = useState({
     title: '',
     description: '',
@@ -190,7 +193,7 @@ export const VotingProposals = () => {
           </p>
         ) : (
           proposals.map((proposal) => (
-            <Card key={proposal.id} className="cursor-pointer hover:shadow-md transition-shadow">
+            <Card key={proposal.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -204,12 +207,34 @@ export const VotingProposals = () => {
                     <p className="text-sm text-muted-foreground mb-2">
                       {proposal.description}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
                       <span>By {proposal.created_by_family_group}</span>
                       <span>{format(new Date(proposal.created_at), 'MMM dd, yyyy')}</span>
                       {proposal.voting_deadline && (
                         <span>Deadline: {format(new Date(proposal.voting_deadline), 'MMM dd, yyyy HH:mm')}</span>
                       )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" onClick={() => setSelectedProposal(proposal)}>
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            Discuss
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Proposal Discussion</DialogTitle>
+                          </DialogHeader>
+                          {selectedProposal && (
+                            <ProposalComments 
+                              proposalId={selectedProposal.id} 
+                              proposalTitle={selectedProposal.title}
+                            />
+                          )}
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                   <div className="text-right text-sm">
