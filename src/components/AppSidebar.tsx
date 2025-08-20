@@ -153,25 +153,25 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Dashboard">
+                <SidebarMenuButton asChild tooltip="Home">
                   <NavLink 
                     to="/home" 
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Home className="h-4 w-4" />
-                    <span>Dashboard</span>
+                    <span>Home</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Setup">
+                <SidebarMenuButton asChild tooltip="Account Setup">
                   <NavLink 
                     to="/setup" 
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
-                    <Settings className="h-4 w-4" />
-                    <span>Setup</span>
+                    <Wrench className="h-4 w-4" />
+                    <span>Account Setup</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
