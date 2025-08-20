@@ -29,6 +29,8 @@ import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
 import Textresponse from "./pages/Textresponse";
+import Optin1 from "./pages/Optin1";
+import Optin2 from "./pages/Optin2";
 import { ManageOrganizations } from "./pages/ManageOrganizations";
 
 
@@ -104,6 +106,8 @@ const AppContent = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/guest" element={<Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense>} />
         <Route path="/textresponse" element={<Textresponse />} />
+        <Route path="/optin1" element={<Optin1 />} />
+        <Route path="/optin2" element={<Optin2 />} />
         <Route path="/home" element={<UnifiedAuthRoute><MainLayout><Index /></MainLayout></UnifiedAuthRoute>} />
         <Route path="/manage-organizations" element={<UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
