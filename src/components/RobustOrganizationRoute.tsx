@@ -33,6 +33,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/setup', 
     '/signup', 
     '/login', 
+    '/home',  // Temporarily exempt home to allow access while debugging org loading
     '/manage-organizations', 
     '/select-family-group',
     '/auth',
