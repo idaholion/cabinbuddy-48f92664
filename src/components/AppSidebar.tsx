@@ -163,6 +163,18 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Setup">
+                  <NavLink 
+                    to="/setup" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>Setup</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
