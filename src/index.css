@@ -346,3 +346,21 @@ All colors MUST be HSL.
     background-size: cover !important;
   }
 }
+
+/* Stable background that doesn't change during interactions */
+.hero-background-stable {
+  background-repeat: no-repeat !important;
+  background-position: center 15% !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  will-change: auto;
+}
+
+/* Ensure stable background on mobile/portrait */
+@media (orientation: portrait) and (max-width: 768px) {
+  .hero-background-stable {
+    background-size: contain !important;
+    background-color: hsl(var(--background));
+    background-attachment: scroll !important;
+  }
+}
