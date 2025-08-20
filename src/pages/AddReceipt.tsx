@@ -23,36 +23,72 @@ const AddReceipt = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<{
+    name: string;
+    size: number;
+    dimensions: { width: number; height: number } | null;
+  } | null>(null);
   const { toast } = useToast();
+
+  const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && uploadAmount) {
-      setUploadingFile(true);
-      try {
-        await createReceipt({
-          amount: parseFloat(uploadAmount),
-          description: `Receipt uploaded: ${file.name}`,
-          date: new Date().toISOString().split('T')[0],
-          image: file
-        });
-        setUploadAmount("");
-        event.target.value = "";
-        toast({
-          title: "Receipt uploaded",
-          description: `${file.name} has been uploaded successfully.`,
-        });
-      } catch (error) {
-        console.error('Upload failed:', error);
-      } finally {
-        setUploadingFile(false);
-      }
-    } else {
-      setCurrentFile(file || null);
-      toast({
-        title: "File selected",
-        description: `${file?.name} selected. Please enter amount to upload.`,
+    if (file) {
+      // Get file info
+      const dimensions = file.type.startsWith('image/') ? await getImageDimensions(file) : null;
+      setFileInfo({
+        name: file.name,
+        size: file.size,
+        dimensions
       });
+
+      if (uploadAmount) {
+        setUploadingFile(true);
+        try {
+          await createReceipt({
+            amount: parseFloat(uploadAmount),
+            description: `Receipt uploaded: ${file.name}`,
+            date: new Date().toISOString().split('T')[0],
+            image: file
+          });
+          setUploadAmount("");
+          setFileInfo(null);
+          event.target.value = "";
+          toast({
+            title: "Receipt uploaded",
+            description: `${file.name} has been uploaded successfully.`,
+          });
+        } catch (error) {
+          console.error('Upload failed:', error);
+        } finally {
+          setUploadingFile(false);
+        }
+      } else {
+        setCurrentFile(file || null);
+        toast({
+          title: "File selected",
+          description: `${file?.name} selected. Please enter amount to upload.`,
+        });
+      }
     }
   };
 
@@ -70,31 +106,44 @@ const AddReceipt = () => {
     e.preventDefault();
     setDragOver(false);
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0 && uploadAmount) {
-      setUploadingFile(true);
-      try {
-        await createReceipt({
-          amount: parseFloat(uploadAmount),
-          description: `Receipt uploaded: ${files[0].name}`,
-          date: new Date().toISOString().split('T')[0],
-          image: files[0]
-        });
-        setUploadAmount("");
-        toast({
-          title: "Receipt uploaded",
-          description: `${files[0].name} has been uploaded successfully.`,
-        });
-      } catch (error) {
-        console.error('Upload failed:', error);
-      } finally {
-        setUploadingFile(false);
-      }
-    } else {
-      setCurrentFile(files[0] || null);
-      toast({
-        title: "File dropped",
-        description: `${files[0]?.name} dropped. Please enter amount to upload.`,
+    if (files.length > 0) {
+      const file = files[0];
+      
+      // Get file info
+      const dimensions = file.type.startsWith('image/') ? await getImageDimensions(file) : null;
+      setFileInfo({
+        name: file.name,
+        size: file.size,
+        dimensions
       });
+
+      if (uploadAmount) {
+        setUploadingFile(true);
+        try {
+          await createReceipt({
+            amount: parseFloat(uploadAmount),
+            description: `Receipt uploaded: ${file.name}`,
+            date: new Date().toISOString().split('T')[0],
+            image: file
+          });
+          setUploadAmount("");
+          setFileInfo(null);
+          toast({
+            title: "Receipt uploaded",
+            description: `${file.name} has been uploaded successfully.`,
+          });
+        } catch (error) {
+          console.error('Upload failed:', error);
+        } finally {
+          setUploadingFile(false);
+        }
+      } else {
+        setCurrentFile(file);
+        toast({
+          title: "File dropped",
+          description: `${file.name} dropped. Please enter amount to upload.`,
+        });
+      }
     }
   };
 
@@ -137,6 +186,15 @@ const AddReceipt = () => {
         const response = await fetch(image.dataUrl);
         const blob = await response.blob();
         const file = new File([blob], `receipt_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        // Get file info
+        const dimensions = await getImageDimensions(file);
+        setFileInfo({
+          name: file.name,
+          size: file.size,
+          dimensions
+        });
+        
         setCurrentFile(file);
         toast({
           title: "Photo captured",
@@ -190,6 +248,7 @@ const AddReceipt = () => {
         });
         setUploadAmount("");
         setCurrentFile(null);
+        setFileInfo(null);
       } catch (error) {
         console.error('Upload failed:', error);
       } finally {
@@ -327,10 +386,21 @@ const AddReceipt = () => {
                       </Button>
                     )}
                   </div>
-                  {currentFile && (
-                    <p className="text-body text-muted-foreground mt-1">
-                      File ready: {currentFile.name}
-                    </p>
+                  {currentFile && fileInfo && (
+                    <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
+                      <p className="font-medium">{fileInfo.name}</p>
+                      <p className="text-muted-foreground">Size: {formatFileSize(fileInfo.size)}</p>
+                      {fileInfo.dimensions && (
+                        <p className="text-muted-foreground">
+                          Resolution: {fileInfo.dimensions.width} × {fileInfo.dimensions.height} pixels
+                        </p>
+                      )}
+                      {fileInfo.size > 5 * 1024 * 1024 && (
+                        <p className="text-warning text-xs mt-1">
+                          ⚠️ Large file size - consider resizing for faster upload
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
