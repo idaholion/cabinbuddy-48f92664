@@ -131,10 +131,10 @@ export default function PhotoSharing() {
   };
 
   const handleUpload = async () => {
-    if (newPhoto.file && newPhoto.caption) {
+    if (newPhoto.file) {
       setUploading(true);
       try {
-        await uploadPhoto(newPhoto.file, newPhoto.caption);
+        await uploadPhoto(newPhoto.file, newPhoto.caption || "");
         setNewPhoto({ caption: "", file: null });
         setIsUploadOpen(false);
       } catch (error) {
@@ -160,7 +160,10 @@ export default function PhotoSharing() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${photo.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${photo.created_at}.jpg`;
+      const filename = photo.caption 
+        ? `${photo.caption.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${photo.created_at}.jpg`
+        : `photo_${photo.created_at}.jpg`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -310,10 +313,10 @@ export default function PhotoSharing() {
                   </div>
                 )}
                 <div>
-                  <Label htmlFor="caption">Caption</Label>
+                  <Label htmlFor="caption">Caption (optional)</Label>
                   <Textarea
                     id="caption"
-                    placeholder="Write a caption for your photo..."
+                    placeholder="Write a caption for your photo... (optional)"
                     value={newPhoto.caption}
                     onChange={(e) => setNewPhoto({ ...newPhoto, caption: e.target.value })}
                     className="mt-1"
@@ -324,7 +327,7 @@ export default function PhotoSharing() {
                 <Button variant="outline" onClick={() => setIsUploadOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleUpload} disabled={!newPhoto.file || !newPhoto.caption || uploading}>
+                <Button onClick={handleUpload} disabled={!newPhoto.file || uploading}>
                   {uploading ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
@@ -420,7 +423,7 @@ export default function PhotoSharing() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm mb-3">{viewingPhoto.caption}</p>
+                    {viewingPhoto.caption && <p className="text-sm mb-3">{viewingPhoto.caption}</p>}
                     <div className="flex items-center gap-4">
                       <Button
                         variant="ghost"
@@ -503,7 +506,7 @@ export default function PhotoSharing() {
                   </div>
                 </div>
                 
-                <p className="text-sm text-foreground mb-3">{photo.caption}</p>
+                {photo.caption && <p className="text-sm text-foreground mb-3">{photo.caption}</p>}
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
