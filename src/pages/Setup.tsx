@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare } from "lucide-react";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -303,7 +303,10 @@ const Setup = () => {
 
         <div className="mb-4">
           <Button variant="outline" asChild className="mb-2">
-            <Link to="/home">← Back to Home</Link>
+            <Link to="/home">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>

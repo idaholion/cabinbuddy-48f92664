@@ -159,7 +159,6 @@ export function AppSidebar() {
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Home className="h-4 w-4" />
-                    <span>Home</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

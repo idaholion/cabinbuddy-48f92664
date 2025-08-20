@@ -971,7 +971,7 @@ export default function Demo() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader backTo="/" backLabel="Back to Home" />
+      <NavigationHeader backTo="/" backLabel="Home" />
       
       <div className="max-w-7xl mx-auto p-6">
         {/* Demo Controls */}

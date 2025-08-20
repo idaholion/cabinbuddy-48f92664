@@ -23,7 +23,10 @@ const CabinRules = () => {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <Button variant="outline" asChild className="mb-4 text-base">
-              <Link to="/home">← Back to Home</Link>
+              <Link to="/home">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Link>
             </Button>
             <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Rules & Policies</h1>
           </div>
@@ -186,7 +189,10 @@ const CabinRules = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button variant="outline" asChild className="mb-4 text-base">
-            <Link to="/home">← Back to Home</Link>
+            <Link to="/home">
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Link>
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Rules & Policies</h1>
           <div className="flex items-center justify-center gap-4">
