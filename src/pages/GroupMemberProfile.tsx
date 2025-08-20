@@ -17,8 +17,7 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
-import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
+// Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 
@@ -46,11 +45,7 @@ const GroupMemberProfile = () => {
   const [showClaimingDialog, setShowClaimingDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Feature onboarding
-  const { shouldShowOnboarding, hideOnboarding, userRole, markProfileCompleted } = useFeatureOnboarding({
-    triggerKey: 'group-member-profile',
-    checkProfileCompletion: true
-  });
+  // Removed feature onboarding as it's not appropriate for this page
 
   const form = useForm<GroupMemberProfileFormData>({
     resolver: zodResolver(groupMemberProfileSchema),
@@ -349,7 +344,7 @@ const GroupMemberProfile = () => {
         });
       }
 
-      markProfileCompleted();
+      // Profile completion tracking removed
       
       toast({
         title: "Success",
@@ -593,12 +588,7 @@ const GroupMemberProfile = () => {
         </CardContent>
       </Card>
 
-      {/* Feature Overview Dialog */}
-      <FeatureOverviewDialog
-        open={shouldShowOnboarding}
-        onOpenChange={hideOnboarding}
-        userRole={userRole}
-      />
+      {/* Feature Overview Dialog removed */}
 
       {/* Profile Claiming Dialog */}
       <ProfileClaimingDialog
