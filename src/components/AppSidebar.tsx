@@ -156,7 +156,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Home">
                   <NavLink 
                     to="/home" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center justify-center`}
                   >
                     <Home className="h-4 w-4" />
                   </NavLink>
