@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Users, Plus, Settings, Copy, X } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
+import { AdminProfileClaimingStep } from "@/components/AdminProfileClaimingStep";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -71,6 +72,7 @@ const FamilySetup = () => {
   const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
   const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
+  const [showProfileClaimingStep, setShowProfileClaimingStep] = useState(false);
   const hasShownToastRef = useRef(false);
 
   // Auto-save all form data
@@ -368,38 +370,58 @@ const FamilySetup = () => {
     }
   };
 
-  // Save organization setup and navigate based on admin role
+  // Save organization setup and show profile claiming step for new organizations
   const saveAndContinueToFamilyGroups = async () => {
     try {
       await saveOrganizationSetup();
       // Clear auto-saved data since we're navigating away
       clearSavedData();
       
-      // If this is a new organization and admin selected a family group, 
-      // route them based on their role in that group
-      if (isCreatingNew && adminFamilyGroup.trim()) {
-        // Check if admin is setting themselves as group lead
-        const isGroupLead = adminEmail && adminEmail.trim() !== "";
-        
-        // Small delay to ensure organization context is updated
-        setTimeout(() => {
-          if (isGroupLead) {
-            navigate("/family-group-setup");
-          } else {
-            navigate("/group-member-profile");
-          }
-        }, 100);
-      } else {
-        // Default to family group setup for existing organizations
-        setTimeout(() => {
-          navigate("/family-group-setup");
-        }, 100);
+      // For new organizations with family groups, show profile claiming step
+      if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.trim()))) {
+        setShowProfileClaimingStep(true);
+        return;
       }
+      
+      // For existing organizations or those without family groups, go directly to setup
+      setTimeout(() => {
+        navigate("/family-group-setup");
+      }, 100);
     } catch (error) {
       console.error('Error in save and continue:', error);
       // Still navigate even if there was an error, user can retry later
       navigate("/family-group-setup");
     }
+  };
+
+  // Handle profile claimed - navigate based on role
+  const handleProfileClaimed = (claimedProfile: any) => {
+    const isGroupLead = claimedProfile?.member_type === 'group_lead';
+    
+    toast({
+      title: "Setup Complete!",
+      description: `Proceeding to ${isGroupLead ? 'group setup' : 'profile management'}...`,
+    });
+    
+    setTimeout(() => {
+      if (isGroupLead) {
+        navigate("/family-group-setup");
+      } else {
+        navigate("/group-member-profile");
+      }
+    }, 1000);
+  };
+
+  // Handle skip profile claiming
+  const handleSkipProfileClaiming = () => {
+    toast({
+      title: "Setup Complete!",
+      description: "You can claim your profile later from the Group Member Profile page.",
+    });
+    
+    setTimeout(() => {
+      navigate("/family-group-setup");
+    }, 1000);
   };
 
   // Handle family group input changes
@@ -471,11 +493,27 @@ const FamilySetup = () => {
           <Button variant="outline" asChild className="mb-4">
             <Link to="/setup">← Back to Setup</Link>
           </Button>
-          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Organization Setup</h1>
-          <p className="text-2xl text-primary text-center font-medium">Setting up your Family Organization and Family Groups list</p>
+          <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">
+            {showProfileClaimingStep ? 'Profile Setup' : 'Family Organization Setup'}
+          </h1>
+          <p className="text-2xl text-primary text-center font-medium">
+            {showProfileClaimingStep 
+              ? 'Link your administrator account to your family profile' 
+              : 'Setting up your Family Organization and Family Groups list'
+            }
+          </p>
         </div>
 
-        {/* Combined Family Organization and Groups Setup */}
+        {/* Show Profile Claiming Step or Regular Setup */}
+        {showProfileClaimingStep ? (
+          <AdminProfileClaimingStep
+            onProfileClaimed={handleProfileClaimed}
+            onSkip={handleSkipProfileClaiming}
+            familyGroups={existingFamilyGroups.length > 0 ? existingFamilyGroups : 
+              familyGroups.filter(g => g.trim()).map(name => ({ name: name.trim() }))}
+            adminEmail={adminEmail}
+          />
+        ) : (
         <Card className="bg-card/95 mb-8">
           <CardHeader className="pb-2 relative">
             <div className="flex justify-end">
@@ -817,6 +855,7 @@ const FamilySetup = () => {
             </div>
           </CardContent>
         </Card>
+        )}
 
 
       </div>
