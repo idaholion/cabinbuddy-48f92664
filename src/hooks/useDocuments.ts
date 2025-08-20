@@ -163,7 +163,13 @@ export const useDocuments = () => {
         .createSignedUrl(filePath, 3600); // 1 hour expiry
 
       if (error) throw error;
-      return data.signedUrl;
+      
+      // Convert relative path to full URL
+      const fullUrl = data.signedUrl.startsWith('http') 
+        ? data.signedUrl 
+        : `https://ftaxzdnrnhktzbcsejoy.supabase.co${data.signedUrl}`;
+      
+      return fullUrl;
     } catch (error) {
       console.error('Error creating signed URL:', error);
       throw error;
