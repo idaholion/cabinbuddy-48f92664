@@ -71,10 +71,8 @@ export const useDocuments = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
-        .getPublicUrl(fileName);
+      // For private buckets, store the file path instead of public URL
+      const filePath = fileName;
 
       // Insert document record
       const { data, error } = await supabase
@@ -82,7 +80,7 @@ export const useDocuments = () => {
         .insert({
           organization_id: organization.id,
           uploaded_by_user_id: user.id,
-          file_url: publicUrl,
+          file_url: filePath, // Store file path for private bucket
           file_size: file.size,
           file_type: file.type,
           ...documentData
@@ -149,6 +147,80 @@ export const useDocuments = () => {
     }
   };
 
+  const getSignedUrl = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error creating signed URL:', error);
+      throw error;
+    }
+  };
+
+  const viewDocument = async (document: Document) => {
+    try {
+      let url = document.file_url;
+      
+      // If the file_url is a file path (not a full URL), generate a signed URL
+      if (url && !url.startsWith('http')) {
+        url = await getSignedUrl(url);
+      } else if (url && url.includes('/storage/v1/object/public/documents/')) {
+        // Handle legacy public URLs - extract file path and generate signed URL
+        const filePath = url.split('/storage/v1/object/public/documents/')[1];
+        url = await getSignedUrl(filePath);
+      }
+      
+      if (url) {
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open document",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const migrateExistingDocuments = async () => {
+    try {
+      const documentsToMigrate = documents.filter(doc => 
+        doc.file_url && doc.file_url.includes('/storage/v1/object/public/documents/')
+      );
+
+      for (const doc of documentsToMigrate) {
+        const filePath = doc.file_url!.split('/storage/v1/object/public/documents/')[1];
+        
+        // Update the document in the database
+        const { error } = await supabase
+          .from('documents')
+          .update({ file_url: filePath })
+          .eq('id', doc.id);
+
+        if (!error) {
+          // Update local state
+          setDocuments(prev => prev.map(d => 
+            d.id === doc.id ? { ...d, file_url: filePath } : d
+          ));
+        }
+      }
+    } catch (error) {
+      console.error('Error migrating documents:', error);
+    }
+  };
+
+  // Auto-migrate existing documents on load
+  useEffect(() => {
+    if (documents.length > 0) {
+      migrateExistingDocuments();
+    }
+  }, [documents.length]);
+
   const deleteDocument = async (documentId: string) => {
     if (!user) return;
 
@@ -156,14 +228,11 @@ export const useDocuments = () => {
       const document = documents.find(d => d.id === documentId);
       if (!document) return;
 
-      // Delete file from storage if it exists
-      if (document.file_url && document.file_url.includes('supabase')) {
-        const fileName = document.file_url.split('/').pop();
-        if (fileName) {
-          await supabase.storage
-            .from('documents')
-            .remove([`${organization?.id}/${user.id}/${fileName}`]);
-        }
+      // Delete file from storage if it exists and is a file path
+      if (document.file_url && !document.file_url.startsWith('http')) {
+        await supabase.storage
+          .from('documents')
+          .remove([document.file_url]);
       }
 
       // Delete from database
@@ -229,6 +298,8 @@ export const useDocuments = () => {
     addDocumentLink,
     deleteDocument,
     updateDocument,
+    viewDocument,
+    getSignedUrl,
     refetch: fetchDocuments
   };
 };

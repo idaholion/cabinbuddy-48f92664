@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 const Documents = () => {
   const navigate = useNavigate();
-  const { documents, loading, uploadDocument, addDocumentLink, deleteDocument } = useDocuments();
+  const { documents, loading, uploadDocument, addDocumentLink, deleteDocument, viewDocument } = useDocuments();
   const { user } = useAuth();
   const { activeOrganization, loading: orgLoading } = useMultiOrganization();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -71,10 +71,8 @@ const Documents = () => {
     }
   };
 
-  const handleDownload = (document: any) => {
-    if (document.file_url) {
-      window.open(document.file_url, '_blank');
-    }
+  const handleDownload = async (document: any) => {
+    await viewDocument(document);
   };
 
   const formatFileSize = (bytes?: number) => {
