@@ -127,32 +127,34 @@ const Documents = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
-        {/* Quick Access Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Quick Access</CardTitle>
-            <CardDescription className="text-base">
-              Navigate to specialized document collections
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              <Button 
-                variant="outline" 
-                className="justify-start h-auto p-4 text-base"
-                onClick={() => navigate("/cabin-seasonal-docs")}
-              >
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  <div className="text-left">
-                    <div className="font-medium text-base">Cabin Opening & Closing Documents</div>
-                    <div className="text-base text-muted-foreground">Seasonal procedures and checklists</div>
+        {/* Quick Access Section - Only show when no documents exist */}
+        {documents.length === 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Quick Access</CardTitle>
+              <CardDescription className="text-base">
+                Navigate to specialized document collections
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3">
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto p-4 text-base"
+                  onClick={() => navigate("/cabin-seasonal-docs")}
+                >
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    <div className="text-left">
+                      <div className="font-medium text-base">Cabin Opening & Closing Documents</div>
+                      <div className="text-base text-muted-foreground">Seasonal procedures and checklists</div>
+                    </div>
                   </div>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-4">
           {documents.map((doc) => (
