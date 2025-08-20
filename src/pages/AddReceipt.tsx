@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2 } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useReceipts } from "@/hooks/useReceipts";
+import { supabase } from "@/integrations/supabase/client";
 
 const AddReceipt = () => {
   const { receipts, loading, createReceipt, deleteReceipt } = useReceipts();
@@ -26,9 +27,52 @@ const AddReceipt = () => {
   const [fileInfo, setFileInfo] = useState<{
     name: string;
     size: number;
+    originalSize?: number;
     dimensions: { width: number; height: number } | null;
   } | null>(null);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [editingReceipt, setEditingReceipt] = useState<string | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+
   const { toast } = useToast();
+
+  // Image compression/resizing function
+  const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = document.createElement('img');
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          }
+        }, 'image/jpeg', quality);
+        
+        URL.revokeObjectURL(img.src);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
     return new Promise((resolve, reject) => {
@@ -53,11 +97,22 @@ const AddReceipt = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Compress image if it's large
+      let processedFile = file;
+      if (file.type.startsWith('image/') && file.size > 1024 * 1024) { // > 1MB
+        toast({
+          title: "Compressing image...",
+          description: "Optimizing image size for faster upload.",
+        });
+        processedFile = await compressImage(file);
+      }
+
       // Get file info
-      const dimensions = file.type.startsWith('image/') ? await getImageDimensions(file) : null;
+      const dimensions = processedFile.type.startsWith('image/') ? await getImageDimensions(processedFile) : null;
       setFileInfo({
-        name: file.name,
-        size: file.size,
+        name: processedFile.name,
+        size: processedFile.size,
+        originalSize: file.size !== processedFile.size ? file.size : undefined,
         dimensions
       });
 
@@ -66,16 +121,16 @@ const AddReceipt = () => {
         try {
           await createReceipt({
             amount: parseFloat(uploadAmount),
-            description: `Receipt uploaded: ${file.name}`,
+            description: `Receipt uploaded: ${processedFile.name}`,
             date: new Date().toISOString().split('T')[0],
-            image: file
+            image: processedFile
           });
           setUploadAmount("");
           setFileInfo(null);
           event.target.value = "";
           toast({
             title: "Receipt uploaded",
-            description: `${file.name} has been uploaded successfully.`,
+            description: `${processedFile.name} has been uploaded successfully.`,
           });
         } catch (error) {
           console.error('Upload failed:', error);
@@ -83,10 +138,10 @@ const AddReceipt = () => {
           setUploadingFile(false);
         }
       } else {
-        setCurrentFile(file || null);
+        setCurrentFile(processedFile);
         toast({
           title: "File selected",
-          description: `${file?.name} selected. Please enter amount to upload.`,
+          description: `${processedFile.name} selected. Please enter amount to upload.`,
         });
       }
     }
@@ -234,6 +289,56 @@ const AddReceipt = () => {
 
   const handleDeleteReceipt = (id: string) => {
     deleteReceipt(id);
+  };
+
+  const handleEditReceipt = (id: string, currentAmount: number) => {
+    setEditingReceipt(id);
+    setEditAmount(currentAmount.toString());
+  };
+
+  const handleSaveAmount = async (id: string) => {
+    if (!editAmount || parseFloat(editAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('receipts')
+        .update({ amount: parseFloat(editAmount) })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      const updatedReceipts = receipts.map(receipt => 
+        receipt.id === id ? { ...receipt, amount: parseFloat(editAmount) } : receipt
+      );
+      
+      toast({
+        title: "Amount updated",
+        description: "Receipt amount has been updated successfully.",
+      });
+
+      setEditingReceipt(null);
+      setEditAmount("");
+    } catch (error) {
+      console.error('Error updating receipt:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update receipt amount.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReceipt(null);
+    setEditAmount("");
   };
 
   const handleUploadWithAmount = async () => {
@@ -386,19 +491,28 @@ const AddReceipt = () => {
                       </Button>
                     )}
                   </div>
-                  {currentFile && fileInfo && (
-                    <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
-                      <p className="font-medium">{fileInfo.name}</p>
-                      <p className="text-muted-foreground">Size: {formatFileSize(fileInfo.size)}</p>
-                      {fileInfo.dimensions && (
-                        <p className="text-muted-foreground">
-                          Resolution: {fileInfo.dimensions.width} × {fileInfo.dimensions.height} pixels
-                        </p>
-                      )}
+                  {fileInfo && (
+                    <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm border">
+                      <p className="font-medium text-foreground">{fileInfo.name}</p>
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="text-muted-foreground">Size: {formatFileSize(fileInfo.size)}</span>
+                        {fileInfo.dimensions && (
+                          <span className="text-muted-foreground">
+                            {fileInfo.dimensions.width} × {fileInfo.dimensions.height}px
+                          </span>
+                        )}
+                      </div>
                       {fileInfo.size > 5 * 1024 * 1024 && (
-                        <p className="text-warning text-xs mt-1">
-                          ⚠️ Large file size - consider resizing for faster upload
-                        </p>
+                        <div className="flex items-center gap-1 mt-2 text-amber-600">
+                          <span className="text-xs">⚠️</span>
+                          <span className="text-xs">Large file - consider resizing</span>
+                        </div>
+                      )}
+                      {fileInfo.originalSize && fileInfo.size < fileInfo.originalSize && (
+                        <div className="flex items-center gap-1 mt-1 text-green-600">
+                          <span className="text-xs">✓</span>
+                          <span className="text-xs">Compressed from {formatFileSize(fileInfo.originalSize)}</span>
+                        </div>
                       )}
                     </div>
                   )}
@@ -478,7 +592,49 @@ const AddReceipt = () => {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-body font-medium truncate">{receipt.description}</p>
-                        <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
+                        <div className="flex items-center gap-2">
+                          {editingReceipt === receipt.id ? (
+                            <div className="flex items-center gap-1">
+                              <span className="text-body">$</span>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={editAmount}
+                                onChange={(e) => setEditAmount(e.target.value)}
+                                className="w-20 h-6 text-sm"
+                                autoFocus
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSaveAmount(receipt.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditReceipt(receipt.id, receipt.amount)}
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                         <p className="text-body-small text-muted-foreground">
                           {new Date(receipt.created_at).toLocaleDateString()}
                         </p>
@@ -513,18 +669,54 @@ const AddReceipt = () => {
         </div>
       </div>
 
-      {/* Image Viewing Modal */}
-      <Dialog open={!!viewingImage} onOpenChange={() => setViewingImage(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      {/* Image Viewing Modal with Zoom */}
+      <Dialog open={!!viewingImage} onOpenChange={() => { setViewingImage(null); setImageZoom(1); }}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Receipt Image</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              Receipt Image
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom(Math.max(0.25, imageZoom - 0.25))}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-mono">{Math.round(imageZoom * 100)}%</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom(Math.min(4, imageZoom + 0.25))}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImageZoom(1)}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogTitle>
           </DialogHeader>
           {viewingImage && (
-            <div className="flex justify-center">
+            <div className="flex justify-center overflow-auto max-h-[75vh]">
               <img 
                 src={viewingImage} 
                 alt="Full size receipt" 
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                className="object-contain rounded-lg cursor-move"
+                style={{ 
+                  transform: `scale(${imageZoom})`,
+                  transformOrigin: 'center',
+                  transition: 'transform 0.2s ease'
+                }}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                  setImageZoom(Math.max(0.25, Math.min(4, imageZoom + delta)));
+                }}
               />
             </div>
           )}
