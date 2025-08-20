@@ -223,21 +223,27 @@ export const useDocuments = () => {
         const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
         
         if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-          console.log('Popup blocked, creating download link');
-          // Popup was blocked, create a download link instead
-          const link = window.document.createElement('a');
-          link.href = url;
-          link.download = document.title || 'document';
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          window.document.body.appendChild(link);
-          link.click();
-          window.document.body.removeChild(link);
+          console.log('Popup blocked, asking user for download');
+          // Popup was blocked, ask user if they want to download
+          const downloadConfirm = window.confirm(
+            `Popup blocked! The document "${document.title}" cannot open in a new window.\n\nWould you like to download it instead?`
+          );
           
-          toast({
-            title: "Document Access",
-            description: "Document download started (popup was blocked)",
-          });
+          if (downloadConfirm) {
+            const link = window.document.createElement('a');
+            link.href = url;
+            link.download = document.title || 'document';
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            window.document.body.appendChild(link);
+            link.click();
+            window.document.body.removeChild(link);
+            
+            toast({
+              title: "Download Started",
+              description: "Document download has begun",
+            });
+          }
         } else {
           console.log('Document opened in new window');
         }
