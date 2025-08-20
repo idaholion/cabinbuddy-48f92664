@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface FinancialRecord {
   id: string;
@@ -27,6 +28,7 @@ export const useFinancialData = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup } = useUserRole();
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -72,20 +74,17 @@ export const useFinancialData = () => {
 
   // Determine user's access level
   const getAccessLevel = () => {
-    if (!userProfile) return 'host';
-    
-    // Check if user is admin (you might need to adjust this logic)
-    if (userProfile.family_role === 'admin' || userProfile.family_role === 'administrator') {
+    // Use organization-level roles first (more reliable)
+    if (isAdmin) {
       return 'admin';
     }
-
-    // Check if user is group lead
-    const userFamilyGroup = getUserFamilyGroup();
-    if (userFamilyGroup) {
-      const group = familyGroups.find(g => g.name === userFamilyGroup);
-      if (group && group.lead_email?.toLowerCase() === user?.email?.toLowerCase()) {
-        return 'group_lead';
-      }
+    
+    if (isTreasurer) {
+      return 'treasurer';
+    }
+    
+    if (isGroupLead) {
+      return 'group_lead';
     }
 
     return 'host';
@@ -113,14 +112,15 @@ export const useFinancialData = () => {
         query = query.eq('user_id', user.id);
       } else if (accessLevel === 'group_lead') {
         // Group leads can see all data from their family group
-        if (userFamilyGroup) {
-          query = query.eq('family_group', userFamilyGroup);
+        const userFamilyGroupName = roleUserFamilyGroup?.name || getUserFamilyGroup();
+        if (userFamilyGroupName) {
+          query = query.eq('family_group', userFamilyGroupName);
         } else {
           // If no family group found, default to own data
           query = query.eq('user_id', user.id);
         }
       }
-      // Admins can see all data (no additional filtering)
+      // Admins and treasurers can see all data (no additional filtering)
 
       const { data, error } = await query;
 
@@ -166,7 +166,7 @@ export const useFinancialData = () => {
     availableYears: getAvailableYears(),
     totalAmount: getTotalAmount(),
     accessLevel: getAccessLevel(),
-    userFamilyGroup: getUserFamilyGroup(),
+    userFamilyGroup: roleUserFamilyGroup?.name || getUserFamilyGroup(),
     refetch: fetchFinancialData,
   };
 };

@@ -49,6 +49,8 @@ const FinancialDashboard = () => {
     switch (accessLevel) {
       case 'admin':
         return { label: 'Administrator', color: 'bg-purple-100 text-purple-700' };
+      case 'treasurer':
+        return { label: 'Treasurer', color: 'bg-orange-100 text-orange-700' };
       case 'group_lead':
         return { label: 'Group Lead', color: 'bg-blue-100 text-blue-700' };
       default:
@@ -282,6 +284,7 @@ const FinancialDashboard = () => {
                         <CardTitle>Financial Records - {selectedYear}</CardTitle>
                         <CardDescription className="text-base">
                           {accessLevel === 'admin' && 'Showing all financial records for the organization'}
+                          {accessLevel === 'treasurer' && 'Showing all financial records for the organization'}
                           {accessLevel === 'group_lead' && `Showing financial records for ${userFamilyGroup}`}
                           {accessLevel === 'host' && 'Showing your financial records'}
                         </CardDescription>
