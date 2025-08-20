@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
 import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
+import { ProfileClaimDialog } from "@/components/ProfileClaimDialog";
+import { useProfileClaim } from "@/hooks/useProfileClaim";
 
 const hostProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -47,6 +49,16 @@ const HostProfile = () => {
     triggerKey: 'host-profile',
     checkProfileCompletion: true
   });
+
+  // Profile claiming
+  const { 
+    claimedProfile, 
+    hasClaimedProfile, 
+    isGroupLead, 
+    getClaimedGroupName,
+    getClaimedMemberName,
+    refetch: refetchClaimedProfile 
+  } = useProfileClaim(organization?.id);
 
   const form = useForm<HostProfileFormData>({
     resolver: zodResolver(hostProfileSchema),
@@ -498,12 +510,53 @@ const HostProfile = () => {
         userRole={userRole}
       />
 
+      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet */}
+      {!hasClaimedProfile() && familyGroups.length > 0 && (
+        <Card className="mb-6 border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Claim Your Group Member Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base text-muted-foreground mb-4">
+              Link your account to your family group member profile using your name as it appears in the system.
+            </p>
+            <ProfileClaimDialog
+              organizationId={organization?.id || ''}
+              familyGroups={familyGroups}
+              onSuccess={refetchClaimedProfile}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show claimed profile info */}
+      {hasClaimedProfile() && (
+        <Card className="mb-6 border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2 text-green-800">
+              <User className="h-5 w-5" />
+              Profile Claimed Successfully
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-green-700">
+            <p className="text-base">
+              You are linked to <strong>{getClaimedMemberName()}</strong> in the <strong>{getClaimedGroupName()}</strong> family group
+              {isGroupLead() && ' as the Group Lead'}.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Information Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-base text-muted-foreground">
+          <p>• First claim your group member profile if you haven't already</p>
           <p>• Select your family group from the dropdown menu</p>
           <p>• Choose your name from the list of host members</p>
           <p>• Update your email and phone number as needed</p>

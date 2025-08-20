@@ -531,6 +531,42 @@ export type Database = {
         }
         Relationships: []
       }
+      member_profile_links: {
+        Row: {
+          claimed_at: string | null
+          claimed_by_user_id: string | null
+          created_at: string
+          family_group_name: string
+          id: string
+          member_name: string
+          member_type: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          created_at?: string
+          family_group_name: string
+          id?: string
+          member_name: string
+          member_type?: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by_user_id?: string | null
+          created_at?: string
+          family_group_name?: string
+          id?: string
+          member_name?: string
+          member_type?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_share_allocations: {
         Row: {
           allocated_by_user_id: string | null
@@ -2063,6 +2099,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      claim_family_member_profile: {
+        Args: {
+          p_family_group_name: string
+          p_member_name: string
+          p_member_type?: string
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       create_reservation_payment: {
         Args: {
           p_deposit_percentage?: number
@@ -2092,6 +2137,10 @@ export type Database = {
           name: string
           updated_at: string
         }[]
+      }
+      get_user_claimed_profile: {
+        Args: { p_organization_id: string }
+        Returns: Json
       }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
