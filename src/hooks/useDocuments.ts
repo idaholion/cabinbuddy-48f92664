@@ -218,7 +218,29 @@ export const useDocuments = () => {
       
       if (url) {
         console.log('Opening URL:', url);
-        window.open(url, '_blank');
+        
+        // Try to open in new window, with fallback for popup blocking
+        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+        
+        if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+          console.log('Popup blocked, creating download link');
+          // Popup was blocked, create a download link instead
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = document.title || 'document';
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+          
+          toast({
+            title: "Document Access",
+            description: "Document download started (popup was blocked)",
+          });
+        } else {
+          console.log('Document opened in new window');
+        }
       } else {
         console.error('No URL available to open');
         toast({
