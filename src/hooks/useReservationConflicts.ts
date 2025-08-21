@@ -20,7 +20,7 @@ export interface ConflictCheckResult {
 export const useReservationConflicts = () => {
   const { organization } = useOrganization();
 
-  // Check for date range overlaps
+  // Check for date range overlaps (allowing same-day check-in/check-out at noon)
   const checkDateOverlap = useCallback((
     start1: Date | string, 
     end1: Date | string, 
@@ -31,6 +31,13 @@ export const useReservationConflicts = () => {
     const endDate1 = new Date(end1);
     const startDate2 = new Date(start2);
     const endDate2 = new Date(end2);
+
+    // Allow same-day check-out/check-in (noon policy)
+    // If one reservation ends on the same day another starts, no conflict
+    if (endDate1.toDateString() === startDate2.toDateString() || 
+        endDate2.toDateString() === startDate1.toDateString()) {
+      return false;
+    }
 
     // Check if ranges overlap: start1 < end2 && end1 > start2
     return startDate1 < endDate2 && endDate1 > startDate2;
@@ -51,12 +58,12 @@ export const useReservationConflicts = () => {
     const endDateStr = typeof endDate === 'string' ? endDate : endDate.toISOString().split('T')[0];
 
     try {
+      // Get all reservations that might overlap, then filter with our noon policy
       let query = supabase
         .from('reservations')
         .select('id, start_date, end_date, family_group, property_name, status')
         .eq('organization_id', organization.id)
-        .eq('status', 'confirmed') // Only check confirmed reservations
-        .or(`and(start_date.lte.${endDateStr},end_date.gte.${startDateStr})`);
+        .eq('status', 'confirmed'); // Only check confirmed reservations
 
       // Exclude specific reservation if provided (for editing)
       if (excludeReservationId) {
@@ -75,10 +82,14 @@ export const useReservationConflicts = () => {
         return { hasConflicts: false, conflicts: [], warnings: ['Error checking for conflicts'] };
       }
 
-      const conflicts = data || [];
+      // Filter overlapping reservations using the updated overlap check
+      const actualConflicts = (data || []).filter(reservation => 
+        checkDateOverlap(startDateStr, endDateStr, reservation.start_date, reservation.end_date)
+      );
+
       const warnings: string[] = [];
 
-      // Add warnings for near-conflicts (same-day checkout/checkin)
+      // Add informational messages for same-day transitions (noon policy)
       const sameDay = data?.filter(reservation => {
         const resEndDate = new Date(reservation.end_date);
         const newStartDate = new Date(startDateStr);
@@ -93,12 +104,12 @@ export const useReservationConflicts = () => {
       }) || [];
 
       sameDay.forEach(reservation => {
-        warnings.push(`Same-day transition with ${reservation.family_group} reservation`);
+        warnings.push(`Same-day transition with ${reservation.family_group} (check-in/out at noon)`);
       });
 
       return {
-        hasConflicts: conflicts.length > 0,
-        conflicts,
+        hasConflicts: actualConflicts.length > 0,
+        conflicts: actualConflicts,
         warnings
       };
     } catch (error) {
