@@ -1039,63 +1039,171 @@ const getBookingsForDate = (date: Date) => {
           
           {/* List View */}
           {viewMode === 'list' && (
-            <div className="space-y-2">
-              {calendarDays
-                .filter(day => day.getMonth() === currentMonth.getMonth())
-                .map(day => {
-                  const dayBookings = getBookingsForDate(day);
-                  const timePeriod = getTimePeriodForDate(day);
-                  const tradeRequests = getTradeRequestsForDate(day);
+            <div className="space-y-3">
+              {timePeriodWindows.map((timePeriod, index) => {
+                // Get all reservations within this time period
+                const periodReservations = reservations.filter(reservation => {
+                  const reservationStart = parseLocalDate(reservation.start_date);
+                  const reservationEnd = parseLocalDate(reservation.end_date);
                   
-                  if (dayBookings.length === 0 && (!timePeriod || !filterOptions.showTimePeriods) && (tradeRequests.length === 0 || !filterOptions.showTradeRequests)) {
-                    return null;
+                  // Check if reservation overlaps with time period
+                  return (reservationStart <= timePeriod.endDate && reservationEnd >= timePeriod.startDate) &&
+                         (reservationStart.getMonth() === currentMonth.getMonth() || reservationEnd.getMonth() === currentMonth.getMonth());
+                });
+
+                // Apply filtering
+                const filteredReservations = periodReservations.filter(reservation => {
+                  // Apply external family group filter
+                  if (selectedFamilyGroupFilter && selectedFamilyGroupFilter !== '' && reservation.family_group !== selectedFamilyGroupFilter) {
+                    return false;
                   }
                   
-                  return (
-                    <div key={day.toISOString()} className="p-3 border border-border rounded-lg bg-card">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium">{day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                        <div className="flex items-center space-x-2">
-                          {timePeriod && filterOptions.showTimePeriods && (
-                            <Badge variant="outline">{timePeriod.familyGroup} Period</Badge>
+                  // Apply internal filter options
+                  if (filterOptions.familyGroupFilter !== 'all' && reservation.family_group !== filterOptions.familyGroupFilter) {
+                    return false;
+                  }
+                  
+                  const isMyBooking = reservation.family_group === userFamilyGroup;
+                  if (isMyBooking && !filterOptions.showMyBookings) {
+                    return false;
+                  }
+                  if (!isMyBooking && !filterOptions.showOtherBookings) {
+                    return false;
+                  }
+                  
+                  return true;
+                });
+
+                // Get usage data for this time period's family group
+                const periodUsage = timePeriodUsage.find(u => u.family_group === timePeriod.familyGroup);
+                
+                // Skip if no reservations and not showing time periods
+                if (filteredReservations.length === 0 && !filterOptions.showTimePeriods) {
+                  return null;
+                }
+                
+                const assignedFamilyGroup = familyGroups.find(fg => fg.name === timePeriod.familyGroup);
+                const groupColor = assignedFamilyGroup?.color;
+                
+                return (
+                  <div key={index} className="p-4 border border-border rounded-lg bg-card">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          {groupColor && (
+                            <div
+                              className="w-4 h-4 rounded-full border border-border"
+                              style={{ backgroundColor: groupColor }}
+                            />
                           )}
-                          {tradeRequests.length > 0 && filterOptions.showTradeRequests && (
-                            <Badge variant="destructive">Trade Request</Badge>
-                          )}
+                          <h4 className="font-medium">Period {timePeriod.periodNumber}</h4>
                         </div>
+                        <Badge variant="outline" className="text-xs">
+                          {timePeriod.familyGroup}
+                        </Badge>
                       </div>
-                      <div className="space-y-1">
-                        {dayBookings.map((booking, i) => {
-                          const familyGroup = familyGroups.find(fg => fg.name === booking.family_group);
-                          const groupColor = familyGroup?.color;
+                      <div className="text-sm text-muted-foreground">
+                        {format(timePeriod.startDate, 'MMM d')} - {format(timePeriod.endDate, 'MMM d, yyyy')}
+                      </div>
+                    </div>
+                    
+                    {/* Period details */}
+                    <div className="mb-3 p-3 bg-muted/30 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Assigned to:</span>
+                          <span className="ml-1 font-medium">{timePeriod.familyGroup}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Max nights:</span>
+                          <span className="ml-1">{timePeriod.maxNights}</span>
+                        </div>
+                        {periodUsage && (
+                          <>
+                            <div>
+                              <span className="text-muted-foreground">Periods used:</span>
+                              <span className="ml-1">{periodUsage.time_periods_used} / {periodUsage.time_periods_allowed}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Available:</span>
+                              <span className="ml-1">
+                                {timePeriod.isAvailable ? (
+                                  <Badge variant="default" className="text-xs">Yes</Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs">No</Badge>
+                                )}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Reservations in this period */}
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium text-muted-foreground">
+                        Reservations ({filteredReservations.length})
+                      </h5>
+                      {filteredReservations.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic pl-4">No reservations in this period</p>
+                      ) : (
+                        filteredReservations.map((reservation, i) => {
+                          const reservationFamilyGroup = familyGroups.find(fg => fg.name === reservation.family_group);
+                          const reservationColor = reservationFamilyGroup?.color;
                           
                           return (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2">
-                                {groupColor && (
+                            <div key={reservation.id} className="flex items-center justify-between p-3 bg-background border border-border/50 rounded-md">
+                              <div className="flex items-center gap-3">
+                                {reservationColor && (
                                   <div
                                     className="w-3 h-3 rounded-full border border-border"
-                                    style={{ backgroundColor: groupColor }}
+                                    style={{ backgroundColor: reservationColor }}
                                   />
                                 )}
-                                <span>{getHostFirstName(booking)}</span>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">{getHostFirstName(reservation)}</span>
+                                    <span className="text-sm text-muted-foreground">({reservation.family_group})</span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {parseLocalDate(reservation.start_date).toLocaleDateString()} - {parseLocalDate(reservation.end_date).toLocaleDateString()}
+                                    {reservation.nights_used && (
+                                      <span className="ml-2">• {reservation.nights_used} nights</span>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                {booking.time_period_number && (
-                                  <Badge variant="secondary" className="text-xs">Period {booking.time_period_number}</Badge>
+                              <div className="flex items-center gap-2">
+                                {(isCalendarKeeper || reservation.family_group === userFamilyGroup) && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditReservation(reservation)}
+                                  >
+                                    <Edit2 className="h-3 w-3 mr-1" />
+                                    Edit
+                                  </Button>
                                 )}
-                                <Badge variant={booking.status === 'confirmed' ? 'default' : 'outline'}>
-                                  {booking.status}
+                                <Badge variant={reservation.status === 'confirmed' ? 'default' : 'secondary'}>
+                                  {reservation.status}
                                 </Badge>
                               </div>
                             </div>
                           );
-                        })}
-                      </div>
+                        })
+                      )}
                     </div>
-                  );
-                })
-                .filter(Boolean)}
+                  </div>
+                );
+              }).filter(Boolean)}
+              
+              {timePeriodWindows.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CalendarDays className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No time periods configured for this month.</p>
+                  <p className="text-sm">Set up rotation settings to see time period allocation.</p>
+                </div>
+              )}
             </div>
           )}
           
