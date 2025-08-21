@@ -69,7 +69,7 @@ const FamilySetup = () => {
   const [calendarKeeperName, setCalendarKeeperName] = useState("");
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
-  const [familyGroups, setFamilyGroups] = useState<string[]>([""]);
+  const [familyGroups, setFamilyGroups] = useState<{name: string, leadFirstName: string, leadLastName: string}[]>([{name: "", leadFirstName: "", leadLastName: ""}]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
   const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
   const [showProfileClaimingStep, setShowProfileClaimingStep] = useState(false);
@@ -133,7 +133,11 @@ const FamilySetup = () => {
         if (savedData.calendarKeeperPhone) setCalendarKeeperPhone(savedData.calendarKeeperPhone);
         if (savedData.calendarKeeperEmail) setCalendarKeeperEmail(savedData.calendarKeeperEmail);
         if (savedData.familyGroups && savedData.familyGroups.length > 0) {
-          setFamilyGroups(savedData.familyGroups);
+          // Handle both old string[] format and new object format
+          const groups = savedData.familyGroups.map((g: any) => 
+            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
+          );
+          setFamilyGroups(groups);
         }
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
         if (savedData.adminFamilyGroup) setAdminFamilyGroup(savedData.adminFamilyGroup);
@@ -183,7 +187,11 @@ const FamilySetup = () => {
         setCalendarKeeperName(savedData.calendarKeeperName || "");
         setCalendarKeeperPhone(savedData.calendarKeeperPhone || "");
         setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
-        setFamilyGroups(savedData.familyGroups && savedData.familyGroups.length > 0 ? savedData.familyGroups : [""]);
+        const groups = savedData.familyGroups && savedData.familyGroups.length > 0 ? 
+          savedData.familyGroups.map((g: any) => 
+            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
+          ) : [{name: "", leadFirstName: "", leadLastName: ""}];
+        setFamilyGroups(groups);
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
         if (savedData.adminFamilyGroup) setAdminFamilyGroup(savedData.adminFamilyGroup);
         
@@ -209,7 +217,11 @@ const FamilySetup = () => {
           setCalendarKeeperName(data.calendarKeeperName || "");
           setCalendarKeeperPhone(data.calendarKeeperPhone || "");
           setCalendarKeeperEmail(data.calendarKeeperEmail || "");
-          setFamilyGroups(data.familyGroups && data.familyGroups.length > 0 ? data.familyGroups : [""]);
+          const groups = data.familyGroups && data.familyGroups.length > 0 ? 
+            data.familyGroups.map((g: any) => 
+              typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
+            ) : [{name: "", leadFirstName: "", leadLastName: ""}];
+          setFamilyGroups(groups);
         }
       }
     }
@@ -275,16 +287,29 @@ const FamilySetup = () => {
         }
       }
       
+      // Validate family groups have required lead names
+      const validGroups = familyGroups.filter(group => 
+        group.name.trim() !== "" && group.leadFirstName.trim() !== "" && group.leadLastName.trim() !== ""
+      );
+      
+      if (familyGroups.some(g => g.name.trim() !== "" && (!g.leadFirstName.trim() || !g.leadLastName.trim()))) {
+        toast({
+          title: "Missing lead information",
+          description: "Please provide first and last names for all family group leads.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Create family groups in the database
-      const nonEmptyGroups = familyGroups.filter(group => group.trim() !== "");
       const currentOrgId = (organization || newOrganization)?.id;
       
-      if (nonEmptyGroups.length > 0 && currentOrgId) {
+      if (validGroups.length > 0 && currentOrgId) {
         try {
-          const payload = nonEmptyGroups.map(groupName => ({
+          const payload = validGroups.map(group => ({
             organization_id: currentOrgId,
-            name: groupName.trim(),
-            lead_name: null,
+            name: group.name.trim(),
+            lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
             lead_phone: null,
             lead_email: null,
             host_members: [],
@@ -359,7 +384,7 @@ const FamilySetup = () => {
       clearSavedData();
       
       // Also save just the family groups for the SelectFamilyGroup page
-      localStorage.setItem('familyGroupsList', JSON.stringify(nonEmptyGroups));
+      localStorage.setItem('familyGroupsList', JSON.stringify(validGroups.map(g => g.name)));
       
     } catch (error) {
       toast({
@@ -378,7 +403,7 @@ const FamilySetup = () => {
       clearSavedData();
       
       // For new organizations with family groups, show profile claiming step
-      if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.trim()))) {
+      if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim()))) {
         setShowProfileClaimingStep(true);
         return;
       }
@@ -425,15 +450,15 @@ const FamilySetup = () => {
   };
 
   // Handle family group input changes
-  const handleFamilyGroupChange = (index: number, value: string) => {
+  const handleFamilyGroupChange = (index: number, field: 'name' | 'leadFirstName' | 'leadLastName', value: string) => {
     const newFamilyGroups = [...familyGroups];
-    newFamilyGroups[index] = value;
+    newFamilyGroups[index][field] = value;
     setFamilyGroups(newFamilyGroups);
   };
 
   // Add a new family group field
   const addFamilyGroup = () => {
-    setFamilyGroups(prev => [...prev, ""]);
+    setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: ""}]);
   };
 
   // Remove a family group field
@@ -510,7 +535,7 @@ const FamilySetup = () => {
             onProfileClaimed={handleProfileClaimed}
             onSkip={handleSkipProfileClaiming}
             familyGroups={existingFamilyGroups.length > 0 ? existingFamilyGroups : 
-              familyGroups.filter(g => g.trim()).map(name => ({ name: name.trim() }))}
+              familyGroups.filter(g => g.name.trim()).map(group => ({ name: group.name.trim() }))}
             adminEmail={adminEmail}
           />
         ) : (
@@ -761,29 +786,54 @@ const FamilySetup = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {familyGroups.map((group, index) => (
-                    <div key={index} className="flex items-end gap-2">
-                      <div className="flex-1 space-y-1">
-                        <Label htmlFor={`familyGroup${index}`} className="text-lg font-semibold">Family Group {index + 1}</Label>
+                    <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-lg font-semibold">Family Group {index + 1}</Label>
+                        {familyGroups.length > 1 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeFamilyGroup(index)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`familyGroupName${index}`} className="text-sm font-medium">Group Name *</Label>
                         <Input
-                          id={`familyGroup${index}`}
+                          id={`familyGroupName${index}`}
                           placeholder={`Enter Family Group ${index + 1} name`}
-                          value={group}
-                          onChange={(e) => handleFamilyGroupChange(index, e.target.value)}
-                          autoFocus={index === familyGroups.length - 1 && group === ""}
+                          value={group.name}
+                          onChange={(e) => handleFamilyGroupChange(index, 'name', e.target.value)}
+                          autoFocus={index === familyGroups.length - 1 && group.name === ""}
                         />
                       </div>
-                      {familyGroups.length > 1 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeFamilyGroup(index)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
+                          <Input
+                            id={`leadFirstName${index}`}
+                            placeholder="First name"
+                            value={group.leadFirstName}
+                            onChange={(e) => handleFamilyGroupChange(index, 'leadFirstName', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`leadLastName${index}`} className="text-sm font-medium">Lead Last Name *</Label>
+                          <Input
+                            id={`leadLastName${index}`}
+                            placeholder="Last name"
+                            value={group.leadLastName}
+                            onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   ))}
                   
@@ -799,13 +849,14 @@ const FamilySetup = () => {
                   </div>
                 
                   <div className="text-sm text-muted-foreground text-center mt-4">
-                    <p>After saving, you can add more details like lead contacts and host members for each family group in the next step.</p>
+                    <p>After saving, you can add more details like lead contacts, host members, and colors for each family group in the next step.</p>
+                    <p className="text-xs mt-1 text-orange-600">* All fields marked with asterisk are required</p>
                   </div>
                 </div>
               )}
 
               {/* Administrator Family Group Selection - Only for new organizations */}
-              {isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.trim())) && (
+              {isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim())) && (
                 <div className="space-y-3 border-t border-border pt-4">
                   <h3 className="text-lg font-semibold text-center">Select Your Family Group</h3>
                   <p className="text-sm text-muted-foreground text-center">
@@ -826,10 +877,10 @@ const FamilySetup = () => {
                             </option>
                           ))
                         : familyGroups
-                            .filter(group => group.trim() !== "")
+                            .filter(group => group.name.trim() !== "")
                             .map((group, index) => (
-                              <option key={index} value={group.trim()}>
-                                {group.trim()}
+                              <option key={index} value={group.name.trim()}>
+                                {group.name.trim()}
                               </option>
                             ))
                       }
