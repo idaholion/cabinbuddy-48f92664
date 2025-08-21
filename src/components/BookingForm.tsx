@@ -184,25 +184,14 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   // Get the selected family group's host members
   const selectedFamilyGroup = familyGroups.find(fg => fg.name === watchedFamilyGroup);
   
-  // Debug logging to see what data we have
-  if (selectedFamilyGroup && watchedFamilyGroup) {
-    console.log('Selected family group:', watchedFamilyGroup, selectedFamilyGroup);
-    console.log('Lead info:', {
-      name: selectedFamilyGroup.lead_name,
-      email: selectedFamilyGroup.lead_email,
-      phone: selectedFamilyGroup.lead_phone
-    });
-    console.log('Host members:', selectedFamilyGroup.host_members);
-  }
-  
   // Combine group lead with host members to ensure leads can be selected as hosts
   const familyGroupHosts = selectedFamilyGroup ? 
     [
-      // Include group lead if they exist and aren't already in host_members
-      ...(selectedFamilyGroup.lead_name && selectedFamilyGroup.lead_email ? 
+      // Include group lead if they exist (email not required in override mode)
+      ...(selectedFamilyGroup.lead_name && (selectedFamilyGroup.lead_email || testOverrideMode) ? 
         [{
           name: selectedFamilyGroup.lead_name,
-          email: selectedFamilyGroup.lead_email,
+          email: selectedFamilyGroup.lead_email || `${selectedFamilyGroup.lead_name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
           phone: selectedFamilyGroup.lead_phone || ''
         }] : []
       ),
@@ -212,11 +201,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       // Remove duplicates based on email
       arr.findIndex(h => h.email?.toLowerCase() === host.email?.toLowerCase()) === index
     ) : [];
-
-  // Debug the final host list
-  if (watchedFamilyGroup) {
-    console.log('Final familyGroupHosts for', watchedFamilyGroup, ':', familyGroupHosts);
-  }
 
   // Calculate time period windows for current month
   const timePeriodWindows = calculateTimePeriodWindows(
@@ -423,7 +407,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                       {...field} 
                       className="w-full p-2 border rounded-md bg-background"
                       required
-                      disabled={isGroupMember && !isGroupLead && !isCalendarKeeper} // Only regular group members can't change family group
+                      disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
                     >
                       <option value="">Select Family Group</option>
                       {availableFamilyGroups.map((group) => (
@@ -461,7 +445,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                             }]);
                           }
                         }}
-                        disabled={isGroupMember && !isGroupLead && !isCalendarKeeper} // Regular group members can't change host
+                        disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
                       >
                         <option value="">Select Host</option>
                         {familyGroupHosts.map((host: any) => (
