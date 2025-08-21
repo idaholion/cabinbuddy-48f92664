@@ -295,10 +295,16 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []); // Removed currentMonth dependency to prevent infinite loop
 
-  const getBookingsForDate = (date: Date) => {
+// Utility function to parse date strings as local dates (avoiding timezone shifts)
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+};
+
+const getBookingsForDate = (date: Date) => {
     const allBookings = reservations.filter(reservation => {
-      const startDate = new Date(reservation.start_date);
-      const endDate = new Date(reservation.end_date);
+      const startDate = parseLocalDate(reservation.start_date);
+      const endDate = parseLocalDate(reservation.end_date);
       
       // Normalize dates to avoid timezone issues
       const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -1174,8 +1180,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   
                   // Get reservations for this month
                   const monthReservations = reservations.filter(reservation => {
-                    const startDate = new Date(reservation.start_date);
-                    const endDate = new Date(reservation.end_date);
+                    const startDate = parseLocalDate(reservation.start_date);
+                    const endDate = parseLocalDate(reservation.end_date);
                     const monthStart = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth(), 1);
                     const monthEnd = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0);
                     
@@ -1235,8 +1241,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                           
                           // Check if this day has any reservations
                           const dayReservations = monthReservations.filter(reservation => {
-                            const startDate = new Date(reservation.start_date);
-                            const endDate = new Date(reservation.end_date);
+                            const startDate = parseLocalDate(reservation.start_date);
+                            const endDate = parseLocalDate(reservation.end_date);
                             return day >= startDate && day <= endDate;
                           });
                           
@@ -1304,7 +1310,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
           <div className="space-y-4">
             {reservations
               .filter(reservation => {
-                const startDate = new Date(reservation.start_date);
+                const startDate = parseLocalDate(reservation.start_date);
                 return startDate.getMonth() === currentMonth.getMonth();
               })
               .slice(0, 10)
@@ -1331,10 +1337,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                          <MapPin className="h-3 w-3 mr-1" />
                          {reservation.property_name || propertyName}
                        </div>
-                       <div className="text-sm text-muted-foreground flex items-center">
-                         <Clock className="h-3 w-3 mr-1" />
-                         {new Date(reservation.start_date).toLocaleDateString()} to {new Date(reservation.end_date).toLocaleDateString()}
-                       </div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {parseLocalDate(reservation.start_date).toLocaleDateString()} to {parseLocalDate(reservation.end_date).toLocaleDateString()}
+                        </div>
                        {reservation.nights_used && (
                          <div className="text-xs text-muted-foreground">
                            {reservation.nights_used} nights • Period #{reservation.time_period_number}
@@ -1373,7 +1379,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               ))}
             
             {reservations.filter(reservation => {
-              const startDate = new Date(reservation.start_date);
+              const startDate = parseLocalDate(reservation.start_date);
               return startDate.getMonth() === currentMonth.getMonth();
             }).length === 0 && (
               <p className="text-muted-foreground text-center py-4">No reservations this month</p>

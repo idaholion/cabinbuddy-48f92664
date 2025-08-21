@@ -18,6 +18,12 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 
+// Utility function to parse date strings as local dates (avoiding timezone shifts)
+const parseLocalDate = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+};
+
 interface BookingFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -104,8 +110,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         })) : [];
 
       form.reset({
-        startDate: new Date(editingReservation.start_date),
-        endDate: new Date(editingReservation.end_date),
+        startDate: parseLocalDate(editingReservation.start_date),
+        endDate: parseLocalDate(editingReservation.end_date),
         familyGroup: editingReservation.family_group,
         totalCost: editingReservation.total_cost || 0,
         hostAssignments: parsedAssignments
