@@ -158,7 +158,7 @@ export const useReservations = () => {
     }
   };
 
-  const updateReservation = async (reservationId: string, updates: Partial<ReservationData>) => {
+  const updateReservation = async (reservationId: string, updates: Partial<ReservationData>, testOverrideMode: boolean = false) => {
     if (!user || !organization?.id) {
       toast({
         title: "Error",
@@ -168,26 +168,29 @@ export const useReservations = () => {
       return null;
     }
 
-    // Check if user has permission to modify reservations
-    const canModifyReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
-    if (!canModifyReservation) {
-      toast({
-        title: "Permission Denied",
-        description: "Only group leads and authorized hosts can modify reservations.",
-        variant: "destructive",
-      });
-      return null;
-    }
+    // Skip permission checks in test override mode
+    if (!testOverrideMode) {
+      // Check if user has permission to modify reservations
+      const canModifyReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+      if (!canModifyReservation) {
+        toast({
+          title: "Permission Denied",
+          description: "Only group leads and authorized hosts can modify reservations.",
+          variant: "destructive",
+        });
+        return null;
+      }
 
-    // Get current reservation to check family group ownership
-    const currentReservation = reservations.find(r => r.id === reservationId);
-    if (userFamilyGroup && currentReservation?.family_group !== userFamilyGroup.name) {
-      toast({
-        title: "Permission Denied",
-        description: "You can only modify reservations for your own family group.",
-        variant: "destructive",
-      });
-      return null;
+      // Get current reservation to check family group ownership
+      const currentReservation = reservations.find(r => r.id === reservationId);
+      if (userFamilyGroup && currentReservation?.family_group !== userFamilyGroup.name) {
+        toast({
+          title: "Permission Denied",
+          description: "You can only modify reservations for your own family group.",
+          variant: "destructive",
+        });
+        return null;
+      }
     }
 
     // If updating dates, validate for conflicts

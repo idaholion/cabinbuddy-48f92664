@@ -180,6 +180,11 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     refetchReservations();
   };
 
+  const handleEditReservation = (reservation: any) => {
+    setEditingReservation(reservation);
+    setShowBookingForm(true);
+  };
+
   const handleEditBookingAction = (action: string) => {
     if (action === 'request-trade') {
       setShowTradeForm(true);
@@ -880,28 +885,29 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                         const groupColor = familyGroup?.color;
                         
                          return (
-                           <div
-                             key={i}
-                             className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold ${
-                               groupColor 
-                                 ? '' // We'll handle color via style for custom colors
-                                 : isMyBooking 
-                                   ? 'bg-primary/20 text-primary-foreground border-primary/30' 
-                                   : booking.status === 'confirmed' 
-                                     ? 'bg-secondary/50 text-secondary-foreground border-secondary/30' 
-                                     : 'bg-muted/60 text-muted-foreground border-muted/30'
-                             } ${
-                               booking.time_period_number ? 'border-l-2 border-l-accent' : ''
-                             }`}
-                             style={{
-                               backgroundColor: groupColor || undefined,
-                               borderColor: groupColor ? `${groupColor}66` : undefined,
-                               color: groupColor ? getContrastTextColor(groupColor) : undefined,
-                               textShadow: groupColor ? 
-                                 getContrastTextColor(groupColor) === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' 
-                                 : undefined
-                             }}
-                           >
+                            <div
+                              key={i}
+                              className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold cursor-pointer hover:opacity-80 ${
+                                groupColor 
+                                  ? '' // We'll handle color via style for custom colors
+                                  : isMyBooking 
+                                    ? 'bg-primary/20 text-primary-foreground border-primary/30' 
+                                    : booking.status === 'confirmed' 
+                                      ? 'bg-secondary/50 text-secondary-foreground border-secondary/30' 
+                                      : 'bg-muted/60 text-muted-foreground border-muted/30'
+                              } ${
+                                booking.time_period_number ? 'border-l-2 border-l-accent' : ''
+                              }`}
+                              style={{
+                                backgroundColor: groupColor || undefined,
+                                borderColor: groupColor ? `${groupColor}66` : undefined,
+                                color: groupColor ? getContrastTextColor(groupColor) : undefined,
+                                textShadow: groupColor ? 
+                                  getContrastTextColor(groupColor) === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' 
+                                  : undefined
+                              }}
+                              onClick={() => handleEditReservation(booking)}
+                            >
                              <div className="flex items-center justify-between">
                                <span className="truncate font-bold text-sm">{getHostFirstName(booking)}</span>
                                {booking.time_period_number && (

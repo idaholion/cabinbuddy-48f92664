@@ -292,7 +292,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           total_cost: data.totalCost,
           nights_used: nights,
           host_assignments: hostAssignmentsData
-        });
+        }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (updatedReservation) {
           toast({
