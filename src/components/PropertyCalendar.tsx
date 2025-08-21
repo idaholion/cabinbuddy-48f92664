@@ -610,99 +610,96 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               </Button>
             </div>
             
-            {/* Save Reservations Button */}
+            {/* Save Button - Simplified */}
             <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
               <Save className="h-4 w-4 mr-1" />
-              Save Reservations
+              Save
             </Button>
             
-            {/* Test Mode Button */}
-            {isCalendarKeeper && (
-              <Button
-                variant={testOverrideMode ? "default" : "outline"}
-                onClick={() => setTestOverrideMode(!testOverrideMode)}
-                size="sm"
-                className={testOverrideMode ? "bg-orange-600 hover:bg-orange-700 text-white" : "border-orange-300 text-orange-700 hover:bg-orange-100"}
-              >
-                Test
-              </Button>
-            )}
             
-            {/* Phase 4: Filter Dropdown - positioned in center */}
+            {/* Filter & Search - Consolidated */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-1" />
-                  Filter
+                  <Search className="h-4 w-4 mr-1" />
+                  Filter & Search
                 </Button>
               </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-4">
-              <div className="space-y-3">
-                <div className="text-sm font-medium">Show Bookings</div>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      checked={filterOptions.showMyBookings}
-                      onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
-                      className="rounded border-border"
+              <DropdownMenuContent className="w-80 p-4">
+                <div className="space-y-4">
+                  {/* Search Section */}
+                  <div>
+                    <div className="text-sm font-medium mb-2">Search</div>
+                    <SearchInput
+                      placeholder="Search reservations, family groups..."
+                      onSearch={setSearchQuery}
+                      className="w-full"
                     />
-                    <span>My bookings</span>
-                  </label>
-                  <label className="flex items-center space-x-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      checked={filterOptions.showOtherBookings}
-                      onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
-                      className="rounded border-border"
-                    />
-                    <span>Other bookings</span>
-                  </label>
-                  <label className="flex items-center space-x-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      checked={filterOptions.showTimePeriods}
-                      onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
-                      className="rounded border-border"
-                    />
-                    <span>Time periods</span>
-                  </label>
-                  <label className="flex items-center space-x-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      checked={filterOptions.showTradeRequests}
-                      onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
-                      className="rounded border-border"
-                    />
-                    <span>Trade requests</span>
-                  </label>
+                  </div>
+                  
+                  {/* Filter Section */}
+                  <div className="pt-3 border-t">
+                    <div className="text-sm font-medium mb-2">Show Bookings</div>
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showMyBookings}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>My bookings</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showOtherBookings}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Other bookings</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showTimePeriods}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Time periods</span>
+                      </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showTradeRequests}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Trade requests</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-3 border-t">
+                    <div className="text-sm font-medium mb-2">Family Group</div>
+                    <Select 
+                      value={filterOptions.familyGroupFilter} 
+                      onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Groups</SelectItem>
+                        {familyGroups.map(fg => (
+                          <SelectItem key={fg.id} value={fg.name}>{fg.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                
-                <div className="text-sm font-medium pt-2 border-t">Family Group</div>
-                <Select 
-                  value={filterOptions.familyGroupFilter} 
-                  onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Groups</SelectItem>
-                    {familyGroups.map(fg => (
-                      <SelectItem key={fg.id} value={fg.name}>{fg.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </DropdownMenuContent>
+              </DropdownMenuContent>
             </DropdownMenu>
-            
-            {/* Search Input - positioned on right */}
-            <SearchInput
-              placeholder="Search reservations, family groups..."
-              onSearch={setSearchQuery}
-              className="w-64"
-            />
           </div>
           
             <div className="flex items-center justify-between">

@@ -343,34 +343,36 @@ const CabinCalendar = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Enhanced Family Group Selector */}
-                  <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial">
-                    <Users className="h-4 w-4 text-primary flex-shrink-0" />
-                    <Select value={selectedFamilyGroup} onValueChange={handleFamilyGroupChange}>
-                      <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
-                        <SelectValue placeholder="Select Family Group" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border border-border shadow-lg z-50">
-                        {isCalendarKeeper && <SelectItem value="all">All Family Groups</SelectItem>}
-                        {(isCalendarKeeper ? familyGroups : familyGroups.filter(fg => fg.name === userFamilyGroupName)).map((familyGroup) => (
-                          <SelectItem key={familyGroup.id} value={familyGroup.name}>
-                            <div className="flex items-center gap-2">
-                              {familyGroup.color && (
-                                <div
-                                  className="w-3 h-3 rounded-full border border-border animate-scale-in"
-                                  style={{ backgroundColor: familyGroup.color }}
-                                />
-                              )}
-                              <span className="truncate">{familyGroup.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Family Group Selector - Only for Calendar Keepers when manually adding reservations */}
+                  {isCalendarKeeper && (
+                    <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial">
+                      <Users className="h-4 w-4 text-primary flex-shrink-0" />
+                      <Select value={selectedFamilyGroup} onValueChange={handleFamilyGroupChange}>
+                        <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
+                          <SelectValue placeholder="Select Family Group" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border border-border shadow-lg z-50">
+                          <SelectItem value="all">All Family Groups</SelectItem>
+                          {familyGroups.map((familyGroup) => (
+                            <SelectItem key={familyGroup.id} value={familyGroup.name}>
+                              <div className="flex items-center gap-2">
+                                {familyGroup.color && (
+                                  <div
+                                    className="w-3 h-3 rounded-full border border-border animate-scale-in"
+                                    style={{ backgroundColor: familyGroup.color }}
+                                  />
+                                )}
+                                <span className="truncate">{familyGroup.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   
-                  {/* Enhanced Host Selector */}
-                  {selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
+                  {/* Host Selector - Only when Calendar Keeper has selected a family group */}
+                  {isCalendarKeeper && selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
                     <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial animate-fade-in">
                       <User className="h-4 w-4 text-primary flex-shrink-0" />
                       <Select value={selectedHost} onValueChange={setSelectedHost}>
@@ -387,21 +389,6 @@ const CabinCalendar = () => {
                       </Select>
                     </div>
                   )}
-                  
-                  {/* Property Selector */}
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    <Select value="property">
-                      <SelectTrigger className="w-full md:w-48 bg-background/90 backdrop-blur-sm border-border">
-                        <SelectValue placeholder="Select property" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background border border-border shadow-lg z-50">
-                        <SelectItem value="property">
-                          {reservationSettings?.property_name || "Property"}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               </div>
             </div>
