@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useSupervisor } from '@/hooks/useSupervisor';
+import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign } from 'lucide-react';
+import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign, UserCheck } from 'lucide-react';
 import { OrganizationDetail } from '@/components/OrganizationDetail';
 import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
 import { DefaultFeatureManagement } from '@/components/DefaultFeatureManagement';
-
 import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTab';
 import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
+import { ProtectedSupervisorRoute } from '@/components/ProtectedSupervisorRoute';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const SupervisorDashboard = () => {
@@ -29,6 +30,7 @@ export const SupervisorDashboard = () => {
     refetchOrganizations,
     refetchSupervisors
   } = useSupervisor();
+  const { canAccessSupervisorFeatures, activeRole } = useRole();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);

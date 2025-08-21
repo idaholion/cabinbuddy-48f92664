@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/contexts/RoleContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,6 +11,7 @@ interface SupervisorRouteProps {
 
 export const SupervisorRoute = ({ children }: SupervisorRouteProps) => {
   const { user, loading: authLoading } = useAuth();
+  const { isSupervisor: isContextSupervisor } = useRole();
   const location = useLocation();
   const [isSupervisor, setIsSupervisor] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,9 +77,10 @@ export const SupervisorRoute = ({ children }: SupervisorRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isSupervisor) {
+  if (!isSupervisor && !isContextSupervisor) {
     return <Navigate to="/" replace />;
   }
 
+  // Allow access regardless of role mode - individual pages handle strict access
   return <>{children}</>;
 };

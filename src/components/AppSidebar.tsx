@@ -38,7 +38,9 @@ import {
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/contexts/RoleContext";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
+import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
 
 const setupItems = [
   {
@@ -132,6 +134,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
   const { signOut } = useAuth();
+  const { canAccessSupervisorFeatures } = useRole();
   
   // Check if we're on a supervisor organization page
   const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
@@ -178,6 +181,15 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Role Toggle Section (only for supervisors) */}
+        {isSupervisor && (
+          <SidebarGroup className="border-b pb-2">
+            <SidebarGroupContent>
+              <SupervisorModeToggle />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Logout Section */}
         <SidebarGroup className="border-b pb-2">
@@ -382,7 +394,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Supervisor */}
-        {isSupervisor && (
+        {canAccessSupervisorFeatures && (
           <SidebarGroup>
             <SidebarGroupLabel>Supervisor</SidebarGroupLabel>
             <SidebarGroupContent>
