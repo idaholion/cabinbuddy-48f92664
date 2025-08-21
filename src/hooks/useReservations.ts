@@ -26,7 +26,7 @@ export const useReservations = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
   const { validateReservationDates } = useReservationConflicts();
-  const { isGroupLead, userFamilyGroup, userHostInfo } = useUserRole();
+  const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper } = useUserRole();
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
@@ -168,8 +168,8 @@ export const useReservations = () => {
       return null;
     }
 
-    // Skip permission checks in test override mode
-    if (!testOverrideMode) {
+    // Skip permission checks in test override mode OR if user is calendar keeper
+    if (!testOverrideMode && !isCalendarKeeper) {
       // Check if user has permission to modify reservations
       const canModifyReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
       if (!canModifyReservation) {
