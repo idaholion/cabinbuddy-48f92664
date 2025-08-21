@@ -177,6 +177,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   );
 
   const handleBookingComplete = () => {
+    console.log('Booking completed - refreshing reservations');
     refetchReservations();
   };
 

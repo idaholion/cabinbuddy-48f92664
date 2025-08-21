@@ -295,6 +295,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (updatedReservation) {
+          console.log('Reservation updated successfully:', updatedReservation);
           toast({
             title: "Booking Updated",
             description: `Successfully updated booking for ${data.familyGroup}`,
@@ -303,6 +304,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           form.reset();
           onOpenChange(false);
           onBookingComplete?.();
+        } else {
+          console.error('Update failed - no reservation returned');
         }
       } else {
         // Create new reservation

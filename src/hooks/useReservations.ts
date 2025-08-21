@@ -250,6 +250,7 @@ export const useReservations = () => {
         prev.map(res => res.id === reservationId ? updatedReservation : res)
       );
       
+      console.log('Updated reservations state with:', updatedReservation);
       toast({
         title: "Success",
         description: "Reservation updated successfully!",
