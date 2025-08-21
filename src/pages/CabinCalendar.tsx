@@ -5,7 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -15,7 +15,7 @@ import { SecondarySelectionManager } from "@/components/SecondarySelectionManage
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
-import { useSelectionStatus } from "@/hooks/useSelectionStatus";
+import { useSequentialSelection } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -181,7 +181,7 @@ const CabinCalendar = () => {
   
   const rotationYear = getRotationYear();
   const currentRotationOrder = rotationData ? getRotationForYear(rotationYear) : [];
-  const { getSelectionIndicators, loading: selectionLoading } = useSelectionStatus(rotationYear);
+  const { familyStatuses, loading: selectionLoading } = useSequentialSelection(rotationYear);
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -226,21 +226,29 @@ const CabinCalendar = () => {
                             <div className="font-medium text-sm mb-2">{rotationYear} Rotation Order</div>
                             <div className="space-y-1">
                               {currentRotationOrder.map((familyGroup, index) => {
-                                const selections = getSelectionIndicators(familyGroup);
+                                const familyStatus = familyStatuses.find(fs => fs.familyGroup === familyGroup);
                                 return (
                                   <div key={index} className="flex items-center gap-2 text-sm">
                                     <span className="font-semibold w-6">{index + 1}.</span>
                                     <span className="flex-1">{familyGroup}</span>
                                     <div className="flex items-center gap-1">
-                                      {selections.primary && (
-                                        <div title="Primary selection made">
-                                          <CheckCircle className="h-3 w-3 text-success" />
+                                      {familyStatus?.status === 'completed' ? (
+                                        <div title="Selections completed">
+                                          <CheckCircle className="h-3 w-3 text-green-500" />
+                                        </div>
+                                      ) : familyStatus?.status === 'active' ? (
+                                        <div title="Currently selecting">
+                                          <ArrowRight className="h-3 w-3 text-primary animate-pulse" />
+                                        </div>
+                                      ) : (
+                                        <div title="Waiting to select">
+                                          <Clock className="h-3 w-3 text-muted-foreground" />
                                         </div>
                                       )}
-                                      {selections.secondary && (
-                                        <div title="Secondary selection made">
-                                          <Clock className="h-3 w-3 text-info" />
-                                        </div>
+                                      {familyStatus?.dayCountText && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {familyStatus.dayCountText}
+                                        </span>
                                       )}
                                     </div>
                                   </div>

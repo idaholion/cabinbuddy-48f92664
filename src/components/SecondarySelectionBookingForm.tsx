@@ -11,7 +11,7 @@ import { useForm } from 'react-hook-form';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { useSelectionStatus } from '@/hooks/useSelectionStatus';
+import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,7 @@ export function SecondarySelectionBookingForm({
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { calculateTimePeriodWindows, timePeriodUsage, updateTimePeriodUsage } = useTimePeriods();
-  const { getSelectionIndicators, secondarySelectionStatus } = useSelectionStatus(new Date().getFullYear());
+  const { currentPhase, currentFamilyGroup } = useSequentialSelection(new Date().getFullYear());
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -96,8 +96,7 @@ export function SecondarySelectionBookingForm({
   }, [timePeriodWindows, familyGroup, timePeriodUsage]);
 
   const isCurrentFamilyTurn = () => {
-    if (!secondarySelectionStatus || !rotationOrder.length) return false;
-    return secondarySelectionStatus.current_family_group === familyGroup;
+    return currentFamilyGroup === familyGroup;
   };
 
   const onSubmit = async (data: SecondaryFormData) => {
@@ -169,7 +168,7 @@ export function SecondarySelectionBookingForm({
   };
 
   const advanceSecondarySelection = async () => {
-    if (!organization?.id || !rotationOrder.length || !secondarySelectionStatus) return;
+    if (!organization?.id || !rotationOrder.length || !currentFamilyGroup) return;
 
     // Get reverse order for secondary selection
     const reverseOrder = [...rotationOrder].reverse();
@@ -215,8 +214,8 @@ export function SecondarySelectionBookingForm({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               It's not your turn for secondary selection yet. 
-              {secondarySelectionStatus?.current_family_group && (
-                <> Currently: <strong>{secondarySelectionStatus.current_family_group}</strong></>
+              {currentFamilyGroup && (
+                <> Currently: <strong>{currentFamilyGroup}</strong></>
               )}
             </AlertDescription>
           </Alert>
