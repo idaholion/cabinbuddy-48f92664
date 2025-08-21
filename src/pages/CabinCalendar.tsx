@@ -23,6 +23,8 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -31,6 +33,7 @@ const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
+  const { toast } = useToast();
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
@@ -184,8 +187,13 @@ const CabinCalendar = () => {
   const { 
     currentPhase, 
     familyStatuses, 
-    loading: selectionLoading 
+    loading: selectionLoading,
+    canCurrentUserSelect,
+    advanceSelection,
+    currentFamilyGroup,
+    getUserUsageInfo
   } = useSequentialSelection(rotationYear);
+  const { userFamilyGroup } = useUserRole();
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -397,6 +405,59 @@ const CabinCalendar = () => {
                 </div>
               </div>
             </div>
+
+            {/* Selection Management - I'm Done Button */}
+            {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
+              <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-primary">
+                      {currentPhase === 'primary' ? 'Primary Selection' : 'Secondary Selection'} - Your Turn
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      It's your family group's turn to make selections. 
+                      {(() => {
+                        const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                        if (!usageInfo) return '';
+                        return ` You have ${usageInfo.remaining} of ${usageInfo.allowed} periods remaining.`;
+                      })()}
+                    </p>
+                  </div>
+                  <ConfirmationDialog
+                    title="Confirm Selection Complete"
+                    description={(() => {
+                      const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                      if (!usageInfo) return "Are you sure you want to complete your selection?";
+                      if (usageInfo.remaining > 0) {
+                        return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
+                      }
+                      return "Confirm that you have completed your selection period.";
+                    })()}
+                    confirmText="Yes, I'm Done"
+                    onConfirm={async () => {
+                      try {
+                        await advanceSelection(true);
+                        toast({
+                          title: "Selection Complete",
+                          description: "Your selection period has been marked complete. The next family group has been notified.",
+                        });
+                      } catch (error) {
+                        console.error('Error advancing selection:', error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to complete selection. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    <Button className="bg-primary hover:bg-primary/90">
+                      I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
+                    </Button>
+                  </ConfirmationDialog>
+                </div>
+              </div>
+            )}
 
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">

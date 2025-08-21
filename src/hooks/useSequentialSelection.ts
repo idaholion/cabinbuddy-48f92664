@@ -24,6 +24,7 @@ interface UseSequentialSelectionReturn {
   advanceSelection: (completed?: boolean) => Promise<void>;
   getDaysRemaining: (familyGroup: string) => number | null;
   loading: boolean;
+  getUserUsageInfo: (userFamilyGroup: string) => { used: number; allowed: number; remaining: number } | null;
 }
 
 export const useSequentialSelection = (rotationYear: number): UseSequentialSelectionReturn => {
@@ -40,9 +41,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
   const [loading, setLoading] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<SelectionPhase>('primary');
+  const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!rotationData || !timePeriodUsage.length) {
+    if (!rotationData || !timePeriodUsage.length || !organization?.id) {
       setLoading(false);
       return;
     }
@@ -58,10 +60,32 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       setCurrentPhase('secondary');
     } else {
       setCurrentPhase('primary');
+      // Determine current family for primary phase
+      determinePrimaryCurrentFamily(rotationOrder);
     }
     
     setLoading(false);
-  }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear]);
+  }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id]);
+
+  // Determine which family group's turn it is in primary phase
+  const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
+    if (!organization?.id || !rotationData) return;
+
+    // Find the first family group that hasn't completed their primary selections
+    for (const familyGroup of rotationOrder) {
+      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+      const used = usage?.time_periods_used || 0;
+      const allowed = rotationData.max_time_slots || 2;
+      
+      if (used < allowed) {
+        setPrimaryCurrentFamily(familyGroup);
+        return;
+      }
+    }
+    
+    // If all have completed, no current family
+    setPrimaryCurrentFamily(null);
+  };
 
   const calculateDaysRemaining = (familyGroup: string, phase: SelectionPhase): number | null => {
     if (!rotationData) return null;
@@ -136,7 +160,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         return {
           familyGroup,
           status,
-          isCurrentTurn: false, // We'd need primary selection tracking for this
+          isCurrentTurn: primaryCurrentFamily === familyGroup,
           daysRemaining: null
         };
       });
@@ -147,8 +171,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (currentPhase === 'secondary') {
       return secondaryStatus?.current_family_group || null;
     }
-    // For primary phase, we'd need to check reservation_periods table
-    return null;
+    return primaryCurrentFamily;
   };
 
   const canCurrentUserSelect = (userFamilyGroup?: string): boolean => {
@@ -165,12 +188,54 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       } else {
         await endSecondarySelection();
       }
+    } else {
+      // Primary phase advancement
+      await advancePrimarySelection();
     }
-    // Primary phase advancement would be handled differently
+  };
+
+  const advancePrimarySelection = async (): Promise<void> => {
+    if (!organization?.id || !rotationData || !primaryCurrentFamily) return;
+
+    const rotationOrder = getRotationForYear(rotationYear);
+    const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
+    
+    // Find next family group that hasn't completed their selections
+    for (let i = 1; i < rotationOrder.length; i++) {
+      const nextIndex = (currentIndex + i) % rotationOrder.length;
+      const nextFamily = rotationOrder[nextIndex];
+      const usage = timePeriodUsage.find(u => u.family_group === nextFamily);
+      const used = usage?.time_periods_used || 0;
+      const allowed = rotationData.max_time_slots || 2;
+      
+      if (used < allowed) {
+        setPrimaryCurrentFamily(nextFamily);
+        return;
+      }
+    }
+    
+    // If no one has remaining selections, end primary phase
+    setPrimaryCurrentFamily(null);
   };
 
   const getDaysRemaining = (familyGroup: string): number | null => {
     return calculateDaysRemaining(familyGroup, currentPhase);
+  };
+
+  const getUserUsageInfo = (userFamilyGroup: string): { used: number; allowed: number; remaining: number } | null => {
+    if (!rotationData) return null;
+    
+    const usage = timePeriodUsage.find(u => u.family_group === userFamilyGroup);
+    
+    if (currentPhase === 'primary') {
+      const used = usage?.time_periods_used || 0;
+      const allowed = rotationData.max_time_slots || 2;
+      return { used, allowed, remaining: allowed - used };
+    } else {
+      const used = usage?.secondary_periods_used || 0;
+      const allowed = rotationData.secondary_max_periods || 1;
+      return { used, allowed, remaining: allowed - used };
+    }
   };
 
   return {
@@ -180,6 +245,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     canCurrentUserSelect,
     advanceSelection,
     getDaysRemaining,
-    loading
+    loading,
+    getUserUsageInfo
   };
 };
