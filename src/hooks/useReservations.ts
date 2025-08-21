@@ -273,6 +273,81 @@ export const useReservations = () => {
     }
   };
 
+  const deleteReservation = async (reservationId: string, testOverrideMode: boolean = false) => {
+    if (!user || !organization?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in and have an organization to delete a reservation.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Skip permission checks in test override mode OR if user is calendar keeper
+    if (!testOverrideMode && !isCalendarKeeper) {
+      // Check if user has permission to modify reservations
+      const canModifyReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+      if (!canModifyReservation) {
+        toast({
+          title: "Permission Denied",
+          description: "Only group leads and authorized hosts can delete reservations.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Get current reservation to check family group ownership
+      const currentReservation = reservations.find(r => r.id === reservationId);
+      if (userFamilyGroup && currentReservation?.family_group !== userFamilyGroup.name) {
+        toast({
+          title: "Permission Denied",
+          description: "You can only delete reservations for your own family group.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .delete()
+        .eq('id', reservationId)
+        .eq('organization_id', organization.id);
+
+      if (error) {
+        console.error('Error deleting reservation:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete reservation. Please try again.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Remove from local state
+      setReservations(prev => prev.filter(res => res.id !== reservationId));
+      
+      toast({
+        title: "Success",
+        description: "Reservation deleted successfully!",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error in deleteReservation:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (organization?.id) {
       fetchReservations();
@@ -284,6 +359,7 @@ export const useReservations = () => {
     loading,
     createReservation,
     updateReservation,
+    deleteReservation,
     refetchReservations: fetchReservations,
     validateReservationDates,
   };

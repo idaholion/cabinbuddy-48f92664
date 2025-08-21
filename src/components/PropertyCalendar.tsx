@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { SearchInput } from "@/components/ui/search-input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -43,7 +44,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
-  const { reservations, loading: reservationsLoading, refetchReservations } = useReservations();
+  const { reservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
   const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
@@ -95,6 +96,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
+  const [reservationToDelete, setReservationToDelete] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Phase 4: Enhanced filtering and view options
   const [filterOptions, setFilterOptions] = useState({
@@ -185,6 +188,17 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     setTimeout(() => {
       console.log('Reservations after refetch delay:', reservations.length);
     }, 1000);
+  };
+
+  const handleDeleteReservation = async () => {
+    if (!reservationToDelete) return;
+    
+    const success = await deleteReservation(reservationToDelete.id);
+    if (success) {
+      setShowDeleteDialog(false);
+      setReservationToDelete(null);
+      refetchReservations(); // Refresh the calendar
+    }
   };
 
   const handleEditReservation = (reservation: any) => {
@@ -1356,20 +1370,33 @@ const getBookingsForDate = (date: Date) => {
                             Edit <ChevronDown className="h-3 w-3 ml-1" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => {
-                            setEditingReservation(reservation);
-                            setShowBookingForm(true);
-                          }}>
-                            Edit Booking
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setEditingReservation(reservation);
-                            setShowSplitDialog(true);
-                          }}>
-                            Split into Periods
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
+                         <DropdownMenuContent>
+                           <DropdownMenuItem onClick={() => {
+                             setEditingReservation(reservation);
+                             setShowBookingForm(true);
+                           }}>
+                             <Edit2 className="h-4 w-4 mr-2" />
+                             Edit Booking
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => {
+                             setEditingReservation(reservation);
+                             setShowSplitDialog(true);
+                           }}>
+                             <ArrowLeftRight className="h-4 w-4 mr-2" />
+                             Split into Periods
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem 
+                             onClick={() => {
+                               setReservationToDelete(reservation);
+                               setShowDeleteDialog(true);
+                             }}
+                             className="text-destructive"
+                           >
+                             <Trash2 className="h-4 w-4 mr-2" />
+                             Delete Reservation
+                           </DropdownMenuItem>
+                         </DropdownMenuContent>
                       </DropdownMenu>
                      <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
                        {reservation.status}
@@ -1570,6 +1597,33 @@ const getBookingsForDate = (date: Date) => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reservation for{" "}
+              <strong>{reservationToDelete?.family_group}</strong> from{" "}
+              {reservationToDelete && parseLocalDate(reservationToDelete.start_date).toLocaleDateString()} to{" "}
+              {reservationToDelete && parseLocalDate(reservationToDelete.end_date).toLocaleDateString()}?
+              <br />
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteReservation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Reservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

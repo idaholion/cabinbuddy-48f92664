@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +60,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
   const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
-  const { createReservation, updateReservation, loading: reservationLoading } = useReservations();
+  const { createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
     calculateTimePeriodWindows, 
@@ -85,6 +86,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       : familyGroups; // Group leads and calendar keepers can see all groups
   
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const form = useForm<BookingFormData>({
     defaultValues: {
@@ -369,6 +371,18 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     }
   };
 
+  const handleDeleteReservation = async () => {
+    if (!editingReservation) return;
+    
+    const success = await deleteReservation(editingReservation.id);
+    if (success) {
+      setShowDeleteDialog(false);
+      form.reset();
+      onOpenChange(false);
+      onBookingComplete?.();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -615,6 +629,19 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               >
                 Cancel
               </Button>
+              
+              {editingReservation && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={submitting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+              
               <Button 
                 type="submit" 
                 disabled={
@@ -624,12 +651,40 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                   reservationLoading
                 }
               >
-                {submitting ? "Creating Booking..." : "Confirm Booking"}
+                {submitting ? 
+                  (editingReservation ? "Updating Booking..." : "Creating Booking...") : 
+                  (editingReservation ? "Update Booking" : "Confirm Booking")
+                }
               </Button>
             </div>
           </form>
         </Form>
       </DialogContent>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Reservation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this reservation for{" "}
+              <strong>{editingReservation?.family_group}</strong>?
+              <br />
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteReservation}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Reservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
