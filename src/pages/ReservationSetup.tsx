@@ -55,6 +55,7 @@ export default function ReservationSetup() {
   // Secondary selection
   const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
   const [secondaryMaxPeriods, setSecondaryMaxPeriods] = useState("1");
+  const [secondarySelectionDays, setSecondarySelectionDays] = useState("7");
   
   // Post rotation selection
   const [enablePostRotationSelection, setEnablePostRotationSelection] = useState(false);
@@ -122,6 +123,7 @@ export default function ReservationSetup() {
             setSelectionDays(data.selection_days?.toString() || "14");
             setEnableSecondarySelection(data.enable_secondary_selection || false);
             setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
+            setSecondarySelectionDays(data.secondary_selection_days?.toString() || "7");
             setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
             
             // Load the rotation order - use saved order directly
@@ -206,6 +208,7 @@ export default function ReservationSetup() {
           selection_days: parseInt(selectionDays),
           enable_secondary_selection: enableSecondarySelection,
           secondary_max_periods: parseInt(secondaryMaxPeriods),
+          secondary_selection_days: parseInt(secondarySelectionDays),
           enable_post_rotation_selection: enablePostRotationSelection,
         };
       }
@@ -301,6 +304,7 @@ export default function ReservationSetup() {
             selection_days: parseInt(selectionDays),
             enable_secondary_selection: enableSecondarySelection,
             secondary_max_periods: parseInt(secondaryMaxPeriods),
+            secondary_selection_days: parseInt(secondarySelectionDays),
             enable_post_rotation_selection: enablePostRotationSelection,
           };
         }
@@ -567,6 +571,21 @@ export default function ReservationSetup() {
                         </SelectContent>
                       </Select>
                       <span>additional time period(s)</span>
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-2 text-base">
+                      <span>Each family group has</span>
+                      <Select value={secondarySelectionDays} onValueChange={setSecondarySelectionDays}>
+                        <SelectTrigger className="w-16 text-lg">
+                          <SelectValue className="text-lg" />
+                        </SelectTrigger>
+                        <SelectContent className="text-lg">
+                          {Array.from({ length: 14 }, (_, i) => (i + 1).toString()).map((num) => (
+                            <SelectItem key={num} value={num} className="text-lg">{num}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span>days to make their secondary selection</span>
                     </div>
                   </div>
                 )}

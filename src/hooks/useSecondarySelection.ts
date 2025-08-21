@@ -23,6 +23,7 @@ export const useSecondarySelection = (rotationYear: number) => {
   const [secondaryStatus, setSecondaryStatus] = useState<SecondarySelectionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSecondaryRoundActive, setIsSecondaryRoundActive] = useState(false);
+  const [selectionStartTime, setSelectionStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!organization?.id) return;
@@ -48,6 +49,11 @@ export const useSecondarySelection = (rotationYear: number) => {
 
       setSecondaryStatus(data);
       setIsSecondaryRoundActive(!!data?.current_family_group);
+      
+      // Track when current family started their selection
+      if (data?.started_at) {
+        setSelectionStartTime(new Date(data.started_at));
+      }
     } catch (error) {
       console.error('Error in fetchSecondarySelectionStatus:', error);
     } finally {
@@ -201,6 +207,26 @@ export const useSecondarySelection = (rotationYear: number) => {
     return [...rotationOrder].reverse();
   };
 
+  const getCurrentSelectionDays = (): { daysPassed: number; totalDays: number; daysRemaining: number } | null => {
+    if (!secondaryStatus?.current_family_group || !rotationData) return null;
+    
+    const startTime = selectionStartTime || (secondaryStatus.started_at ? new Date(secondaryStatus.started_at) : new Date());
+    const totalDays = rotationData.secondary_selection_days || 7;
+    const daysPassed = Math.floor((Date.now() - startTime.getTime()) / (24 * 60 * 60 * 1000));
+    const daysRemaining = Math.max(0, totalDays - daysPassed);
+    
+    return {
+      daysPassed: Math.min(daysPassed + 1, totalDays), // Show as Day 1, 2, 3, etc.
+      totalDays,
+      daysRemaining
+    };
+  };
+
+  const hasSelectionTimeExpired = (): boolean => {
+    const selectionDays = getCurrentSelectionDays();
+    return selectionDays ? selectionDays.daysRemaining <= 0 : false;
+  };
+
   return {
     secondaryStatus,
     loading,
@@ -208,6 +234,8 @@ export const useSecondarySelection = (rotationYear: number) => {
     isCurrentFamilyTurn,
     getRemainingSecondaryPeriods,
     getSecondarySelectionOrder,
+    getCurrentSelectionDays,
+    hasSelectionTimeExpired,
     startSecondarySelection,
     advanceSecondarySelection,
     endSecondarySelection,

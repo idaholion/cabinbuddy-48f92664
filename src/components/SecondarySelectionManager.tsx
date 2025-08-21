@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Users, ArrowRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
@@ -31,8 +32,18 @@ export function SecondarySelectionManager({
     isCurrentFamilyTurn,
     getRemainingSecondaryPeriods,
     getSecondarySelectionOrder,
-    startSecondarySelection
+    getCurrentSelectionDays,
+    hasSelectionTimeExpired,
+    startSecondarySelection,
+    advanceSecondarySelection
   } = useSecondarySelection(currentYear);
+
+  const {
+    currentPhase,
+    familyStatuses,
+    canCurrentUserSelect,
+    advanceSelection
+  } = useSequentialSelection(currentYear);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
 
@@ -205,6 +216,14 @@ export function SecondarySelectionManager({
                 {secondaryStatus?.current_family_group || 'None'}
               </Badge>
             </div>
+            {getCurrentSelectionDays() && (
+              <div className="text-sm text-muted-foreground mb-2">
+                {getCurrentSelectionDays()?.daysPassed} of {getCurrentSelectionDays()?.totalDays} days used
+                {getCurrentSelectionDays()?.daysRemaining === 0 && (
+                  <span className="text-destructive font-medium"> (Time Expired)</span>
+                )}
+              </div>
+            )}
             <div className="text-sm text-muted-foreground">
               Selection follows reverse order from primary round
             </div>
@@ -220,6 +239,28 @@ export function SecondarySelectionManager({
                 const isCurrentTurn = isCurrentFamilyTurn(familyGroup);
                 const isComplete = remaining <= 0;
                 
+                // Determine status indicators
+                let statusIndicator = <Clock className="h-4 w-4 text-muted-foreground" />;
+                let statusText = "⏳ Waiting";
+                
+                if (isComplete) {
+                  statusIndicator = <CheckCircle className="h-4 w-4 text-green-500" />;
+                  statusText = "✅ Completed";
+                } else if (isCurrentTurn) {
+                  statusIndicator = <ArrowRight className="h-4 w-4 text-primary" />;
+                  const selectionDays = getCurrentSelectionDays();
+                  statusText = selectionDays ? 
+                    `🔄 Day ${selectionDays.daysPassed} of ${selectionDays.totalDays}` : 
+                    "🔄 Current Turn";
+                } else {
+                  // Check if this family is next
+                  const currentIndex = getSecondarySelectionOrder().findIndex(f => isCurrentFamilyTurn(f));
+                  const nextIndex = (currentIndex + 1) % getSecondarySelectionOrder().length;
+                  if (index === nextIndex && !isComplete) {
+                    statusText = "Next";
+                  }
+                }
+                
                 return (
                   <div 
                     key={familyGroup} 
@@ -230,15 +271,16 @@ export function SecondarySelectionManager({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{index + 1}. {familyGroup}</span>
+                        <span className="text-sm text-muted-foreground">{statusText}</span>
                         {isCurrentTurn && (
                           <Badge variant="default" className="text-xs">Current Turn</Badge>
                         )}
-                        {isComplete && (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        )}
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {used}/{rotationData.secondary_max_periods || 1} used
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground">
+                          {used}/{rotationData.secondary_max_periods || 1} used
+                        </div>
+                        {statusIndicator}
                       </div>
                     </div>
                     
@@ -254,20 +296,38 @@ export function SecondarySelectionManager({
 
           {/* User Action */}
           {userFamilyGroup && isCurrentFamilyTurn(userFamilyGroup) && (
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t space-y-4">
               <Alert className="mb-4">
                 <Users className="h-4 w-4" />
                 <AlertDescription>
                   It's your turn for secondary selection! You can book up to {getRemainingSecondaryPeriods(userFamilyGroup)} additional period(s).
+                  {getCurrentSelectionDays() && (
+                    <div className="mt-2 font-medium">
+                      Day {getCurrentSelectionDays()?.daysPassed} of {getCurrentSelectionDays()?.totalDays} 
+                      ({getCurrentSelectionDays()?.daysRemaining} days remaining)
+                    </div>
+                  )}
                 </AlertDescription>
               </Alert>
               
-              <Button 
-                onClick={() => setShowBookingForm(true)}
-                className="w-full"
-              >
-                Make Secondary Selection
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => setShowBookingForm(true)}
+                  className="flex-1"
+                >
+                  Make Secondary Selection
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={async () => {
+                    await advanceSecondarySelection();
+                  }}
+                  className="flex-1"
+                >
+                  I'm Done Selecting
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

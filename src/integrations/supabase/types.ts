@@ -1403,6 +1403,7 @@ export type Database = {
           rotation_order: Json
           rotation_year: number
           secondary_max_periods: number | null
+          secondary_selection_days: number | null
           selection_days: number | null
           start_day: string | null
           start_month: string | null
@@ -1421,6 +1422,7 @@ export type Database = {
           rotation_order?: Json
           rotation_year: number
           secondary_max_periods?: number | null
+          secondary_selection_days?: number | null
           selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
@@ -1439,6 +1441,7 @@ export type Database = {
           rotation_order?: Json
           rotation_year?: number
           secondary_max_periods?: number | null
+          secondary_selection_days?: number | null
           selection_days?: number | null
           start_day?: string | null
           start_month?: string | null
