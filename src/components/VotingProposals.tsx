@@ -208,15 +208,7 @@ export const VotingProposals = () => {
                       {proposal.description}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-                      <span>By {(() => {
-                        try {
-                          return typeof proposal.created_by_family_group === 'string' && proposal.created_by_family_group.startsWith('{')
-                            ? JSON.parse(proposal.created_by_family_group)?.name || 'Unknown'
-                            : proposal.created_by_family_group || 'Unknown';
-                        } catch {
-                          return proposal.created_by_family_group || 'Unknown';
-                        }
-                      })()}</span>
+                      <span>By {proposal.created_by_name}</span>
                       <span>{format(new Date(proposal.created_at), 'MMM dd, yyyy')}</span>
                       {proposal.voting_deadline && (
                         <span>Deadline: {format(new Date(proposal.voting_deadline), 'MMM dd, yyyy HH:mm')}</span>
