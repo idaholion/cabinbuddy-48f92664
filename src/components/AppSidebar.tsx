@@ -188,15 +188,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Role Toggle Section (only for supervisors) */}
-        {isSupervisor && (
-          <SidebarGroup className="border-b pb-2">
-            <SidebarGroupContent>
-              <SupervisorModeToggle />
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
         {/* Logout Section */}
         <SidebarGroup className="border-b pb-2">
           <SidebarGroupContent>
@@ -458,6 +449,15 @@ export function AppSidebar() {
                   </>
                 )}
               </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Role Toggle Section (only for supervisors) */}
+        {isSupervisor && (
+          <SidebarGroup className="border-t pt-2">
+            <SidebarGroupContent>
+              <SupervisorModeToggle />
             </SidebarGroupContent>
           </SidebarGroup>
         )}
