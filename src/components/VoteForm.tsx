@@ -234,67 +234,78 @@ export const VoteForm = () => {
 
   return (
     <div className="space-y-4">
-      {existingVote && (
-        <div className="p-3 bg-muted rounded-lg">
+      {proposals.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-2">No active proposals available</p>
           <p className="text-sm text-muted-foreground">
-            You have already voted on this proposal with {existingVote.shares_used} shares ({existingVote.vote_choice}).
+            Check back later or create a new proposal to get started.
           </p>
         </div>
+      ) : (
+        <>
+          {existingVote && (
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                You have already voted on this proposal with {existingVote.shares_used} shares ({existingVote.vote_choice}).
+              </p>
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="proposal">Select Proposal</Label>
+            <Select value={selectedProposal} onValueChange={setSelectedProposal}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a proposal to vote on" />
+              </SelectTrigger>
+              <SelectContent>
+                {proposals.map((proposal) => (
+                  <SelectItem key={proposal.id} value={proposal.id}>
+                    {proposal.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="shares">Number of Shares to Use</Label>
+            <Input
+              id="shares"
+              type="number"
+              value={votingShares}
+              onChange={(e) => setVotingShares(parseInt(e.target.value) || 0)}
+              min="1"
+              max={getUserShares()}
+              placeholder="Enter number of shares"
+              disabled={!!existingVote}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Available: {getUserShares()} shares
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="choice">Vote Choice</Label>
+            <Select value={voteChoice} onValueChange={setVoteChoice} disabled={!!existingVote}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your vote" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="for">For</SelectItem>
+                <SelectItem value="against">Against</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button 
+            onClick={castVote} 
+            disabled={loading || !selectedProposal || !voteChoice || votingShares <= 0 || !!existingVote}
+            className="w-full"
+          >
+            {loading ? "Casting Vote..." : existingVote ? "Already Voted" : "Cast Vote"}
+          </Button>
+        </>
       )}
-
-      <div>
-        <Label htmlFor="proposal">Select Proposal</Label>
-        <Select value={selectedProposal} onValueChange={setSelectedProposal}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose a proposal to vote on" />
-          </SelectTrigger>
-          <SelectContent>
-            {proposals.map((proposal) => (
-              <SelectItem key={proposal.id} value={proposal.id}>
-                {proposal.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="shares">Number of Shares to Use</Label>
-        <Input
-          id="shares"
-          type="number"
-          value={votingShares}
-          onChange={(e) => setVotingShares(parseInt(e.target.value) || 0)}
-          min="1"
-          max={getUserShares()}
-          placeholder="Enter number of shares"
-          disabled={!!existingVote}
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Available: {getUserShares()} shares
-        </p>
-      </div>
-
-      <div>
-        <Label htmlFor="choice">Vote Choice</Label>
-        <Select value={voteChoice} onValueChange={setVoteChoice} disabled={!!existingVote}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select your vote" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="for">For</SelectItem>
-            <SelectItem value="against">Against</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Button 
-        onClick={castVote} 
-        disabled={loading || !selectedProposal || !voteChoice || votingShares <= 0 || !!existingVote}
-        className="w-full"
-      >
-        {loading ? "Casting Vote..." : existingVote ? "Already Voted" : "Cast Vote"}
-      </Button>
     </div>
   );
 };
