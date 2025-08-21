@@ -178,7 +178,13 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
 
   const handleBookingComplete = () => {
     console.log('Booking completed - refreshing reservations');
+    console.log('Current reservations before refetch:', reservations.length);
     refetchReservations();
+    
+    // Force a re-render after a short delay to ensure state updates
+    setTimeout(() => {
+      console.log('Reservations after refetch delay:', reservations.length);
+    }, 1000);
   };
 
   const handleEditReservation = (reservation: any) => {

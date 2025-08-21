@@ -49,6 +49,7 @@ export const useReservations = () => {
 
       console.log('Fetched reservations from DB:', data);
       setReservations(data || []);
+      console.log('Set reservations state to:', data?.length || 0, 'items');
     } catch (error) {
       console.error('Error in fetchReservations:', error);
     } finally {
