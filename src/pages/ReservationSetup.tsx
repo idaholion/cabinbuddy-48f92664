@@ -388,11 +388,11 @@ export default function ReservationSetup() {
               <RadioGroup value={rotationOption} onValueChange={setRotationOption} className="flex items-center gap-4">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="rotate" id="rotate" />
-                  <Label htmlFor="rotate" className="text-base text-muted-foreground">Group Order Rotates</Label>
+                  <Label htmlFor="rotate" className="text-base text-foreground">Group Order Rotates</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="fixed" id="fixed" />
-                  <Label htmlFor="fixed" className="text-base text-muted-foreground">Group Order Constant</Label>
+                  <Label htmlFor="fixed" className="text-base text-foreground">Group Order Constant</Label>
                 </div>
               </RadioGroup>
               
@@ -475,7 +475,7 @@ export default function ReservationSetup() {
               </div>
               
               <div className="space-y-3">
-                 <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+                 <div className="flex flex-wrap items-center gap-2 text-base text-foreground">
                     <span>If Group Order Rotates selected, this order will rotate each year, with the person who selected</span>
                     <Select value={firstLastOption} onValueChange={setFirstLastOption}>
                       <SelectTrigger className="w-20 text-lg">
@@ -489,7 +489,7 @@ export default function ReservationSetup() {
                     <span>selecting {firstLastOption === "first" ? "last" : "first"} the following year.</span>
                   </div>
                  
-                 <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+                 <div className="flex flex-wrap items-center gap-2 text-base text-foreground">
                    <span>The selection will start the first day of</span>
                     <Select value={startMonth} onValueChange={setStartMonth}>
                       <SelectTrigger className="w-36 text-lg">
@@ -543,10 +543,10 @@ export default function ReservationSetup() {
                 {enableSecondarySelection && (
                   <div className="pl-6 space-y-3">
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-base text-muted-foreground mb-2">
+                      <p className="text-base text-foreground mb-2">
                         <strong>How Secondary Selection Works:</strong>
                       </p>
-                      <ul className="text-base text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-base text-foreground space-y-1 list-disc list-inside">
                         <li>After all family groups complete their primary selections ({maxTimeSlots} periods each)</li>
                         <li>A secondary round automatically begins</li>
                         <li>Selection order follows <strong>reverse order</strong> from the last person who selected in the primary round</li>
@@ -588,10 +588,10 @@ export default function ReservationSetup() {
                 {enablePostRotationSelection && (
                   <div className="pl-6 space-y-3">
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-base text-muted-foreground mb-2">
+                      <p className="text-base text-foreground mb-2">
                         <strong>How Post Rotation Selection Works:</strong>
                       </p>
-                      <ul className="text-base text-muted-foreground space-y-1 list-disc list-inside">
+                      <ul className="text-base text-foreground space-y-1 list-disc list-inside">
                         <li>After secondary selection completes (or primary if secondary is disabled)</li>
                         <li>Open first-come, first-served booking for all available dates</li>
                         <li>Any family group or authorized host member can make reservations</li>
@@ -599,10 +599,10 @@ export default function ReservationSetup() {
                       </ul>
                     </div>
                     
-                    <div className="text-base text-muted-foreground">
+                    <div className="text-base text-foreground">
                       <p className="mb-2">Additional limits and restrictions can be configured here:</p>
                       <div className="p-2 bg-background rounded border border-dashed">
-                        <p className="text-base text-muted-foreground italic">
+                        <p className="text-base text-foreground italic">
                           Future configuration options (e.g., max additional periods per group, booking windows, etc.) 
                           will be added here as needed.
                         </p>
@@ -660,7 +660,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-base text-muted-foreground">
+                  <div className="mt-3 text-base text-foreground">
                     Rotation: {firstLastOption === "first" ? "First person moves to last position each year" : "Last person moves to first position each year"}
                   </div>
                 </div>
@@ -742,7 +742,7 @@ export default function ReservationSetup() {
                   </Select>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 text-base text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-base text-foreground">
                   <span>Each year, groups rotate with the</span>
                   <Select value={staticWeeksRotationDirection} onValueChange={setStaticWeeksRotationDirection}>
                     <SelectTrigger className="w-20 text-lg">
@@ -827,7 +827,7 @@ export default function ReservationSetup() {
                       );
                     })}
                   </div>
-                  <div className="mt-3 text-base text-muted-foreground">
+                  <div className="mt-3 text-base text-foreground">
                     Rotation: {staticWeeksRotationDirection === "first" ? "First group moves to last week each year" : "Last group moves to first week each year"}
                   </div>
                 </div>
@@ -889,7 +889,7 @@ export default function ReservationSetup() {
               </div>
               
               <div className="text-center py-4">
-                <p className="text-muted-foreground text-base">
+                <p className="text-foreground text-base">
                   This setup is ideal for organizations that prefer centralized booking management 
                   or have specific approval processes for reservations.
                 </p>
