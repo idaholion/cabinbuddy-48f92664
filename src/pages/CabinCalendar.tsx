@@ -234,52 +234,34 @@ const CabinCalendar = () => {
                        {/* 2026 Selection Status Dropdown */}
                        <Select>
                          <SelectTrigger className="w-64 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear + 1} ${currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status`} />
+                           <SelectValue placeholder={`${rotationYear + 1} Selection Status`} />
                          </SelectTrigger>
                          <SelectContent className="bg-background border border-border shadow-lg z-50">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
-                               {rotationYear + 1} {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status
+                               {rotationYear + 1} Selection Status
                              </div>
                              <div className="space-y-1">
-                               {familyStatuses.map((familyStatus, index) => {
+                               {/* Get next year rotation order (reversed) */}
+                               {rotationData && getRotationForYear(rotationYear + 1).map((familyGroup, index) => {
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
                                      <span className="font-semibold w-6">{index + 1}.</span>
-                                     <span className="flex-1">{familyStatus.familyGroup}</span>
+                                     <span className="flex-1">{familyGroup}</span>
                                      <div className="flex items-center gap-1">
-                                       {familyStatus.status === 'completed' ? (
-                                         <div title="Selections completed">
-                                           <CheckCircle className="h-3 w-3 text-green-500" />
-                                         </div>
-                                       ) : familyStatus.status === 'active' ? (
-                                         <div title="Currently selecting">
-                                           <ArrowRight className="h-3 w-3 text-primary animate-pulse" />
-                                         </div>
-                                       ) : (
-                                         <div title="Waiting to select">
-                                           <Clock className="h-3 w-3 text-muted-foreground" />
-                                         </div>
-                                       )}
-                                       {familyStatus.dayCountText && (
-                                         <span className="text-xs text-muted-foreground">
-                                           {familyStatus.dayCountText}
-                                         </span>
-                                       )}
+                                       <div title="Waiting to select">
+                                         <Clock className="h-3 w-3 text-muted-foreground" />
+                                       </div>
+                                       <span className="text-xs text-muted-foreground">(waiting)</span>
                                      </div>
                                    </div>
                                  );
                                })}
                              </div>
-                             {rotationData && (
-                               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-                                 <p>Phase: {currentPhase === 'primary' ? 'Primary Selection' : 'Secondary Selection'}</p>
-                                 <p>Based on {rotationData.rotation_year} rotation</p>
-                                 {currentPhase === 'secondary' && (
-                                   <p>Order reversed for secondary selection</p>
-                                 )}
-                               </div>
-                             )}
+                             <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                               <p className="font-medium">Selection begins October 1st</p>
+                               <p>{getRotationForYear(rotationYear + 1)[0]} starts selecting first</p>
+                             </div>
                            </div>
                          </SelectContent>
                        </Select>
