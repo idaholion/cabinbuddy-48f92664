@@ -389,6 +389,12 @@ const CabinCalendar = () => {
 
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">
+              {/* Show Secondary Selection prominently when active */}
+              <SecondarySelectionManager 
+                currentMonth={currentCalendarMonth} 
+                userFamilyGroup={userFamilyGroupName} 
+              />
+              
               <PropertyCalendar 
                 onMonthChange={setCurrentCalendarMonth}
                 selectedFamilyGroupFilter=""
@@ -397,15 +403,6 @@ const CabinCalendar = () => {
 
             {/* Collapsible sections for secondary tools */}
             <Accordion type="multiple" className="mt-4 space-y-2">
-              <AccordionItem value="secondary-selection" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Secondary Selection Management
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 animate-accordion-down">
-                  <SecondarySelectionManager currentMonth={currentCalendarMonth} />
-                </AccordionContent>
-              </AccordionItem>
-
               <AccordionItem value="work-weekend" className="border rounded-lg">
                 <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
                   Work Weekend Proposals
