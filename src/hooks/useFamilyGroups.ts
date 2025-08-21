@@ -101,6 +101,24 @@ export const useFamilyGroups = () => {
       return null;
     }
 
+    // Ensure group lead is included in host_members if they exist
+    let hostMembers = groupData.host_members || [];
+    if (groupData.lead_name && groupData.lead_email) {
+      const leadExists = hostMembers.some(member => 
+        member.email?.toLowerCase() === groupData.lead_email?.toLowerCase()
+      );
+      
+      if (!leadExists) {
+        const leadAsMember = {
+          name: groupData.lead_name,
+          phone: groupData.lead_phone || '',
+          email: groupData.lead_email,
+          canHost: true
+        };
+        hostMembers = [leadAsMember, ...hostMembers];
+      }
+    }
+
     setLoading(true);
     try {
       const { data: newGroup, error } = await supabase
@@ -108,7 +126,7 @@ export const useFamilyGroups = () => {
         .insert({
           ...groupData,
           organization_id: organization.id,
-          host_members: groupData.host_members as any // Cast to any for JSONB
+          host_members: hostMembers as any // Cast to any for JSONB
         })
         .select()
         .single();
@@ -172,10 +190,34 @@ export const useFamilyGroups = () => {
 
     setLoading(true);
     try {
+      // Get the current group data to merge with updates
+      const currentGroup = familyGroups.find(g => g.id === groupId);
+      
+      // Prepare the final data by merging current and updates
+      const finalData = { ...currentGroup, ...updates };
+      
+      // Ensure group lead is included in host_members if they exist
+      let hostMembers = finalData.host_members || [];
+      if (finalData.lead_name && finalData.lead_email) {
+        const leadExists = hostMembers.some(member => 
+          member.email?.toLowerCase() === finalData.lead_email?.toLowerCase()
+        );
+        
+        if (!leadExists) {
+          const leadAsMember = {
+            name: finalData.lead_name,
+            phone: finalData.lead_phone || '',
+            email: finalData.lead_email,
+            canHost: true
+          };
+          hostMembers = [leadAsMember, ...hostMembers];
+        }
+      }
+
       // Prepare updates with proper JSONB casting
       const updatesWithJsonb = {
         ...updates,
-        host_members: updates.host_members ? (updates.host_members as any) : undefined
+        host_members: hostMembers as any
       };
 
       const { data: updatedGroup, error } = await supabase
