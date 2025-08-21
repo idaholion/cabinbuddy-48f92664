@@ -19,6 +19,14 @@ interface UserAllocation {
   allocated_shares: number;
 }
 
+interface ExistingVote {
+  id: string;
+  proposal_id: string;
+  shares_used: number;
+  vote_choice: string;
+  voted_by_user_id: string;
+}
+
 export const VoteForm = () => {
   const { organization } = useOrganization();
   const { userFamilyGroup } = useUserRole();
@@ -30,7 +38,7 @@ export const VoteForm = () => {
   const [votingShares, setVotingShares] = useState(0);
   const [voteChoice, setVoteChoice] = useState('');
   const [loading, setLoading] = useState(false);
-  const [existingVote, setExistingVote] = useState<any>(null);
+  const [existingVote, setExistingVote] = useState<ExistingVote | null>(null);
 
   useEffect(() => {
     if (organization?.id && user?.id) {
@@ -90,10 +98,10 @@ export const VoteForm = () => {
     try {
       const { data, error } = await supabase
         .from('votes')
-        .select('*')
+        .select('id, proposal_id, shares_used, vote_choice, voted_by_user_id')
         .eq('proposal_id', selectedProposal)
         .eq('voted_by_user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
 
