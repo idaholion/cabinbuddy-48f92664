@@ -58,18 +58,17 @@ export const GuestAccessProvider = ({ children }: GuestAccessProviderProps) => {
       }
 
       if (data) {
-        // Fetch organization details for guest mode
-        const { data: org, error: orgError } = await supabase
-          .from('organizations')
-          .select('id, name, code, access_type')
-          .eq('id', orgId)
-          .single();
+        // Use safe guest access function to get organization details
+        const { data: orgData, error: orgError } = await supabase.rpc('get_safe_guest_organization_info', {
+          org_id: orgId
+        });
 
-        if (orgError || !org) {
+        if (orgError || !orgData || orgData.length === 0) {
           toast.error('Organization not found');
           return false;
         }
 
+        const org = orgData[0];
         setGuestOrganization(org);
         setIsGuestMode(true);
         toast.success(`Welcome to ${org.name}! You're viewing in preview mode.`);

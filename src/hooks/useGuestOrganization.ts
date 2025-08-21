@@ -23,23 +23,19 @@ export const useGuestOrganization = () => {
     setError(null);
 
     try {
-      // Fetch basic organization data, family groups, and features
-      // Only select safe fields for guest access - no sensitive contact information
+      // Use safe guest access functions that don't expose personal information
       const [orgResult, familyGroupsResult, featuresResult] = await Promise.all([
-        supabase
-          .from('organizations')
-          .select('id, name, code, access_type, created_at, updated_at')
-          .eq('id', guestOrganization.id)
-          .single(),
+        supabase.rpc('get_safe_guest_organization_info', {
+          org_id: guestOrganization.id
+        }),
         
-        supabase
-          .from('family_groups')
-          .select('*')
-          .eq('organization_id', guestOrganization.id),
+        supabase.rpc('get_safe_guest_family_groups', {
+          org_id: guestOrganization.id
+        }),
         
         supabase
           .from('features')
-          .select('*')
+          .select('id, feature_key, title, description, icon, category, sort_order, is_active')
           .eq('organization_id', guestOrganization.id)
           .eq('is_active', true)
       ]);
@@ -49,7 +45,7 @@ export const useGuestOrganization = () => {
       if (featuresResult.error) throw featuresResult.error;
 
       setOrganizationData({
-        organization: orgResult.data,
+        organization: orgResult.data?.[0] || null,
         familyGroups: familyGroupsResult.data || [],
         features: featuresResult.data || [],
       });

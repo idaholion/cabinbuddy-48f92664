@@ -2191,6 +2191,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_safe_guest_family_groups: {
+        Args: { org_id: string }
+        Returns: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }[]
+      }
+      get_safe_guest_organization_info: {
+        Args: { org_id: string }
+        Returns: {
+          access_type: string
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }[]
+      }
       get_safe_organization_info: {
         Args: { org_id: string }
         Returns: {
