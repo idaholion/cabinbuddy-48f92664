@@ -91,7 +91,7 @@ export const VotingProposals = () => {
           description: newProposal.description,
           created_by_user_id: user?.id,
           created_by_name: user?.email?.split('@')[0] || 'Unknown',
-          created_by_family_group: userFamilyGroup,
+          created_by_family_group: typeof userFamilyGroup === 'string' ? userFamilyGroup : userFamilyGroup?.name || 'Unknown',
           voting_deadline: newProposal.voting_deadline ? new Date(newProposal.voting_deadline).toISOString() : null,
           status: 'active'
         });
@@ -208,7 +208,15 @@ export const VotingProposals = () => {
                       {proposal.description}
                     </p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-                      <span>By {proposal.created_by_family_group}</span>
+                      <span>By {(() => {
+                        try {
+                          return typeof proposal.created_by_family_group === 'string' && proposal.created_by_family_group.startsWith('{')
+                            ? JSON.parse(proposal.created_by_family_group)?.name || 'Unknown'
+                            : proposal.created_by_family_group || 'Unknown';
+                        } catch {
+                          return proposal.created_by_family_group || 'Unknown';
+                        }
+                      })()}</span>
                       <span>{format(new Date(proposal.created_at), 'MMM dd, yyyy')}</span>
                       {proposal.voting_deadline && (
                         <span>Deadline: {format(new Date(proposal.voting_deadline), 'MMM dd, yyyy HH:mm')}</span>
