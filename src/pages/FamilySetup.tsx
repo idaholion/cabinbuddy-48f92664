@@ -13,6 +13,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useUserRole } from "@/hooks/useUserRole";
 
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
@@ -26,6 +27,7 @@ const FamilySetup = () => {
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
   const { familyGroups: existingFamilyGroups } = useFamilyGroups();
+  const { isGroupLead, isGroupMember, isAdmin, userFamilyGroup, loading: roleLoading } = useUserRole();
   
   const [searchParams] = useSearchParams();
   
@@ -99,10 +101,33 @@ const FamilySetup = () => {
     enabled: true,
   });
 
+  // Redirect regular group members to their profile page
+  useEffect(() => {
+    if (!roleLoading && !isCreatingNew) {
+      if (isGroupMember && !isGroupLead && !isAdmin) {
+        toast({
+          title: "Redirecting",
+          description: "Group members should use the Group Member Profile page.",
+        });
+        navigate("/group-member-profile");
+      }
+    }
+  }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast]);
+
   // Load existing family groups into editable state
   useEffect(() => {
-    if (existingFamilyGroups.length > 0 && !isCreatingNew) {
-      const editableGroups = existingFamilyGroups.map(group => {
+    if (existingFamilyGroups.length > 0 && !isCreatingNew && !roleLoading) {
+      // Filter groups based on user role
+      let filteredGroups = existingFamilyGroups;
+      
+      if (isGroupLead && !isAdmin) {
+        // Group leads only see their own group
+        filteredGroups = existingFamilyGroups.filter(group => 
+          group.id === userFamilyGroup?.id
+        );
+      }
+      
+      const editableGroups = filteredGroups.map(group => {
         const leadName = group.lead_name || '';
         const nameParts = leadName.split(' ');
         return {
@@ -114,15 +139,15 @@ const FamilySetup = () => {
         };
       });
       
-      // Add at least one empty group for new additions
+      // Only admins can add new groups
       const newGroups = [...editableGroups];
-      if (newGroups.every(g => g.isExisting)) {
+      if (isAdmin && newGroups.every(g => g.isExisting)) {
         newGroups.push({name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false});
       }
       
       setFamilyGroups(newGroups);
     }
-  }, [existingFamilyGroups, isCreatingNew]);
+  }, [existingFamilyGroups, isCreatingNew, isGroupLead, isAdmin, userFamilyGroup, roleLoading]);
 
   // Load saved data on component mount
   useEffect(() => {
@@ -505,21 +530,21 @@ const FamilySetup = () => {
     setFamilyGroups(newFamilyGroups);
   };
 
-  // Add a new family group field
+  // Add a new family group field (only for admins)
   const addFamilyGroup = () => {
-    setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false}]);
+    if (isAdmin || isCreatingNew) {
+      setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false}]);
+    }
   };
 
-  // Remove a family group field
+  // Remove a family group field (only for admins or during creation)
   const removeFamilyGroup = (index: number) => {
-    if (familyGroups.length > 1) {
+    if ((isAdmin || isCreatingNew) && familyGroups.length > 1) {
       setFamilyGroups(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  // Check if user is admin (for now, assume admin if they have admin email filled)
-  const isAdmin = adminEmail && adminEmail.trim() !== "";
-
+  // Generate organization code
   const regenerateOrgCode = () => {
     setOrganizationCode(generateOrgCode());
     toast({
@@ -595,9 +620,18 @@ const FamilySetup = () => {
                 {(orgLoading || settingsLoading) ? "Saving..." : "Save Organization Setup"}
               </Button>
             </div>
-            <CardTitle className="text-2xl text-center">Family Organization & Groups Setup</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              {isAdmin ? 'Family Organization & Groups Setup' : 
+               isGroupLead ? 'Edit Your Family Group' : 
+               'Family Organization & Groups Setup'}
+            </CardTitle>
             <CardDescription className="text-center">
               📝 Auto-saving your changes...
+              {isGroupLead && !isAdmin && (
+                <span className="block text-sm text-muted-foreground mt-1">
+                  Group leads can edit their own family group details
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 py-4">
@@ -641,7 +675,7 @@ const FamilySetup = () => {
                     <Copy className="h-4 w-4" />
                     Copy
                   </Button>
-                  {(isCreatingNew || isAdmin) && (
+                   {(isCreatingNew || isAdmin) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -809,7 +843,14 @@ const FamilySetup = () => {
               {/* Family Groups - Editable for all cases */}
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground text-center mb-4">
-                  <p>{existingFamilyGroups.length > 0 ? 'Edit existing family groups and add new ones:' : 'Set up your family groups:'}</p>
+                  <p>
+                    {isAdmin ? 
+                      (existingFamilyGroups.length > 0 ? 'Edit existing family groups and add new ones:' : 'Set up your family groups:') :
+                     isGroupLead ? 
+                      'Edit your family group details:' : 
+                      'Set up your family groups:'
+                    }
+                  </p>
                 </div>
                 {familyGroups.map((group, index) => (
                   <div key={group.id || index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
@@ -817,7 +858,7 @@ const FamilySetup = () => {
                       <Label className="text-lg font-semibold">
                         {group.isExisting ? `${group.name} (Edit)` : `New Family Group ${existingFamilyGroups.length + (index - familyGroups.filter(g => g.isExisting).length) + 1}`}
                       </Label>
-                      {familyGroups.length > 1 && !group.isExisting && (
+                      {(isAdmin || isCreatingNew) && familyGroups.length > 1 && !group.isExisting && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -863,16 +904,18 @@ const FamilySetup = () => {
                   </div>
                 ))}
                 
-                <div className="flex justify-center pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={addFamilyGroup}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Another Family Group
-                  </Button>
-                </div>
+                {(isAdmin || isCreatingNew) && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={addFamilyGroup}
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Another Family Group
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Administrator Family Group Selection - Only for new organizations */}
