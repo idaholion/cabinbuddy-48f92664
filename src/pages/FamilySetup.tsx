@@ -69,7 +69,7 @@ const FamilySetup = () => {
   const [calendarKeeperName, setCalendarKeeperName] = useState("");
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
-  const [familyGroups, setFamilyGroups] = useState<{name: string, leadFirstName: string, leadLastName: string}[]>([{name: "", leadFirstName: "", leadLastName: ""}]);
+  const [familyGroups, setFamilyGroups] = useState<{name: string, leadFirstName: string, leadLastName: string, id?: string, isExisting?: boolean}[]>([{name: "", leadFirstName: "", leadLastName: ""}]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
   const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
   const [showProfileClaimingStep, setShowProfileClaimingStep] = useState(false);
@@ -98,6 +98,31 @@ const FamilySetup = () => {
     data: formData,
     enabled: true,
   });
+
+  // Load existing family groups into editable state
+  useEffect(() => {
+    if (existingFamilyGroups.length > 0 && !isCreatingNew) {
+      const editableGroups = existingFamilyGroups.map(group => {
+        const leadName = group.lead_name || '';
+        const nameParts = leadName.split(' ');
+        return {
+          id: group.id,
+          name: group.name,
+          leadFirstName: nameParts[0] || '',
+          leadLastName: nameParts.slice(1).join(' ') || '',
+          isExisting: true
+        };
+      });
+      
+      // Add at least one empty group for new additions
+      const newGroups = [...editableGroups];
+      if (newGroups.every(g => g.isExisting)) {
+        newGroups.push({name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false});
+      }
+      
+      setFamilyGroups(newGroups);
+    }
+  }, [existingFamilyGroups, isCreatingNew]);
 
   // Load saved data on component mount
   useEffect(() => {
@@ -301,33 +326,57 @@ const FamilySetup = () => {
         return;
       }
       
-      // Create family groups in the database
+      // Create/update family groups in the database
       const currentOrgId = (organization || newOrganization)?.id;
       
       if (validGroups.length > 0 && currentOrgId) {
         try {
-          const payload = validGroups.map(group => ({
-            organization_id: currentOrgId,
-            name: group.name.trim(),
-            lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
-            lead_phone: null,
-            lead_email: null,
-            host_members: [],
-            color: null,
-            alternate_lead_id: null,
-          }));
+          // Handle updates for existing groups
+          const existingGroupsToUpdate = validGroups.filter(group => group.id && group.isExisting);
+          const newGroupsToCreate = validGroups.filter(group => !group.id || !group.isExisting);
 
-          // Use upsert to handle duplicates gracefully
-          const { data, error } = await supabase
-            .from('family_groups')
-            .upsert(payload, { 
-              onConflict: 'organization_id,name',
-              ignoreDuplicates: true 
-            })
-            .select();
+          // Update existing groups
+          for (const group of existingGroupsToUpdate) {
+            const { error: updateError } = await supabase
+              .from('family_groups')
+              .update({
+                name: group.name.trim(),
+                lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', group.id);
 
-          if (error) {
-            throw error;
+            if (updateError) {
+              console.error('Error updating existing group:', updateError);
+              throw updateError;
+            }
+          }
+
+          // Create new groups if any
+          if (newGroupsToCreate.length > 0) {
+            const payload = newGroupsToCreate.map(group => ({
+              organization_id: currentOrgId,
+              name: group.name.trim(),
+              lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
+              lead_phone: null,
+              lead_email: null,
+              host_members: [],
+              color: null,
+              alternate_lead_id: null,
+            }));
+
+            // Use upsert to handle duplicates gracefully
+            const { data, error } = await supabase
+              .from('family_groups')
+              .upsert(payload, { 
+                onConflict: 'organization_id,name',
+                ignoreDuplicates: true 
+              })
+              .select();
+
+            if (error) {
+              throw error;
+            }
           }
 
           
@@ -458,7 +507,7 @@ const FamilySetup = () => {
 
   // Add a new family group field
   const addFamilyGroup = () => {
-    setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: ""}]);
+    setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false}]);
   };
 
   // Remove a family group field
@@ -757,171 +806,74 @@ const FamilySetup = () => {
                 </h2>
               </div>
               
-              {/* Show existing family groups if they exist */}
-              {existingFamilyGroups.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="text-sm text-muted-foreground text-center mb-4">
-                    <p>Current family groups in your organization:</p>
-                  </div>
-                  {existingFamilyGroups.map((group, index) => (
-                    <div key={group.id} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/30">
-                      <div className="flex-1">
-                        <div className="font-medium">{group.name}</div>
-                        {group.lead_name && (
-                          <div className="text-sm text-muted-foreground">
-                            Lead: {group.lead_name} {group.lead_email && `(${group.lead_email})`}
-                          </div>
-                        )}
-                        {group.host_members && group.host_members.length > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            {group.host_members.length} group member{group.host_members.length !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  
-                  {/* Add More Family Groups Section for Existing Organizations */}
-                  <div className="border-t pt-4">
-                    <h3 className="text-lg font-semibold text-center mb-4">Add More Family Groups</h3>
-                    <div className="space-y-4">
-                      {familyGroups.map((group, index) => (
-                        <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-lg font-semibold">New Family Group {index + 1}</Label>
-                            {familyGroups.length > 1 && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => removeFamilyGroup(index)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor={`familyGroupName${index}`} className="text-sm font-medium">Group Name *</Label>
-                            <Input
-                              id={`familyGroupName${index}`}
-                              placeholder={`Enter Family Group ${index + 1} name`}
-                              value={group.name}
-                              onChange={(e) => handleFamilyGroupChange(index, 'name', e.target.value)}
-                              autoFocus={index === familyGroups.length - 1 && group.name === ""}
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div className="space-y-2">
-                              <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
-                              <Input
-                                id={`leadFirstName${index}`}
-                                placeholder="First name"
-                                value={group.leadFirstName}
-                                onChange={(e) => handleFamilyGroupChange(index, 'leadFirstName', e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`leadLastName${index}`} className="text-sm font-medium">Lead Last Name *</Label>
-                              <Input
-                                id={`leadLastName${index}`}
-                                placeholder="Last name"
-                                value={group.leadLastName}
-                                onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      <div className="flex justify-center pt-2">
+              {/* Family Groups - Editable for all cases */}
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground text-center mb-4">
+                  <p>{existingFamilyGroups.length > 0 ? 'Edit existing family groups and add new ones:' : 'Set up your family groups:'}</p>
+                </div>
+                {familyGroups.map((group, index) => (
+                  <div key={group.id || index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-lg font-semibold">
+                        {group.isExisting ? `${group.name} (Edit)` : `New Family Group ${index - familyGroups.filter(g => g.isExisting).length + 1}`}
+                      </Label>
+                      {familyGroups.length > 1 && !group.isExisting && (
                         <Button
                           variant="outline"
-                          onClick={addFamilyGroup}
-                          className="flex items-center gap-2"
+                          size="sm"
+                          onClick={() => removeFamilyGroup(index)}
+                          className="text-destructive hover:text-destructive"
                         >
-                          <Plus className="h-4 w-4" />
-                          Add Another Family Group
+                          <X className="h-4 w-4" />
                         </Button>
-                      </div>
+                      )}
                     </div>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground text-center mt-4">
-                    <p>To modify existing family groups, use the "Family Group Setup" page after saving.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {familyGroups.map((group, index) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-lg font-semibold">Family Group {index + 1}</Label>
-                        {familyGroups.length > 1 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeFamilyGroup(index)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`familyGroupName${index}`} className="text-sm font-medium">Group Name *</Label>
+                      <Input
+                        id={`familyGroupName${index}`}
+                        placeholder={`Enter Family Group name`}
+                        value={group.name}
+                        onChange={(e) => handleFamilyGroupChange(index, 'name', e.target.value)}
+                        autoFocus={index === familyGroups.length - 1 && group.name === ""}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       <div className="space-y-2">
-                        <Label htmlFor={`familyGroupName${index}`} className="text-sm font-medium">Group Name *</Label>
+                        <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
                         <Input
-                          id={`familyGroupName${index}`}
-                          placeholder={`Enter Family Group ${index + 1} name`}
-                          value={group.name}
-                          onChange={(e) => handleFamilyGroupChange(index, 'name', e.target.value)}
-                          autoFocus={index === familyGroups.length - 1 && group.name === ""}
+                          id={`leadFirstName${index}`}
+                          placeholder="First name"
+                          value={group.leadFirstName}
+                          onChange={(e) => handleFamilyGroupChange(index, 'leadFirstName', e.target.value)}
                         />
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div className="space-y-2">
-                          <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
-                          <Input
-                            id={`leadFirstName${index}`}
-                            placeholder="First name"
-                            value={group.leadFirstName}
-                            onChange={(e) => handleFamilyGroupChange(index, 'leadFirstName', e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`leadLastName${index}`} className="text-sm font-medium">Lead Last Name *</Label>
-                          <Input
-                            id={`leadLastName${index}`}
-                            placeholder="Last name"
-                            value={group.leadLastName}
-                            onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
-                          />
-                        </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`leadLastName${index}`} className="text-sm font-medium">Lead Last Name *</Label>
+                        <Input
+                          id={`leadLastName${index}`}
+                          placeholder="Last name"
+                          value={group.leadLastName}
+                          onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
+                        />
                       </div>
                     </div>
-                  ))}
-                  
-                  <div className="flex justify-center pt-2">
-                    <Button
-                      variant="outline"
-                      onClick={addFamilyGroup}
-                      className="flex items-center gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Family Group
-                    </Button>
                   </div>
+                ))}
                 
-                  <div className="text-sm text-muted-foreground text-center mt-4">
-                    <p>After saving, you can add more details like lead contacts, group members, and colors for each family group in the next step.</p>
-                    <p className="text-xs mt-1 text-orange-600">* All fields marked with asterisk are required</p>
-                  </div>
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={addFamilyGroup}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Another Family Group
+                  </Button>
                 </div>
-              )}
+              </div>
 
               {/* Administrator Family Group Selection - Only for new organizations */}
               {isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim())) && (
