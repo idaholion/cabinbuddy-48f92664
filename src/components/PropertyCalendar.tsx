@@ -610,15 +610,9 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               </Button>
             </div>
             
-            {/* Save Button - Simplified */}
-            <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
-              <Save className="h-4 w-4 mr-1" />
-              Save
-            </Button>
-            
-            
-            {/* Filter & Search - Consolidated */}
-            <DropdownMenu>
+            {/* Filter & Search and Save - Consolidated */}
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Search className="h-4 w-4 mr-1" />
@@ -699,7 +693,14 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                   </div>
                 </div>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+              
+              {/* Save Button */}
+              <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+            </div>
           </div>
           
             <div className="flex items-center justify-between">

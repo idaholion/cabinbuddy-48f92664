@@ -214,7 +214,7 @@ const CabinCalendar = () => {
                     familyGroups={familyGroups}
                     selectedFamilyGroup={selectedFamilyGroup}
                     onFamilyGroupChange={handleFamilyGroupChange}
-                    showFamilyGroupSelector={isCalendarKeeper}
+                    showFamilyGroupSelector={isCalendarKeeper || (organization?.admin_email?.toLowerCase() === user?.email?.toLowerCase())}
                   />
                 </div>
               </div>
@@ -353,12 +353,12 @@ const CabinCalendar = () => {
                              </SelectTrigger>
                              <SelectContent className="bg-background border border-border shadow-lg z-50 min-w-[12rem]">
                                {availableHosts.map((host) => (
-                                 <SelectItem key={host.name} value={host.name}>
-                                   <div className="flex items-center gap-2">
-                                     <User className="h-3 w-3" />
-                                     <span className="truncate">{host.name}</span>
-                                   </div>
-                                 </SelectItem>
+                                  <SelectItem key={host.name} value={host.name}>
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-3 w-3" />
+                                      <span className="truncate">{host.name.split(' ')[0]}</span>
+                                    </div>
+                                  </SelectItem>
                                ))}
                              </SelectContent>
                            </Select>
