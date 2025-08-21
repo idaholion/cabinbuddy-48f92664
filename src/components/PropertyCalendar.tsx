@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -107,7 +107,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     showTradeRequests: true,
     familyGroupFilter: 'all'
   });
-  const [viewMode, setViewMode] = useState<'calendar' | 'timeline' | 'mini'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'mini'>('calendar');
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   
@@ -623,19 +623,10 @@ const getBookingsForDate = (date: Date) => {
                 variant={viewMode === 'calendar' ? 'default' : 'ghost'} 
                 size="sm"
                 onClick={() => setViewMode('calendar')}
-                className="rounded-none"
+                className="rounded-l-lg"
               >
                 <Calendar className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Calendar</span>
-              </Button>
-              <Button 
-                variant={viewMode === 'timeline' ? 'default' : 'ghost'} 
-                size="sm"
-                onClick={() => setViewMode('timeline')}
-                className="rounded-none"
-              >
-                <ArrowLeftRight className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">Timeline</span>
               </Button>
               <Button 
                 variant={viewMode === 'mini' ? 'default' : 'ghost'} 
@@ -643,7 +634,7 @@ const getBookingsForDate = (date: Date) => {
                 onClick={() => setViewMode('mini')}
                 className="rounded-r-lg"
               >
-                <Calendar className="h-4 w-4 sm:mr-1" />
+                <Layers className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Mini</span>
               </Button>
             </div>
@@ -964,7 +955,7 @@ const getBookingsForDate = (date: Date) => {
                       {/* Trade requests indicator */}
                       {hasPendingTrade && (
                         <div className="text-xs px-1 py-0.5 bg-destructive/20 text-destructive rounded truncate">
-                          <ArrowLeftRight className="h-3 w-3 inline mr-1" />
+                          <Edit2 className="h-3 w-3 inline mr-1" />
                           Trade Request
                         </div>
                       )}
@@ -1049,59 +1040,6 @@ const getBookingsForDate = (date: Date) => {
             </>
           )}
           
-          {/* Timeline View */}
-          {viewMode === 'timeline' && (
-            <div className="space-y-4">
-              {familyGroups.map(familyGroup => {
-                const groupBookings = reservations.filter(r => 
-                  r.family_group === familyGroup.name &&
-                  new Date(r.start_date).getMonth() === currentMonth.getMonth()
-                );
-                
-                if (groupBookings.length === 0 && filterOptions.familyGroupFilter !== 'all' && filterOptions.familyGroupFilter !== familyGroup.name) {
-                  return null;
-                }
-                
-                return (
-                  <div key={familyGroup.id} className="p-4 border border-border rounded-lg bg-card">
-                    <div className="flex items-center space-x-3 mb-3">
-                      {familyGroup.color && (
-                        <div
-                          className="w-4 h-4 rounded-full border border-border"
-                          style={{ backgroundColor: familyGroup.color }}
-                        />
-                      )}
-                      <Users className="h-5 w-5 text-primary" />
-                      <h4 className="font-medium">{familyGroup.name}</h4>
-                      <div className="flex-1 h-px bg-border"></div>
-                    </div>
-                    <div className="space-y-2">
-                      {groupBookings.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No bookings this month</p>
-                      ) : (
-                        groupBookings.map(booking => (
-                          <div key={booking.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                            <div className="text-sm">
-                              {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {booking.time_period_number && (
-                                <Badge variant="outline" className="text-xs">P{booking.time_period_number}</Badge>
-                              )}
-                              <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
-                                {booking.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
           {/* Mini View */}
           {viewMode === 'mini' && (
             <div className="space-y-4">
@@ -1328,13 +1266,13 @@ const getBookingsForDate = (date: Date) => {
                              <Edit2 className="h-4 w-4 mr-2" />
                              Edit Booking
                            </DropdownMenuItem>
-                           <DropdownMenuItem onClick={() => {
-                             setEditingReservation(reservation);
-                             setShowSplitDialog(true);
-                           }}>
-                             <ArrowLeftRight className="h-4 w-4 mr-2" />
-                             Split into Periods
-                           </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setEditingReservation(reservation);
+                              setShowSplitDialog(true);
+                            }}>
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Split into Periods
+                            </DropdownMenuItem>
                            <DropdownMenuSeparator />
                            <DropdownMenuItem 
                              onClick={() => {
