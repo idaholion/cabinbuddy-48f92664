@@ -183,7 +183,24 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Get the selected family group's host members
   const selectedFamilyGroup = familyGroups.find(fg => fg.name === watchedFamilyGroup);
-  const familyGroupHosts = selectedFamilyGroup?.host_members || [];
+  
+  // Combine group lead with host members to ensure leads can be selected as hosts
+  const familyGroupHosts = selectedFamilyGroup ? 
+    [
+      // Include group lead if they exist and aren't already in host_members
+      ...(selectedFamilyGroup.lead_name && selectedFamilyGroup.lead_email ? 
+        [{
+          name: selectedFamilyGroup.lead_name,
+          email: selectedFamilyGroup.lead_email,
+          phone: selectedFamilyGroup.lead_phone || ''
+        }] : []
+      ),
+      // Include all host members
+      ...(selectedFamilyGroup.host_members || [])
+    ].filter((host, index, arr) => 
+      // Remove duplicates based on email
+      arr.findIndex(h => h.email?.toLowerCase() === host.email?.toLowerCase()) === index
+    ) : [];
 
   // Calculate time period windows for current month
   const timePeriodWindows = calculateTimePeriodWindows(
