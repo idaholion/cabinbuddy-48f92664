@@ -695,6 +695,20 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
               </DropdownMenuContent>
               </DropdownMenu>
               
+              {/* Calendar Keeper Override Mode Toggle */}
+              {isCalendarKeeper && (
+                <Button
+                  variant={testOverrideMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setTestOverrideMode(!testOverrideMode)}
+                  className={testOverrideMode ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+                  title="Toggle override mode to bypass time period restrictions"
+                >
+                  <TestTube className="h-4 w-4 mr-1" />
+                  Override Mode
+                </Button>
+              )}
+              
               {/* Save Button */}
               <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
                 <Save className="h-4 w-4 mr-1" />
