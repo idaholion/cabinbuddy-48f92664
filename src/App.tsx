@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GuestAccessProvider } from "@/contexts/GuestAccessContext";
+import { RoleProvider } from "@/contexts/RoleContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RobustOrganizationRoute } from "@/components/RobustOrganizationRoute";
 import { UnifiedAuthRoute } from "@/components/UnifiedAuthRoute";
@@ -157,12 +158,14 @@ const App = () => (
     <TooltipProvider>
       <NetworkStatusProvider>
         <AuthProvider>
-          <ErrorBoundary>
-            <Toaster />
-            <Sonner />
-            
-            <AppContent />
-          </ErrorBoundary>
+          <RoleProvider>
+            <ErrorBoundary>
+              <Toaster />
+              <Sonner />
+              
+              <AppContent />
+            </ErrorBoundary>
+          </RoleProvider>
         </AuthProvider>
       </NetworkStatusProvider>
     </TooltipProvider>
