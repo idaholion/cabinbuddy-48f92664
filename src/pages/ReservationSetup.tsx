@@ -69,7 +69,9 @@ export default function ReservationSetup() {
     const savedData = localStorage.getItem('familySetupData');
     if (savedData) {
       const data = JSON.parse(savedData);
-      const groups = data.familyGroups?.filter((group: string) => group.trim() !== '') || [];
+      const groups = data.familyGroups?.filter((group: any) => 
+        typeof group === 'string' && group.trim() !== ''
+      ) || [];
       if (groups.length > 0 && familyGroups.length === 0) {
         setRotationOrder(new Array(groups.length).fill(''));
       }
