@@ -569,7 +569,7 @@ const FamilyGroupSetup = () => {
                          Group Members ({filledMembersCount} filled)
                        </h3>
                         <p className="text-lg text-muted-foreground mt-1">
-                          Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Host Profile page. Check the boxes to indicate who can host and who can make reservations.
+                          Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
                         </p>
                     </div>
                     
