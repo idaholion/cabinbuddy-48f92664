@@ -344,83 +344,66 @@ const CabinCalendar = () => {
                          </DropdownMenuContent>
                        </DropdownMenu>
 
-                        {/* Host Selector - Only when Calendar Keeper has selected a family group */}
-                        {isCalendarKeeper && selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
-                          <Select value={selectedHost} onValueChange={setSelectedHost}>
-                            <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
-                              <User className="h-4 w-4 mr-1" />
-                              <SelectValue placeholder="Host" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background border border-border shadow-lg z-50 min-w-[12rem]">
-                              {availableHosts.map((host) => (
-                                <SelectItem key={host.name} value={host.name}>
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-3 w-3" />
-                                    <span className="truncate">{host.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                         {/* Host Selector - Only when Calendar Keeper has selected a family group */}
+                         {isCalendarKeeper && selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
+                           <Select value={selectedHost} onValueChange={setSelectedHost}>
+                             <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
+                               <User className="h-4 w-4 mr-1" />
+                               <SelectValue placeholder="Host" />
+                             </SelectTrigger>
+                             <SelectContent className="bg-background border border-border shadow-lg z-50 min-w-[12rem]">
+                               {availableHosts.map((host) => (
+                                 <SelectItem key={host.name} value={host.name}>
+                                   <div className="flex items-center gap-2">
+                                     <User className="h-3 w-3" />
+                                     <span className="truncate">{host.name}</span>
+                                   </div>
+                                 </SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                         )}
+
+                         {/* I'm Done Button - moved inline */}
+                         {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
+                           <ConfirmationDialog
+                             title="Confirm Selection Complete"
+                             description={(() => {
+                               const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                               if (!usageInfo) return "Are you sure you want to complete your selection?";
+                               if (usageInfo.remaining > 0) {
+                                 return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
+                               }
+                               return "Confirm that you have completed your selection period.";
+                             })()}
+                             confirmText="Yes, I'm Done"
+                             onConfirm={async () => {
+                               try {
+                                 await advanceSelection(true);
+                                 toast({
+                                   title: "Selection Complete",
+                                   description: "Your selection period has been marked complete. The next family group has been notified.",
+                                 });
+                               } catch (error) {
+                                 console.error('Error advancing selection:', error);
+                                 toast({
+                                   title: "Error",
+                                   description: "Failed to complete selection. Please try again.",
+                                   variant: "destructive",
+                                 });
+                               }
+                             }}
+                           >
+                             <Button className="bg-primary hover:bg-primary/90">
+                               I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
+                             </Button>
+                           </ConfirmationDialog>
+                         )}
                      </div>
                    </div>
                  )}
-                
-                 {/* Sequential Selection Section */}
-                 {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
-                   <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                     <div className="flex items-center justify-between">
-                       <div>
-                         <h3 className="font-medium text-primary">
-                           {currentPhase === 'primary' ? 'Primary Selection' : 'Secondary Selection'} - Your Turn
-                         </h3>
-                         <p className="text-sm text-muted-foreground mt-1">
-                           It's your family group's turn to make selections. 
-                           {(() => {
-                             const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                             if (!usageInfo) return '';
-                             return ` You have ${usageInfo.remaining} of ${usageInfo.allowed} periods remaining.`;
-                           })()}
-                         </p>
-                       </div>
-                       <ConfirmationDialog
-                         title="Confirm Selection Complete"
-                         description={(() => {
-                           const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                           if (!usageInfo) return "Are you sure you want to complete your selection?";
-                           if (usageInfo.remaining > 0) {
-                             return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
-                           }
-                           return "Confirm that you have completed your selection period.";
-                         })()}
-                         confirmText="Yes, I'm Done"
-                         onConfirm={async () => {
-                           try {
-                             await advanceSelection(true);
-                             toast({
-                               title: "Selection Complete",
-                               description: "Your selection period has been marked complete. The next family group has been notified.",
-                             });
-                           } catch (error) {
-                             console.error('Error advancing selection:', error);
-                             toast({
-                               title: "Error",
-                               description: "Failed to complete selection. Please try again.",
-                               variant: "destructive",
-                             });
-                           }
-                         }}
-                       >
-                         <Button className="bg-primary hover:bg-primary/90">
-                           I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
-                         </Button>
-                       </ConfirmationDialog>
-                     </div>
-                   </div>
-                 )}
-               </div>
-             </div>
+                </div>
+              </div>
 
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">
