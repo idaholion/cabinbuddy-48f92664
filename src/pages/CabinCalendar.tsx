@@ -250,7 +250,7 @@ const CabinCalendar = () => {
                                      <span className="flex-1">{familyGroup}</span>
                                      <div className="flex items-center gap-1">
                                        <div title="Waiting to select">
-                                         <Clock className="h-3 w-3 text-muted-foreground" />
+                                         ⏳
                                        </div>
                                        <span className="text-xs text-muted-foreground">(waiting)</span>
                                      </div>
