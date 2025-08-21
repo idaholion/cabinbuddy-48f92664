@@ -88,7 +88,7 @@ export const useFamilyGroupBulkOperations = () => {
       return;
     }
 
-    // Get estimated count of groups with host members
+    // Get estimated count of groups with group members
     const { count } = await supabase
       .from('family_groups')
       .select('*', { count: 'exact', head: true })

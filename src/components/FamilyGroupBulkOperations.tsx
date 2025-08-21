@@ -135,7 +135,7 @@ export const FamilyGroupBulkOperations = () => {
               <h3 className="text-lg font-medium">Reservation Permissions</h3>
             </div>
             <p className="text-base text-muted-foreground">
-              Enable or disable reservation permissions for all host members across all family groups.
+              Enable or disable reservation permissions for all group members across all family groups.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Button

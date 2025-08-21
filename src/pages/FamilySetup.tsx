@@ -774,15 +774,83 @@ const FamilySetup = () => {
                         )}
                         {group.host_members && group.host_members.length > 0 && (
                           <div className="text-xs text-muted-foreground">
-                            {group.host_members.length} host member{group.host_members.length !== 1 ? 's' : ''}
+                            {group.host_members.length} group member{group.host_members.length !== 1 ? 's' : ''}
                           </div>
                         )}
                       </div>
                     </div>
                   ))}
                   
+                  
+                  {/* Add More Family Groups Section for Existing Organizations */}
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold text-center mb-4">Add More Family Groups</h3>
+                    <div className="space-y-4">
+                      {familyGroups.map((group, index) => (
+                        <div key={index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-lg font-semibold">New Family Group {index + 1}</Label>
+                            {familyGroups.length > 1 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeFamilyGroup(index)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`familyGroupName${index}`} className="text-sm font-medium">Group Name *</Label>
+                            <Input
+                              id={`familyGroupName${index}`}
+                              placeholder={`Enter Family Group ${index + 1} name`}
+                              value={group.name}
+                              onChange={(e) => handleFamilyGroupChange(index, 'name', e.target.value)}
+                              autoFocus={index === familyGroups.length - 1 && group.name === ""}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
+                              <Input
+                                id={`leadFirstName${index}`}
+                                placeholder="First name"
+                                value={group.leadFirstName}
+                                onChange={(e) => handleFamilyGroupChange(index, 'leadFirstName', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor={`leadLastName${index}`} className="text-sm font-medium">Lead Last Name *</Label>
+                              <Input
+                                id={`leadLastName${index}`}
+                                placeholder="Last name"
+                                value={group.leadLastName}
+                                onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="flex justify-center pt-2">
+                        <Button
+                          variant="outline"
+                          onClick={addFamilyGroup}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Another Family Group
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="text-sm text-muted-foreground text-center mt-4">
-                    <p>To modify these family groups, use the "Family Group Setup" page after saving.</p>
+                    <p>To modify existing family groups, use the "Family Group Setup" page after saving.</p>
                   </div>
                 </div>
               ) : (
@@ -849,7 +917,7 @@ const FamilySetup = () => {
                   </div>
                 
                   <div className="text-sm text-muted-foreground text-center mt-4">
-                    <p>After saving, you can add more details like lead contacts, host members, and colors for each family group in the next step.</p>
+                    <p>After saving, you can add more details like lead contacts, group members, and colors for each family group in the next step.</p>
                     <p className="text-xs mt-1 text-orange-600">* All fields marked with asterisk are required</p>
                   </div>
                 </div>

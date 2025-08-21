@@ -129,7 +129,7 @@ export function HostAssignmentForm({
       <CardContent className="space-y-4">
         {familyGroupHosts.length === 0 && (
           <p className="text-sm text-muted-foreground italic">
-            No hosts available for this family group. Please add host members to the family group first.
+            No hosts available for this family group. Please add group members to the family group first.
           </p>
         )}
 

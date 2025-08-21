@@ -206,7 +206,7 @@ export default function GuestAccess() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      {group.host_members?.length || 0} host members
+                      {group.host_members?.length || 0} group members
                     </p>
                   </CardContent>
                 </Card>

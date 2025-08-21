@@ -336,7 +336,7 @@ export const SupervisorFamilyGroupsTab = ({ organizationId }: SupervisorFamilyGr
 
               {/* Host Members Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Additional Host Members</h3>
+                <h3 className="text-lg font-semibold">Additional Group Members</h3>
                 {hostMembers.map((member, index) => (
                   <div key={index} className="p-3 border rounded-lg space-y-3">
                     <div className="text-base font-medium text-muted-foreground">Host Member {index + 1}</div>

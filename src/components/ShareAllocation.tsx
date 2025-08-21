@@ -119,7 +119,7 @@ export const ShareAllocation = () => {
       
       console.log('Fetching data for group:', groupName);
       
-      // First, get the family group with its host members - prioritize the one with actual data
+      // First, get the family group with its group members - prioritize the one with actual data
       const { data: familyGroups, error: groupError } = await supabase
         .from('family_groups')
         .select('host_members, lead_name, lead_email')
@@ -180,7 +180,7 @@ export const ShareAllocation = () => {
         existingAllocations?.map(item => [item.member_name, item.allocated_shares]) || []
       );
 
-      // Build allocations list from host members + group lead
+      // Build allocations list from group members + group lead
       const memberAllocations: MemberAllocation[] = [];
       
       // Add the group lead with default allocation to all shares if no existing allocations
@@ -195,7 +195,7 @@ export const ShareAllocation = () => {
         });
       }
 
-      // Add host members
+      // Add group members
       if (familyGroup?.host_members && Array.isArray(familyGroup.host_members)) {
         familyGroup.host_members.forEach((member: any) => {
           if (member.name && member.name !== familyGroup.lead_name) {
@@ -214,7 +214,7 @@ export const ShareAllocation = () => {
       console.error('Unexpected error in fetchMemberAllocations:', error);
       toast({
         title: "Error",
-        description: `Failed to fetch host members and allocations: ${error.message}`,
+        description: `Failed to fetch group members and allocations: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -326,7 +326,7 @@ export const ShareAllocation = () => {
         <CardContent className="space-y-4">
           {allocations.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
-              No host members found. Please add host members to your family group first.
+              No group members found. Please add group members to your family group first.
             </p>
           ) : (
             allocations.map((member, index) => (

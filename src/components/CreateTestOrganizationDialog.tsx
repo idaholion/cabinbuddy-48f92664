@@ -211,7 +211,7 @@ export const CreateTestOrganizationDialog = ({ onOrganizationCreated }: CreateTe
             This will create a test organization with sample data including:
             <ul className="list-disc list-inside mt-2 space-y-1 text-base">
               <li>Organization contacts (admin, treasurer, calendar keeper)</li>
-              <li>4 family groups with leads and host members</li>
+              <li>4 family groups with leads and group members</li>
               <li>8 sample receipts with various expenses</li>
               <li>Complete property and reservation settings</li>
             </ul>
