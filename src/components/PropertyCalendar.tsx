@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, Save, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, ArrowLeftRight, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -755,12 +755,6 @@ const getBookingsForDate = (date: Date) => {
                   Override Mode
                 </Button>
               )}
-              
-              {/* Save Button */}
-              <Button variant="default" size="sm" className="bg-success hover:bg-success/90">
-                <Save className="h-4 w-4 mr-1" />
-                Save
-              </Button>
             </div>
           </div>
           
