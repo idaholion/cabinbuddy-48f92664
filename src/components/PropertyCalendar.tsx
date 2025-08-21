@@ -45,7 +45,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { reservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
-  const { calculateTimePeriodWindows, timePeriodUsage } = useTimePeriods();
+  const { calculateTimePeriodWindows } = useTimePeriods();
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
@@ -1303,23 +1303,6 @@ const getBookingsForDate = (date: Date) => {
                      (startDate.getMonth() === nextMonth.getMonth() && startDate.getFullYear() === nextMonth.getFullYear());
             }).length === 0 && (
               <p className="text-muted-foreground text-center py-4">No upcoming reservations in the next 2 months</p>
-            )}
-            
-            {/* Time period usage summary */}
-            {timePeriodUsage.length > 0 && (
-              <div className="mt-4 p-3 bg-muted/30 rounded">
-                <h4 className="text-sm font-medium mb-2">Time Period Usage ({currentMonth.getFullYear()})</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {timePeriodUsage.map((usage) => (
-                    <div key={usage.family_group} className="text-xs">
-                      <span className="font-medium">{usage.family_group}:</span>
-                      <span className="text-muted-foreground ml-1">
-                        {usage.time_periods_used}/{usage.time_periods_allowed} periods
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
         </CardContent>
