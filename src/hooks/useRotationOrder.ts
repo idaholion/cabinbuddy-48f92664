@@ -17,6 +17,7 @@ interface RotationOrderData {
   secondary_max_periods?: number;
   secondary_selection_days?: number;
   selection_days?: number;
+  enable_post_rotation_selection?: boolean;
 }
 
 interface DatabaseRotationOrder {

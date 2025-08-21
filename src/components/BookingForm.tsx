@@ -53,6 +53,7 @@ interface BookingFormData {
   familyGroup: string;
   totalCost?: number;
   hostAssignments: HostAssignment[];
+  adminOverride?: boolean;
 }
 
 export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplete, editingReservation, testOverrideMode = false, selectedStartDate, selectedEndDate, prefilledFamilyGroup, prefilledHost }: BookingFormProps) {
@@ -94,7 +95,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       endDate: new Date(),
       familyGroup: '',
       totalCost: 0,
-      hostAssignments: []
+      hostAssignments: [],
+      adminOverride: false
     }
   });
 
@@ -179,7 +181,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         endDate: defaultEndDate,
         familyGroup: defaultFamilyGroup,
         totalCost: 0,
-        hostAssignments: defaultHostAssignments
+        hostAssignments: defaultHostAssignments,
+        adminOverride: false
       });
     }
   }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
@@ -188,6 +191,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const watchedEndDate = form.watch('endDate');
   const watchedFamilyGroup = form.watch('familyGroup');
   const watchedHostAssignments = form.watch('hostAssignments');
+  const watchedAdminOverride = form.watch('adminOverride');
 
   // Get the selected family group's host members
   const selectedFamilyGroup = familyGroups.find(fg => fg.name === watchedFamilyGroup);
@@ -255,7 +259,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows)
+        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -267,7 +271,10 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Check if family group can still make bookings
   const familyUsage = timePeriodUsage.find(u => u.family_group === watchedFamilyGroup);
-  const canMakeBooking = !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+
+  // Check if the family group can make a booking (considering admin override and all phases active)
+  const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
+  const canMakeBooking = watchedAdminOverride || allPhasesActive || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
     // Final validation - bypass in test mode
@@ -275,7 +282,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
-        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows);
+        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows, data.adminOverride);
     
     if (!validation.isValid) {
       toast({
@@ -572,6 +579,34 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               />
             </div>
 
+            {/* Admin Override Checkbox - Only show for calendar keepers */}
+            {(isCalendarKeeper || testOverrideMode) && !editingReservation && (
+              <FormField
+                control={form.control}
+                name="adminOverride"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="mt-0.5"
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="text-sm font-medium">
+                        Override Time Period Limits
+                      </FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Allow booking even if the family group has already used all allocated time periods for this year
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
+
 
             {/* Time Period Info */}
             {relevantWindow && (
@@ -599,10 +634,23 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               </div>
             )}
 
-            {!canMakeBooking && (
+            {!canMakeBooking && !watchedAdminOverride && !allPhasesActive && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">
                   This family group has already used all allocated time periods for this year.
+                  {(isCalendarKeeper || testOverrideMode) && (
+                    <span className="block mt-2 text-muted-foreground">
+                      Use the "Override Time Period Limits" option above to allow this booking.
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+
+            {allPhasesActive && (
+              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-sm text-primary">
+                  ℹ️ All selection phases (Primary, Secondary, and Post-Rotation) are active. Time period limits are not enforced.
                 </p>
               </div>
             )}

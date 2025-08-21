@@ -125,7 +125,8 @@ export const useTimePeriods = () => {
     startDate: Date,
     endDate: Date,
     familyGroup: string,
-    timePeriodWindows: TimePeriodWindow[]
+    timePeriodWindows: TimePeriodWindow[],
+    adminOverride: boolean = false
   ): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
@@ -169,9 +170,14 @@ export const useTimePeriods = () => {
     }
 
     // Check if family group has available time periods
-    const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-    if (usage && usage.time_periods_used >= usage.time_periods_allowed) {
-      errors.push('Your family group has already used all allocated time periods');
+    // Skip this check if admin override is enabled OR if all selection phases are active
+    const allPhasesActive = rotationData.enable_secondary_selection && rotationData.enable_post_rotation_selection;
+    
+    if (!adminOverride && !allPhasesActive) {
+      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+      if (usage && usage.time_periods_used >= usage.time_periods_allowed) {
+        errors.push('This family group has already used all allocated time periods for this year');
+      }
     }
 
     return { isValid: errors.length === 0, errors };
