@@ -220,16 +220,29 @@ const CabinCalendar = () => {
                       <span className="text-sm font-medium">{rotationYear} Rotation</span>
                     </div>
                     <div className="hidden md:flex items-center gap-4">
-                       {/* Static 2025 Rotation Order Display */}
-                       <div className="flex items-center gap-2">
-                         <RotateCcw className="h-4 w-4 text-primary" />
-                         <div className="px-3 py-2 bg-background/90 backdrop-blur-sm border border-border rounded-md">
-                           <div className="font-medium text-sm">{rotationYear} Rotation Order</div>
-                           <div className="text-xs text-muted-foreground mt-1">
-                             {currentRotationOrder.join(' → ')}
+                       {/* 2025 Order Dropdown */}
+                       <Select>
+                         <SelectTrigger className="w-64 bg-background/90 backdrop-blur-sm border-border">
+                           <SelectValue placeholder={`${rotationYear} Order`} />
+                         </SelectTrigger>
+                         <SelectContent className="bg-background border border-border shadow-lg z-50">
+                           <div className="p-3">
+                             <div className="font-medium text-sm mb-2">
+                               {rotationYear} Rotation Order
+                             </div>
+                             <div className="space-y-1">
+                               {currentRotationOrder.map((familyGroup, index) => {
+                                 return (
+                                   <div key={index} className="flex items-center gap-2 text-sm">
+                                     <span className="font-semibold w-6">{index + 1}.</span>
+                                     <span className="flex-1">{familyGroup}</span>
+                                   </div>
+                                 );
+                               })}
+                             </div>
                            </div>
-                         </div>
-                       </div>
+                         </SelectContent>
+                       </Select>
 
                        {/* 2026 Selection Status Dropdown */}
                        <Select>
@@ -387,12 +400,6 @@ const CabinCalendar = () => {
 
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">
-              {/* Show Secondary Selection prominently when active */}
-              <SecondarySelectionManager 
-                currentMonth={currentCalendarMonth} 
-                userFamilyGroup={userFamilyGroupName} 
-              />
-              
               <PropertyCalendar 
                 onMonthChange={setCurrentCalendarMonth}
                 selectedFamilyGroupFilter=""
