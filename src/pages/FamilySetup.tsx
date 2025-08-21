@@ -147,7 +147,7 @@ const FamilySetup = () => {
       
       // Load auto-saved data if available
       const savedData = loadSavedData();
-      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
+      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: any) => typeof g === 'string' ? g.trim() : g.name?.trim()))) {
         if (savedData.orgName) setOrgName(savedData.orgName);
         if (savedData.propertyName) setPropertyName(savedData.propertyName);
         if (savedData.adminPhone) setAdminPhone(savedData.adminPhone);
@@ -200,7 +200,7 @@ const FamilySetup = () => {
     if (!organization) {
       // Try to load auto-saved data first (only if there's meaningful data)
       const savedData = loadSavedData();
-      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: string) => g.trim()))) {
+      if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: any) => typeof g === 'string' ? g.trim() : g.name?.trim()))) {
         setOrgName(savedData.orgName || "");
         setPropertyName(savedData.propertyName || "");
         setAdminName(savedData.adminName || "");
