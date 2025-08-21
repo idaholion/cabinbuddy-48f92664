@@ -76,10 +76,10 @@ export const VoteForm = () => {
   const fetchUserAllocation = async () => {
     try {
       const { data, error } = await supabase
-        .from('user_share_allocations')
+        .from('member_share_allocations')
         .select('allocated_shares')
         .eq('organization_id', organization?.id)
-        .eq('user_id', user?.id)
+        .eq('member_email', user?.email)
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
@@ -164,7 +164,7 @@ export const VoteForm = () => {
           organization_id: organization?.id,
           voter_name: user?.email || 'Unknown',
           voter_email: user?.email,
-          family_group_name: userFamilyGroup,
+          family_group_name: typeof userFamilyGroup === 'string' ? userFamilyGroup : userFamilyGroup?.name || 'Unknown',
           shares_used: votingShares,
           vote_choice: voteChoice,
           voted_by_user_id: user?.id
