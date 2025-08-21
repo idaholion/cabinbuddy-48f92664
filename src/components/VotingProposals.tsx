@@ -90,7 +90,7 @@ export const VotingProposals = () => {
           title: newProposal.title,
           description: newProposal.description,
           created_by_user_id: user?.id,
-          created_by_name: user?.email?.split('@')[0] || 'Unknown',
+          created_by_name: user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Unknown',
           created_by_family_group: typeof userFamilyGroup === 'string' ? userFamilyGroup : userFamilyGroup?.name || 'Unknown',
           voting_deadline: newProposal.voting_deadline ? new Date(newProposal.voting_deadline).toISOString() : null,
           status: 'active'
