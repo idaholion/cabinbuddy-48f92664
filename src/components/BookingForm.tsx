@@ -329,7 +329,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           time_period_number: window?.periodNumber,
           nights_used: nights,
           host_assignments: hostAssignmentsData
-        });
+        }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (reservation) {
           await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());

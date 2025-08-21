@@ -54,7 +54,7 @@ export const useReservations = () => {
     }
   };
 
-  const createReservation = async (reservationData: ReservationData) => {
+  const createReservation = async (reservationData: ReservationData, testOverrideMode: boolean = false) => {
     if (!user || !organization?.id) {
       toast({
         title: "Error",
@@ -64,25 +64,28 @@ export const useReservations = () => {
       return null;
     }
 
-    // Check if user has permission to make reservations for their family group
-    const canMakeReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
-    if (!canMakeReservation) {
-      toast({
-        title: "Permission Denied",
-        description: "Only group leads and authorized hosts can make reservations.",
-        variant: "destructive",
-      });
-      return null;
-    }
+    // Skip permission checks in test override mode
+    if (!testOverrideMode) {
+      // Check if user has permission to make reservations for their family group
+      const canMakeReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+      if (!canMakeReservation) {
+        toast({
+          title: "Permission Denied",
+          description: "Only group leads and authorized hosts can make reservations.",
+          variant: "destructive",
+        });
+        return null;
+      }
 
-    // Ensure user can only make reservations for their own family group
-    if (userFamilyGroup && reservationData.family_group !== userFamilyGroup.name) {
-      toast({
-        title: "Permission Denied",
-        description: "You can only make reservations for your own family group.",
-        variant: "destructive",
-      });
-      return null;
+      // Ensure user can only make reservations for their own family group
+      if (userFamilyGroup && reservationData.family_group !== userFamilyGroup.name) {
+        toast({
+          title: "Permission Denied",
+          description: "You can only make reservations for your own family group.",
+          variant: "destructive",
+        });
+        return null;
+      }
     }
 
     // Validate dates and check for conflicts
