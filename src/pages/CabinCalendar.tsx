@@ -208,7 +208,14 @@ const CabinCalendar = () => {
               <div className="relative flex items-center justify-center">
                 <p className="text-sm md:text-lg text-primary font-medium">View and manage cabin reservations and availability</p>
                 <div className="absolute left-0">
-                  <NavigationHeader backLabel="Home" className="mb-0" />
+                  <NavigationHeader 
+                    backLabel="Home" 
+                    className="mb-0"
+                    familyGroups={familyGroups}
+                    selectedFamilyGroup={selectedFamilyGroup}
+                    onFamilyGroupChange={handleFamilyGroupChange}
+                    showFamilyGroupSelector={isCalendarKeeper}
+                  />
                 </div>
               </div>
             </div>
@@ -227,13 +234,13 @@ const CabinCalendar = () => {
                       <RotateCcw className="h-4 w-4 text-primary flex-shrink-0" />
                       <span className="text-sm font-medium">{rotationYear} Rotation</span>
                     </div>
-                    <div className="hidden md:flex items-center gap-4">
-                       {/* 2025 Order Dropdown */}
+                    <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+                       {/* 2025 Order Dropdown - Narrow trigger, wide content */}
                        <Select>
-                         <SelectTrigger className="w-64 bg-background/90 backdrop-blur-sm border-border">
+                         <SelectTrigger className="w-32 bg-background/90 backdrop-blur-sm border-border">
                            <SelectValue placeholder={`${rotationYear} Order`} />
                          </SelectTrigger>
-                         <SelectContent className="bg-background border border-border shadow-lg z-50">
+                         <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
                                {rotationYear} Rotation Order
@@ -252,12 +259,12 @@ const CabinCalendar = () => {
                          </SelectContent>
                        </Select>
 
-                       {/* 2026 Selection Status Dropdown */}
+                       {/* 2026 Selection Status Dropdown - Narrow trigger, wide content */}
                        <Select>
-                         <SelectTrigger className="w-64 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear + 1} Selection Status`} />
+                         <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
+                           <SelectValue placeholder={`${rotationYear + 1} Status`} />
                          </SelectTrigger>
-                         <SelectContent className="bg-background border border-border shadow-lg z-50">
+                         <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
                                {rotationYear + 1} Selection Status
@@ -286,165 +293,134 @@ const CabinCalendar = () => {
                            </div>
                          </SelectContent>
                        </Select>
+
+                       {/* Booking Controls */}
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button size="sm" className="hover-scale">
+                             <Calendar className="h-4 w-4 mr-2" />
+                             Booking
+                             <ChevronDown className="h-4 w-4 ml-1" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                         <DropdownMenuContent align="start" className="w-56">
+                           <DropdownMenuItem 
+                             onClick={() => setManualDateSelectionOpen(true)}
+                             className="hover-scale"
+                           >
+                             <Calendar className="h-4 w-4 mr-2" />
+                             Manual Date Selection
+                           </DropdownMenuItem>
+                           <DropdownMenuItem>
+                             <Clock className="h-4 w-4 mr-2" />
+                             Work Weekend
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuSub>
+                             <DropdownMenuSubTrigger className="relative">
+                               <Edit2 className="h-4 w-4 mr-2" />
+                               Edit Booking
+                               {pendingTradeRequests > 0 && (
+                                 <Badge 
+                                   variant="destructive" 
+                                   className="ml-auto h-5 w-5 p-0 text-xs animate-pulse"
+                                 >
+                                   {pendingTradeRequests}
+                                 </Badge>
+                               )}
+                             </DropdownMenuSubTrigger>
+                             <DropdownMenuSubContent>
+                               <DropdownMenuItem>
+                                 Edit my bookings
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 Request trade with another group
+                               </DropdownMenuItem>
+                               <DropdownMenuItem>
+                                 Request Calendar Keeper assistance
+                               </DropdownMenuItem>
+                             </DropdownMenuSubContent>
+                           </DropdownMenuSub>
+                         </DropdownMenuContent>
+                       </DropdownMenu>
+
+                        {/* Host Selector - Only when Calendar Keeper has selected a family group */}
+                        {isCalendarKeeper && selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
+                          <Select value={selectedHost} onValueChange={setSelectedHost}>
+                            <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
+                              <User className="h-4 w-4 mr-1" />
+                              <SelectValue placeholder="Host" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-background border border-border shadow-lg z-50 min-w-[12rem]">
+                              {availableHosts.map((host) => (
+                                <SelectItem key={host.name} value={host.name}>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-3 w-3" />
+                                    <span className="truncate">{host.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                      </div>
-                  </div>
-                )}
+                   </div>
+                 )}
                 
-                {/* Main Controls Row - Responsive Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:items-center gap-3 lg:gap-4">
-                  {/* Enhanced Mobile-Responsive Booking Controls */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="sm" className="w-full lg:w-auto hover-scale">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span className="hidden sm:inline">Booking</span>
-                        <span className="sm:hidden">Book</span>
-                        <ChevronDown className="h-4 w-4 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      <DropdownMenuItem 
-                        onClick={() => setManualDateSelectionOpen(true)}
-                        className="hover-scale"
-                      >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Manual Date Selection
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Clock className="h-4 w-4 mr-2" />
-                        Work Weekend
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="relative">
-                          <Edit2 className="h-4 w-4 mr-2" />
-                          Edit Booking
-                          {pendingTradeRequests > 0 && (
-                            <Badge 
-                              variant="destructive" 
-                              className="ml-auto h-5 w-5 p-0 text-xs animate-pulse"
-                            >
-                              {pendingTradeRequests}
-                            </Badge>
-                          )}
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem>
-                            Edit my bookings
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Request trade with another group
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Request Calendar Keeper assistance
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* Family Group Selector - Only for Calendar Keepers when manually adding reservations */}
-                  {isCalendarKeeper && (
-                    <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial">
-                      <Users className="h-4 w-4 text-primary flex-shrink-0" />
-                      <Select value={selectedFamilyGroup} onValueChange={handleFamilyGroupChange}>
-                        <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
-                          <SelectValue placeholder="Select Family Group" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border border-border shadow-lg z-50">
-                          <SelectItem value="all">All Family Groups</SelectItem>
-                          {familyGroups.map((familyGroup) => (
-                            <SelectItem key={familyGroup.id} value={familyGroup.name}>
-                              <div className="flex items-center gap-2">
-                                {familyGroup.color && (
-                                  <div
-                                    className="w-3 h-3 rounded-full border border-border animate-scale-in"
-                                    style={{ backgroundColor: familyGroup.color }}
-                                  />
-                                )}
-                                <span className="truncate">{familyGroup.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  
-                  {/* Host Selector - Only when Calendar Keeper has selected a family group */}
-                  {isCalendarKeeper && selectedFamilyGroup && selectedFamilyGroup !== "all" && availableHosts.length > 0 && (
-                    <div className="flex items-center gap-2 min-w-0 flex-1 lg:flex-initial animate-fade-in">
-                      <User className="h-4 w-4 text-primary flex-shrink-0" />
-                      <Select value={selectedHost} onValueChange={setSelectedHost}>
-                        <SelectTrigger className="w-full lg:w-48 bg-background/90 backdrop-blur-sm border-border">
-                          <SelectValue placeholder="Select Host" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background border border-border shadow-lg z-50">
-                          {availableHosts.map((host, index) => (
-                            <SelectItem key={index} value={host.name}>
-                              <span className="truncate">{host.name}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Selection Management - I'm Done Button */}
-            {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
-              <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-primary">
-                      {currentPhase === 'primary' ? 'Primary Selection' : 'Secondary Selection'} - Your Turn
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      It's your family group's turn to make selections. 
-                      {(() => {
-                        const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                        if (!usageInfo) return '';
-                        return ` You have ${usageInfo.remaining} of ${usageInfo.allowed} periods remaining.`;
-                      })()}
-                    </p>
-                  </div>
-                  <ConfirmationDialog
-                    title="Confirm Selection Complete"
-                    description={(() => {
-                      const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                      if (!usageInfo) return "Are you sure you want to complete your selection?";
-                      if (usageInfo.remaining > 0) {
-                        return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
-                      }
-                      return "Confirm that you have completed your selection period.";
-                    })()}
-                    confirmText="Yes, I'm Done"
-                    onConfirm={async () => {
-                      try {
-                        await advanceSelection(true);
-                        toast({
-                          title: "Selection Complete",
-                          description: "Your selection period has been marked complete. The next family group has been notified.",
-                        });
-                      } catch (error) {
-                        console.error('Error advancing selection:', error);
-                        toast({
-                          title: "Error",
-                          description: "Failed to complete selection. Please try again.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    <Button className="bg-primary hover:bg-primary/90">
-                      I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
-                    </Button>
-                  </ConfirmationDialog>
-                </div>
-              </div>
-            )}
+                 {/* Sequential Selection Section */}
+                 {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
+                   <div className="mb-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                     <div className="flex items-center justify-between">
+                       <div>
+                         <h3 className="font-medium text-primary">
+                           {currentPhase === 'primary' ? 'Primary Selection' : 'Secondary Selection'} - Your Turn
+                         </h3>
+                         <p className="text-sm text-muted-foreground mt-1">
+                           It's your family group's turn to make selections. 
+                           {(() => {
+                             const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                             if (!usageInfo) return '';
+                             return ` You have ${usageInfo.remaining} of ${usageInfo.allowed} periods remaining.`;
+                           })()}
+                         </p>
+                       </div>
+                       <ConfirmationDialog
+                         title="Confirm Selection Complete"
+                         description={(() => {
+                           const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                           if (!usageInfo) return "Are you sure you want to complete your selection?";
+                           if (usageInfo.remaining > 0) {
+                             return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
+                           }
+                           return "Confirm that you have completed your selection period.";
+                         })()}
+                         confirmText="Yes, I'm Done"
+                         onConfirm={async () => {
+                           try {
+                             await advanceSelection(true);
+                             toast({
+                               title: "Selection Complete",
+                               description: "Your selection period has been marked complete. The next family group has been notified.",
+                             });
+                           } catch (error) {
+                             console.error('Error advancing selection:', error);
+                             toast({
+                               title: "Error",
+                               description: "Failed to complete selection. Please try again.",
+                               variant: "destructive",
+                             });
+                           }
+                         }}
+                       >
+                         <Button className="bg-primary hover:bg-primary/90">
+                           I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
+                         </Button>
+                       </ConfirmationDialog>
+                     </div>
+                   </div>
+                 )}
+               </div>
+             </div>
 
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">
