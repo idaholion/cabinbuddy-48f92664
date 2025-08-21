@@ -815,7 +815,7 @@ const FamilySetup = () => {
                   <div key={group.id || index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
                     <div className="flex items-center justify-between">
                       <Label className="text-lg font-semibold">
-                        {group.isExisting ? `${group.name} (Edit)` : `New Family Group ${index - familyGroups.filter(g => g.isExisting).length + 1}`}
+                        {group.isExisting ? `${group.name} (Edit)` : `New Family Group ${existingFamilyGroups.length + (index - familyGroups.filter(g => g.isExisting).length) + 1}`}
                       </Label>
                       {familyGroups.length > 1 && !group.isExisting && (
                         <Button
