@@ -214,15 +214,20 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     
     if (!editingReservation) return { isValid: false, errors: ["No reservation to edit"] };
     
-    // Can't extend beyond original allocated period
-    const originalStart = new Date(editingReservation.allocated_start_date!);
-    const originalEnd = new Date(editingReservation.allocated_end_date!);
-    
-    if (startDate < originalStart) {
-      errors.push(`Cannot move start date before original allocated period (${format(originalStart, "PPP")})`);
-    }
-    if (endDate > originalEnd) {
-      errors.push(`Cannot extend end date beyond original allocated period (${format(originalEnd, "PPP")})`);
+    // Only validate allocated period if the fields exist and are valid
+    if (editingReservation.allocated_start_date && editingReservation.allocated_end_date) {
+      const originalStart = new Date(editingReservation.allocated_start_date);
+      const originalEnd = new Date(editingReservation.allocated_end_date);
+      
+      // Check if dates are valid (not epoch date)
+      if (originalStart.getFullYear() > 1970 && originalEnd.getFullYear() > 1970) {
+        if (startDate < originalStart) {
+          errors.push(`Cannot move start date before original allocated period (${format(originalStart, "PPP")})`);
+        }
+        if (endDate > originalEnd) {
+          errors.push(`Cannot extend end date beyond original allocated period (${format(originalEnd, "PPP")})`);
+        }
+      }
     }
     
     // Can't extend duration
