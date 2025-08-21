@@ -33,6 +33,7 @@ export const useReservations = () => {
   const fetchReservations = async () => {
     if (!user || !organization?.id) return;
 
+    console.log('Fetching reservations from database...');
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -46,6 +47,7 @@ export const useReservations = () => {
         return;
       }
 
+      console.log('Fetched reservations from DB:', data);
       setReservations(data || []);
     } catch (error) {
       console.error('Error in fetchReservations:', error);
