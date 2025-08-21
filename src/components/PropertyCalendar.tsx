@@ -191,6 +191,21 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     }
   };
 
+  // Helper function to get the primary host's first name
+  const getHostFirstName = (reservation: any): string => {
+    // Check if there are host assignments and get the primary host (first one)
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      if (primaryHost?.host_name) {
+        // Extract first name (everything before the first space)
+        return primaryHost.host_name.split(' ')[0];
+      }
+    }
+    
+    // Fallback to family group name if no host information
+    return reservation.family_group || 'Unknown';
+  };
+
   // Generate calendar days for the current month
   const generateCalendarDays = () => {
     const year = currentMonth.getFullYear();
@@ -888,7 +903,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                              }}
                            >
                              <div className="flex items-center justify-between">
-                               <span className="truncate font-bold text-sm">{booking.family_group}</span>
+                               <span className="truncate font-bold text-sm">{getHostFirstName(booking)}</span>
                                {booking.time_period_number && (
                                  <span className="ml-1 text-xs opacity-80">P{booking.time_period_number}</span>
                                )}
@@ -1036,7 +1051,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                                     style={{ backgroundColor: groupColor }}
                                   />
                                 )}
-                                <span>{booking.family_group}</span>
+                                <span>{getHostFirstName(booking)}</span>
                               </div>
                               <div className="flex items-center space-x-2">
                                 {booking.time_period_number && (
@@ -1297,7 +1312,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
                              />
                            );
                          })()}
-                         <div className="font-medium">{reservation.family_group}</div>
+                         <div className="font-medium">{getHostFirstName(reservation)}</div>
                        </div>
                        <div className="text-sm text-muted-foreground flex items-center">
                          <MapPin className="h-3 w-3 mr-1" />
