@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Monitor,
   Vote,
-  Sparkles
+  Sparkles,
+  User
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -52,6 +53,11 @@ const setupItems = [
     title: "Family Group Setup", 
     url: "/family-group-setup",
     icon: Users,
+  },
+  {
+    title: "Group Member Profile",
+    url: "/group-member-profile",
+    icon: User,
   },
   {
     title: "Financial Dashboard",
