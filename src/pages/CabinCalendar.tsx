@@ -219,16 +219,27 @@ const CabinCalendar = () => {
                       <RotateCcw className="h-4 w-4 text-primary flex-shrink-0" />
                       <span className="text-sm font-medium">{rotationYear} Rotation</span>
                     </div>
-                    <div className="hidden md:flex items-center gap-2">
-                      <RotateCcw className="h-4 w-4 text-primary" />
+                    <div className="hidden md:flex items-center gap-4">
+                       {/* Static 2025 Rotation Order Display */}
+                       <div className="flex items-center gap-2">
+                         <RotateCcw className="h-4 w-4 text-primary" />
+                         <div className="px-3 py-2 bg-background/90 backdrop-blur-sm border border-border rounded-md">
+                           <div className="font-medium text-sm">{rotationYear} Rotation Order</div>
+                           <div className="text-xs text-muted-foreground mt-1">
+                             {currentRotationOrder.join(' → ')}
+                           </div>
+                         </div>
+                       </div>
+
+                       {/* 2026 Selection Status Dropdown */}
                        <Select>
                          <SelectTrigger className="w-64 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear} ${currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status`} />
+                           <SelectValue placeholder={`${rotationYear + 1} ${currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status`} />
                          </SelectTrigger>
                          <SelectContent className="bg-background border border-border shadow-lg z-50">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
-                               {rotationYear} {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status
+                               {rotationYear + 1} {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selection Status
                              </div>
                              <div className="space-y-1">
                                {familyStatuses.map((familyStatus, index) => {
@@ -272,7 +283,7 @@ const CabinCalendar = () => {
                            </div>
                          </SelectContent>
                        </Select>
-                    </div>
+                     </div>
                   </div>
                 )}
                 
