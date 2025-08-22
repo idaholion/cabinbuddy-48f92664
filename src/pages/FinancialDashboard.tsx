@@ -64,7 +64,11 @@ const FinancialDashboard = () => {
     {
       key: 'date',
       title: 'Date',
-      render: (record: any) => format(new Date(record.date), 'MMM d, yyyy'),
+      render: (record: any) => {
+        if (!record.date) return 'N/A';
+        const date = new Date(record.date);
+        return isNaN(date.getTime()) ? 'Invalid Date' : format(date, 'MMM d, yyyy');
+      },
     },
     {
       key: 'description',
