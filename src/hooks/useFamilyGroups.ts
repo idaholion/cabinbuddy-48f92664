@@ -4,23 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useSupervisor } from '@/hooks/useSupervisor';
-
-interface HostMember {
-  name: string;
-  phone: string;
-  email: string;
-  canHost?: boolean;
-}
-
-interface FamilyGroupData {
-  name: string;
-  lead_name?: string;
-  lead_email?: string;
-  lead_phone?: string;
-  host_members?: HostMember[];
-  color?: string;
-  alternate_lead_id?: string;
-}
+import { GroupMember, FamilyGroupData } from '@/types/group-member';
 
 export const useFamilyGroups = () => {
   const { user } = useAuth();
@@ -52,7 +36,7 @@ export const useFamilyGroups = () => {
       // Parse the JSONB host_members field and deduplicate by name
       const parsedData = (data || []).map(group => ({
         ...group,
-        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as GroupMember[]) : []
       }));
       
       // Deduplicate family groups by name, keeping the oldest one
@@ -102,9 +86,9 @@ export const useFamilyGroups = () => {
     }
 
     // Ensure group lead is included in host_members if they exist
-    let hostMembers = groupData.host_members || [];
+    let groupMembers = groupData.host_members || [];
     if (groupData.lead_name && groupData.lead_email) {
-      const leadExists = hostMembers.some(member => 
+      const leadExists = groupMembers.some(member => 
         member.email?.toLowerCase() === groupData.lead_email?.toLowerCase()
       );
       
@@ -115,7 +99,7 @@ export const useFamilyGroups = () => {
           email: groupData.lead_email,
           canHost: true
         };
-        hostMembers = [leadAsMember, ...hostMembers];
+        groupMembers = [leadAsMember, ...groupMembers];
       }
     }
 
@@ -126,7 +110,7 @@ export const useFamilyGroups = () => {
         .insert({
           ...groupData,
           organization_id: organization.id,
-          host_members: hostMembers as any // Cast to any for JSONB
+          host_members: groupMembers as any // Cast to any for JSONB
         })
         .select()
         .single();
@@ -153,7 +137,7 @@ export const useFamilyGroups = () => {
       // Parse the new group data
       const parsedNewGroup = {
         ...newGroup,
-        host_members: Array.isArray(newGroup.host_members) ? (newGroup.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(newGroup.host_members) ? (newGroup.host_members as unknown as GroupMember[]) : []
       };
       
       setFamilyGroups(prev => [...prev, parsedNewGroup]);
@@ -197,9 +181,9 @@ export const useFamilyGroups = () => {
       const finalData = { ...currentGroup, ...updates };
       
       // Ensure group lead is included in host_members if they exist
-      let hostMembers = finalData.host_members || [];
+      let groupMembers = finalData.host_members || [];
       if (finalData.lead_name && finalData.lead_email) {
-        const leadExists = hostMembers.some(member => 
+        const leadExists = groupMembers.some(member => 
           member.email?.toLowerCase() === finalData.lead_email?.toLowerCase()
         );
         
@@ -210,14 +194,14 @@ export const useFamilyGroups = () => {
             email: finalData.lead_email,
             canHost: true
           };
-          hostMembers = [leadAsMember, ...hostMembers];
+          groupMembers = [leadAsMember, ...groupMembers];
         }
       }
 
       // Prepare updates with proper JSONB casting
       const updatesWithJsonb = {
         ...updates,
-        host_members: hostMembers as any
+        host_members: groupMembers as any
       };
 
       const { data: updatedGroup, error } = await supabase
@@ -241,7 +225,7 @@ export const useFamilyGroups = () => {
       // Parse the updated group data
       const parsedUpdatedGroup = {
         ...updatedGroup,
-        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as GroupMember[]) : []
       };
       
       setFamilyGroups(prev => 
@@ -376,7 +360,7 @@ export const useFamilyGroups = () => {
       // Parse the updated group data
       const parsedUpdatedGroup = {
         ...updatedGroup,
-        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(updatedGroup.host_members) ? (updatedGroup.host_members as unknown as GroupMember[]) : []
       };
       
       setFamilyGroups(prev => 

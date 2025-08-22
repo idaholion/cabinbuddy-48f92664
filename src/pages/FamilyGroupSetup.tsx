@@ -47,7 +47,7 @@ const FamilyGroupSetup = () => {
       leadName: "",
       leadPhone: "",
       leadEmail: "",
-      hostMembers: [
+      groupMembers: [
         { name: "", phone: "", email: "", canHost: false },
         { name: "", phone: "", email: "", canHost: false },
         { name: "", phone: "", email: "", canHost: false }
@@ -60,7 +60,7 @@ const FamilyGroupSetup = () => {
   const { control, watch, setValue, getValues, handleSubmit, formState: { errors, isValid } } = form;
   const { fields, append, remove, move } = useFieldArray({
     control,
-    name: "hostMembers",
+    name: "groupMembers",
   });
 
   const watchedData = watch();

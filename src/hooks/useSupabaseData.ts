@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { GroupMember } from '@/types/group-member';
 
 // Types for our data structures
 export interface Organization {
@@ -19,12 +20,6 @@ export interface Organization {
   calendar_keeper_phone?: string;
 }
 
-interface HostMember {
-  name: string;
-  phone: string;
-  email: string;
-}
-
 export interface FamilyGroup {
   id: string;
   organization_id: string;
@@ -32,7 +27,7 @@ export interface FamilyGroup {
   lead_name?: string;
   lead_phone?: string;
   lead_email?: string;
-  host_members?: HostMember[];
+  host_members?: GroupMember[];
 }
 
 export interface ReservationSettings {
@@ -204,7 +199,7 @@ export const useFamilyGroups = () => {
       // Parse the JSONB host_members field
       const parsedData = (data || []).map((group: any) => ({
         ...group,
-        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as GroupMember[]) : []
       }));
       setFamilyGroups(parsedData);
     } catch (error) {
@@ -238,7 +233,7 @@ export const useFamilyGroups = () => {
       // Parse the new group data
       const parsedData = {
         ...data,
-        host_members: Array.isArray(data.host_members) ? (data.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(data.host_members) ? (data.host_members as unknown as GroupMember[]) : []
       };
       setFamilyGroups(prev => [...prev, parsedData]);
       toast({ title: "Family group created successfully!" });

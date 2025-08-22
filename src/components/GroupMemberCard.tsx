@@ -28,8 +28,8 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   isDragOver = false,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
-  const hostMembers = watch('hostMembers');
-  const currentMember = hostMembers[index];
+  const groupMembers = watch('groupMembers');
+  const currentMember = groupMembers[index];
   
   const {
     attributes,
@@ -49,10 +49,10 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   const isFilled = currentMember?.name || currentMember?.email || currentMember?.phone;
 
   // Check for duplicates
-  const nameError = errors.hostMembers?.[index]?.name;
-  const emailError = errors.hostMembers?.[index]?.email;
-  const phoneError = errors.hostMembers?.[index]?.phone;
-  const hasRootError = errors.hostMembers?.root;
+  const nameError = errors.groupMembers?.[index]?.name;
+  const emailError = errors.groupMembers?.[index]?.email;
+  const phoneError = errors.groupMembers?.[index]?.phone;
+  const hasRootError = errors.groupMembers?.root;
 
   return (
     <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-50' : ''}>
@@ -114,7 +114,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
           <FormField
             control={control}
-            name={`hostMembers.${index}.name`}
+            name={`groupMembers.${index}.name`}
             render={({ field }) => (
               <FormItem>
                  <FormLabel className="text-xl">Name</FormLabel>
@@ -129,7 +129,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={control}
-              name={`hostMembers.${index}.email`}
+              name={`groupMembers.${index}.email`}
               render={({ field }) => (
                 <FormItem>
                    <FormLabel className="text-xl">Email</FormLabel>
@@ -143,7 +143,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
 
             <FormField
               control={control}
-              name={`hostMembers.${index}.phone`}
+              name={`groupMembers.${index}.phone`}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xl">Phone</FormLabel>
@@ -163,7 +163,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
            <div className="flex flex-wrap gap-4">
             <FormField
               control={control}
-              name={`hostMembers.${index}.canHost`}
+              name={`groupMembers.${index}.canHost`}
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">

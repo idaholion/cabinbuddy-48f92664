@@ -44,7 +44,7 @@ export const useFamilyGroupBulkOperations = () => {
     });
   };
 
-  const bulkRemoveHostMember = async (hostName: string) => {
+  const bulkRemoveGroupMember = async (memberName: string) => {
     if (!activeOrganization) {
       toast({
         title: "Error",
@@ -59,7 +59,7 @@ export const useFamilyGroupBulkOperations = () => {
       .from('family_groups')
       .select('id')
       .eq('organization_id', activeOrganization.organization_id)
-      .like('host_members', `%${hostName}%`);
+      .like('host_members', `%${memberName}%`);
 
     requestBulkOperation({
       operationType: 'Remove Host Member',
@@ -70,7 +70,7 @@ export const useFamilyGroupBulkOperations = () => {
         const { error } = await supabase.rpc('supervisor_bulk_remove_host_member', {
           p_organization_id: activeOrganization.organization_id,
           p_confirmation_code: 'CONFIRM_BULK_UPDATE',
-          p_host_name: hostName,
+          p_host_name: memberName,
         });
 
         if (error) throw error;
@@ -115,7 +115,7 @@ export const useFamilyGroupBulkOperations = () => {
 
   return {
     bulkUpdateLeads,
-    bulkRemoveHostMember,
+    bulkRemoveGroupMember,
     bulkUpdateReservationPermissions,
     loading,
   };

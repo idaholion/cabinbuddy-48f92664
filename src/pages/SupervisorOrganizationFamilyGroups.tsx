@@ -14,12 +14,7 @@ import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { SupervisorBulkOperationDialog } from "@/components/SupervisorBulkOperationDialog";
 import { useBulkOperationProtection } from "@/hooks/useBulkOperationProtection";
 import { FamilyGroupBulkOperations } from "@/components/FamilyGroupBulkOperations";
-
-interface HostMember {
-  name: string;
-  phone: string;
-  email: string;
-}
+import { GroupMember } from '@/types/group-member';
 
 interface FamilyGroup {
   id: string;
@@ -27,7 +22,7 @@ interface FamilyGroup {
   lead_name?: string;
   lead_phone?: string;
   lead_email?: string;
-  host_members?: HostMember[];
+  host_members?: GroupMember[];
   color?: string;
 }
 
@@ -50,10 +45,10 @@ const SupervisorOrganizationFamilyGroups = () => {
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
-  const [hostMembers, setHostMembers] = useState<HostMember[]>([
-    { name: "", phone: "", email: "" },
-    { name: "", phone: "", email: "" },
-    { name: "", phone: "", email: "" }
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([
+    { name: "", phone: "", email: "", canHost: false },
+    { name: "", phone: "", email: "", canHost: false },
+    { name: "", phone: "", email: "", canHost: false }
   ]);
   const [newGroupName, setNewGroupName] = useState("");
   const [groupColor, setGroupColor] = useState("");
@@ -74,7 +69,7 @@ const SupervisorOrganizationFamilyGroups = () => {
       // Parse the JSONB host_members field
       const parsedData = (data || []).map(group => ({
         ...group,
-        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as HostMember[]) : []
+        host_members: Array.isArray(group.host_members) ? (group.host_members as unknown as GroupMember[]) : []
       }));
       
       setFamilyGroups(parsedData);
@@ -115,8 +110,8 @@ const SupervisorOrganizationFamilyGroups = () => {
         
         // Handle group members - ensure we have at least 3 empty slots
         const existingMembers = group.host_members || [];
-        const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ name: "", phone: "", email: "" });
-        setHostMembers([...existingMembers, ...emptyMembers]);
+        const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ name: "", phone: "", email: "", canHost: false });
+        setGroupMembers([...existingMembers, ...emptyMembers]);
         
         // Fetch available colors for this group
         fetchAvailableColors(group.id);
@@ -126,10 +121,10 @@ const SupervisorOrganizationFamilyGroups = () => {
       setLeadPhone("");
       setLeadEmail("");
       setGroupColor("");
-      setHostMembers([
-        { name: "", phone: "", email: "" },
-        { name: "", phone: "", email: "" },
-        { name: "", phone: "", email: "" }
+      setGroupMembers([
+        { name: "", phone: "", email: "", canHost: false },
+        { name: "", phone: "", email: "", canHost: false },
+        { name: "", phone: "", email: "", canHost: false }
       ]);
       fetchAvailableColors();
     }
@@ -188,10 +183,11 @@ const SupervisorOrganizationFamilyGroups = () => {
     const group = familyGroups.find(g => g.name === selectedGroup);
     if (!group) return;
 
-    const hostMembersList = hostMembers.filter(member => member.name.trim() !== '').map(member => ({
+    const groupMembersList = groupMembers.filter(member => member.name.trim() !== '').map(member => ({
       name: member.name.trim(),
       phone: member.phone ? unformatPhoneNumber(member.phone) : '',
-      email: member.email.trim()
+      email: member.email.trim(),
+      canHost: member.canHost || false
     }));
     
     setLoading(true);
@@ -202,7 +198,7 @@ const SupervisorOrganizationFamilyGroups = () => {
           lead_name: leadName || undefined,
           lead_phone: leadPhone ? unformatPhoneNumber(leadPhone) : undefined,
           lead_email: leadEmail || undefined,
-          host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+          host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
           color: groupColor || undefined,
         })
         .eq('id', group.id);
@@ -228,14 +224,14 @@ const SupervisorOrganizationFamilyGroups = () => {
     }
   };
 
-  const handleHostMemberChange = (index: number, field: keyof HostMember, value: string) => {
-    const newHostMembers = [...hostMembers];
-    newHostMembers[index] = { ...newHostMembers[index], [field]: value };
-    setHostMembers(newHostMembers);
+  const handleGroupMemberChange = (index: number, field: keyof GroupMember, value: string | boolean) => {
+    const newGroupMembers = [...groupMembers];
+    newGroupMembers[index] = { ...newGroupMembers[index], [field]: value };
+    setGroupMembers(newGroupMembers);
   };
 
-  const addHostMember = () => {
-    setHostMembers([...hostMembers, { name: "", phone: "", email: "" }]);
+  const addGroupMember = () => {
+    setGroupMembers([...groupMembers, { name: "", phone: "", email: "", canHost: false }]);
   };
 
   const handleBulkAssignColors = () => {
@@ -389,47 +385,62 @@ const SupervisorOrganizationFamilyGroups = () => {
                 {/* Group Members Section */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Additional Group Members</h3>
-                  {hostMembers.map((member, index) => (
+                  {groupMembers.map((member, index) => (
                     <div key={index} className="p-3 border rounded-lg space-y-3">
-                      <div className="text-base font-medium text-muted-foreground">Host Member {index + 1}</div>
-                      <div className="grid gap-2 md:grid-cols-3">
+                      <div className="text-base font-medium text-muted-foreground">Group Member {index + 1}</div>
+                      <div className="grid gap-2 md:grid-cols-4">
                         <div className="space-y-1">
-                          <Label htmlFor={`hostName${index}`} className="text-base">Name</Label>
+                          <Label htmlFor={`memberName${index}`} className="text-base">Name</Label>
                           <Input 
-                            id={`hostName${index}`}
+                            id={`memberName${index}`}
                             placeholder="Full name"
                             value={member.name}
-                            onChange={(e) => handleHostMemberChange(index, 'name', e.target.value)}
+                            onChange={(e) => handleGroupMemberChange(index, 'name', e.target.value)}
                             className="text-base placeholder:text-base"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor={`hostPhone${index}`} className="text-base">Phone Number</Label>
+                          <Label htmlFor={`memberPhone${index}`} className="text-base">Phone Number</Label>
                           <PhoneInput 
-                            id={`hostPhone${index}`}
+                            id={`memberPhone${index}`}
                             value={member.phone}
-                            onChange={(formatted) => handleHostMemberChange(index, 'phone', formatted)}
+                            onChange={(formatted) => handleGroupMemberChange(index, 'phone', formatted)}
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label htmlFor={`hostEmail${index}`} className="text-base">Email Address</Label>
+                          <Label htmlFor={`memberEmail${index}`} className="text-base">Email Address</Label>
                           <Input 
-                            id={`hostEmail${index}`}
+                            id={`memberEmail${index}`}
                             type="email"
                             placeholder="email@example.com"
                             value={member.email}
-                            onChange={(e) => handleHostMemberChange(index, 'email', e.target.value)}
+                            onChange={(e) => handleGroupMemberChange(index, 'email', e.target.value)}
                             className="text-base placeholder:text-base"
                           />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`canHost${index}`} className="text-base">Can Host</Label>
+                          <div className="flex items-center space-x-2 pt-2">
+                            <input
+                              type="checkbox"
+                              id={`canHost${index}`}
+                              checked={member.canHost || false}
+                              onChange={(e) => handleGroupMemberChange(index, 'canHost', e.target.checked)}
+                              className="rounded border-input"
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              Can make reservations
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                   
                   <div className="flex justify-center pt-2">
-                    <Button variant="outline" onClick={addHostMember} className="text-base">
+                    <Button variant="outline" onClick={addGroupMember} className="text-base">
                       <Plus className="h-4 w-4 mr-2" />
-                      Add Host Member
+                      Add Group Member
                     </Button>
                   </div>
                 </div>

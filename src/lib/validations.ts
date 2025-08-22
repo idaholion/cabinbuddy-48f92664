@@ -50,7 +50,7 @@ export const familyGroupSetupSchema = z.object({
     if (!val || val === "") return true;
     return z.string().email().safeParse(val).success;
   }, "Please enter a valid email address"),
-  hostMembers: z.array(z.object({
+  groupMembers: z.array(z.object({
     name: z.string(),
     phone: z.string().refine((val) => {
       if (!val || val === "") return true;

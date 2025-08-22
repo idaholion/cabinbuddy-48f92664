@@ -14,7 +14,7 @@ export const FamilyGroupBulkOperations = () => {
   const [leadEmail, setLeadEmail] = useState("");
   const [hostNameToRemove, setHostNameToRemove] = useState("");
   
-  const { bulkUpdateLeads, bulkRemoveHostMember, bulkUpdateReservationPermissions } = useFamilyGroupBulkOperations();
+  const { bulkUpdateLeads, bulkRemoveGroupMember, bulkUpdateReservationPermissions } = useFamilyGroupBulkOperations();
   const { 
     isDialogOpen, 
     currentOperation, 
@@ -116,7 +116,7 @@ export const FamilyGroupBulkOperations = () => {
               />
             </div>
             <Button
-              onClick={() => bulkRemoveHostMember(hostNameToRemove)}
+              onClick={() => bulkRemoveGroupMember(hostNameToRemove)}
               disabled={!hostNameToRemove.trim()}
               variant="destructive"
               className="w-full text-base"

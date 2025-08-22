@@ -3,23 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRole } from '@/contexts/RoleContext';
-
-interface HostMember {
-  name: string;
-  phone: string;
-  email: string;
-  canHost?: boolean;
-}
-
-interface FamilyGroupData {
-  name: string;
-  lead_name?: string;
-  lead_phone?: string;
-  lead_email?: string;
-  host_members?: HostMember[];
-  color?: string;
-  alternate_lead_id?: string;
-}
+import { GroupMember, FamilyGroupData } from '@/types/group-member';
 
 interface FamilyGroup extends FamilyGroupData {
   id: string;
