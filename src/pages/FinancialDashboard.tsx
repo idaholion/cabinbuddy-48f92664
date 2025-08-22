@@ -77,19 +77,19 @@ const FinancialDashboard = () => {
     {
       key: 'family_group',
       title: 'Family Group',
-      render: (record: any) => record.family_group || 'N/A',
+      render: (record: any) => record?.family_group || 'N/A',
     },
     {
       key: 'amount',
       title: 'Amount',
-      render: (record: any) => formatCurrency(Number(record.amount)),
+      render: (record: any) => record ? formatCurrency(Number(record.amount)) : 'N/A',
       className: 'text-right font-mono',
     },
     {
       key: 'image_url',
       title: 'Receipt',
       render: (record: any) => (
-        record.image_url ? (
+        record?.image_url ? (
           <Button
             variant="outline"
             size="sm"
@@ -258,11 +258,11 @@ const FinancialDashboard = () => {
                               // Simple CSV export
                               const csvContent = [
                                 ['Date', 'Description', 'Family Group', 'Amount'],
-                                ...records.map(record => [
-                                  record.date,
-                                  record.description,
+                                ...records.filter(record => record).map(record => [
+                                  record.date || '',
+                                  record.description || '',
                                   record.family_group || '',
-                                  record.amount.toString()
+                                  (record.amount || 0).toString()
                                 ])
                               ].map(row => row.join(',')).join('\n');
                               
