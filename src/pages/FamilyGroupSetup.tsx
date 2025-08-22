@@ -123,7 +123,7 @@ const FamilyGroupSetup = () => {
           email: member.email || "",
           canHost: member.canHost || false,
         }));
-        setValue("hostMembers", formattedHostMembers);
+        setValue("groupMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // Automatically copy Group Lead info to Group Member 1
@@ -134,7 +134,7 @@ const FamilyGroupSetup = () => {
           canHost: true // Group leads can always host
         };
         
-        setValue("hostMembers", [
+        setValue("groupMembers", [
           leadAsHostMember,
           { name: "", phone: "", email: "", canHost: false },
           { name: "", phone: "", email: "", canHost: false }
@@ -147,17 +147,17 @@ const FamilyGroupSetup = () => {
 
   // Auto-update Group Member 1 when Group Lead info changes
   useEffect(() => {
-    const currentHostMembers = getValues("hostMembers");
-    if (currentHostMembers && currentHostMembers.length > 0 && watchedData.leadName) {
+    const currentGroupMembers = getValues("groupMembers");
+    if (currentGroupMembers && currentGroupMembers.length > 0 && watchedData.leadName) {
       // Update first group member with Group Lead info
-      const updatedHostMembers = [...currentHostMembers];
-      updatedHostMembers[0] = {
+      const updatedGroupMembers = [...currentGroupMembers];
+      updatedGroupMembers[0] = {
         name: watchedData.leadName || "",
         phone: watchedData.leadPhone || "",
         email: watchedData.leadEmail || "",
         canHost: true // Group leads can always host
       };
-      setValue("hostMembers", updatedHostMembers);
+      setValue("groupMembers", updatedGroupMembers);
     }
   }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues]);
 
@@ -171,7 +171,7 @@ const FamilyGroupSetup = () => {
       return;
     }
 
-    const hostMembersList = data.hostMembers
+    const groupMembersList = data.groupMembers
       .filter(member => member.name?.trim() !== '')
       .map(member => ({
         name: member.name || "",
@@ -188,7 +188,7 @@ const FamilyGroupSetup = () => {
           lead_name: data.leadName || undefined,
           lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
           lead_email: data.leadEmail || undefined,
-          host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+          host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
         
@@ -202,7 +202,7 @@ const FamilyGroupSetup = () => {
           lead_name: data.leadName || undefined,
           lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
           lead_email: data.leadEmail || undefined,
-          host_members: hostMembersList.length > 0 ? hostMembersList : undefined,
+          host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
           
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
@@ -219,21 +219,21 @@ const FamilyGroupSetup = () => {
     }
   };
 
-  const addHostMember = () => {
+  const addGroupMember = () => {
     append({ name: "", phone: "", email: "", canHost: false });
     setShowAllMembers(true);
   };
 
-  const removeHostMember = (index: number) => {
+  const removeGroupMember = (index: number) => {
     remove(index);
-    const currentMembers = getValues("hostMembers");
+    const currentMembers = getValues("groupMembers");
     if (currentMembers.length <= 3) {
       setShowAllMembers(false);
     }
   };
 
-  const clearAllHostMembers = () => {
-    setValue("hostMembers", [
+  const clearAllGroupMembers = () => {
+    setValue("groupMembers", [
       { name: "", phone: "", email: "", canHost: false },
       { name: "", phone: "", email: "", canHost: false },
       { name: "", phone: "", email: "", canHost: false }
@@ -242,7 +242,7 @@ const FamilyGroupSetup = () => {
   };
 
   const removeEmptySlots = () => {
-    const currentMembers = getValues("hostMembers");
+    const currentMembers = getValues("groupMembers");
     const filledMembers = currentMembers.filter(member => 
       member.name?.trim() || member.email?.trim() || member.phone?.trim()
     );
@@ -252,7 +252,7 @@ const FamilyGroupSetup = () => {
       filledMembers.push({ name: "", phone: "", email: "", canHost: false });
     }
     
-    setValue("hostMembers", filledMembers);
+    setValue("groupMembers", filledMembers);
     setShowAllMembers(filledMembers.length > 3);
   };
 
@@ -270,7 +270,7 @@ const FamilyGroupSetup = () => {
   // Get available family groups
   const allGroups = familyGroups.map(g => g.name);
   const displayedMembers = showAllMembers ? fields : fields.slice(0, 3);
-  const filledMembersCount = watchedData.hostMembers?.filter(member => 
+  const filledMembersCount = watchedData.groupMembers?.filter(member => 
     member.name?.trim() || member.email?.trim() || member.phone?.trim()
   ).length || 0;
 
@@ -590,7 +590,7 @@ const FamilyGroupSetup = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={clearAllHostMembers}>
+                              <AlertDialogAction onClick={clearAllGroupMembers}>
                                 Clear All
                               </AlertDialogAction>
                             </AlertDialogFooter>
@@ -611,9 +611,9 @@ const FamilyGroupSetup = () => {
 
 
                   {/* Duplicate validation errors */}
-                  {errors.hostMembers?.root && (
+                  {errors.groupMembers?.root && (
                     <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-                      {errors.hostMembers.root.message}
+                      {errors.groupMembers.root.message}
                     </div>
                   )}
 
@@ -633,7 +633,7 @@ const FamilyGroupSetup = () => {
                             key={field.id}
                             index={index}
                             control={control}
-                            onRemove={removeHostMember}
+                            onRemove={removeGroupMember}
                             canRemove={fields.length > 1}
                           />
                         ))}
@@ -656,7 +656,7 @@ const FamilyGroupSetup = () => {
 
                   {/* Add Group Member Button */}
                   <div className="flex justify-center pt-2">
-                    <Button type="button" variant="outline" onClick={addHostMember} className="text-lg">
+                    <Button type="button" variant="outline" onClick={addGroupMember} className="text-lg">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Group Member
                     </Button>
@@ -682,7 +682,7 @@ const FamilyGroupSetup = () => {
                            </SelectTrigger>
                             <SelectContent className="bg-background z-50 text-lg">
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
-                              {watchedData.hostMembers
+                               {watchedData.groupMembers
                                 ?.filter(member => member.name && member.name.trim() !== '')
                                 .filter(member => member.name !== watchedData.leadName) // Exclude Group Lead
                                 .map((member, index) => (
