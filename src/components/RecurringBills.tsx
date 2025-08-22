@@ -72,7 +72,9 @@ export const RecurringBills = () => {
   const [bills, setBills] = useState<RecurringBill[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<RecurringBill | null>(null);
+  const [viewingHistoryBill, setViewingHistoryBill] = useState<RecurringBill | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     provider_name: "",
@@ -243,6 +245,11 @@ export const RecurringBills = () => {
       console.error('Error deleting recurring bill:', error);
       toast.error('Failed to delete recurring bill');
     }
+  };
+
+  const handleViewHistory = (bill: RecurringBill) => {
+    setViewingHistoryBill(bill);
+    setHistoryDialogOpen(true);
   };
 
   const addHistoricalEntry = async () => {
@@ -779,6 +786,17 @@ export const RecurringBills = () => {
                   </div>
 
                   <div className="flex gap-2 ml-4">
+                    {bill.historical_values && bill.historical_values.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewHistory(bill)}
+                        className="text-base"
+                        title="View Historical Data"
+                      >
+                        <History className="h-3 w-3" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -802,6 +820,110 @@ export const RecurringBills = () => {
           ))}
         </div>
       )}
+
+      {/* Read-only Historical Data Dialog */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">
+              Historical Data - {viewingHistoryBill?.name}
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              View historical cost changes for this recurring bill
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingHistoryBill && (
+            <div className="space-y-4">
+              {/* Bill Summary */}
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Bill Name</p>
+                    <p className="font-medium">{viewingHistoryBill.name}</p>
+                  </div>
+                  {viewingHistoryBill.provider_name && (
+                    <div>
+                      <p className="text-muted-foreground">Provider</p>
+                      <p className="font-medium">{viewingHistoryBill.provider_name}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-muted-foreground">Category</p>
+                    <p className="font-medium">{viewingHistoryBill.category}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Tracking Type</p>
+                    <p className="font-medium">{viewingHistoryBill.historical_tracking_type || 'monthly'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Historical Entries */}
+              {viewingHistoryBill.historical_values && viewingHistoryBill.historical_values.length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="text-base font-medium">Historical Entries ({viewingHistoryBill.historical_values.length} total)</h4>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {viewingHistoryBill.historical_values
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map((entry, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <p className="font-medium">{format(new Date(entry.date), 'MMM dd, yyyy')}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(entry.date), 'EEEE')}
+                              </p>
+                            </div>
+                            {entry.notes && (
+                              <div className="text-sm text-muted-foreground max-w-xs">
+                                <p className="truncate">{entry.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-mono font-medium text-lg">
+                              {formatCurrency(entry.amount)}
+                            </p>
+                            {index < viewingHistoryBill.historical_values.length - 1 && (
+                              <p className="text-xs text-muted-foreground">
+                                {(() => {
+                                  const current = entry.amount;
+                                  const previous = viewingHistoryBill.historical_values[index + 1].amount;
+                                  const change = current - previous;
+                                  const changePercent = previous !== 0 ? (change / previous) * 100 : 0;
+                                  
+                                  if (Math.abs(changePercent) < 0.01) return "No change";
+                                  
+                                  return `${change >= 0 ? '+' : ''}${formatCurrency(change)} (${change >= 0 ? '+' : ''}${changePercent.toFixed(1)}%)`;
+                                })()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No historical data available for this bill</p>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setHistoryDialogOpen(false)}
+                  className="text-base"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

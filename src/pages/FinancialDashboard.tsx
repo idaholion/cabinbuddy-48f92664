@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import PaymentTracker from "@/components/PaymentTracker";
 import { RecurringBills } from "@/components/RecurringBills";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw } from "lucide-react";
+import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw, History } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useConversationReminders } from "@/hooks/useConversationReminders";
@@ -136,7 +137,7 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-5 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-2 text-base">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
@@ -144,6 +145,10 @@ const FinancialDashboard = () => {
                 <TabsTrigger value="recurring" className="flex items-center gap-2 text-base">
                   <RotateCcw className="h-4 w-4" />
                   Recurring Bills
+                </TabsTrigger>
+                <TabsTrigger value="historical" className="flex items-center gap-2 text-base">
+                  <History className="h-4 w-4" />
+                  Historical Reports
                 </TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2 text-base">
                   <CreditCard className="h-4 w-4" />
@@ -169,6 +174,11 @@ const FinancialDashboard = () => {
               {/* Recurring Bills Tab */}
               <TabsContent value="recurring" className="p-6 pt-4">
                 <RecurringBills />
+              </TabsContent>
+
+              {/* Historical Reports Tab */}
+              <TabsContent value="historical" className="p-6 pt-4">
+                <RecurringBillsHistoricalReports />
               </TabsContent>
 
               {/* Payment Tracking Tab */}
