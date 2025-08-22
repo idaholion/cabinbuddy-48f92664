@@ -58,8 +58,8 @@ const CATEGORIES = [
 const FREQUENCIES = [
   "monthly",
   "quarterly",
-  "annually",
-  "bi-annually"
+  "semi-annually",
+  "annually"
 ];
 
 const TRACKING_TYPES = [
@@ -318,7 +318,7 @@ export const RecurringBills = () => {
       case 'monthly': return 'bg-blue-100 text-blue-700';
       case 'quarterly': return 'bg-green-100 text-green-700';
       case 'annually': return 'bg-purple-100 text-purple-700';
-      case 'bi-annually': return 'bg-orange-100 text-orange-700';
+      case 'semi-annually': return 'bg-orange-100 text-orange-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -337,7 +337,7 @@ export const RecurringBills = () => {
       case 'monthly': return total + bill.amount;
       case 'quarterly': return total + (bill.amount / 3);
       case 'annually': return total + (bill.amount / 12);
-      case 'bi-annually': return total + (bill.amount / 6);
+      case 'semi-annually': return total + (bill.amount / 6);
       default: return total;
     }
   }, 0);
