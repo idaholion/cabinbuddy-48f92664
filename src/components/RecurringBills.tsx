@@ -272,10 +272,34 @@ export const RecurringBills = () => {
 
       if (error) throw error;
       
+      // Update the editingBill state immediately
       setEditingBill({ ...editingBill, historical_values: updatedHistorical });
       setNewHistoricalEntry({ date: "", amount: "", notes: "" });
       toast.success('Historical entry added');
-      fetchBills();
+      
+      // Refresh the bills list and sync with editingBill
+      await fetchBills();
+      
+      // Update editingBill with fresh data from database
+      const { data: updatedBill } = await supabase
+        .from('recurring_bills')
+        .select('*')
+        .eq('id', editingBill.id)
+        .single();
+        
+      if (updatedBill) {
+        const parsedBill = {
+          ...updatedBill,
+          historical_values: updatedBill.historical_values 
+            ? (Array.isArray(updatedBill.historical_values) 
+              ? updatedBill.historical_values 
+              : typeof updatedBill.historical_values === 'string'
+                ? JSON.parse(updatedBill.historical_values)
+                : updatedBill.historical_values) as HistoricalValue[]
+            : [] as HistoricalValue[]
+        };
+        setEditingBill(parsedBill);
+      }
     } catch (error) {
       console.error('Error adding historical entry:', error);
       toast.error('Failed to add historical entry');
@@ -296,9 +320,33 @@ export const RecurringBills = () => {
 
       if (error) throw error;
       
+      // Update the editingBill state immediately
       setEditingBill({ ...editingBill, historical_values: updatedHistorical });
       toast.success('Historical entry removed');
-      fetchBills();
+      
+      // Refresh the bills list and sync with editingBill
+      await fetchBills();
+      
+      // Update editingBill with fresh data from database
+      const { data: updatedBill } = await supabase
+        .from('recurring_bills')
+        .select('*')
+        .eq('id', editingBill.id)
+        .single();
+        
+      if (updatedBill) {
+        const parsedBill = {
+          ...updatedBill,
+          historical_values: updatedBill.historical_values 
+            ? (Array.isArray(updatedBill.historical_values) 
+              ? updatedBill.historical_values 
+              : typeof updatedBill.historical_values === 'string'
+                ? JSON.parse(updatedBill.historical_values)
+                : updatedBill.historical_values) as HistoricalValue[]
+            : [] as HistoricalValue[]
+        };
+        setEditingBill(parsedBill);
+      }
     } catch (error) {
       console.error('Error removing historical entry:', error);
       toast.error('Failed to remove historical entry');
