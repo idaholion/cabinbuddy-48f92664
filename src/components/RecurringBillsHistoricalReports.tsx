@@ -50,6 +50,32 @@ export const RecurringBillsHistoricalReports = () => {
     }
   }, [organization?.id]);
 
+  // Add real-time subscription to refresh when recurring_bills data changes
+  useEffect(() => {
+    if (!organization?.id) return;
+
+    const channel = supabase
+      .channel('historical-reports-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all changes (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'recurring_bills',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        () => {
+          // Refresh data when any recurring bill changes
+          fetchBillsWithHistory();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organization?.id]);
+
   const fetchBillsWithHistory = async () => {
     if (!organization?.id) return;
     
