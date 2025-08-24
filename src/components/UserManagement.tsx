@@ -76,13 +76,16 @@ export const UserManagement = () => {
 
       // Get user details including emails using our secure function
       const { data: userDetails, error: detailsError } = await supabase
-        .rpc('get_organization_user_emails', { org_id: organization.id });
+        .rpc('get_organization_user_emails', { org_id: organization.id }) as { 
+          data: Array<{user_id: string, email: string, first_name: string, last_name: string, display_name: string}> | null, 
+          error: any 
+        };
 
       if (detailsError) throw detailsError;
 
       // Combine the data
       const enrichedUsers = orgUsers?.map(orgUser => {
-        const details = (userDetails as any[])?.find((detail: any) => detail.user_id === orgUser.user_id);
+        const details = userDetails?.find((detail) => detail.user_id === orgUser.user_id);
         
         return {
           user_id: orgUser.user_id,
@@ -125,11 +128,11 @@ export const UserManagement = () => {
         p_user_email: selectedUser.email,
         p_organization_id: organization.id,
         p_confirmation_code: 'CONFIRM_REMOVE_USER'
-      });
+      }) as { data: { success: boolean; error?: string; message?: string } | null, error: any };
 
       if (error) throw error;
 
-      const result = data as { success: boolean; error?: string } | null;
+      const result = data;
       
       if (result?.success) {
         toast({
