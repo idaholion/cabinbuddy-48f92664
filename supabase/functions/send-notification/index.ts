@@ -344,7 +344,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email notification
     const emailResponse = await resend.emails.send({
-      from: `${organizationName} <noreply@yourdomainhere.com>`,
+      from: `${organizationName} <onboarding@resend.dev>`,
       to: [reservation?.guest_email || selection_data?.guest_email || ''],
       subject: subject,
       html: htmlContent,
