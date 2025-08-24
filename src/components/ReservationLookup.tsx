@@ -16,6 +16,10 @@ export const ReservationLookup = () => {
   const { reservations, loading } = useReservations();
   const navigate = useNavigate();
 
+  const getShortReservationId = (id: string) => {
+    return id.slice(0, 8).toUpperCase();
+  };
+
   const filteredReservations = useMemo(() => {
     if (!reservations) return [];
 
@@ -60,6 +64,13 @@ export const ReservationLookup = () => {
   };
 
   const columns = [
+    {
+      key: 'id',
+      title: 'ID',
+      render: (value: any, reservation: any) => (
+        <span className="font-mono text-xs">{getShortReservationId(reservation?.id || '')}</span>
+      )
+    },
     {
       key: 'family_group',
       title: 'Family Group',

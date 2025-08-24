@@ -84,6 +84,10 @@ const ReservationDetail = () => {
     }
   };
 
+  const getShortReservationId = (id: string) => {
+    return id.slice(0, 8).toUpperCase();
+  };
+
   const calculateNights = () => {
     try {
       const start = new Date(reservation.start_date);
@@ -131,7 +135,7 @@ const ReservationDetail = () => {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Reservation ID</span>
-                <span className="font-mono text-sm">{reservation.id}</span>
+                <span className="font-mono text-sm">{getShortReservationId(reservation.id)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Family Group</span>
