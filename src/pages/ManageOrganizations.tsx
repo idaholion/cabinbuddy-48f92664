@@ -20,14 +20,21 @@ export const ManageOrganizations = () => {
         // Users with no organizations should go to setup, not signup
         navigate('/setup');
       } else if (organizations.length === 1) {
-        navigate('/home');
+        // Only auto-navigate to home if user isn't in a specific setup process
+        const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
+        if (!isInSetupProcess) {
+          navigate('/home');
+        }
       }
     }
   }, [organizations, loading, error, navigate, isDebugMode]);
 
   const handleOrganizationSelected = () => {
-    // Navigate to the main app after organization is selected
-    navigate('/home');
+    // Only navigate to home if not in a setup process
+    const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
+    if (!isInSetupProcess) {
+      navigate('/home');
+    }
   };
 
   // Show loading or error state

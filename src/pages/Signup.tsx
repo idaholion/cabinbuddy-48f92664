@@ -91,7 +91,7 @@ const Signup = () => {
             title: "Successfully joined organization!",
             description: "Welcome to your new cabin sharing group.",
           });
-          navigate("/home");
+          // Let the organization route handling manage navigation instead of forcing /home
         } catch (joinError: any) {
           // If join fails, redirect to select org page with error context
           toast({
