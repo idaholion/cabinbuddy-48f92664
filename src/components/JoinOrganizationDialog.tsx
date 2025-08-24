@@ -19,13 +19,29 @@ export const JoinOrganizationDialog = ({ children }: JoinOrganizationDialogProps
   const handleJoinOrganization = async () => {
     if (!joinCode.trim()) return;
     
+    console.log('🔍 [JOIN DIALOG] Starting organization join process...');
     setJoiningLoading(true);
-    const success = await joinOrganization(joinCode.trim());
-    setJoiningLoading(false);
     
-    if (success) {
-      setJoinCode('');
-      setDialogOpen(false);
+    try {
+      const success = await joinOrganization(joinCode.trim());
+      
+      if (success) {
+        console.log('✅ [JOIN DIALOG] Organization joined successfully');
+        setJoinCode('');
+        setDialogOpen(false);
+        
+        // Navigate to family-group-setup after successful join
+        setTimeout(() => {
+          console.log('🚀 [JOIN DIALOG] Navigating to family-group-setup');
+          window.location.href = '/family-group-setup';
+        }, 1000);
+      } else {
+        console.log('❌ [JOIN DIALOG] Organization join failed');
+      }
+    } catch (error) {
+      console.error('❌ [JOIN DIALOG] Exception during join:', error);
+    } finally {
+      setJoiningLoading(false);
     }
   };
 
