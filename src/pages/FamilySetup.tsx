@@ -22,13 +22,31 @@ import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 const FamilySetup = () => {
+  // IMMEDIATE debug logging to see if component is loading at all
+  console.log('🚨 [FAMILY SETUP] COMPONENT STARTED - TOP OF FUNCTION!');
+  console.log('🚨 [FAMILY SETUP] Current time:', new Date().toISOString());
+  console.log('🚨 [FAMILY SETUP] Location:', window.location.href);
+  
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  console.log('🚨 [FAMILY SETUP] User loaded:', { userEmail: user?.email, userId: user?.id });
+  
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
   const { familyGroups: existingFamilyGroups } = useFamilyGroups();
   const { isGroupLead, isGroupMember, isAdmin, userFamilyGroup, loading: roleLoading } = useUserRole();
+  
+  console.log('🚨 [FAMILY SETUP] All hooks loaded:', { 
+    orgLoading, 
+    settingsLoading, 
+    roleLoading,
+    isGroupLead,
+    isGroupMember,
+    isAdmin,
+    userFamilyGroup: userFamilyGroup?.name
+  });
   
   const [searchParams] = useSearchParams();
   
