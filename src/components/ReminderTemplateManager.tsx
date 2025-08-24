@@ -1,12 +1,17 @@
-import { useState } from "react";
-import { Mail, Clock, Calendar, Edit, Save, X, Settings, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, Clock, Calendar, Edit, Save, X, Settings, ToggleLeft, ToggleRight, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRobustMultiOrganization } from "@/hooks/useRobustMultiOrganization";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface ReminderTemplate {
   id: string;
@@ -15,206 +20,208 @@ interface ReminderTemplate {
   custom_message: string;
   checklist_items: string[];
   is_active: boolean;
-  days_in_advance: number;
+  days_in_advance: number | null;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const ReminderTemplateManager = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { activeOrganization } = useRobustMultiOrganization();
   const [isEditing, setIsEditing] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [templates, setTemplates] = useState<ReminderTemplate[]>([
-    {
-      id: '1',
-      reminder_type: 'stay_7_day',
-      subject_template: 'Cabin Reservation Reminder - 7 days to go!',
-      custom_message: `Hi {{guest_name}},
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [templates, setTemplates] = useState<ReminderTemplate[]>([]);
+  const [newTemplateType, setNewTemplateType] = useState("");
 
-Your cabin reservation is in 7 days! Time to start getting excited and prepared.
-
-**Reservation Details:**
-• Family Group: {{family_group_name}}
-• Check-in: {{check_in_date}}
-• Check-out: {{check_out_date}}
-• Reservation ID: {{reservation_id}}
-• [View Reservation Details]({{reservation_detail_url}})
-
-We're looking forward to your stay!
-
-Best regards,
-{{organization_name}} Team`,
-      checklist_items: [
-        'Review shopping list and coordinate with other families',
-        'Check weather forecast for packing',
-        'Share guest information packet with friends/family joining',
-        'Review cabin rules and policies',
-        'Plan transportation and confirm directions'
-      ],
-      is_active: true,
-      days_in_advance: 7
-    },
-    {
-      id: '2',
-      reminder_type: 'stay_3_day',
-      subject_template: 'Cabin Reservation Reminder - 3 days to go!',
-      custom_message: `Hi {{guest_name}},
-
-Your cabin stay is just 3 days away! Here are some final preparations to ensure a smooth arrival.
-
-**Reservation Details:**
-• Family Group: {{family_group_name}}
-• Check-in: {{check_in_date}}
-• Check-out: {{check_out_date}}
-• Reservation ID: {{reservation_id}}
-• [View Reservation Details]({{reservation_detail_url}})
-
-Don't forget to confirm your arrival time if needed!
-
-Best regards,
-{{organization_name}} Team`,
-      checklist_items: [
-        'Final review of shopping list',
-        'Confirm arrival time with calendar keeper if needed',
-        'Pack according to weather forecast',
-        'Double-check emergency contact information',
-        'Review check-in procedures'
-      ],
-      is_active: true,
-      days_in_advance: 3
-    },
-    {
-      id: '3',
-      reminder_type: 'stay_1_day',
-      subject_template: 'Cabin Reservation Reminder - Tomorrow!',
-      custom_message: `Hi {{guest_name}},
-
-Your cabin stay is tomorrow! We hope you're all packed and ready for a wonderful time.
-
-**Reservation Details:**
-• Family Group: {{family_group_name}}
-• Check-in: {{check_in_date}}
-• Check-out: {{check_out_date}}
-• Reservation ID: {{reservation_id}}
-• [View Reservation Details]({{reservation_detail_url}})
-
-Safe travels and enjoy your stay!
-
-Best regards,
-{{organization_name}} Team`,
-      checklist_items: [
-        'Final weather check and packing adjustments',
-        'Confirm departure time and route',
-        'Ensure all guests have cabin address and WiFi info',
-        'Last-minute coordination with other families',
-        'Emergency contacts saved in phone'
-      ],
-      is_active: true,
-      days_in_advance: 1
-    },
-    {
-      id: '4',
-      reminder_type: 'selection_period_start',
-      subject_template: 'Calendar Selection Period Now Open',
-      custom_message: `Hi {{guest_name}},
-
-The calendar selection period for {{selection_year}} is now open! It's time to select your preferred cabin dates.
-
-**Selection Details:**
-• Your turn starts: {{selection_start_date}}
-• Selection deadline: {{selection_end_date}}
-• Available periods: {{available_periods}}
-
-Please log into the system to make your selections as soon as possible.
-
-Best regards,
-{{organization_name}} Calendar Keeper`,
-      checklist_items: [
-        'Review available time periods',
-        'Coordinate with family group members',
-        'Consider seasonal preferences and activities',
-        'Submit selections before deadline',
-        'Contact calendar keeper with any questions'
-      ],
-      is_active: true,
-      days_in_advance: 0
-    },
-    {
-      id: '5',
-      reminder_type: 'selection_period_ending',
-      subject_template: 'Selection Period Ends Tomorrow - Final Reminder',
-      custom_message: `Hi {{guest_name}},
-
-Your calendar selection period for {{selection_year}} ends TOMORROW! 
-
-**Important Deadline Information:**
-• Selection deadline: {{selection_end_date}}
-• You have until end of day to complete your selections
-• Currently selected periods: {{current_selections}}
-• Remaining selections allowed: {{remaining_selections}}
-
-If you don't complete your selections by the deadline, you'll miss your opportunity for this rotation year.
-
-**Action Required:** Please log in immediately to finalize your cabin date selections.
-
-Best regards,
-{{organization_name}} Calendar Keeper`,
-      checklist_items: [
-        'Log into the system immediately',
-        'Review your current selections',
-        'Complete any remaining time period selections',
-        'Confirm all selections are submitted',
-        'Contact calendar keeper if you need assistance',
-        'Remember: deadline is end of day tomorrow'
-      ],
-      is_active: false,
-      days_in_advance: 1
+  // Fetch templates from database
+  useEffect(() => {
+    if (activeOrganization?.organization_id) {
+      fetchTemplates();
     }
-  ]);
+  }, [activeOrganization?.organization_id]);
+
+  const fetchTemplates = async () => {
+    if (!activeOrganization?.organization_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('reminder_templates')
+        .select('*')
+        .eq('organization_id', activeOrganization.organization_id)
+        .order('reminder_type');
+
+      if (error) throw error;
+
+      // Convert JSONB checklist_items back to string array and handle missing fields
+      const templatesWithArrays = (data || []).map((template: any) => ({
+        ...template,
+        checklist_items: Array.isArray(template.checklist_items) 
+          ? template.checklist_items as string[]
+          : [],
+        is_active: template.is_active ?? true,
+        days_in_advance: template.days_in_advance ?? null
+      }));
+
+      setTemplates(templatesWithArrays);
+    } catch (error: any) {
+      console.error('Error fetching templates:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load reminder templates",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateTemplate = (templateId: string, updates: Partial<ReminderTemplate>) => {
     setTemplates(prev => prev.map(template => 
       template.id === templateId ? { ...template, ...updates } : template
     ));
-    setHasUnsavedChanges(true);
   };
 
-  const handleSaveReminders = () => {
-    // Here you would typically save to the database
-    setHasUnsavedChanges(false);
-    setIsEditing(false);
-    toast({
-      title: "Success",
-      description: "Reminder templates saved successfully",
-    });
+  const addNewTemplate = () => {
+    if (!newTemplateType.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a template type",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newTemplate: ReminderTemplate = {
+      id: 'new-' + Date.now(),
+      reminder_type: newTemplateType.toLowerCase().replace(/\s+/g, '_'),
+      subject_template: `${newTemplateType} Reminder`,
+      custom_message: `Hi {{recipient_name}},\n\nThis is a reminder about the upcoming ${newTemplateType}.\n\nBest regards,\n{{organization_name}} Team`,
+      checklist_items: [],
+      is_active: true,
+      days_in_advance: 7,
+      organization_id: activeOrganization?.organization_id || '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    setTemplates(prev => [...prev, newTemplate]);
+    setNewTemplateType("");
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    if (window.confirm("Are you sure you want to delete this template?")) {
+      setTemplates(prev => prev.filter(template => template.id !== templateId));
+    }
+  };
+
+  const handleSaveReminders = async () => {
+    if (!activeOrganization?.organization_id || !user?.id) return;
+
+    setSaving(true);
+    try {
+      // Separate new templates from existing ones
+      const newTemplates = templates.filter(t => t.id.startsWith('new-'));
+      const existingTemplates = templates.filter(t => !t.id.startsWith('new-'));
+
+      // Insert new templates
+      for (const template of newTemplates) {
+        const { error } = await supabase
+          .from('reminder_templates')
+          .insert({
+            organization_id: activeOrganization.organization_id,
+            reminder_type: template.reminder_type,
+            subject_template: template.subject_template,
+            custom_message: template.custom_message,
+            checklist_items: template.checklist_items,
+            is_active: template.is_active,
+            days_in_advance: template.days_in_advance,
+            created_by_user_id: user.id
+          });
+
+        if (error) throw error;
+      }
+
+      // Update existing templates
+      for (const template of existingTemplates) {
+        const { error } = await supabase
+          .from('reminder_templates')
+          .update({
+            subject_template: template.subject_template,
+            custom_message: template.custom_message,
+            checklist_items: template.checklist_items,
+            is_active: template.is_active,
+            days_in_advance: template.days_in_advance
+          })
+          .eq('id', template.id);
+
+        if (error) throw error;
+      }
+
+      // Delete templates that were removed (check if any in database don't exist in current list)
+      const currentIds = existingTemplates.map(t => t.id);
+      const { data: dbTemplates } = await supabase
+        .from('reminder_templates')
+        .select('id')
+        .eq('organization_id', activeOrganization.organization_id);
+
+      const deletedIds = (dbTemplates || [])
+        .filter(db => !currentIds.includes(db.id))
+        .map(db => db.id);
+
+      if (deletedIds.length > 0) {
+        const { error } = await supabase
+          .from('reminder_templates')
+          .delete()
+          .in('id', deletedIds);
+
+        if (error) throw error;
+      }
+
+      await fetchTemplates(); // Refresh from database
+      setIsEditing(false);
+      
+      toast({
+        title: "Success",
+        description: "Reminder templates saved successfully",
+      });
+    } catch (error: any) {
+      console.error('Error saving templates:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save reminder templates",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancelEdit = () => {
-    if (hasUnsavedChanges) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to cancel?")) {
-        setIsEditing(false);
-        setHasUnsavedChanges(false);
-        // Reload templates from saved state
-        window.location.reload();
-      }
-    } else {
+    if (window.confirm("You have unsaved changes. Are you sure you want to cancel?")) {
       setIsEditing(false);
+      fetchTemplates(); // Reload from database
     }
   };
 
   const getTemplateIcon = (type: string) => {
-    if (type.includes('selection')) return <Calendar className="h-4 w-4" />;
+    if (type.includes('selection') || type.includes('calendar')) return <Calendar className="h-4 w-4" />;
+    if (type.includes('work') || type.includes('weekend')) return <Settings className="h-4 w-4" />;
     return <Clock className="h-4 w-4" />;
   };
 
   const getTemplateTitle = (type: string) => {
-    switch (type) {
-      case 'stay_7_day': return '7-Day Stay Reminder';
-      case 'stay_3_day': return '3-Day Stay Reminder';
-      case 'stay_1_day': return '1-Day Stay Reminder';
-      case 'selection_period_start': return 'Selection Period Start';
-      case 'selection_period_ending': return 'Selection Period Ending Tomorrow';
-      default: return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    }
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
+
+  if (loading) {
+    return <LoadingSpinner size="lg" />;
+  }
 
   return (
     <div className="space-y-6">
@@ -237,11 +244,11 @@ Best regards,
               </Button>
               <Button 
                 onClick={handleSaveReminders} 
-                disabled={!hasUnsavedChanges}
+                disabled={saving}
                 className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none"
               >
-                <Save className="h-4 w-4" />
-                <span>Save Reminders</span>
+                {saving ? <LoadingSpinner size="sm" /> : <Save className="h-4 w-4" />}
+                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
               </Button>
             </>
           )}
@@ -249,32 +256,46 @@ Best regards,
       </div>
       
       {isEditing && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center space-x-2 text-yellow-800">
-            <Settings className="h-4 w-4" />
-            <span className="font-medium">Edit Mode Active</span>
+        <>
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center space-x-2 text-yellow-800">
+              <Settings className="h-4 w-4" />
+              <span className="font-medium">Edit Mode Active</span>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">
+              You can now modify reminder templates. Don't forget to save your changes!
+            </p>
           </div>
-          <p className="text-sm text-yellow-700 mt-1">
-            You can now modify reminder templates. Don't forget to save your changes!
-          </p>
-        </div>
+
+          {/* Add New Template Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center space-x-2">
+                <Plus className="h-4 w-4" />
+                <span>Add New Template</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                <Input
+                  placeholder="Template type (e.g., Work Weekend, Annual Meeting)"
+                  value={newTemplateType}
+                  onChange={(e) => setNewTemplateType(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={addNewTemplate} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Template
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
-      <div className="text-base text-muted-foreground">{isEditing ? "Editing reminder templates. " : ""}Customize the content of reminder notifications. Available variables: 
-        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{selection_start_date}}, {{selection_end_date}}, {{available_periods}}, {{current_selections}}, {{remaining_selections}}"}
-      </div>
-
-      {/* Development Note */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div className="flex items-center space-x-2 text-blue-800">
-          <Settings className="h-4 w-4" />
-          <span className="font-medium">Development Note</span>
-        </div>
-        <p className="text-sm text-blue-700 mt-1">
-          <strong>TODO:</strong> Apply semantic typography system to remaining components. Current implementation uses hardcoded text sizes (text-base, text-lg, etc.). 
-          Should be refactored to use semantic classes (.text-heading-primary, .text-heading-secondary, .text-body, .text-label, etc.) 
-          for consistent design hierarchy across the entire application. See CabinRulesEditor, AddReceipt, Index, and SupervisorDashboard for examples.
-        </p>
+      <div className="text-base text-muted-foreground">
+        {isEditing ? "Editing reminder templates. " : ""}Customize the content of reminder notifications. Available variables: 
+        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
       <div className="space-y-6">
@@ -299,11 +320,11 @@ Best regards,
                         onCheckedChange={(checked) => updateTemplate(template.id, { is_active: checked })}
                       />
                     </div>
-                    {template.reminder_type.includes('stay_') && (
+                    {(template.reminder_type.includes('stay_') || template.reminder_type.includes('work_')) && (
                       <div className="flex items-center space-x-2">
                         <Label htmlFor={`days-${template.id}`} className="text-sm">Days in advance</Label>
                         <Select 
-                          value={template.days_in_advance.toString()} 
+                          value={(template.days_in_advance || 7).toString()} 
                           onValueChange={(value) => updateTemplate(template.id, { days_in_advance: parseInt(value) })}
                         >
                           <SelectTrigger className="w-20">
@@ -321,6 +342,14 @@ Best regards,
                         </Select>
                       </div>
                     )}
+                    <Button 
+                      onClick={() => deleteTemplate(template.id)}
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
