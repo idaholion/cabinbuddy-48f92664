@@ -328,7 +328,7 @@ export const ReminderTemplateManager = () => {
                           onValueChange={(value) => updateTemplate(template.id, { days_in_advance: parseInt(value) })}
                         >
                           <SelectTrigger className="w-20">
-                            <SelectValue />
+                            <SelectValue placeholder="7" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="1">1</SelectItem>
