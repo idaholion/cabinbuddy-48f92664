@@ -7,6 +7,7 @@ import { Users, Plus, Settings, Copy, X } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { AdminProfileClaimingStep } from "@/components/AdminProfileClaimingStep";
+import { UserManagement } from "@/components/UserManagement";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -971,6 +972,23 @@ const FamilySetup = () => {
         </Card>
         )}
 
+        {/* User Management Section - Only visible for Administrators */}
+        {isAdmin && !showProfileClaimingStep && !isCreatingNew && organization && (
+          <Card className="bg-card/95 mb-8">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
+                <Users className="h-6 w-6" />
+                Organization User Management
+              </CardTitle>
+              <CardDescription className="text-center">
+                Manage users in your organization. Remove members who no longer need access.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserManagement />
+            </CardContent>
+          </Card>
+        )}
 
       </div>
     </div>
