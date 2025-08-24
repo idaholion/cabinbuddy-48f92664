@@ -13,6 +13,7 @@ export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,8 +53,13 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !confirmPassword || !firstName || !lastName) {
       toast({ title: "Please fill in all fields", variant: "destructive" });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
 
@@ -84,6 +90,7 @@ export default function Auth() {
         // Reset form
         setEmail('');
         setPassword('');
+        setConfirmPassword('');
         setFirstName('');
         setLastName('');
       }
@@ -240,6 +247,21 @@ export default function Auth() {
                       required
                       minLength={6}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="Re-enter your password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className={password && confirmPassword && password !== confirmPassword ? "border-destructive" : ""}
+                    />
+                    {password && confirmPassword && password !== confirmPassword && (
+                      <p className="text-sm text-destructive">Passwords do not match</p>
+                    )}
                   </div>
                   <Button 
                     type="submit" 
