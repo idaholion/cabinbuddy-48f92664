@@ -135,7 +135,19 @@ const FamilySetup = () => {
     });
     
     if (!roleLoading && !isCreatingNew) {
-      // Group leads should go to family-group-setup, not stay here
+      // NEW USERS: If someone just signed up and is both admin and group lead,
+      // they should go to family-group-setup to manage their group
+      if (isGroupLead && isAdmin) {
+        console.log('🚀 [FAMILY SETUP] Admin who is also group lead - redirecting to family-group-setup');
+        toast({
+          title: "Redirecting", 
+          description: "Please use the Family Group Setup page to manage your group.",
+        });
+        navigate("/family-group-setup");
+        return;
+      }
+      
+      // Group leads (non-admin) should go to family-group-setup
       if (isGroupLead && !isAdmin) {
         console.log('🚀 [FAMILY SETUP] Group lead detected - redirecting to family-group-setup');
         toast({
@@ -146,9 +158,9 @@ const FamilySetup = () => {
         return;
       }
       
-      // Admins can stay on family-setup
-      if (isAdmin) {
-        console.log('✅ [FAMILY SETUP] Admin staying on family setup page');
+      // Pure admins (not group leads) can stay on family-setup
+      if (isAdmin && !isGroupLead) {
+        console.log('✅ [FAMILY SETUP] Pure admin staying on family setup page');
         return;
       }
       
