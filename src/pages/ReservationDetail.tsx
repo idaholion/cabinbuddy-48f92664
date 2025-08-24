@@ -76,9 +76,14 @@ const ReservationDetail = () => {
     }
   };
 
+  const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+  };
+
   const formatDate = (date: string) => {
     try {
-      return format(new Date(date), 'EEEE, MMMM d, yyyy');
+      return format(parseLocalDate(date), 'EEEE, MMMM d, yyyy');
     } catch {
       return date;
     }
@@ -90,8 +95,8 @@ const ReservationDetail = () => {
 
   const calculateNights = () => {
     try {
-      const start = new Date(reservation.start_date);
-      const end = new Date(reservation.end_date);
+      const start = parseLocalDate(reservation.start_date);
+      const end = parseLocalDate(reservation.end_date);
       const diffTime = Math.abs(end.getTime() - start.getTime());
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     } catch {

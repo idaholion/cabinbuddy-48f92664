@@ -16,6 +16,11 @@ export const ReservationLookup = () => {
   const { reservations, loading } = useReservations();
   const navigate = useNavigate();
 
+  const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+  };
+
   const getShortReservationId = (id: string) => {
     return id.slice(0, 8).toUpperCase();
   };
@@ -36,7 +41,7 @@ export const ReservationLookup = () => {
 
   const formatDate = (date: string) => {
     try {
-      return format(new Date(date), 'MMM d, yyyy');
+      return format(parseLocalDate(date), 'MMM d, yyyy');
     } catch {
       return date;
     }
@@ -54,8 +59,8 @@ export const ReservationLookup = () => {
   const calculateNights = (startDate: string, endDate: string) => {
     try {
       if (!startDate || !endDate) return 'N/A';
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const start = parseLocalDate(startDate);
+      const end = parseLocalDate(endDate);
       const diffTime = Math.abs(end.getTime() - start.getTime());
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     } catch {
