@@ -141,12 +141,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('🔐 Starting sign in for email:', email);
+      
+      // Clear any existing auth state first
+      console.log('🔐 Clearing existing auth state...');
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+          console.log('🔐 Clearing localStorage key during signIn:', key);
+          localStorage.removeItem(key);
+        }
+      });
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('🔐 SignIn response:', {
+        hasUser: !!data.user,
+        userEmail: data.user?.email,
+        hasSession: !!data.session,
+        error: error?.message
+      });
+
       if (error) {
+        console.error('🔐 SignIn error:', error);
         toast({
           title: "Sign In Error",
           description: error.message,
@@ -156,6 +175,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data.user && data.session) {
+        console.log('🔐 SignIn successful for user:', data.user.email);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
@@ -166,8 +186,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error: null };
       }
 
+      console.error('🔐 SignIn failed: No user data returned');
       return { error: new Error('No user data returned') };
     } catch (error: any) {
+      console.error('🔐 SignIn exception:', error);
       toast({
         title: "Connection Error",
         description: "Unable to connect to authentication service. Please check your connection.",

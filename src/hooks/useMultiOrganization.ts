@@ -124,6 +124,11 @@ export const useMultiOrganization = () => {
     }
 
     console.log('🔍 [JOIN ORG] Starting join process for code:', organizationCode);
+    console.log('🔍 [JOIN ORG] Current user details:', {
+      id: user.id,
+      email: user.email,
+      userMetadata: user.user_metadata
+    });
     setLoading(true);
     
     try {
