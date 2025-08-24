@@ -2209,6 +2209,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_organization_user_emails: {
+        Args: { org_id: string }
+        Returns: {
+          display_name: string
+          email: string
+          first_name: string
+          last_name: string
+          user_id: string
+        }[]
+      }
       get_safe_guest_family_groups: {
         Args: { org_id: string }
         Returns: {

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Trash2, Database, AlertTriangle, Loader2, CheckCircle, XCircle, Users, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { UserManagement } from "./UserManagement";
 
 interface Organization {
   id: string;
@@ -29,7 +30,6 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
   const [confirmationInput, setConfirmationInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastOperation, setLastOperation] = useState<{ type: string; success: boolean; message: string } | null>(null);
-  const [isUserGuideDialogOpen, setIsUserGuideDialogOpen] = useState(false);
 
   // Get selected organization details
   const selectedOrg = organizations.find(org => org.id === selectedOrgId);
@@ -374,103 +374,9 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
             </div>
           </div>
 
-          {/* User Account Management */}
+          {/* User Management */}
           <div className="space-y-3">
-            <h4 className="font-medium text-destructive">User Account Management</h4>
-            <p className="text-base text-muted-foreground">
-              Instructions for deleting user authentication accounts from Supabase Dashboard.
-            </p>
-            <AlertDialog open={isUserGuideDialogOpen} onOpenChange={setIsUserGuideDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground hover:scale-105 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200">
-                  <Users className="h-4 w-4 mr-2" />
-                  How to Delete Users
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <Info className="h-5 w-5 text-primary" />
-                    How to Delete User Authentication Accounts
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-4 text-left">
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="font-medium text-yellow-800">Important Note:</p>
-                      <p className="text-sm text-yellow-700">
-                        When you reset application data, user authentication accounts remain in Supabase Auth. 
-                        This is normal behavior - authentication and application data are separate systems.
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h5 className="font-medium">Step-by-Step Instructions:</h5>
-                      <ol className="list-decimal list-inside space-y-2 text-sm">
-                        <li>
-                          <strong>Access Supabase Dashboard:</strong>
-                          <br />
-                          Open your browser and go to{" "}
-                          <code className="bg-gray-100 px-1 rounded">supabase.com</code> and sign in to your account.
-                        </li>
-                        <li>
-                          <strong>Navigate to your project:</strong>
-                          <br />
-                          Select the project that contains your application data.
-                        </li>
-                        <li>
-                          <strong>Go to Authentication section:</strong>
-                          <br />
-                          In the left sidebar, click on{" "}
-                          <code className="bg-gray-100 px-1 rounded">Authentication</code>.
-                        </li>
-                        <li>
-                          <strong>Access Users tab:</strong>
-                          <br />
-                          Click on the{" "}
-                          <code className="bg-gray-100 px-1 rounded">Users</code> tab to see all authenticated users.
-                        </li>
-                        <li>
-                          <strong>Find users to delete:</strong>
-                          <br />
-                          Look for test users such as{" "}
-                          <code className="bg-gray-100 px-1 rounded">test1@test1.com</code>,{" "}
-                          <code className="bg-gray-100 px-1 rounded">rvandrew@outlook.com</code>, or other test accounts.
-                        </li>
-                        <li>
-                          <strong>Delete users:</strong>
-                          <br />
-                          Click the three dots menu (⋯) next to each user you want to delete, then select{" "}
-                          <code className="bg-gray-100 px-1 rounded">Delete user</code>.
-                        </li>
-                        <li>
-                          <strong>Confirm deletion:</strong>
-                          <br />
-                          Confirm the deletion when prompted. The user will be permanently removed from authentication.
-                        </li>
-                      </ol>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="font-medium text-blue-800">Pro Tip:</p>
-                      <p className="text-sm text-blue-700">
-                        After deleting users, you can create fresh test accounts or use different email addresses 
-                        for testing without conflicts.
-                      </p>
-                    </div>
-
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                      <p className="font-medium text-red-800">Caution:</p>
-                      <p className="text-sm text-red-700">
-                        Only delete test/development user accounts. Do not delete production user accounts 
-                        unless you are certain they should be removed permanently.
-                      </p>
-                    </div>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="text-base">Close</AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <UserManagement />
           </div>
         </CardContent>
       </Card>

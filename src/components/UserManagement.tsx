@@ -40,6 +40,7 @@ interface OrganizationUser {
   role: string;
   joined_at: string;
   is_primary: boolean;
+  email: string;
   display_name?: string;
   first_name?: string;
   last_name?: string;
@@ -60,7 +61,7 @@ export const UserManagement = () => {
     if (!organization?.id) return;
 
     try {
-      // Get users in the organization with their profiles
+      // Get users in the organization
       const { data: orgUsers, error: orgError } = await supabase
         .from('user_organizations')
         .select(`
@@ -73,33 +74,25 @@ export const UserManagement = () => {
 
       if (orgError) throw orgError;
 
-      // Get profile information for these users
-      const userIds = orgUsers?.map(u => u.user_id) || [];
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, display_name')
-        .in('user_id', userIds);
+      // Get user details including emails using our secure function
+      const { data: userDetails, error: detailsError } = await supabase
+        .rpc('get_organization_user_emails', { org_id: organization.id });
 
-      if (profileError) throw profileError;
-
-      // Get email addresses from auth.users (via RPC)
-      const { data: authUsers, error: authError } = await supabase
-        .rpc('get_user_emails_by_ids', { user_ids: userIds });
-
-      if (authError) throw authError;
+      if (detailsError) throw detailsError;
 
       // Combine the data
       const enrichedUsers = orgUsers?.map(orgUser => {
-        const profile = profiles?.find(p => p.user_id === orgUser.user_id);
-        const authUser = authUsers?.find((au: any) => au.id === orgUser.user_id);
+        const details = (userDetails as any[])?.find((detail: any) => detail.user_id === orgUser.user_id);
         
         return {
           user_id: orgUser.user_id,
-          email: authUser?.email || 'Unknown',
           role: orgUser.role,
           joined_at: orgUser.joined_at,
           is_primary: orgUser.is_primary,
-          display_name: profile?.display_name
+          email: details?.email || 'Unknown',
+          display_name: details?.display_name,
+          first_name: details?.first_name,
+          last_name: details?.last_name
         };
       }) || [];
 
@@ -136,7 +129,9 @@ export const UserManagement = () => {
 
       if (error) throw error;
 
-      if (data?.success) {
+      const result = data as { success: boolean; error?: string } | null;
+      
+      if (result?.success) {
         toast({
           title: "User Removed",
           description: `${selectedUser.email} has been removed from the organization`,
@@ -149,7 +144,7 @@ export const UserManagement = () => {
         setSelectedUser(null);
         setConfirmationText("");
       } else {
-        throw new Error(data?.error || 'Failed to remove user');
+        throw new Error(result?.error || 'Failed to remove user');
       }
     } catch (error: any) {
       console.error('Error removing user:', error);
