@@ -51,7 +51,7 @@ export const ReminderTemplateManager = () => {
         .from('reminder_templates')
         .select('*')
         .eq('organization_id', activeOrganization.organization_id)
-        .order('reminder_type');
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
 

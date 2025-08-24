@@ -1131,6 +1131,7 @@ export type Database = {
           id: string
           organization_id: string
           reminder_type: string
+          sort_order: number | null
           subject_template: string
           updated_at: string
         }
@@ -1141,6 +1142,7 @@ export type Database = {
           id?: string
           organization_id: string
           reminder_type: string
+          sort_order?: number | null
           subject_template: string
           updated_at?: string
         }
@@ -1151,6 +1153,7 @@ export type Database = {
           id?: string
           organization_id?: string
           reminder_type?: string
+          sort_order?: number | null
           subject_template?: string
           updated_at?: string
         }
