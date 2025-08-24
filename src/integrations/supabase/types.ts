@@ -1127,7 +1127,9 @@ export type Database = {
         Row: {
           checklist_items: Json
           created_at: string
+          created_by_user_id: string | null
           custom_message: string | null
+          days_in_advance: number | null
           id: string
           organization_id: string
           reminder_type: string
@@ -1138,7 +1140,9 @@ export type Database = {
         Insert: {
           checklist_items?: Json
           created_at?: string
+          created_by_user_id?: string | null
           custom_message?: string | null
+          days_in_advance?: number | null
           id?: string
           organization_id: string
           reminder_type: string
@@ -1149,7 +1153,9 @@ export type Database = {
         Update: {
           checklist_items?: Json
           created_at?: string
+          created_by_user_id?: string | null
           custom_message?: string | null
+          days_in_advance?: number | null
           id?: string
           organization_id?: string
           reminder_type?: string
