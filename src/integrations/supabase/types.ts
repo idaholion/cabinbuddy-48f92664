@@ -1131,6 +1131,7 @@ export type Database = {
           custom_message: string | null
           days_in_advance: number | null
           id: string
+          is_active: boolean | null
           organization_id: string
           reminder_type: string
           sort_order: number | null
@@ -1144,6 +1145,7 @@ export type Database = {
           custom_message?: string | null
           days_in_advance?: number | null
           id?: string
+          is_active?: boolean | null
           organization_id: string
           reminder_type: string
           sort_order?: number | null
@@ -1157,6 +1159,7 @@ export type Database = {
           custom_message?: string | null
           days_in_advance?: number | null
           id?: string
+          is_active?: boolean | null
           organization_id?: string
           reminder_type?: string
           sort_order?: number | null
