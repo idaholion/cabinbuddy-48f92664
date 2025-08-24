@@ -22,12 +22,13 @@ const ReservationDetail = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && reservations && id) {
+    if (!loading && reservations && Array.isArray(reservations) && id) {
       const foundReservation = reservations.find(r => r.id === id);
       if (foundReservation) {
         setReservation(foundReservation);
         document.title = `Reservation ${foundReservation.family_group} - Details`;
-      } else {
+      } else if (reservations.length > 0) {
+        // Only show error if we have reservations but couldn't find this one
         toast({
           title: "Reservation Not Found",
           description: "The requested reservation could not be found.",
