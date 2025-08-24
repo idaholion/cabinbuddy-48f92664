@@ -20,6 +20,33 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('Running reminder notification check...');
     
+    // Check if any organizations have automated reminders enabled
+    const { data: enabledOrgs, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('automated_reminders_enabled', true);
+    
+    if (orgError) {
+      console.error('Error fetching enabled organizations:', orgError);
+      throw orgError;
+    }
+    
+    if (!enabledOrgs || enabledOrgs.length === 0) {
+      console.log('No organizations have automated reminders enabled');
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'No organizations with automated reminders enabled' 
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+    }
+    
+    console.log(`Found ${enabledOrgs.length} organizations with automated reminders enabled`);
+    
     // Get upcoming reservations (within 7, 3, and 1 days)
     const reminderDays = [7, 3, 1];
     
@@ -30,7 +57,8 @@ const handler = async (req: Request): Promise<Response> => {
       
       console.log(`Checking for reservations ${days} days away (${targetDateString})`);
       
-      // Query reservations for the target date
+      // Query reservations for the target date from enabled organizations only
+      const enabledOrgIds = enabledOrgs.map(org => org.id);
       const { data: reservations, error } = await supabase
         .from('reservations')
         .select(`
@@ -50,7 +78,8 @@ const handler = async (req: Request): Promise<Response> => {
           )
         `)
         .eq('start_date', targetDateString)
-        .eq('status', 'confirmed');
+        .eq('status', 'confirmed')
+        .in('organization_id', enabledOrgIds);
       
       if (error) {
         console.error(`Error fetching reservations for ${days} days:`, error);

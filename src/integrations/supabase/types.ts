@@ -714,6 +714,7 @@ export type Database = {
           admin_name: string | null
           admin_phone: string | null
           alternate_supervisor_email: string | null
+          automated_reminders_enabled: boolean | null
           calendar_keeper_email: string | null
           calendar_keeper_name: string | null
           calendar_keeper_phone: string | null
@@ -734,6 +735,7 @@ export type Database = {
           admin_name?: string | null
           admin_phone?: string | null
           alternate_supervisor_email?: string | null
+          automated_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
@@ -754,6 +756,7 @@ export type Database = {
           admin_name?: string | null
           admin_phone?: string | null
           alternate_supervisor_email?: string | null
+          automated_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
