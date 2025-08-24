@@ -71,6 +71,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           timestamp: new Date().toISOString()
         });
         
+        // CRITICAL DEBUG: Alert what account is actually logged in
+        if (session?.user) {
+          console.log('🚨 CRITICAL DEBUG: User logged in as:', session.user.email);
+          console.log('🚨 User ID:', session.user.id);
+          console.log('🚨 Full user object:', session.user);
+        } else {
+          console.log('🚨 CRITICAL DEBUG: No user session found');
+        }
+        
         // Log session details if available
         if (session) {
           console.log('🔐 Session details:', {
