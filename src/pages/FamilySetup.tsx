@@ -104,7 +104,37 @@ const FamilySetup = () => {
 
   // Redirect regular group members to their profile page (but allow new joiners to complete setup)
   useEffect(() => {
+    console.log('🔍 [FAMILY SETUP] Role-based navigation check:', {
+      roleLoading,
+      isCreatingNew,
+      isGroupMember,
+      isGroupLead,
+      isAdmin,
+      userEmail: user?.email,
+      userFamilyGroup: userFamilyGroup?.name,
+      hasCompletedSetup: localStorage.getItem('setupCompleted'),
+      pathname: window.location.pathname
+    });
+    
     if (!roleLoading && !isCreatingNew) {
+      // Group leads should go to family-group-setup, not stay here
+      if (isGroupLead && !isAdmin) {
+        console.log('🚀 [FAMILY SETUP] Group lead detected - redirecting to family-group-setup');
+        toast({
+          title: "Redirecting",
+          description: "Group leads should use the Family Group Setup page.",
+        });
+        navigate("/family-group-setup");
+        return;
+      }
+      
+      // Admins can stay on family-setup
+      if (isAdmin) {
+        console.log('✅ [FAMILY SETUP] Admin staying on family setup page');
+        return;
+      }
+      
+      // Regular group members go to profile page
       if (isGroupMember && !isGroupLead && !isAdmin) {
         // Check if this is a new user who just joined and needs to complete setup
         const hasCompletedSetup = localStorage.getItem('setupCompleted');
@@ -122,7 +152,7 @@ const FamilySetup = () => {
         }
       }
     }
-  }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast]);
+  }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast, user?.email, userFamilyGroup]);
 
   // Load existing family groups into editable state
   useEffect(() => {
