@@ -125,6 +125,7 @@ export const NotificationTest = () => {
           <Label htmlFor="test-phone" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             Phone Number
+            <span className="text-xs text-muted-foreground">(Coming Soon)</span>
           </Label>
           <Input
             id="test-phone"
@@ -132,6 +133,8 @@ export const NotificationTest = () => {
             placeholder="+1 (555) 123-4567"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            disabled
+            className="opacity-50"
           />
         </div>
 

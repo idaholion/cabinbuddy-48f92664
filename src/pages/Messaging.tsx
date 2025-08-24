@@ -165,17 +165,19 @@ const Messaging = () => {
                       Email only
                     </div>
                   </SelectItem>
-                  <SelectItem value="sms" className="text-base">
+                  <SelectItem value="sms" disabled className="text-base opacity-50">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4" />
                       Text message only
+                      <span className="text-xs text-muted-foreground ml-auto">(Coming Soon)</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="both" className="text-base">
+                  <SelectItem value="both" disabled className="text-base opacity-50">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4" />
                       <MessageSquare className="h-4 w-4" />
                       Both email and text
+                      <span className="text-xs text-muted-foreground ml-auto">(Coming Soon)</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
