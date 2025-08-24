@@ -44,11 +44,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Clear any mock authentication data
     localStorage.removeItem('mock-auth-user');
     localStorage.removeItem('mock-auth-token');
+    
+    console.log('🔐 AuthProvider initializing...');
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state change:', { event, hasSession: !!session, userId: session?.user?.id });
+        console.log('🔐 Auth state change:', { 
+          event, 
+          hasSession: !!session, 
+          userId: session?.user?.id,
+          userEmail: session?.user?.email,
+          userMetadata: session?.user?.user_metadata,
+          previousUserId: user?.id,
+          previousUserEmail: user?.email,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Log session details if available
+        if (session) {
+          console.log('🔐 Session details:', {
+            expires_at: session.expires_at,
+            token_type: session.token_type,
+            user: {
+              id: session.user.id,
+              email: session.user.email,
+              email_confirmed_at: session.user.email_confirmed_at,
+              created_at: session.user.created_at,
+              user_metadata: session.user.user_metadata
+            }
+          });
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -58,10 +85,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 Initial session loaded:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        userEmail: session?.user?.email,
+        userMetadata: session?.user?.user_metadata,
+        timestamp: new Date().toISOString()
+      });
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
     });
 
     return () => subscription.unsubscribe();
