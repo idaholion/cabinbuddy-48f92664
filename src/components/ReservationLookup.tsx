@@ -49,6 +49,7 @@ export const ReservationLookup = () => {
 
   const calculateNights = (startDate: string, endDate: string) => {
     try {
+      if (!startDate || !endDate) return 'N/A';
       const start = new Date(startDate);
       const end = new Date(endDate);
       const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -67,25 +68,30 @@ export const ReservationLookup = () => {
     {
       key: 'dates',
       title: 'Stay Dates',
-      render: (reservation: any) => (
-        <div className="space-y-1">
-          <div className="text-sm">{formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}</div>
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {calculateNights(reservation.start_date, reservation.end_date)} nights
+      render: (reservation: any) => {
+        if (!reservation || !reservation.start_date || !reservation.end_date) {
+          return <div className="text-sm text-muted-foreground">No dates available</div>;
+        }
+        return (
+          <div className="space-y-1">
+            <div className="text-sm">{formatDate(reservation.start_date)} - {formatDate(reservation.end_date)}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {calculateNights(reservation.start_date, reservation.end_date)} nights
+            </div>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
       key: 'property_name',
       title: 'Property',
-      render: (reservation: any) => reservation.property_name || 'Main Cabin'
+      render: (reservation: any) => reservation?.property_name || 'Main Cabin'
     },
     {
       key: 'guest_count',
       title: 'Guests',
-      render: (reservation: any) => reservation.guest_count ? (
+      render: (reservation: any) => reservation?.guest_count ? (
         <div className="flex items-center gap-1">
           <Users className="h-3 w-3" />
           {reservation.guest_count}
@@ -96,15 +102,15 @@ export const ReservationLookup = () => {
       key: 'status',
       title: 'Status',
       render: (reservation: any) => (
-        <Badge className={getStatusColor(reservation.status)}>
-          {reservation.status || 'Confirmed'}
+        <Badge className={getStatusColor(reservation?.status)}>
+          {reservation?.status || 'Confirmed'}
         </Badge>
       )
     },
     {
       key: 'actions',
       title: 'Actions',
-      render: (reservation: any) => (
+      render: (reservation: any) => reservation?.id ? (
         <Button
           size="sm"
           variant="outline"
@@ -114,7 +120,7 @@ export const ReservationLookup = () => {
           <Eye className="mr-1 h-3 w-3" />
           View Details
         </Button>
-      )
+      ) : null
     }
   ];
 
