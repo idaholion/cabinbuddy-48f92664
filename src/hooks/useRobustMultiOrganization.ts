@@ -382,7 +382,7 @@ export const useRobustMultiOrganization = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [offline, error, isNetworkError, reset, fetchUserOrganizations]);
+  }, [offline, error, isNetworkError, reset]); // Removed fetchUserOrganizations dependency
 
   return {
     organizations,
