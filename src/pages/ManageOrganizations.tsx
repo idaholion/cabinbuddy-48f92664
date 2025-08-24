@@ -26,8 +26,8 @@ export const ManageOrganizations = () => {
         const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
         
         if (isFromFamilySetup) {
-          // User came from family setup and should go to family-group-setup
-          navigate('/family-group-setup');
+          // User came from family setup - they need to complete profile claiming first
+          navigate('/family-setup');
         } else if (!isInSetupProcess) {
           // Only auto-navigate to home if user isn't in a specific setup process
           navigate('/home');
@@ -37,13 +37,14 @@ export const ManageOrganizations = () => {
   }, [organizations, loading, error, navigate, isDebugMode, location.pathname, location.state]);
 
   const handleOrganizationSelected = () => {
-    // Check if user should go to family-group-setup based on referrer
+    // Check if user should go back to family setup to claim profile first
     const referrerPath = location.state?.from?.pathname;
     const isFromFamilySetup = referrerPath?.includes('family-setup') || referrerPath?.includes('family-group-setup');
     const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
     
     if (isFromFamilySetup) {
-      navigate('/family-group-setup');
+      // Send them back to family setup to claim their profile first
+      navigate('/family-setup');
     } else if (!isInSetupProcess) {
       navigate('/home');
     }
