@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface UpcomingReservation {
   id: string;
@@ -20,8 +22,10 @@ interface UpcomingReservation {
 export const NotificationManagement = () => {
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const { toast } = useToast();
   const { organization } = useOrganization();
+  const { sendNotification } = useNotifications();
 
   // Fetch upcoming reservations
   useEffect(() => {
@@ -114,6 +118,21 @@ export const NotificationManagement = () => {
     return "outline";
   };
 
+  const handleSendReminder = async (reservation: UpcomingReservation) => {
+    setSendingReminder(reservation.id);
+    
+    const success = await sendNotification('reminder', {
+      id: reservation.id,
+      family_group_name: reservation.family_group,
+      check_in_date: reservation.start_date,
+      check_out_date: reservation.end_date,
+      guest_email: reservation.guest_email,
+      guest_name: reservation.guest_name,
+    }, reservation.days_until);
+    
+    setSendingReminder(null);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -139,18 +158,37 @@ export const NotificationManagement = () => {
               {upcomingReservations.map((reservation) => (
                 <Card key={reservation.id} className="border-l-4 border-l-primary">
                   <CardContent className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium">{reservation.family_group}</h4>
-                      <Badge variant={getReminderBadgeVariant(reservation.days_until)}>
-                        {reservation.days_until} day{reservation.days_until !== 1 ? 's' : ''} away
-                      </Badge>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h4 className="font-medium">{reservation.family_group}</h4>
+                          <Badge variant={getReminderBadgeVariant(reservation.days_until)}>
+                            {reservation.days_until} day{reservation.days_until !== 1 ? 's' : ''} away
+                          </Badge>
+                        </div>
+                        <p className="text-base text-muted-foreground mt-1">
+                          {new Date(reservation.start_date).toLocaleDateString()} - {new Date(reservation.end_date).toLocaleDateString()}
+                        </p>
+                        <p className="text-base text-muted-foreground">
+                          {reservation.guest_name} • {reservation.guest_email}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleSendReminder(reservation)}
+                        disabled={sendingReminder === reservation.id}
+                        size="sm"
+                        className="ml-4"
+                      >
+                        {sendingReminder === reservation.id ? (
+                          "Sending..."
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Reminder
+                          </>
+                        )}
+                      </Button>
                     </div>
-                    <p className="text-base text-muted-foreground mt-1">
-                      {new Date(reservation.start_date).toLocaleDateString()} - {new Date(reservation.end_date).toLocaleDateString()}
-                    </p>
-                    <p className="text-base text-muted-foreground">
-                      {reservation.guest_name} • {reservation.guest_email}
-                    </p>
                   </CardContent>
                 </Card>
               ))}

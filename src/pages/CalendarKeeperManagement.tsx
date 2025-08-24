@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { NotificationManagement } from "@/components/NotificationManagement";
+import { NotificationTest } from "@/components/NotificationTest";
 import { ReminderTemplateManager } from "@/components/ReminderTemplateManager";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,12 +22,16 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="notifications">Upcoming Notifications</TabsTrigger>
-              <TabsTrigger value="templates">Reminder Templates</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
+              <TabsTrigger value="test">Test System</TabsTrigger>
+              <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
             <TabsContent value="notifications" className="mt-6">
               <NotificationManagement />
+            </TabsContent>
+            <TabsContent value="test" className="mt-6 flex justify-center">
+              <NotificationTest />
             </TabsContent>
             <TabsContent value="templates" className="mt-6">
               <ReminderTemplateManager />
