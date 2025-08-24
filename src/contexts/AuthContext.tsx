@@ -151,6 +151,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signIn = async (email: string, password: string) => {
     try {
       console.log('🔐 Starting sign in for email:', email);
+      console.log('🔐 CRITICAL: Input email is:', email);
+      
+      // FORCE clear everything before sign in
+      await supabase.auth.signOut();
       
       // Clear any existing auth state first
       console.log('🔐 Clearing existing auth state...');
@@ -161,17 +165,32 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
       
+      // Clear session storage too
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+          console.log('🔐 Clearing sessionStorage key during signIn:', key);
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      console.log('🔐 ABOUT TO SIGN IN WITH EMAIL:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(), // Ensure clean input
         password,
       });
 
       console.log('🔐 SignIn response:', {
+        inputEmail: email,
         hasUser: !!data.user,
-        userEmail: data.user?.email,
+        responseUserEmail: data.user?.email,
+        responseUserId: data.user?.id,
         hasSession: !!data.session,
         error: error?.message
       });
+
+      console.log('🚨 CRITICAL: EXPECTED EMAIL:', email);
+      console.log('🚨 CRITICAL: ACTUAL EMAIL FROM SUPABASE:', data.user?.email);
 
       if (error) {
         console.error('🔐 SignIn error:', error);
@@ -185,12 +204,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (data.user && data.session) {
         console.log('🔐 SignIn successful for user:', data.user.email);
+        
+        // DOUBLE CHECK: Verify the email matches what was entered
+        if (data.user.email !== email.trim().toLowerCase()) {
+          console.error('🚨 EMAIL MISMATCH DETECTED!');
+          console.error('🚨 Expected:', email.trim().toLowerCase());
+          console.error('🚨 Got:', data.user.email);
+          
+          alert(`CRITICAL ERROR: Email mismatch!\nExpected: ${email}\nGot: ${data.user.email}\n\nSomething is seriously wrong!`);
+        }
+        
         toast({
           title: "Welcome back!",
-          description: "Successfully signed in.",
+          description: `Successfully signed in as ${data.user.email}`,
         });
-        
-        // Organization routing is now handled by RobustOrganizationRoute
         
         return { error: null };
       }
