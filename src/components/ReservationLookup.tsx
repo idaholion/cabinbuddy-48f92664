@@ -68,7 +68,7 @@ export const ReservationLookup = () => {
     {
       key: 'dates',
       title: 'Stay Dates',
-      render: (reservation: any) => {
+      render: (value: any, reservation: any) => {
         if (!reservation || !reservation.start_date || !reservation.end_date) {
           return <div className="text-sm text-muted-foreground">No dates available</div>;
         }
@@ -86,12 +86,12 @@ export const ReservationLookup = () => {
     {
       key: 'property_name',
       title: 'Property',
-      render: (reservation: any) => reservation?.property_name || 'Main Cabin'
+      render: (value: any, reservation: any) => reservation?.property_name || 'Main Cabin'
     },
     {
       key: 'guest_count',
       title: 'Guests',
-      render: (reservation: any) => reservation?.guest_count ? (
+      render: (value: any, reservation: any) => reservation?.guest_count ? (
         <div className="flex items-center gap-1">
           <Users className="h-3 w-3" />
           {reservation.guest_count}
@@ -101,7 +101,7 @@ export const ReservationLookup = () => {
     {
       key: 'status',
       title: 'Status',
-      render: (reservation: any) => (
+      render: (value: any, reservation: any) => (
         <Badge className={getStatusColor(reservation?.status)}>
           {reservation?.status || 'Confirmed'}
         </Badge>
@@ -110,7 +110,7 @@ export const ReservationLookup = () => {
     {
       key: 'actions',
       title: 'Actions',
-      render: (reservation: any) => reservation?.id ? (
+      render: (value: any, reservation: any) => reservation?.id ? (
         <Button
           size="sm"
           variant="outline"
