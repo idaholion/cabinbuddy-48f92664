@@ -86,17 +86,27 @@ const Signup = () => {
       // Handle organization operations after successful signup
       if (organizationType === "join") {
         try {
-          await joinOrganization(organizationCode);
-          console.log('🚀 [SIGNUP] Successfully joined organization, navigating to manage-organizations');
-          toast({
-            title: "Successfully joined organization!",
-            description: "Welcome to your new cabin sharing group.",
-          });
-          // Navigate to manage organizations with context to continue to family-group-setup
-          navigate("/manage-organizations", { 
-            state: { from: { pathname: '/family-group-setup' } }
-          });
+          const joinSuccess = await joinOrganization(organizationCode);
+          
+          if (joinSuccess) {
+            console.log('🚀 [SIGNUP] Successfully joined organization, navigating to manage-organizations');
+            toast({
+              title: "Successfully joined organization!",
+              description: "Welcome to your new cabin sharing group.",
+            });
+            // Navigate to manage organizations with context to continue to family-group-setup
+            navigate("/manage-organizations", { 
+              state: { from: { pathname: '/family-group-setup' } }
+            });
+          } else {
+            // joinOrganization already showed an error toast
+            console.log('❌ [SIGNUP] Failed to join organization');
+            navigate("/manage-organizations", { 
+              state: { from: { pathname: '/family-group-setup' } }
+            });
+          }
         } catch (joinError: any) {
+          console.error('❌ [SIGNUP] Exception in joinOrganization:', joinError);
           // If join fails, redirect to select org page with error context
           toast({
             title: "Organization join failed",

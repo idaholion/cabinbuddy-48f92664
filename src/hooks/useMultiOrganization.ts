@@ -114,6 +114,7 @@ export const useMultiOrganization = () => {
 
   const joinOrganization = async (organizationCode: string) => {
     if (!user) {
+      console.error('❌ [JOIN ORG] No user found');
       toast({
         title: "Error",
         description: "You must be logged in to join an organization.",
@@ -122,9 +123,12 @@ export const useMultiOrganization = () => {
       return false;
     }
 
+    console.log('🔍 [JOIN ORG] Starting join process for code:', organizationCode);
     setLoading(true);
+    
     try {
       // First, find the organization by code
+      console.log('🔍 [JOIN ORG] Looking up organization by code...');
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, code')
@@ -132,6 +136,7 @@ export const useMultiOrganization = () => {
         .single();
 
       if (orgError || !org) {
+        console.error('❌ [JOIN ORG] Organization not found:', orgError);
         toast({
           title: "Error",
           description: "Organization not found with that code.",
@@ -140,9 +145,12 @@ export const useMultiOrganization = () => {
         return false;
       }
 
+      console.log('✅ [JOIN ORG] Found organization:', org.name);
+
       // Check if user is already a member
       const existing = organizations.find(o => o.organization_id === org.id);
       if (existing) {
+        console.log('⚠️ [JOIN ORG] User already a member');
         toast({
           title: "Already a member",
           description: "You are already a member of this organization.",
@@ -152,6 +160,7 @@ export const useMultiOrganization = () => {
       }
 
       // SECURITY FIX: Validate role assignment - only allow 'member' for joining organizations
+      console.log('🔍 [JOIN ORG] Adding user to organization...');
       const { error: joinError } = await supabase
         .from('user_organizations')
         .insert({
@@ -162,7 +171,7 @@ export const useMultiOrganization = () => {
         });
 
       if (joinError) {
-        console.error('Error joining organization:', joinError);
+        console.error('❌ [JOIN ORG] Database error:', joinError);
         toast({
           title: "Error",
           description: "Failed to join organization. Please try again.",
@@ -171,9 +180,13 @@ export const useMultiOrganization = () => {
         return false;
       }
 
+      console.log('✅ [JOIN ORG] Successfully added to organization');
+
       // Invalidate cache and refresh organizations list
       apiCache.invalidate(cacheKeys.userOrganizations(user.id));
       await fetchUserOrganizations();
+      
+      console.log('✅ [JOIN ORG] Organization list refreshed');
       
       toast({
         title: "Success", 
@@ -182,7 +195,7 @@ export const useMultiOrganization = () => {
 
       return true;
     } catch (error) {
-      console.error('Error in joinOrganization:', error);
+      console.error('❌ [JOIN ORG] Exception:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred.",
