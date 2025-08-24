@@ -257,12 +257,12 @@ export const ReminderTemplateManager = () => {
       
       {isEditing && (
         <>
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center space-x-2 text-yellow-800">
+          <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
+            <div className="flex items-center space-x-2 text-warning-foreground">
               <Settings className="h-4 w-4" />
               <span className="font-medium">Edit Mode Active</span>
             </div>
-            <p className="text-sm text-yellow-700 mt-1">
+            <p className="text-sm text-warning-foreground/80 mt-1">
               You can now modify reminder templates. Don't forget to save your changes!
             </p>
           </div>
@@ -307,7 +307,7 @@ export const ReminderTemplateManager = () => {
                   {getTemplateIcon(template.reminder_type)}
                   <CardTitle className="text-base">{getTemplateTitle(template.reminder_type)}</CardTitle>
                   {!template.is_active && (
-                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Disabled</span>
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Disabled</span>
                   )}
                 </div>
                 {isEditing && (
