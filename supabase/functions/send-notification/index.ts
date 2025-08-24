@@ -169,6 +169,8 @@ const handler = async (req: Request): Promise<Response> => {
           check_in_date: new Date(reservation.check_in_date).toLocaleDateString(),
           check_out_date: new Date(reservation.check_out_date).toLocaleDateString(),
           organization_name: organizationName,
+          reservation_id: reservation.id,
+          reservation_detail_url: `https://lovable.dev/projects/ftaxzdnrnhktzbcsejoy/reservation/${reservation.id}`,
         };
 
         if (template) {
@@ -208,7 +210,8 @@ const handler = async (req: Request): Promise<Response> => {
                 <p><strong>Family Group:</strong> ${reservation.family_group_name}</p>
                 <p><strong>Check-in:</strong> ${new Date(reservation.check_in_date).toLocaleDateString()}</p>
                 <p><strong>Check-out:</strong> ${new Date(reservation.check_out_date).toLocaleDateString()}</p>
-                <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+                 <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+                 <p><strong><a href="https://lovable.dev/projects/ftaxzdnrnhktzbcsejoy/reservation/${reservation.id}" style="color: #2d5d2d; text-decoration: none; background: #e8f5e8; padding: 8px 16px; border-radius: 4px; display: inline-block; margin-top: 8px;">🔗 View Reservation Details</a></strong></p>
               </div>
               
               <p>We're looking forward to your stay and hope you have a wonderful time!</p>
@@ -295,7 +298,8 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Family Group:</strong> ${reservation.family_group_name}</p>
             <p><strong>Check-in:</strong> ${new Date(reservation.check_in_date).toLocaleDateString()}</p>
             <p><strong>Check-out:</strong> ${new Date(reservation.check_out_date).toLocaleDateString()}</p>
-            <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+             <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+             <p><strong><a href="https://lovable.dev/projects/ftaxzdnrnhktzbcsejoy/reservation/${reservation.id}" style="color: #2d5d2d; text-decoration: none; background: #e8f5e8; padding: 8px 16px; border-radius: 4px; display: inline-block; margin-top: 8px;">🔗 View Reservation Details</a></strong></p>
           </div>
           <p>You'll receive reminder notifications as your stay approaches.</p>
           <p>Best regards,<br>${organizationName} Team</p>
@@ -315,7 +319,8 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Family Group:</strong> ${reservation.family_group_name}</p>
             <p><strong>Original Check-in:</strong> ${new Date(reservation.check_in_date).toLocaleDateString()}</p>
             <p><strong>Original Check-out:</strong> ${new Date(reservation.check_out_date).toLocaleDateString()}</p>
-            <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+             <p><strong>Reservation ID:</strong> ${reservation.id}</p>
+             <p><strong><a href="https://lovable.dev/projects/ftaxzdnrnhktzbcsejoy/reservation/${reservation.id}" style="color: #2d5d2d; text-decoration: none; background: #f8d7da; padding: 8px 16px; border-radius: 4px; display: inline-block; margin-top: 8px;">🔗 View Cancelled Reservation</a></strong></p>
           </div>
           <p>If you have any questions, please don't hesitate to contact us.</p>
           <p>Best regards,<br>${organizationName} Team</p>

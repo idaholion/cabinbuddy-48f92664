@@ -35,6 +35,8 @@ Your cabin reservation is in 7 days! Time to start getting excited and prepared.
 • Family Group: {{family_group_name}}
 • Check-in: {{check_in_date}}
 • Check-out: {{check_out_date}}
+• Reservation ID: {{reservation_id}}
+• [View Reservation Details]({{reservation_detail_url}})
 
 We're looking forward to your stay!
 
@@ -62,6 +64,8 @@ Your cabin stay is just 3 days away! Here are some final preparations to ensure 
 • Family Group: {{family_group_name}}
 • Check-in: {{check_in_date}}
 • Check-out: {{check_out_date}}
+• Reservation ID: {{reservation_id}}
+• [View Reservation Details]({{reservation_detail_url}})
 
 Don't forget to confirm your arrival time if needed!
 
@@ -89,6 +93,8 @@ Your cabin stay is tomorrow! We hope you're all packed and ready for a wonderful
 • Family Group: {{family_group_name}}
 • Check-in: {{check_in_date}}
 • Check-out: {{check_out_date}}
+• Reservation ID: {{reservation_id}}
+• [View Reservation Details]({{reservation_detail_url}})
 
 Safe travels and enjoy your stay!
 

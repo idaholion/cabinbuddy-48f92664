@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { NotificationManagement } from "@/components/NotificationManagement";
 import { NotificationTest } from "@/components/NotificationTest";
 import { ReminderTemplateManager } from "@/components/ReminderTemplateManager";
+import { ReservationLookup } from "@/components/ReservationLookup";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -22,13 +23,17 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
+              <TabsTrigger value="lookup">Reservation Lookup</TabsTrigger>
               <TabsTrigger value="test">Test System</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
             <TabsContent value="notifications" className="mt-6">
               <NotificationManagement />
+            </TabsContent>
+            <TabsContent value="lookup" className="mt-6">
+              <ReservationLookup />
             </TabsContent>
             <TabsContent value="test" className="mt-6 flex justify-center">
               <NotificationTest />

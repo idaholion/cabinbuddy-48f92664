@@ -60,6 +60,7 @@ const DataBackup = React.lazy(() => import("./pages/DataBackup"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
 const Demo = React.lazy(() => import("./pages/Demo"));
 const CalendarKeeperManagement = React.lazy(() => import("./pages/CalendarKeeperManagement"));
+const ReservationDetail = React.lazy(() => import("./pages/ReservationDetail"));
 const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 const FeaturesPage = React.lazy(() => import("./pages/FeaturesPage"));
 
@@ -139,6 +140,7 @@ const AppContent = () => {
         <Route path="/admin/treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/calendar-keeper-management" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CalendarKeeperManagement /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/reservation/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationDetail /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/family-voting" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyVoting /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/features" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FeaturesPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
