@@ -27,7 +27,7 @@ export const ManageOrganizations = () => {
         }
       }
     }
-  }, [organizations, loading, error, navigate, isDebugMode]);
+  }, [organizations, loading, error, navigate, isDebugMode, location.pathname]);
 
   const handleOrganizationSelected = () => {
     // Only navigate to home if not in a setup process

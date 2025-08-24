@@ -472,35 +472,46 @@ const FamilySetup = () => {
 
   // Save organization setup and show profile claiming step for new organizations
   const saveAndContinueToFamilyGroups = async () => {
-    console.log('🔍 Starting saveAndContinueToFamilyGroups...', {
+    console.log('🔍 [FAMILY SETUP] Starting saveAndContinueToFamilyGroups...', {
       user: !!user,
       userId: user?.id,
+      userEmail: user?.email,
       organization: !!organization,
       orgId: organization?.id,
-      isCreatingNew
+      orgName: organization?.name,
+      isCreatingNew,
+      pathname: window.location.pathname
     });
     
     try {
+      console.log('🔍 [FAMILY SETUP] About to call saveOrganizationSetup...');
       await saveOrganizationSetup();
-      console.log('✅ Organization setup saved successfully');
+      console.log('✅ [FAMILY SETUP] Organization setup saved successfully');
       
       // Clear auto-saved data since we're navigating away
       clearSavedData();
       
       // For new organizations with family groups, show profile claiming step
       if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim()))) {
-        console.log('📋 Showing profile claiming step for new organization');
+        console.log('📋 [FAMILY SETUP] Showing profile claiming step for new organization');
         setShowProfileClaimingStep(true);
         return;
       }
       
-      console.log('🚀 Navigating to family-group-setup...');
+      console.log('🚀 [FAMILY SETUP] Navigating to family-group-setup...');
       // For existing organizations or those without family groups, go directly to setup
       setTimeout(() => {
+        console.log('🚀 [FAMILY SETUP] Executing navigation to /family-group-setup');
         navigate("/family-group-setup");
       }, 100);
     } catch (error) {
-      console.error('❌ ORGANIZATION ERROR in save and continue:', error);
+      console.error('❌ [FAMILY SETUP] ORGANIZATION ERROR in save and continue:', error);
+      console.error('❌ [FAMILY SETUP] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        type: typeof error,
+        errorObject: error
+      });
       toast({
         title: "Organization Error", 
         description: `Failed to save organization: ${error instanceof Error ? error.message : 'Unknown error'}`,
