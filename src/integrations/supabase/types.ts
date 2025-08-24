@@ -2323,6 +2323,14 @@ export type Database = {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
       }
+      supervisor_remove_user_from_organization: {
+        Args: {
+          p_confirmation_code: string
+          p_organization_id: string
+          p_user_email: string
+        }
+        Returns: Json
+      }
       supervisor_reset_database: {
         Args: { p_confirmation_code: string }
         Returns: string
