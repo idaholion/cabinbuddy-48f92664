@@ -2212,7 +2212,6 @@ export type Database = {
       get_organization_user_emails: {
         Args: { org_id: string }
         Returns: {
-          display_name: string
           email: string
           first_name: string
           last_name: string
