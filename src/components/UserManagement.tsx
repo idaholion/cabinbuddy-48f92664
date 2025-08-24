@@ -60,6 +60,12 @@ export const UserManagement = () => {
   const fetchUsers = async () => {
     if (!organization?.id) return;
 
+    console.log('🔍 Debug: Fetching users for organization:', {
+      orgId: organization.id,
+      orgName: organization.name,
+      orgCode: organization.code
+    });
+
     try {
       // Get users in the organization
       const { data: orgUsers, error: orgError } = await supabase
@@ -71,6 +77,12 @@ export const UserManagement = () => {
           is_primary
         `)
         .eq('organization_id', organization.id);
+
+      console.log('🔍 Debug: Organization users query result:', { 
+        orgUsers, 
+        orgError,
+        userCount: orgUsers?.length || 0 
+      });
 
       if (orgError) throw orgError;
 
