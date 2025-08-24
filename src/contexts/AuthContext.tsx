@@ -46,6 +46,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('mock-auth-token');
     
     console.log('🔐 AuthProvider initializing...');
+    console.log('🔐 Current localStorage keys:', Object.keys(localStorage));
+    console.log('🔐 Auth-related localStorage:', Object.keys(localStorage).filter(k => k.includes('auth') || k.includes('supabase')));
+    
+    // Log all auth-related localStorage items
+    Object.keys(localStorage).forEach(key => {
+      if (key.includes('auth') || key.includes('supabase')) {
+        const value = localStorage.getItem(key);
+        console.log(`🔐 localStorage[${key}]:`, value ? value.substring(0, 100) + '...' : value);
+      }
+    });
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -199,7 +209,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async () => {
     try {
+      console.log('🔐 Signing out...');
       const { error } = await supabase.auth.signOut();
+      
+      // Clear ALL auth-related localStorage items
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+          console.log('🔐 Clearing localStorage key:', key);
+          localStorage.removeItem(key);
+        }
+      });
+      
       // Handle error silently in production
       if (error && process.env.NODE_ENV === 'development') {
         console.error('Sign out error:', error);
@@ -214,6 +234,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Always clear state and redirect
     setUser(null);
     setSession(null);
+    console.log('🔐 Sign out complete, redirecting...');
     window.location.href = '/';
   };
 
