@@ -197,8 +197,47 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `;
         } else {
-          // Use default template (existing logic)
+          // Use default template with checklist based on days_until
           subject = `Cabin Reservation Reminder - ${days_until} day${days_until !== 1 ? 's' : ''} to go!`;
+          
+          // Default checklists based on days until arrival
+          let defaultChecklistItems: string[] = [];
+          if (days_until === 7) {
+            defaultChecklistItems = [
+              'Review shopping list and coordinate with other families',
+              'Check weather forecast for packing',
+              'Share guest information packet with friends/family joining',
+              'Review cabin rules and policies',
+              'Plan transportation and confirm directions'
+            ];
+          } else if (days_until === 3) {
+            defaultChecklistItems = [
+              'Final review of shopping list',
+              'Confirm arrival time with calendar keeper if needed',
+              'Pack according to weather forecast',
+              'Double-check emergency contact information',
+              'Review check-in procedures'
+            ];
+          } else if (days_until === 1) {
+            defaultChecklistItems = [
+              'Final weather check and packing adjustments',
+              'Confirm departure time and route',
+              'Ensure all guests have cabin address and WiFi info',
+              'Last-minute coordination with other families',
+              'Emergency contacts saved in phone'
+            ];
+          }
+          
+          const defaultChecklistHtml = defaultChecklistItems.length > 0 ? `
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #2d5d2d; margin-top: 0;">📋 Pre-Arrival Checklist (${days_until} day${days_until !== 1 ? 's' : ''} out)</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${defaultChecklistItems.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+              <p style="font-size: 14px; color: #666; margin-bottom: 0;"><em>💡 Tip: You can access your shopping list and documents in the cabin management system!</em></p>
+            </div>
+          ` : '';
+          
           htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
               <h1 style="color: #2d5d2d; text-align: center;">🏡 Your Cabin Reservation is Coming Up!</h1>
@@ -213,6 +252,8 @@ const handler = async (req: Request): Promise<Response> => {
                  <p><strong>Reservation ID:</strong> ${reservation.id}</p>
                  <p><strong><a href="https://lovable.dev/projects/ftaxzdnrnhktzbcsejoy/reservation/${reservation.id}" style="color: #2d5d2d; text-decoration: none; background: #e8f5e8; padding: 8px 16px; border-radius: 4px; display: inline-block; margin-top: 8px;">🔗 View Reservation Details</a></strong></p>
               </div>
+              
+              ${defaultChecklistHtml}
               
               <p>We're looking forward to your stay and hope you have a wonderful time!</p>
               <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
