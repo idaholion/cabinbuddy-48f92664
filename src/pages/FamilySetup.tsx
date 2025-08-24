@@ -31,7 +31,18 @@ const FamilySetup = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  console.log('🚨 [FAMILY SETUP] User loaded:', { userEmail: user?.email, userId: user?.id });
+  console.log('🚨 [FAMILY SETUP] Raw user object from useAuth:', user);
+  console.log('🚨 [FAMILY SETUP] User loaded:', { 
+    userEmail: user?.email, 
+    userId: user?.id,
+    userMetadata: user?.user_metadata
+  });
+  
+  // Check localStorage for any cached auth data
+  console.log('🚨 [FAMILY SETUP] LocalStorage auth check:', {
+    supabaseAuth: localStorage.getItem('sb-ftaxzdnrnhktzbcsejoy-auth-token'),
+    otherAuthKeys: Object.keys(localStorage).filter(key => key.includes('auth'))
+  });
   
   const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
   const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
