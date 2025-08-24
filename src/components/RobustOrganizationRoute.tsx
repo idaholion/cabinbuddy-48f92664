@@ -36,12 +36,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/manage-organizations', 
     '/select-family-group',
     '/auth',
-    '/reset-password',
-    '/family-setup',
-    '/family-group-setup',
-    '/group-member-profile',
-    '/use-fee-setup',
-    '/reservation-setup'
+    '/reset-password'
   ];
   
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
