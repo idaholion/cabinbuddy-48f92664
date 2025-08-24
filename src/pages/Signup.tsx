@@ -91,7 +91,10 @@ const Signup = () => {
             title: "Successfully joined organization!",
             description: "Welcome to your new cabin sharing group.",
           });
-          // Let the organization route handling manage navigation instead of forcing /home
+          // Navigate to manage organizations with context to continue to family-group-setup
+          navigate("/manage-organizations", { 
+            state: { from: { pathname: '/family-setup' } }
+          });
         } catch (joinError: any) {
           // If join fails, redirect to select org page with error context
           toast({
@@ -99,7 +102,9 @@ const Signup = () => {
             description: joinError.message || "Invalid organization code. Please try again.",
             variant: "destructive"
           });
-          navigate("/manage-organizations");
+          navigate("/manage-organizations", { 
+            state: { from: { pathname: '/family-setup' } }
+          });
         }
       } else if (organizationType === "start") {
         // Store signup data and redirect to organization setup

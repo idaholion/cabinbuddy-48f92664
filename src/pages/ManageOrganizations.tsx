@@ -20,19 +20,31 @@ export const ManageOrganizations = () => {
         // Users with no organizations should go to setup, not signup
         navigate('/setup');
       } else if (organizations.length === 1) {
-        // Only auto-navigate to home if user isn't in a specific setup process
+        // Check if user just joined and should continue with setup process
+        const referrerPath = location.state?.from?.pathname;
+        const isFromFamilySetup = referrerPath?.includes('family-setup') || referrerPath?.includes('family-group-setup');
         const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
-        if (!isInSetupProcess) {
+        
+        if (isFromFamilySetup) {
+          // User came from family setup and should go to family-group-setup
+          navigate('/family-group-setup');
+        } else if (!isInSetupProcess) {
+          // Only auto-navigate to home if user isn't in a specific setup process
           navigate('/home');
         }
       }
     }
-  }, [organizations, loading, error, navigate, isDebugMode, location.pathname]);
+  }, [organizations, loading, error, navigate, isDebugMode, location.pathname, location.state]);
 
   const handleOrganizationSelected = () => {
-    // Only navigate to home if not in a setup process
+    // Check if user should go to family-group-setup based on referrer
+    const referrerPath = location.state?.from?.pathname;
+    const isFromFamilySetup = referrerPath?.includes('family-setup') || referrerPath?.includes('family-group-setup');
     const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
-    if (!isInSetupProcess) {
+    
+    if (isFromFamilySetup) {
+      navigate('/family-group-setup');
+    } else if (!isInSetupProcess) {
       navigate('/home');
     }
   };
