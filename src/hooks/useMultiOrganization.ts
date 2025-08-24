@@ -176,9 +176,14 @@ export const useMultiOrganization = () => {
       await fetchUserOrganizations();
       
       toast({
-        title: "Success",
-        description: `Successfully joined ${org.name}!`,
+        title: "Success", 
+        description: `Successfully joined ${org.name}! Redirecting to setup...`,
       });
+
+      // Redirect to group member profile setup after successful join
+      setTimeout(() => {
+        window.location.href = '/group-member-profile';
+      }, 1500);
 
       return true;
     } catch (error) {

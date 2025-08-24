@@ -40,6 +40,7 @@ import {
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
 
@@ -141,6 +142,7 @@ export function AppSidebar() {
   const { isSupervisor } = useSupervisor();
   const { signOut } = useAuth();
   const { canAccessSupervisorFeatures } = useRole();
+  const { isGroupLead, isAdmin, loading: roleLoading } = useUserRole();
   
   // Check if we're on a supervisor organization page
   const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
@@ -368,27 +370,40 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Setup</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {setupItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Setup - Only show to admins and group leads */}
+        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Setup</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {setupItems
+                  .filter(item => {
+                    // Filter setup items based on user role
+                    if (item.title === "Family Setup") {
+                      return isAdmin || canAccessSupervisorFeatures; // Only admins and supervisors
+                    }
+                    if (item.title === "Family Group Setup") {
+                      return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Admins, group leads, and supervisors
+                    }
+                    return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Default: all setup users
+                  })
+                  .map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.title}>
+                        <NavLink 
+                          to={item.url} 
+                          className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Supervisor */}
         {canAccessSupervisorFeatures && (
