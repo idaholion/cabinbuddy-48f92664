@@ -66,6 +66,14 @@ const Signup = () => {
     }
 
     try {
+      console.log('🔍 [SIGNUP] Starting signup process:', {
+        organizationType,
+        organizationCode,
+        email,
+        firstName,
+        lastName
+      });
+
       const { error: signUpError } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
@@ -73,11 +81,13 @@ const Signup = () => {
       });
 
       if (signUpError) {
+        console.error('❌ [SIGNUP] Auth signup error:', signUpError);
         setError(signUpError.message || "Failed to create account. Please try again.");
         setLoading(false);
         return;
       }
 
+      console.log('✅ [SIGNUP] Account created successfully');
       toast({
         title: "Account created successfully!",
         description: "Please check your email to confirm your account. You can continue with organization setup now.",
@@ -86,33 +96,43 @@ const Signup = () => {
       // Handle organization operations after successful signup
       if (organizationType === "join") {
         try {
+          console.log('🔍 [SIGNUP] Starting organization join process...');
           const joinSuccess = await joinOrganization(organizationCode);
           
           if (joinSuccess) {
-            console.log('🚀 [SIGNUP] Successfully joined organization, navigating to manage-organizations');
+            console.log('✅ [SIGNUP] Organization join successful, navigating...');
             toast({
-              title: "Successfully joined organization!",
-              description: "Welcome to your new cabin sharing group.",
+              title: "Welcome!",
+              description: "Successfully joined organization. Setting up your account...",
             });
-            // Navigate to manage organizations with context to continue to family-group-setup
-            navigate("/manage-organizations", { 
-              state: { from: { pathname: '/family-group-setup' } }
-            });
+            
+            // Add delay to ensure state is updated
+            setTimeout(() => {
+              console.log('🚀 [SIGNUP] Executing delayed navigation to manage-organizations');
+              navigate("/manage-organizations", { 
+                state: { from: { pathname: '/family-group-setup' } }
+              });
+            }, 1500);
           } else {
-            // joinOrganization already showed an error toast
-            console.log('❌ [SIGNUP] Failed to join organization');
+            console.error('❌ [SIGNUP] Organization join returned false');
+            // Don't show additional error - joinOrganization already showed one
             navigate("/manage-organizations", { 
               state: { from: { pathname: '/family-group-setup' } }
             });
           }
         } catch (joinError: any) {
-          console.error('❌ [SIGNUP] Exception in joinOrganization:', joinError);
-          // If join fails, redirect to select org page with error context
+          console.error('❌ [SIGNUP] Exception during organization join:', {
+            error: joinError,
+            message: joinError?.message,
+            stack: joinError?.stack
+          });
+          
           toast({
-            title: "Organization join failed",
-            description: joinError.message || "Invalid organization code. Please try again.",
+            title: "Join Error",
+            description: `Failed to join organization: ${joinError?.message || 'Unknown error'}`,
             variant: "destructive"
           });
+          
           navigate("/manage-organizations", { 
             state: { from: { pathname: '/family-group-setup' } }
           });
@@ -128,6 +148,14 @@ const Signup = () => {
         navigate("/setup");
       }
     } catch (error: any) {
+      console.error('❌ [SIGNUP] Top-level signup error:', {
+        error,
+        message: error?.message,
+        stack: error?.stack,
+        organizationType,
+        organizationCode
+      });
+      
       setError(error.message || "An unexpected error occurred. Please try again.");
     }
     
