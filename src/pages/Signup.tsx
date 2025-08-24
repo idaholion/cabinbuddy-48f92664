@@ -93,7 +93,7 @@ const Signup = () => {
           });
           // Navigate to manage organizations with context to continue to family-group-setup
           navigate("/manage-organizations", { 
-            state: { from: { pathname: '/family-setup' } }
+            state: { from: { pathname: '/family-group-setup' } }
           });
         } catch (joinError: any) {
           // If join fails, redirect to select org page with error context
@@ -103,7 +103,7 @@ const Signup = () => {
             variant: "destructive"
           });
           navigate("/manage-organizations", { 
-            state: { from: { pathname: '/family-setup' } }
+            state: { from: { pathname: '/family-group-setup' } }
           });
         }
       } else if (organizationType === "start") {

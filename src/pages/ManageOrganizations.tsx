@@ -26,8 +26,8 @@ export const ManageOrganizations = () => {
         const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
         
         if (isFromFamilySetup) {
-          // User came from family setup - they need to complete profile claiming first
-          navigate('/family-setup');
+          // User came from family setup - send group leads to family-group-setup
+          navigate('/family-group-setup');
         } else if (!isInSetupProcess) {
           // Only auto-navigate to home if user isn't in a specific setup process
           navigate('/home');
@@ -43,8 +43,8 @@ export const ManageOrganizations = () => {
     const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
     
     if (isFromFamilySetup) {
-      // Send them back to family setup to claim their profile first
-      navigate('/family-setup');
+      // Send group leads directly to family-group-setup 
+      navigate('/family-group-setup');
     } else if (!isInSetupProcess) {
       navigate('/home');
     }
