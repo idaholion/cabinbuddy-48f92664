@@ -3,10 +3,19 @@ import { Calendar, Clock, AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useNotifications } from "@/hooks/useNotifications";
+
+const REMINDER_TYPES = [
+  { value: 'reminder_7', label: '7-Day Reminder', days: 7 },
+  { value: 'reminder_3', label: '3-Day Reminder', days: 3 },
+  { value: 'reminder_1', label: '1-Day Reminder', days: 1 },
+  { value: 'confirmation', label: 'Confirmation Email', days: null },
+  { value: 'cancellation', label: 'Cancellation Email', days: null },
+];
 
 interface UpcomingReservation {
   id: string;
@@ -23,6 +32,7 @@ export const NotificationManagement = () => {
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
   const [loading, setLoading] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [selectedReminderTypes, setSelectedReminderTypes] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { organization } = useOrganization();
   const { sendNotification } = useNotifications();
@@ -119,18 +129,44 @@ export const NotificationManagement = () => {
   };
 
   const handleSendReminder = async (reservation: UpcomingReservation) => {
+    const reminderType = selectedReminderTypes[reservation.id] || 'reminder_3';
+    const selectedType = REMINDER_TYPES.find(t => t.value === reminderType);
+    
     setSendingReminder(reservation.id);
     
-    const success = await sendNotification('reminder', {
-      id: reservation.id,
-      family_group_name: reservation.family_group,
-      check_in_date: reservation.start_date,
-      check_out_date: reservation.end_date,
-      guest_email: reservation.guest_email,
-      guest_name: reservation.guest_name,
-    }, reservation.days_until);
+    // Map reminder types to valid notification types
+    let notificationType: 'reminder' | 'confirmation' | 'cancellation';
+    if (reminderType.startsWith('reminder_')) {
+      notificationType = 'reminder';
+    } else if (reminderType === 'confirmation') {
+      notificationType = 'confirmation';
+    } else if (reminderType === 'cancellation') {
+      notificationType = 'cancellation';
+    } else {
+      notificationType = 'reminder'; // fallback
+    }
+    
+    const success = await sendNotification(
+      notificationType,
+      {
+        id: reservation.id,
+        family_group_name: reservation.family_group,
+        check_in_date: reservation.start_date,
+        check_out_date: reservation.end_date,
+        guest_email: reservation.guest_email,
+        guest_name: reservation.guest_name,
+      }, 
+      selectedType?.days || reservation.days_until
+    );
     
     setSendingReminder(null);
+  };
+
+  const handleReminderTypeChange = (reservationId: string, reminderType: string) => {
+    setSelectedReminderTypes(prev => ({
+      ...prev,
+      [reservationId]: reminderType
+    }));
   };
 
 
@@ -173,21 +209,37 @@ export const NotificationManagement = () => {
                           {reservation.guest_name} • {reservation.guest_email}
                         </p>
                       </div>
-                      <Button
-                        onClick={() => handleSendReminder(reservation)}
-                        disabled={sendingReminder === reservation.id}
-                        size="sm"
-                        className="ml-4"
-                      >
-                        {sendingReminder === reservation.id ? (
-                          "Sending..."
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4 mr-2" />
-                            Send Reminder
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <Select
+                          value={selectedReminderTypes[reservation.id] || 'reminder_3'}
+                          onValueChange={(value) => handleReminderTypeChange(reservation.id, value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select reminder type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {REMINDER_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          onClick={() => handleSendReminder(reservation)}
+                          disabled={sendingReminder === reservation.id}
+                          size="sm"
+                        >
+                          {sendingReminder === reservation.id ? (
+                            "Sending..."
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Send
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
