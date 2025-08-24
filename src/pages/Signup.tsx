@@ -87,6 +87,7 @@ const Signup = () => {
       if (organizationType === "join") {
         try {
           await joinOrganization(organizationCode);
+          console.log('🚀 [SIGNUP] Successfully joined organization, navigating to manage-organizations');
           toast({
             title: "Successfully joined organization!",
             description: "Welcome to your new cabin sharing group.",

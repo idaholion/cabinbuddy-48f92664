@@ -13,10 +13,19 @@ export const ManageOrganizations = () => {
   // Check if we're in debug mode
   const isDebugMode = location.search.includes('debug=true');
 
-  // Redirect logic - users with 0 or 1 organizations shouldn't be here (unless in debug mode)
   useEffect(() => {
+    console.log('🔍 [MANAGE ORGS] useEffect triggered:', {
+      loading,
+      error,
+      isDebugMode,
+      organizationCount: organizations.length,
+      pathname: location.pathname,
+      state: location.state
+    });
+    
     if (!loading && !error && !isDebugMode) {
       if (organizations.length === 0) {
+        console.log('🔄 [MANAGE ORGS] No organizations, redirecting to setup');
         // Users with no organizations should go to setup, not signup
         navigate('/setup');
       } else if (organizations.length === 1) {
@@ -25,10 +34,18 @@ export const ManageOrganizations = () => {
         const isFromFamilySetup = referrerPath?.includes('family-setup') || referrerPath?.includes('family-group-setup');
         const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
         
+        console.log('🔍 [MANAGE ORGS] Single organization navigation logic:', {
+          referrerPath,
+          isFromFamilySetup,
+          isInSetupProcess
+        });
+        
         if (isFromFamilySetup) {
+          console.log('🚀 [MANAGE ORGS] Navigating from family setup to family-group-setup');
           // User came from family setup - send group leads to family-group-setup
           navigate('/family-group-setup');
         } else if (!isInSetupProcess) {
+          console.log('🚀 [MANAGE ORGS] Navigating to home');
           // Only auto-navigate to home if user isn't in a specific setup process
           navigate('/home');
         }
@@ -37,15 +54,25 @@ export const ManageOrganizations = () => {
   }, [organizations, loading, error, navigate, isDebugMode, location.pathname, location.state]);
 
   const handleOrganizationSelected = () => {
+    console.log('🔍 [MANAGE ORGS] Organization selected, handling navigation');
+    
     // Check if user should go back to family setup to claim profile first
     const referrerPath = location.state?.from?.pathname;
     const isFromFamilySetup = referrerPath?.includes('family-setup') || referrerPath?.includes('family-group-setup');
     const isInSetupProcess = location.pathname.includes('setup') || location.pathname.includes('family');
     
+    console.log('🔍 [MANAGE ORGS] Navigation context:', {
+      referrerPath,
+      isFromFamilySetup,
+      isInSetupProcess
+    });
+    
     if (isFromFamilySetup) {
+      console.log('🚀 [MANAGE ORGS] Navigating to family-group-setup via handleOrganizationSelected');
       // Send group leads directly to family-group-setup 
       navigate('/family-group-setup');
     } else if (!isInSetupProcess) {
+      console.log('🚀 [MANAGE ORGS] Navigating to home via handleOrganizationSelected');
       navigate('/home');
     }
   };
