@@ -241,6 +241,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     try {
       console.log('🔐 Signing out...');
+      console.log('🔐 Current user before signout:', user?.email);
+      
       const { error } = await supabase.auth.signOut();
       
       // Clear ALL auth-related localStorage items
@@ -248,6 +250,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
           console.log('🔐 Clearing localStorage key:', key);
           localStorage.removeItem(key);
+        }
+      });
+      
+      // Also clear sessionStorage
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+          console.log('🔐 Clearing sessionStorage key:', key);
+          sessionStorage.removeItem(key);
         }
       });
       
@@ -266,7 +276,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
     setSession(null);
     console.log('🔐 Sign out complete, redirecting...');
-    window.location.href = '/';
+    
+    // Force a hard refresh to completely clear any cached state
+    window.location.replace('/');
   };
 
   const value = {
