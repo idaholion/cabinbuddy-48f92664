@@ -102,15 +102,24 @@ const FamilySetup = () => {
     enabled: true,
   });
 
-  // Redirect regular group members to their profile page
+  // Redirect regular group members to their profile page (but allow new joiners to complete setup)
   useEffect(() => {
     if (!roleLoading && !isCreatingNew) {
       if (isGroupMember && !isGroupLead && !isAdmin) {
-        toast({
-          title: "Redirecting",
-          description: "Group members should use the Group Member Profile page.",
-        });
-        navigate("/group-member-profile");
+        // Check if this is a new user who just joined and needs to complete setup
+        const hasCompletedSetup = localStorage.getItem('setupCompleted');
+        const isNewJoiner = !hasCompletedSetup;
+        
+        if (!isNewJoiner) {
+          console.log('🔄 [FAMILY SETUP] Redirecting group member to profile page');
+          toast({
+            title: "Redirecting",
+            description: "Group members should use the Group Member Profile page.",
+          });
+          navigate("/group-member-profile");
+        } else {
+          console.log('🔄 [FAMILY SETUP] Allowing new joiner to complete setup process');
+        }
       }
     }
   }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast]);
@@ -499,6 +508,9 @@ const FamilySetup = () => {
       }
       
       console.log('🚀 [FAMILY SETUP] Navigating to family-group-setup...');
+      // Mark setup as completed to prevent future redirects
+      localStorage.setItem('setupCompleted', 'true');
+      
       // For existing organizations or those without family groups, go directly to setup
       setTimeout(() => {
         console.log('🚀 [FAMILY SETUP] Executing navigation to /family-group-setup');
