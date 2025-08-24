@@ -472,25 +472,41 @@ const FamilySetup = () => {
 
   // Save organization setup and show profile claiming step for new organizations
   const saveAndContinueToFamilyGroups = async () => {
+    console.log('🔍 Starting saveAndContinueToFamilyGroups...', {
+      user: !!user,
+      userId: user?.id,
+      organization: !!organization,
+      orgId: organization?.id,
+      isCreatingNew
+    });
+    
     try {
       await saveOrganizationSetup();
+      console.log('✅ Organization setup saved successfully');
+      
       // Clear auto-saved data since we're navigating away
       clearSavedData();
       
       // For new organizations with family groups, show profile claiming step
       if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim()))) {
+        console.log('📋 Showing profile claiming step for new organization');
         setShowProfileClaimingStep(true);
         return;
       }
       
+      console.log('🚀 Navigating to family-group-setup...');
       // For existing organizations or those without family groups, go directly to setup
       setTimeout(() => {
         navigate("/family-group-setup");
       }, 100);
     } catch (error) {
-      console.error('Error in save and continue:', error);
-      // Still navigate even if there was an error, user can retry later
-      navigate("/family-group-setup");
+      console.error('❌ ORGANIZATION ERROR in save and continue:', error);
+      toast({
+        title: "Organization Error", 
+        description: `Failed to save organization: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+      // Don't navigate on error - let user fix the issue
     }
   };
 
