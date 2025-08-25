@@ -150,55 +150,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('🔐 NUCLEAR OPTION: Attempting complete auth reset for:', email);
+      console.log('🔐 Signing in user:', email.trim().toLowerCase());
       
-      // NUCLEAR OPTION: Complete Supabase reset with global scope
-      await supabase.auth.signOut({ scope: 'global' });
-      
-      // Wait for the signout to fully complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Clear ALL possible storage mechanisms
-      console.log('🔐 CLEARING ALL STORAGE COMPLETELY');
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear all cookies
-      document.cookie.split(";").forEach(c => {
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-      
-      // Clear IndexedDB if it exists (Supabase might use it)
-      if ('indexedDB' in window) {
-        try {
-          const databases = await indexedDB.databases();
-          databases.forEach(db => {
-            if (db.name && db.name.includes('supabase')) {
-              indexedDB.deleteDatabase(db.name);
-            }
-          });
-        } catch (e) {
-          console.log('Could not clear IndexedDB:', e);
-        }
-      }
-      
-      console.log('🔐 ATTEMPTING COMPLETELY FRESH LOGIN FOR:', email.trim().toLowerCase());
-      
-      // Wait a bit more to ensure everything is cleared
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Force a completely fresh auth attempt
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
-      });
-
-      console.log('🔐 NUCLEAR FRESH LOGIN RESULT:', {
-        inputEmail: email.trim().toLowerCase(),
-        responseEmail: data.user?.email,
-        responseUserId: data.user?.id,
-        success: !error,
-        errorMessage: error?.message
       });
 
       if (error) {
@@ -212,34 +168,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (data.user && data.session) {
-        // CRITICAL VALIDATION
-        const expectedEmail = email.trim().toLowerCase();
-        const actualEmail = data.user.email;
-        
-        if (actualEmail !== expectedEmail) {
-          console.error('🚨🚨🚨 AUTHENTICATION SYSTEM FAILURE 🚨🚨🚨');
-          console.error('🚨 Expected email:', expectedEmail);
-          console.error('🚨 Actual email:', actualEmail);
-          console.error('🚨 User ID:', data.user.id);
-          console.error('🚨 This indicates a serious authentication bug!');
-          
-          // Force another signout
-          await supabase.auth.signOut({ scope: 'global' });
-          
-          toast({
-            title: "Critical Authentication Error",
-            description: `Authentication system returned wrong user. Expected: ${expectedEmail}, Got: ${actualEmail}. Please contact support.`,
-            variant: "destructive",
-          });
-          
-          return { error: { message: "Authentication system failure" } };
-        }
-        
-        console.log('✅ SUCCESS: Correctly authenticated user:', actualEmail);
+        console.log('✅ Successfully authenticated user:', data.user.email);
         
         toast({
           title: "Welcome back!",
-          description: `Successfully signed in as ${actualEmail}`,
+          description: `Successfully signed in as ${data.user.email}`,
         });
         
         return { error: null };
