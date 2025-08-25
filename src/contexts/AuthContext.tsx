@@ -171,31 +171,60 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           description: error.message,
           variant: "destructive",
         });
-      } else {
-        console.log('✅ FRESH CLIENT SIGNUP SUCCESS for:', data.user?.email);
-        
-        // Verify the email matches what was entered
-        if (data.user?.email !== email.trim().toLowerCase()) {
-          console.error('🚨🚨🚨 EMAIL MISMATCH WITH FRESH CLIENT 🚨🚨🚨');
-          console.error('Expected:', email.trim().toLowerCase());
-          console.error('Got:', data.user?.email);
-          
-          toast({
-            title: "Critical Error",
-            description: `Fresh client still returned wrong user. This is a Supabase server-side bug.`,
-            variant: "destructive",
-          });
-          
-          return { error: { message: "Supabase server-side authentication failure" } };
-        }
-        
-        toast({
-          title: "Account Created Successfully!",
-          description: `Account created for ${data.user?.email}. You can now sign in.`,
-        });
+        return { error };
       }
 
-      return { error };
+      if (!data.user) {
+        console.error('🚨 NO USER DATA RETURNED FROM SIGNUP');
+        toast({
+          title: "Sign Up Error",
+          description: "No user data returned from signup",
+          variant: "destructive",
+        });
+        return { error: { message: "No user data returned" } };
+      }
+
+      console.log('✅ FRESH CLIENT SIGNUP SUCCESS for:', data.user.email);
+      
+      // Verify the email matches what was entered
+      if (data.user.email !== email.trim().toLowerCase()) {
+        console.error('🚨🚨🚨 EMAIL MISMATCH WITH FRESH CLIENT 🚨🚨🚨');
+        console.error('Expected:', email.trim().toLowerCase());
+        console.error('Got:', data.user.email);
+        
+        toast({
+          title: "Critical Error",
+          description: `Fresh client still returned wrong user. This is a Supabase server-side bug.`,
+          variant: "destructive",
+        });
+        
+        return { error: { message: "Supabase server-side authentication failure" } };
+      }
+
+      // STEP 4: Now sign the user in with the main client
+      console.log('🔐 STEP 4: Signing in user with main client after successful signup');
+      
+      // Wait a moment for the user to be fully created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const signInResult = await signIn(email.trim().toLowerCase(), password);
+      
+      if (signInResult.error) {
+        console.error('🚨 AUTO SIGN-IN FAILED AFTER SIGNUP:', signInResult.error);
+        toast({
+          title: "Account Created - Please Sign In",
+          description: `Account created successfully for ${data.user.email}. Please sign in manually.`,
+        });
+        return { error: null }; // Don't return the sign-in error since signup was successful
+      }
+
+      console.log('✅ AUTO SIGN-IN SUCCESSFUL AFTER SIGNUP');
+      toast({
+        title: "Welcome!",
+        description: `Account created and signed in successfully as ${data.user.email}!`,
+      });
+
+      return { error: null };
     } catch (error: any) {
       console.error('🔐 Fresh client signup exception:', error);
       toast({
