@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +19,7 @@ import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 // Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
@@ -34,7 +35,7 @@ type GroupMemberProfileFormData = z.infer<typeof groupMemberProfileSchema>;
 
 const GroupMemberProfile = () => {
   const { toast } = useToast();
-  const { user, signOut } = useAuth();
+  const { user, signOut, resetPassword } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
   const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
@@ -380,6 +381,40 @@ const GroupMemberProfile = () => {
     }
   };
 
+  // Handle password reset
+  const handlePasswordReset = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "No email address found for your account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await resetPassword(user.email);
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send password reset email.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Password Reset Email Sent",
+          description: `A password reset link has been sent to ${user.email}. Please check your email and follow the instructions.`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formData = form.watch();
   const autoSaveHook = useAutoSave({ 
     key: "group-member-profile", 
@@ -673,6 +708,34 @@ const GroupMemberProfile = () => {
             </form>
           </Form>
 
+        </CardContent>
+      </Card>
+
+      {/* Account Security Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Account Security
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-base">
+              Manage your account security settings and password.
+            </p>
+            <ConfirmationDialog
+              title="Reset Password"
+              description={`A password reset email will be sent to ${user?.email}. You will need to check your email and follow the instructions to create a new password.`}
+              confirmText="Send Reset Email"
+              onConfirm={handlePasswordReset}
+            >
+              <Button variant="outline" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Change Password
+              </Button>
+            </ConfirmationDialog>
+          </div>
         </CardContent>
       </Card>
 
