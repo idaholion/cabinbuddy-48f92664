@@ -309,8 +309,10 @@ const FamilyGroupSetup = () => {
     }
   };
 
-  // Get available family groups
-  const allGroups = familyGroups.map(g => g.name);
+  // Get available family groups - filter based on user role
+  const allGroups = isGroupLead && userFamilyGroup 
+    ? [userFamilyGroup.name] // Group leads can only see their own group
+    : familyGroups.map(g => g.name); // Non-group leads see all groups
   const displayedMembers = showAllMembers ? fields : fields.slice(0, 3);
   const filledMembersCount = watchedData.groupMembers?.filter(member => 
     member.name?.trim() || member.email?.trim() || member.phone?.trim()
