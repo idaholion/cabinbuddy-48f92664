@@ -28,6 +28,96 @@ const Signup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Function to determine user role and navigate accordingly
+  const determineUserRoleAndNavigate = async (userEmail: string) => {
+    try {
+      console.log('🔍 [SIGNUP] Determining user role for navigation...');
+      
+      // Fetch family groups to determine user role
+      const { data: familyGroups, error } = await supabase
+        .from('family_groups')
+        .select('*')
+        .eq('organization_id', organizationCode === 'GLOBAL' ? 
+          '123e4567-e89b-12d3-a456-426614174000' : 
+          organizationCode);
+
+      if (error) {
+        console.error('❌ [SIGNUP] Error fetching family groups:', error);
+        // Fallback to family-group-setup on error
+        toast({
+          title: "Welcome!",
+          description: "Successfully joined organization. Redirecting to setup...",
+        });
+        setTimeout(() => navigate("/family-group-setup"), 1500);
+        return;
+      }
+
+      console.log('📋 [SIGNUP] Family groups found:', familyGroups?.length || 0);
+
+      if (!familyGroups || familyGroups.length === 0) {
+        // No family groups yet, user likely needs to set up
+        toast({
+          title: "Welcome!",
+          description: "Successfully joined organization. Redirecting to family group setup...",
+        });
+        setTimeout(() => navigate("/family-group-setup"), 1500);
+        return;
+      }
+
+      // Check if user is a group lead
+      const userGroup = familyGroups.find(group => 
+        group.lead_email && group.lead_email.toLowerCase() === userEmail.toLowerCase()
+      );
+
+      let shouldGoToSetup = !!userGroup;
+
+      // If not a group lead, check if user is a host member with reservation permissions
+      if (!shouldGoToSetup) {
+        for (const group of familyGroups) {
+          if (group.host_members && Array.isArray(group.host_members)) {
+            const hostMember = (group.host_members as any[]).find((member: any) => 
+              member.email && member.email.toLowerCase() === userEmail.toLowerCase()
+            );
+            
+            if (hostMember?.canMakeReservations) {
+              shouldGoToSetup = true;
+              break;
+            }
+          }
+        }
+      }
+
+      console.log('🎯 [SIGNUP] Role determination result:', {
+        userEmail,
+        shouldGoToSetup,
+        destination: shouldGoToSetup ? "/family-group-setup" : "/group-member-profile"
+      });
+
+      if (shouldGoToSetup) {
+        toast({
+          title: "Welcome!",
+          description: "Successfully joined organization. Redirecting to family group setup...",
+        });
+        setTimeout(() => navigate("/family-group-setup"), 1500);
+      } else {
+        toast({
+          title: "Welcome!",
+          description: "Successfully joined organization. Redirecting to your profile...",
+        });
+        setTimeout(() => navigate("/group-member-profile"), 1500);
+      }
+
+    } catch (error) {
+      console.error('❌ [SIGNUP] Error in role determination:', error);
+      // Fallback to family-group-setup on error
+      toast({
+        title: "Welcome!",
+        description: "Successfully joined organization. Redirecting to setup...",
+      });
+      setTimeout(() => navigate("/family-group-setup"), 1500);
+    }
+  };
+
   // Check if user came from login failure
   useEffect(() => {
     if (searchParams.get('from') === 'login') {
@@ -159,18 +249,12 @@ const Signup = () => {
                 }
 
                 console.log('✅ [SIGNUP] Successfully joined organization');
-                toast({
-                  title: "Welcome!",
-                  description: "Successfully joined organization. Redirecting to family group setup...",
-                });
                 
                 // Clear signup flag since join was successful
                 localStorage.removeItem('recent-signup');
                 
-                // Direct redirect to family group setup
-                setTimeout(() => {
-                  navigate("/family-group-setup");
-                }, 1500);
+                // Determine user role and navigate accordingly
+                await determineUserRoleAndNavigate(email);
                 return;
                 
               } catch (joinError: any) {
