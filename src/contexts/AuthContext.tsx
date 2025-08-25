@@ -122,51 +122,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
-      console.log('🔐 SIGNUP ATTEMPT - STEP 1: Starting signup process');
+      console.log('🔐 SIGNUP ATTEMPT - STEP 1: Creating fresh client');
       console.log('🔐 Input email:', email.trim().toLowerCase());
-      console.log('🔐 Current user before signup:', user?.email);
-      console.log('🔐 Current session before signup:', session?.user?.email);
       
-      // AGGRESSIVE SESSION DESTRUCTION
-      console.log('🔐 STEP 2: Destroying all existing sessions');
+      // Create a completely fresh Supabase client instance for this operation
+      const { createClient } = await import('@supabase/supabase-js');
+      const freshClient = createClient(
+        "https://ftaxzdnrnhktzbcsejoy.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXh6ZG5ybmhrdHpiY3Nlam95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTgwNDMsImV4cCI6MjA2OTAzNDA0M30.EqvoCt1QJpe3UWFzbhgS_9EUOzoKw-Ze7BnstPBFdNQ",
+        {
+          auth: {
+            storage: {
+              getItem: () => null,    // Always return null for fresh start
+              setItem: () => {},      // Don't persist anything
+              removeItem: () => {}    // No-op
+            },
+            persistSession: false,    // Don't persist at all
+            autoRefreshToken: false,  // Don't auto-refresh
+            detectSessionInUrl: false
+          }
+        }
+      );
       
-      // Sign out from all possible scopes
-      await supabase.auth.signOut({ scope: 'global' });
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Wait for signout to propagate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Nuclear storage clearing
-      console.log('🔐 STEP 3: Nuclear storage clearing');
-      const tabId = sessionStorage.getItem('tab-id');
-      
-      // Clear everything in sessionStorage
-      sessionStorage.clear();
-      localStorage.clear();
-      
-      // Clear all cookies
-      document.cookie.split(";").forEach(c => {
-        const cookieName = c.replace(/^ +/, "").replace(/=.*/, "");
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-      });
-      
-      // Force state reset
-      setUser(null);
-      setSession(null);
-      
-      // Wait for state to clear completely
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('🔐 STEP 4: Attempting fresh signup');
-      console.log('🔐 User after clearing:', user?.email || 'null');
-      console.log('🔐 Session after clearing:', session?.user?.email || 'null');
+      console.log('🔐 STEP 2: Fresh client created, attempting signup');
       
       const redirectUrl = `${window.location.origin}/`;
       
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await freshClient.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
@@ -175,7 +157,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
 
-      console.log('🔐 STEP 5: Signup response received');
+      console.log('🔐 STEP 3: Fresh client signup response');
       console.log('🔐 SUCCESS:', !error);
       console.log('🔐 Input Email:', email.trim().toLowerCase());
       console.log('🔐 Response Email:', data.user?.email || 'null');
@@ -183,42 +165,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('🔐 Error:', error?.message || 'none');
 
       if (error) {
-        console.error('🚨 SIGNUP ERROR:', error);
+        console.error('🚨 FRESH CLIENT SIGNUP ERROR:', error);
         toast({
           title: "Sign Up Error",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        console.log('✅ SIGNUP SUCCESS for:', data.user?.email);
+        console.log('✅ FRESH CLIENT SIGNUP SUCCESS for:', data.user?.email);
         
         // Verify the email matches what was entered
         if (data.user?.email !== email.trim().toLowerCase()) {
-          console.error('🚨🚨🚨 EMAIL MISMATCH DETECTED 🚨🚨🚨');
+          console.error('🚨🚨🚨 EMAIL MISMATCH WITH FRESH CLIENT 🚨🚨🚨');
           console.error('Expected:', email.trim().toLowerCase());
           console.error('Got:', data.user?.email);
           
           toast({
             title: "Critical Error",
-            description: `Authentication system error. Expected ${email.trim().toLowerCase()}, got ${data.user?.email}`,
+            description: `Fresh client still returned wrong user. This is a Supabase server-side bug.`,
             variant: "destructive",
           });
           
-          return { error: { message: "Authentication system failure" } };
+          return { error: { message: "Supabase server-side authentication failure" } };
         }
         
         toast({
-          title: "Account Created!",
-          description: "You can now sign in with your new account.",
+          title: "Account Created Successfully!",
+          description: `Account created for ${data.user?.email}. You can now sign in.`,
         });
       }
 
       return { error };
     } catch (error: any) {
-      console.error('🔐 SignUp exception:', error);
+      console.error('🔐 Fresh client signup exception:', error);
       toast({
         title: "Sign Up Error",
-        description: "Unable to create account. Please try again.",
+        description: "Unable to create account with fresh client. Please try again.",
         variant: "destructive",
       });
       return { error };
