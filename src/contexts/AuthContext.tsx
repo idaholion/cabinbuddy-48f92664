@@ -122,17 +122,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
-      console.log('🔐 SIGNUP ATTEMPT:', {
-        email: email.trim().toLowerCase(),
-        metadata,
-        timestamp: new Date().toISOString()
+      console.log('🔐 SIGNUP ATTEMPT - STEP 1: Starting signup process');
+      console.log('🔐 Input email:', email.trim().toLowerCase());
+      console.log('🔐 Current user before signup:', user?.email);
+      console.log('🔐 Current session before signup:', session?.user?.email);
+      
+      // AGGRESSIVE SESSION DESTRUCTION
+      console.log('🔐 STEP 2: Destroying all existing sessions');
+      
+      // Sign out from all possible scopes
+      await supabase.auth.signOut({ scope: 'global' });
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Wait for signout to propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Nuclear storage clearing
+      console.log('🔐 STEP 3: Nuclear storage clearing');
+      const tabId = sessionStorage.getItem('tab-id');
+      
+      // Clear everything in sessionStorage
+      sessionStorage.clear();
+      localStorage.clear();
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach(c => {
+        const cookieName = c.replace(/^ +/, "").replace(/=.*/, "");
+        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+        document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
       });
       
-      // Force a complete signout first to prevent session mixing
-      await supabase.auth.signOut({ scope: 'global' });
+      // Force state reset
+      setUser(null);
+      setSession(null);
       
-      // Wait for signout to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for state to clear completely
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log('🔐 STEP 4: Attempting fresh signup');
+      console.log('🔐 User after clearing:', user?.email || 'null');
+      console.log('🔐 Session after clearing:', session?.user?.email || 'null');
       
       const redirectUrl = `${window.location.origin}/`;
       
@@ -145,24 +175,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
 
-      console.log('🔐 SIGNUP RESULT:', {
-        inputEmail: email.trim().toLowerCase(),
-        responseEmail: data.user?.email,
-        responseUserId: data.user?.id,
-        success: !error,
-        errorMessage: error?.message,
-        timestamp: new Date().toISOString()
-      });
+      console.log('🔐 STEP 5: Signup response received');
+      console.log('🔐 SUCCESS:', !error);
+      console.log('🔐 Input Email:', email.trim().toLowerCase());
+      console.log('🔐 Response Email:', data.user?.email || 'null');
+      console.log('🔐 Response User ID:', data.user?.id || 'null');
+      console.log('🔐 Error:', error?.message || 'none');
 
       if (error) {
-        console.error('🔐 SignUp error:', error);
+        console.error('🚨 SIGNUP ERROR:', error);
         toast({
           title: "Sign Up Error",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        console.log('✅ SUCCESS: User signed up:', data.user?.email);
+        console.log('✅ SIGNUP SUCCESS for:', data.user?.email);
+        
+        // Verify the email matches what was entered
+        if (data.user?.email !== email.trim().toLowerCase()) {
+          console.error('🚨🚨🚨 EMAIL MISMATCH DETECTED 🚨🚨🚨');
+          console.error('Expected:', email.trim().toLowerCase());
+          console.error('Got:', data.user?.email);
+          
+          toast({
+            title: "Critical Error",
+            description: `Authentication system error. Expected ${email.trim().toLowerCase()}, got ${data.user?.email}`,
+            variant: "destructive",
+          });
+          
+          return { error: { message: "Authentication system failure" } };
+        }
+        
         toast({
           title: "Account Created!",
           description: "You can now sign in with your new account.",
