@@ -121,31 +121,64 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: metadata
-      }
-    });
+    try {
+      console.log('🔐 SIGNUP ATTEMPT:', {
+        email: email.trim().toLowerCase(),
+        metadata,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Force a complete signout first to prevent session mixing
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Wait for signout to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: metadata
+        }
+      });
 
-    if (error) {
+      console.log('🔐 SIGNUP RESULT:', {
+        inputEmail: email.trim().toLowerCase(),
+        responseEmail: data.user?.email,
+        responseUserId: data.user?.id,
+        success: !error,
+        errorMessage: error?.message,
+        timestamp: new Date().toISOString()
+      });
+
+      if (error) {
+        console.error('🔐 SignUp error:', error);
+        toast({
+          title: "Sign Up Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        console.log('✅ SUCCESS: User signed up:', data.user?.email);
+        toast({
+          title: "Account Created!",
+          description: "You can now sign in with your new account.",
+        });
+      }
+
+      return { error };
+    } catch (error: any) {
+      console.error('🔐 SignUp exception:', error);
       toast({
         title: "Sign Up Error",
-        description: error.message,
+        description: "Unable to create account. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration.",
-      });
+      return { error };
     }
-
-    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
@@ -228,19 +261,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       const { error } = await supabase.auth.signOut();
       
-      // Clear ALL auth-related localStorage items
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
-          console.log('🔐 Clearing localStorage key:', key);
-          localStorage.removeItem(key);
-        }
-      });
-      
-      // Also clear sessionStorage
+      // Clear ALL auth-related sessionStorage items (since we switched to sessionStorage)
       Object.keys(sessionStorage).forEach(key => {
         if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
           console.log('🔐 Clearing sessionStorage key:', key);
           sessionStorage.removeItem(key);
+        }
+      });
+      
+      // Also clear any remaining localStorage items for safety
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+          console.log('🔐 Clearing localStorage key:', key);
+          localStorage.removeItem(key);
         }
       });
       
