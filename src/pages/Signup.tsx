@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -95,48 +96,56 @@ const Signup = () => {
 
       // Handle organization operations after successful signup
       if (organizationType === "join") {
-        try {
-          console.log('🔍 [SIGNUP] Starting organization join process...');
-          const joinSuccess = await joinOrganization(organizationCode);
-          
-          if (joinSuccess) {
-            console.log('✅ [SIGNUP] Organization join successful, navigating...');
-            toast({
-              title: "Welcome!",
-              description: "Successfully joined organization. Setting up your account...",
-            });
+        // Wait for authentication to complete and retry joining
+        const joinWithRetry = async (retries = 5) => {
+          for (let i = 0; i < retries; i++) {
+            console.log(`🔍 [SIGNUP] Join attempt ${i + 1}/${retries}`);
             
-            // Add delay to ensure state is updated
-            setTimeout(() => {
-              console.log('🚀 [SIGNUP] Executing delayed navigation to manage-organizations');
-              navigate("/manage-organizations", { 
-                state: { from: { pathname: '/family-group-setup' } }
-              });
-            }, 1500);
-          } else {
-            console.error('❌ [SIGNUP] Organization join returned false');
-            // Don't show additional error - joinOrganization already showed one
-            navigate("/manage-organizations", { 
-              state: { from: { pathname: '/family-group-setup' } }
-            });
+            // Check if user is authenticated
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            
+            if (currentUser) {
+              console.log('✅ [SIGNUP] User authenticated, attempting join...');
+              try {
+                const joinSuccess = await joinOrganization(organizationCode);
+                
+                if (joinSuccess) {
+                  console.log('✅ [SIGNUP] Organization join successful');
+                  toast({
+                    title: "Welcome!",
+                    description: "Successfully joined organization. Redirecting to family group setup...",
+                  });
+                  
+                  // Direct redirect to family group setup
+                  setTimeout(() => {
+                    navigate("/family-group-setup");
+                  }, 1500);
+                  return;
+                } else {
+                  console.error('❌ [SIGNUP] Organization join failed');
+                  break; // Don't retry if join explicitly failed
+                }
+              } catch (joinError: any) {
+                console.error('❌ [SIGNUP] Exception during join:', joinError);
+                break; // Don't retry on exceptions
+              }
+            } else {
+              console.log(`⏳ [SIGNUP] User not yet authenticated, waiting... (${i + 1}/${retries})`);
+              // Wait 1 second before retrying
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
-        } catch (joinError: any) {
-          console.error('❌ [SIGNUP] Exception during organization join:', {
-            error: joinError,
-            message: joinError?.message,
-            stack: joinError?.stack
-          });
           
+          // If we get here, joining failed
+          console.error('❌ [SIGNUP] Failed to join organization after retries');
           toast({
-            title: "Join Error",
-            description: `Failed to join organization: ${joinError?.message || 'Unknown error'}`,
-            variant: "destructive"
+            title: "Setup Required",
+            description: "Account created! Please enter your organization code to complete setup.",
           });
-          
-          navigate("/manage-organizations", { 
-            state: { from: { pathname: '/family-group-setup' } }
-          });
-        }
+          navigate("/setup");
+        };
+        
+        joinWithRetry();
       } else if (organizationType === "start") {
         // Store signup data and redirect to organization setup
         localStorage.setItem('signupData', JSON.stringify({
