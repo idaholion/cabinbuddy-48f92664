@@ -96,6 +96,11 @@ const Signup = () => {
 
       // Handle organization operations after successful signup
       if (organizationType === "join") {
+        console.log('🔍 [SIGNUP] Starting organization join process...');
+        
+        // Set signup flag to prevent security monitoring errors
+        localStorage.setItem('recent-signup', Date.now().toString());
+        
         // Wait for authentication to complete and retry joining
         const joinWithRetry = async (retries = 5) => {
           for (let i = 0; i < retries; i++) {
@@ -115,6 +120,9 @@ const Signup = () => {
                     title: "Welcome!",
                     description: "Successfully joined organization. Redirecting to family group setup...",
                   });
+                  
+                  // Clear signup flag since join was successful
+                  localStorage.removeItem('recent-signup');
                   
                   // Direct redirect to family group setup
                   setTimeout(() => {
@@ -138,6 +146,8 @@ const Signup = () => {
           
           // If we get here, joining failed
           console.error('❌ [SIGNUP] Failed to join organization after retries');
+          // Clear signup flag since we're giving up
+          localStorage.removeItem('recent-signup');
           toast({
             title: "Setup Required",
             description: "Account created! Please enter your organization code to complete setup.",

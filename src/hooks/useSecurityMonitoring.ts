@@ -29,7 +29,24 @@ export const useSecurityMonitoring = () => {
     organizationAccess: { hasAccess: false }
   });
 
+  // Add flag to prevent security monitoring immediately after signup
+  const isRecentSignup = useCallback(() => {
+    const signupFlag = localStorage.getItem('recent-signup');
+    if (signupFlag) {
+      const signupTime = parseInt(signupFlag);
+      const now = Date.now();
+      return (now - signupTime) < 10000; // 10 second grace period
+    }
+    return false;
+  }, []);
+
   const logSecurityEvent = useCallback((event: Omit<SecurityEvent, 'timestamp'>) => {
+    // Don't show security errors if user just signed up
+    if (isRecentSignup()) {
+      console.log('🔐 Security event suppressed during signup grace period:', event);
+      return;
+    }
+
     const newEvent: SecurityEvent = {
       ...event,
       timestamp: new Date()
@@ -55,7 +72,7 @@ export const useSecurityMonitoring = () => {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, isRecentSignup]);
 
   const checkOrganizationAccess = useCallback(async () => {
     if (!user) {
@@ -63,6 +80,12 @@ export const useSecurityMonitoring = () => {
         ...prev,
         organizationAccess: { hasAccess: false, error: 'User not authenticated' }
       }));
+      return;
+    }
+
+    // Skip security check if user just signed up
+    if (isRecentSignup()) {
+      console.log('🔐 Organization access check skipped during signup grace period');
       return;
     }
 
@@ -126,7 +149,7 @@ export const useSecurityMonitoring = () => {
         details: { error: error instanceof Error ? error.message : 'Unknown error' }
       });
     }
-  }, [user, logSecurityEvent]);
+  }, [user, logSecurityEvent, isRecentSignup]);
 
   const clearSecurityEvents = useCallback(() => {
     setSecurityData(prev => ({
