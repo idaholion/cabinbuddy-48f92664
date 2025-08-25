@@ -35,7 +35,7 @@ export const useSecurityMonitoring = () => {
     if (signupFlag) {
       const signupTime = parseInt(signupFlag);
       const now = Date.now();
-      return (now - signupTime) < 10000; // 10 second grace period
+      return (now - signupTime) < 30000; // 30 second grace period
     }
     return false;
   }, []);

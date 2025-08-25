@@ -102,45 +102,93 @@ const Signup = () => {
         localStorage.setItem('recent-signup', Date.now().toString());
         
         // Wait for authentication to complete and retry joining
-        const joinWithRetry = async (retries = 5) => {
+        const joinWithRetry = async (retries = 10) => {
           for (let i = 0; i < retries; i++) {
             console.log(`🔍 [SIGNUP] Join attempt ${i + 1}/${retries}`);
             
-            // Check if user is authenticated
+            // Check if user is authenticated with longer timeout
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             
             if (currentUser) {
-              console.log('✅ [SIGNUP] User authenticated, attempting join...');
+              console.log('✅ [SIGNUP] User authenticated, attempting direct join...');
+              
+              // Instead of using the hook, make the join request directly to avoid timing issues
               try {
-                const joinSuccess = await joinOrganization(organizationCode);
-                
-                if (joinSuccess) {
-                  console.log('✅ [SIGNUP] Organization join successful');
+                // First, find the organization by code
+                const { data: org, error: orgError } = await supabase
+                  .from('organizations')
+                  .select('id, name, code')
+                  .eq('code', organizationCode.toUpperCase())
+                  .single();
+
+                if (orgError || !org) {
+                  console.error('❌ [SIGNUP] Organization not found:', orgError);
                   toast({
-                    title: "Welcome!",
-                    description: "Successfully joined organization. Redirecting to family group setup...",
+                    title: "Error",
+                    description: "Organization not found with that code.",
+                    variant: "destructive",
                   });
-                  
-                  // Clear signup flag since join was successful
-                  localStorage.removeItem('recent-signup');
-                  
-                  // Direct redirect to family group setup
-                  setTimeout(() => {
-                    navigate("/family-group-setup");
-                  }, 1500);
-                  return;
-                } else {
-                  console.error('❌ [SIGNUP] Organization join failed');
-                  break; // Don't retry if join explicitly failed
+                  break;
                 }
+
+                console.log('✅ [SIGNUP] Found organization:', org.name);
+
+                // Add user to organization directly
+                const { error: joinError } = await supabase
+                  .from('user_organizations')
+                  .insert({
+                    user_id: currentUser.id,
+                    organization_id: org.id,
+                    role: 'member',
+                    is_primary: true // Make it primary since it's their first org
+                  });
+
+                if (joinError) {
+                  console.error('❌ [SIGNUP] Database error during join:', joinError);
+                  // If it's a duplicate error, that's actually OK - they're already in the org
+                  if (joinError.code === '23505') { // Unique constraint violation
+                    console.log('✅ [SIGNUP] User already in organization, proceeding...');
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: "Failed to join organization. Please try again.",
+                      variant: "destructive",
+                    });
+                    break;
+                  }
+                }
+
+                console.log('✅ [SIGNUP] Successfully joined organization');
+                toast({
+                  title: "Welcome!",
+                  description: "Successfully joined organization. Redirecting to family group setup...",
+                });
+                
+                // Clear signup flag since join was successful
+                localStorage.removeItem('recent-signup');
+                
+                // Direct redirect to family group setup
+                setTimeout(() => {
+                  navigate("/family-group-setup");
+                }, 1500);
+                return;
+                
               } catch (joinError: any) {
-                console.error('❌ [SIGNUP] Exception during join:', joinError);
-                break; // Don't retry on exceptions
+                console.error('❌ [SIGNUP] Exception during direct join:', joinError);
+                // If it's the last retry, show error, otherwise continue retrying
+                if (i === retries - 1) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to join organization. Please try again from the setup page.",
+                    variant: "destructive",
+                  });
+                  break;
+                }
               }
             } else {
               console.log(`⏳ [SIGNUP] User not yet authenticated, waiting... (${i + 1}/${retries})`);
-              // Wait 1 second before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // Wait 2 seconds before retrying for better reliability
+              await new Promise(resolve => setTimeout(resolve, 2000));
             }
           }
           
