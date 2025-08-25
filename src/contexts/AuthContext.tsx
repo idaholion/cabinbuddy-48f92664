@@ -261,9 +261,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       const { error } = await supabase.auth.signOut();
       
-      // Clear ALL auth-related sessionStorage items (since we switched to sessionStorage)
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+      // Clear ALL sessionStorage items (including tab-specific ones)
+      const tabId = sessionStorage.getItem('tab-id');
+      const allKeys = Object.keys(sessionStorage);
+      
+      allKeys.forEach(key => {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-') || 
+            (tabId && key.startsWith(tabId)) || key === 'tab-id') {
           console.log('🔐 Clearing sessionStorage key:', key);
           sessionStorage.removeItem(key);
         }
@@ -274,6 +278,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
           console.log('🔐 Clearing localStorage key:', key);
           localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear all cookies aggressively
+      document.cookie.split(";").forEach(c => {
+        const cookieName = c.replace(/^ +/, "").replace(/=.*/, "");
+        if (cookieName.includes('supabase') || cookieName.includes('sb-') || cookieName.includes('auth')) {
+          document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
         }
       });
       

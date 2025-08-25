@@ -5,14 +5,35 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://ftaxzdnrnhktzbcsejoy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXh6ZG5ybmhrdHpiY3Nlam95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTgwNDMsImV4cCI6MjA2OTAzNDA0M30.EqvoCt1QJpe3UWFzbhgS_9EUOzoKw-Ze7BnstPBFdNQ";
 
+// Create a custom storage adapter that forces session isolation
+const customStorage = {
+  getItem: (key: string) => {
+    // Add session isolation by prefixing with current tab ID
+    const tabId = sessionStorage.getItem('tab-id') || Math.random().toString(36);
+    sessionStorage.setItem('tab-id', tabId);
+    return sessionStorage.getItem(`${tabId}-${key}`);
+  },
+  setItem: (key: string, value: string) => {
+    const tabId = sessionStorage.getItem('tab-id') || Math.random().toString(36);
+    sessionStorage.setItem('tab-id', tabId);
+    sessionStorage.setItem(`${tabId}-${key}`, value);
+  },
+  removeItem: (key: string) => {
+    const tabId = sessionStorage.getItem('tab-id');
+    if (tabId) {
+      sessionStorage.removeItem(`${tabId}-${key}`);
+    }
+  }
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: sessionStorage, // Use sessionStorage instead of localStorage for better isolation
+    storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false, // Prevent URL-based session detection interference
+    detectSessionInUrl: false,
   }
 });
