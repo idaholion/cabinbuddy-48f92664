@@ -26,6 +26,7 @@ import { LoadingState } from "@/components/ui/loading-spinner";
 import { OrganizationRoleReminder } from "@/components/OrganizationRoleReminder";
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useSupervisor } from "@/hooks/useSupervisor";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
@@ -33,7 +34,8 @@ const FamilyGroupSetup = () => {
   const { user, loading: authLoading } = useAuth();
   const { organization, loading: organizationLoading } = useOrganization();
   const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading, refetchFamilyGroups } = useFamilyGroups();
-  const { isGroupLead, userFamilyGroup } = useUserRole();
+  const { isGroupLead, userFamilyGroup, isAdmin } = useUserRole();
+  const { isSupervisor } = useSupervisor();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
@@ -310,9 +312,11 @@ const FamilyGroupSetup = () => {
   };
 
   // Get available family groups - filter based on user role
-  const allGroups = isGroupLead && userFamilyGroup 
-    ? [userFamilyGroup.name] // Group leads can only see their own group
-    : familyGroups.map(g => g.name); // Non-group leads see all groups
+  const allGroups = (isAdmin || isSupervisor)
+    ? familyGroups.map(g => g.name) // Admins and Supervisors see all groups
+    : (isGroupLead && userFamilyGroup) 
+      ? [userFamilyGroup.name] // Group leads see only their own group
+      : []; // All other roles cannot select groups
   const displayedMembers = showAllMembers ? fields : fields.slice(0, 3);
   const filledMembersCount = watchedData.groupMembers?.filter(member => 
     member.name?.trim() || member.email?.trim() || member.phone?.trim()
