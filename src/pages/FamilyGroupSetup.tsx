@@ -98,6 +98,48 @@ const FamilyGroupSetup = () => {
     }
   }, [loadSavedData, setValue, toast]);
 
+  // Pre-populate user information for new signups
+  useEffect(() => {
+    // Only run if user is authenticated and no auto-save data was loaded
+    if (!user || hasLoadedAutoSave.current) return;
+
+    // Only pre-populate if form is empty (no group selected and lead fields are empty)
+    const currentValues = getValues();
+    if (currentValues.selectedGroup || currentValues.leadName || currentValues.leadEmail) return;
+
+    console.log('🔧 [FAMILY_GROUP_SETUP] Pre-populating user information for new signup');
+
+    // Get user information from user metadata
+    const firstName = user.user_metadata?.first_name || '';
+    const lastName = user.user_metadata?.last_name || '';
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+    const userEmail = user.email || '';
+
+    if (fullName || userEmail) {
+      // Pre-populate Group Lead fields
+      if (fullName) setValue("leadName", fullName);
+      if (userEmail) setValue("leadEmail", userEmail);
+
+      // Also pre-populate Group Member 1 with same info (group lead is typically first member)
+      const currentGroupMembers = getValues("groupMembers");
+      if (currentGroupMembers && currentGroupMembers.length > 0) {
+        const updatedGroupMembers = [...currentGroupMembers];
+        updatedGroupMembers[0] = {
+          name: fullName,
+          phone: "",
+          email: userEmail,
+          canHost: true // Group leads can always host
+        };
+        setValue("groupMembers", updatedGroupMembers);
+      }
+
+      console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information:', {
+        fullName,
+        userEmail
+      });
+    }
+  }, [user, setValue, getValues, hasLoadedAutoSave]);
+
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
 
