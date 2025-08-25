@@ -59,9 +59,13 @@ const Setup = () => {
         setJoinDialogOpen(false);
         toast({
           title: "Successfully Joined!",
-          description: "You've joined the organization. You'll now be redirected to family group setup.",
+          description: "You've joined the organization. Redirecting to family group setup...",
         });
-        // The useRobustMultiOrganization hook will handle the redirect
+        
+        // Wait a moment for the toast to show, then redirect
+        setTimeout(() => {
+          window.location.href = '/family-group-setup';
+        }, 1500);
       }
     } catch (error) {
       console.error('Error joining organization:', error);
