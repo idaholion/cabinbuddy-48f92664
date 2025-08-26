@@ -326,7 +326,7 @@ const FamilyGroupSetup = () => {
     ? familyGroups.map(g => g.name) // Admins and Supervisors see all groups
     : (isGroupLead && userFamilyGroup) 
       ? [userFamilyGroup.name] // Group leads see only their own group
-      : []; // All other roles cannot select groups
+      : familyGroups.map(g => g.name); // New users can see all groups to select one
   
   console.log('📋 [FAMILY_GROUP_SETUP] Available Groups:', allGroups);
   const displayedMembers = showAllMembers ? fields : fields.slice(0, 3);
