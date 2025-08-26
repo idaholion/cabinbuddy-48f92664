@@ -54,7 +54,12 @@ export const useUserRole = () => {
       );
       console.log('🎭 [USER ROLE] Group lead check:', {
         userEmail: user.email,
-        familyGroups: familyGroups.map(g => ({ name: g.name, lead_email: g.lead_email })),
+        familyGroups: familyGroups.map(g => ({ 
+          name: g.name, 
+          lead_email: g.lead_email,
+          lead_name: g.lead_name,
+          host_members: g.host_members
+        })),
         foundLeadGroup: leadGroup?.name,
         isGroupLead: !!leadGroup
       });
