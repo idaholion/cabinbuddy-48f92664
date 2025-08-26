@@ -154,20 +154,21 @@ export function AppSidebar() {
   // Combined group lead check
   const isAnyGroupLead = isGroupLead || isDirectGroupLead;
   
-  // Debug role detection
-  console.log('🔧 [SIDEBAR] Role detection:', {
+  // Debug role detection - simplified
+  const debugInfo = {
     userEmail: user?.email,
     isGroupLead,
     isDirectGroupLead,
     isAnyGroupLead,
     isAdmin,
     roleLoading,
-    canAccessSupervisorFeatures,
-    currentPath: location.pathname,
-    familyGroupsCount: familyGroups.length,
-    familyGroupsWithLeads: familyGroups.filter(g => g.lead_email).map(g => ({ name: g.name, lead_email: g.lead_email })),
-    shouldShowSetup: !roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'))
-  });
+    familyGroupsCount: familyGroups.length
+  };
+  
+  // Simple alert for debugging - remove after testing
+  if (user?.email === '54bjwoolf@gmail.com') {
+    console.log('🚨 [BARB DEBUG] Sidebar rendering for Barb:', debugInfo);
+  }
   
   // Check if we're on a supervisor organization page
   const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
@@ -395,8 +396,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup - Show to admins, group leads, supervisors, and users setting up groups */}
-        {!roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup')) && (
+        {/* Setup - ALWAYS show for Barb during debugging, then use normal logic */}
+        {((!roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'))) || (user?.email === '54bjwoolf@gmail.com')) && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
