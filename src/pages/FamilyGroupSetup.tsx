@@ -312,11 +312,23 @@ const FamilyGroupSetup = () => {
   };
 
   // Get available family groups - filter based on user role
+  console.log('🔍 [FAMILY_GROUP_SETUP] Role Detection:', {
+    isAdmin,
+    isSupervisor,
+    isGroupLead,
+    userFamilyGroup: userFamilyGroup?.name,
+    familyGroupsCount: familyGroups.length,
+    userEmail: user?.email,
+    organizationAdminEmail: organization?.admin_email
+  });
+  
   const allGroups = (isAdmin || isSupervisor)
     ? familyGroups.map(g => g.name) // Admins and Supervisors see all groups
     : (isGroupLead && userFamilyGroup) 
       ? [userFamilyGroup.name] // Group leads see only their own group
       : []; // All other roles cannot select groups
+  
+  console.log('📋 [FAMILY_GROUP_SETUP] Available Groups:', allGroups);
   const displayedMembers = showAllMembers ? fields : fields.slice(0, 3);
   const filledMembersCount = watchedData.groupMembers?.filter(member => 
     member.name?.trim() || member.email?.trim() || member.phone?.trim()
