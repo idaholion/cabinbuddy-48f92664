@@ -33,7 +33,7 @@ const FamilyGroupSetup = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { organization, loading: organizationLoading } = useOrganization();
-  const { familyGroups, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, loading, refetchFamilyGroups } = useFamilyGroups();
+  const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
   const { isGroupLead, userFamilyGroup, isAdmin } = useUserRole();
   const { isSupervisor } = useSupervisor();
   const [showAllMembers, setShowAllMembers] = useState(false);
@@ -245,6 +245,9 @@ const FamilyGroupSetup = () => {
           title: "Success",
           description: "Family group updated successfully.",
         });
+        
+        // Refresh family groups data to update user roles
+        await refetchFamilyGroups();
       } else {
         await createFamilyGroup({
           name: data.selectedGroup,
@@ -260,6 +263,9 @@ const FamilyGroupSetup = () => {
           title: "Success",
           description: "Family group created successfully.",
         });
+        
+        // Refresh family groups data to update user roles
+        await refetchFamilyGroups();
       }
       
       clearSavedData();
@@ -432,9 +438,9 @@ const FamilyGroupSetup = () => {
             <div className="absolute top-6 right-6 flex flex-col gap-2">
               <Button 
                 onClick={handleSubmit(onSubmit)}
-                disabled={loading || !isValid}
+                disabled={familyGroupsLoading || !isValid}
               >
-                {loading ? "Saving..." : "Save Family Group Setup"}
+                {familyGroupsLoading ? "Saving..." : "Save Family Group Setup"}
               </Button>
             </div>
             
@@ -781,11 +787,11 @@ const FamilyGroupSetup = () => {
             <div className="flex justify-center">
               <Button 
                 onClick={saveAndContinue} 
-                disabled={loading}
+                disabled={familyGroupsLoading}
                 className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold"
                 size="lg"
               >
-                {loading ? "Saving..." : "Save and Go to Financial Setup"}
+                {familyGroupsLoading ? "Saving..." : "Save and Go to Financial Setup"}
               </Button>
             </div>
           </CardContent>
