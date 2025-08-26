@@ -150,7 +150,11 @@ const FamilyGroupSetup = () => {
     if (selectedFamilyGroup) {
       setValue("leadName", selectedFamilyGroup.lead_name || "");
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "");
-      setValue("leadEmail", selectedFamilyGroup.lead_email || "");
+      
+      // Preserve user's email if family group doesn't have lead email set
+      const currentEmail = getValues("leadEmail");
+      const shouldUseUserEmail = !selectedFamilyGroup.lead_email && currentEmail && user?.email === currentEmail;
+      setValue("leadEmail", selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : ""));
       
       // Force override alternate lead from database (don't let auto-save interfere)
       setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none", { 
@@ -171,10 +175,11 @@ const FamilyGroupSetup = () => {
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // Automatically copy Group Lead info to Group Member 1
+        const leadEmail = selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : "");
         const leadAsHostMember = {
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
-          email: selectedFamilyGroup.lead_email || "",
+          email: leadEmail,
           canHost: true // Group leads can always host
         };
         
@@ -187,7 +192,7 @@ const FamilyGroupSetup = () => {
     } else if (watchedData.selectedGroup === "") {
       form.reset();
     }
-  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup]);
+  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
 
   // Auto-update Group Member 1 when Group Lead info changes
   useEffect(() => {

@@ -370,8 +370,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup - Only show to admins and group leads */}
-        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures) && (
+        {/* Setup - Only show to admins, group leads, and users setting up groups */}
+        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup')) && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -383,7 +383,7 @@ export function AppSidebar() {
                       return isAdmin || canAccessSupervisorFeatures; // Only admins and supervisors
                     }
                     if (item.title === "Family Group Setup") {
-                      return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Admins, group leads, and supervisors
+                      return isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup'); // Include users actively setting up groups
                     }
                     return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Default: all setup users
                   })
