@@ -41,6 +41,7 @@ import { useSupervisor } from "@/hooks/useSupervisor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
 
@@ -140,18 +141,32 @@ const helpItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { canAccessSupervisorFeatures } = useRole();
   const { isGroupLead, isAdmin, loading: roleLoading } = useUserRole();
+  const { familyGroups } = useFamilyGroups();
+  
+  // Direct check for group leadership as fallback
+  const isDirectGroupLead = user?.email ? familyGroups.some(group => 
+    group.lead_email?.toLowerCase() === user.email.toLowerCase()
+  ) : false;
+  
+  // Combined group lead check
+  const isAnyGroupLead = isGroupLead || isDirectGroupLead;
   
   // Debug role detection
   console.log('🔧 [SIDEBAR] Role detection:', {
+    userEmail: user?.email,
     isGroupLead,
+    isDirectGroupLead,
+    isAnyGroupLead,
     isAdmin,
     roleLoading,
     canAccessSupervisorFeatures,
     currentPath: location.pathname,
-    shouldShowSetup: !roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup'))
+    familyGroupsCount: familyGroups.length,
+    familyGroupsWithLeads: familyGroups.filter(g => g.lead_email).map(g => ({ name: g.name, lead_email: g.lead_email })),
+    shouldShowSetup: !roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'))
   });
   
   // Check if we're on a supervisor organization page
@@ -381,7 +396,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {/* Setup - Show to admins, group leads, supervisors, and users setting up groups */}
-        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup')) && (
+        {!roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup')) && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -393,9 +408,9 @@ export function AppSidebar() {
                       return isAdmin || canAccessSupervisorFeatures; // Only admins and supervisors
                     }
                     if (item.title === "Family Group Setup") {
-                      return isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'); // Include users actively setting up groups
+                      return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'); // Include users actively setting up groups
                     }
-                    return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Default: all setup users
+                    return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures; // Default: all setup users
                   })
                   .map((item) => (
                     <SidebarMenuItem key={item.title}>
