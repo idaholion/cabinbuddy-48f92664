@@ -168,6 +168,7 @@ export function AppSidebar() {
   // Simple alert for debugging - remove after testing
   if (user?.email === '54bjwoolf@gmail.com') {
     console.log('🚨 [BARB DEBUG] Sidebar rendering for Barb:', debugInfo);
+    alert(`🚨 BARB DEBUG: Sidebar is rendering! Setup should show: ${(!roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'))) || (user?.email === '54bjwoolf@gmail.com')}`);
   }
   
   // Check if we're on a supervisor organization page
