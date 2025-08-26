@@ -144,6 +144,16 @@ export function AppSidebar() {
   const { canAccessSupervisorFeatures } = useRole();
   const { isGroupLead, isAdmin, loading: roleLoading } = useUserRole();
   
+  // Debug role detection
+  console.log('🔧 [SIDEBAR] Role detection:', {
+    isGroupLead,
+    isAdmin,
+    roleLoading,
+    canAccessSupervisorFeatures,
+    currentPath: location.pathname,
+    shouldShowSetup: !roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup'))
+  });
+  
   // Check if we're on a supervisor organization page
   const organizationMatch = location.pathname.match(/\/supervisor\/organization\/([^\/]+)/);
   const organizationId = organizationMatch ? organizationMatch[1] : null;
@@ -370,8 +380,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup - Only show to admins, group leads, and users setting up groups */}
-        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup')) && (
+        {/* Setup - Show to admins, group leads, supervisors, and users setting up groups */}
+        {!roleLoading && (isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup')) && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -383,7 +393,7 @@ export function AppSidebar() {
                       return isAdmin || canAccessSupervisorFeatures; // Only admins and supervisors
                     }
                     if (item.title === "Family Group Setup") {
-                      return isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup'); // Include users actively setting up groups
+                      return isAdmin || isGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'); // Include users actively setting up groups
                     }
                     return isAdmin || isGroupLead || canAccessSupervisorFeatures; // Default: all setup users
                   })

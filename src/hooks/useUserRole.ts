@@ -110,7 +110,9 @@ export const useUserRole = () => {
         isGroupMember: !leadGroup && !!userHostInfo,
         isHost: !leadGroup && !!userHostInfo?.canHost,
         organizationAdminEmail: organization?.admin_email,
-        organizationTreasurerEmail: organization?.treasurer_email
+        organizationTreasurerEmail: organization?.treasurer_email,
+        foundLeadGroup: leadGroup?.name,
+        familyGroupsWithLeadEmails: familyGroups.filter(g => g.lead_email).map(g => ({ name: g.name, lead_email: g.lead_email }))
       });
       
       setLoading(false);
