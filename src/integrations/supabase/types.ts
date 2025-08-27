@@ -2189,6 +2189,22 @@ export type Database = {
         }
         Returns: Json
       }
+      create_organization_with_user_link: {
+        Args: {
+          p_admin_email?: string
+          p_admin_name?: string
+          p_admin_phone?: string
+          p_calendar_keeper_email?: string
+          p_calendar_keeper_name?: string
+          p_calendar_keeper_phone?: string
+          p_code: string
+          p_name: string
+          p_treasurer_email?: string
+          p_treasurer_name?: string
+          p_treasurer_phone?: string
+        }
+        Returns: Json
+      }
       create_reservation_payment: {
         Args: {
           p_deposit_percentage?: number

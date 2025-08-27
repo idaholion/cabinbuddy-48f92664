@@ -8,6 +8,17 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface CreateOrganizationResult {
+  success: boolean;
+  organization_id?: string;
+  organization_name?: string;
+  organization_code?: string;
+  message?: string;
+  error?: string;
+  error_code?: string;
+}
 
 interface CreateOrganizationDialogProps {
   onOrganizationCreated?: () => void;
@@ -23,6 +34,7 @@ export const CreateOrganizationDialog = ({
   trigger 
 }: CreateOrganizationDialogProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
   
   // Use external open state if provided, otherwise use internal
@@ -82,48 +94,87 @@ export const CreateOrganizationDialog = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('organizations')
-        .insert({
-          name: formData.name,
-          code: formData.code.toUpperCase(),
-          admin_name: formData.admin_name || null,
-          admin_email: formData.admin_email || null,
-          admin_phone: formData.admin_phone ? unformatPhoneNumber(formData.admin_phone) : null,
-          treasurer_name: formData.treasurer_name || null,
-          treasurer_email: formData.treasurer_email || null,
-          treasurer_phone: formData.treasurer_phone ? unformatPhoneNumber(formData.treasurer_phone) : null,
-          calendar_keeper_name: formData.calendar_keeper_name || null,
-          calendar_keeper_email: formData.calendar_keeper_email || null,
-          calendar_keeper_phone: formData.calendar_keeper_phone ? unformatPhoneNumber(formData.calendar_keeper_phone) : null,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating organization:', error);
-        toast({
-          title: "Error",
-          description: "Failed to create organization. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
+    if (!user) {
       toast({
-        title: "Success",
-        description: `Organization "${formData.name}" created successfully!`,
+        title: "Authentication required",
+        description: "You must be logged in to create an organization.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      console.log('🚀 [CREATE_ORG] Starting atomic organization creation...');
+      console.log('👤 [CREATE_ORG] User authenticated:', { userId: user.id, email: user.email });
+      
+      // Use the atomic database function to create both organization and user link
+      const { data, error } = await supabase.rpc('create_organization_with_user_link', {
+        p_name: formData.name,
+        p_code: formData.code.toUpperCase(),
+        p_admin_name: formData.admin_name || null,
+        p_admin_email: formData.admin_email || null,
+        p_admin_phone: formData.admin_phone ? unformatPhoneNumber(formData.admin_phone) : null,
+        p_treasurer_name: formData.treasurer_name || null,
+        p_treasurer_email: formData.treasurer_email || null,
+        p_treasurer_phone: formData.treasurer_phone ? unformatPhoneNumber(formData.treasurer_phone) : null,
+        p_calendar_keeper_name: formData.calendar_keeper_name || null,
+        p_calendar_keeper_email: formData.calendar_keeper_email || null,
+        p_calendar_keeper_phone: formData.calendar_keeper_phone ? unformatPhoneNumber(formData.calendar_keeper_phone) : null,
       });
 
+      if (error) {
+        console.error('❌ [CREATE_ORG] Database function RPC error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      console.log('📊 [CREATE_ORG] Function result:', data);
+
+      // Cast the response to our expected type
+      const result = data as unknown as CreateOrganizationResult;
+
+      if (!result || !result.success) {
+        const errorMessage = result?.error || 'Unknown error occurred';
+        console.error('❌ [CREATE_ORG] Function returned error:', errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      console.log('✅ [CREATE_ORG] Organization created atomically:', {
+        id: result.organization_id,
+        name: result.organization_name,
+        code: result.organization_code
+      });
+
+      toast({
+        title: "Success", 
+        description: result.message || `Organization "${formData.name}" created successfully!`,
+      });
+
+      // Reset form and close dialog
       handleOpenChange(false);
       onOrganizationCreated?.();
+
     } catch (error) {
-      console.error('Error creating organization:', error);
+      console.error('💥 [CREATE_ORG] Fatal error:', error);
+      
+      // Extract user-friendly error message
+      let errorMessage = "Failed to create organization";
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate') || error.message.includes('already exists')) {
+          errorMessage = "An organization with this code already exists. Please choose a different code.";
+        } else if (error.message.includes('authentication') || error.message.includes('not authenticated')) {
+          errorMessage = "You must be logged in to create an organization.";
+        } else if (error.message.includes('required')) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
