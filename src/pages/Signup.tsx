@@ -64,28 +64,12 @@ const Signup = () => {
         return;
       }
 
-      // Check if user is a group lead
+      // Only group leads should go to setup page
       const userGroup = familyGroups.find(group => 
         group.lead_email && group.lead_email.toLowerCase() === userEmail.toLowerCase()
       );
 
-      let shouldGoToSetup = !!userGroup;
-
-      // If not a group lead, check if user is a host member with reservation permissions
-      if (!shouldGoToSetup) {
-        for (const group of familyGroups) {
-          if (group.host_members && Array.isArray(group.host_members)) {
-            const hostMember = (group.host_members as any[]).find((member: any) => 
-              member.email && member.email.toLowerCase() === userEmail.toLowerCase()
-            );
-            
-            if (hostMember?.canMakeReservations) {
-              shouldGoToSetup = true;
-              break;
-            }
-          }
-        }
-      }
+      const shouldGoToSetup = !!userGroup;
 
       console.log('🎯 [SIGNUP] Role determination result:', {
         userEmail,

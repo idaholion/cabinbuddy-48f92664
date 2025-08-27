@@ -81,7 +81,7 @@ const SelectFamilyGroup = () => {
         description: `You've been added to ${selectedFamilyGroup}`,
       });
 
-      // Check if user is the group lead of this specific family group
+      // Only group leads should go to setup page
       const isGroupLead = selectedGroup.lead_email && user.email === selectedGroup.lead_email;
       
       console.log('Role determination:', {
@@ -90,25 +90,7 @@ const SelectFamilyGroup = () => {
         isGroupLead
       });
 
-      // If no lead email is set, check if user is in host members
-      let shouldGoToSetup = isGroupLead;
-      
-      if (!selectedGroup.lead_email && selectedGroup.host_members) {
-        // If no lead is set, check if user is a host member who can make reservations
-        const hostMember = selectedGroup.host_members.find(
-          (member: any) => member.email === user.email
-        );
-        
-        console.log('Checking host members for user:', {
-          hostMember,
-          canMakeReservations: hostMember?.canMakeReservations
-        });
-        
-        // If user is a host member with reservation permissions, they might be the effective lead
-        if (hostMember?.canMakeReservations) {
-          shouldGoToSetup = true;
-        }
-      }
+      const shouldGoToSetup = isGroupLead;
 
       console.log('Final navigation decision:', {
         shouldGoToSetup,
