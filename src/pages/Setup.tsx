@@ -4,30 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare, Home, UserPlus } from "lucide-react";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare, Home } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
-import { useMultiOrganization } from "@/hooks/useMultiOrganization";
-import { toast } from "@/hooks/use-toast";
 
 const Setup = () => {
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
-  const { joinOrganization } = useMultiOrganization();
-  
-  // Join organization state
-  const [joinCode, setJoinCode] = useState("");
-  const [joiningLoading, setJoiningLoading] = useState(false);
-  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -39,45 +28,6 @@ const Setup = () => {
     // Only show for first-time users (check if dismissal is stored)
     return !localStorage.getItem('sidebarInfoDismissed');
   });
-
-  // Handle joining an organization
-  const handleJoinOrganization = async () => {
-    if (!joinCode.trim()) {
-      toast({
-        title: "Organization Code Required",
-        description: "Please enter an organization code to join.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setJoiningLoading(true);
-    try {
-      const success = await joinOrganization(joinCode.trim());
-      if (success) {
-        setJoinCode('');
-        setJoinDialogOpen(false);
-        toast({
-          title: "Successfully Joined!",
-          description: "You've joined the organization. Redirecting to family group setup...",
-        });
-        
-        // Wait a moment for the toast to show, then redirect
-        setTimeout(() => {
-          window.location.href = '/family-group-setup';
-        }, 1500);
-      }
-    } catch (error) {
-      console.error('Error joining organization:', error);
-      toast({
-        title: "Failed to Join",
-        description: "Please check the organization code and try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setJoiningLoading(false);
-    }
-  };
 
   // Debug the actual values causing completion to be true
   const orgComplete = !!(
@@ -360,67 +310,6 @@ const Setup = () => {
           </Button>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
-        </div>
-
-        {/* Join Organization Section - Prominent for new users */}
-        <div className="mb-6">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardHeader className="text-center">
-              <CardTitle className="flex items-center justify-center text-blue-800">
-                <UserPlus className="h-6 w-6 mr-2" />
-                Already part of a cabin organization?
-              </CardTitle>
-              <CardDescription className="text-blue-700">
-                If you've been invited to join an existing cabin organization, enter the organization code below instead of going through the full setup.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default" className="bg-blue-600 hover:bg-blue-700">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Join Existing Organization
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Join Organization</DialogTitle>
-                    <DialogDescription>
-                      Enter the organization code provided by your cabin administrator to join their organization.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="join-code">Organization Code</Label>
-                      <Input
-                        id="join-code"
-                        placeholder="Enter organization code (e.g., GLOBAL)"
-                        value={joinCode}
-                        onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={handleJoinOrganization} 
-                        disabled={joiningLoading || !joinCode.trim()}
-                        className="flex-1"
-                      >
-                        {joiningLoading ? "Joining..." : "Join Organization"}
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setJoinDialogOpen(false)}
-                        className="flex-1"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Sidebar Info Card - First time users only */}
