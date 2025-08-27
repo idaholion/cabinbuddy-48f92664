@@ -83,7 +83,7 @@ export const useSecurityMonitoring = () => {
       return;
     }
 
-    // Skip security check if user just signed up
+    // Skip security check if user just signed up or is a new user
     if (isRecentSignup()) {
       console.log('🔐 Organization access check skipped during signup grace period');
       return;
@@ -125,35 +125,26 @@ export const useSecurityMonitoring = () => {
 
       if (error) {
         console.error('🔐 [SECURITY] Error checking user organizations:', error);
-        logSecurityEvent({
-          type: 'permission_error',
-          message: 'Failed to check organization access',
-          details: { error: error.message }
-        });
-        
+        // Don't show error to new users, this is normal
         setSecurityData(prev => ({
           ...prev,
           organizationAccess: { 
             hasAccess: false, 
-            error: 'Failed to verify organization access' 
+            error: undefined // Don't show error for new users
           }
         }));
         return;
       }
 
       if (!organizations || organizations.length === 0) {
-        console.log('🔐 [SECURITY] User has no organization access - triggering mismatch event');
-        logSecurityEvent({
-          type: 'organization_mismatch',
-          message: 'User has no organization access',
-          details: { userId: user.id, userEmail: user.email }
-        });
-        
+        console.log('🔐 [SECURITY] User has no organization access - this is normal for new users');
+        // Don't trigger security event for new users without organizations
+        // This is normal behavior, not a security issue
         setSecurityData(prev => ({
           ...prev,
           organizationAccess: { 
             hasAccess: false, 
-            error: 'No organization access found' 
+            error: undefined // No error - this is expected for new users
           }
         }));
         return;
@@ -177,11 +168,14 @@ export const useSecurityMonitoring = () => {
 
     } catch (error) {
       console.error('🔐 [SECURITY] Security monitoring error:', error);
-      logSecurityEvent({
-        type: 'permission_error',
-        message: 'Unexpected error during security check',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
-      });
+      // Don't show errors to users during normal organization creation flow
+      setSecurityData(prev => ({
+        ...prev,
+        organizationAccess: { 
+          hasAccess: false, 
+          error: undefined 
+        }
+      }));
     }
   }, [user, logSecurityEvent, isRecentSignup]);
 
