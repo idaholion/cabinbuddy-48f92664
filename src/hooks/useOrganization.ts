@@ -27,6 +27,17 @@ export const useOrganization = () => {
   const [organization, setOrganization] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if user just signed up (same logic as security monitoring)
+  const isRecentSignup = useCallback(() => {
+    const signupFlag = localStorage.getItem('recent-signup');
+    if (signupFlag) {
+      const signupTime = parseInt(signupFlag);
+      const now = Date.now();
+      return (now - signupTime) < 30000; // 30 second grace period
+    }
+    return false;
+  }, []);
+
   const fetchUserOrganization = useCallback(async () => {
     if (!user) {
       setError("User not authenticated");
@@ -60,6 +71,13 @@ export const useOrganization = () => {
       }
 
       if (!primaryOrgId) {
+        // Don't show security errors for new users during signup grace period
+        if (isRecentSignup()) {
+          console.log('🔐 No primary organization found, but user recently signed up - this is normal');
+          setError("No organization access found");
+          return;
+        }
+        
         setError("No organization access found");
         logSecurityEvent({
           type: 'organization_mismatch',
@@ -121,7 +139,7 @@ export const useOrganization = () => {
     } finally {
       setLoading(false);
     }
-  }, [user, logSecurityEvent]);
+  }, [user, logSecurityEvent, isRecentSignup]);
 
   const createOrganization = async (orgData: OrganizationData) => {
     if (!user) {
