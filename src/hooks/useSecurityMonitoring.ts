@@ -90,6 +90,33 @@ export const useSecurityMonitoring = () => {
     }
 
     try {
+      console.log('🔐 [SECURITY] Checking organization access for user:', user.email);
+
+      // First check if user is a supervisor - they have universal access
+      const { data: supervisorData, error: supervisorError } = await supabase
+        .from('supervisors')
+        .select('*')
+        .eq('email', user.email)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (supervisorError) {
+        console.error('🔐 [SECURITY] Error checking supervisor status:', supervisorError);
+      }
+
+      if (supervisorData) {
+        console.log('🔐 [SECURITY] User is a supervisor - granting universal access');
+        setSecurityData(prev => ({
+          ...prev,
+          organizationAccess: {
+            hasAccess: true,
+            organizationId: 'supervisor-access',
+            error: undefined
+          }
+        }));
+        return;
+      }
+
       // Check if user has access to any organization
       const { data: organizations, error } = await supabase
         .from('user_organizations')
@@ -97,6 +124,7 @@ export const useSecurityMonitoring = () => {
         .eq('user_id', user.id);
 
       if (error) {
+        console.error('🔐 [SECURITY] Error checking user organizations:', error);
         logSecurityEvent({
           type: 'permission_error',
           message: 'Failed to check organization access',
@@ -114,10 +142,11 @@ export const useSecurityMonitoring = () => {
       }
 
       if (!organizations || organizations.length === 0) {
+        console.log('🔐 [SECURITY] User has no organization access - triggering mismatch event');
         logSecurityEvent({
           type: 'organization_mismatch',
           message: 'User has no organization access',
-          details: { userId: user.id }
+          details: { userId: user.id, userEmail: user.email }
         });
         
         setSecurityData(prev => ({
@@ -133,6 +162,11 @@ export const useSecurityMonitoring = () => {
       // Find primary organization or use first one
       const primaryOrg = organizations.find(org => org.is_primary) || organizations[0];
       
+      console.log('🔐 [SECURITY] User has organization access:', {
+        organizationCount: organizations.length,
+        primaryOrgId: primaryOrg.organization_id
+      });
+
       setSecurityData(prev => ({
         ...prev,
         organizationAccess: {
@@ -142,7 +176,7 @@ export const useSecurityMonitoring = () => {
       }));
 
     } catch (error) {
-      console.error('Security monitoring error:', error);
+      console.error('🔐 [SECURITY] Security monitoring error:', error);
       logSecurityEvent({
         type: 'permission_error',
         message: 'Unexpected error during security check',
