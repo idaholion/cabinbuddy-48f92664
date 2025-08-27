@@ -29,6 +29,37 @@ export const useSecurityMonitoring = () => {
     organizationAccess: { hasAccess: false }
   });
 
+  // Routes that don't need security monitoring
+  const exemptRoutes = [
+    '/textresponse',
+    '/optin1', 
+    '/optin2',
+    '/intro',
+    '/auth',
+    '/login',
+    '/signup',
+    '/reset-password',
+    '/'
+  ];
+  
+  const currentPath = window.location.pathname;
+  const isExemptRoute = exemptRoutes.some(route => currentPath.startsWith(route));
+  
+  // Skip all security monitoring on exempt routes
+  if (isExemptRoute) {
+    return {
+      securityData: {
+        events: [],
+        hasRecentErrors: false,
+        organizationAccess: { hasAccess: true } // Assume OK for exempt routes
+      },
+      logSecurityEvent: () => {}, // No-op
+      checkOrganizationAccess: () => Promise.resolve(), // No-op
+      clearSecurityEvents: () => {}, // No-op
+      emergencyAccessRequest: () => Promise.resolve(false) // No-op
+    };
+  }
+
   // Add flag to prevent security monitoring immediately after signup
   const isRecentSignup = useCallback(() => {
     const signupFlag = localStorage.getItem('recent-signup');
