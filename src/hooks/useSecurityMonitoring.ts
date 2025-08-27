@@ -31,6 +31,7 @@ export const useSecurityMonitoring = () => {
 
   // Routes that don't need security monitoring
   const exemptRoutes = [
+    '/setup', // Add setup to exempt routes - it's part of onboarding flow
     '/textresponse',
     '/optin1', 
     '/optin2',
@@ -44,21 +45,6 @@ export const useSecurityMonitoring = () => {
   
   const currentPath = window.location.pathname;
   const isExemptRoute = exemptRoutes.some(route => currentPath.startsWith(route));
-  
-  // Skip all security monitoring on exempt routes
-  if (isExemptRoute) {
-    return {
-      securityData: {
-        events: [],
-        hasRecentErrors: false,
-        organizationAccess: { hasAccess: true } // Assume OK for exempt routes
-      },
-      logSecurityEvent: () => {}, // No-op
-      checkOrganizationAccess: () => Promise.resolve(), // No-op
-      clearSecurityEvents: () => {}, // No-op
-      emergencyAccessRequest: () => Promise.resolve(false) // No-op
-    };
-  }
 
   // Add flag to prevent security monitoring immediately after signup
   const isRecentSignup = useCallback(() => {
@@ -72,6 +58,9 @@ export const useSecurityMonitoring = () => {
   }, []);
 
   const logSecurityEvent = useCallback((event: Omit<SecurityEvent, 'timestamp'>) => {
+    // Skip on exempt routes
+    if (isExemptRoute) return;
+    
     // Don't show security errors if user just signed up
     if (isRecentSignup()) {
       console.log('🔐 Security event suppressed during signup grace period:', event);
@@ -103,9 +92,18 @@ export const useSecurityMonitoring = () => {
         variant: "destructive",
       });
     }
-  }, [toast, isRecentSignup]);
+  }, [toast, isRecentSignup, isExemptRoute]);
 
   const checkOrganizationAccess = useCallback(async () => {
+    // Skip on exempt routes
+    if (isExemptRoute) {
+      setSecurityData(prev => ({
+        ...prev,
+        organizationAccess: { hasAccess: true } // Assume OK for exempt routes
+      }));
+      return;
+    }
+
     if (!user) {
       setSecurityData(prev => ({
         ...prev,
