@@ -318,6 +318,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { apiCache } = await import('@/lib/cache');
       apiCache.clear();
       
+      // Clear all auto-save data before signing out
+      clearAllAutoSaveData();
+      
       const { error } = await supabase.auth.signOut();
       
       // Clear ALL sessionStorage items (including tab-specific ones)
@@ -332,9 +335,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
       
-      // Also clear any remaining localStorage items for safety
+      // Also clear any remaining localStorage items for safety (including auto-save)
       Object.keys(localStorage).forEach(key => {
-        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-')) {
+        if (key.includes('auth') || key.includes('supabase') || key.includes('sb-') || key.startsWith('autosave_')) {
           console.log('🔐 Clearing localStorage key:', key);
           localStorage.removeItem(key);
         }
@@ -367,6 +370,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Force a hard refresh to completely clear any cached state
     window.location.replace('/');
+  };
+
+  // Clear all auto-save data (helper function)
+  const clearAllAutoSaveData = () => {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('autosave_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      console.log(`🧹 Cleared ${keysToRemove.length} auto-save entries during signOut`);
+    } catch (error) {
+      console.warn('Failed to clear auto-save data during signOut:', error);
+    }
   };
 
   const value = {
