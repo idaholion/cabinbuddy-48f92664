@@ -285,18 +285,33 @@ const FamilySetup = () => {
     }
     
     // First try to load from database if organization exists
-    if (organization && !isCreatingNew) {
-      setOrgName(organization.name || "");
-      setOrganizationCode(organization.code || generateOrgCode());
-      setAdminName(organization.admin_name || "");
-      setAdminPhone(organization.admin_phone || "");
-      setAdminEmail(organization.admin_email || "");
-      setTreasurerName(organization.treasurer_name || "");
-      setTreasurerPhone(organization.treasurer_phone || "");
-      setTreasurerEmail(organization.treasurer_email || "");
-      setCalendarKeeperName(organization.calendar_keeper_name || "");
-      setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
-      setCalendarKeeperEmail(organization.calendar_keeper_email || "");
+    if (organization && !isCreatingNew && user) {
+      // Additional safety check - ensure organization belongs to current user
+      console.log('🔍 [FAMILY SETUP] Loading organization data:', {
+        orgId: organization.id,
+        orgName: organization.name,
+        userId: user.id,
+        userEmail: user.email,
+        cachedUserId: organization._cached_user_id
+      });
+      
+      // Only load organization data if it's validated for current user
+      const orgAny = organization as any;
+      if (!orgAny._cached_user_id || orgAny._cached_user_id === user.id) {
+        setOrgName(organization.name || "");
+        setOrganizationCode(organization.code || generateOrgCode());
+        setAdminName(organization.admin_name || "");
+        setAdminPhone(organization.admin_phone || "");
+        setAdminEmail(organization.admin_email || "");
+        setTreasurerName(organization.treasurer_name || "");
+        setTreasurerPhone(organization.treasurer_phone || "");
+        setTreasurerEmail(organization.treasurer_email || "");
+        setCalendarKeeperName(organization.calendar_keeper_name || "");
+        setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
+        setCalendarKeeperEmail(organization.calendar_keeper_email || "");
+      } else {
+        console.warn('🚨 [FAMILY SETUP] Organization data belongs to different user - ignoring');
+      }
       
       // Don't overwrite with auto-save data when loading fresh organization data
       return;

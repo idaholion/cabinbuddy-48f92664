@@ -44,12 +44,16 @@ export const useOrganization = () => {
       return;
     }
 
-    // Check cache first
-    const cachedOrg = apiCache.get(cacheKeys.primaryOrganization(user.id));
-    if (cachedOrg) {
+    // Check cache first - but validate it belongs to current user
+    const cacheKey = cacheKeys.primaryOrganization(user.id);
+    const cachedOrg = apiCache.get<any>(cacheKey);
+    if (cachedOrg && typeof cachedOrg === 'object' && cachedOrg._cached_user_id === user.id) {
       setOrganization(cachedOrg);
       setError(null);
       return;
+    } else if (cachedOrg && typeof cachedOrg === 'object' && cachedOrg._cached_user_id !== user.id) {
+      // Cache is for different user - clear it
+      apiCache.invalidate(cacheKey);
     }
 
     setLoading(true);
@@ -87,14 +91,19 @@ export const useOrganization = () => {
         return;
       }
 
-      // Check if organization details are cached
-      const cachedOrgDetails = apiCache.get(cacheKeys.organization(primaryOrgId));
-      if (cachedOrgDetails) {
+      // Check if organization details are cached with user validation
+      const orgCacheKey = cacheKeys.organization(primaryOrgId);
+      const cachedOrgDetails = apiCache.get<any>(orgCacheKey);
+      if (cachedOrgDetails && typeof cachedOrgDetails === 'object' && cachedOrgDetails._cached_user_id === user.id) {
         setOrganization(cachedOrgDetails);
-        // Cache as primary organization
-        apiCache.set(cacheKeys.primaryOrganization(user.id), cachedOrgDetails);
+        // Cache as primary organization with user ID
+        const orgWithUserId = { ...cachedOrgDetails, _cached_user_id: user.id };
+        apiCache.set(cacheKeys.primaryOrganization(user.id), orgWithUserId);
         setError(null);
         return;
+      } else if (cachedOrgDetails && typeof cachedOrgDetails === 'object' && cachedOrgDetails._cached_user_id !== user.id) {
+        // Cache is for different user - clear it
+        apiCache.invalidate(orgCacheKey);
       }
 
       // Fetch the organization details
@@ -124,9 +133,10 @@ export const useOrganization = () => {
       } else if (org) {
         setOrganization(org);
         setError(null);
-        // Cache both the organization and as primary
-        apiCache.set(cacheKeys.organization(primaryOrgId), org);
-        apiCache.set(cacheKeys.primaryOrganization(user.id), org);
+        // Cache both the organization and as primary with user ID validation
+        const orgWithUserId = { ...org, _cached_user_id: user.id };
+        apiCache.set(cacheKeys.organization(primaryOrgId), orgWithUserId);
+        apiCache.set(cacheKeys.primaryOrganization(user.id), orgWithUserId);
       }
     } catch (error) {
       console.error('Error in fetchUserOrganization:', error);
@@ -187,10 +197,11 @@ export const useOrganization = () => {
 
       setOrganization(newOrg);
       
-      // Invalidate relevant caches
+      // Invalidate relevant caches and set new ones with user ID
       apiCache.invalidateByPrefix(`user_organizations_${user.id}`);
       apiCache.invalidate(cacheKeys.primaryOrganization(user.id));
-      apiCache.set(cacheKeys.organization(newOrg.id), newOrg);
+      const orgWithUserId = { ...newOrg, _cached_user_id: user.id };
+      apiCache.set(cacheKeys.organization(newOrg.id), orgWithUserId);
       
       toast({
         title: "Success",
@@ -242,9 +253,10 @@ export const useOrganization = () => {
 
       setOrganization(updatedOrg);
       
-      // Update cache
-      apiCache.set(cacheKeys.organization(organization.id), updatedOrg);
-      apiCache.set(cacheKeys.primaryOrganization(user.id), updatedOrg);
+      // Update cache with user ID validation
+      const orgWithUserId = { ...updatedOrg, _cached_user_id: user.id };
+      apiCache.set(cacheKeys.organization(organization.id), orgWithUserId);
+      apiCache.set(cacheKeys.primaryOrganization(user.id), orgWithUserId);
       
       toast({
         title: "Success",
@@ -263,8 +275,15 @@ export const useOrganization = () => {
   };
 
   useEffect(() => {
-    fetchUserOrganization();
-  }, [user]);
+    if (user) {
+      fetchUserOrganization();
+    } else {
+      // Clear state and cache when user logs out or changes
+      setOrganization(null);
+      setError(null);
+      apiCache.clear(); // Clear all cache on user change
+    }
+  }, [user, fetchUserOrganization]);
 
   return {
     organization,

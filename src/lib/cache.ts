@@ -29,6 +29,23 @@ class Cache {
     return item.data;
   }
 
+  // Enhanced validation for user-specific data
+  getUserSpecificData<T>(key: string, userId: string): T | null {
+    const data = this.get<T>(key);
+    if (!data) return null;
+    
+    // Validate the cached data belongs to the current user
+    if (typeof data === 'object' && data !== null && '_cached_user_id' in data) {
+      if ((data as any)._cached_user_id !== userId) {
+        console.warn('🚨 Cache contamination detected - clearing invalid cache entry:', key);
+        this.invalidate(key);
+        return null;
+      }
+    }
+    
+    return data;
+  }
+
   invalidate(key: string): void {
     this.cache.delete(key);
   }

@@ -314,6 +314,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('🔐 Signing out...');
       console.log('🔐 Current user before signout:', user?.email);
       
+      // Clear cache before signing out to prevent data bleeding
+      const { apiCache } = await import('@/lib/cache');
+      apiCache.clear();
+      
       const { error } = await supabase.auth.signOut();
       
       // Clear ALL sessionStorage items (including tab-specific ones)
