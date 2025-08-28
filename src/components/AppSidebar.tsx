@@ -1,3 +1,4 @@
+
 import { 
   Home,
   Users,
@@ -154,16 +155,20 @@ export function AppSidebar() {
   // Combined group lead check - includes name-matched users
   const isAnyGroupLead = isGroupLead || isDirectGroupLead || isNameMatchedGroupLead;
   
-  // Debug role detection - simplified
-  const debugInfo = {
-    userEmail: user?.email,
-    isGroupLead,
-    isDirectGroupLead,
-    isAnyGroupLead,
-    isAdmin,
-    roleLoading,
-    familyGroupsCount: familyGroups.length
-  };
+  // Enhanced setup visibility check - show setup menus during organization creation
+  const isOnSetupFlow = location.pathname.includes('/setup') || 
+                       location.pathname.includes('/family-setup') ||
+                       location.pathname.includes('/family-group-setup') ||
+                       location.pathname.includes('mode=create') ||
+                       location.search.includes('mode=create');
+  
+  const shouldShowSetup = !roleLoading && (
+    isAdmin || 
+    isAnyGroupLead || 
+    isNameMatchedMember || 
+    canAccessSupervisorFeatures || 
+    isOnSetupFlow
+  );
   
   // Debug for alpha alpha specifically
   if (user?.email?.toLowerCase().includes('alpha')) {
@@ -177,10 +182,10 @@ export function AppSidebar() {
       roleLoading,
       canAccessSupervisorFeatures,
       location: location.pathname,
-      shouldShowSetup: !roleLoading && (isAdmin || isAnyGroupLead || isNameMatchedMember || canAccessSupervisorFeatures || 
-        location.pathname.includes('/family-group-setup') || 
-        location.pathname.includes('/setup') || 
-        location.pathname.includes('mode=create'))
+      locationSearch: location.search,
+      isOnSetupFlow,
+      shouldShowSetup,
+      familyGroupsCount: familyGroups.length
     });
   }
   
@@ -410,29 +415,25 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup - Enhanced visibility for new users and role-based access */}
-        {(!roleLoading && (isAdmin || isAnyGroupLead || isNameMatchedMember || canAccessSupervisorFeatures || 
-          location.pathname.includes('/family-group-setup') || 
-          location.pathname.includes('/setup') || 
-          location.pathname.includes('mode=create') ||
-          location.search.includes('mode=create'))) && (
+        {/* Setup - Enhanced visibility for setup flow users */}
+        {shouldShowSetup && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {setupItems
                   .filter(item => {
-                    // Filter setup items based on user role
+                    // Filter setup items based on user role and setup flow
                     if (item.title === "Family Setup") {
-                      return isAdmin || canAccessSupervisorFeatures; // Only admins and supervisors
+                      return isAdmin || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
                     }
                     if (item.title === "Family Group Setup") {
-                      return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'); // Include users actively setting up groups
+                      return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
                     }
                     if (item.title === "Group Member Profile") {  
                       return isNameMatchedMember || isAdmin || canAccessSupervisorFeatures; // Show for name-matched members
                     }
-                    return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures; // Default: all setup users
+                    return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Default: show during setup
                   })
                   .map((item) => (
                     <SidebarMenuItem key={item.title}>
