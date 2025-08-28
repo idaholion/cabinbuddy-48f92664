@@ -226,6 +226,16 @@ const Index = () => {
         <div className="fixed bottom-8 left-8 z-30">
           <FeedbackButton />
         </div>
+
+        {/* Bottom Center Privacy Policy Link */}
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20">
+          <Button variant="link" asChild className="text-xs text-primary/70 hover:text-primary">
+            <Link to="/privacy-policy" state={{ from: '/home' }}>
+              <Shield className="h-3 w-3 mr-1" />
+              Privacy Policy
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { PhoneConsentDialog } from "@/components/ui/phone-consent-dialog";
+import { Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import cabinHeroImage from "@/assets/cabin-hero.jpg";
 
 const Textresponse = () => {
@@ -63,6 +65,15 @@ const Textresponse = () => {
 
               <div className="text-sm text-muted-foreground text-center">
                 <p>Phone Number Consent. Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. Message and data rates may apply. Mobile information will not be shared with third parties for marketing/promotional purposes. Message Frequency Varies.</p>
+              </div>
+              
+              <div className="text-center pt-4">
+                <Button variant="link" asChild className="text-xs text-muted-foreground hover:text-foreground">
+                  <Link to="/privacy-policy" state={{ from: '/textresponse' }}>
+                    <Shield className="h-3 w-3 mr-1" />
+                    Privacy Policy
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

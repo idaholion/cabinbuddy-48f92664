@@ -9,6 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
 
 interface PhoneConsentDialogProps {
   open: boolean;
@@ -78,6 +80,17 @@ export const PhoneConsentDialog = ({
             ACCEPT
           </AlertDialogAction>
         </AlertDialogFooter>
+        
+        <div className="px-6 pb-6">
+          <div className="text-center">
+            <Button variant="link" asChild className="text-xs text-muted-foreground hover:text-foreground">
+              <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
+                <Shield className="h-3 w-3 mr-1" />
+                Privacy Policy
+              </a>
+            </Button>
+          </div>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );

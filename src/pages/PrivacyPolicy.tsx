@@ -1,8 +1,18 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, ArrowLeft } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const PrivacyPolicy = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const handleGoBack = () => {
+    // Check if there's a referrer in state, otherwise go to home
+    const from = location.state?.from || '/home';
+    navigate(from);
+  };
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <PageHeader 
@@ -74,6 +84,13 @@ const PrivacyPolicy = () => {
             <p className="text-sm text-muted-foreground">
               If you have any questions about this privacy policy or our data practices, please contact us through the appropriate channels in your cabin management system.
             </p>
+          </div>
+          
+          <div className="mt-6 text-center">
+            <Button onClick={handleGoBack} variant="outline" className="px-6">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
           </div>
         </CardContent>
       </Card>
