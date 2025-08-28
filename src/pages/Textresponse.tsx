@@ -11,10 +11,8 @@ const Textresponse = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showConsentDialog, setShowConsentDialog] = useState(false);
 
-  const handleTestConsent = () => {
-    if (phoneNumber.trim()) {
-      setShowConsentDialog(true);
-    }
+  const handlePhoneClick = () => {
+    setShowConsentDialog(true);
   };
 
   const handleConsentAccept = () => {
@@ -52,17 +50,10 @@ const Textresponse = () => {
                   value={phoneNumber}
                   onChange={setPhoneNumber}
                   autoFormat={true}
+                  onClick={handlePhoneClick}
                 />
               </div>
               
-              <Button 
-                onClick={handleTestConsent}
-                className="w-full"
-                disabled={!phoneNumber.trim()}
-              >
-                Test Consent Flow
-              </Button>
-
               <div className="text-sm text-muted-foreground text-center">
                 <p>Phone Number Consent. Selecting the Phone Number block will bring up a consent dialog. Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. Message and data rates may apply. Mobile information will not be shared with third parties for marketing/promotional purposes. Message Frequency Varies.</p>
               </div>
