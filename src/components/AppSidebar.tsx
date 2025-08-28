@@ -143,7 +143,7 @@ export function AppSidebar() {
   const { isSupervisor } = useSupervisor();
   const { signOut, user } = useAuth();
   const { canAccessSupervisorFeatures } = useRole();
-  const { isGroupLead, isAdmin, loading: roleLoading } = useUserRole();
+  const { isGroupLead, isNameMatchedGroupLead, isNameMatchedMember, isAdmin, loading: roleLoading } = useUserRole();
   const { familyGroups } = useFamilyGroups();
   
   // Direct check for group leadership as fallback
@@ -151,8 +151,8 @@ export function AppSidebar() {
     group.lead_email?.toLowerCase() === user.email.toLowerCase()
   ) : false;
   
-  // Combined group lead check
-  const isAnyGroupLead = isGroupLead || isDirectGroupLead;
+  // Combined group lead check - includes name-matched users
+  const isAnyGroupLead = isGroupLead || isDirectGroupLead || isNameMatchedGroupLead;
   
   // Debug role detection - simplified
   const debugInfo = {
@@ -397,8 +397,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Setup - ALWAYS show for Barb during debugging, then use normal logic */}
-        {((!roleLoading && (isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'))) || (user?.email === '54bjwoolf@gmail.com')) && (
+        {/* Setup - Enhanced visibility for administrators, group leads, and name-matched users */}
+        {!roleLoading && (isAdmin || isAnyGroupLead || isNameMatchedMember || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup') || location.pathname.includes('/manage-organizations?mode=create')) && (
           <SidebarGroup>
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -411,6 +411,9 @@ export function AppSidebar() {
                     }
                     if (item.title === "Family Group Setup") {
                       return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || location.pathname.includes('/family-group-setup') || location.pathname.includes('/setup'); // Include users actively setting up groups
+                    }
+                    if (item.title === "Group Member Profile") {  
+                      return isNameMatchedMember || isAdmin || canAccessSupervisorFeatures; // Show for name-matched members
                     }
                     return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures; // Default: all setup users
                   })
