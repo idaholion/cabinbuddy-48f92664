@@ -64,9 +64,10 @@ export const PhoneConsentDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="text-base">Phone Number Consent</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            Pressing ACCEPT shows you agree to have your phone receive text messages from Richard Andrew. 
+            Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. 
             Message and data rates may apply. 
-            Mobile information will not be shared with third parties for marketing/promotional purposes
+            Mobile information will not be shared with third parties for marketing/promotional purposes. 
+            Message Frequency Varies.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
