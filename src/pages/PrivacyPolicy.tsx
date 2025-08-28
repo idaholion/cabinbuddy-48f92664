@@ -33,7 +33,7 @@ const PrivacyPolicy = () => {
         </CardHeader>
         <CardContent className="prose prose-slate max-w-none dark:prose-invert">
           <p className="mb-6">
-            We respect your privacy. By opting into our SMS messaging service, you agree to the following terms regarding how we handle your data:
+            Richard Andrew respects your privacy. By opting into our SMS messaging service, you agree to the following terms regarding how we handle your data:
           </p>
           
           <div className="space-y-4">
