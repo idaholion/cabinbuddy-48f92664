@@ -198,7 +198,7 @@ export const useUserRole = () => {
     };
 
     checkUserRole();
-  }, [user, familyGroups, familyGroupsLoading, organization, organizationLoading, activeOrganization]);
+  }, [user, familyGroups, familyGroupsLoading, organization, organizationLoading, activeOrganization?.role, activeOrganization?.organization_id]);
 
   return {
     isGroupLead,
