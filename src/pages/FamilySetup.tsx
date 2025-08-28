@@ -565,57 +565,49 @@ const FamilySetup = () => {
     }
   };
 
-  // Save organization setup and show profile claiming step for new organizations
-  const saveAndContinueToFamilyGroups = async () => {
-    console.log('🔍 [FAMILY SETUP] Starting saveAndContinueToFamilyGroups...', {
-      user: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-      organization: !!organization,
-      orgId: organization?.id,
-      orgName: organization?.name,
-      isCreatingNew,
-      pathname: window.location.pathname
-    });
-    
+  // Save and navigate to family group setup
+  const saveAndGoToFamilyGroups = async () => {
     try {
-      console.log('🔍 [FAMILY SETUP] About to call saveOrganizationSetup...');
       await saveOrganizationSetup();
-      console.log('✅ [FAMILY SETUP] Organization setup saved successfully');
-      
-      // Clear auto-saved data since we're navigating away
       clearSavedData();
+      toast({
+        title: "Organization Saved!",
+        description: "Proceeding to family group setup...",
+      });
       
-      // For new organizations with family groups, show profile claiming step
-      if (isCreatingNew && (existingFamilyGroups.length > 0 || familyGroups.some(g => g.name.trim()))) {
-        console.log('📋 [FAMILY SETUP] Showing profile claiming step for new organization');
-        setShowProfileClaimingStep(true);
-        return;
-      }
-      
-      console.log('🚀 [FAMILY SETUP] Navigating to family-group-setup...');
-      // Mark setup as completed to prevent future redirects
-      localStorage.setItem('setupCompleted', 'true');
-      
-      // For existing organizations or those without family groups, go directly to setup
       setTimeout(() => {
-        console.log('🚀 [FAMILY SETUP] Executing navigation to /family-group-setup');
         navigate("/family-group-setup");
       }, 100);
     } catch (error) {
-      console.error('❌ [FAMILY SETUP] ORGANIZATION ERROR in save and continue:', error);
-      console.error('❌ [FAMILY SETUP] Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : 'No stack trace',
-        type: typeof error,
-        errorObject: error
-      });
+      console.error('Failed to save organization:', error);
       toast({
-        title: "Organization Error", 
+        title: "Save Error", 
         description: `Failed to save organization: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
-      // Don't navigate on error - let user fix the issue
+    }
+  };
+
+  // Save and navigate to use fee setup
+  const saveAndGoToUseFeeSetup = async () => {
+    try {
+      await saveOrganizationSetup();
+      clearSavedData();
+      toast({
+        title: "Organization Saved!",
+        description: "Proceeding to use fee setup...",
+      });
+      
+      setTimeout(() => {
+        navigate("/use-fee-setup");
+      }, 100);
+    } catch (error) {
+      console.error('Failed to save organization:', error);
+      toast({
+        title: "Save Error", 
+        description: `Failed to save organization: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -1081,17 +1073,7 @@ const FamilySetup = () => {
                 </div>
               )}
               
-              {/* Save and Continue Button */}
-              <div className="flex justify-center pt-6 border-t border-border">
-                <Button 
-                  onClick={saveAndContinueToFamilyGroups} 
-                  disabled={orgLoading || settingsLoading}
-                  className="w-full max-w-md"
-                  size="lg"
-                >
-                  {(orgLoading || settingsLoading) ? "Saving..." : "Save and Continue to Family Groups"}
-                </Button>
-              </div>
+              {/* Removed old Save and Continue Button */}
             </div>
           </CardContent>
         </Card>
@@ -1132,15 +1114,17 @@ const FamilySetup = () => {
                 <CardHeader>
                   <CardTitle className="text-lg text-blue-800">Set Up Your Family Group</CardTitle>
                   <CardDescription className="text-blue-700">
-                    If you want to set up your own family group now and join the cabin as a participant
+                    Save your organization setup and proceed to set up your family group
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Link to="/family-group-setup">
-                      <Users className="h-4 w-4 mr-2" />
-                      Set Up Family Group
-                    </Link>
+                  <Button 
+                    onClick={saveAndGoToFamilyGroups}
+                    disabled={orgLoading || settingsLoading}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    {(orgLoading || settingsLoading) ? "Saving..." : "Save and Set Up Family Groups"}
                   </Button>
                 </CardContent>
               </Card>
@@ -1149,15 +1133,17 @@ const FamilySetup = () => {
                 <CardHeader>
                   <CardTitle className="text-lg text-green-800">Continue Organization Setup</CardTitle>
                   <CardDescription className="text-green-700">
-                    Continue with the next organizational setup step (Use Fee Setup)
+                    Save your organization setup and continue with Use Fee Setup
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button asChild className="w-full bg-green-600 hover:bg-green-700">
-                    <Link to="/use-fee-setup">
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Continue to Use Fee Setup
-                    </Link>
+                  <Button 
+                    onClick={saveAndGoToUseFeeSetup}
+                    disabled={orgLoading || settingsLoading}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    {(orgLoading || settingsLoading) ? "Saving..." : "Save and Continue to Use Fee Setup"}
                   </Button>
                 </CardContent>
               </Card>
