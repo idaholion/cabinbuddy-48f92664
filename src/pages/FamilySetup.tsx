@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings, Copy, X } from "lucide-react";
+import { Users, Plus, Settings, Copy, X, DollarSign } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { AdminProfileClaimingStep } from "@/components/AdminProfileClaimingStep";
@@ -1114,6 +1114,56 @@ const FamilySetup = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Navigation Choices */}
+        <div className="mt-8">
+          <Card className="bg-card/95 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center text-primary">
+                <Users className="h-6 w-6 mr-2" />
+                What's Next?
+              </CardTitle>
+              <CardDescription className="text-center text-lg">
+                Choose your next step to complete your cabin management setup
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800">Set Up Your Family Group</CardTitle>
+                  <CardDescription className="text-blue-700">
+                    If you want to set up your own family group now and join the cabin as a participant
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Link to="/family-group-setup">
+                      <Users className="h-4 w-4 mr-2" />
+                      Set Up Family Group
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-green-800">Continue Organization Setup</CardTitle>
+                  <CardDescription className="text-green-700">
+                    Continue with the next organizational setup step (Use Fee Setup)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                    <Link to="/use-fee-setup">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Continue to Use Fee Setup
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </div>
 
       </div>
     </div>
