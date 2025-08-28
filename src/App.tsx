@@ -63,6 +63,7 @@ const CalendarKeeperManagement = React.lazy(() => import("./pages/CalendarKeeper
 const ReservationDetail = React.lazy(() => import("./pages/ReservationDetail"));
 const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 const FeaturesPage = React.lazy(() => import("./pages/FeaturesPage"));
+const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -145,6 +146,7 @@ const AppContent = () => {
         <Route path="/features" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FeaturesPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/demo" element={<Suspense fallback={<LoadingSpinner />}><Demo /></Suspense>} />
+        <Route path="/privacy-policy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
