@@ -1044,13 +1044,14 @@ const FamilySetup = () => {
                     As the administrator, which family group do you belong to?
                   </p>
                   <div className="max-w-md mx-auto">
-                    <select
+                     <select
                       value={adminFamilyGroup}
                       onChange={(e) => setAdminFamilyGroup(e.target.value)}
                       className="w-full p-2 border border-border rounded-md bg-background text-foreground"
                       required
                     >
                       <option value="">Choose your family group...</option>
+                      <option value="not_in_family_group">Not in a family group, administrator only</option>
                       {existingFamilyGroups.length > 0 
                         ? existingFamilyGroups.map((group) => (
                             <option key={group.id} value={group.name}>
