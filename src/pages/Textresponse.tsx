@@ -55,7 +55,7 @@ const Textresponse = () => {
               </div>
               
               <div className="text-sm text-muted-foreground text-center">
-                <p>Phone Number Consent. Selecting the Phone Number block will bring up a consent dialog. Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. Message and data rates may apply. Mobile information will not be shared with third parties for marketing/promotional purposes. Message Frequency Varies.</p>
+                <p>Phone Number Consent. Selecting the Phone Number block will bring up a consent dialog. Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Cabinbuddy. Message and data rates may apply. Mobile information will not be shared with third parties for marketing/promotional purposes. Message Frequency Varies.</p>
               </div>
               
               <div className="text-center pt-4">

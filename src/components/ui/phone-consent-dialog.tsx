@@ -46,7 +46,7 @@ export const PhoneConsentDialog = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base">Opt-in Confirmation</AlertDialogTitle>
             <AlertDialogDescription className="text-base">
-              You have successfully opted in to receive messages from Richard Andrew via our website. 
+              You have successfully opted in to receive messages from Cabinbuddy via our website. 
               Message and data rates may apply. Reply to administrator HELP for support or STOP to unsubscribe.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -66,7 +66,7 @@ export const PhoneConsentDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle className="text-base">Phone Number Consent</AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. 
+            Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Cabinbuddy. 
             Message and data rates may apply. 
             Mobile information will not be shared with third parties for marketing/promotional purposes. 
             Message Frequency Varies.
