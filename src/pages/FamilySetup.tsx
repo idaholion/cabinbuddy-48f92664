@@ -193,7 +193,7 @@ const FamilySetup = () => {
         }
       }
     }
-  }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast, user?.email, userFamilyGroup]);
+  }, [isGroupMember, isGroupLead, isAdmin, roleLoading, isCreatingNew, navigate, toast, user?.email, userFamilyGroup?.id]);
 
   // Load existing family groups into editable state
   useEffect(() => {
@@ -228,7 +228,7 @@ const FamilySetup = () => {
       
       setFamilyGroups(newGroups);
     }
-  }, [existingFamilyGroups, isCreatingNew, isGroupLead, isAdmin, userFamilyGroup, roleLoading]);
+  }, [existingFamilyGroups, isCreatingNew, isGroupLead, isAdmin, userFamilyGroup?.id, roleLoading]);
 
   // Load saved data on component mount
   useEffect(() => {
