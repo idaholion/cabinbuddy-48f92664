@@ -105,7 +105,17 @@ export const useSetupState = () => {
       return;
     }
 
-    // User has organizations - clear setup state to allow normal navigation
+    // User has organizations - only keep them in setup flow if they're explicitly doing setup
+    // or if they have stored setup state indicating they're an admin/lead doing initial setup
+    const isExplicitSetup = storedState?.isInSetupFlow && 
+      (storedState.setupStep === 'initial' || storedState.setupStep === 'organization');
+
+    if (isExplicitSetup) {
+      setSetupState(storedState);
+      return;
+    }
+
+    // User has completed setup or is a regular member - clear setup state
     const completedState: SetupState = {
       isInSetupFlow: false,
       needsOrganization: false,

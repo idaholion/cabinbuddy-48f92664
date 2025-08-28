@@ -37,6 +37,24 @@ const Index = () => {
   // Monitor performance
   usePerformanceMonitoring();
 
+  // If user is a regular member (not admin, not group lead) and lands on home,
+  // redirect them to their profile page after role loading completes
+  useEffect(() => {
+    if (!roleLoading && user && activeOrganization) {
+      // Check if user should be redirected to profile (regular member with no special roles)
+      const isRegularMember = !isGroupLead && !isSupervisor && !user.user_metadata?.is_admin;
+      
+      // Only redirect from the root home path, not if they navigated here intentionally
+      if (isRegularMember && window.location.pathname === '/home') {
+        // Small delay to allow UI to settle
+        setTimeout(() => {
+          window.location.href = '/group-member-profile';
+        }, 500);
+      }
+    }
+  }, [roleLoading, user, activeOrganization, isGroupLead, isSupervisor]);
+
+
 
   return (
     <div className="min-h-screen relative">
