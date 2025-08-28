@@ -13,7 +13,7 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useSetupState } from "@/hooks/useSetupState";
 
 const Setup = () => {
-  const { enterSetupFlow, updateSetupStep } = useSetupState();
+  const { enterSetupFlow, updateSetupStep, clearSetupState } = useSetupState();
 
   // Mark user as entering setup flow when they visit this page
   useEffect(() => {
@@ -155,6 +155,14 @@ const Setup = () => {
       return () => clearTimeout(timer);
     }
   }, [completedSteps, totalSteps, showCelebration]);
+
+  // Clear setup state when all steps are complete
+  useEffect(() => {
+    if (completedSteps === totalSteps) {
+      // Clear the setup state so home navigation works properly
+      clearSetupState();
+    }
+  }, [completedSteps, totalSteps, clearSetupState]);
 
   const CompletionBadge = ({ isComplete, delay = 0 }: { isComplete: boolean; delay?: number }) => (
     <div className={cn(
