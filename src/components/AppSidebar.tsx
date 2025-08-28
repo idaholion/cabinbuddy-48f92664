@@ -162,18 +162,8 @@ export function AppSidebar() {
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
-  // Show setup menus - simplified logic to ensure visibility
-  const shouldShowSetup = (
-    // Always show if on setup flow
-    isOnSetupFlow ||
-    // Always show if user has required permissions (regardless of loading state)
-    isAdmin || 
-    isAnyGroupLead || 
-    isNameMatchedMember || 
-    canAccessSupervisorFeatures ||
-    // Fallback: show during loading to prevent flickering
-    roleLoading
-  );
+  // Show setup menus - always show to prevent flickering, let filtering handle logic
+  const shouldShowSetup = true;
   
   // Debug for alpha alpha specifically - more detailed logging
   if (user?.email?.toLowerCase().includes('alpha')) {
