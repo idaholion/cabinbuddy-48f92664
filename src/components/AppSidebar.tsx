@@ -164,8 +164,9 @@ export function AppSidebar() {
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
-  // Show setup menus if user is in setup flow or on setup-related pages
-  const shouldShowSetup = setupState.isInSetupFlow || 
+  // Show setup menus for admins and group leads (always) or during setup flow
+  const shouldShowSetup = isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || 
+    setupState.isInSetupFlow || 
     location.pathname.includes('/setup') || 
     location.pathname.includes('/family-setup') ||
     location.pathname.includes('/family-group-setup') ||
