@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
+import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 
 interface SetupState {
   isInSetupFlow: boolean;
@@ -13,7 +13,7 @@ const SETUP_STORAGE_KEY = 'user_setup_state';
 
 export const useSetupState = () => {
   const { user } = useAuth();
-  const { organizations, loading: orgLoading } = useRobustMultiOrganization();
+  const { organizations, loading: orgLoading } = useMultiOrganization();
   
   const [setupState, setSetupState] = useState<SetupState>({
     isInSetupFlow: false,

@@ -15,14 +15,7 @@ import { useSetupState } from "@/hooks/useSetupState";
 const Setup = () => {
   const { enterSetupFlow, updateSetupStep, clearSetupState } = useSetupState();
 
-  // Mark user as entering setup flow when they visit this page
-  useEffect(() => {
-    enterSetupFlow('initial');
-  }, [enterSetupFlow]);
-
-  const handleNextStep = (step: 'organization' | 'family') => {
-    updateSetupStep(step);
-  };
+  // Only enter setup flow if user doesn't have organizations
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
