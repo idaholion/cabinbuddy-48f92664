@@ -155,18 +155,19 @@ export function AppSidebar() {
   // Combined group lead check - includes name-matched users
   const isAnyGroupLead = isGroupLead || isDirectGroupLead || isNameMatchedGroupLead;
   
-  // Enhanced setup visibility check - show setup menus during organization creation
+  // Enhanced setup visibility check - persistent for admins and group leads
   const isOnSetupFlow = location.pathname.includes('/setup') || 
                        location.pathname.includes('/family-setup') ||
                        location.pathname.includes('/family-group-setup') ||
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
+  // Show setup menus persistently for admins and group leads, not just during setup flow
   const shouldShowSetup = !roleLoading && (
     isAdmin || 
     isAnyGroupLead || 
     isNameMatchedMember || 
-    canAccessSupervisorFeatures || 
+    canAccessSupervisorFeatures ||
     isOnSetupFlow
   );
   
