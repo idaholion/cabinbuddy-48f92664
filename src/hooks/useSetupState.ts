@@ -105,13 +105,7 @@ export const useSetupState = () => {
       return;
     }
 
-    // If user has organizations but stored state indicates incomplete setup
-    if (storedState?.hasIncompleteSetup && storedState?.isInSetupFlow) {
-      setSetupState(storedState);
-      return;
-    }
-
-    // User has completed setup
+    // User has organizations - clear setup state to allow normal navigation
     const completedState: SetupState = {
       isInSetupFlow: false,
       needsOrganization: false,
@@ -120,6 +114,14 @@ export const useSetupState = () => {
     };
     
     setSetupState(completedState);
+    // Clear any stored setup state since organization exists
+    if (storedState?.isInSetupFlow) {
+      try {
+        localStorage.removeItem(`${SETUP_STORAGE_KEY}_${user.id}`);
+      } catch (error) {
+        console.warn('Failed to clear setup state:', error);
+      }
+    }
   }, [user, organizations, orgLoading, getStoredSetupState, storeSetupState]);
 
   // Get the appropriate redirect path based on setup state

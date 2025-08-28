@@ -156,13 +156,6 @@ const Setup = () => {
     }
   }, [completedSteps, totalSteps, showCelebration]);
 
-  // Clear setup state when all steps are complete
-  useEffect(() => {
-    if (completedSteps === totalSteps) {
-      // Clear the setup state so home navigation works properly
-      clearSetupState();
-    }
-  }, [completedSteps, totalSteps, clearSetupState]);
 
   const CompletionBadge = ({ isComplete, delay = 0 }: { isComplete: boolean; delay?: number }) => (
     <div className={cn(
