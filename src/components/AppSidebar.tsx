@@ -59,11 +59,6 @@ const setupItems = [
     icon: Users,
   },
   {
-    title: "Group Member Profile",
-    url: "/group-member-profile",
-    icon: User,
-  },
-  {
     title: "Financial Dashboard",
     url: "/finance-reports",
     icon: DollarSign,
@@ -319,7 +314,7 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              <SidebarMenuItem>
+               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Family Voting">
                   <NavLink 
                     to="/family-voting" 
@@ -330,6 +325,21 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              {/* Group Member Profile - accessible to name-matched members and admins */}
+              {(isNameMatchedMember || isAdmin || canAccessSupervisorFeatures) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Group Member Profile">
+                    <NavLink 
+                      to="/group-member-profile" 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Group Member Profile</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -428,7 +438,7 @@ export function AppSidebar() {
             <SidebarGroupLabel>Setup</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {setupItems
+                 {setupItems
                   .filter(item => {
                     // Filter setup items based on user role and setup flow
                     if (item.title === "Family Setup") {
@@ -436,9 +446,6 @@ export function AppSidebar() {
                     }
                     if (item.title === "Family Group Setup") {
                       return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
-                    }
-                    if (item.title === "Group Member Profile") {  
-                      return isNameMatchedMember || isAdmin || canAccessSupervisorFeatures; // Show for name-matched members
                     }
                     return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Default: show during setup
                   })
