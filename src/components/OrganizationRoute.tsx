@@ -14,7 +14,7 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
   const location = useLocation();
 
   // Skip org check for certain routes
-  const exemptRoutes = ['/setup', '/signup', '/login', '/manage-organizations', '/select-family-group'];
+  const exemptRoutes = ['/setup', '/signup', '/login', '/manage-organizations', '/select-family-group', '/family-group-setup'];
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
 
   // Show loading during auth and org checks - CRITICAL: Don't redirect while loading

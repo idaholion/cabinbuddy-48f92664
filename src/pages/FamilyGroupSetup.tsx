@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Trash2, Users, Edit2, Check, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
-import { useOrganization } from "@/hooks/useOrganization";
+import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -32,7 +32,7 @@ const FamilyGroupSetup = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { organization, loading: organizationLoading } = useOrganization();
+  const { activeOrganization: organization, loading: organizationLoading } = useMultiOrganization();
   const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
   const { isGroupLead, userFamilyGroup, isAdmin } = useUserRole();
   const { isSupervisor } = useSupervisor();
@@ -330,7 +330,7 @@ const FamilyGroupSetup = () => {
     userFamilyGroup: userFamilyGroup?.name,
     familyGroupsCount: familyGroups.length,
     userEmail: user?.email,
-    organizationAdminEmail: organization?.admin_email
+    hasOrganization: !!organization
   });
   
   const allGroups = (isAdmin || isSupervisor)
