@@ -8,7 +8,6 @@ import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Men
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
-import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useSetupState } from "@/hooks/useSetupState";
@@ -25,13 +24,12 @@ const Setup = () => {
     updateSetupStep(step);
   };
   const { organization } = useOrganization();
-  const { familyGroups } = useFamilyGroups();
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
-  const [cardAnimations, setCardAnimations] = useState([false, false, false, false, false]);
+  const [cardAnimations, setCardAnimations] = useState([false, false, false, false]);
   const [progressValue, setProgressValue] = useState(0);
   
   // State for sidebar info card dismissal
@@ -51,19 +49,11 @@ const Setup = () => {
     organization?.calendar_keeper_email?.trim()?.includes('@')
   );
 
-  const familyComplete = !!(
-    familyGroups &&
-    familyGroups.length > 0 &&
-    familyGroups.every(group => 
-      group?.name?.trim() &&
-      group?.lead_name?.trim() && 
-      group?.lead_email?.trim()?.includes('@')
-    )
-  );
+  // Family Groups removed from main setup flow
 
-  // Show what's causing completion if either is true
+  // Debug organization completion
   useEffect(() => {
-    if (orgComplete || familyComplete) {
+    if (orgComplete) {
       console.log('=== COMPLETION DEBUG ===');
       console.log('Organization complete:', orgComplete);
       console.log('Organization data:', {
@@ -75,18 +65,11 @@ const Setup = () => {
         calendar_keeper_name: organization?.calendar_keeper_name,
         calendar_keeper_email: organization?.calendar_keeper_email
       });
-      console.log('Family groups complete:', familyComplete);
-      console.log('Family groups data:', familyGroups?.map(g => ({
-        name: g.name,
-        lead_name: g.lead_name,
-        lead_email: g.lead_email
-      })));
     }
-  }, [orgComplete, familyComplete, organization, familyGroups]);
+  }, [orgComplete, organization]);
 
   // Use the computed values
   const isOrganizationComplete = orgComplete;
-  const isFamilyGroupsComplete = familyComplete;
     
   const isFinancialComplete = !!(
     reservationSettings?.nightly_rate &&
@@ -114,10 +97,9 @@ const Setup = () => {
   // Determine the next step to highlight
   const getNextStep = () => {
     if (!isOrganizationComplete) return 1;
-    if (!isFamilyGroupsComplete) return 2;
-    if (!isFinancialComplete) return 3;
-    if (!isReservationComplete) return 4;
-    if (!isCalendarKeeperComplete) return 5;
+    if (!isFinancialComplete) return 2;
+    if (!isReservationComplete) return 3;
+    if (!isCalendarKeeperComplete) return 4;
     return null; // All complete
   };
 
@@ -132,12 +114,11 @@ const Setup = () => {
   // Calculate overall progress
   const completedSteps = [
     isOrganizationComplete,
-    isFamilyGroupsComplete,
     isFinancialComplete,
     isReservationComplete,
     isCalendarKeeperComplete
   ].filter(Boolean).length;
-  const totalSteps = 5;
+  const totalSteps = 4;
   const progressPercentage = (completedSteps / totalSteps) * 100;
 
   // Animation effects
@@ -350,53 +331,93 @@ const Setup = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <StepCard
             stepNumber={1}
-            title="Step 1: Family Setup"
+            title="Step 1: Organization Setup"
             description="Configure your organization details, administrator, treasurer, and calendar keeper information."
             icon={Users}
             isComplete={isOrganizationComplete}
             linkTo="/family-setup?mode=create"
-            linkText="Configure or Change Family Setup"
+            linkText="Configure Organization Details"
           />
 
           <StepCard
             stepNumber={2}
-            title="Step 2: Family Groups"
-            description="Set up individual family groups with lead members and host details."
-            icon={Users}
-            isComplete={isFamilyGroupsComplete}
-            linkTo="/family-group-setup"
-            linkText="Configure or Change Family Groups"
-          />
-
-          <StepCard
-            stepNumber={3}
-            title="Step 3: Use Fee Setup"
+            title="Step 2: Use Fee Setup"
             description="Configure use fee rates, payment settings, and billing information for your cabin."
             icon={DollarSign}
             isComplete={isFinancialComplete}
             linkTo="/use-fee-setup"
-            linkText="Configure or Change Use Fees"
+            linkText="Configure Use Fees"
           />
 
           <StepCard
-            stepNumber={4}
-            title="Step 4: Reservation Setup"
+            stepNumber={3}
+            title="Step 3: Reservation Setup"
             description="Configure rotation schedules, time blocks, and seniority settings for reservations."
             icon={Calendar}
             isComplete={isReservationComplete}
             linkTo="/reservation-setup"
-            linkText="Configure or Change Reservations"
+            linkText="Configure Reservations"
           />
 
           <StepCard
-            stepNumber={5}
-            title="Step 5: Calendar Keeper Management"
+            stepNumber={4}
+            title="Step 4: Calendar Keeper Management"
             description="Configure messaging templates and reminder settings for communicating with cabin users about deadlines and updates."
             icon={MessageSquare}
             isComplete={isCalendarKeeperComplete}
             linkTo="/calendar-keeper-management"
             linkText="Configure Calendar Keeper Management"
           />
+        </div>
+
+        {/* Navigation Choices */}
+        <div className="mt-8">
+          <Card className="bg-card/95 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-center text-primary">
+                <Users className="h-6 w-6 mr-2" />
+                What's Next?
+              </CardTitle>
+              <CardDescription className="text-center text-lg">
+                Choose your next step to complete your cabin management setup
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800">Set Up Your Family Group</CardTitle>
+                  <CardDescription className="text-blue-700">
+                    If you want to set up your own family group now and join the cabin as a participant
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                    <Link to="/family-group-setup">
+                      <Users className="h-4 w-4 mr-2" />
+                      Set Up Family Group
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50/50">
+                <CardHeader>
+                  <CardTitle className="text-lg text-green-800">Continue Organization Setup</CardTitle>
+                  <CardDescription className="text-green-700">
+                    Continue with the next organizational setup step (Use Fee Setup)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                    <Link to="/use-fee-setup">
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Continue to Use Fee Setup
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="mt-8 text-center">
