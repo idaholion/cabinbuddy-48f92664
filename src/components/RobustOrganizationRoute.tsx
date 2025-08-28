@@ -96,8 +96,8 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     return <>{children}</>;
   }
 
-  // Check if user needs setup flow - handle this before organization checks
-  if (setupState.isInSetupFlow) {
+  // Check if user needs setup flow - but only redirect if they don't have organizations
+  if (setupState.isInSetupFlow && organizations.length === 0) {
     const setupPath = getSetupRedirectPath();
     if (setupPath && location.pathname !== setupPath) {
       console.log('Redirecting to setup flow:', { currentPath: location.pathname, setupPath, setupState });
