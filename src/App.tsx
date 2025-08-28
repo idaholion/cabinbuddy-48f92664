@@ -110,7 +110,7 @@ const AppContent = () => {
         <Route path="/textresponse" element={<Textresponse />} />
         <Route path="/optin1" element={<Optin1 />} />
         <Route path="/optin2" element={<Optin2 />} />
-        <Route path="/home" element={<UnifiedAuthRoute requiresOrganization={false}><MainLayout><Index /></MainLayout></UnifiedAuthRoute>} />
+        <Route path="/home" element={<UnifiedAuthRoute requiresOrganization={true}><MainLayout><Index /></MainLayout></UnifiedAuthRoute>} />
         <Route path="/manage-organizations" element={<UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
