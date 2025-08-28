@@ -2348,6 +2348,10 @@ export type Database = {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
       }
+      supervisor_normalize_emails_and_fix_membership: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       supervisor_remove_user_from_organization: {
         Args: {
           p_confirmation_code: string
