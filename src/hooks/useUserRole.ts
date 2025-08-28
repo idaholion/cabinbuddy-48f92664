@@ -198,7 +198,23 @@ export const useUserRole = () => {
     };
 
     checkUserRole();
-  }, [user, familyGroups, familyGroupsLoading, organization, organizationLoading, activeOrganization?.role, activeOrganization?.organization_id]);
+  }, [
+    user?.email, 
+    user?.id, 
+    user?.user_metadata?.display_name,
+    user?.user_metadata?.full_name,
+    user?.user_metadata?.first_name,
+    user?.user_metadata?.last_name,
+    familyGroups, 
+    familyGroupsLoading, 
+    organization?.id,
+    organization?.admin_email,
+    organization?.treasurer_email,
+    organization?.calendar_keeper_email,
+    organizationLoading, 
+    activeOrganization?.role, 
+    activeOrganization?.organization_id
+  ]);
 
   return {
     isGroupLead,
