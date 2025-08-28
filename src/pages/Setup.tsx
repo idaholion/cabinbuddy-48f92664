@@ -11,8 +11,19 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
+import { useSetupState } from "@/hooks/useSetupState";
 
 const Setup = () => {
+  const { enterSetupFlow, updateSetupStep } = useSetupState();
+
+  // Mark user as entering setup flow when they visit this page
+  useEffect(() => {
+    enterSetupFlow('initial');
+  }, [enterSetupFlow]);
+
+  const handleNextStep = (step: 'organization' | 'family') => {
+    updateSetupStep(step);
+  };
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
   const { reservationSettings } = useReservationSettings();

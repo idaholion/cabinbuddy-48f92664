@@ -42,6 +42,7 @@ import { useSupervisor } from "@/hooks/useSupervisor";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useSetupState } from "@/hooks/useSetupState";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
@@ -145,6 +146,7 @@ export function AppSidebar() {
   const { signOut, user } = useAuth();
   const { canAccessSupervisorFeatures } = useRole();
   const { isGroupLead, isNameMatchedGroupLead, isNameMatchedMember, isAdmin, loading: roleLoading } = useUserRole();
+  const { setupState } = useSetupState();
   const { familyGroups } = useFamilyGroups();
   
   // Direct check for group leadership as fallback
@@ -162,8 +164,13 @@ export function AppSidebar() {
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
-  // Show setup menus - always show to prevent flickering, let filtering handle logic
-  const shouldShowSetup = true;
+  // Show setup menus if user is in setup flow or on setup-related pages
+  const shouldShowSetup = setupState.isInSetupFlow || 
+    location.pathname.includes('/setup') || 
+    location.pathname.includes('/family-setup') ||
+    location.pathname.includes('/family-group-setup') ||
+    location.pathname.includes('mode=create') ||
+    location.search.includes('mode=create');
   
   // Debug for alpha alpha specifically - more detailed logging
   if (user?.email?.toLowerCase().includes('alpha')) {

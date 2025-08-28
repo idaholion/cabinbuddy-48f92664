@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
+import { useSetupState } from '@/hooks/useSetupState';
 import { LoadingState } from '@/components/ui/loading-spinner';
 import { ErrorWithRecovery } from '@/components/ui/error-recovery';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     offline,
     retry 
   } = useRobustMultiOrganization();
+  const { setupState, getSetupRedirectPath, loading: setupLoading } = useSetupState();
   const { securityData } = useSecurityMonitoring();
   const location = useLocation();
   const [retryAttempts, setRetryAttempts] = useState(0);
@@ -35,6 +37,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/login', 
     '/manage-organizations', 
     '/select-family-group',
+    '/family-setup',
     '/auth',
     '/reset-password'
   ];
@@ -60,8 +63,8 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   }, [error, offline, retryAttempts]);
 
   // Show loading state during initial auth and org checks
-  if (authLoading || (orgLoading && !error)) {
-    console.log('RobustOrganizationRoute - Loading state:', { authLoading, orgLoading, pathname: location.pathname });
+  if (authLoading || (orgLoading && !error) || setupLoading) {
+    console.log('RobustOrganizationRoute - Loading state:', { authLoading, orgLoading, setupLoading, pathname: location.pathname });
     return (
       <LoadingState 
         message="Loading your organizations..." 
@@ -91,6 +94,15 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   // Authenticated but on exempt route - allow access
   if (isExemptRoute) {
     return <>{children}</>;
+  }
+
+  // Check if user needs setup flow - handle this before organization checks
+  if (setupState.isInSetupFlow) {
+    const setupPath = getSetupRedirectPath();
+    if (setupPath && location.pathname !== setupPath) {
+      console.log('Redirecting to setup flow:', { currentPath: location.pathname, setupPath, setupState });
+      return <Navigate to={setupPath} replace />;
+    }
   }
 
   // Handle offline state
@@ -135,12 +147,10 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
 
   // Handle case where organization exists but user might not be properly associated
   if (organizations.length === 0 && !orgLoading && !error) {    
-    // Check if this is a setup-related route first
-    if (isExemptRoute) {
-      return <>{children}</>;
+    // If user has no organizations and not in setup flow, redirect to setup
+    if (!setupState.isInSetupFlow) {
+      return <Navigate to="/setup" replace />;
     }
-    // For non-exempt routes with no organizations, redirect to setup
-    return <Navigate to="/setup" replace />;
   }
 
   // Authenticated user with multiple organizations but no primary - redirect to manage

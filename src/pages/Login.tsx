@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSetupState } from "@/hooks/useSetupState";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ const Login = () => {
   const [resetMode, setResetMode] = useState(false);
   const [error, setError] = useState("");
   const { signIn, resetPassword, user } = useAuth();
+  const { getSetupRedirectPath } = useSetupState();
   const navigate = useNavigate();
 
   // Only redirect if not in debug mode (check for debug query param or debug mode indicator)
@@ -23,9 +25,10 @@ const Login = () => {
     const isDebugMode = urlParams.has('debug') || window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
     
     if (user && !isDebugMode) {
-      navigate("/home");
+      const setupPath = getSetupRedirectPath();
+      navigate(setupPath || "/home");
     }
-  }, [user, navigate]);
+  }, [user, navigate, getSetupRedirectPath]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +52,11 @@ const Login = () => {
       }
     } else {
       console.log('Login successful');
-      navigate("/home");
+      // Use a slight delay to allow setup state to be determined after login
+      setTimeout(() => {
+        const setupPath = getSetupRedirectPath();
+        navigate(setupPath || "/home");
+      }, 100);
     }
     
     setLoading(false);

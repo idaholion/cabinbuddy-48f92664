@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useSetupState } from '@/hooks/useSetupState';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
@@ -35,6 +36,7 @@ export const CreateOrganizationDialog = ({
 }: CreateOrganizationDialogProps) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { clearSetupState } = useSetupState();
   const [internalOpen, setInternalOpen] = useState(false);
   
   // Use external open state if provided, otherwise use internal
@@ -150,6 +152,9 @@ export const CreateOrganizationDialog = ({
         title: "Success", 
         description: result.message || `Organization "${formData.name}" created successfully!`,
       });
+
+      // Clear setup state since organization creation is complete
+      clearSetupState();
 
       // Reset form and close dialog
       handleOpenChange(false);
