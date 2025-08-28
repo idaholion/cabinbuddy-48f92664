@@ -62,8 +62,7 @@ const Textresponse = () => {
               </Button>
 
               <div className="text-sm text-muted-foreground text-center">
-                <p>Enter a phone number and click "Test Consent Flow" to see the consent dialog.</p>
-                <p className="mt-2">This demonstration shows both the initial consent request and the confirmation message.</p>
+                <p>Phone Number Consent. Pressing ACCEPT shows you agree to have your phone receive SMS Messages from Richard Andrew. Message and data rates may apply. Mobile information will not be shared with third parties for marketing/promotional purposes. Message Frequency Varies.</p>
               </div>
             </CardContent>
           </Card>
