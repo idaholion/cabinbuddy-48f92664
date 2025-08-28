@@ -162,12 +162,18 @@ export function AppSidebar() {
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
-  // Show setup menus persistently for admins and group leads, not just during setup flow
-  const shouldShowSetup = !roleLoading && (
-    isAdmin || 
-    isAnyGroupLead || 
-    isNameMatchedMember || 
-    canAccessSupervisorFeatures ||
+  // Show setup menus persistently for admins and group leads, or during loading with setup indicators
+  const shouldShowSetup = (
+    // Show during role loading if on setup flow or if user has setup indicators
+    (roleLoading && isOnSetupFlow) ||
+    // Show after role loading if user has required permissions
+    (!roleLoading && (
+      isAdmin || 
+      isAnyGroupLead || 
+      isNameMatchedMember || 
+      canAccessSupervisorFeatures
+    )) ||
+    // Always show if actively on setup flow
     isOnSetupFlow
   );
   
