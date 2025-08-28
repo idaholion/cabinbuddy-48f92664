@@ -162,22 +162,20 @@ export function AppSidebar() {
                        location.pathname.includes('mode=create') ||
                        location.search.includes('mode=create');
   
-  // Show setup menus persistently for admins and group leads, or during loading with setup indicators
+  // Show setup menus - simplified logic to ensure visibility
   const shouldShowSetup = (
-    // Show during role loading if on setup flow or if user has setup indicators
-    (roleLoading && isOnSetupFlow) ||
-    // Show after role loading if user has required permissions
-    (!roleLoading && (
-      isAdmin || 
-      isAnyGroupLead || 
-      isNameMatchedMember || 
-      canAccessSupervisorFeatures
-    )) ||
-    // Always show if actively on setup flow
-    isOnSetupFlow
+    // Always show if on setup flow
+    isOnSetupFlow ||
+    // Always show if user has required permissions (regardless of loading state)
+    isAdmin || 
+    isAnyGroupLead || 
+    isNameMatchedMember || 
+    canAccessSupervisorFeatures ||
+    // Fallback: show during loading to prevent flickering
+    roleLoading
   );
   
-  // Debug for alpha alpha specifically
+  // Debug for alpha alpha specifically - more detailed logging
   if (user?.email?.toLowerCase().includes('alpha')) {
     console.log('🔍 [ALPHA DEBUG] Sidebar data:', {
       userEmail: user?.email,
@@ -192,7 +190,11 @@ export function AppSidebar() {
       locationSearch: location.search,
       isOnSetupFlow,
       shouldShowSetup,
-      familyGroupsCount: familyGroups.length
+      familyGroupsCount: familyGroups.length,
+      // Additional debugging for conditions
+      condition1: roleLoading && isOnSetupFlow,
+      condition2: !roleLoading && (isAdmin || isAnyGroupLead || isNameMatchedMember || canAccessSupervisorFeatures),
+      condition3: isOnSetupFlow
     });
   }
   
