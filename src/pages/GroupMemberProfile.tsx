@@ -75,6 +75,16 @@ const GroupMemberProfile = () => {
   const watchedFamilyGroup = watch("selectedFamilyGroup");
   const watchedMemberName = watch("selectedMemberName");
 
+  // Debug logging for form state
+  console.log('📋 [GROUP_MEMBER_PROFILE] Form State:', {
+    watchedFamilyGroup,
+    watchedMemberName,
+    availableMembersCount: availableMembers.length,
+    selectedGroupMemberExists: !!selectedGroupMember,
+    hasClaimedProfile,
+    formIsValid: isValid
+  });
+
   // Update available members when family group changes
   useEffect(() => {
     if (watchedFamilyGroup) {
