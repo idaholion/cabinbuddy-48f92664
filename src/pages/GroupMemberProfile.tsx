@@ -922,7 +922,7 @@ const GroupMemberProfile = () => {
 
       {/* Bottom Home Button */}
       <div className="flex justify-center pb-6">
-        <Button onClick={() => navigate('/')} size="lg" className="flex items-center space-x-2 text-base">
+        <Button onClick={() => navigate('/home')} size="lg" className="flex items-center space-x-2 text-base">
           <Home className="h-4 w-4" />
           <span>Return to Home</span>
         </Button>
