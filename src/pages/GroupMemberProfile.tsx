@@ -144,74 +144,52 @@ const GroupMemberProfile = () => {
 
   // Auto-populate user information when family groups load
   useEffect(() => {
-    if (familyGroups.length > 0 && user && !autoPopulated) {
-      const userEmail = user.email;
-      const userFirstName = user.user_metadata?.first_name;
+    if (!loading && familyGroups.length > 0 && user?.email && !autoPopulated) {
+      const userEmail = user.email.toLowerCase();
       
-      // Try to find user by email or name in family groups
+      console.log('👤 [GROUP_MEMBER_PROFILE] Auto-population check:', {
+        userEmail,
+        hasClaimedProfile,
+        claimedProfile: claimedProfile
+      });
+
+      // If user has a claimed profile, use that
+      if (hasClaimedProfile && claimedProfile) {
+        console.log('✅ [GROUP_MEMBER_PROFILE] Using claimed profile data');
+        setValue("selectedFamilyGroup", claimedProfile.family_group_name);
+        setValue("selectedMemberName", claimedProfile.member_name);
+        setAutoPopulated(true);
+        return;
+      }
+
+      // Otherwise, try to auto-detect based on email matching
       for (const group of familyGroups) {
-        // Check group lead
-        if (group.lead_email?.toLowerCase() === userEmail?.toLowerCase() || 
-            (userFirstName && group.lead_name?.toLowerCase().includes(userFirstName.toLowerCase()))) {
+        // Check if user is the group lead
+        if (group.lead_email && group.lead_email.toLowerCase() === userEmail) {
+          console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as group lead');
           setValue("selectedFamilyGroup", group.name);
           setValue("selectedMemberName", group.lead_name);
-          setValue("email", group.lead_email || userEmail || "");
-          setValue("phone", group.lead_phone || "");
-          
-          setSelectedGroup(group);
-          const members = [
-            { name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true },
-            ...(group.host_members || []).map((member: any) => ({ 
-              name: member.name, email: member.email, phone: member.phone, isLead: false 
-            }))
-          ];
-          setAvailableMembers(members);
-          setSelectedGroupMember({ name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true });
           setAutoPopulated(true);
-          
-          toast({
-            title: "Profile Found",
-            description: `Auto-populated your profile from ${group.name} as Group Lead`,
-          });
-          break;
+          return;
         }
-        
-        // Check host members
+
+        // Check if user is in host_members
         if (group.host_members) {
-          const foundMember = group.host_members.find((member: any) => 
-            member.email?.toLowerCase() === userEmail?.toLowerCase() || 
-            (userFirstName && member.name?.toLowerCase().includes(userFirstName.toLowerCase()))
-          );
-          
-          if (foundMember) {
-            setValue("selectedFamilyGroup", group.name);
-            setValue("selectedMemberName", foundMember.name);
-            setValue("email", foundMember.email || userEmail || "");
-            setValue("phone", foundMember.phone || "");
-            
-            setSelectedGroup(group);
-            const members = [
-              ...(group.lead_name ? [{ 
-                name: group.lead_name, email: group.lead_email, phone: group.lead_phone, isLead: true 
-              }] : []),
-              ...group.host_members.map((member: any) => ({ 
-                name: member.name, email: member.email, phone: member.phone, isLead: false 
-              }))
-            ];
-            setAvailableMembers(members);
-            setSelectedGroupMember(foundMember);
-            setAutoPopulated(true);
-            
-            toast({
-              title: "Profile Found",
-              description: `Auto-populated your profile from ${group.name}`,
-            });
-            break;
+          for (const member of group.host_members) {
+            if (member.email && member.email.toLowerCase() === userEmail) {
+              console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as host member');
+              setValue("selectedFamilyGroup", group.name);
+              setValue("selectedMemberName", member.name);
+              setAutoPopulated(true);
+              return;
+            }
           }
         }
       }
+      
+      console.log('⚠️ [GROUP_MEMBER_PROFILE] No automatic match found - user must select manually');
     }
-  }, [familyGroups, user, setValue, autoPopulated, toast]);
+   }, [loading, familyGroups, user?.email, hasClaimedProfile, claimedProfile, setValue, autoPopulated]);
 
   // Fetch user profile data
   useEffect(() => {
@@ -609,10 +587,10 @@ const GroupMemberProfile = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Select Your Family Group</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
                       <FormControl>
                         <SelectTrigger className="text-base">
-                          <SelectValue placeholder="Choose your family group" className="text-base" />
+                          <SelectValue placeholder={autoPopulated ? "Auto-detected from your profile" : "Choose your family group"} className="text-base" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -624,6 +602,9 @@ const GroupMemberProfile = () => {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                    {autoPopulated && (
+                      <p className="text-xs text-green-600 mt-1">✓ Auto-detected based on your account information</p>
+                    )}
                   </FormItem>
                 )}
               />
@@ -636,10 +617,10 @@ const GroupMemberProfile = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Select Your Name</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
                         <FormControl>
                           <SelectTrigger className="text-base">
-                            <SelectValue placeholder="Choose your name from the list" className="text-base" />
+                            <SelectValue placeholder={autoPopulated ? "Auto-detected from your profile" : "Choose your name from the list"} className="text-base" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -654,6 +635,9 @@ const GroupMemberProfile = () => {
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                      {autoPopulated && (
+                        <p className="text-xs text-green-600 mt-1">✓ Auto-detected based on your account information</p>
+                      )}
                     </FormItem>
                   )}
                 />
