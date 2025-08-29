@@ -34,7 +34,7 @@ const FamilyGroupSetup = () => {
   const { user, loading: authLoading } = useAuth();
   const { activeOrganization: organization, loading: organizationLoading } = useMultiOrganization();
   const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
-  const { isGroupLead, userFamilyGroup, isAdmin } = useUserRole();
+  const { isGroupLead, userFamilyGroup, isAdmin, loading: roleLoading, isGroupMember } = useUserRole();
   const { isSupervisor } = useSupervisor();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -99,6 +99,32 @@ const FamilyGroupSetup = () => {
       });
     }
   }, [loadSavedData, setValue, toast]);
+
+  // Redirect regular group members to their profile page
+  useEffect(() => {
+    if (!roleLoading && !authLoading && !organizationLoading) {
+      console.log('🔍 [FAMILY_GROUP_SETUP] Role Detection:', {
+        isAdmin,
+        isSupervisor,
+        isGroupLead,
+        userFamilyGroup,
+        familyGroupsCount: familyGroups.length,
+        userEmail: user?.email,
+        hasOrganization: !!organization
+      });
+
+      // Regular group members should use the Group Member Profile page
+      if (isGroupMember && !isGroupLead && !isAdmin && !isSupervisor) {
+        console.log('🔄 [FAMILY_GROUP_SETUP] Redirecting group member to profile page');
+        toast({
+          title: "Redirecting",
+          description: "Group members should use the Group Member Profile page.",
+        });
+        navigate("/group-member-profile");
+        return;
+      }
+    }
+  }, [isGroupMember, isGroupLead, isAdmin, isSupervisor, roleLoading, authLoading, organizationLoading, navigate, toast, user?.email, userFamilyGroup, familyGroups.length, organization]);
 
   // Pre-populate user information for new signups
   useEffect(() => {
