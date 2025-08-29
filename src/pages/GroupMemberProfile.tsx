@@ -600,8 +600,8 @@ const GroupMemberProfile = () => {
         </Button>
       </div>
 
-      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet */}
-      {!hasClaimedProfile && familyGroups.length > 0 && (
+      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet AND auto-population failed */}
+      {!hasClaimedProfile && !autoPopulated && familyGroups.length > 0 && (
         <Card className="mb-6 border-primary/50 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
@@ -611,7 +611,7 @@ const GroupMemberProfile = () => {
           </CardHeader>
           <CardContent>
             <p className="text-base text-muted-foreground mb-4">
-              Link your account to your family group member profile using your name as it appears in the system.
+              We couldn't automatically detect your profile. Please manually link your account to your family group member profile.
             </p>
             <Button
               onClick={() => setShowClaimingDialog(true)}
