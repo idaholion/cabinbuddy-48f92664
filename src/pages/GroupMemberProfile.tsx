@@ -689,12 +689,17 @@ const GroupMemberProfile = () => {
                     render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Phone Number</FormLabel>
+                      <div className="text-xs text-red-600 mb-1">DEBUG: Phone field value: "{field.value}" - onChange working: {typeof field.onChange === 'function' ? 'YES' : 'NO'}</div>
                       <FormControl>
                         <PhoneInput
                           value={field.value || ""}
-                          onChange={(formatted, raw) => field.onChange(formatted)}
+                          onChange={(formatted, raw) => {
+                            console.log('📞 [PHONE INPUT] Change detected:', { formatted, raw });
+                            field.onChange(formatted);
+                          }}
                           autoFormat
                           className="text-base placeholder:text-base"
+                          placeholder="Enter your phone number"
                         />
                       </FormControl>
                         <FormMessage />
