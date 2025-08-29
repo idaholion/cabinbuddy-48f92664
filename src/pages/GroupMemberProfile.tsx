@@ -912,11 +912,11 @@ const GroupMemberProfile = () => {
           <CardTitle className="text-lg">Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-base text-muted-foreground">
-          <p>• First claim your group member profile if you haven't already</p>
-          <p>• Select your family group from the dropdown menu</p>
-          <p>• Choose your name from the list of group members</p>
+          <p>• Your family group and name are automatically detected from your account</p>
+          <p>• If auto-detection fails, you can manually claim your profile</p>
           <p>• Update your email and phone number as needed</p>
           <p>• Your changes will be saved automatically</p>
+          <p>• Use the home buttons to navigate back to the main page</p>
         </CardContent>
       </Card>
 
