@@ -150,7 +150,8 @@ const GroupMemberProfile = () => {
       console.log('👤 [GROUP_MEMBER_PROFILE] Auto-population check:', {
         userEmail,
         hasClaimedProfile,
-        claimedProfile: claimedProfile
+        claimedProfile: claimedProfile,
+        familyGroupsCount: familyGroups.length
       });
 
       // If user has a claimed profile, use that
@@ -192,12 +193,40 @@ const GroupMemberProfile = () => {
 
       // Otherwise, try to auto-detect based on email matching
       for (const group of familyGroups) {
+        console.log('🔍 [GROUP_MEMBER_PROFILE] Checking group:', {
+          groupName: group.name,
+          leadEmail: group.lead_email,
+          hostMembersCount: group.host_members?.length || 0
+        });
+        
         // Check if user is the group lead
         if (group.lead_email && group.lead_email.toLowerCase() === userEmail) {
-          console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as group lead');
+          console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as group lead:', {
+            groupName: group.name,
+            leadName: group.lead_name,
+            leadEmail: group.lead_email
+          });
+          
           setValue("selectedFamilyGroup", group.name);
           setValue("selectedMemberName", group.lead_name);
           setSelectedGroup(group);
+          
+          // Set available members for this group
+          const members = [
+            ...(group.lead_name ? [{ 
+              name: group.lead_name, 
+              email: group.lead_email, 
+              phone: group.lead_phone,
+              isLead: true 
+            }] : []),
+            ...(group.host_members || []).map((member: any) => ({ 
+              name: member.name, 
+              email: member.email, 
+              phone: member.phone,
+              isLead: false 
+            }))
+          ];
+          setAvailableMembers(members);
           
           const leadMember = {
             name: group.lead_name, 
@@ -216,11 +245,38 @@ const GroupMemberProfile = () => {
         // Check if user is in host_members
         if (group.host_members) {
           for (const member of group.host_members) {
+            console.log('🔍 [GROUP_MEMBER_PROFILE] Checking host member:', {
+              memberName: member.name,
+              memberEmail: member.email
+            });
+            
             if (member.email && member.email.toLowerCase() === userEmail) {
-              console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as host member');
+              console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as host member:', {
+                groupName: group.name,
+                memberName: member.name,
+                memberEmail: member.email
+              });
+              
               setValue("selectedFamilyGroup", group.name);
               setValue("selectedMemberName", member.name);
               setSelectedGroup(group);
+              
+              // Set available members for this group
+              const members = [
+                ...(group.lead_name ? [{ 
+                  name: group.lead_name, 
+                  email: group.lead_email, 
+                  phone: group.lead_phone,
+                  isLead: true 
+                }] : []),
+                ...(group.host_members || []).map((m: any) => ({ 
+                  name: m.name, 
+                  email: m.email, 
+                  phone: m.phone,
+                  isLead: false 
+                }))
+              ];
+              setAvailableMembers(members);
               
               const hostMember = {
                 name: member.name,
