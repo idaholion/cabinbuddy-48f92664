@@ -81,8 +81,10 @@ const GroupMemberProfile = () => {
     watchedMemberName,
     availableMembersCount: availableMembers.length,
     selectedGroupMemberExists: !!selectedGroupMember,
+    selectedGroupMember: selectedGroupMember?.name,
     hasClaimedProfile,
-    formIsValid: isValid
+    formIsValid: isValid,
+    autoPopulated
   });
 
   // Update available members when family group changes
@@ -109,10 +111,14 @@ const GroupMemberProfile = () => {
       } else {
         setAvailableMembers([]);
       }
-      setValue("selectedMemberName", "");
-      setSelectedGroupMember(null);
+      
+      // Only clear member name if not auto-populated to prevent conflict
+      if (!autoPopulated) {
+        setValue("selectedMemberName", "");
+        setSelectedGroupMember(null);
+      }
     }
-  }, [watchedFamilyGroup, familyGroups, setValue]);
+  }, [watchedFamilyGroup, familyGroups, setValue, autoPopulated]);
 
   // Update form fields when member name changes
   useEffect(() => {
@@ -255,6 +261,13 @@ const GroupMemberProfile = () => {
                 groupName: group.name,
                 memberName: member.name,
                 memberEmail: member.email
+              });
+              
+              console.log('🔧 [GROUP_MEMBER_PROFILE] Setting form values:', {
+                familyGroup: group.name,
+                memberName: member.name,
+                email: member.email || "",
+                phone: member.phone || ""
               });
               
               setValue("selectedFamilyGroup", group.name);
