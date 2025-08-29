@@ -767,7 +767,6 @@ const GroupMemberProfile = () => {
               {/* Email Field */}
               {selectedGroupMember && (
                 <>
-                  <div className="text-sm text-blue-600 mb-2">DEBUG: Email and Phone fields should be visible here</div>
                   <FormField
                     control={form.control}
                     name="email"
@@ -794,7 +793,6 @@ const GroupMemberProfile = () => {
                     render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Phone Number</FormLabel>
-                      <div className="text-xs text-red-600 mb-1">DEBUG: Phone field value: "{field.value}" - onChange working: {typeof field.onChange === 'function' ? 'YES' : 'NO'}</div>
                       <FormControl>
                         <PhoneInput
                           value={field.value || ""}
