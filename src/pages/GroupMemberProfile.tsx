@@ -662,6 +662,7 @@ const GroupMemberProfile = () => {
               {/* Email Field */}
               {selectedGroupMember && (
                 <>
+                  <div className="text-sm text-blue-600 mb-2">DEBUG: Email and Phone fields should be visible here</div>
                   <FormField
                     control={form.control}
                     name="email"
