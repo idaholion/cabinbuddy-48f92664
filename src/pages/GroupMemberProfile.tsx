@@ -156,9 +156,37 @@ const GroupMemberProfile = () => {
       // If user has a claimed profile, use that
       if (hasClaimedProfile && claimedProfile) {
         console.log('✅ [GROUP_MEMBER_PROFILE] Using claimed profile data');
-        setValue("selectedFamilyGroup", claimedProfile.family_group_name);
-        setValue("selectedMemberName", claimedProfile.member_name);
-        setAutoPopulated(true);
+        const group = familyGroups.find(g => g.name === claimedProfile.family_group_name);
+        if (group) {
+          setValue("selectedFamilyGroup", claimedProfile.family_group_name);
+          setValue("selectedMemberName", claimedProfile.member_name);
+          setSelectedGroup(group);
+          
+          // Find and set the selected member
+          const members = [
+            ...(group.lead_name ? [{ 
+              name: group.lead_name, 
+              email: group.lead_email, 
+              phone: group.lead_phone,
+              isLead: true 
+            }] : []),
+            ...(group.host_members || []).map((member: any) => ({ 
+              name: member.name, 
+              email: member.email, 
+              phone: member.phone,
+              isLead: false 
+            }))
+          ];
+          
+          const selectedMember = members.find(m => m.name === claimedProfile.member_name);
+          if (selectedMember) {
+            setSelectedGroupMember(selectedMember);
+            setValue("email", selectedMember.email || "");
+            setValue("phone", selectedMember.phone || "");
+          }
+          
+          setAutoPopulated(true);
+        }
         return;
       }
 
@@ -169,6 +197,18 @@ const GroupMemberProfile = () => {
           console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as group lead');
           setValue("selectedFamilyGroup", group.name);
           setValue("selectedMemberName", group.lead_name);
+          setSelectedGroup(group);
+          
+          const leadMember = {
+            name: group.lead_name, 
+            email: group.lead_email, 
+            phone: group.lead_phone,
+            isLead: true
+          };
+          setSelectedGroupMember(leadMember);
+          setValue("email", leadMember.email || "");
+          setValue("phone", leadMember.phone || "");
+          
           setAutoPopulated(true);
           return;
         }
@@ -180,6 +220,18 @@ const GroupMemberProfile = () => {
               console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as host member');
               setValue("selectedFamilyGroup", group.name);
               setValue("selectedMemberName", member.name);
+              setSelectedGroup(group);
+              
+              const hostMember = {
+                name: member.name,
+                email: member.email,
+                phone: member.phone,
+                isLead: false
+              };
+              setSelectedGroupMember(hostMember);
+              setValue("email", hostMember.email || "");
+              setValue("phone", hostMember.phone || "");
+              
               setAutoPopulated(true);
               return;
             }
@@ -587,12 +639,12 @@ const GroupMemberProfile = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Select Your Family Group</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
-                      <FormControl>
-                        <SelectTrigger className="text-base">
-                          <SelectValue placeholder={autoPopulated ? "Auto-detected from your profile" : "Choose your family group"} className="text-base" />
-                        </SelectTrigger>
-                      </FormControl>
+                     <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
+                       <FormControl>
+                         <SelectTrigger className="text-base">
+                           <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your family group"} className="text-base" />
+                         </SelectTrigger>
+                       </FormControl>
                       <SelectContent>
                         {familyGroups.map((group) => (
                           <SelectItem key={group.id} value={group.name}>
@@ -617,12 +669,12 @@ const GroupMemberProfile = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Select Your Name</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
-                        <FormControl>
-                          <SelectTrigger className="text-base">
-                            <SelectValue placeholder={autoPopulated ? "Auto-detected from your profile" : "Choose your name from the list"} className="text-base" />
-                          </SelectTrigger>
-                        </FormControl>
+                       <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
+                         <FormControl>
+                           <SelectTrigger className="text-base">
+                             <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your name from the list"} className="text-base" />
+                           </SelectTrigger>
+                         </FormControl>
                         <SelectContent>
                           {availableMembers.map((member, index) => (
                             <SelectItem key={index} value={member.name}>
