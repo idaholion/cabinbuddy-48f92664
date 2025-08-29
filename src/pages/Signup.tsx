@@ -165,7 +165,7 @@ const Signup = () => {
       console.log('✅ [SIGNUP] Account created successfully');
       toast({
         title: "Account created successfully!",
-        description: "Please check your email to confirm your account. You can continue with organization setup now.",
+        description: "You're now signed in and ready to continue with organization setup.",
       });
 
       // Handle organization operations after successful signup
