@@ -151,7 +151,13 @@ export const useReservationConflicts = () => {
       errors.push('Check-out date must be after check-in date');
     }
 
-    if (start < new Date()) {
+    // Compare dates at midnight to avoid time-of-day issues
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDateMidnight = new Date(start);
+    startDateMidnight.setHours(0, 0, 0, 0);
+    
+    if (startDateMidnight < today) {
       errors.push('Cannot make reservations for past dates');
     }
 
