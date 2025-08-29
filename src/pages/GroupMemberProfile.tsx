@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
@@ -585,9 +585,15 @@ const GroupMemberProfile = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      {/* Header with Logout */}
+      {/* Header with Home and Logout */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Profile Settings</h1>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/')} className="flex items-center space-x-2 text-base">
+            <Home className="h-4 w-4" />
+            <span>Home</span>
+          </Button>
+          <h1 className="text-2xl font-bold">Profile Settings</h1>
+        </div>
         <Button variant="outline" onClick={signOut} className="flex items-center space-x-2 text-base">
           <LogOut className="h-4 w-4" />
           <span>Logout</span>
@@ -901,7 +907,7 @@ const GroupMemberProfile = () => {
       </Dialog>
 
       {/* Information Card */}
-      <Card>
+      <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg">Information</CardTitle>
         </CardHeader>
@@ -913,6 +919,14 @@ const GroupMemberProfile = () => {
           <p>• Your changes will be saved automatically</p>
         </CardContent>
       </Card>
+
+      {/* Bottom Home Button */}
+      <div className="flex justify-center pb-6">
+        <Button onClick={() => navigate('/')} size="lg" className="flex items-center space-x-2 text-base">
+          <Home className="h-4 w-4" />
+          <span>Return to Home</span>
+        </Button>
+      </div>
     </div>
   );
 };
