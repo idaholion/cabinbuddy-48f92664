@@ -691,15 +691,15 @@ const GroupMemberProfile = () => {
                       <FormLabel className="text-base">Phone Number</FormLabel>
                       <div className="text-xs text-red-600 mb-1">DEBUG: Phone field value: "{field.value}" - onChange working: {typeof field.onChange === 'function' ? 'YES' : 'NO'}</div>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="Enter your phone number (e.g., 555-123-4567)"
+                        <PhoneInput
                           value={field.value || ""}
-                          onChange={(e) => {
-                            console.log('📞 [PHONE INPUT] Change detected:', e.target.value);
-                            field.onChange(e.target.value);
+                          onChange={(formatted, raw) => {
+                            console.log('📞 [PHONE INPUT] Change detected:', { formatted, raw });
+                            field.onChange(formatted);
                           }}
+                          autoFormat
                           className="text-base placeholder:text-base"
+                          placeholder="Enter your phone number"
                         />
                       </FormControl>
                         <FormMessage />

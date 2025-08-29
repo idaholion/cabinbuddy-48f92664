@@ -30,7 +30,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     }, [value, autoFormat]);
 
     const handleFocus = () => {
-      if (!hasConsented && !value) {
+      // Always show consent dialog on first focus, regardless of existing value
+      if (!hasConsented) {
         setShowConsentDialog(true);
       } else {
         setInputFocused(true);
@@ -38,7 +39,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     };
 
     const handleClick = () => {
-      if (!hasConsented && !value) {
+      // Always show consent dialog on click if not consented, regardless of existing value
+      if (!hasConsented) {
         setShowConsentDialog(true);
       }
     };
