@@ -7,10 +7,17 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Twilio configuration
+// Twilio configuration with enhanced logging
 const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
 const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+
+// Debug logging for Twilio configuration
+console.log("🔧 Twilio Configuration Check:");
+console.log("  - Account SID:", twilioAccountSid ? `Present (${twilioAccountSid.substring(0, 8)}...)` : "❌ Missing");
+console.log("  - Auth Token:", twilioAuthToken ? `Present (${twilioAuthToken.substring(0, 8)}...)` : "❌ Missing");
+console.log("  - Phone Number:", twilioPhoneNumber ? `Present (${twilioPhoneNumber})` : "❌ Missing");
+console.log("  - All credentials present:", !!(twilioAccountSid && twilioAuthToken && twilioPhoneNumber));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,41 +56,66 @@ interface NotificationRequest {
 }
 
 async function sendSMS(to: string, message: string) {
+  console.log("🔄 SMS Sending Attempt:");
+  console.log("  - Recipient:", to);
+  console.log("  - Message length:", message.length, "characters");
+  console.log("  - From number:", twilioPhoneNumber);
+  
   if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-    console.log("Twilio credentials not configured, skipping SMS");
+    console.log("❌ Twilio credentials not configured, skipping SMS");
+    console.log("  - Missing:", {
+      accountSid: !twilioAccountSid,
+      authToken: !twilioAuthToken,
+      phoneNumber: !twilioPhoneNumber
+    });
     return null;
   }
 
   try {
+    console.log("✅ All Twilio credentials present, attempting to send SMS...");
     const auth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
     
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Basic ${auth}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          From: twilioPhoneNumber,
-          To: to,
-          Body: message,
-        }),
-      }
-    );
+    console.log("  - Twilio API URL:", twilioUrl);
+    
+    const requestBody = new URLSearchParams({
+      From: twilioPhoneNumber,
+      To: to,
+      Body: message,
+    });
+    
+    console.log("  - Request body prepared");
+    
+    const response = await fetch(twilioUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: requestBody,
+    });
+
+    console.log("  - Response status:", response.status);
+    console.log("  - Response status text:", response.statusText);
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error("Twilio SMS error:", error);
-      return { error };
+      const errorText = await response.text();
+      console.error("❌ Twilio SMS error response:", errorText);
+      console.error("  - Status code:", response.status);
+      console.error("  - Status text:", response.statusText);
+      return { error: errorText };
     }
 
     const result = await response.json();
-    console.log("SMS sent successfully:", result.sid);
+    console.log("✅ SMS sent successfully!");
+    console.log("  - Message SID:", result.sid);
+    console.log("  - Status:", result.status);
     return result;
   } catch (error) {
-    console.error("Error sending SMS:", error);
+    console.error("❌ Exception while sending SMS:", error);
+    console.error("  - Error name:", error.name);
+    console.error("  - Error message:", error.message);
+    console.error("  - Error stack:", error.stack);
     return { error: error.message };
   }
 }
@@ -399,12 +431,25 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`${type} email sent successfully:`, emailResponse);
 
     // Send SMS notification if phone number is provided
+    console.log("📱 SMS Check:");
+    console.log("  - Has guest_phone:", !!reservation?.guest_phone);
+    console.log("  - Guest phone:", reservation?.guest_phone || "Not provided");
+    console.log("  - Has SMS message:", !!smsMessage);
+    console.log("  - SMS message length:", smsMessage ? smsMessage.length : 0);
+    
     let smsResponse = null;
     if (reservation?.guest_phone && smsMessage) {
+      console.log("🚀 Attempting to send SMS...");
       smsResponse = await sendSMS(reservation.guest_phone, smsMessage);
       if (smsResponse && !smsResponse.error) {
-        console.log(`${type} SMS sent successfully`);
+        console.log(`✅ ${type} SMS sent successfully`);
+      } else if (smsResponse && smsResponse.error) {
+        console.error(`❌ ${type} SMS failed:`, smsResponse.error);
+      } else {
+        console.log(`⚠️ ${type} SMS skipped (credentials not configured)`);
       }
+    } else {
+      console.log("⏭️ SMS skipped - missing phone number or message");
     }
 
     return new Response(JSON.stringify({
