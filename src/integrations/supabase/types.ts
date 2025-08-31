@@ -2217,6 +2217,10 @@ export type Database = {
         Args: { expires_hours?: number; org_id: string }
         Returns: string
       }
+      generate_unique_organization_code: {
+        Args: { base_code?: string }
+        Returns: string
+      }
       get_available_colors: {
         Args: { p_current_group_id?: string; p_organization_id: string }
         Returns: string[]
