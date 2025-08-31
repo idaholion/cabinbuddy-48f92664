@@ -64,6 +64,7 @@ const ReservationDetail = React.lazy(() => import("./pages/ReservationDetail"));
 const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 const FeaturesPage = React.lazy(() => import("./pages/FeaturesPage"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
+const AccountSecurity = React.lazy(() => import("./pages/AccountSecurity"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -144,6 +145,7 @@ const AppContent = () => {
         <Route path="/reservation/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationDetail /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/family-voting" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyVoting /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/features" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FeaturesPage /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/account-security" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AccountSecurity /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/payment-tracking" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/demo" element={<Suspense fallback={<LoadingSpinner />}><Demo /></Suspense>} />
         <Route path="/privacy-policy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />

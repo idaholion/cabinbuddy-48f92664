@@ -23,7 +23,8 @@ import {
   Monitor,
   Vote,
   Sparkles,
-  User
+  User,
+  Shield
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -237,10 +238,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Logout Section */}
+        {/* Account & Security */}
         <SidebarGroup className="border-b pb-2">
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Account Security">
+                  <NavLink 
+                    to="/account-security" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Account Security</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
