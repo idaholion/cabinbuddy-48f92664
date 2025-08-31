@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validateFullName } from "./name-utils";
 
 // Common validation schemas
 export const emailSchema = z.string().email("Please enter a valid email address");
@@ -31,7 +32,9 @@ export const organizationSchema = z.object({
 // Family group validation schemas
 export const familyGroupSchema = z.object({
   name: requiredStringSchema.min(2, "Family group name must be at least 2 characters"),
-  lead_name: requiredStringSchema.min(2, "Lead name must be at least 2 characters"),
+  lead_name: requiredStringSchema.min(2, "Lead name must contain at least 2 characters").refine((val) => {
+    return validateFullName(val);
+  }, "Please enter both first and last name"),
   lead_email: emailSchema.optional().or(z.literal("")),
   lead_phone: phoneSchema.optional().or(z.literal("")),
 });
@@ -39,7 +42,9 @@ export const familyGroupSchema = z.object({
 // Enhanced family group setup validation schema
 export const familyGroupSetupSchema = z.object({
   selectedGroup: requiredStringSchema.min(1, "Please select or create a family group"),
-  leadName: requiredStringSchema.min(2, "Lead name must be at least 2 characters"),
+  leadName: requiredStringSchema.min(2, "Lead name must contain at least 2 characters").refine((val) => {
+    return validateFullName(val);
+  }, "Please enter both first and last name"),
   leadPhone: z.string().optional().refine((val) => {
     if (!val || val === "") return true;
     // Remove all non-digit characters and check if it's a valid phone number
@@ -51,7 +56,10 @@ export const familyGroupSetupSchema = z.object({
     return z.string().email().safeParse(val).success;
   }, "Please enter a valid email address"),
   groupMembers: z.array(z.object({
-    name: z.string(),
+    name: z.string().refine((val) => {
+      if (!val || val.trim() === "") return false;
+      return validateFullName(val);
+    }, "Please enter both first and last name"),
     phone: z.string().refine((val) => {
       if (!val || val === "") return true;
       // Remove all non-digit characters and check if it's a valid phone number

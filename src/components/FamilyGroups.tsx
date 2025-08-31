@@ -13,10 +13,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
+import { getInitials, formatNameForDisplay, parseFullName } from "@/lib/name-utils";
 
 interface FamilyMember {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  displayName: string;
   email: string;
   phone: string;
   role: "lead" | "member";
@@ -49,9 +53,15 @@ export const FamilyGroups = () => {
     familyGroups.forEach(group => {
       // Add group lead as member
       if (group.lead_name) {
+        const leadNameParts = parseFullName(group.lead_name);
+        const displayName = formatNameForDisplay(group.lead_name);
+        
         convertedMembers.push({
           id: `${group.id}-lead`,
-          name: group.lead_name,
+          name: group.lead_name, // Keep for backward compatibility
+          firstName: leadNameParts.firstName,
+          lastName: leadNameParts.lastName,
+          displayName: displayName,
           email: group.lead_email || '',
           phone: group.lead_phone || '',
           role: "lead",
@@ -65,9 +75,15 @@ export const FamilyGroups = () => {
       if (group.host_members && Array.isArray(group.host_members)) {
         group.host_members.forEach((hostMember: any, index: number) => {
           if (hostMember.name && hostMember.name !== group.lead_name) {
+            const memberNameParts = parseFullName(hostMember.name);
+            const displayName = formatNameForDisplay(hostMember.name);
+            
             convertedMembers.push({
               id: `${group.id}-host-${index}`,
-              name: hostMember.name,
+              name: hostMember.name, // Keep for backward compatibility
+              firstName: memberNameParts.firstName,
+              lastName: memberNameParts.lastName,
+              displayName: displayName,
               email: hostMember.email || '',
               phone: hostMember.phone || '',
               role: "member",
@@ -138,9 +154,11 @@ export const FamilyGroups = () => {
   };
 
   const filteredMembers = members.filter(member =>
-    member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    member.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.familyGroup.toLowerCase().includes(searchQuery.toLowerCase())
+    member.familyGroup.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (member.firstName && member.firstName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (member.lastName && member.lastName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (loading) {
@@ -302,12 +320,12 @@ export const FamilyGroups = () => {
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
                         <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {member.name.split(' ').map(n => n[0]).join('')}
+                          {getInitials(member.displayName)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <h3 className="font-semibold text-gray-900">{member.name}</h3>
+                          <h3 className="font-semibold text-gray-900">{member.displayName}</h3>
                           <Badge variant={getRoleBadgeVariant(member.role)}>
                             <RoleIcon className="h-3 w-3 mr-1" />
                             {member.role === 'lead' ? 'Group Lead' : 'Member'}
