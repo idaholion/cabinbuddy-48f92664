@@ -147,11 +147,13 @@ const FamilyGroupSetup = () => {
     const lastName = user.user_metadata?.last_name || '';
     const fullName = [firstName, lastName].filter(Boolean).join(' ');
     const userEmail = user.email || '';
+    const userPhone = user.phone || user.user_metadata?.phone || '';
 
     if (fullName || userEmail) {
       // Pre-populate Group Lead fields
       if (fullName) setValue("leadName", fullName);
       if (userEmail) setValue("leadEmail", userEmail);
+      if (userPhone) setValue("leadPhone", userPhone);
 
       // Also pre-populate ONLY Group Member 1 with same info (group lead is typically first member)
       const currentGroupMembers = getValues("groupMembers");
@@ -160,7 +162,7 @@ const FamilyGroupSetup = () => {
         // Only update the first member (index 0), leave others unchanged
         updatedGroupMembers[0] = {
           name: fullName,
-          phone: "",
+          phone: userPhone,
           email: userEmail,
           canHost: true // Group leads can always host
         };
@@ -232,8 +234,8 @@ const FamilyGroupSetup = () => {
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
     
-    // Only update if we have group members and lead info, and avoid interference with pre-population
-    if (currentGroupMembers && currentGroupMembers.length > 0 && watchedData.leadName && !hasLoadedAutoSave.current) {
+    // Only update if we have group members and any lead info, and avoid interference with pre-population
+    if (currentGroupMembers && currentGroupMembers.length > 0 && (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail) && !hasLoadedAutoSave.current) {
       // Create a copy to avoid mutations
       const updatedGroupMembers = [...currentGroupMembers];
       
