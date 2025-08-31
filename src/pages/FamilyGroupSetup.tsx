@@ -405,13 +405,13 @@ const FamilyGroupSetup = () => {
     
     // Save the form and navigate
     await handleSubmit(onSubmit)();
-    navigate("/use-fee-setup");
+    navigate("/");
   };
 
   const handleContinueWithoutAlternateLead = async () => {
     await handleSubmit(onSubmit)();
     setShowAlternateLeadDialog(false);
-    navigate("/use-fee-setup");
+    navigate("/");
   };
 
   // Show loading state while auth or organization data is loading
@@ -837,7 +837,7 @@ const FamilyGroupSetup = () => {
                 className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold"
                 size="lg"
               >
-                {familyGroupsLoading ? "Saving..." : "Save and Go to Financial Setup"}
+                {familyGroupsLoading ? "Saving..." : "Save and Go to Home"}
               </Button>
             </div>
           </CardContent>
