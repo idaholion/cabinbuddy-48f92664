@@ -153,22 +153,25 @@ const FamilyGroupSetup = () => {
       if (fullName) setValue("leadName", fullName);
       if (userEmail) setValue("leadEmail", userEmail);
 
-      // Also pre-populate Group Member 1 with same info (group lead is typically first member)
+      // Also pre-populate ONLY Group Member 1 with same info (group lead is typically first member)
       const currentGroupMembers = getValues("groupMembers");
       if (currentGroupMembers && currentGroupMembers.length > 0) {
         const updatedGroupMembers = [...currentGroupMembers];
+        // Only update the first member (index 0), leave others unchanged
         updatedGroupMembers[0] = {
           name: fullName,
           phone: "",
           email: userEmail,
           canHost: true // Group leads can always host
         };
+        // Keep other members as they are (empty by default)
         setValue("groupMembers", updatedGroupMembers);
       }
 
-      console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information:', {
+      console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information for first member only:', {
         fullName,
-        userEmail
+        userEmail,
+        memberIndex: 0
       });
     }
   }, [user, setValue, getValues, hasLoadedAutoSave]);
@@ -225,21 +228,34 @@ const FamilyGroupSetup = () => {
     }
   }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
 
-  // Auto-update Group Member 1 when Group Lead info changes
+  // Auto-update ONLY Group Member 1 when Group Lead info changes
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
-    if (currentGroupMembers && currentGroupMembers.length > 0 && watchedData.leadName) {
-      // Update first group member with Group Lead info
+    
+    // Only update if we have group members and lead info, and avoid interference with pre-population
+    if (currentGroupMembers && currentGroupMembers.length > 0 && watchedData.leadName && !hasLoadedAutoSave.current) {
+      // Create a copy to avoid mutations
       const updatedGroupMembers = [...currentGroupMembers];
+      
+      // ONLY update the first group member (index 0) with Group Lead info
       updatedGroupMembers[0] = {
         name: watchedData.leadName || "",
         phone: watchedData.leadPhone || "",
         email: watchedData.leadEmail || "",
         canHost: true // Group leads can always host
       };
+      
+      // Keep all other members exactly as they were
       setValue("groupMembers", updatedGroupMembers);
+      
+      console.log('🔄 [FAMILY_GROUP_SETUP] Updated ONLY first group member with lead info:', {
+        leadName: watchedData.leadName,
+        leadEmail: watchedData.leadEmail,
+        memberIndex: 0,
+        totalMembers: updatedGroupMembers.length
+      });
     }
-  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues]);
+  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave]);
 
   const onSubmit = async (data: FamilyGroupSetupFormData) => {
     if (!data.selectedGroup) {
