@@ -23,6 +23,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 // Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { useProfile } from "@/hooks/useProfile";
 
 const groupMemberProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -39,6 +40,7 @@ const GroupMemberProfile = () => {
   const { organization } = useOrganization();
   const { familyGroups, updateFamilyGroup, loading } = useFamilyGroups();
   const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
+  const { updateProfile: updateUserProfile } = useProfile();
   const navigate = useNavigate();
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
@@ -532,7 +534,7 @@ const GroupMemberProfile = () => {
   });
 
   const onSubmit = async (data: GroupMemberProfileFormData) => {
-    if (!selectedGroup || !selectedGroupMember) {
+    if (!selectedGroup || !selectedGroupMember || !user) {
       toast({
         title: "Error",
         description: "Please select your family group and name.",
@@ -542,37 +544,41 @@ const GroupMemberProfile = () => {
     }
 
     try {
-      if (selectedGroupMember.isLead) {
-        // Update group lead information
-        await updateFamilyGroup(selectedGroup.id, {
-          lead_email: data.email || "",
-          lead_phone: data.phone ? unformatPhoneNumber(data.phone) : "",
-        });
-      } else {
-        // Update the host member in the selected family group
-        const hostMembersArray = selectedGroup.host_members || [];
-        const updatedHostMembers = hostMembersArray.map((member: any) => {
-          if (member.name === selectedGroupMember.name) {
-            return {
-              ...member,
-              email: data.email || member.email,
-              phone: data.phone ? unformatPhoneNumber(data.phone) : member.phone,
-            };
-          }
-          return member;
-        });
-
-        await updateFamilyGroup(selectedGroup.id, {
-          host_members: updatedHostMembers
-        });
-      }
-
-      // Profile completion tracking removed
+      const phoneFormatted = data.phone ? unformatPhoneNumber(data.phone) : "";
       
-      toast({
-        title: "Success",
-        description: "Your profile has been updated successfully.",
+      // Update user profile first - this will trigger the sync to family groups
+      await updateUserProfile({
+        display_name: selectedGroupMember.name,
+        family_group: selectedGroup.name,
+        family_role: selectedGroupMember.isLead ? 'lead' : 'member'
       });
+
+      const updateData = {
+        ...selectedGroupMember,
+        email: data.email || selectedGroupMember.email,
+        phone: phoneFormatted || selectedGroupMember.phone,
+      };
+
+      if (selectedGroupMember.isLead) {
+        // Update the lead information
+        const updates = {
+          lead_email: updateData.email,
+          lead_phone: updateData.phone,
+        };
+        await updateFamilyGroup(selectedGroup.id, updates);
+      } else {
+        // Update host_members array
+        const updatedHostMembers = (selectedGroup.host_members || []).map((member: any) =>
+          member.name === selectedGroupMember.name 
+            ? { ...member, email: updateData.email, phone: updateData.phone }
+            : member
+        );
+        
+        const updates = {
+          host_members: updatedHostMembers,
+        };
+        await updateFamilyGroup(selectedGroup.id, updates);
+      }
     } catch (error) {
       console.error("Error updating group member profile:", error);
       toast({
