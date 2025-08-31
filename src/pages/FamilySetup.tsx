@@ -230,6 +230,11 @@ const FamilySetup = () => {
     }
   }, [existingFamilyGroups, isCreatingNew, isGroupLead, isAdmin, userFamilyGroup?.id, roleLoading]);
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Load saved data on component mount
   useEffect(() => {
     // If we're creating a new organization, auto-populate admin data from signup
