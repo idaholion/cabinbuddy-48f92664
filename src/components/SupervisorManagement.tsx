@@ -215,6 +215,52 @@ export const SupervisorManagement = ({ supervisors }: SupervisorManagementProps)
           <div>• All supervisor actions are logged for security and audit purposes</div>
         </CardContent>
       </Card>
+
+      {/* Supabase Access Card */}
+      <Card className="border-amber-200 bg-amber-50/30 dark:bg-amber-950/20 dark:border-amber-800">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2 text-amber-800 dark:text-amber-200">
+            <Shield className="h-5 w-5" />
+            Supabase Database Access
+          </CardTitle>
+          <CardDescription className="text-amber-700 dark:text-amber-300">
+            Direct access to manage user authentication data
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-base text-amber-800 dark:text-amber-200">
+            <p className="mb-3">
+              To clear out sign-in data and manage user accounts directly, supervisors can access the Supabase Auth Users dashboard:
+            </p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1">
+                    Supabase Auth Users
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Manage user accounts, reset passwords, and view authentication data
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.open('https://supabase.com/dashboard/project/ftaxzdnrnhktzbcsejoy/auth/users', '_blank')}
+                  className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 dark:hover:bg-amber-950/50"
+                >
+                  Open Auth Users
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+            <div>• View all user accounts and their authentication status</div>
+            <div>• Delete user accounts to remove sign-in access</div>
+            <div>• Reset passwords and manage user verification status</div>
+            <div>• Monitor authentication logs and security events</div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
