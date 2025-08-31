@@ -23,7 +23,7 @@ import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/val
 import { GroupMemberCard } from "@/components/GroupMemberCard";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
-import { OrganizationRoleReminder } from "@/components/OrganizationRoleReminder";
+
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSupervisor } from "@/hooks/useSupervisor";
@@ -803,9 +803,6 @@ const FamilyGroupSetup = () => {
             </Form>
           </CardContent>
         </Card>
-        
-        {/* Organization Role Reminder */}
-        <OrganizationRoleReminder />
         
         {/* Save and Continue Section */}
         <Card className="bg-card/95">
