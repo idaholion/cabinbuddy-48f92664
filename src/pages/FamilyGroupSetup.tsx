@@ -82,6 +82,11 @@ const FamilyGroupSetup = () => {
     })
   );
 
+  // Scroll to top when page loads
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Load auto-saved data on mount (only once)
   useEffect(() => {
     if (hasLoadedAutoSave.current) return;
