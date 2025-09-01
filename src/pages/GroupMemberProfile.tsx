@@ -762,9 +762,9 @@ const GroupMemberProfile = () => {
                                {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
                              </SelectItem>
                            ))}
-                          <SelectItem value="NOT_FOUND" className="text-muted-foreground">
-                            I don't see my name
-                          </SelectItem>
+                           <SelectItem value="NOT_FOUND" className="text-muted-foreground">
+                             I don&apos;t see my name
+                           </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
