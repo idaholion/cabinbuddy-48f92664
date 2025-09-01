@@ -452,12 +452,16 @@ export function AppSidebar() {
               <SidebarMenu>
                  {setupItems
                   .filter(item => {
-                    // Filter setup items based on user role and setup flow
+  // Filter setup items based on user role and setup flow
                     if (item.title === "Family Setup") {
                       return isAdmin || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
                     }
                     if (item.title === "Family Group Setup") {
                       return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
+                    }
+                    if (item.title === "Financial Dashboard") {
+                      // Show Financial Dashboard to: admin/treasurer always, OR all members if enabled by admin
+                      return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow;
                     }
                     return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Default: show during setup
                   })

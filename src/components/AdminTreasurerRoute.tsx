@@ -27,10 +27,17 @@ export const AdminTreasurerRoute = ({ children }: AdminTreasurerRouteProps) => {
 
       // SECURITY FIX: Removed debug mode bypass - no URL parameter overrides should allow access
 
-      // Only admin and treasurer have access to financial features
       const userEmail = user.email.toLowerCase();
-      const isAuthorized = organization.admin_email?.toLowerCase() === userEmail ||
-                          organization.treasurer_email?.toLowerCase() === userEmail;
+      
+      // Check admin/treasurer access (always allowed)
+      const isAdminOrTreasurer = organization.admin_email?.toLowerCase() === userEmail ||
+                                organization.treasurer_email?.toLowerCase() === userEmail;
+      
+      // Check if organization allows all members financial access
+      const allowMemberAccess = organization.allow_member_financial_access === true;
+      
+      // Grant access if: admin/treasurer OR (member access enabled AND user is authenticated)
+      const isAuthorized = isAdminOrTreasurer || (allowMemberAccess && !!user);
       
       setHasAccess(isAuthorized);
       setLoading(false);

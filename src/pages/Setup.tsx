@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare, Home } from "lucide-react";
+import { Users, DollarSign, Calendar, Settings, CheckCircle, Sparkles, Info, Menu, X, MessageSquare, Home, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useSetupState } from "@/hooks/useSetupState";
+import { OrganizationFinancialSettings } from "@/components/OrganizationFinancialSettings";
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 
 const Setup = () => {
   const { enterSetupFlow, updateSetupStep, clearSetupState } = useSetupState();
@@ -19,6 +21,7 @@ const Setup = () => {
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
+  const { isAdmin } = useOrgAdmin();
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -363,6 +366,27 @@ const Setup = () => {
             linkText="Configure Calendar Keeper Management"
           />
         </div>
+
+        {/* Financial Access Settings - Only for Admins */}
+        {isAdmin && (
+          <div className="mb-8">
+            <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  Financial Access Settings
+                  <Badge variant="secondary">Admin Only</Badge>
+                </CardTitle>
+                <CardDescription>
+                  Configure who can access the financial dashboard and expense data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <OrganizationFinancialSettings />
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Navigation Choices */}
         <div className="mt-8">

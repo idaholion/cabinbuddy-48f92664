@@ -713,6 +713,7 @@ export type Database = {
           admin_email: string | null
           admin_name: string | null
           admin_phone: string | null
+          allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
           automated_reminders_enabled: boolean | null
           calendar_keeper_email: string | null
@@ -734,6 +735,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
@@ -755,6 +757,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
