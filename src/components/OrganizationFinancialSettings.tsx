@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -13,11 +13,24 @@ export const OrganizationFinancialSettings = () => {
   const { organization, refetchOrganization } = useOrganization();
   const { isAdmin } = useOrgAdmin();
   const [updating, setUpdating] = useState(false);
+  const [localAccessState, setLocalAccessState] = useState<boolean | null>(null);
+
+  // Sync local state with organization data
+  useEffect(() => {
+    if (organization?.allow_member_financial_access !== undefined) {
+      setLocalAccessState(organization.allow_member_financial_access);
+    }
+  }, [organization?.allow_member_financial_access]);
 
   const handleToggleMemberAccess = async (enabled: boolean) => {
     if (!organization?.id) return;
 
+    console.log(`🔄 Updating financial access to: ${enabled}`);
     setUpdating(true);
+    
+    // Optimistically update local state
+    setLocalAccessState(enabled);
+    
     try {
       const { error } = await supabase
         .from('organizations')
@@ -26,7 +39,13 @@ export const OrganizationFinancialSettings = () => {
 
       if (error) throw error;
 
+      console.log(`✅ Database updated successfully`);
+      
+      // Force a refetch and wait for it
       await refetchOrganization();
+      
+      console.log(`🔄 Organization data refetched`);
+      
       toast({
         title: 'Settings Updated',
         description: enabled 
@@ -34,7 +53,11 @@ export const OrganizationFinancialSettings = () => {
           : 'Financial dashboard access restricted to admin and treasurer only',
       });
     } catch (error) {
-      console.error('Error updating financial access:', error);
+      console.error('❌ Error updating financial access:', error);
+      
+      // Revert optimistic update on error
+      setLocalAccessState(!enabled);
+      
       toast({
         title: 'Update Failed',
         description: 'Failed to update financial access settings',
@@ -79,7 +102,7 @@ export const OrganizationFinancialSettings = () => {
           </div>
           <Switch
             id="member-financial-access"
-            checked={organization?.allow_member_financial_access || false}
+            checked={localAccessState ?? false}
             onCheckedChange={handleToggleMemberAccess}
             disabled={updating}
           />
@@ -89,7 +112,7 @@ export const OrganizationFinancialSettings = () => {
           <Info className="h-4 w-4" />
           <AlertDescription>
             <strong>Default Access:</strong> Admin and treasurer always have full access to financial data.
-            {organization?.allow_member_financial_access ? (
+            {localAccessState ? (
               <span className="block mt-1">
                 <strong>Current Setting:</strong> All members can view financial dashboard with appropriate data filtering based on their role.
               </span>
