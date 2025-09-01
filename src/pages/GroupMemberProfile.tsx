@@ -751,11 +751,11 @@ const GroupMemberProfile = () => {
                     <FormItem>
                       <FormLabel className="text-base">Select Your Name</FormLabel>
                        <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
-                         <FormControl>
-                           <SelectTrigger className="text-base">
-                             <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your name from the list"} className="text-base" />
-                           </SelectTrigger>
-                         </FormControl>
+                          <FormControl>
+                            <SelectTrigger className="text-base">
+                              <SelectValue placeholder="Choose your name from the list" className="text-base" />
+                            </SelectTrigger>
+                          </FormControl>
                          <SelectContent>
                            {availableMembers.map((member, index) => (
                              <SelectItem key={index} value={member.name}>
