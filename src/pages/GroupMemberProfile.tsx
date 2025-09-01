@@ -756,12 +756,12 @@ const GroupMemberProfile = () => {
                              <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your name from the list"} className="text-base" />
                            </SelectTrigger>
                          </FormControl>
-                        <SelectContent>
-                          {availableMembers.map((member, index) => (
-                            <SelectItem key={index} value={member.name}>
-                              {member.name} {member.isLead && '(Group Lead)'}
-                            </SelectItem>
-                          ))}
+                         <SelectContent>
+                           {availableMembers.map((member, index) => (
+                             <SelectItem key={index} value={member.name}>
+                               {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
+                             </SelectItem>
+                           ))}
                           <SelectItem value="NOT_FOUND" className="text-muted-foreground">
                             I don't see my name
                           </SelectItem>
