@@ -11,7 +11,7 @@ type DbSurveyResponse = Database['public']['Tables']['survey_responses']['Row'];
 export interface CustomChecklist {
   id: string;
   organization_id: string;
-  checklist_type: 'arrival' | 'daily';
+  checklist_type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance';
   items: any[];
 }
 
@@ -19,7 +19,7 @@ export interface CheckinSession {
   id: string;
   organization_id: string;
   user_id?: string;
-  session_type: 'arrival' | 'daily';
+  session_type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance';
   check_date: string;
   family_group?: string;
   guest_names?: string[];
@@ -40,7 +40,7 @@ export interface SurveyResponse {
 const mapDbChecklistToCustomChecklist = (dbChecklist: DbCustomChecklist): CustomChecklist => ({
   id: dbChecklist.id,
   organization_id: dbChecklist.organization_id,
-  checklist_type: dbChecklist.checklist_type as 'arrival' | 'daily',
+  checklist_type: dbChecklist.checklist_type as 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance',
   items: Array.isArray(dbChecklist.items) ? dbChecklist.items : []
 });
 
@@ -48,7 +48,7 @@ const mapDbSessionToCheckinSession = (dbSession: DbCheckinSession): CheckinSessi
   id: dbSession.id,
   organization_id: dbSession.organization_id,
   user_id: dbSession.user_id || undefined,
-  session_type: dbSession.session_type as 'arrival' | 'daily',
+  session_type: dbSession.session_type as 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance',
   check_date: dbSession.check_date,
   family_group: dbSession.family_group || undefined,
   guest_names: dbSession.guest_names || undefined,
@@ -96,7 +96,7 @@ export const useCustomChecklists = () => {
     }
   };
 
-  const saveChecklist = async (type: 'arrival' | 'daily', items: any[]) => {
+  const saveChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance', items: any[]) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
