@@ -67,7 +67,7 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Please convert this document content into a ${checklistType} checklist with associated image descriptions where relevant:\n\n${Buffer.from(pdfFile, 'base64').toString('utf8').substring(0, 10000)}`
+            content: `Please convert this document content into a ${checklistType} checklist with associated image descriptions where relevant:\n\n${new TextDecoder().decode(Uint8Array.from(atob(pdfFile), c => c.charCodeAt(0))).substring(0, 10000)}`
           }
         ],
         max_completion_tokens: 2000,
