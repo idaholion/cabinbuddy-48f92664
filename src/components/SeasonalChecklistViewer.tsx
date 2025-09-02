@@ -54,7 +54,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
   const sections: ChecklistSection[] = Array.isArray(checklist.items) ? checklist.items : [];
   
   // Calculate progress
-  const totalItems = sections.reduce((acc, section) => acc + section.items.length, 0);
+  const totalItems = sections.reduce((acc, section) => acc + (section.items?.length || 0), 0);
   const completedCount = Object.values(completedItems).filter(Boolean).length;
   const progress = totalItems > 0 ? (completedCount / totalItems) * 100 : 0;
 
@@ -307,13 +307,13 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                   <span>{section.title}</span>
                   {isSessionMode && (
                     <Badge variant="secondary">
-                      {section.items.filter(item => completedItems[item.id]).length} / {section.items.length}
+                      {(section.items || []).filter(item => completedItems[item.id]).length} / {section.items?.length || 0}
                     </Badge>
                   )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {section.items.map((item, itemIndex) => renderChecklistItem(item, itemIndex))}
+                {(section.items || []).map((item, itemIndex) => renderChecklistItem(item, itemIndex))}
               </CardContent>
             </Card>
           ))}
