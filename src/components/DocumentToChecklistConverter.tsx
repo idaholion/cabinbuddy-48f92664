@@ -162,7 +162,7 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
         };
       }
 
-      await saveChecklist(checklistType as any, checklist.items);
+      await saveChecklist(checklistType as any, checklist.items[0].items, checklist.images);
 
       toast({
         title: "Success",
