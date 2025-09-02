@@ -100,13 +100,11 @@ export const useCustomChecklists = () => {
 
   const saveChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance', items: any[], images?: any[]) => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      const { data: organizationId, error: orgError } = await supabase
+        .rpc('get_user_primary_organization_id');
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      if (orgError) throw orgError;
+      if (!organizationId) throw new Error('No organization found');
 
       const existingChecklist = checklists[type];
 
@@ -132,7 +130,7 @@ export const useCustomChecklists = () => {
       } else {
         // Create new
         const insertData: any = {
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
           checklist_type: type,
           items
         };
@@ -196,19 +194,17 @@ export const useCheckinSessions = () => {
 
   const createSession = async (sessionData: Omit<CheckinSession, 'id' | 'organization_id'>) => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      const { data: organizationId, error: orgError } = await supabase
+        .rpc('get_user_primary_organization_id');
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      if (orgError) throw orgError;
+      if (!organizationId) throw new Error('No organization found');
 
       const { data, error } = await supabase
         .from('checkin_sessions')
         .insert({
           ...sessionData,
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
           user_id: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
@@ -285,19 +281,17 @@ export const useSurveyResponses = () => {
 
   const createResponse = async (responseData: Omit<SurveyResponse, 'id' | 'organization_id'>) => {
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      const { data: organizationId, error: orgError } = await supabase
+        .rpc('get_user_primary_organization_id');
 
-      if (!profile?.organization_id) throw new Error('No organization found');
+      if (orgError) throw orgError;
+      if (!organizationId) throw new Error('No organization found');
 
       const { data, error } = await supabase
         .from('survey_responses')
         .insert({
           ...responseData,
-          organization_id: profile.organization_id,
+          organization_id: organizationId,
           user_id: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
