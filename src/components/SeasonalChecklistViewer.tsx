@@ -8,6 +8,7 @@ import { CheckSquare, Clock, Edit2, Save, X, Image as ImageIcon } from 'lucide-r
 import { toast } from '@/hooks/use-toast';
 import type { CustomChecklist } from '@/hooks/useChecklistData';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
+import { ChecklistEditor } from './ChecklistEditor';
 
 interface ChecklistImage {
   itemId: string;
@@ -45,6 +46,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
 }) => {
   const [completedItems, setCompletedItems] = useState<Record<string, boolean>>({});
   const [isSessionMode, setIsSessionMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [sessionStartTime] = useState<Date>(new Date());
   const { saveChecklist } = useCustomChecklists();
 
@@ -161,7 +163,12 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
               <ImageIcon className="h-4 w-4 text-muted-foreground" />
             )}
             {!isSessionMode && (
-              <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-6 w-6 p-0"
+                onClick={() => setIsEditMode(true)}
+              >
                 <Edit2 className="h-3 w-3" />
               </Button>
             )}
@@ -198,6 +205,34 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
 
   const totalImages = checklist.images?.length || 0;
 
+  const handleSaveEdit = async (updatedSections: ChecklistSection[]) => {
+    try {
+      await saveChecklist(checklist.checklist_type, updatedSections, checklist.images);
+      setIsEditMode(false);
+      onUpdate();
+      toast({ title: "Checklist updated successfully!" });
+    } catch (error) {
+      console.error('Error saving checklist:', error);
+      toast({ 
+        title: "Error saving checklist", 
+        description: "Please try again.",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  // Show editor mode
+  if (isEditMode) {
+    return (
+      <ChecklistEditor
+        sections={sections}
+        onSave={handleSaveEdit}
+        onCancel={() => setIsEditMode(false)}
+        checklistType={checklist.checklist_type}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with progress and actions */}
@@ -232,7 +267,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
           </>
         )}
 
-        {!isSessionMode && (
+        {!isSessionMode && !isEditMode && (
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <h3 className="text-lg font-medium capitalize">
@@ -248,34 +283,42 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                 )}
               </div>
             </div>
-            <Button onClick={startSession}>
-              <CheckSquare className="h-4 w-4 mr-2" />
-              Start Session
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setIsEditMode(true)}>
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit Checklist
+              </Button>
+              <Button onClick={startSession}>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Start Session
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
       {/* Checklist Sections */}
-      <div className="space-y-4">
-        {sections.map((section, sectionIndex) => (
-          <Card key={sectionIndex} className="border-l-4 border-l-primary">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span>{section.title}</span>
-                {isSessionMode && (
-                  <Badge variant="secondary">
-                    {section.items.filter(item => completedItems[item.id]).length} / {section.items.length}
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {section.items.map((item, itemIndex) => renderChecklistItem(item, itemIndex))}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {!isEditMode && (
+        <div className="space-y-4">
+          {sections.map((section, sectionIndex) => (
+            <Card key={sectionIndex} className="border-l-4 border-l-primary">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>{section.title}</span>
+                  {isSessionMode && (
+                    <Badge variant="secondary">
+                      {section.items.filter(item => completedItems[item.id]).length} / {section.items.length}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {section.items.map((item, itemIndex) => renderChecklistItem(item, itemIndex))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       
       {/* Session Summary */}
       {isSessionMode && progress > 0 && (

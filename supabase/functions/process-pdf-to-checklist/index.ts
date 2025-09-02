@@ -2,6 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// Rate limiting helper
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -27,7 +30,9 @@ serve(async (req) => {
     
     console.log('Processing PDF for checklist type:', checklistType);
 
-    // Convert base64 PDF to text and extract images using OpenAI GPT-4V
+    // Convert PDF to text first (OpenAI vision doesn't support PDFs directly)
+    console.log('Converting PDF to text using OpenAI...');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -35,25 +40,25 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-5-2025-08-07',
         messages: [
           {
             role: 'system',
-            content: `You are an AI that converts PDF documents into structured checklists with images. 
+            content: `You are an AI that converts text content into structured checklists with image descriptions.
             
-            Extract the text content and identify any visual elements (diagrams, photos, illustrations) that would be helpful for checklist items.
+            Based on the provided text, create actionable checklist items. For each item where a visual aid would be helpful, describe what type of image would enhance understanding.
             
             Return a JSON response with this structure:
             {
               "items": [
                 {
-                  "id": "unique-id",
+                  "id": "item-1",
                   "text": "Checklist item text",
                   "completed": false,
                   "category": "${checklistType}",
                   "hasImage": true/false,
-                  "imageDescription": "Description of what the image shows",
-                  "imagePosition": "before|after" // Whether image should appear before or after the text
+                  "imageDescription": "Detailed description of what the image should show",
+                  "imagePosition": "before|after"
                 }
               ]
             }
@@ -62,22 +67,10 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: `Please convert this PDF document into a ${checklistType} checklist with associated images where relevant.`
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${pdfFile}`
-                }
-              }
-            ]
+            content: `Please convert this document content into a ${checklistType} checklist with associated image descriptions where relevant:\n\n${Buffer.from(pdfFile, 'base64').toString('utf8').substring(0, 10000)}`
           }
         ],
-        max_tokens: 2000,
-        temperature: 0.3,
+        max_completion_tokens: 2000,
       }),
     });
 
@@ -105,61 +98,89 @@ serve(async (req) => {
     }
 
     // For items that need images, generate them using OpenAI's image generation
-    for (const item of checklistData.items) {
-      if (item.hasImage && item.imageDescription) {
-        try {
-          console.log('Generating image for item:', item.text);
-          
-          const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'gpt-image-1',
-              prompt: `${item.imageDescription}. Make it clear, instructional, and suitable for a ${checklistType} checklist. High quality, professional style.`,
-              n: 1,
-              size: '1024x1024',
-              quality: 'high',
-              output_format: 'png'
-            }),
-          });
-
-          if (imageResponse.ok) {
-            const imageData = await imageResponse.json();
-            const imageBase64 = imageData.data[0].b64_json;
-            
-            // Upload image to Supabase storage
-            const fileName = `${organizationId}/${checklistType}/${item.id}.png`;
-            const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('checklist-images')
-              .upload(fileName, imageBuffer, {
-                contentType: 'image/png',
-                upsert: true
+    let imageProcessedCount = 0;
+    const maxConcurrentImages = 3; // Limit concurrent requests
+    
+    for (let i = 0; i < checklistData.items.length; i += maxConcurrentImages) {
+      const batch = checklistData.items.slice(i, i + maxConcurrentImages);
+      
+      await Promise.all(
+        batch.map(async (item) => {
+          if (item.hasImage && item.imageDescription) {
+            try {
+              console.log('Generating image for item:', item.text);
+              
+              // Add delay between requests to avoid rate limiting
+              if (imageProcessedCount > 0) {
+                await delay(2000); // 2 second delay between image requests
+              }
+              
+              const imageResponse = await fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'gpt-image-1',
+                  prompt: `${item.imageDescription}. Make it clear, instructional, and suitable for a ${checklistType} checklist. High quality, professional style.`,
+                  n: 1,
+                  size: '1024x1024',
+                  quality: 'high',
+                  output_format: 'png'
+                }),
               });
 
-            if (!uploadError) {
-              const { data: { publicUrl } } = supabase.storage
-                .from('checklist-images')
-                .getPublicUrl(fileName);
+              if (imageResponse.ok) {
+                const imageData = await imageResponse.json();
+                const imageBase64 = imageData.data[0].b64_json;
+                
+                // Upload image to Supabase storage
+                const fileName = `${organizationId}/${checklistType}/${item.id}.png`;
+                const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('checklist-images')
+                  .upload(fileName, imageBuffer, {
+                    contentType: 'image/png',
+                    upsert: true
+                  });
+
+                if (!uploadError) {
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('checklist-images')
+                    .getPublicUrl(fileName);
+                  
+                  item.imageUrl = publicUrl;
+                  console.log('Image uploaded successfully:', publicUrl);
+                } else {
+                  console.error('Failed to upload image:', uploadError);
+                  item.hasImage = false;
+                }
+              } else {
+                const errorText = await imageResponse.text();
+                console.error('Failed to generate image:', errorText);
+                
+                // Handle rate limiting
+                if (imageResponse.status === 429) {
+                  console.log('Rate limited, waiting longer before retry...');
+                  await delay(10000); // 10 second delay for rate limiting
+                }
+                item.hasImage = false;
+              }
               
-              item.imageUrl = publicUrl;
-              console.log('Image uploaded successfully:', publicUrl);
-            } else {
-              console.error('Failed to upload image:', uploadError);
+              imageProcessedCount++;
+            } catch (imageError) {
+              console.error('Error processing image for item:', item.text, imageError);
               item.hasImage = false;
             }
-          } else {
-            console.error('Failed to generate image:', await imageResponse.text());
-            item.hasImage = false;
           }
-        } catch (imageError) {
-          console.error('Error processing image for item:', item.text, imageError);
-          item.hasImage = false;
-        }
+        })
+      );
+      
+      // Add delay between batches
+      if (i + maxConcurrentImages < checklistData.items.length) {
+        await delay(3000); // 3 second delay between batches
       }
     }
 
