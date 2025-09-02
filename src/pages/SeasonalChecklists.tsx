@@ -133,7 +133,21 @@ const SeasonalChecklists = () => {
                     Paste your bulleted document text and convert it into an interactive checklist
                   </DialogDescription>
                 </DialogHeader>
-                <DocumentToChecklistConverter />
+                <DocumentToChecklistConverter 
+                  onChecklistCreated={(checklist) => {
+                    // Close the converter dialog
+                    setIsConverterOpen(false);
+                    // Refresh the checklists data
+                    refetch();
+                    // Switch to the newly created checklist type
+                    setSelectedChecklistType(checklist.checklist_type);
+                    // Show success message
+                    toast({
+                      title: "Checklist Created!",
+                      description: `Your ${checklist.checklist_type} checklist has been created successfully.`
+                    });
+                  }}
+                />
               </DialogContent>
             </Dialog>
 
