@@ -13,6 +13,7 @@ export interface CustomChecklist {
   organization_id: string;
   checklist_type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance';
   items: any[];
+  images?: any[];
 }
 
 export interface CheckinSession {
@@ -41,7 +42,8 @@ const mapDbChecklistToCustomChecklist = (dbChecklist: DbCustomChecklist): Custom
   id: dbChecklist.id,
   organization_id: dbChecklist.organization_id,
   checklist_type: dbChecklist.checklist_type as 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance',
-  items: Array.isArray(dbChecklist.items) ? dbChecklist.items : []
+  items: Array.isArray(dbChecklist.items) ? dbChecklist.items : [],
+  images: Array.isArray(dbChecklist.images) ? dbChecklist.images : []
 });
 
 const mapDbSessionToCheckinSession = (dbSession: DbCheckinSession): CheckinSession => ({
@@ -96,7 +98,7 @@ export const useCustomChecklists = () => {
     }
   };
 
-  const saveChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance', items: any[]) => {
+  const saveChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance', items: any[], images?: any[]) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -110,9 +112,14 @@ export const useCustomChecklists = () => {
 
       if (existingChecklist) {
         // Update existing
+        const updateData: any = { items };
+        if (images !== undefined) {
+          updateData.images = images;
+        }
+        
         const { data, error } = await supabase
           .from('custom_checklists')
-          .update({ items })
+          .update(updateData)
           .eq('id', existingChecklist.id)
           .select()
           .single();
@@ -124,13 +131,18 @@ export const useCustomChecklists = () => {
         }
       } else {
         // Create new
+        const insertData: any = {
+          organization_id: profile.organization_id,
+          checklist_type: type,
+          items
+        };
+        if (images !== undefined) {
+          insertData.images = images;
+        }
+        
         const { data, error } = await supabase
           .from('custom_checklists')
-          .insert({
-            organization_id: profile.organization_id,
-            checklist_type: type,
-            items
-          })
+          .insert(insertData)
           .select()
           .single();
 

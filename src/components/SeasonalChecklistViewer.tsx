@@ -4,15 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { CheckSquare, Clock, Edit2, Save, X } from 'lucide-react';
+import { CheckSquare, Clock, Edit2, Save, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { CustomChecklist } from '@/hooks/useChecklistData';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
+
+interface ChecklistImage {
+  itemId: string;
+  url: string;
+  description?: string;
+  position: 'before' | 'after';
+}
 
 interface ChecklistItem {
   id: string;
   text: string;
   completed?: boolean;
+  imageUrl?: string;
+  imageDescription?: string;
+  imagePosition?: 'before' | 'after';
 }
 
 interface ChecklistSection {
@@ -20,8 +30,12 @@ interface ChecklistSection {
   items: ChecklistItem[];
 }
 
+interface EnhancedCustomChecklist extends CustomChecklist {
+  images?: ChecklistImage[];
+}
+
 interface SeasonalChecklistViewerProps {
-  checklist: CustomChecklist;
+  checklist: EnhancedCustomChecklist;
   onUpdate: () => void;
 }
 
@@ -88,6 +102,90 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
     toast({ title: "Session cancelled" });
   };
 
+  // Render individual checklist item with image support
+  const renderChecklistItem = (item: ChecklistItem, itemIndex: number) => {
+    // Find associated image for this item
+    const itemImage = checklist.images?.find(img => img.itemId === item.id) || 
+                      (item.imageUrl ? { url: item.imageUrl, description: item.imageDescription, position: item.imagePosition || 'after' } : null);
+
+    return (
+      <div key={item.id} className="space-y-3">
+        {/* Image before text */}
+        {itemImage && itemImage.position === 'before' && (
+          <div className="relative ml-6">
+            <img 
+              src={itemImage.url} 
+              alt={itemImage.description || `Image for ${item.text}`}
+              className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
+              loading="lazy"
+            />
+            {itemImage.description && (
+              <p className="text-xs text-muted-foreground mt-1 text-center">{itemImage.description}</p>
+            )}
+          </div>
+        )}
+
+        {/* Checklist item */}
+        <div 
+          className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+            isSessionMode 
+              ? 'bg-muted/30 hover:bg-muted/50 cursor-pointer' 
+              : 'bg-background'
+          } ${
+            completedItems[item.id] ? 'opacity-60' : ''
+          }`}
+          onClick={() => isSessionMode && toggleItem(item.id)}
+        >
+          {isSessionMode ? (
+            <Checkbox 
+              checked={completedItems[item.id] || false}
+              onCheckedChange={() => toggleItem(item.id)}
+              className="mt-0.5"
+            />
+          ) : (
+            <CheckSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          )}
+          
+          <div className="flex-1">
+            <span 
+              className={`text-sm leading-relaxed ${
+                completedItems[item.id] ? 'line-through text-muted-foreground' : ''
+              }`}
+            >
+              {item.text}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {itemImage && (
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            )}
+            {!isSessionMode && (
+              <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Image after text */}
+        {itemImage && itemImage.position === 'after' && (
+          <div className="relative ml-6">
+            <img 
+              src={itemImage.url} 
+              alt={itemImage.description || `Image for ${item.text}`}
+              className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
+              loading="lazy"
+            />
+            {itemImage.description && (
+              <p className="text-xs text-muted-foreground mt-1 text-center">{itemImage.description}</p>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (sections.length === 0) {
     return (
       <div className="text-center py-8">
@@ -97,6 +195,8 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
       </div>
     );
   }
+
+  const totalImages = checklist.images?.length || 0;
 
   return (
     <div className="space-y-6">
@@ -138,9 +238,15 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
               <h3 className="text-lg font-medium capitalize">
                 {checklist.checklist_type.replace('_', ' ')} Checklist
               </h3>
-              <p className="text-sm text-muted-foreground">
-                {totalItems} total items across {sections.length} sections
-              </p>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>{totalItems} total items across {sections.length} sections</span>
+                {totalImages > 0 && (
+                  <div className="flex items-center gap-1">
+                    <ImageIcon className="h-3 w-3" />
+                    <span>{totalImages} images</span>
+                  </div>
+                )}
+              </div>
             </div>
             <Button onClick={startSession}>
               <CheckSquare className="h-4 w-4 mr-2" />
@@ -164,44 +270,8 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {section.items.map((item, itemIndex) => (
-                <div 
-                  key={item.id} 
-                  className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                    isSessionMode 
-                      ? 'bg-muted/30 hover:bg-muted/50 cursor-pointer' 
-                      : 'bg-background'
-                  } ${
-                    completedItems[item.id] ? 'opacity-60' : ''
-                  }`}
-                  onClick={() => isSessionMode && toggleItem(item.id)}
-                >
-                  {isSessionMode ? (
-                    <Checkbox 
-                      checked={completedItems[item.id] || false}
-                      onCheckedChange={() => toggleItem(item.id)}
-                      className="mt-0.5"
-                    />
-                  ) : (
-                    <CheckSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                  )}
-                  
-                  <span 
-                    className={`flex-1 text-sm leading-relaxed ${
-                      completedItems[item.id] ? 'line-through text-muted-foreground' : ''
-                    }`}
-                  >
-                    {item.text}
-                  </span>
-                  
-                  {!isSessionMode && (
-                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+            <CardContent className="space-y-4">
+              {section.items.map((item, itemIndex) => renderChecklistItem(item, itemIndex))}
             </CardContent>
           </Card>
         ))}

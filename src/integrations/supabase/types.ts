@@ -245,6 +245,7 @@ export type Database = {
           checklist_type: string
           created_at: string
           id: string
+          images: Json | null
           items: Json
           organization_id: string
           updated_at: string
@@ -253,6 +254,7 @@ export type Database = {
           checklist_type: string
           created_at?: string
           id?: string
+          images?: Json | null
           items?: Json
           organization_id: string
           updated_at?: string
@@ -261,6 +263,7 @@ export type Database = {
           checklist_type?: string
           created_at?: string
           id?: string
+          images?: Json | null
           items?: Json
           organization_id?: string
           updated_at?: string

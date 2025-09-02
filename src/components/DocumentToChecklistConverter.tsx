@@ -1,322 +1,306 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { CheckSquare, FileText, Edit2, Trash2, Plus } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Loader2, FileText, Wand2, Upload, Image } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
-import type { CustomChecklist } from '@/hooks/useChecklistData';
+import { useOrganization } from '@/hooks/useOrganization';
+import { supabase } from '@/integrations/supabase/client';
 
-interface ChecklistItem {
-  id: string;
-  text: string;
-  completed?: boolean;
-  category?: string;
+interface DocumentToChecklistConverterProps {
+  onChecklistCreated?: (checklist: any) => void;
 }
 
-interface ChecklistSection {
-  title: string;
-  items: ChecklistItem[];
-}
-
-export const DocumentToChecklistConverter = () => {
+export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverterProps> = ({
+  onChecklistCreated
+}) => {
   const [documentText, setDocumentText] = useState('');
-  const [checklistType, setChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('closing');
-  const [parsedSections, setParsedSections] = useState<ChecklistSection[]>([]);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [editingItem, setEditingItem] = useState<string | null>(null);
-  
-  const { saveChecklist, loading } = useCustomChecklists();
+  const [checklistType, setChecklistType] = useState<string>('');
+  const [isConverting, setIsConverting] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [processingMode, setProcessingMode] = useState<'text' | 'pdf'>('text');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const { saveChecklist } = useCustomChecklists();
+  const { organization } = useOrganization();
 
-  // Parse bulleted text into checklist items
-  const parseDocumentText = () => {
-    if (!documentText.trim()) {
-      toast({ title: "Please enter some text to convert", variant: "destructive" });
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'application/pdf') {
+      setPdfFile(file);
+      setProcessingMode('pdf');
+    } else {
+      toast({
+        title: "Invalid File",
+        description: "Please select a PDF file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data:application/pdf;base64, prefix
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleConvert = async () => {
+    if (processingMode === 'text' && !documentText.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide document text.",
+        variant: "destructive",
+      });
       return;
     }
 
-    const lines = documentText.split('\n').map(line => line.trim()).filter(line => line);
-    const sections: ChecklistSection[] = [];
-    let currentSection: ChecklistSection | null = null;
-
-    lines.forEach((line, index) => {
-      // Check if it's a section header (not bulleted, typically in caps or ends with colon)
-      if (!line.match(/^[\s]*[-•*]\s/) && (line.includes(':') || line === line.toUpperCase())) {
-        // Save previous section if exists
-        if (currentSection && currentSection.items.length > 0) {
-          sections.push(currentSection);
-        }
-        
-        // Start new section
-        currentSection = {
-          title: line.replace(':', ''),
-          items: []
-        };
-      } else if (line.match(/^[\s]*[-•*]\s/) || line.match(/^\d+\.\s/)) {
-        // It's a bulleted or numbered item
-        const cleanedText = line.replace(/^[\s]*[-•*]\s*/, '').replace(/^\d+\.\s*/, '').trim();
-        
-        if (cleanedText) {
-          if (!currentSection) {
-            currentSection = {
-              title: 'Main Checklist',
-              items: []
-            };
-          }
-          
-          currentSection.items.push({
-            id: `item_${Date.now()}_${index}`,
-            text: cleanedText,
-            completed: false
-          });
-        }
-      } else if (line && currentSection) {
-        // Regular text line, add as an item if we're in a section
-        currentSection.items.push({
-          id: `item_${Date.now()}_${index}`,
-          text: line,
-          completed: false
-        });
-      }
-    });
-
-    // Add final section
-    if (currentSection && currentSection.items.length > 0) {
-      sections.push(currentSection);
-    }
-
-    if (sections.length === 0) {
-      toast({ title: "No valid checklist items found", variant: "destructive" });
+    if (processingMode === 'pdf' && !pdfFile) {
+      toast({
+        title: "Missing Information",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
       return;
     }
 
-    setParsedSections(sections);
-    setIsPreviewMode(true);
-    toast({ title: `Parsed ${sections.reduce((acc, s) => acc + s.items.length, 0)} checklist items!` });
-  };
-
-  // Edit an item
-  const editItem = (sectionIndex: number, itemIndex: number, newText: string) => {
-    const updatedSections = [...parsedSections];
-    updatedSections[sectionIndex].items[itemIndex].text = newText;
-    setParsedSections(updatedSections);
-    setEditingItem(null);
-  };
-
-  // Delete an item
-  const deleteItem = (sectionIndex: number, itemIndex: number) => {
-    const updatedSections = [...parsedSections];
-    updatedSections[sectionIndex].items.splice(itemIndex, 1);
-    
-    // Remove section if it's empty
-    if (updatedSections[sectionIndex].items.length === 0) {
-      updatedSections.splice(sectionIndex, 1);
+    if (!checklistType) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a checklist type.",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    setParsedSections(updatedSections);
-  };
 
-  // Add a new item to a section
-  const addItem = (sectionIndex: number) => {
-    const updatedSections = [...parsedSections];
-    updatedSections[sectionIndex].items.push({
-      id: `item_${Date.now()}_new`,
-      text: 'New item',
-      completed: false
-    });
-    setParsedSections(updatedSections);
-    setEditingItem(`${sectionIndex}_${updatedSections[sectionIndex].items.length - 1}`);
-  };
+    if (!organization?.id) {
+      toast({
+        title: "Error",
+        description: "Organization not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  // Save the checklist
-  const saveConvertedChecklist = async () => {
+    setIsConverting(true);
+
     try {
-      // Transform sections into the format expected by the checklist system
-      const checklistData = parsedSections.map(section => ({
-        title: section.title,
-        items: section.items.map(item => ({
-          id: item.id,
-          text: item.text,
-          completed: false
-        }))
-      }));
+      let checklist;
 
-      await saveChecklist(checklistType, checklistData);
-      
-      // Reset the form
+      if (processingMode === 'pdf' && pdfFile) {
+        // Process PDF with AI
+        const base64File = await convertFileToBase64(pdfFile);
+        
+        const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
+          body: {
+            pdfFile: base64File,
+            checklistType,
+            organizationId: organization.id
+          }
+        });
+
+        if (error) {
+          throw new Error(error.message || 'Failed to process PDF');
+        }
+
+        if (!data.success) {
+          throw new Error(data.details || 'Failed to process PDF');
+        }
+
+        // Transform the AI response into the format expected by the checklist system
+        const sections = [{
+          title: `${checklistType} Checklist`,
+          items: data.checklist.items.map((item: any) => ({
+            id: item.id,
+            text: item.text,
+            completed: false,
+            imageUrl: item.imageUrl,
+            imageDescription: item.imageDescription,
+            imagePosition: item.imagePosition
+          }))
+        }];
+
+        checklist = {
+          checklist_type: checklistType,
+          items: sections,
+          images: data.checklist.items.filter((item: any) => item.imageUrl).map((item: any) => ({
+            itemId: item.id,
+            url: item.imageUrl,
+            description: item.imageDescription,
+            position: item.imagePosition || 'after'
+          }))
+        };
+      } else {
+        // Process text manually
+        const lines = documentText.split('\n').filter(line => line.trim());
+        const items = lines.map((line, index) => ({
+          id: `item-${index}`,
+          text: line.trim(),
+          completed: false
+        }));
+
+        const sections = [{
+          title: `${checklistType} Checklist`,
+          items
+        }];
+
+        checklist = {
+          checklist_type: checklistType,
+          items: sections,
+          images: []
+        };
+      }
+
+      await saveChecklist(checklistType as any, checklist.items);
+
+      toast({
+        title: "Success",
+        description: `${checklistType} checklist created with ${checklist.items[0]?.items?.length || 0} items${checklist.images?.length ? ` and ${checklist.images.length} images` : ''}.`,
+      });
+
+      // Reset form
       setDocumentText('');
-      setParsedSections([]);
-      setIsPreviewMode(false);
+      setChecklistType('');
+      setPdfFile(null);
+      setProcessingMode('text');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       
-      toast({ title: `${checklistType} checklist saved successfully!` });
+      // Notify parent component
+      onChecklistCreated?.(checklist);
+
     } catch (error) {
-      console.error('Error saving checklist:', error);
-      toast({ title: "Error saving checklist", variant: "destructive" });
+      console.error('Error converting document:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to convert document to checklist. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConverting(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Document to Checklist Converter
+          Enhanced Document to Visual Checklist Converter
         </CardTitle>
-        <CardDescription>
-          Convert your bulleted Word document into an interactive checklist. 
-          Simply paste your text below and we'll parse it into checklist items.
-        </CardDescription>
       </CardHeader>
-      
       <CardContent className="space-y-6">
-        {!isPreviewMode ? (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="checklist-type">Checklist Type</Label>
-              <Select value={checklistType} onValueChange={(value: any) => setChecklistType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select checklist type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="closing">Cabin Closing</SelectItem>
-                  <SelectItem value="opening">Cabin Opening</SelectItem>
-                  <SelectItem value="seasonal">Seasonal Tasks</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="checklistType">Checklist Type</Label>
+          <Select value={checklistType} onValueChange={setChecklistType}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select checklist type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="opening">Opening Checklist</SelectItem>
+              <SelectItem value="closing">Closing Checklist</SelectItem>
+              <SelectItem value="seasonal">Seasonal Checklist</SelectItem>
+              <SelectItem value="maintenance">Maintenance Checklist</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="document-text">
-                Paste Your Bulleted Document Text
-              </Label>
-              <Textarea
-                id="document-text"
-                placeholder="Paste your bulleted text here...
+        <div className="space-y-4">
+          <Label>Input Method</Label>
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant={processingMode === 'text' ? 'default' : 'outline'}
+              onClick={() => setProcessingMode('text')}
+              className="flex-1"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Text Input
+            </Button>
+            <Button
+              type="button"
+              variant={processingMode === 'pdf' ? 'default' : 'outline'}
+              onClick={() => setProcessingMode('pdf')}
+              className="flex-1"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              PDF Upload
+            </Button>
+          </div>
+        </div>
 
-Example:
-CABIN CLOSING CHECKLIST:
-• Turn off main water supply
-• Drain all pipes and faucets
-• Check all windows are secure
-
-HEATING SYSTEM:
-• Turn off furnace
-• Set thermostat to 55°F
-• Check for proper ventilation"
-                value={documentText}
-                onChange={(e) => setDocumentText(e.target.value)}
-                className="min-h-[300px] font-mono text-sm"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button 
-                onClick={parseDocumentText}
-                disabled={!documentText.trim()}
-                className="flex items-center gap-2"
-              >
-                <CheckSquare className="h-4 w-4" />
-                Parse into Checklist
-              </Button>
-            </div>
-          </>
+        {processingMode === 'text' ? (
+          <div className="space-y-2">
+            <Label htmlFor="documentText">Document Text</Label>
+            <Textarea
+              id="documentText"
+              placeholder="Paste your document text here. Each line will become a checklist item."
+              value={documentText}
+              onChange={(e) => setDocumentText(e.target.value)}
+              className="min-h-[200px]"
+            />
+          </div>
         ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Preview: {checklistType} Checklist</h3>
-                <p className="text-sm text-muted-foreground">
-                  {parsedSections.reduce((acc, s) => acc + s.items.length, 0)} total items across {parsedSections.length} sections
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsPreviewMode(false)}
-                >
-                  Edit Text
-                </Button>
-                <Button 
-                  onClick={saveConvertedChecklist}
-                  disabled={loading}
-                  className="flex items-center gap-2"
-                >
-                  <CheckSquare className="h-4 w-4" />
-                  Save Checklist
-                </Button>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="pdfFile">PDF Document</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                ref={fileInputRef}
+                id="pdfFile"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileUpload}
+                className="flex-1"
+              />
+              {pdfFile && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Image className="h-4 w-4" />
+                  AI will extract images
+                </div>
+              )}
             </div>
+            {pdfFile && (
+              <p className="text-sm text-muted-foreground">
+                Selected: {pdfFile.name} - AI will analyze the document and extract relevant images for checklist items.
+              </p>
+            )}
+          </div>
+        )}
 
-            <Separator />
-
-            <div className="space-y-6">
-              {parsedSections.map((section, sectionIndex) => (
-                <Card key={sectionIndex} className="border-l-4 border-l-primary">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">{section.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {section.items.map((item, itemIndex) => (
-                      <div key={item.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
-                        <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                        {editingItem === `${sectionIndex}_${itemIndex}` ? (
-                          <input
-                            type="text"
-                            value={item.text}
-                            onChange={(e) => editItem(sectionIndex, itemIndex, e.target.value)}
-                            onBlur={() => setEditingItem(null)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') setEditingItem(null);
-                            }}
-                            className="flex-1 bg-background border rounded px-2 py-1 text-sm"
-                            autoFocus
-                          />
-                        ) : (
-                          <span 
-                            className="flex-1 text-sm cursor-pointer hover:bg-muted/50 px-2 py-1 rounded"
-                            onClick={() => setEditingItem(`${sectionIndex}_${itemIndex}`)}
-                          >
-                            {item.text}
-                          </span>
-                        )}
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingItem(`${sectionIndex}_${itemIndex}`)}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteItem(sectionIndex, itemIndex)}
-                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => addItem(sectionIndex)}
-                      className="w-full h-8 text-muted-foreground border-dashed border hover:border-solid"
-                    >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Add item
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </>
+        <Button 
+          onClick={handleConvert} 
+          disabled={isConverting || !checklistType || (processingMode === 'text' ? !documentText.trim() : !pdfFile)}
+          className="w-full"
+        >
+          {isConverting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {processingMode === 'pdf' ? 'Processing PDF with AI...' : 'Converting...'}
+            </>
+          ) : (
+            <>
+              <Wand2 className="mr-2 h-4 w-4" />
+              {processingMode === 'pdf' ? 'Process PDF with AI' : 'Convert to Checklist'}
+            </>
+          )}
+        </Button>
+        
+        {processingMode === 'pdf' && (
+          <p className="text-xs text-muted-foreground">
+            PDF processing uses AI to extract text, identify relevant images, and create visual checklist items with associated pictures where helpful.
+          </p>
         )}
       </CardContent>
     </Card>
