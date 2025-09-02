@@ -97,6 +97,7 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
 
     try {
       let checklist;
+      let sections;
 
       if (processingMode === 'pdf' && pdfFile) {
         // Process PDF with AI
@@ -119,7 +120,7 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
         }
 
         // Transform the AI response into the format expected by the checklist system
-        const sections = [{
+        sections = [{
           title: `${checklistType} Checklist`,
           items: data.checklist.items.map((item: any) => ({
             id: item.id,
@@ -150,7 +151,7 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
           completed: false
         }));
 
-        const sections = [{
+        sections = [{
           title: `${checklistType} Checklist`,
           items
         }];
@@ -162,7 +163,7 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
         };
       }
 
-      await saveChecklist(checklistType as any, checklist.items[0].items, checklist.images);
+      await saveChecklist(checklistType as any, sections, checklist.images);
 
       toast({
         title: "Success",
