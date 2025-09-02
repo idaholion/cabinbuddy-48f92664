@@ -158,10 +158,46 @@ export const useCustomChecklists = () => {
     }
   };
 
+  const deleteChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance') => {
+    try {
+      const { data: organizationId, error: orgError } = await supabase
+        .rpc('get_user_primary_organization_id');
+
+      if (orgError) throw orgError;
+      if (!organizationId) throw new Error('No organization found');
+
+      const existingChecklist = checklists[type];
+      if (!existingChecklist) {
+        toast({ title: "No checklist found to delete", variant: "destructive" });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('custom_checklists')
+        .delete()
+        .eq('id', existingChecklist.id);
+
+      if (error) throw error;
+      
+      // Remove from local state
+      setChecklists(prev => {
+        const updated = { ...prev };
+        delete updated[type];
+        return updated;
+      });
+
+      toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} checklist deleted successfully!` });
+    } catch (error) {
+      console.error('Error deleting checklist:', error);
+      toast({ title: "Error deleting checklist", variant: "destructive" });
+    }
+  };
+
   return {
     checklists,
     loading,
     saveChecklist,
+    deleteChecklist,
     refetch: fetchChecklists
   };
 };

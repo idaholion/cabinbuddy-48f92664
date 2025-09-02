@@ -28,32 +28,9 @@ serve(async (req) => {
     console.log('Processing PDF for checklist type:', checklistType);
     console.log('PDF file size:', pdfFile.length);
 
-    // For this demo, we'll create a simple text-based conversion
-    // In a production app, you'd want to use a proper PDF parsing library
-    console.log('Processing PDF content...');
+    // Try to extract text from PDF using OpenAI's newer capabilities
+    console.log('Processing PDF with OpenAI...');
     
-    // Simulate PDF text extraction for demo purposes
-    // In reality, you'd decode the base64, parse the PDF, and extract text
-    const simulatedContent = `
-Based on the uploaded PDF, here are the checklist items:
-
-• Check all windows and doors are locked
-• Turn off all lights and electrical appliances  
-• Check thermostat settings
-• Ensure all faucets are turned off completely
-• Check for any water leaks
-• Empty all trash receptacles
-• Clean kitchen surfaces and appliances
-• Make beds and straighten bedrooms
-• Check smoke detector batteries
-• Secure any outdoor furniture
-• Lock all entry points
-• Set security system if applicable
-    `.trim();
-
-    console.log('Using simulated PDF content extraction...');
-    
-    // Use OpenAI to structure the content into checklist items
     const extractionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -61,35 +38,46 @@ Based on the uploaded PDF, here are the checklist items:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: `You are a checklist item extractor. Extract ALL bullet points, numbered items, and checklist items from the provided text. 
+            content: `You are a document content extractor. Extract ALL text content from the provided document and identify any checklist items, bullet points, numbered lists, or task items.
             
             Return ONLY a JSON object with this exact structure:
             {
               "items": [
                 {
-                  "text": "exact text of the bullet point or item",
+                  "text": "exact text of each item",
                   "hasImage": false
                 }
               ]
             }
             
             IMPORTANT:
-            - Extract EVERY bullet point, dash, number, or checklist item
+            - Extract EVERY identifiable task, item, or instruction
             - Keep the original text exactly as written
-            - Do not summarize or modify the text
-            - Do not add your own items
-            - Remove bullet symbols (•, -, *, numbers) from the text`
+            - Remove only bullet symbols (•, -, *, numbers) from the beginning
+            - If no clear list items exist, break content into logical task-based chunks
+            - Do not add your own interpretation or items`
           },
           {
             role: 'user',
-            content: `Please extract all checklist items from this text:\n\n${simulatedContent}`
+            content: [
+              {
+                type: 'text',
+                text: 'Please extract all checklist items and tasks from this document.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:application/pdf;base64,${pdfFile}`
+                }
+              }
+            ]
           }
         ],
-        max_tokens: 4000
+        max_completion_tokens: 8000
       }),
     });
 

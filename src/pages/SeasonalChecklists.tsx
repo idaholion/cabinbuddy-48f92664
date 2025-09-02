@@ -8,13 +8,13 @@ import { DocumentToChecklistConverter } from '@/components/DocumentToChecklistCo
 import { SeasonalChecklistViewer } from '@/components/SeasonalChecklistViewer';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { PageHeader } from '@/components/ui/page-header';
-import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench } from 'lucide-react';
+import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const SeasonalChecklists = () => {
   const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('closing');
   const [isConverterOpen, setIsConverterOpen] = useState(false);
-  const { checklists, loading, refetch } = useCustomChecklists();
+  const { checklists, loading, deleteChecklist, refetch } = useCustomChecklists();
 
   const checklistTypes = [
     { 
@@ -185,13 +185,31 @@ const SeasonalChecklists = () => {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {React.createElement(checklistTypes.find(t => t.key === selectedChecklistType)?.icon || CheckSquare, { className: "h-5 w-5" })}
-                {checklistTypes.find(t => t.key === selectedChecklistType)?.label} Checklist
-              </CardTitle>
-              <CardDescription>
-                {checklistTypes.find(t => t.key === selectedChecklistType)?.description}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    {React.createElement(checklistTypes.find(t => t.key === selectedChecklistType)?.icon || CheckSquare, { className: "h-5 w-5" })}
+                    {checklistTypes.find(t => t.key === selectedChecklistType)?.label} Checklist
+                  </CardTitle>
+                  <CardDescription>
+                    {checklistTypes.find(t => t.key === selectedChecklistType)?.description}
+                  </CardDescription>
+                </div>
+                {checklists[selectedChecklistType] && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (confirm(`Are you sure you want to delete the ${selectedChecklistType} checklist? This action cannot be undone.`)) {
+                        await deleteChecklist(selectedChecklistType);
+                      }
+                    }}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (
