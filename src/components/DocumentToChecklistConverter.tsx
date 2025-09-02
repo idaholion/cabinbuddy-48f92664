@@ -184,9 +184,13 @@ export const DocumentToChecklistConverter: React.FC<DocumentToChecklistConverter
 
     } catch (error) {
       console.error('Error converting document:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to convert document to checklist. Please try again.";
+      
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to convert document to checklist. Please try again.",
+        title: "Conversion Error",
+        description: errorMessage.includes('PDF Processing Not Available') 
+          ? "PDF processing isn't available yet. Please copy your text content and use the 'Text Input' option instead."
+          : errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -28,131 +28,17 @@ serve(async (req) => {
     console.log('Processing PDF for checklist type:', checklistType);
     console.log('PDF file size:', pdfFile.length);
 
-    // Try to extract text from PDF using OpenAI's newer capabilities
-    console.log('Processing PDF with OpenAI...');
+    // Note: Direct PDF processing with OpenAI requires proper PDF parsing
+    // For now, we'll provide a clear message about the limitation
+    console.log('PDF processing requested...');
     
-    const extractionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a document content extractor. Extract ALL text content from the provided document and identify any checklist items, bullet points, numbered lists, or task items.
-            
-            Return ONLY a JSON object with this exact structure:
-            {
-              "items": [
-                {
-                  "text": "exact text of each item",
-                  "hasImage": false
-                }
-              ]
-            }
-            
-            IMPORTANT:
-            - Extract EVERY identifiable task, item, or instruction
-            - Keep the original text exactly as written
-            - Remove only bullet symbols (•, -, *, numbers) from the beginning
-            - If no clear list items exist, break content into logical task-based chunks
-            - Do not add your own interpretation or items`
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Please extract all checklist items and tasks from this document.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:application/pdf;base64,${pdfFile}`
-                }
-              }
-            ]
-          }
-        ],
-        max_completion_tokens: 8000
-      }),
-    });
-
-    if (!extractionResponse.ok) {
-      const errorText = await extractionResponse.text();
-      console.error('OpenAI extraction failed:', errorText);
-      throw new Error(`Failed to extract PDF content: ${errorText}`);
-    }
-
-    const extractionData = await extractionResponse.json();
-    console.log('OpenAI extraction response:', extractionData);
-    
-    const extractedContent = extractionData.choices[0].message.content;
-    console.log('Extracted content:', extractedContent);
-
-    // Parse the JSON response
-    let parsedContent;
-    try {
-      // Try to extract JSON from the response (in case there's extra text)
-      const jsonMatch = extractedContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsedContent = JSON.parse(jsonMatch[0]);
-      } else {
-        parsedContent = JSON.parse(extractedContent);
-      }
-    } catch (parseError) {
-      console.error('Failed to parse extracted content as JSON:', parseError);
-      console.log('Raw content:', extractedContent);
-      
-      // Fallback: try to extract bullet points manually from the text
-      const lines = extractedContent.split('\n');
-      const bulletPoints = lines
-        .filter(line => {
-          const trimmed = line.trim();
-          return trimmed.length > 0 && (
-            trimmed.startsWith('•') || 
-            trimmed.startsWith('-') || 
-            trimmed.startsWith('*') ||
-            /^\d+\./.test(trimmed) ||
-            trimmed.startsWith('□') ||
-            trimmed.startsWith('☐')
-          );
-        })
-        .map((line, index) => ({
-          text: line.trim().replace(/^[•\-*\d+\.\□☐]\s*/, ''),
-          hasImage: false
-        }));
-
-      parsedContent = { items: bulletPoints };
-    }
-
-    if (!parsedContent.items || !Array.isArray(parsedContent.items)) {
-      throw new Error('Invalid content structure extracted from PDF');
-    }
-
-    console.log(`Successfully extracted ${parsedContent.items.length} items from PDF`);
-
-    // Process the extracted items and add IDs
-    const processedItems = parsedContent.items.map((item, index) => ({
-      id: `item-${index + 1}`,
-      text: item.text || '',
-      completed: false,
-      hasImage: item.hasImage || false,
-      imagePosition: 'after'
-    }));
-
-    const checklistData = { items: processedItems };
-
-    console.log('Successfully processed PDF into checklist with', checklistData.items.length, 'items');
-
     return new Response(JSON.stringify({
-      success: true,
-      checklist: checklistData,
-      extractedCount: processedItems.length
+      success: false,
+      error: 'PDF Processing Not Available',
+      details: 'Direct PDF processing is not currently supported. Please copy and paste the text content from your PDF into the text converter instead.',
+      suggestion: 'Use the "Text" option in the converter and paste your checklist items directly.'
     }), {
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
@@ -160,10 +46,10 @@ serve(async (req) => {
     console.error('Error in process-pdf-to-checklist:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: 'Failed to process PDF',
-      details: error.message 
+      error: 'PDF Processing Not Available',
+      details: 'Direct PDF processing is not currently supported. Please copy and paste the text content from your PDF into the text converter instead.'
     }), {
-      status: 500,
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
