@@ -26,10 +26,10 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       const fileName = selectedFile.name.toLowerCase();
-      if (!fileName.endsWith('.docx') && !fileName.endsWith('.txt') && !fileName.endsWith('.rtf')) {
+      if (!fileName.endsWith('.docx') && !fileName.endsWith('.txt') && !fileName.endsWith('.rtf') && !fileName.endsWith('.pdf')) {
         toast({
           title: "Invalid File Type",
-          description: "Please select a Word document (.docx), text file (.txt), or RTF file (.rtf)",
+          description: "Please select a Word document (.docx), PDF (.pdf), text file (.txt), or RTF file (.rtf)",
           variant: "destructive"
         });
         return;
@@ -139,10 +139,15 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       // Convert file to base64
       const base64File = await convertFileToBase64(file);
 
-      // Call the edge function to process the Word document
-      const { data, error } = await supabase.functions.invoke('process-word-to-checklist', {
+      // Determine which edge function to use based on file type
+      const fileName = file.name.toLowerCase();
+      const functionName = fileName.endsWith('.pdf') ? 'process-pdf-to-checklist' : 'process-word-to-checklist';
+      const bodyKey = fileName.endsWith('.pdf') ? 'pdfFile' : 'wordFile';
+
+      // Call the appropriate edge function
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
-          wordFile: base64File,
+          [bodyKey]: base64File,
           checklistType,
           organizationId
         }
@@ -243,7 +248,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
             <Input
               id="word-file"
               type="file"
-              accept=".docx,.txt,.rtf"
+              accept=".docx,.txt,.rtf,.pdf"
               onChange={handleFileChange}
               className="flex-1"
             />
@@ -255,14 +260,12 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
             )}
           </div>
           <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium">💡 For best results with Word documents:</p>
+            <p className="text-sm text-blue-800 font-medium">💡 For best results:</p>
             <ol className="text-sm text-blue-700 mt-1 ml-4 space-y-1">
-              <li>1. Open your Word document</li>
-              <li>2. Select all content (Ctrl+A)</li>
-              <li>3. Copy (Ctrl+C)</li>
-              <li>4. Use "Paste text content" option below instead</li>
+              <li><strong>PDF files:</strong> Work great! Just upload directly</li>
+              <li><strong>Word documents:</strong> Copy content and paste as text instead</li>
+              <li><strong>Text files:</strong> Upload directly or paste content</li>
             </ol>
-            <p className="text-xs text-blue-600 mt-2">Or try saving your Word doc as a .txt file and uploading that.</p>
           </div>
         </div>
 
