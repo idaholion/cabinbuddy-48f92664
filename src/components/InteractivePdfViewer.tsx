@@ -158,10 +158,18 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <h3 className="text-lg font-semibold">Upload Your Document</h3>
-              <p className="text-muted-foreground">
-                Upload your HTML document (saved from Word as HTML). It will be displayed exactly as it is, 
-                and you can add checkboxes anywhere by clicking on the document.
+              <p className="text-muted-foreground mb-4">
+                Upload your HTML document (saved from Word as HTML). For images to display properly:
               </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-amber-800 mb-2">📋 For Images to Work:</h4>
+                <ul className="text-sm text-amber-700 space-y-1">
+                  <li>• <strong>Save as "Web Page, Complete"</strong> from Word (not just "Web Page")</li>
+                  <li>• This creates an HTML file + a folder with images</li>
+                  <li>• Upload the HTML file here, then the images should display</li>
+                  <li>• Or embed images directly in Word before saving</li>
+                </ul>
+              </div>
               
               <div className="mt-4 p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                 <div className="text-center">
