@@ -206,15 +206,24 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               <input
                 type="file"
                 accept=".html,.htm,text/html"
-                onChange={handleFileUpload}
+                onChange={(e) => {
+                  console.log('🔘 File input onChange fired');
+                  handleFileUpload(e);
+                }}
                 ref={fileInputRef}
                 className="hidden"
                 disabled={isLoading}
+                onClick={() => console.log('🔘 File input clicked')}
               />
               <Button
                 onClick={() => {
-                  console.log('Upload button clicked');
-                  fileInputRef.current?.click();
+                  console.log('🔘 Upload button clicked');
+                  if (fileInputRef.current) {
+                    console.log('🔘 File input exists, triggering click');
+                    fileInputRef.current.click();
+                  } else {
+                    console.log('❌ File input ref is null');
+                  }
                 }}
                 className="w-full max-w-sm"
                 size="lg"
