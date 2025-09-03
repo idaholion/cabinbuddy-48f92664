@@ -207,8 +207,13 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 type="file"
                 accept=".html,.htm,text/html"
                 onChange={(e) => {
-                  console.log('🔘 File input onChange fired');
-                  handleFileUpload(e);
+                  console.log('🔘 File input onChange fired, files:', e.target.files?.length);
+                  if (e.target.files?.length) {
+                    console.log('🔘 File selected:', e.target.files[0].name);
+                    handleFileUpload(e);
+                  } else {
+                    console.log('❌ No files selected');
+                  }
                 }}
                 ref={fileInputRef}
                 className="hidden"
