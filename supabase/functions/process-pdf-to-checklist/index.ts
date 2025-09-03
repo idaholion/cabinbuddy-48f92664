@@ -36,10 +36,21 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    const { pdfFile, checklistType, organizationId } = await req.json();
+    const requestBody = await req.json();
+    console.log('Raw request body:', requestBody);
+    
+    const { pdfFile, checklistType, organizationId } = requestBody;
     
     console.log('Processing PDF for checklist type:', checklistType);
     console.log('Organization ID:', organizationId);
+    
+    if (!pdfFile) {
+      throw new Error('PDF file data is required');
+    }
+    
+    if (!organizationId) {
+      throw new Error('Organization ID is required');
+    }
 
     // Extract text from PDF
     const extractedText = await extractPdfText(pdfFile);
