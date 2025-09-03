@@ -1,6 +1,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Import PDF parsing library that works in Deno
+import { getDocument, PDFDocumentProxy } from 'https://esm.sh/pdfjs-dist@3.11.174/build/pdf.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -147,7 +149,7 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractPdfText(base64File: string): Promise<string> {
-  console.log('Starting PDF text extraction...');
+  console.log('Starting PDF text extraction with proper PDF parser...');
   
   try {
     // Handle different base64 formats
@@ -156,113 +158,150 @@ async function extractPdfText(base64File: string): Promise<string> {
       base64Data = base64File.split(',')[1];
     }
     
-    // Decode the PDF
+    // Convert base64 to Uint8Array
     const binaryString = atob(base64Data);
-    console.log('PDF file size:', binaryString.length, 'bytes');
-    
-    // Simple PDF text extraction using stream parsing
-    let extractedText = '';
-    const textObjects = [];
-    
-    // Look for text objects in PDF stream
-    let i = 0;
-    while (i < binaryString.length - 10) {
-      // Look for text objects (BT...ET blocks)
-      if (binaryString.substr(i, 2) === 'BT') {
-        let endIndex = binaryString.indexOf('ET', i);
-        if (endIndex > i) {
-          const textBlock = binaryString.substring(i, endIndex + 2);
-          textObjects.push(textBlock);
-          i = endIndex + 2;
-        } else {
-          i++;
-        }
-      } else {
-        i++;
-      }
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
     
-    console.log('Found text blocks:', textObjects.length);
+    console.log('PDF file size:', bytes.length, 'bytes');
     
-    // Extract text from text objects
-    for (const textBlock of textObjects) {
-      // Look for text content in parentheses or brackets
-      const textMatches = textBlock.match(/\([^)]+\)/g) || textBlock.match(/\[[^\]]+\]/g);
-      if (textMatches) {
-        for (const match of textMatches) {
-          const cleanText = match
-            .replace(/^\(|\)$|^\[|\]$/g, '') // Remove parentheses/brackets
-            .replace(/\\[nrt]/g, ' ') // Replace escape sequences
-            .replace(/\s+/g, ' ') // Normalize spaces
-            .trim();
+    try {
+      // Use PDF.js to properly parse the PDF
+      const doc: PDFDocumentProxy = await getDocument({
+        data: bytes,
+        useSystemFonts: true,
+        standardFontDataUrl: null,
+        useWorkerFetch: false
+      }).promise;
+      
+      console.log('PDF loaded successfully, pages:', doc.numPages);
+      
+      let fullText = '';
+      
+      // Extract text from all pages
+      for (let pageNum = 1; pageNum <= Math.min(doc.numPages, 10); pageNum++) {
+        try {
+          const page = await doc.getPage(pageNum);
+          const textContent = await page.getTextContent();
           
-          if (cleanText.length > 1 && /[a-zA-Z]/.test(cleanText)) {
-            textObjects.push(cleanText);
+          // Combine text items
+          const pageText = textContent.items
+            .map((item: any) => {
+              // Handle both text items and marked content
+              if (typeof item === 'object' && item.str) {
+                return item.str;
+              }
+              return '';
+            })
+            .filter(text => text.trim().length > 0)
+            .join(' ');
+          
+          if (pageText.trim()) {
+            fullText += pageText + '\n\n';
           }
-        }
-      }
-    }
-    
-    // If stream extraction didn't work well, try simple string extraction
-    if (extractedText.length < 50) {
-      console.log('Stream extraction yielded little text, trying fallback method...');
-      
-      const words = [];
-      let currentWord = '';
-      
-      for (let i = 0; i < Math.min(binaryString.length, 50000); i++) {
-        const char = binaryString[i];
-        const charCode = char.charCodeAt(0);
-        
-        // Look for printable ASCII characters
-        if (charCode >= 32 && charCode <= 126) {
-          currentWord += char;
-        } else {
-          if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
-            words.push(currentWord);
-          }
-          currentWord = '';
+          
+          console.log(`Page ${pageNum} extracted ${pageText.length} characters`);
+        } catch (pageError) {
+          console.error(`Error extracting text from page ${pageNum}:`, pageError);
+          // Continue with other pages
         }
       }
       
-      // Add the last word
-      if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
-        words.push(currentWord);
+      // Clean up the extracted text
+      fullText = fullText
+        .replace(/\s+/g, ' ')
+        .replace(/\n\s*\n/g, '\n')
+        .trim();
+      
+      console.log('Total extracted text length:', fullText.length);
+      console.log('Text preview:', fullText.substring(0, 200) + '...');
+      
+      if (fullText.length < 10) {
+        throw new Error('No readable text found in PDF');
       }
       
-      // Filter meaningful words
-      const meaningfulWords = words.filter(word => {
-        const clean = word.trim();
-        return clean.length >= 3 && 
-               clean.length <= 50 &&
-               !/^[\d\s\-_.()]+$/.test(clean) &&
-               /[a-zA-Z]/.test(clean) &&
-               !clean.match(/^[A-Z]{4,}$/) && // Skip all-caps sequences
-               !clean.includes('obj') && // Skip PDF object references
-               !clean.includes('endobj');
-      });
+      return fullText;
       
-      extractedText = meaningfulWords.slice(0, 300).join(' ');
-      console.log('Fallback extraction found words:', meaningfulWords.length);
+    } catch (pdfError) {
+      console.error('PDF.js parsing failed:', pdfError);
+      
+      // Fallback to simple text extraction for basic PDFs
+      console.log('Attempting fallback text extraction...');
+      return await fallbackTextExtraction(binaryString);
     }
-    
-    // Clean up final text
-    extractedText = extractedText
-      .replace(/\s+/g, ' ')
-      .replace(/[^\w\s\-.,!?()]/g, ' ')
-      .trim();
-    
-    if (extractedText.length < 20) {
-      extractedText = 'Unable to extract readable text from this PDF. The PDF may be image-based or encrypted. Please try copying and pasting the text content instead.';
-    }
-    
-    console.log('Final extracted text length:', extractedText.length);
-    console.log('Text preview:', extractedText.substring(0, 150) + '...');
-    
-    return extractedText;
     
   } catch (error) {
     console.error('Error in PDF extraction:', error);
-    return 'PDF text extraction failed. Please copy and paste your checklist content as text instead.';
+    return 'PDF text extraction failed. The PDF may be image-based, encrypted, or corrupted. Please try copying and pasting the text content instead, or use a different PDF.';
   }
+}
+
+async function fallbackTextExtraction(binaryString: string): Promise<string> {
+  console.log('Using fallback extraction method...');
+  
+  const words = [];
+  let currentWord = '';
+  
+  // Extract readable ASCII text sequences
+  for (let i = 0; i < Math.min(binaryString.length, 100000); i++) {
+    const char = binaryString[i];
+    const charCode = char.charCodeAt(0);
+    
+    // Look for printable ASCII characters including common punctuation
+    if ((charCode >= 32 && charCode <= 126) || charCode === 10 || charCode === 13) {
+      if (charCode === 10 || charCode === 13) {
+        // Handle line breaks
+        if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+          words.push(currentWord);
+        }
+        currentWord = '';
+        words.push('\n');
+      } else {
+        currentWord += char;
+      }
+    } else {
+      if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+        words.push(currentWord);
+      }
+      currentWord = '';
+    }
+  }
+  
+  // Add the last word
+  if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+    words.push(currentWord);
+  }
+  
+  // Filter and clean meaningful words
+  const meaningfulWords = words.filter(word => {
+    if (word === '\n') return true;
+    
+    const clean = word.trim();
+    return clean.length >= 2 && 
+           clean.length <= 100 &&
+           /[a-zA-Z]/.test(clean) &&
+           !clean.match(/^[^a-zA-Z]*$/) && // Must contain letters
+           !clean.includes('obj') &&
+           !clean.includes('endobj') &&
+           !clean.includes('xref') &&
+           !clean.includes('trailer') &&
+           !clean.match(/^[A-F0-9]{10,}$/); // Skip hex sequences
+  });
+  
+  let extractedText = meaningfulWords.join(' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .replace(/\s+/g, ' ')
+    .replace(/\n+/g, '\n')
+    .trim();
+  
+  console.log('Fallback extraction found words:', meaningfulWords.length);
+  console.log('Fallback text preview:', extractedText.substring(0, 200));
+  
+  if (extractedText.length < 10) {
+    return 'Unable to extract readable text from this PDF. The PDF may be image-based, encrypted, or in an unsupported format. Please try copying and pasting the text content instead.';
+  }
+  
+  return extractedText;
 }
