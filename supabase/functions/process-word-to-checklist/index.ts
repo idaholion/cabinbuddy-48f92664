@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-// @deno-types="https://cdn.skypack.dev/jszip@3.10.1/index.d.ts"
-import JSZip from "https://cdn.skypack.dev/jszip@3.10.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -175,7 +173,7 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractWordContent(base64File: string): Promise<DocumentContent> {
-  console.log('Starting document extraction...');
+  console.log('Starting lightweight document extraction...');
   
   try {
     // Handle text files directly
@@ -190,122 +188,114 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
       };
     }
     
-    // Handle .docx files (ZIP format)
+    // Handle binary files with lightweight extraction
     const base64Data = base64File.split(',')[1] || base64File;
     const binaryString = atob(base64Data);
+    console.log('Processing document, size:', binaryString.length, 'bytes');
     
-    // Convert to Uint8Array for JSZip
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+    // Lightweight .docx text extraction (without full ZIP parsing)
+    let extractedText = '';
     
-    try {
-      // Try to parse as .docx (ZIP file)
-      const zip = await JSZip.loadAsync(bytes);
-      console.log('Successfully loaded .docx file, found files:', Object.keys(zip.files));
+    // Look for .docx XML content patterns
+    if (binaryString.includes('word/document.xml') || binaryString.includes('<w:t>')) {
+      console.log('Detected .docx format - extracting text patterns');
       
-      // Extract document text from word/document.xml
-      let extractedText = '';
-      const documentXml = zip.files['word/document.xml'];
-      if (documentXml) {
-        const xmlContent = await documentXml.async('text');
-        // Extract text from XML tags
-        extractedText = xmlContent
-          .replace(/<[^>]+>/g, ' ') // Remove XML tags
-          .replace(/\s+/g, ' ') // Normalize whitespace
-          .trim();
-        console.log('Extracted text from document.xml, length:', extractedText.length);
+      // Extract text between <w:t> tags (Word document text elements)
+      const textMatches = binaryString.match(/<w:t[^>]*>(.*?)<\/w:t>/g);
+      if (textMatches) {
+        const textParts = textMatches.map(match => {
+          return match.replace(/<[^>]+>/g, '').trim();
+        }).filter(text => text.length > 0);
+        
+        extractedText = textParts.join(' ');
+        console.log('Extracted from w:t tags, parts:', textParts.length);
       }
       
-      // Extract images from word/media/ folder
-      const images: Array<{ data: string; position: number; description?: string }> = [];
-      let imageIndex = 0;
-      
-      for (const [fileName, file] of Object.entries(zip.files)) {
-        if (fileName.startsWith('word/media/') && !file.dir) {
-          try {
-            const imageData = await file.async('base64');
-            images.push({
-              data: imageData,
-              position: imageIndex * 20, // Distribute images throughout document
-              description: `Image ${imageIndex + 1} from document`
-            });
-            imageIndex++;
-            console.log('Extracted image:', fileName);
-          } catch (imageError) {
-            console.error('Error extracting image:', fileName, imageError);
-          }
+      // If no w:t tags found, try broader XML text extraction
+      if (!extractedText) {
+        const xmlText = binaryString.replace(/[^\x20-\x7E\s]/g, ' '); // Keep only printable ASCII
+        const words = xmlText.match(/\b[a-zA-Z][a-zA-Z\s]{2,50}\b/g);
+        if (words && words.length > 10) {
+          extractedText = words.slice(0, 200).join(' ');
+          console.log('Extracted from XML patterns, words:', words.length);
         }
       }
-      
-      console.log('Total images extracted:', images.length);
-      
-      return {
-        text: extractedText || 'No readable text found in the document.',
-        images
-      };
-      
-    } catch (zipError) {
-      console.log('Not a valid .docx file, trying RTF parsing...');
-      
-      // Handle RTF files
-      if (binaryString.includes('\\rtf')) {
-        console.log('Detected RTF format');
-        const extractedText = binaryString
-          .replace(/\\[a-z]+\d*\s?/g, ' ') // Remove RTF control codes
-          .replace(/[{}]/g, ' ') // Remove RTF braces
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        return {
-          text: extractedText || 'No readable text found in RTF file.',
-          images: []
-        };
-      }
-      
-      // Fallback: try to extract readable text from any format
+    }
+    // Handle RTF files
+    else if (binaryString.includes('\\rtf')) {
+      console.log('Detected RTF format');
+      extractedText = binaryString
+        .replace(/\\[a-z]+\d*\s?/g, ' ') // Remove RTF control codes
+        .replace(/[{}]/g, ' ') // Remove RTF braces
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    // Fallback: extract readable ASCII text
+    else {
+      console.log('Using fallback text extraction');
       const readableText = [];
       let currentWord = '';
       
-      for (let i = 0; i < Math.min(binaryString.length, 50000); i++) {
+      for (let i = 0; i < Math.min(binaryString.length, 30000); i++) {
         const char = binaryString[i];
         const charCode = char.charCodeAt(0);
         
         if (charCode >= 32 && charCode <= 126) {
           currentWord += char;
+        } else if (charCode === 10 || charCode === 13 || charCode === 9) {
+          // Handle newlines and tabs as word separators
+          if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+            readableText.push(currentWord);
+          }
+          currentWord = '';
         } else {
-          if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
+          if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
             readableText.push(currentWord);
           }
           currentWord = '';
         }
       }
       
-      if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
+      if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
         readableText.push(currentWord);
       }
       
       const meaningfulWords = readableText.filter(word => {
         const clean = word.trim();
-        return clean.length >= 3 && 
+        return clean.length >= 2 && 
                clean.length <= 50 &&
                !/^[\d\s\-_.()]+$/.test(clean) &&
                /[a-zA-Z]/.test(clean);
       });
       
-      const extractedText = meaningfulWords.slice(0, 200).join(' ');
-      
-      return {
-        text: extractedText || 'Unable to extract readable text. Please save as .txt file or copy/paste the content.',
-        images: []
-      };
+      extractedText = meaningfulWords.slice(0, 150).join(' ');
+      console.log('Extracted meaningful words:', meaningfulWords.length);
     }
+    
+    // Clean up the final text
+    extractedText = extractedText
+      .replace(/\s+/g, ' ')
+      .replace(/[^\w\s\-.,!?()]/g, ' ') // Remove special characters
+      .trim();
+    
+    if (extractedText.length < 10) {
+      extractedText = 'Unable to extract readable text from this document. For best results, please save your Word document as a .txt file and upload it instead.';
+    }
+    
+    console.log('Final text length:', extractedText.length);
+    console.log('Text preview:', extractedText.substring(0, 100) + '...');
+    
+    // Note: Image extraction from .docx files requires full ZIP parsing which is too resource-intensive
+    // For now, we'll focus on text extraction and suggest users include image descriptions in text
+    return {
+      text: extractedText,
+      images: []
+    };
     
   } catch (error) {
     console.error('Error in document extraction:', error);
     return {
-      text: 'Document processing failed. Please try saving as .txt file or copy/paste the content.',
+      text: 'Document processing failed. Please save your Word document as a .txt file and try again.',
       images: []
     };
   }
