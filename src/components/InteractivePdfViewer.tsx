@@ -33,8 +33,12 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File upload started');
     const file = event.target.files?.[0];
+    console.log('Selected file:', file);
+    
     if (!file || file.type !== 'application/pdf') {
+      console.log('Invalid file type:', file?.type);
       toast({
         title: "Invalid File",
         description: "Please upload a PDF file.",
@@ -44,16 +48,25 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     }
 
     setIsLoading(true);
+    console.log('Loading started, file size:', file.size);
     
     try {
+      console.log('Converting file to array buffer...');
       const arrayBuffer = await file.arrayBuffer();
+      console.log('Array buffer created, size:', arrayBuffer.byteLength);
+      
+      console.log('Loading PDF document...');
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      console.log('PDF loaded, number of pages:', pdf.numPages);
+      
       const canvases: HTMLCanvasElement[] = [];
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        console.log(`Processing page ${pageNum}...`);
         const page = await pdf.getPage(pageNum);
         const scale = 1.5;
         const viewport = page.getViewport({ scale });
+        console.log(`Page ${pageNum} viewport:`, viewport.width, 'x', viewport.height);
 
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -61,18 +74,22 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         canvas.width = viewport.width;
 
         if (context) {
+          console.log(`Rendering page ${pageNum}...`);
           await page.render({
             canvasContext: context,
             viewport: viewport,
             canvas: canvas
           }).promise;
+          console.log(`Page ${pageNum} rendered successfully`);
         }
 
         canvases.push(canvas);
       }
 
+      console.log('All pages processed, setting state...');
       setPdfPages(canvases);
       setSelectedPage(0);
+      console.log('PDF pages set in state');
       
       toast({
         title: "PDF Loaded Successfully",
@@ -87,6 +104,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       });
     } finally {
       setIsLoading(false);
+      console.log('Loading finished');
     }
   };
 
