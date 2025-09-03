@@ -56,17 +56,12 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     setIsProcessing(true);
 
     try {
-      // Get user's organization
-      const { data: userOrgs, error: orgError } = await supabase
-        .from('user_organizations')
-        .select('organization_id')
-        .eq('is_primary', true)
-        .single();
+      // Get user's organization using the database function
+      const { data: organizationId, error: orgError } = await supabase
+        .rpc('get_user_primary_organization_id');
 
       if (orgError) throw orgError;
-      if (!userOrgs?.organization_id) throw new Error('No organization found');
-
-      const organizationId = userOrgs.organization_id;
+      if (!organizationId) throw new Error('No organization found');
 
       // Convert file to base64
       const base64File = await convertFileToBase64(file);
