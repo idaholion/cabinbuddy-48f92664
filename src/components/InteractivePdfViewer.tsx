@@ -26,7 +26,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || file.type !== 'application/pdf') {
       toast({
@@ -38,35 +38,8 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     }
 
     try {
-      // Convert PDF to images using PDF.js
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      
-      // For now, we'll use a simple approach - convert PDF to images via canvas
-      await convertPdfToImages(arrayBuffer);
-      
-      toast({
-        title: "PDF Loaded",
-        description: "Click 'Add Checkbox' then click on the document to place checkboxes.",
-      });
-    } catch (error) {
-      console.error('Error loading PDF:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load PDF. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const convertPdfToImages = async (arrayBuffer: ArrayBuffer) => {
-    try {
-      // Simple approach: Create a blob URL and let the browser handle PDF display
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      
-      // For now, we'll create a single "page" that embeds the PDF
-      // This is a simpler, more reliable approach
+      // Create a blob URL for the PDF
+      const url = URL.createObjectURL(file);
       setPdfPages([url]);
       setSelectedPage(0);
       
@@ -75,10 +48,10 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         description: "Your document is ready. Turn on 'Add Checkboxes' mode and click on the document to place checkboxes.",
       });
     } catch (error) {
-      console.error('PDF conversion error:', error);
+      console.error('Error loading PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to process PDF. Please try again.",
+        description: "Failed to load PDF. Please try again.",
         variant: "destructive",
       });
     }
