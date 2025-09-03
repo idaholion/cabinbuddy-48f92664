@@ -3,15 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Download, Upload, Plus, Save, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-
-interface PageData {
-  page: number;
-  imageUrl: string;
-  width: number;
-  height: number;
-}
+import { Trash2, Upload, Plus, Save, Loader2 } from 'lucide-react';
 
 interface CheckboxItem {
   id: string;
@@ -26,33 +18,26 @@ interface InteractivePdfViewerProps {
 }
 
 export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
-  const [pdfPages, setPdfPages] = useState<PageData[]>([]);
+  const [htmlContent, setHtmlContent] = useState<string>('');
   const [checkboxes, setCheckboxes] = useState<CheckboxItem[]>([]);
   const [isAddingMode, setIsAddingMode] = useState(false);
-  const [selectedPage, setSelectedPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [checklistId, setChecklistId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('🔍 File upload started');
     const file = event.target.files?.[0];
-    console.log('🔍 Selected file:', file?.name, 'Type:', file?.type, 'Size:', file?.size);
     
     if (!file) {
-      console.log('❌ No file selected');
       return;
     }
     
-    // More lenient file type checking - accept any file with .html/.htm extension
     const isHtmlFile = file.name.toLowerCase().endsWith('.html') || 
                        file.name.toLowerCase().endsWith('.htm') ||
                        file.type === 'text/html';
     
     if (!isHtmlFile) {
-      console.log('❌ Invalid file type:', file?.type, 'Name:', file?.name);
       toast({
         title: "Invalid File",
         description: "Please upload an HTML file (.html or .htm).",
@@ -60,71 +45,23 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       });
       return;
     }
-    
-    console.log('✅ File validation passed');
 
     setIsLoading(true);
-    console.log('Processing HTML file...');
     
     try {
-      // Convert file to base64
-      const base64 = await fileToBase64(file);
-      console.log('File converted to base64, length:', base64.length);
+      // Read file as text
+      const text = await fileToText(file);
+      setHtmlContent(text);
       
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get user's organization ID
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const { data: userOrgs } = await supabase
-        .from('user_organizations')
-        .select('organization_id')
-        .eq('user_id', authUser?.id)
-        .eq('is_primary', true)
-        .single();
-
-      if (!userOrgs?.organization_id) {
-        throw new Error('No organization found for user');
-      }
-
-      // Call edge function to process HTML
-      const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
-        body: {
-          htmlFile: base64.split(',')[1], // Remove data:text/html;base64, prefix
-          checklistType: 'seasonal',
-          organizationId: userOrgs.organization_id
-        }
+      toast({
+        title: "Document Loaded Successfully!",
+        description: "Your document is ready. Click 'Add Checkboxes' to start adding checkboxes anywhere on the document.",
       });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(`Failed to process HTML: ${error.message}`);
-      }
-
-      console.log('HTML processed successfully:', data);
-      
-      if (data.success && data.itemsCount > 0) {
-        setChecklistId(data.checklistId);
-        
-        toast({
-          title: "HTML Processed Successfully",
-          description: `Created ${data.itemsCount} checklist items from your document.`,
-        });
-        console.log('HTML processed successfully');
-        
-        // Redirect to the checklist view or show success state
-        window.location.href = '/seasonal-checklists';
-      } else {
-        throw new Error(data.error || 'No checklist items were generated from the HTML');
-      }
     } catch (error) {
-      console.error('Error processing HTML:', error);
+      console.error('Error reading HTML:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process HTML. Please try again.",
+        description: "Failed to read HTML file. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -132,10 +69,10 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
+  const fileToText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+      reader.readAsText(file);
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = error => reject(error);
     });
@@ -195,32 +132,16 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      {pdfPages.length === 0 && (
+      {!htmlContent && (
         <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-4">
-              <h3 className="text-lg font-semibold">Upload Your Winterizing Document</h3>
+              <h3 className="text-lg font-semibold">Upload Your Document</h3>
               <p className="text-muted-foreground">
-                Upload your HTML document (saved from Word as HTML). We'll extract the content and convert it to an interactive checklist.
+                Upload your HTML document (saved from Word as HTML). It will be displayed exactly as it is, 
+                and you can add checkboxes anywhere by clicking on the document.
               </p>
-              <input
-                type="file"
-                accept=".html,.htm"
-                onChange={(e) => {
-                  console.log('🔘 File input onChange fired, files:', e.target.files?.length);
-                  if (e.target.files?.length) {
-                    console.log('🔘 File selected:', e.target.files[0].name);
-                    handleFileUpload(e);
-                  } else {
-                    console.log('❌ No files selected');
-                  }
-                }}
-                ref={fileInputRef}
-                className="hidden"
-                disabled={isLoading}
-              />
               
-              {/* Simplified visible file input */}
               <div className="mt-4 p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                 <div className="text-center">
                   <p className="text-sm text-blue-700 mb-3 font-medium">Select your HTML file:</p>
@@ -235,39 +156,20 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                   <p className="text-xs text-blue-600 mt-2">Choose your HTML file (saved from Word)</p>
                 </div>
               </div>
-              <Button
-                onClick={() => {
-                  console.log('🔘 Upload button clicked');
-                  if (fileInputRef.current) {
-                    console.log('🔘 File input exists, triggering click');
-                    fileInputRef.current.click();
-                  } else {
-                    console.log('❌ File input ref is null');
-                  }
-                }}
-                className="w-full max-w-sm"
-                size="lg"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processing HTML...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-5 w-5" />
-                    Upload HTML Document
-                  </>
-                )}
-              </Button>
+              
+              {isLoading && (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Loading document...
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Controls */}
-      {pdfPages.length > 0 && (
+      {htmlContent && (
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-3 items-center justify-between">
@@ -304,15 +206,14 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setPdfPages([]);
+                    setHtmlContent('');
                     setCheckboxes([]);
                     setIsAddingMode(false);
-                    setChecklistId(null);
                   }}
                   size="sm"
                 >
                   <Upload className="mr-2 h-4 w-4" />
-                  Upload New PDF
+                  Upload New Document
                 </Button>
               </div>
 
@@ -332,101 +233,65 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         </Card>
       )}
 
-      {/* PDF Viewer with Interactive Checkboxes */}
-      {pdfPages.length > 0 && (
+      {/* Document Viewer with Interactive Checkboxes */}
+      {htmlContent && (
         <Card>
           <CardContent className="p-4">
-            {/* Page Navigation */}
-            {pdfPages.length > 1 && (
-              <div className="mb-4 flex items-center gap-2">
-                <span className="text-sm font-medium">Page:</span>
-                {pdfPages.map((_, index) => (
-                  <Button
-                    key={index}
-                    variant={selectedPage === index ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedPage(index)}
-                  >
-                    {index + 1}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {/* Document Display */}
             <div 
               ref={containerRef}
               className="relative border rounded-lg overflow-hidden bg-white"
               onClick={handleDocumentClick}
               style={{ minHeight: '600px' }}
             >
-              <div className="relative w-full flex justify-center">
+              {/* Original Document Content */}
+              <div 
+                className="relative p-6"
+                style={{ 
+                  pointerEvents: isAddingMode ? 'none' : 'auto'
+                }}
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
+              />
+              
+              {/* Overlay div for capturing clicks in add mode */}
+              {isAddingMode && (
                 <div 
-                  className="relative"
-                  style={{ 
-                    pointerEvents: isAddingMode ? 'none' : 'auto'
+                  className="absolute inset-0 cursor-crosshair bg-transparent"
+                  style={{ zIndex: 10 }}
+                  onClick={handleDocumentClick}
+                />
+              )}
+
+              {/* Overlay Checkboxes */}
+              {checkboxes.map(checkbox => (
+                <div
+                  key={checkbox.id}
+                  className="absolute flex items-center gap-2 group z-20"
+                  style={{
+                    left: `${checkbox.x}%`,
+                    top: `${checkbox.y}%`,
+                    transform: 'translate(-50%, -50%)',
                   }}
                 >
-                  <img
-                    src={pdfPages[selectedPage]?.imageUrl}
-                    alt={`Page ${selectedPage + 1}`}
-                    className="max-w-full h-auto"
-                    style={{ 
-                      maxHeight: '1000px',
-                      width: 'auto'
-                    }}
-                    onError={(e) => {
-                      console.error('Error loading page image:', e);
-                      // Fallback to PDF embed if image fails
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                  
-                  {/* Overlay div for capturing clicks */}
-                  {isAddingMode && (
-                    <div 
-                      className="absolute inset-0 cursor-crosshair bg-transparent"
-                      style={{ zIndex: 10 }}
-                      onClick={handleDocumentClick}
+                  <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
+                    <Checkbox
+                      checked={checkbox.checked}
+                      onCheckedChange={() => toggleCheckbox(checkbox.id)}
+                      className="scale-125"
                     />
-                  )}
-
-                  {/* Overlay Checkboxes */}
-                  {checkboxes
-                    .filter(cb => selectedPage === (cb as any).page || selectedPage === 0) 
-                    .map(checkbox => (
-                    <div
-                      key={checkbox.id}
-                      className="absolute flex items-center gap-2 group z-20"
-                      style={{
-                        left: `${checkbox.x}%`,
-                        top: `${checkbox.y}%`,
-                        transform: 'translate(-50%, -50%)',
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="p-1 h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteCheckbox(checkbox.id);
                       }}
                     >
-                      <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
-                        <Checkbox
-                          checked={checkbox.checked}
-                          onCheckedChange={() => toggleCheckbox(checkbox.id)}
-                          className="scale-125"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="p-1 h-6 w-6"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteCheckbox(checkbox.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>
