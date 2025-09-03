@@ -88,13 +88,9 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
           .replace(/ï¿½/g, "")   // Remove replacement characters
           .replace(/\uFFFD/g, ""); // Remove Unicode replacement characters
         
-        // Replace image references with placeholders
-        content = content.replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, (match, src) => {
-          const filename = src.split('/').pop() || 'image';
-          return `<div style="border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; background: #f9f9f9; color: #666;">
-                    📷 Image: ${filename}<br>
-                    <small>Image was referenced but not embedded in HTML</small>
-                  </div>`;
+        // Add error handling to images instead of replacing them
+        content = content.replace(/<img([^>]*?)>/gi, (match, attributes) => {
+          return `<img${attributes} onerror="this.outerHTML='<div style=&quot;border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; background: #f9f9f9; color: #666;&quot;>📷 Image failed to load<br><small>Image was referenced but could not be displayed</small></div>'" />`;
         });
         
         resolve(content);
