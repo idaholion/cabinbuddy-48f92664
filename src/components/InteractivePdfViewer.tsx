@@ -94,7 +94,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
         body: {
           htmlFile: base64.split(',')[1], // Remove data:text/html;base64, prefix
-          checklistType: 'custom',
+          checklistType: 'seasonal',
           organizationId: userOrgs.organization_id
         }
       });
