@@ -65,12 +65,25 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         throw new Error('User not authenticated');
       }
 
+      // Get user's organization ID
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const { data: userOrgs } = await supabase
+        .from('user_organizations')
+        .select('organization_id')
+        .eq('user_id', authUser?.id)
+        .eq('is_primary', true)
+        .single();
+
+      if (!userOrgs?.organization_id) {
+        throw new Error('No organization found for user');
+      }
+
       // Call edge function to process PDF
       const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
         body: {
-          pdfData: base64.split(',')[1], // Remove data:application/pdf;base64, prefix
-          title: file.name.replace('.pdf', ''),
-          userId: user.id
+          pdfFile: base64.split(',')[1], // Remove data:application/pdf;base64, prefix
+          checklistType: 'pdf_generated',
+          organizationId: userOrgs.organization_id
         }
       });
 
