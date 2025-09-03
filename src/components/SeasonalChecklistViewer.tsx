@@ -14,10 +14,12 @@ interface ChecklistImage {
   id?: string;
   itemId?: string;
   url?: string;
-  data?: string;
+  data?: string | null;
   description?: string;
   position?: 'before' | 'after';
   type?: string;
+  filename?: string;
+  alt?: string;
 }
 
 interface ChecklistItem {
@@ -131,23 +133,39 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
     // Also check if item has direct image data
     const imageData = itemImage?.data || item.imageUrl;
     const imageDesc = itemImage?.description || item.imageDescription || `Image for item ${itemIndex + 1}`;
+    const isPlaceholder = itemImage?.type === 'placeholder' || (itemImage?.data === null);
     
     return (
       <div key={item.id} className="space-y-3">
-        {/* Image before or after text based on position or default to after */}
-        {imageData && (
+        {/* Image before or after text - handle both embedded and placeholder images */}
+        {(imageData || isPlaceholder) && (
           <div className="relative ml-6">
-            <img 
-              src={imageData} 
-              alt={imageDesc}
-              className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
-              loading="lazy"
-              onError={(e) => {
-                console.log('Image failed to load:', imageData);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            <p className="text-xs text-muted-foreground mt-1 text-center">{imageDesc}</p>
+            {imageData && !isPlaceholder ? (
+              <div>
+                <img 
+                  src={imageData} 
+                  alt={imageDesc}
+                  className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
+                  loading="lazy"
+                  onError={(e) => {
+                    console.log('Image failed to load:', imageData);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-1 text-center">{imageDesc}</p>
+              </div>
+            ) : (
+              <div className="bg-muted/50 border-2 border-dashed border-muted-foreground/20 p-6 rounded-lg text-center max-w-md mx-auto">
+                <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                <p className="text-sm font-medium text-muted-foreground">Image Reference</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {itemImage?.filename || itemImage?.alt || 'External image file'}
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  Image was not embedded in the HTML file
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -183,7 +201,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
           </div>
 
           <div className="flex items-center gap-2">
-            {imageData && (
+            {(imageData || isPlaceholder) && (
               <ImageIcon className="h-4 w-4 text-muted-foreground" />
             )}
             {!isSessionMode && (

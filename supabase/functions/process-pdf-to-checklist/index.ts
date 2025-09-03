@@ -177,8 +177,15 @@ async function extractHtmlContent(base64File: string): Promise<{extractedText: s
     const images: any[] = [];
     const imgMatches = htmlString.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/gi);
     
-    for (const match of imgMatches) {
+    console.log('Total img tags found:', Array.from(imgMatches).length);
+    
+    // Reset the iterator
+    const allImgMatches = Array.from(htmlString.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/gi));
+    
+    for (const match of allImgMatches) {
       const src = match[1];
+      console.log('Found image src:', src);
+      
       if (src.startsWith('data:image/')) {
         // Extract base64 image data
         const imageId = Math.random().toString(36).substr(2, 9);
@@ -187,10 +194,44 @@ async function extractHtmlContent(base64File: string): Promise<{extractedText: s
           data: src,
           type: src.match(/data:image\/([^;]+)/)?.[1] || 'png'
         });
+        console.log('Added embedded base64 image');
+      } else {
+        // Handle external image references - look for the actual image data in HTML
+        const imageId = Math.random().toString(36).substr(2, 9);
+        
+        // Try to find embedded image data by filename
+        const imageName = src.split('/').pop()?.split('.')[0];
+        if (imageName) {
+          // Look for base64 data associated with this image name
+          const base64Regex = new RegExp(`${imageName}[^"]*"([^"]*data:image/[^"]+)"`, 'gi');
+          const base64Match = htmlString.match(base64Regex);
+          
+          if (base64Match) {
+            const base64Data = base64Match[0].match(/data:image\/[^"]+/)?.[0];
+            if (base64Data) {
+              images.push({
+                id: imageId,
+                data: base64Data,
+                type: base64Data.match(/data:image\/([^;]+)/)?.[1] || 'png'
+              });
+              console.log('Found and added image data for:', imageName);
+            }
+          } else {
+            // Create a placeholder for missing image
+            images.push({
+              id: imageId,
+              data: null,
+              filename: src,
+              type: 'placeholder',
+              alt: match[0].match(/alt="([^"]*)"/)?.[1] || 'Image'
+            });
+            console.log('Added placeholder for external image:', src);
+          }
+        }
       }
     }
     
-    console.log('Found embedded images:', images.length);
+    console.log('Total images processed:', images.length);
     
     // Remove HTML tags and extract text content
     let textContent = htmlString
