@@ -4,6 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Download, Upload, Plus, Save } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface CheckboxItem {
   id: string;
@@ -18,15 +22,16 @@ interface InteractivePdfViewerProps {
 }
 
 export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
-  const [pdfPages, setPdfPages] = useState<string[]>([]);
+  const [pdfPages, setPdfPages] = useState<HTMLCanvasElement[]>([]);
   const [checkboxes, setCheckboxes] = useState<CheckboxItem[]>([]);
   const [isAddingMode, setIsAddingMode] = useState(false);
   const [selectedPage, setSelectedPage] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || file.type !== 'application/pdf') {
       toast({
@@ -37,10 +42,35 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      // Create a blob URL for the PDF
-      const url = URL.createObjectURL(file);
-      setPdfPages([url]);
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const canvases: HTMLCanvasElement[] = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const scale = 1.5;
+        const viewport = page.getViewport({ scale });
+
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        if (context) {
+          await page.render({
+            canvasContext: context,
+            viewport: viewport,
+            canvas: canvas
+          }).promise;
+        }
+
+        canvases.push(canvas);
+      }
+
+      setPdfPages(canvases);
       setSelectedPage(0);
       
       toast({
@@ -54,6 +84,8 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         description: "Failed to load PDF. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -219,51 +251,48 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               onClick={handleDocumentClick}
               style={{ minHeight: '600px' }}
             >
-              {pdfPages[selectedPage] ? (
-                <div className="relative w-full" style={{ minHeight: '600px' }}>
-                  <object
-                    data={pdfPages[selectedPage]}
-                    type="application/pdf"
-                    className="w-full h-full border-0"
+              {isLoading ? (
+                <div className="flex items-center justify-center h-96">
+                  <div className="text-center space-y-2">
+                    <p className="text-muted-foreground">Loading PDF...</p>
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                  </div>
+                </div>
+              ) : pdfPages[selectedPage] ? (
+                <div className="relative w-full flex justify-center">
+                  <div 
+                    className="relative"
                     style={{ 
-                      minHeight: '800px',
                       pointerEvents: isAddingMode ? 'none' : 'auto'
                     }}
                   >
-                    <embed
-                      src={pdfPages[selectedPage]}
-                      type="application/pdf"
-                      className="w-full h-full"
-                      style={{ minHeight: '800px' }}
+                    <canvas
+                      ref={(canvas) => {
+                        if (canvas && pdfPages[selectedPage]) {
+                          const ctx = canvas.getContext('2d');
+                          const sourceCanvas = pdfPages[selectedPage];
+                          canvas.width = sourceCanvas.width;
+                          canvas.height = sourceCanvas.height;
+                          ctx?.drawImage(sourceCanvas, 0, 0);
+                        }
+                      }}
+                      className="max-w-full h-auto"
                     />
-                    <div className="p-8 text-center">
-                      <p className="text-muted-foreground mb-4">
-                        Your browser doesn't support PDF display. 
-                      </p>
-                      <a 
-                        href={pdfPages[selectedPage]} 
-                        download="document.pdf"
-                        className="text-primary underline"
-                      >
-                        Download PDF to view
-                      </a>
-                    </div>
-                  </object>
-                  
-                  {/* Overlay div for capturing clicks */}
-                  {isAddingMode && (
-                    <div 
-                      className="absolute inset-0 cursor-crosshair bg-transparent"
-                      style={{ zIndex: 10 }}
-                      onClick={handleDocumentClick}
-                    />
-                  )}
+                    
+                    {/* Overlay div for capturing clicks */}
+                    {isAddingMode && (
+                      <div 
+                        className="absolute inset-0 cursor-crosshair bg-transparent"
+                        style={{ zIndex: 10 }}
+                        onClick={handleDocumentClick}
+                      />
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-96">
                   <div className="text-center space-y-2">
-                    <p className="text-muted-foreground">Loading document...</p>
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <p className="text-muted-foreground">Upload a PDF to get started</p>
                   </div>
                 </div>
               )}
