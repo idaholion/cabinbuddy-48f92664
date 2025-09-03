@@ -221,20 +221,39 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
             >
               {pdfPages[selectedPage] ? (
                 <div className="relative w-full" style={{ minHeight: '600px' }}>
-                  <iframe
-                    src={pdfPages[selectedPage]}
+                  <object
+                    data={pdfPages[selectedPage]}
+                    type="application/pdf"
                     className="w-full h-full border-0"
                     style={{ 
                       minHeight: '800px',
                       pointerEvents: isAddingMode ? 'none' : 'auto'
                     }}
-                    title="PDF Document"
-                  />
+                  >
+                    <embed
+                      src={pdfPages[selectedPage]}
+                      type="application/pdf"
+                      className="w-full h-full"
+                      style={{ minHeight: '800px' }}
+                    />
+                    <div className="p-8 text-center">
+                      <p className="text-muted-foreground mb-4">
+                        Your browser doesn't support PDF display. 
+                      </p>
+                      <a 
+                        href={pdfPages[selectedPage]} 
+                        download="document.pdf"
+                        className="text-primary underline"
+                      >
+                        Download PDF to view
+                      </a>
+                    </div>
+                  </object>
                   
                   {/* Overlay div for capturing clicks */}
                   {isAddingMode && (
                     <div 
-                      className="absolute inset-0 cursor-crosshair"
+                      className="absolute inset-0 cursor-crosshair bg-transparent"
                       style={{ zIndex: 10 }}
                       onClick={handleDocumentClick}
                     />
