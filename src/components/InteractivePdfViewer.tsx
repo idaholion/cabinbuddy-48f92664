@@ -4,11 +4,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Download, Upload, Plus, Save } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
-
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 interface CheckboxItem {
   id: string;
@@ -23,16 +18,15 @@ interface InteractivePdfViewerProps {
 }
 
 export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
-  const [pdfPages, setPdfPages] = useState<HTMLCanvasElement[]>([]);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
   const [checkboxes, setCheckboxes] = useState<CheckboxItem[]>([]);
   const [isAddingMode, setIsAddingMode] = useState(false);
-  const [selectedPage, setSelectedPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('File upload started');
     const file = event.target.files?.[0];
     console.log('Selected file:', file);
@@ -47,64 +41,25 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       return;
     }
 
-    setIsLoading(true);
-    console.log('Loading started, file size:', file.size);
-    
+    console.log('Creating blob URL for PDF...');
     try {
-      console.log('Converting file to array buffer...');
-      const arrayBuffer = await file.arrayBuffer();
-      console.log('Array buffer created, size:', arrayBuffer.byteLength);
-      
-      console.log('Loading PDF document...');
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      console.log('PDF loaded, number of pages:', pdf.numPages);
-      
-      const canvases: HTMLCanvasElement[] = [];
-
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        console.log(`Processing page ${pageNum}...`);
-        const page = await pdf.getPage(pageNum);
-        const scale = 1.5;
-        const viewport = page.getViewport({ scale });
-        console.log(`Page ${pageNum} viewport:`, viewport.width, 'x', viewport.height);
-
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        if (context) {
-          console.log(`Rendering page ${pageNum}...`);
-          await page.render({
-            canvasContext: context,
-            viewport: viewport,
-            canvas: canvas
-          }).promise;
-          console.log(`Page ${pageNum} rendered successfully`);
-        }
-
-        canvases.push(canvas);
-      }
-
-      console.log('All pages processed, setting state...');
-      setPdfPages(canvases);
-      setSelectedPage(0);
-      console.log('PDF pages set in state');
+      const url = URL.createObjectURL(file);
+      console.log('Blob URL created:', url);
+      setPdfUrl(url);
+      setCheckboxes([]); // Reset checkboxes for new document
       
       toast({
         title: "PDF Loaded Successfully",
         description: "Your document is ready. Turn on 'Add Checkboxes' mode and click on the document to place checkboxes.",
       });
+      console.log('PDF loaded successfully');
     } catch (error) {
-      console.error('Error loading PDF:', error);
+      console.error('Error creating blob URL:', error);
       toast({
         title: "Error",
         description: "Failed to load PDF. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-      console.log('Loading finished');
     }
   };
 
@@ -162,7 +117,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      {pdfPages.length === 0 && (
+      {!pdfUrl && (
         <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-4">
@@ -178,7 +133,10 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 className="hidden"
               />
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  console.log('Upload button clicked');
+                  fileInputRef.current?.click();
+                }}
                 className="w-full max-w-sm"
                 size="lg"
               >
@@ -191,7 +149,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       )}
 
       {/* Controls */}
-      {pdfPages.length > 0 && (
+      {pdfUrl && (
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-3 items-center justify-between">
@@ -224,6 +182,19 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                   <Save className="mr-2 h-4 w-4" />
                   Save Progress
                 </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setPdfUrl('');
+                    setCheckboxes([]);
+                    setIsAddingMode(false);
+                  }}
+                  size="sm"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload New PDF
+                </Button>
               </div>
 
               <div className="text-sm text-muted-foreground">
@@ -243,26 +214,9 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       )}
 
       {/* PDF Viewer with Interactive Checkboxes */}
-      {pdfPages.length > 0 && (
+      {pdfUrl && (
         <Card>
           <CardContent className="p-4">
-            {/* Page Navigation */}
-            {pdfPages.length > 1 && (
-              <div className="mb-4 flex items-center gap-2">
-                <span className="text-sm font-medium">Page:</span>
-                {pdfPages.map((_, index) => (
-                  <Button
-                    key={index}
-                    variant={selectedPage === index ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedPage(index)}
-                  >
-                    {index + 1}
-                  </Button>
-                ))}
-              </div>
-            )}
-
             {/* Document Display */}
             <div 
               ref={containerRef}
@@ -270,85 +224,59 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               onClick={handleDocumentClick}
               style={{ minHeight: '600px' }}
             >
-              {isLoading ? (
-                <div className="flex items-center justify-center h-96">
-                  <div className="text-center space-y-2">
-                    <p className="text-muted-foreground">Loading PDF...</p>
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                  </div>
-                </div>
-              ) : pdfPages[selectedPage] ? (
-                <div className="relative w-full flex justify-center">
+              <div className="relative w-full">
+                <iframe
+                  src={pdfUrl}
+                  className="w-full border-0"
+                  style={{ 
+                    height: '800px',
+                    minHeight: '600px',
+                    pointerEvents: isAddingMode ? 'none' : 'auto'
+                  }}
+                  title="PDF Document"
+                />
+                
+                {/* Overlay div for capturing clicks */}
+                {isAddingMode && (
                   <div 
-                    className="relative"
-                    style={{ 
-                      pointerEvents: isAddingMode ? 'none' : 'auto'
+                    className="absolute inset-0 cursor-crosshair bg-transparent"
+                    style={{ zIndex: 10 }}
+                    onClick={handleDocumentClick}
+                  />
+                )}
+
+                {/* Overlay Checkboxes */}
+                {checkboxes.map(checkbox => (
+                  <div
+                    key={checkbox.id}
+                    className="absolute flex items-center gap-2 group z-20"
+                    style={{
+                      left: `${checkbox.x}%`,
+                      top: `${checkbox.y}%`,
+                      transform: 'translate(-50%, -50%)',
                     }}
                   >
-                    <canvas
-                      ref={(canvas) => {
-                        if (canvas && pdfPages[selectedPage]) {
-                          const ctx = canvas.getContext('2d');
-                          const sourceCanvas = pdfPages[selectedPage];
-                          canvas.width = sourceCanvas.width;
-                          canvas.height = sourceCanvas.height;
-                          ctx?.drawImage(sourceCanvas, 0, 0);
-                        }
-                      }}
-                      className="max-w-full h-auto"
-                    />
-                    
-                    {/* Overlay div for capturing clicks */}
-                    {isAddingMode && (
-                      <div 
-                        className="absolute inset-0 cursor-crosshair bg-transparent"
-                        style={{ zIndex: 10 }}
-                        onClick={handleDocumentClick}
+                    <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
+                      <Checkbox
+                        checked={checkbox.checked}
+                        onCheckedChange={() => toggleCheckbox(checkbox.id)}
+                        className="scale-125"
                       />
-                    )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteCheckbox(checkbox.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-96">
-                  <div className="text-center space-y-2">
-                    <p className="text-muted-foreground">Upload a PDF to get started</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Overlay Checkboxes */}
-              {checkboxes
-                .filter(cb => selectedPage === 0) // For now, all checkboxes on first page
-                .map(checkbox => (
-                <div
-                  key={checkbox.id}
-                  className="absolute flex items-center gap-2 group z-20"
-                  style={{
-                    left: `${checkbox.x}%`,
-                    top: `${checkbox.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                >
-                  <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
-                    <Checkbox
-                      checked={checkbox.checked}
-                      onCheckedChange={() => toggleCheckbox(checkbox.id)}
-                      className="scale-125"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="p-1 h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteCheckbox(checkbox.id);
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
