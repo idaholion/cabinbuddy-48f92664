@@ -50,10 +50,22 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
   const [sessionStartTime] = useState<Date>(new Date());
   const { saveChecklist } = useCustomChecklists();
 
-  // Get checklist sections from the checklist data
-  const sections: ChecklistSection[] = Array.isArray(checklist.items) ? checklist.items : [];
+  // Convert flat items array to sections structure
+  const sections: ChecklistSection[] = Array.isArray(checklist.items) && checklist.items.length > 0 ? [
+    {
+      title: `${checklist.checklist_type.charAt(0).toUpperCase() + checklist.checklist_type.slice(1)} Checklist`,
+      items: checklist.items.map((item: any) => ({
+        id: item.id?.toString() || Math.random().toString(),
+        text: item.text || '',
+        completed: item.completed || false,
+        imageUrl: item.imageUrl,
+        imageDescription: item.imageDescription,
+        imagePosition: item.imagePosition || 'after'
+      }))
+    }
+  ] : [];
   
-  // Calculate progress
+  // Calculate progress  
   const totalItems = sections.reduce((acc, section) => acc + (section.items?.length || 0), 0);
   const completedCount = Object.values(completedItems).filter(Boolean).length;
   const progress = totalItems > 0 ? (completedCount / totalItems) * 100 : 0;
