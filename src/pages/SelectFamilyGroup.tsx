@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Loader2, Wifi, WifiOff, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
 import { useFeatureOnboarding } from "@/hooks/useFeatureOnboarding";
+import { useNetworkStatus } from "@/components/NetworkStatusProvider";
 
 const SelectFamilyGroup = () => {
   const navigate = useNavigate();
@@ -18,12 +19,26 @@ const SelectFamilyGroup = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const { isOnline, isSlowConnection, connectionType } = useNetworkStatus();
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState("");
   
   // Feature onboarding
   const { shouldShowOnboarding, hideOnboarding, userRole } = useFeatureOnboarding({
     triggerKey: 'family-group-selection'
   });
+
+  // Debug connection status
+  useEffect(() => {
+    console.log('🌐 Network Status:', { 
+      isOnline, 
+      isSlowConnection, 
+      connectionType,
+      userAuthenticated: !!user,
+      organizationId: organization?.id,
+      familyGroupsCount: familyGroups.length,
+      loading
+    });
+  }, [isOnline, isSlowConnection, connectionType, user, organization, familyGroups, loading]);
 
   const handleFamilyGroupSelection = async () => {
     if (!selectedFamilyGroup || !user) {
@@ -145,11 +160,35 @@ const SelectFamilyGroup = () => {
       <div className="min-h-screen p-4">
         <div className="container mx-auto max-w-2xl">
 
+          {/* Network Status Indicator */}
+          {!isOnline && (
+            <div className="bg-destructive/90 backdrop-blur-sm text-destructive-foreground p-4 rounded-lg mb-4 flex items-center gap-2">
+              <WifiOff className="h-5 w-5" />
+              <span>No internet connection. Please check your network and try again.</span>
+            </div>
+          )}
+          
+          {isOnline && isSlowConnection && (
+            <div className="bg-warning/90 backdrop-blur-sm text-warning-foreground p-4 rounded-lg mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              <span>Slow connection detected. Loading may take longer than usual.</span>
+            </div>
+          )}
+
           {/* Page title */}
           <div className="text-center mb-8 pt-8">
             <h1 className="text-4xl md:text-6xl font-kaushan text-primary mb-4 drop-shadow-lg">
               Select Your Family Group
             </h1>
+            
+            {/* Connection status debug info */}
+            <div className="text-sm text-muted-foreground flex items-center justify-center gap-2">
+              {isOnline ? (
+                <><Wifi className="h-4 w-4 text-green-600" /> Connected {connectionType && `(${connectionType})`}</>
+              ) : (
+                <><WifiOff className="h-4 w-4 text-red-600" /> Offline</>
+              )}
+            </div>
           </div>
 
           {/* Selection card */}
