@@ -25,10 +25,11 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      if (!selectedFile.name.toLowerCase().endsWith('.docx')) {
+      const fileName = selectedFile.name.toLowerCase();
+      if (!fileName.endsWith('.docx') && !fileName.endsWith('.txt') && !fileName.endsWith('.rtf')) {
         toast({
           title: "Invalid File Type",
-          description: "Please select a Word document (.docx file)",
+          description: "Please select a Word document (.docx), text file (.txt), or RTF file (.rtf)",
           variant: "destructive"
         });
         return;
@@ -237,12 +238,12 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="word-file">Upload Word Document (.docx)</Label>
+          <Label htmlFor="word-file">Upload Document</Label>
           <div className="flex items-center gap-4">
             <Input
               id="word-file"
               type="file"
-              accept=".docx"
+              accept=".docx,.txt,.rtf"
               onChange={handleFileChange}
               className="flex-1"
             />
@@ -253,9 +254,16 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
               </div>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Select your Word document with numbered steps and the AI will convert it to an interactive checklist
-          </p>
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium">💡 For best results with Word documents:</p>
+            <ol className="text-sm text-blue-700 mt-1 ml-4 space-y-1">
+              <li>1. Open your Word document</li>
+              <li>2. Select all content (Ctrl+A)</li>
+              <li>3. Copy (Ctrl+C)</li>
+              <li>4. Use "Paste text content" option below instead</li>
+            </ol>
+            <p className="text-xs text-blue-600 mt-2">Or try saving your Word doc as a .txt file and uploading that.</p>
+          </div>
         </div>
 
         <Button 

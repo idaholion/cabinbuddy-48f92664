@@ -173,90 +173,91 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractWordContent(base64File: string): Promise<DocumentContent> {
-  console.log('Starting advanced Word document extraction...');
+  console.log('Starting document extraction...');
   
   try {
-    // Decode base64 file
-    const binaryString = atob(base64File.split(',')[1] || base64File);
-    console.log('Document size:', binaryString.length, 'bytes');
+    // Decode the file
+    let fileContent = '';
     
-    // .docx files are ZIP archives - we need to extract the document.xml content
-    // This is a simplified ZIP parser focused on finding document.xml
+    if (base64File.startsWith('data:text/plain;base64,')) {
+      // Handle text files directly
+      const base64Data = base64File.split(',')[1];
+      fileContent = atob(base64Data);
+      console.log('Processing plain text file, length:', fileContent.length);
+      
+      return {
+        text: fileContent.trim() || 'No text content found in the file.',
+        images: []
+      };
+    }
+    
+    // Handle binary files (Word documents, RTF, etc.)
+    const binaryString = atob(base64File.split(',')[1] || base64File);
+    console.log('Processing binary document, size:', binaryString.length, 'bytes');
+    
+    // Simple text extraction from any document format
     let extractedText = '';
     
-    // Look for ZIP file signature
-    if (binaryString.substring(0, 4) === 'PK\x03\x04' || binaryString.includes('PK')) {
-      console.log('Detected ZIP/DOCX format');
+    // For RTF files, remove RTF codes
+    if (binaryString.includes('\\rtf')) {
+      console.log('Detected RTF format');
+      extractedText = binaryString
+        .replace(/\\[a-z]+\d*\s?/g, ' ') // Remove RTF control codes
+        .replace(/[{}]/g, ' ') // Remove RTF braces
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    // For Word documents or other formats
+    else {
+      // Extract readable ASCII text
+      const readableText = [];
+      let currentWord = '';
       
-      // Find document.xml or similar content
-      const documentXmlPattern = /<w:t[^>]*>([^<]+)<\/w:t>/g;
-      const paragraphPattern = /<w:p[^>]*>.*?<\/w:p>/g;
-      
-      // Extract all text content between w:t tags (Word text elements)
-      let matches = [...binaryString.matchAll(documentXmlPattern)];
-      if (matches.length > 0) {
-        extractedText = matches.map(match => match[1]).join(' ');
-        console.log('Extracted from w:t tags:', matches.length, 'text elements');
-      }
-      
-      // If no w:t tags found, try broader XML text extraction
-      if (!extractedText.trim()) {
-        // Look for any text content in angle brackets
-        const xmlTextPattern = />([^<]+)</g;
-        const allMatches = [...binaryString.matchAll(xmlTextPattern)];
+      for (let i = 0; i < Math.min(binaryString.length, 100000); i++) {
+        const char = binaryString[i];
+        const charCode = char.charCodeAt(0);
         
-        const meaningfulText = allMatches
-          .map(match => match[1].trim())
-          .filter(text => {
-            return text.length > 2 && 
-                   !text.match(/^[\d\s\-_.]+$/) && // Skip numbers/symbols only
-                   text.match(/[a-zA-Z]/); // Must contain letters
-          })
-          .slice(0, 200); // Limit to prevent too much noise
-          
-        if (meaningfulText.length > 5) {
-          extractedText = meaningfulText.join(' ');
-          console.log('Extracted from XML content:', meaningfulText.length, 'text fragments');
+        // Check if character is printable ASCII
+        if (charCode >= 32 && charCode <= 126) {
+          currentWord += char;
+        } else {
+          // End of word - save if it's meaningful
+          if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+            readableText.push(currentWord);
+          }
+          currentWord = '';
         }
       }
-    }
-    
-    // Fallback: extract any readable text
-    if (!extractedText.trim()) {
-      console.log('Using fallback text extraction');
-      const readableChars = binaryString
-        .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ') // Remove control chars
-        .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable ASCII
-        .replace(/\s+/g, ' ') // Normalize spaces
-        .trim();
       
-      const words = readableChars.split(' ')
-        .filter(word => {
-          const clean = word.trim();
-          return clean.length >= 3 && 
-                 clean.length <= 30 && 
-                 /^[a-zA-Z][a-zA-Z0-9\s\-.,!?'()]*$/.test(clean);
-        })
-        .slice(0, 150);
-      
-      if (words.length >= 10) {
-        extractedText = words.join(' ');
-        console.log('Fallback extraction found:', words.length, 'words');
+      // Don't forget the last word
+      if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+        readableText.push(currentWord);
       }
+      
+      // Filter out obvious non-content words and join
+      const meaningfulWords = readableText.filter(word => {
+        const clean = word.trim();
+        return clean.length >= 2 && 
+               clean.length <= 50 &&
+               !/^[\d\s\-_.()]+$/.test(clean) && // Skip numbers/symbols only
+               /[a-zA-Z]/.test(clean); // Must contain letters
+      });
+      
+      extractedText = meaningfulWords.slice(0, 300).join(' ');
+      console.log('Extracted meaningful words:', meaningfulWords.length);
     }
     
-    // Final cleanup
+    // Clean up the final text
     extractedText = extractedText
       .replace(/\s+/g, ' ')
-      .replace(/([.!?])\s*/g, '$1 ')
       .trim();
     
-    if (extractedText.length < 20) {
-      extractedText = 'Unable to extract readable content from this document. The document may be empty, corrupted, or in an unsupported format. Please try copying and pasting the content instead.';
+    if (extractedText.length < 10) {
+      extractedText = 'Unable to extract readable text from this document. Please copy and paste the content instead, or save your Word document as a .txt file and try again.';
     }
     
-    console.log('Final extracted text length:', extractedText.length);
-    console.log('Text preview:', extractedText.substring(0, 150) + '...');
+    console.log('Final text length:', extractedText.length);
+    console.log('Text preview:', extractedText.substring(0, 100) + '...');
     
     return {
       text: extractedText,
@@ -266,7 +267,7 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
   } catch (error) {
     console.error('Error in document extraction:', error);
     return {
-      text: 'Document processing failed. Please copy and paste your content using the Text Input tab instead.',
+      text: 'Document processing failed. Please try copying and pasting your content instead.',
       images: []
     };
   }
