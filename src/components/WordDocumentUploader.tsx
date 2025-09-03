@@ -106,20 +106,26 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       }
 
     } catch (error) {
-      console.error('Upload error:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error constructor:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+      console.error('Upload error details:', {
+        error,
+        message: error?.message,
+        type: typeof error,
+        constructor: error?.constructor?.name,
+        keys: Object.keys(error || {}),
+        stack: error?.stack
+      });
       
       let errorMessage = "Failed to process the Word document";
       
-      if (error instanceof Error) {
+      // Handle different error types
+      if (error && error.message) {
         errorMessage = error.message;
       } else if (typeof error === 'string') {
         errorMessage = error;
-      } else if (error && typeof error === 'object') {
-        errorMessage = error.message || JSON.stringify(error);
+      } else if (error && error.error) {
+        errorMessage = error.error;
+      } else if (error && error.details) {
+        errorMessage = error.details;
       }
       
       toast({
@@ -181,14 +187,17 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
         </div>
 
         <div className="bg-muted/50 p-4 rounded-lg">
-          <h4 className="font-medium mb-2">What happens next:</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Text will be extracted (preserving lists and formatting)</li>
-            <li>• Photos will be saved as image files</li>
-            <li>• AI will convert text into structured checklist items</li>
-            <li>• Photos will be matched to relevant checklist steps</li>
-            <li>• Interactive checklist will be saved to your organization</li>
-          </ul>
+          <h4 className="font-medium mb-2">Current Status:</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-medium text-orange-600">⚠️ Word document parsing is currently limited</p>
+            <p>The system processes a placeholder text instead of your actual .docx content.</p>
+            <p className="font-medium">For now, you can:</p>
+            <ul className="ml-4 space-y-1">
+              <li>• Copy text from your Word document</li>
+              <li>• Use the text-based checklist creator instead</li>
+              <li>• Or proceed to test the AI processing with placeholder content</li>
+            </ul>
+          </div>
         </div>
 
         <Button 

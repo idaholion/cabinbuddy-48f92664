@@ -154,13 +154,20 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 
   } catch (error) {
     console.error('Error processing Word document:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
+    
     return new Response(JSON.stringify({
       success: false,
       error: error.message || 'Failed to process Word document',
-      details: 'Please ensure you uploaded a valid .docx file'
+      details: 'Please ensure you uploaded a valid .docx file and try again'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 200, // Changed to 200 to avoid additional error handling
     });
   }
 });
