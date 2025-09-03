@@ -37,12 +37,22 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File upload started');
+    console.log('🔍 File upload started');
     const file = event.target.files?.[0];
-    console.log('Selected file:', file);
+    console.log('🔍 Selected file:', file?.name, 'Type:', file?.type, 'Size:', file?.size);
     
-    if (!file || (file.type !== 'text/html' && !file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm'))) {
-      console.log('Invalid file type:', file?.type);
+    if (!file) {
+      console.log('❌ No file selected');
+      return;
+    }
+    
+    // More lenient file type checking - accept any file with .html/.htm extension
+    const isHtmlFile = file.name.toLowerCase().endsWith('.html') || 
+                       file.name.toLowerCase().endsWith('.htm') ||
+                       file.type === 'text/html';
+    
+    if (!isHtmlFile) {
+      console.log('❌ Invalid file type:', file?.type, 'Name:', file?.name);
       toast({
         title: "Invalid File",
         description: "Please upload an HTML file (.html or .htm).",
@@ -50,6 +60,8 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       });
       return;
     }
+    
+    console.log('✅ File validation passed');
 
     setIsLoading(true);
     console.log('Processing HTML file...');
