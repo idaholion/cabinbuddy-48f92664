@@ -35,14 +35,12 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     
     const isHtmlFile = file.name.toLowerCase().endsWith('.html') || 
                        file.name.toLowerCase().endsWith('.htm') ||
-                       file.name.toLowerCase().endsWith('.mht') ||
-                       file.name.toLowerCase().endsWith('.mhtml') ||
                        file.type === 'text/html';
     
     if (!isHtmlFile) {
       toast({
         title: "Invalid File",
-        description: "Please upload an HTML file (.html, .htm, .mht, or .mhtml).",
+        description: "Please upload an HTML file (.html or .htm).",
         variant: "destructive",
       });
       return;
@@ -78,11 +76,6 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       reader.onload = () => {
         let content = reader.result as string;
         
-        // Check if this is an MHTML file
-        if (file.name.toLowerCase().endsWith('.mht') || file.name.toLowerCase().endsWith('.mhtml')) {
-          content = parseMHTMLContent(content);
-        }
-        
         // Clean up common HTML issues from Word
         content = content
           .replace(/â€™/g, "'") // Fix apostrophes
@@ -104,62 +97,6 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       };
       reader.onerror = error => reject(error);
     });
-  };
-
-  const parseMHTMLContent = (mhtmlContent: string): string => {
-    console.log("MHTML Content (first 1000 chars):", mhtmlContent.substring(0, 1000));
-    
-    // Find the HTML part in the MHTML file
-    const htmlMatch = mhtmlContent.match(/Content-Type:\s*text\/html[\s\S]*?\n\n([\s\S]*?)(?=\n--)/i);
-    console.log("HTML Match found:", !!htmlMatch);
-    
-    if (htmlMatch) {
-      let htmlContent = htmlMatch[1];
-      console.log("Extracted HTML (first 500 chars):", htmlContent.substring(0, 500));
-      
-      // Check if content is quoted-printable encoded
-      if (mhtmlContent.includes('Content-Transfer-Encoding: quoted-printable')) {
-        console.log("Detected quoted-printable encoding");
-        htmlContent = decodeQuotedPrintable(htmlContent);
-      }
-      
-      // Find all image parts and convert them to data URLs
-      const imageParts = mhtmlContent.match(/Content-Location:\s*([^\r\n]+)[\s\S]*?Content-Type:\s*image\/[^;\r\n]+[\s\S]*?Content-Transfer-Encoding:\s*base64[\s\S]*?\n\n([A-Za-z0-9+/=\s]+?)(?=\n--)/gi);
-      console.log("Image parts found:", imageParts?.length || 0);
-      
-      if (imageParts) {
-        imageParts.forEach(part => {
-          const locationMatch = part.match(/Content-Location:\s*([^\r\n]+)/i);
-          const typeMatch = part.match(/Content-Type:\s*(image\/[^;\r\n]+)/i);
-          const dataMatch = part.match(/Content-Transfer-Encoding:\s*base64[\s\S]*?\n\n([A-Za-z0-9+/=\s]+?)$/i);
-          
-          if (locationMatch && typeMatch && dataMatch) {
-            const location = locationMatch[1].trim();
-            const mimeType = typeMatch[1].trim();
-            const base64Data = dataMatch[1].replace(/\s/g, '');
-            const dataUrl = `data:${mimeType};base64,${base64Data}`;
-            
-            console.log("Converting image:", location, "to data URL");
-            // Replace image references with data URLs
-            htmlContent = htmlContent.replace(new RegExp(`src=["']?${location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?`, 'gi'), `src="${dataUrl}"`);
-          }
-        });
-      }
-      
-      return htmlContent;
-    }
-    
-    console.log("No HTML part found, returning original content");
-    // If no HTML part found, return the original content
-    return mhtmlContent;
-  };
-
-  const decodeQuotedPrintable = (input: string): string => {
-    return input
-      .replace(/=\r?\n/g, '') // Remove soft line breaks
-      .replace(/=([0-9A-F]{2})/gi, (match, hex) => {
-        return String.fromCharCode(parseInt(hex, 16));
-      });
   };
 
   const handleDocumentClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -225,12 +162,12 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 Upload your HTML document (saved from Word as HTML). For images to display properly:
               </p>
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                <h4 className="font-semibold text-amber-800 mb-2">📋 For Images to Work:</h4>
+                <h4 className="font-semibold text-amber-800 mb-2">📋 For Best Results with Images:</h4>
                 <ul className="text-sm text-amber-700 space-y-1">
-                  <li>• <strong>Best:</strong> Save as "Single file web page (.mht)" - embeds everything in one file</li>
-                  <li>• <strong>Alternative:</strong> Save as "Web Page (.htm)" - creates HTML + images folder</li>
-                  <li>• Avoid "Web page filtered" as it may strip images</li>
-                  <li>• Or copy/paste images directly into Word before saving</li>
+                  <li>• <strong>Recommended:</strong> Save as "Web Page (.htm)" from Word - creates HTML + images folder</li>
+                  <li>• Upload the HTML file here (images may not display, but document structure will work)</li>
+                  <li>• <strong>Alternative:</strong> Copy/paste images directly into Word before saving</li>
+                  <li>• MHTML (.mht) files are complex and may have display issues</li>
                 </ul>
               </div>
               
@@ -240,7 +177,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                   <input
                     id="html-file-input"
                     type="file"
-                    accept=".html,.htm,.mht,.mhtml"
+                    accept=".html,.htm"
                     onChange={handleFileUpload}
                     className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:bg-blue-600 file:text-white file:border-0 file:py-2 file:px-4 file:rounded-lg file:cursor-pointer"
                     disabled={isLoading}
