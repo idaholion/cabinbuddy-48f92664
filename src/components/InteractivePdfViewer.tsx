@@ -220,25 +220,20 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 disabled={isLoading}
               />
               
-              {/* Visible file input as backup */}
-              <div className="mt-4 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">Select your HTML file:</p>
-                <input
-                  type="file"
-                  accept=".html,.htm"
-                  onChange={(e) => {
-                    console.log('🔘 Visible file input onChange fired, files:', e.target.files?.length);
-                    if (e.target.files && e.target.files.length > 0) {
-                      console.log('🔘 File selected via visible input:', e.target.files[0].name);
-                      handleFileUpload(e);
-                    } else {
-                      console.log('❌ No files in visible input');
-                    }
-                  }}
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  disabled={isLoading}
-                />
-                <p className="text-xs text-gray-500 mt-2">Supported formats: HTML files (.html, .htm)</p>
+              {/* Simplified visible file input */}
+              <div className="mt-4 p-6 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
+                <div className="text-center">
+                  <p className="text-sm text-blue-700 mb-3 font-medium">Select your HTML file:</p>
+                  <input
+                    id="html-file-input"
+                    type="file"
+                    accept=".html,.htm"
+                    onChange={handleFileUpload}
+                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:bg-blue-600 file:text-white file:border-0 file:py-2 file:px-4 file:rounded-lg file:cursor-pointer"
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-blue-600 mt-2">Choose your HTML file (saved from Word)</p>
+                </div>
               </div>
               <Button
                 onClick={() => {
