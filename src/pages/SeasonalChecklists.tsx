@@ -12,7 +12,7 @@ import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench, Trash2 } from 
 import { toast } from '@/hooks/use-toast';
 
 const SeasonalChecklists = () => {
-  const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('closing');
+  const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
   const [isConverterOpen, setIsConverterOpen] = useState(false);
   const { checklists, loading, deleteChecklist, refetch } = useCustomChecklists();
 
