@@ -107,14 +107,16 @@ Preserve numbered lists and bullet points from the HTML. Make items concise but 
 
     console.log('Generated checklist items:', checklistItems.length);
 
-    // Save the checklist to database
+    // Save the checklist to database (upsert to handle updates)
     const { data, error } = await supabase
       .from('custom_checklists')
-      .insert({
+      .upsert({
         organization_id: organizationId,
         checklist_type: checklistType,
         items: checklistItems,
         images: images
+      }, {
+        onConflict: 'organization_id,checklist_type'
       })
       .select()
       .single();
