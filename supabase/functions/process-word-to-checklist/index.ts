@@ -173,67 +173,56 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractWordContent(base64File: string): Promise<DocumentContent> {
+  console.log('Starting simple Word document extraction...');
+  
   try {
-    console.log('Starting Word document extraction...');
-    
-    // Decode base64 file
+    // Simple approach: treat the document as binary and extract any readable text
     const binaryString = atob(base64File.split(',')[1] || base64File);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    console.log('Document size:', bytes.length, 'bytes');
-
-    // Simple text extraction approach for .docx files
-    // .docx files are ZIP archives containing XML files
-    let extractedText = '';
     
-    try {
-      // Convert to string for pattern matching
-      const fileString = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
-      
-      // Try to extract text content - look for readable text patterns
-      // Remove most binary content and extract readable strings
-      const cleanedText = fileString
-        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ') // Remove control characters
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .trim();
-
-      // Extract words that look like real content (letters, numbers, common punctuation)
-      const words = cleanedText.split(/\s+/).filter(word => {
-        return word.length >= 2 && 
-               word.length <= 50 && 
-               /^[a-zA-Z0-9][a-zA-Z0-9\s\-.,!?()'"]*[a-zA-Z0-9]$/.test(word.trim());
-      });
-
-      console.log('Found words:', words.length);
-
-      if (words.length >= 3) {
-        // Take up to 300 meaningful words
-        extractedText = words.slice(0, 300).join(' ');
-        console.log('Extracted text preview:', extractedText.substring(0, 100));
-      } else {
-        extractedText = 'Unable to extract readable text from the document. Please ensure the document contains text content.';
+    // Extract readable ASCII characters and create meaningful text
+    let extractedText = '';
+    let readableChars = '';
+    
+    for (let i = 0; i < binaryString.length && i < 50000; i++) { // Limit processing to prevent timeout
+      const charCode = binaryString.charCodeAt(i);
+      // Include printable ASCII characters
+      if ((charCode >= 32 && charCode <= 126) || charCode === 10 || charCode === 13) {
+        readableChars += binaryString.charAt(i);
+      } else if (readableChars.length > 0) {
+        // Add space when hitting non-printable to separate words
+        readableChars += ' ';
       }
+    }
+    
+    // Clean up the text and extract meaningful words
+    const words = readableChars
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .split(' ')
+      .filter(word => {
+        const trimmed = word.trim();
+        return trimmed.length >= 3 && 
+               trimmed.length <= 30 && 
+               /^[a-zA-Z][a-zA-Z0-9\-.,!?']*$/.test(trimmed);
+      })
+      .slice(0, 200); // Limit number of words
 
-    } catch (parseError) {
-      console.error('Error parsing document:', parseError);
-      extractedText = 'Error processing document content. Please try a different document format.';
+    if (words.length >= 5) {
+      extractedText = words.join(' ');
+      console.log('Successfully extracted', words.length, 'words');
+    } else {
+      extractedText = 'Please copy and paste your checklist content, as automatic extraction from this document format is not fully supported.';
+      console.log('Insufficient readable content found');
     }
 
-    const content: DocumentContent = {
+    return {
       text: extractedText,
       images: []
     };
-
-    console.log('Final extracted text length:', extractedText.length);
-    return content;
     
   } catch (error) {
-    console.error('Error extracting Word content:', error);
+    console.error('Error in extraction:', error);
     return {
-      text: 'Failed to process the Word document. Please try copying and pasting your content instead.',
+      text: 'Document processing failed. Please copy and paste your content instead.',
       images: []
     };
   }
