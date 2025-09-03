@@ -109,20 +109,19 @@ Preserve numbered lists and bullet points from the HTML. Make items concise but 
     // Save the checklist to database
     const { data, error } = await supabase
       .from('custom_checklists')
-      .upsert({
+      .insert({
         organization_id: organizationId,
         checklist_type: checklistType,
         items: checklistItems,
         images: []
-      }, {
-        onConflict: 'organization_id,checklist_type'
       })
       .select()
       .single();
 
     if (error) {
       console.error('Database error:', error);
-      throw new Error('Failed to save checklist to database');
+      console.error('Database error details:', JSON.stringify(error, null, 2));
+      throw new Error(`Failed to save checklist to database: ${error.message}`);
     }
 
     console.log('Checklist saved successfully:', data.id);
