@@ -174,6 +174,8 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 
 async function extractWordContent(base64File: string): Promise<DocumentContent> {
   try {
+    console.log('Starting Word document extraction...');
+    
     // Decode base64 file
     const binaryString = atob(base64File.split(',')[1] || base64File);
     const bytes = new Uint8Array(binaryString.length);
@@ -181,80 +183,59 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Basic .docx parsing by extracting text from XML
-    // This is a simplified approach that works for basic .docx files
+    console.log('Document size:', bytes.length, 'bytes');
+
+    // Simple text extraction approach for .docx files
+    // .docx files are ZIP archives containing XML files
     let extractedText = '';
     
     try {
-      // Convert bytes to string for text extraction
-      const decoder = new TextDecoder('utf-8', { fatal: false });
-      const fileContent = decoder.decode(bytes);
+      // Convert to string for pattern matching
+      const fileString = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
       
-      // Look for text content in the .docx structure
-      // .docx files contain XML, we'll extract text between <w:t> tags
-      const textMatches = fileContent.match(/<w:t[^>]*>([^<]*)<\/w:t>/g);
-      
-      if (textMatches) {
-        extractedText = textMatches
-          .map(match => {
-            // Extract text content from <w:t> tags
-            const textMatch = match.match(/<w:t[^>]*>([^<]*)<\/w:t>/);
-            return textMatch ? textMatch[1] : '';
-          })
-          .filter(text => text.trim().length > 0)
-          .join(' ');
+      // Try to extract text content - look for readable text patterns
+      // Remove most binary content and extract readable strings
+      const cleanedText = fileString
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ') // Remove control characters
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+
+      // Extract words that look like real content (letters, numbers, common punctuation)
+      const words = cleanedText.split(/\s+/).filter(word => {
+        return word.length >= 2 && 
+               word.length <= 50 && 
+               /^[a-zA-Z0-9][a-zA-Z0-9\s\-.,!?()'"]*[a-zA-Z0-9]$/.test(word.trim());
+      });
+
+      console.log('Found words:', words.length);
+
+      if (words.length >= 3) {
+        // Take up to 300 meaningful words
+        extractedText = words.slice(0, 300).join(' ');
+        console.log('Extracted text preview:', extractedText.substring(0, 100));
+      } else {
+        extractedText = 'Unable to extract readable text from the document. Please ensure the document contains text content.';
       }
-      
-      // If no text found with XML parsing, try a more aggressive approach
-      if (!extractedText.trim()) {
-        // Look for any readable text in the file
-        const readableText = fileContent.replace(/[^\x20-\x7E\s]/g, ' ').replace(/\s+/g, ' ').trim();
-        const words = readableText.split(' ').filter(word => 
-          word.length > 2 && 
-          /^[a-zA-Z0-9\-.,!?()]+$/.test(word)
-        );
-        
-        if (words.length > 10) {
-          extractedText = words.slice(0, 500).join(' '); // Limit to reasonable size
-        }
-      }
-      
-      // Final fallback - basic binary text extraction
-      if (!extractedText.trim()) {
-        extractedText = Array.from(bytes)
-          .map(byte => String.fromCharCode(byte))
-          .join('')
-          .replace(/[^\x20-\x7E]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-          
-        // Extract meaningful words
-        const meaningfulWords = extractedText.split(' ').filter(word => 
-          word.length > 2 && 
-          /^[a-zA-Z0-9\-.,!?()]+$/.test(word)
-        );
-        
-        if (meaningfulWords.length > 5) {
-          extractedText = meaningfulWords.slice(0, 300).join(' ');
-        }
-      }
-      
+
     } catch (parseError) {
-      console.error('Error parsing document content:', parseError);
-      extractedText = 'Unable to extract readable content from the document.';
+      console.error('Error parsing document:', parseError);
+      extractedText = 'Error processing document content. Please try a different document format.';
     }
 
     const content: DocumentContent = {
-      text: extractedText || 'No readable text content found in the document.',
+      text: extractedText,
       images: []
     };
 
-    console.log('Extracted text preview:', extractedText.substring(0, 200) + '...');
+    console.log('Final extracted text length:', extractedText.length);
     return content;
     
   } catch (error) {
     console.error('Error extracting Word content:', error);
-    throw new Error('Failed to extract content from Word document');
+    return {
+      text: 'Failed to process the Word document. Please try copying and pasting your content instead.',
+      images: []
+    };
   }
 }
 
