@@ -39,47 +39,99 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log('Raw request body:', requestBody);
     
-    const { pdfFile, checklistType, organizationId } = requestBody;
+    const { htmlFile, checklistType, organizationId } = requestBody;
     
-    console.log('Processing PDF for checklist type:', checklistType);
+    console.log('Processing HTML for checklist type:', checklistType);
     console.log('Organization ID:', organizationId);
     
-    if (!pdfFile) {
-      throw new Error('PDF file data is required');
+    if (!htmlFile) {
+      throw new Error('HTML file data is required');
     }
     
     if (!organizationId) {
       throw new Error('Organization ID is required');
     }
 
-    // Convert PDF to images (pages)
-    const pdfPages = await convertPdfToImages(pdfFile);
-    console.log('Converted PDF to', pdfPages.length, 'pages');
+    // Extract text from HTML
+    const extractedText = await extractHtmlText(htmlFile);
+    console.log('Extracted text length:', extractedText.length);
 
-    // Save PDF pages data 
-    const { data: pdfData, error: pdfError } = await supabase
-      .from('pdf_checklists')
-      .insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        title: `PDF Checklist ${new Date().toISOString()}`,
-        pages_data: pdfPages,
-        checkboxes: []
+    // Send text to OpenAI for checklist conversion
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Convert the following HTML text into a structured JSON checklist. Each item should be short, actionable, and numbered if possible.
+
+Return a JSON array where each item has:
+- id: unique identifier (string)
+- text: short, actionable instruction (string)  
+- completed: false (boolean)
+
+Preserve numbered lists and bullet points from the HTML. Make items concise but complete. Focus on actionable tasks and instructions.`
+          },
+          {
+            role: 'user',
+            content: extractedText
+          }
+        ],
+        max_tokens: 4000,
+      }),
+    });
+
+    if (!openAIResponse.ok) {
+      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+    }
+
+    const openAIData = await openAIResponse.json();
+    let checklistItems: ChecklistItem[] = [];
+    
+    try {
+      const aiContent = openAIData.choices[0]?.message?.content || '[]';
+      // Extract JSON from response (handle potential markdown formatting)
+      const jsonMatch = aiContent.match(/\[[\s\S]*\]/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : aiContent;
+      checklistItems = JSON.parse(jsonStr);
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Failed to parse AI response into valid JSON');
+    }
+
+    console.log('Generated checklist items:', checklistItems.length);
+
+    // Save the checklist to database
+    const { data, error } = await supabase
+      .from('custom_checklists')
+      .upsert({
+        organization_id: organizationId,
+        checklist_type: checklistType,
+        items: checklistItems,
+        images: []
+      }, {
+        onConflict: 'organization_id,checklist_type'
       })
       .select()
       .single();
 
-    if (pdfError) {
-      console.error('Database error saving PDF data:', pdfError);
-      throw new Error('Failed to save PDF data to database');
+    if (error) {
+      console.error('Database error:', error);
+      throw new Error('Failed to save checklist to database');
     }
 
-    console.log('PDF data saved successfully:', pdfData.id);
+    console.log('Checklist saved successfully:', data.id);
 
     return new Response(JSON.stringify({
       success: true,
-      checklistId: pdfData.id,
-      pages: pdfPages,
-      message: 'PDF successfully processed for interactive use'
+      checklistId: data.id,
+      itemsCount: checklistItems.length,
+      message: 'HTML successfully converted to checklist'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -103,6 +155,68 @@ serve(async (req) => {
     });
   }
 });
+
+// Extract text content from HTML file
+async function extractHtmlText(base64File: string): Promise<string> {
+  console.log('Starting HTML text extraction...');
+  
+  try {
+    // Handle different base64 formats
+    let base64Data = base64File;
+    if (base64File.includes(',')) {
+      base64Data = base64File.split(',')[1];
+    }
+    
+    // Convert base64 to text
+    const htmlString = atob(base64Data);
+    console.log('HTML file size:', htmlString.length, 'characters');
+    
+    // Remove HTML tags and extract text content
+    let textContent = htmlString
+      // Remove script and style content completely
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      // Remove HTML tags but preserve list structure
+      .replace(/<li[^>]*>/gi, '\n• ')
+      .replace(/<\/li>/gi, '')
+      .replace(/<ol[^>]*>/gi, '\n')
+      .replace(/<ul[^>]*>/gi, '\n') 
+      .replace(/<\/[ou]l>/gi, '\n')
+      .replace(/<h[1-6][^>]*>/gi, '\n\n')
+      .replace(/<\/h[1-6]>/gi, '\n')
+      .replace(/<p[^>]*>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<br[^>]*\/?>/gi, '\n')
+      .replace(/<div[^>]*>/gi, '\n')
+      .replace(/<\/div>/gi, '')
+      // Remove remaining HTML tags
+      .replace(/<[^>]+>/g, ' ')
+      // Clean up HTML entities
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Clean up whitespace
+      .replace(/\n\s*\n/g, '\n')
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    console.log('Extracted text length:', textContent.length);
+    console.log('Text preview:', textContent.substring(0, 200));
+    
+    if (textContent.length < 20) {
+      return `Unable to extract meaningful text from this HTML file. Please ensure your HTML file contains readable text content and try again.`;
+    }
+    
+    return textContent;
+    
+  } catch (error) {
+    console.error('Error in HTML extraction:', error);
+    return 'HTML processing failed. Please ensure you uploaded a valid HTML file.';
+  }
+}
 
 // Convert PDF to images using a simple approach
 async function convertPdfToImages(base64File: string): Promise<any[]> {

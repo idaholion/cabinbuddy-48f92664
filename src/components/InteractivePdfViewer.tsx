@@ -41,18 +41,18 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     const file = event.target.files?.[0];
     console.log('Selected file:', file);
     
-    if (!file || file.type !== 'application/pdf') {
+    if (!file || (file.type !== 'text/html' && !file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm'))) {
       console.log('Invalid file type:', file?.type);
       toast({
         title: "Invalid File",
-        description: "Please upload a PDF file.",
+        description: "Please upload an HTML file (.html or .htm).",
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
-    console.log('Processing PDF file...');
+    console.log('Processing HTML file...');
     
     try {
       // Convert file to base64
@@ -78,41 +78,41 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
         throw new Error('No organization found for user');
       }
 
-      // Call edge function to process PDF
+      // Call edge function to process HTML
       const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
         body: {
-          pdfFile: base64.split(',')[1], // Remove data:application/pdf;base64, prefix
-          checklistType: 'pdf_generated',
+          htmlFile: base64.split(',')[1], // Remove data:text/html;base64, prefix
+          checklistType: 'html_generated',
           organizationId: userOrgs.organization_id
         }
       });
 
       if (error) {
         console.error('Edge function error:', error);
-        throw new Error(`Failed to process PDF: ${error.message}`);
+        throw new Error(`Failed to process HTML: ${error.message}`);
       }
 
-      console.log('PDF processed successfully:', data);
+      console.log('HTML processed successfully:', data);
       
-      if (data.success && data.pages) {
-        setPdfPages(data.pages);
+      if (data.success && data.itemsCount > 0) {
         setChecklistId(data.checklistId);
-        setSelectedPage(0);
-        setCheckboxes([]); // Reset checkboxes for new document
         
         toast({
-          title: "PDF Loaded Successfully",
-          description: "Your document is ready. Turn on 'Add Checkboxes' mode and click on the document to place checkboxes.",
+          title: "HTML Processed Successfully",
+          description: `Created ${data.itemsCount} checklist items from your document.`,
         });
-        console.log('PDF loaded successfully');
+        console.log('HTML processed successfully');
+        
+        // Redirect to the checklist view or show success state
+        window.location.href = '/seasonal-checklists';
       } else {
-        throw new Error(data.error || 'Unknown error processing PDF');
+        throw new Error(data.error || 'No checklist items were generated from the HTML');
       }
     } catch (error) {
-      console.error('Error processing PDF:', error);
+      console.error('Error processing HTML:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process PDF. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process HTML. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -189,11 +189,11 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
             <div className="text-center space-y-4">
               <h3 className="text-lg font-semibold">Upload Your Winterizing Document</h3>
               <p className="text-muted-foreground">
-                Upload your PDF with text and pictures. We'll process it on our servers and you'll be able to add checkboxes anywhere on the document.
+                Upload your HTML document (saved from Word as HTML). We'll extract the content and convert it to an interactive checklist.
               </p>
               <input
                 type="file"
-                accept=".pdf"
+                accept=".html,.htm,text/html"
                 onChange={handleFileUpload}
                 ref={fileInputRef}
                 className="hidden"
@@ -211,12 +211,12 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processing PDF...
+                    Processing HTML...
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-5 w-5" />
-                    Upload PDF Document
+                    Upload HTML Document
                   </>
                 )}
               </Button>
