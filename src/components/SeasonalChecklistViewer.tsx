@@ -11,10 +11,13 @@ import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ChecklistEditor } from './ChecklistEditor';
 
 interface ChecklistImage {
-  itemId: string;
-  url: string;
+  id?: string;
+  itemId?: string;
+  url?: string;
+  data?: string;
   description?: string;
-  position: 'before' | 'after';
+  position?: 'before' | 'after';
+  type?: string;
 }
 
 interface ChecklistItem {
@@ -118,24 +121,33 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
 
   // Render individual checklist item with image support
   const renderChecklistItem = (item: ChecklistItem, itemIndex: number) => {
-    // Find associated image for this item
-    const itemImage = checklist.images?.find(img => img.itemId === item.id) || 
-                      (item.imageUrl ? { url: item.imageUrl, description: item.imageDescription, position: item.imagePosition || 'after' } : null);
+    // Find associated image for this item from the checklist images array
+    const itemImage = checklist.images?.find((img: any) => {
+      // Try to match by item index or ID
+      return img.itemId === item.id || img.id === item.id || 
+             (Array.isArray(checklist.images) && checklist.images.indexOf(img) === itemIndex);
+    });
 
+    // Also check if item has direct image data
+    const imageData = itemImage?.data || item.imageUrl;
+    const imageDesc = itemImage?.description || item.imageDescription || `Image for item ${itemIndex + 1}`;
+    
     return (
       <div key={item.id} className="space-y-3">
-        {/* Image before text */}
-        {itemImage && itemImage.position === 'before' && (
+        {/* Image before or after text based on position or default to after */}
+        {imageData && (
           <div className="relative ml-6">
             <img 
-              src={itemImage.url} 
-              alt={itemImage.description || `Image for ${item.text}`}
+              src={imageData} 
+              alt={imageDesc}
               className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
               loading="lazy"
+              onError={(e) => {
+                console.log('Image failed to load:', imageData);
+                e.currentTarget.style.display = 'none';
+              }}
             />
-            {itemImage.description && (
-              <p className="text-xs text-muted-foreground mt-1 text-center">{itemImage.description}</p>
-            )}
+            <p className="text-xs text-muted-foreground mt-1 text-center">{imageDesc}</p>
           </div>
         )}
 
@@ -171,7 +183,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
           </div>
 
           <div className="flex items-center gap-2">
-            {itemImage && (
+            {imageData && (
               <ImageIcon className="h-4 w-4 text-muted-foreground" />
             )}
             {!isSessionMode && (
@@ -186,21 +198,6 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
             )}
           </div>
         </div>
-
-        {/* Image after text */}
-        {itemImage && itemImage.position === 'after' && (
-          <div className="relative ml-6">
-            <img 
-              src={itemImage.url} 
-              alt={itemImage.description || `Image for ${item.text}`}
-              className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
-              loading="lazy"
-            />
-            {itemImage.description && (
-              <p className="text-xs text-muted-foreground mt-1 text-center">{itemImage.description}</p>
-            )}
-          </div>
-        )}
       </div>
     );
   };

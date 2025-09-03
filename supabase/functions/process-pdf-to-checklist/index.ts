@@ -52,9 +52,10 @@ serve(async (req) => {
       throw new Error('Organization ID is required');
     }
 
-    // Extract text from HTML
-    const extractedText = await extractHtmlText(htmlFile);
+    // Extract text and images from HTML
+    const { extractedText, images } = await extractHtmlContent(htmlFile);
     console.log('Extracted text length:', extractedText.length);
+    console.log('Found images:', images.length);
 
     // Send text to OpenAI for checklist conversion
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -113,7 +114,7 @@ Preserve numbered lists and bullet points from the HTML. Make items concise but 
         organization_id: organizationId,
         checklist_type: checklistType,
         items: checklistItems,
-        images: []
+        images: images
       })
       .select()
       .single();
@@ -155,9 +156,9 @@ Preserve numbered lists and bullet points from the HTML. Make items concise but 
   }
 });
 
-// Extract text content from HTML file
-async function extractHtmlText(base64File: string): Promise<string> {
-  console.log('Starting HTML text extraction...');
+// Extract text content and images from HTML file
+async function extractHtmlContent(base64File: string): Promise<{extractedText: string, images: any[]}> {
+  console.log('Starting HTML content extraction...');
   
   try {
     // Handle different base64 formats
@@ -170,11 +171,32 @@ async function extractHtmlText(base64File: string): Promise<string> {
     const htmlString = atob(base64Data);
     console.log('HTML file size:', htmlString.length, 'characters');
     
+    // Extract images first
+    const images: any[] = [];
+    const imgMatches = htmlString.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/gi);
+    
+    for (const match of imgMatches) {
+      const src = match[1];
+      if (src.startsWith('data:image/')) {
+        // Extract base64 image data
+        const imageId = Math.random().toString(36).substr(2, 9);
+        images.push({
+          id: imageId,
+          data: src,
+          type: src.match(/data:image\/([^;]+)/)?.[1] || 'png'
+        });
+      }
+    }
+    
+    console.log('Found embedded images:', images.length);
+    
     // Remove HTML tags and extract text content
     let textContent = htmlString
       // Remove script and style content completely
       .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
       .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      // Remove images (we've already extracted them)
+      .replace(/<img[^>]*>/gi, '')
       // Remove HTML tags but preserve list structure
       .replace(/<li[^>]*>/gi, '\n• ')
       .replace(/<\/li>/gi, '')
@@ -206,15 +228,30 @@ async function extractHtmlText(base64File: string): Promise<string> {
     console.log('Text preview:', textContent.substring(0, 200));
     
     if (textContent.length < 20) {
-      return `Unable to extract meaningful text from this HTML file. Please ensure your HTML file contains readable text content and try again.`;
+      return {
+        extractedText: `Unable to extract meaningful text from this HTML file. Please ensure your HTML file contains readable text content and try again.`,
+        images: []
+      };
     }
     
-    return textContent;
+    return {
+      extractedText: textContent,
+      images: images
+    };
     
   } catch (error) {
     console.error('Error in HTML extraction:', error);
-    return 'HTML processing failed. Please ensure you uploaded a valid HTML file.';
+    return {
+      extractedText: 'HTML processing failed. Please ensure you uploaded a valid HTML file.',
+      images: []
+    };
   }
+}
+
+// Legacy function for backward compatibility
+async function extractHtmlText(base64File: string): Promise<string> {
+  const result = await extractHtmlContent(base64File);
+  return result.extractedText;
 }
 
 // Convert PDF to images using a simple approach
