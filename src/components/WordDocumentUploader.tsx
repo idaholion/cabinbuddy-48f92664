@@ -215,7 +215,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Create Checklist from Content
+          Create Checklist from Document
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -236,112 +236,79 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
           </Select>
         </div>
 
-        <Tabs defaultValue="text" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="text" className="flex items-center gap-2">
-              <Type className="h-4 w-4" />
-              Text Input
-            </TabsTrigger>
-            <TabsTrigger value="file" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Word Document
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-2">
+          <Label htmlFor="word-file">Upload Word Document (.docx)</Label>
+          <div className="flex items-center gap-4">
+            <Input
+              id="word-file"
+              type="file"
+              accept=".docx"
+              onChange={handleFileChange}
+              className="flex-1"
+            />
+            {file && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileText className="h-4 w-4" />
+                {file.name}
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Select your Word document with numbered steps and the AI will convert it to an interactive checklist
+          </p>
+        </div>
 
-          <TabsContent value="text" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="text-content">Checklist Content</Label>
+        <Button 
+          onClick={handleUploadAndProcess}
+          disabled={!file || !checklistType || isProcessing}
+          className="w-full"
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Processing Document...
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload & Create Checklist
+            </>
+          )}
+        </Button>
+
+        <div className="border-t pt-4">
+          <details className="space-y-3">
+            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+              Alternative: Paste text content instead
+            </summary>
+            <div className="space-y-3">
               <Textarea
-                id="text-content"
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                placeholder="Paste your checklist content here... 
-
-For example:
-1. Turn off main water supply
-2. Drain all water pipes
-3. Check for any leaks
-4. Close all windows and doors
-5. Set thermostat to 55°F"
-                className="min-h-[200px]"
+                placeholder="If document upload doesn't work, paste your checklist content here..."
+                className="min-h-[120px]"
               />
-              <p className="text-sm text-muted-foreground">
-                Copy and paste your checklist steps from any document. The AI will convert it into an interactive checklist.
-              </p>
-            </div>
-
-            <Button 
-              onClick={processTextContent}
-              disabled={!textContent.trim() || !checklistType || isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Checklist...
-                </>
-              ) : (
-                <>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Create Checklist from Text
-                </>
-              )}
-            </Button>
-          </TabsContent>
-
-          <TabsContent value="file" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="word-file">Word Document (.docx)</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="word-file"
-                  type="file"
-                  accept=".docx"
-                  onChange={handleFileChange}
-                  className="flex-1"
-                />
-                {file && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <FileText className="h-4 w-4" />
-                    {file.name}
-                  </div>
+              <Button 
+                onClick={processTextContent}
+                disabled={!textContent.trim() || !checklistType || isProcessing}
+                variant="outline"
+                className="w-full"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating Checklist...
+                  </>
+                ) : (
+                  <>
+                    <Type className="h-4 w-4 mr-2" />
+                    Create from Text
+                  </>
                 )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Upload a Word document (.docx) containing step-by-step instructions
-              </p>
+              </Button>
             </div>
-
-            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-orange-800">⚠️ Word Document Parsing (Beta)</h4>
-              <div className="text-sm text-orange-700 space-y-1">
-                <p>Document parsing is still being improved. For best results:</p>
-                <ul className="ml-4 space-y-1">
-                  <li>• Use the Text Input tab above (copy/paste content)</li>
-                  <li>• Or try uploading and see if it extracts your content correctly</li>
-                </ul>
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleUploadAndProcess}
-              disabled={!file || !checklistType || isProcessing}
-              className="w-full"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing Document...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload & Process Document
-                </>
-              )}
-            </Button>
-          </TabsContent>
-        </Tabs>
+          </details>
+        </div>
       </CardContent>
     </Card>
   );

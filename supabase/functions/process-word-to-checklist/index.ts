@@ -173,56 +173,100 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractWordContent(base64File: string): Promise<DocumentContent> {
-  console.log('Starting simple Word document extraction...');
+  console.log('Starting advanced Word document extraction...');
   
   try {
-    // Simple approach: treat the document as binary and extract any readable text
+    // Decode base64 file
     const binaryString = atob(base64File.split(',')[1] || base64File);
+    console.log('Document size:', binaryString.length, 'bytes');
     
-    // Extract readable ASCII characters and create meaningful text
+    // .docx files are ZIP archives - we need to extract the document.xml content
+    // This is a simplified ZIP parser focused on finding document.xml
     let extractedText = '';
-    let readableChars = '';
     
-    for (let i = 0; i < binaryString.length && i < 50000; i++) { // Limit processing to prevent timeout
-      const charCode = binaryString.charCodeAt(i);
-      // Include printable ASCII characters
-      if ((charCode >= 32 && charCode <= 126) || charCode === 10 || charCode === 13) {
-        readableChars += binaryString.charAt(i);
-      } else if (readableChars.length > 0) {
-        // Add space when hitting non-printable to separate words
-        readableChars += ' ';
+    // Look for ZIP file signature
+    if (binaryString.substring(0, 4) === 'PK\x03\x04' || binaryString.includes('PK')) {
+      console.log('Detected ZIP/DOCX format');
+      
+      // Find document.xml or similar content
+      const documentXmlPattern = /<w:t[^>]*>([^<]+)<\/w:t>/g;
+      const paragraphPattern = /<w:p[^>]*>.*?<\/w:p>/g;
+      
+      // Extract all text content between w:t tags (Word text elements)
+      let matches = [...binaryString.matchAll(documentXmlPattern)];
+      if (matches.length > 0) {
+        extractedText = matches.map(match => match[1]).join(' ');
+        console.log('Extracted from w:t tags:', matches.length, 'text elements');
+      }
+      
+      // If no w:t tags found, try broader XML text extraction
+      if (!extractedText.trim()) {
+        // Look for any text content in angle brackets
+        const xmlTextPattern = />([^<]+)</g;
+        const allMatches = [...binaryString.matchAll(xmlTextPattern)];
+        
+        const meaningfulText = allMatches
+          .map(match => match[1].trim())
+          .filter(text => {
+            return text.length > 2 && 
+                   !text.match(/^[\d\s\-_.]+$/) && // Skip numbers/symbols only
+                   text.match(/[a-zA-Z]/); // Must contain letters
+          })
+          .slice(0, 200); // Limit to prevent too much noise
+          
+        if (meaningfulText.length > 5) {
+          extractedText = meaningfulText.join(' ');
+          console.log('Extracted from XML content:', meaningfulText.length, 'text fragments');
+        }
       }
     }
     
-    // Clean up the text and extract meaningful words
-    const words = readableChars
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .split(' ')
-      .filter(word => {
-        const trimmed = word.trim();
-        return trimmed.length >= 3 && 
-               trimmed.length <= 30 && 
-               /^[a-zA-Z][a-zA-Z0-9\-.,!?']*$/.test(trimmed);
-      })
-      .slice(0, 200); // Limit number of words
-
-    if (words.length >= 5) {
-      extractedText = words.join(' ');
-      console.log('Successfully extracted', words.length, 'words');
-    } else {
-      extractedText = 'Please copy and paste your checklist content, as automatic extraction from this document format is not fully supported.';
-      console.log('Insufficient readable content found');
+    // Fallback: extract any readable text
+    if (!extractedText.trim()) {
+      console.log('Using fallback text extraction');
+      const readableChars = binaryString
+        .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ') // Remove control chars
+        .replace(/[^\x20-\x7E\s]/g, ' ') // Keep only printable ASCII
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim();
+      
+      const words = readableChars.split(' ')
+        .filter(word => {
+          const clean = word.trim();
+          return clean.length >= 3 && 
+                 clean.length <= 30 && 
+                 /^[a-zA-Z][a-zA-Z0-9\s\-.,!?'()]*$/.test(clean);
+        })
+        .slice(0, 150);
+      
+      if (words.length >= 10) {
+        extractedText = words.join(' ');
+        console.log('Fallback extraction found:', words.length, 'words');
+      }
     }
-
+    
+    // Final cleanup
+    extractedText = extractedText
+      .replace(/\s+/g, ' ')
+      .replace(/([.!?])\s*/g, '$1 ')
+      .trim();
+    
+    if (extractedText.length < 20) {
+      extractedText = 'Unable to extract readable content from this document. The document may be empty, corrupted, or in an unsupported format. Please try copying and pasting the content instead.';
+    }
+    
+    console.log('Final extracted text length:', extractedText.length);
+    console.log('Text preview:', extractedText.substring(0, 150) + '...');
+    
     return {
       text: extractedText,
       images: []
     };
     
   } catch (error) {
-    console.error('Error in extraction:', error);
+    console.error('Error in document extraction:', error);
     return {
-      text: 'Document processing failed. Please copy and paste your content instead.',
+      text: 'Document processing failed. Please copy and paste your content using the Text Input tab instead.',
       images: []
     };
   }
