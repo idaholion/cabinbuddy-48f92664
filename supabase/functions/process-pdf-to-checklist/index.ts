@@ -147,7 +147,7 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
 });
 
 async function extractPdfText(base64File: string): Promise<string> {
-  console.log('Starting improved PDF text extraction...');
+  console.log('Starting simple text extraction...');
   
   try {
     // Handle different base64 formats
@@ -156,177 +156,157 @@ async function extractPdfText(base64File: string): Promise<string> {
       base64Data = base64File.split(',')[1];
     }
     
-    // Convert base64 to bytes
+    // Convert base64 to text
     const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+    console.log('PDF file size:', binaryString.length, 'bytes');
+    
+    // Simple approach: find actual readable text content
+    const readableText = extractReadableContent(binaryString);
+    
+    if (readableText.length < 20) {
+      return `Unable to extract text from this PDF. Please try one of these alternatives:
+
+1. Copy and paste the text content directly into the text area below
+2. Convert your PDF to a text file first
+3. Use a PDF with selectable text (not scanned images)
+
+If your PDF contains a checklist or instructions, please manually copy that content and paste it here instead.`;
     }
     
-    console.log('PDF file size:', bytes.length, 'bytes');
-    
-    // Try to extract text using improved heuristics
-    return await advancedTextExtraction(binaryString);
+    return readableText;
     
   } catch (error) {
     console.error('Error in PDF extraction:', error);
-    return 'PDF text extraction failed. The PDF may be image-based, encrypted, or corrupted. Please try copying and pasting the text content instead, or use a different PDF.';
+    return 'PDF processing failed. Please copy and paste your checklist content as text instead.';
   }
 }
 
-async function advancedTextExtraction(binaryString: string): Promise<string> {
-  console.log('Using advanced text extraction method...');
+function extractReadableContent(data: string): string {
+  console.log('Extracting readable content...');
   
-  const extractedText: string[] = [];
+  const sentences: string[] = [];
+  const minSentenceLength = 10;
+  const maxSentenceLength = 200;
   
-  // Method 1: Look for text between parentheses in text objects
-  const textObjectMatches = binaryString.match(/BT[\s\S]*?ET/g);
-  if (textObjectMatches) {
-    console.log('Found text objects:', textObjectMatches.length);
+  // Look for complete sentences or phrases
+  let buffer = '';
+  let inReadableSection = false;
+  
+  for (let i = 0; i < data.length; i++) {
+    const char = data[i];
+    const code = char.charCodeAt(0);
     
-    for (const textObject of textObjectMatches) {
-      // Extract text in parentheses: (text)
-      const textInParens = textObject.match(/\([^)]*\)/g);
-      if (textInParens) {
-        for (const match of textInParens) {
-          const cleanText = match
-            .replace(/^\(|\)$/g, '') // Remove parentheses
-            .replace(/\\[nrtf\\()]/g, ' ') // Handle escape sequences
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          if (cleanText.length > 2 && /[a-zA-Z]/.test(cleanText) && !cleanText.match(/^[A-Z]{4,}$/)) {
-            extractedText.push(cleanText);
+    // Check if character is readable (letters, numbers, common punctuation, spaces)
+    if ((code >= 32 && code <= 126) || code === 10 || code === 13) {
+      // Skip PDF commands and metadata
+      if (buffer.length === 0) {
+        // Skip if starting with PDF keywords
+        const preview = data.substring(i, i + 20);
+        if (preview.match(/^(obj|endobj|stream|endstream|xref|trailer|PDF|Type|Filter|Length|Font|Page)/)) {
+          // Skip past this keyword
+          while (i < data.length && data.charCodeAt(i) >= 32 && data.charCodeAt(i) <= 126) {
+            i++;
           }
+          continue;
         }
       }
       
-      // Extract text in brackets: [text]
-      const textInBrackets = textObject.match(/\[[^\]]*\]/g);
-      if (textInBrackets) {
-        for (const match of textInBrackets) {
-          const cleanText = match
-            .replace(/^\[|\]$/g, '') // Remove brackets
-            .replace(/\s+/g, ' ')
-            .trim();
-          
-          if (cleanText.length > 2 && /[a-zA-Z]/.test(cleanText)) {
-            extractedText.push(cleanText);
+      if (char === '\n' || char === '\r') {
+        // Process accumulated buffer
+        if (buffer.trim().length >= minSentenceLength && buffer.trim().length <= maxSentenceLength) {
+          const cleanText = cleanSentence(buffer.trim());
+          if (cleanText && isValidSentence(cleanText)) {
+            sentences.push(cleanText);
           }
         }
-      }
-    }
-  }
-  
-  // Method 2: Look for stream content between 'stream' and 'endstream'
-  const streamMatches = binaryString.match(/stream[\s\S]*?endstream/g);
-  if (streamMatches) {
-    console.log('Found streams:', streamMatches.length);
-    
-    for (const stream of streamMatches) {
-      // Remove 'stream' and 'endstream' markers
-      const streamContent = stream.replace(/^stream\s*|\s*endstream$/g, '');
-      
-      // Extract readable ASCII text sequences
-      let currentWord = '';
-      for (let i = 0; i < Math.min(streamContent.length, 10000); i++) {
-        const char = streamContent[i];
-        const charCode = char.charCodeAt(0);
-        
-        if (charCode >= 32 && charCode <= 126) {
-          currentWord += char;
-        } else {
-          if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
-            const cleanWord = currentWord.trim();
-            if (!cleanWord.match(/^[^a-zA-Z]*$/) && 
-                !cleanWord.includes('obj') && 
-                !cleanWord.includes('endobj') &&
-                cleanWord.length <= 50) {
-              extractedText.push(cleanWord);
-            }
-          }
-          currentWord = '';
-        }
-      }
-      
-      // Add final word
-      if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
-        extractedText.push(currentWord.trim());
-      }
-    }
-  }
-  
-  // Method 3: General readable text extraction
-  if (extractedText.length < 5) {
-    console.log('Applying general text extraction fallback...');
-    
-    let currentPhrase = '';
-    let wordCount = 0;
-    
-    for (let i = 0; i < Math.min(binaryString.length, 50000); i++) {
-      const char = binaryString[i];
-      const charCode = char.charCodeAt(0);
-      
-      // Include letters, numbers, spaces, and common punctuation
-      if ((charCode >= 32 && charCode <= 126) || char === '\n' || char === '\r') {
-        if (char === '\n' || char === '\r') {
-          if (currentPhrase.trim().length > 5 && wordCount >= 2) {
-            extractedText.push(currentPhrase.trim());
-          }
-          currentPhrase = '';
-          wordCount = 0;
-        } else if (char === ' ') {
-          if (currentPhrase.length > 0) {
-            wordCount++;
-          }
-          currentPhrase += char;
-        } else {
-          currentPhrase += char;
-        }
+        buffer = '';
+        inReadableSection = false;
       } else {
-        if (currentPhrase.trim().length > 5 && wordCount >= 2) {
-          extractedText.push(currentPhrase.trim());
+        buffer += char;
+        if (buffer.length > maxSentenceLength) {
+          // Reset if too long
+          buffer = '';
+          inReadableSection = false;
         }
-        currentPhrase = '';
-        wordCount = 0;
       }
-    }
-    
-    // Add final phrase
-    if (currentPhrase.trim().length > 5 && wordCount >= 2) {
-      extractedText.push(currentPhrase.trim());
+    } else {
+      // Non-readable character, process buffer if we have one
+      if (buffer.trim().length >= minSentenceLength && buffer.trim().length <= maxSentenceLength) {
+        const cleanText = cleanSentence(buffer.trim());
+        if (cleanText && isValidSentence(cleanText)) {
+          sentences.push(cleanText);
+        }
+      }
+      buffer = '';
+      inReadableSection = false;
     }
   }
   
-  // Clean and filter the extracted text
-  const cleanedText = extractedText
-    .filter(text => {
-      const clean = text.trim();
-      return clean.length >= 3 && 
-             clean.length <= 200 &&
-             /[a-zA-Z]/.test(clean) &&
-             !clean.match(/^[0-9\s\-_.()]+$/) &&
-             !clean.includes('obj') &&
-             !clean.includes('endobj') &&
-             !clean.includes('xref') &&
-             !clean.includes('trailer') &&
-             !clean.match(/^[A-F0-9]{8,}$/) &&
-             !clean.match(/^PDF-/) &&
-             !clean.match(/^Type\//) &&
-             !clean.match(/^Filter\//) &&
-             !clean.match(/^Length\s+\d+$/);
-    })
-    .slice(0, 100) // Limit to first 100 meaningful phrases
+  // Process final buffer
+  if (buffer.trim().length >= minSentenceLength && buffer.trim().length <= maxSentenceLength) {
+    const cleanText = cleanSentence(buffer.trim());
+    if (cleanText && isValidSentence(cleanText)) {
+      sentences.push(cleanText);
+    }
+  }
+  
+  // Join sentences and clean up
+  const result = sentences
+    .slice(0, 50) // Limit to first 50 sentences
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
   
-  console.log('Extracted text length:', cleanedText.length);
-  console.log('Text preview:', cleanedText.substring(0, 300));
+  console.log('Found sentences:', sentences.length);
+  console.log('Sample sentences:', sentences.slice(0, 3));
+  console.log('Final text preview:', result.substring(0, 200));
   
-  if (cleanedText.length < 20) {
-    return 'Unable to extract readable text from this PDF. The PDF may be image-based, encrypted, or in an unsupported format. Please try:\n1. Converting the PDF to text format\n2. Copy and paste the content manually\n3. Use a different PDF with selectable text';
+  return result;
+}
+
+function cleanSentence(text: string): string {
+  return text
+    .replace(/[^\w\s\-.,!?():;"']/g, ' ') // Keep only word characters and common punctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isValidSentence(text: string): boolean {
+  // Must contain letters
+  if (!/[a-zA-Z]/.test(text)) return false;
+  
+  // Must have reasonable letter to total ratio
+  const letters = (text.match(/[a-zA-Z]/g) || []).length;
+  const ratio = letters / text.length;
+  if (ratio < 0.3) return false;
+  
+  // Exclude common PDF artifacts
+  const lowerText = text.toLowerCase();
+  const excludePatterns = [
+    /^(type|filter|length|font|page|obj|endobj|stream|endstream|xref|trailer)/,
+    /pdf[\s\-]?1\./,
+    /flatedecode/,
+    /^[a-f0-9\s\-]+$/i, // hex patterns
+    /^[\d\s\-.,]+$/, // only numbers and punctuation
+    /^[A-Z\s\-]+$/, // all caps (usually metadata)
+    /times.*roman|arial|helvetica/i, // font names
+    /rgb|cmyk|device/i, // color space names
+  ];
+  
+  for (const pattern of excludePatterns) {
+    if (pattern.test(lowerText)) return false;
   }
   
-  return cleanedText;
+  // Must contain actual words (not just random characters)
+  const words = text.split(/\s+/).filter(w => w.length >= 2);
+  if (words.length < 2) return false;
+  
+  // Check for reasonable word patterns
+  const validWords = words.filter(word => {
+    return /^[a-zA-Z][a-zA-Z0-9]*$/.test(word) || // Normal words
+           /^\d+$/.test(word) || // Numbers
+           /^[a-zA-Z]+[.,!?]$/.test(word); // Words with punctuation
+  });
+  
+  return validWords.length >= Math.max(1, words.length * 0.5);
 }
