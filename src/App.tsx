@@ -71,6 +71,7 @@ const AccountSecurity = React.lazy(() => import("./pages/AccountSecurity"));
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const WordChecklistCreator = React.lazy(() => import("./pages/WordChecklistCreator"));
+const PdfChecklistCreator = React.lazy(() => import("./pages/PdfChecklistCreator"));
 
 
 
@@ -129,6 +130,7 @@ const AppContent = () => {
         <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/word-checklist-creator" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><WordChecklistCreator /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/pdf-checklist" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PdfChecklistCreator /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSeasonalDocs /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
