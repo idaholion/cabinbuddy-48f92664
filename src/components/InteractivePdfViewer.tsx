@@ -164,10 +164,10 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                 <h4 className="font-semibold text-amber-800 mb-2">📋 For Images to Work:</h4>
                 <ul className="text-sm text-amber-700 space-y-1">
-                  <li>• <strong>Save as "Web Page, Complete"</strong> from Word (not just "Web Page")</li>
-                  <li>• This creates an HTML file + a folder with images</li>
-                  <li>• Upload the HTML file here, then the images should display</li>
-                  <li>• Or embed images directly in Word before saving</li>
+                  <li>• <strong>Best:</strong> Save as "Single file web page (.mht)" - embeds everything in one file</li>
+                  <li>• <strong>Alternative:</strong> Save as "Web Page (.htm)" - creates HTML + images folder</li>
+                  <li>• Avoid "Web page filtered" as it may strip images</li>
+                  <li>• Or copy/paste images directly into Word before saving</li>
                 </ul>
               </div>
               
