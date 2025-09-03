@@ -107,9 +107,24 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
 
     } catch (error) {
       console.error('Upload error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error constructor:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      let errorMessage = "Failed to process the Word document";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        errorMessage = error.message || JSON.stringify(error);
+      }
+      
       toast({
         title: "Processing Failed",
-        description: error.message || "Failed to process the Word document",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
