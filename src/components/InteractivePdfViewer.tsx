@@ -222,17 +222,23 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               
               {/* Visible file input as backup */}
               <div className="mt-4 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">Select your HTML file:</p>
                 <input
                   type="file"
                   accept=".html,.htm"
                   onChange={(e) => {
-                    console.log('🔘 Visible file input onChange fired');
-                    handleFileUpload(e);
+                    console.log('🔘 Visible file input onChange fired, files:', e.target.files?.length);
+                    if (e.target.files && e.target.files.length > 0) {
+                      console.log('🔘 File selected via visible input:', e.target.files[0].name);
+                      handleFileUpload(e);
+                    } else {
+                      console.log('❌ No files in visible input');
+                    }
                   }}
-                  className="w-full"
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   disabled={isLoading}
                 />
-                <p className="text-sm text-gray-500 mt-2">Or drag and drop your HTML file here</p>
+                <p className="text-xs text-gray-500 mt-2">Supported formats: HTML files (.html, .htm)</p>
               </div>
               <Button
                 onClick={() => {
