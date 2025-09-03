@@ -853,6 +853,39 @@ export type Database = {
           },
         ]
       }
+      pdf_checklists: {
+        Row: {
+          checkboxes: Json | null
+          created_at: string
+          id: string
+          pages_data: Json | null
+          pdf_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checkboxes?: Json | null
+          created_at?: string
+          id?: string
+          pages_data?: Json | null
+          pdf_url?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checkboxes?: Json | null
+          created_at?: string
+          id?: string
+          pages_data?: Json | null
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       photo_comments: {
         Row: {
           comment: string
