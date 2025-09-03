@@ -72,8 +72,33 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   const fileToText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsText(file);
-      reader.onload = () => resolve(reader.result as string);
+      reader.readAsText(file, 'UTF-8'); // Specify UTF-8 encoding
+      reader.onload = () => {
+        let content = reader.result as string;
+        
+        // Clean up common HTML issues from Word
+        content = content
+          .replace(/â€™/g, "'") // Fix apostrophes
+          .replace(/â€œ/g, '"') // Fix opening quotes
+          .replace(/â€/g, '"')  // Fix closing quotes
+          .replace(/â€¢/g, "•") // Fix bullets
+          .replace(/â€"/g, "–") // Fix en-dashes
+          .replace(/â€"/g, "—") // Fix em-dashes
+          .replace(/Â /g, " ")   // Fix non-breaking spaces
+          .replace(/ï¿½/g, "")   // Remove replacement characters
+          .replace(/\uFFFD/g, ""); // Remove Unicode replacement characters
+        
+        // Replace image references with placeholders
+        content = content.replace(/<img[^>]*src="([^"]*)"[^>]*>/gi, (match, src) => {
+          const filename = src.split('/').pop() || 'image';
+          return `<div style="border: 2px dashed #ccc; padding: 20px; margin: 10px 0; text-align: center; background: #f9f9f9; color: #666;">
+                    📷 Image: ${filename}<br>
+                    <small>Image was referenced but not embedded in HTML</small>
+                  </div>`;
+        });
+        
+        resolve(content);
+      };
       reader.onerror = error => reject(error);
     });
   };
