@@ -52,87 +52,34 @@ serve(async (req) => {
       throw new Error('Organization ID is required');
     }
 
-    // Extract text from PDF
-    const extractedText = await extractPdfText(pdfFile);
-    console.log('Extracted text length:', extractedText.length);
+    // Convert PDF to images (pages)
+    const pdfPages = await convertPdfToImages(pdfFile);
+    console.log('Converted PDF to', pdfPages.length, 'pages');
 
-    // Send text to OpenAI for checklist conversion
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `Convert the following text into a structured JSON checklist. Each item should be short, actionable, and numbered if possible.
-
-Return a JSON array where each item has:
-- id: unique identifier (string)
-- text: short, actionable instruction (string)
-- completed: false (boolean)
-
-Preserve numbered lists and bullet points. Make items concise but complete.`
-          },
-          {
-            role: 'user',
-            content: extractedText
-          }
-        ],
-        max_tokens: 4000,
-      }),
-    });
-
-    if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
-    }
-
-    const openAIData = await openAIResponse.json();
-    let checklistItems: ChecklistItem[] = [];
-    
-    try {
-      const aiContent = openAIData.choices[0]?.message?.content || '[]';
-      // Extract JSON from response (handle potential markdown formatting)
-      const jsonMatch = aiContent.match(/\[[\s\S]*\]/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : aiContent;
-      checklistItems = JSON.parse(jsonStr);
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
-      throw new Error('Failed to parse AI response into valid JSON');
-    }
-
-    console.log('Generated checklist items:', checklistItems.length);
-
-    // Save the checklist to database
-    const { data, error } = await supabase
-      .from('custom_checklists')
-      .upsert({
-        organization_id: organizationId,
-        checklist_type: checklistType,
-        items: checklistItems,
-        images: []
-      }, {
-        onConflict: 'organization_id,checklist_type'
+    // Save PDF pages data 
+    const { data: pdfData, error: pdfError } = await supabase
+      .from('pdf_checklists')
+      .insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        title: `PDF Checklist ${new Date().toISOString()}`,
+        pages_data: pdfPages,
+        checkboxes: []
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('Database error:', error);
-      throw new Error('Failed to save checklist to database');
+    if (pdfError) {
+      console.error('Database error saving PDF data:', pdfError);
+      throw new Error('Failed to save PDF data to database');
     }
 
-    console.log('Checklist saved successfully:', data.id);
+    console.log('PDF data saved successfully:', pdfData.id);
 
     return new Response(JSON.stringify({
       success: true,
-      checklistId: data.id,
-      itemsCount: checklistItems.length,
-      imagesCount: 0,
-      message: 'PDF successfully converted to interactive checklist'
+      checklistId: pdfData.id,
+      pages: pdfPages,
+      message: 'PDF successfully processed for interactive use'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -156,6 +103,37 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
     });
   }
 });
+
+// Convert PDF to images using a simple approach
+async function convertPdfToImages(base64File: string): Promise<any[]> {
+  console.log('Converting PDF to images...');
+  
+  try {
+    // For now, we'll create a simple implementation that returns the PDF as a single "page"
+    // In a production environment, you'd want to use a proper PDF-to-image library
+    
+    // Clean the base64 data
+    let base64Data = base64File;
+    if (base64File.includes(',')) {
+      base64Data = base64File.split(',')[1];
+    }
+    
+    // Create a data URL for the PDF
+    const pdfDataUrl = `data:application/pdf;base64,${base64Data}`;
+    
+    // Return a single page object - the frontend will handle PDF rendering
+    return [{
+      page: 1,
+      imageUrl: pdfDataUrl,
+      width: 800,
+      height: 1200
+    }];
+    
+  } catch (error) {
+    console.error('Error converting PDF to images:', error);
+    throw new Error('Failed to process PDF pages');
+  }
+}
 
 async function extractPdfText(base64File: string): Promise<string> {
   console.log('Starting simple text extraction...');
