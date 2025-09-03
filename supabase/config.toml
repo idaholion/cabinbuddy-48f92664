@@ -2,3 +2,6 @@ project_id = "ftaxzdnrnhktzbcsejoy"
 
 [functions.process-pdf-to-checklist]
 verify_jwt = false
+
+[functions.process-word-to-checklist]
+verify_jwt = false
