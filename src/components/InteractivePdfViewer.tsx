@@ -1,9 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Trash2, Download, Upload, Plus, Save } from 'lucide-react';
+import { Trash2, Download, Upload, Plus, Save, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface PageData {
+  page: number;
+  imageUrl: string;
+  width: number;
+  height: number;
+}
 
 interface CheckboxItem {
   id: string;
@@ -18,15 +26,17 @@ interface InteractivePdfViewerProps {
 }
 
 export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
-  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [pdfPages, setPdfPages] = useState<PageData[]>([]);
   const [checkboxes, setCheckboxes] = useState<CheckboxItem[]>([]);
   const [isAddingMode, setIsAddingMode] = useState(false);
+  const [selectedPage, setSelectedPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [checklistId, setChecklistId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('File upload started');
     const file = event.target.files?.[0];
     console.log('Selected file:', file);
@@ -41,26 +51,69 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       return;
     }
 
-    console.log('Creating blob URL for PDF...');
+    setIsLoading(true);
+    console.log('Processing PDF file...');
+    
     try {
-      const url = URL.createObjectURL(file);
-      console.log('Blob URL created:', url);
-      setPdfUrl(url);
-      setCheckboxes([]); // Reset checkboxes for new document
+      // Convert file to base64
+      const base64 = await fileToBase64(file);
+      console.log('File converted to base64, length:', base64.length);
       
-      toast({
-        title: "PDF Loaded Successfully",
-        description: "Your document is ready. Turn on 'Add Checkboxes' mode and click on the document to place checkboxes.",
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Call edge function to process PDF
+      const { data, error } = await supabase.functions.invoke('process-pdf-to-checklist', {
+        body: {
+          pdfData: base64.split(',')[1], // Remove data:application/pdf;base64, prefix
+          title: file.name.replace('.pdf', ''),
+          userId: user.id
+        }
       });
-      console.log('PDF loaded successfully');
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(`Failed to process PDF: ${error.message}`);
+      }
+
+      console.log('PDF processed successfully:', data);
+      
+      if (data.success && data.pages) {
+        setPdfPages(data.pages);
+        setChecklistId(data.checklistId);
+        setSelectedPage(0);
+        setCheckboxes([]); // Reset checkboxes for new document
+        
+        toast({
+          title: "PDF Loaded Successfully",
+          description: "Your document is ready. Turn on 'Add Checkboxes' mode and click on the document to place checkboxes.",
+        });
+        console.log('PDF loaded successfully');
+      } else {
+        throw new Error(data.error || 'Unknown error processing PDF');
+      }
     } catch (error) {
-      console.error('Error creating blob URL:', error);
+      console.error('Error processing PDF:', error);
       toast({
         title: "Error",
-        description: "Failed to load PDF. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process PDF. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
   };
 
   const handleDocumentClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -117,13 +170,13 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      {!pdfUrl && (
+      {pdfPages.length === 0 && (
         <Card>
           <CardContent className="p-6">
             <div className="text-center space-y-4">
               <h3 className="text-lg font-semibold">Upload Your Winterizing Document</h3>
               <p className="text-muted-foreground">
-                Upload your PDF with text and pictures. You'll then be able to add checkboxes anywhere on the document.
+                Upload your PDF with text and pictures. We'll process it on our servers and you'll be able to add checkboxes anywhere on the document.
               </p>
               <input
                 type="file"
@@ -131,6 +184,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 onChange={handleFileUpload}
                 ref={fileInputRef}
                 className="hidden"
+                disabled={isLoading}
               />
               <Button
                 onClick={() => {
@@ -139,9 +193,19 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 }}
                 className="w-full max-w-sm"
                 size="lg"
+                disabled={isLoading}
               >
-                <Upload className="mr-2 h-5 w-5" />
-                Upload PDF Document
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Processing PDF...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-5 w-5" />
+                    Upload PDF Document
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
@@ -149,7 +213,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       )}
 
       {/* Controls */}
-      {pdfUrl && (
+      {pdfPages.length > 0 && (
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-3 items-center justify-between">
@@ -186,9 +250,10 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setPdfUrl('');
+                    setPdfPages([]);
                     setCheckboxes([]);
                     setIsAddingMode(false);
+                    setChecklistId(null);
                   }}
                   size="sm"
                 >
@@ -214,9 +279,26 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       )}
 
       {/* PDF Viewer with Interactive Checkboxes */}
-      {pdfUrl && (
+      {pdfPages.length > 0 && (
         <Card>
           <CardContent className="p-4">
+            {/* Page Navigation */}
+            {pdfPages.length > 1 && (
+              <div className="mb-4 flex items-center gap-2">
+                <span className="text-sm font-medium">Page:</span>
+                {pdfPages.map((_, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedPage === index ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedPage(index)}
+                  >
+                    {index + 1}
+                  </Button>
+                ))}
+              </div>
+            )}
+
             {/* Document Display */}
             <div 
               ref={containerRef}
@@ -224,58 +306,72 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
               onClick={handleDocumentClick}
               style={{ minHeight: '600px' }}
             >
-              <div className="relative w-full">
-                <iframe
-                  src={pdfUrl}
-                  className="w-full border-0"
+              <div className="relative w-full flex justify-center">
+                <div 
+                  className="relative"
                   style={{ 
-                    height: '800px',
-                    minHeight: '600px',
                     pointerEvents: isAddingMode ? 'none' : 'auto'
                   }}
-                  title="PDF Document"
-                />
-                
-                {/* Overlay div for capturing clicks */}
-                {isAddingMode && (
-                  <div 
-                    className="absolute inset-0 cursor-crosshair bg-transparent"
-                    style={{ zIndex: 10 }}
-                    onClick={handleDocumentClick}
-                  />
-                )}
-
-                {/* Overlay Checkboxes */}
-                {checkboxes.map(checkbox => (
-                  <div
-                    key={checkbox.id}
-                    className="absolute flex items-center gap-2 group z-20"
-                    style={{
-                      left: `${checkbox.x}%`,
-                      top: `${checkbox.y}%`,
-                      transform: 'translate(-50%, -50%)',
+                >
+                  <img
+                    src={pdfPages[selectedPage]?.imageUrl}
+                    alt={`Page ${selectedPage + 1}`}
+                    className="max-w-full h-auto"
+                    style={{ 
+                      maxHeight: '1000px',
+                      width: 'auto'
                     }}
-                  >
-                    <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
-                      <Checkbox
-                        checked={checkbox.checked}
-                        onCheckedChange={() => toggleCheckbox(checkbox.id)}
-                        className="scale-125"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="p-1 h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteCheckbox(checkbox.id);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                    onError={(e) => {
+                      console.error('Error loading page image:', e);
+                      // Fallback to PDF embed if image fails
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  
+                  {/* Overlay div for capturing clicks */}
+                  {isAddingMode && (
+                    <div 
+                      className="absolute inset-0 cursor-crosshair bg-transparent"
+                      style={{ zIndex: 10 }}
+                      onClick={handleDocumentClick}
+                    />
+                  )}
+
+                  {/* Overlay Checkboxes */}
+                  {checkboxes
+                    .filter(cb => selectedPage === (cb as any).page || selectedPage === 0) 
+                    .map(checkbox => (
+                    <div
+                      key={checkbox.id}
+                      className="absolute flex items-center gap-2 group z-20"
+                      style={{
+                        left: `${checkbox.x}%`,
+                        top: `${checkbox.y}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    >
+                      <div className="bg-white rounded-lg shadow-lg border-2 border-primary p-2 flex items-center gap-2">
+                        <Checkbox
+                          checked={checkbox.checked}
+                          onCheckedChange={() => toggleCheckbox(checkbox.id)}
+                          className="scale-125"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="p-1 h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteCheckbox(checkbox.id);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </CardContent>
