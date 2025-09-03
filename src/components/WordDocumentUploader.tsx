@@ -75,12 +75,20 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
         }
       });
 
+      console.log('Edge function response:', { data, error });
+
       if (error) {
-        throw new Error(error.message || 'Failed to process document');
+        console.error('Supabase function error:', error);
+        throw new Error(`Function call failed: ${error.message || JSON.stringify(error)}`);
+      }
+
+      if (!data) {
+        throw new Error('No response data received from processing function');
       }
 
       if (!data.success) {
-        throw new Error(data.error || 'Processing failed');
+        console.error('Processing failed:', data);
+        throw new Error(data.error || data.message || 'Processing failed');
       }
 
       toast({

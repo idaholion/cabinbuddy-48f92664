@@ -34,7 +34,14 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
+    console.log('Environment check:', {
+      hasOpenAI: !!OPENAI_API_KEY,
+      hasSupabase: !!SUPABASE_URL,
+      hasServiceRole: !!SUPABASE_SERVICE_ROLE_KEY
+    });
+
     if (!OPENAI_API_KEY) {
+      console.error('OpenAI API key not configured');
       throw new Error('OpenAI API key not configured');
     }
 
@@ -43,6 +50,7 @@ serve(async (req) => {
     const { wordFile, checklistType, organizationId } = await req.json();
     
     console.log('Processing Word document for checklist type:', checklistType);
+    console.log('Organization ID:', organizationId);
 
     // Extract content from Word document (.docx)
     const documentContent = await extractWordContent(wordFile);
@@ -57,7 +65,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-5-mini-2025-08-07',
         messages: [
           {
             role: 'system',
@@ -77,8 +85,7 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
             content: documentContent.text
           }
         ],
-        temperature: 0.3,
-        max_tokens: 4000,
+        max_completion_tokens: 4000,
       }),
     });
 
