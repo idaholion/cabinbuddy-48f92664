@@ -35,12 +35,14 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
     
     const isHtmlFile = file.name.toLowerCase().endsWith('.html') || 
                        file.name.toLowerCase().endsWith('.htm') ||
+                       file.name.toLowerCase().endsWith('.mht') ||
+                       file.name.toLowerCase().endsWith('.mhtml') ||
                        file.type === 'text/html';
     
     if (!isHtmlFile) {
       toast({
         title: "Invalid File",
-        description: "Please upload an HTML file (.html or .htm).",
+        description: "Please upload an HTML file (.html, .htm, .mht, or .mhtml).",
         variant: "destructive",
       });
       return;
@@ -177,7 +179,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
                   <input
                     id="html-file-input"
                     type="file"
-                    accept=".html,.htm"
+                    accept=".html,.htm,.mht,.mhtml"
                     onChange={handleFileUpload}
                     className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none file:bg-blue-600 file:text-white file:border-0 file:py-2 file:px-4 file:rounded-lg file:cursor-pointer"
                     disabled={isLoading}
