@@ -107,13 +107,25 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   };
 
   const parseMHTMLContent = (mhtmlContent: string): string => {
+    console.log("MHTML Content (first 1000 chars):", mhtmlContent.substring(0, 1000));
+    
     // Find the HTML part in the MHTML file
     const htmlMatch = mhtmlContent.match(/Content-Type:\s*text\/html[\s\S]*?\n\n([\s\S]*?)(?=\n--)/i);
+    console.log("HTML Match found:", !!htmlMatch);
+    
     if (htmlMatch) {
       let htmlContent = htmlMatch[1];
+      console.log("Extracted HTML (first 500 chars):", htmlContent.substring(0, 500));
+      
+      // Check if content is quoted-printable encoded
+      if (mhtmlContent.includes('Content-Transfer-Encoding: quoted-printable')) {
+        console.log("Detected quoted-printable encoding");
+        htmlContent = decodeQuotedPrintable(htmlContent);
+      }
       
       // Find all image parts and convert them to data URLs
       const imageParts = mhtmlContent.match(/Content-Location:\s*([^\r\n]+)[\s\S]*?Content-Type:\s*image\/[^;\r\n]+[\s\S]*?Content-Transfer-Encoding:\s*base64[\s\S]*?\n\n([A-Za-z0-9+/=\s]+?)(?=\n--)/gi);
+      console.log("Image parts found:", imageParts?.length || 0);
       
       if (imageParts) {
         imageParts.forEach(part => {
@@ -127,6 +139,7 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
             const base64Data = dataMatch[1].replace(/\s/g, '');
             const dataUrl = `data:${mimeType};base64,${base64Data}`;
             
+            console.log("Converting image:", location, "to data URL");
             // Replace image references with data URLs
             htmlContent = htmlContent.replace(new RegExp(`src=["']?${location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?`, 'gi'), `src="${dataUrl}"`);
           }
@@ -136,8 +149,17 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       return htmlContent;
     }
     
+    console.log("No HTML part found, returning original content");
     // If no HTML part found, return the original content
     return mhtmlContent;
+  };
+
+  const decodeQuotedPrintable = (input: string): string => {
+    return input
+      .replace(/=\r?\n/g, '') // Remove soft line breaks
+      .replace(/=([0-9A-F]{2})/gi, (match, hex) => {
+        return String.fromCharCode(parseInt(hex, 16));
+      });
   };
 
   const handleDocumentClick = (event: React.MouseEvent<HTMLDivElement>) => {
