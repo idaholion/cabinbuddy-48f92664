@@ -65,7 +65,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -85,7 +85,7 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
             content: documentContent.text
           }
         ],
-        max_completion_tokens: 4000,
+        max_tokens: 4000,
       }),
     });
 
