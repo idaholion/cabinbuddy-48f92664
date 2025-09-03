@@ -74,9 +74,14 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
   const fileToText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.readAsText(file, 'UTF-8'); // Specify UTF-8 encoding
+      reader.readAsText(file, 'UTF-8');
       reader.onload = () => {
         let content = reader.result as string;
+        
+        // Check if this is an MHTML file
+        if (file.name.toLowerCase().endsWith('.mht') || file.name.toLowerCase().endsWith('.mhtml')) {
+          content = parseMHTMLContent(content);
+        }
         
         // Clean up common HTML issues from Word
         content = content
@@ -99,6 +104,40 @@ export const InteractivePdfViewer = ({ onSave }: InteractivePdfViewerProps) => {
       };
       reader.onerror = error => reject(error);
     });
+  };
+
+  const parseMHTMLContent = (mhtmlContent: string): string => {
+    // Find the HTML part in the MHTML file
+    const htmlMatch = mhtmlContent.match(/Content-Type:\s*text\/html[\s\S]*?\n\n([\s\S]*?)(?=\n--)/i);
+    if (htmlMatch) {
+      let htmlContent = htmlMatch[1];
+      
+      // Find all image parts and convert them to data URLs
+      const imageParts = mhtmlContent.match(/Content-Location:\s*([^\r\n]+)[\s\S]*?Content-Type:\s*image\/[^;\r\n]+[\s\S]*?Content-Transfer-Encoding:\s*base64[\s\S]*?\n\n([A-Za-z0-9+/=\s]+?)(?=\n--)/gi);
+      
+      if (imageParts) {
+        imageParts.forEach(part => {
+          const locationMatch = part.match(/Content-Location:\s*([^\r\n]+)/i);
+          const typeMatch = part.match(/Content-Type:\s*(image\/[^;\r\n]+)/i);
+          const dataMatch = part.match(/Content-Transfer-Encoding:\s*base64[\s\S]*?\n\n([A-Za-z0-9+/=\s]+?)$/i);
+          
+          if (locationMatch && typeMatch && dataMatch) {
+            const location = locationMatch[1].trim();
+            const mimeType = typeMatch[1].trim();
+            const base64Data = dataMatch[1].replace(/\s/g, '');
+            const dataUrl = `data:${mimeType};base64,${base64Data}`;
+            
+            // Replace image references with data URLs
+            htmlContent = htmlContent.replace(new RegExp(`src=["']?${location.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']?`, 'gi'), `src="${dataUrl}"`);
+          }
+        });
+      }
+      
+      return htmlContent;
+    }
+    
+    // If no HTML part found, return the original content
+    return mhtmlContent;
   };
 
   const handleDocumentClick = (event: React.MouseEvent<HTMLDivElement>) => {
