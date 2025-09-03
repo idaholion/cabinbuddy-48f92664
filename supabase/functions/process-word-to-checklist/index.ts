@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+// @deno-types="https://cdn.skypack.dev/jszip@3.10.1/index.d.ts"
+import JSZip from "https://cdn.skypack.dev/jszip@3.10.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -176,13 +178,10 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
   console.log('Starting document extraction...');
   
   try {
-    // Decode the file
-    let fileContent = '';
-    
+    // Handle text files directly
     if (base64File.startsWith('data:text/plain;base64,')) {
-      // Handle text files directly
       const base64Data = base64File.split(',')[1];
-      fileContent = atob(base64Data);
+      const fileContent = atob(base64Data);
       console.log('Processing plain text file, length:', fileContent.length);
       
       return {
@@ -191,83 +190,122 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
       };
     }
     
-    // Handle binary files (Word documents, RTF, etc.)
-    const binaryString = atob(base64File.split(',')[1] || base64File);
-    console.log('Processing binary document, size:', binaryString.length, 'bytes');
+    // Handle .docx files (ZIP format)
+    const base64Data = base64File.split(',')[1] || base64File;
+    const binaryString = atob(base64Data);
     
-    // Simple text extraction from any document format
-    let extractedText = '';
-    
-    // For RTF files, remove RTF codes
-    if (binaryString.includes('\\rtf')) {
-      console.log('Detected RTF format');
-      extractedText = binaryString
-        .replace(/\\[a-z]+\d*\s?/g, ' ') // Remove RTF control codes
-        .replace(/[{}]/g, ' ') // Remove RTF braces
-        .replace(/\s+/g, ' ')
-        .trim();
+    // Convert to Uint8Array for JSZip
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
     }
-    // For Word documents or other formats
-    else {
-      // Extract readable ASCII text
+    
+    try {
+      // Try to parse as .docx (ZIP file)
+      const zip = await JSZip.loadAsync(bytes);
+      console.log('Successfully loaded .docx file, found files:', Object.keys(zip.files));
+      
+      // Extract document text from word/document.xml
+      let extractedText = '';
+      const documentXml = zip.files['word/document.xml'];
+      if (documentXml) {
+        const xmlContent = await documentXml.async('text');
+        // Extract text from XML tags
+        extractedText = xmlContent
+          .replace(/<[^>]+>/g, ' ') // Remove XML tags
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .trim();
+        console.log('Extracted text from document.xml, length:', extractedText.length);
+      }
+      
+      // Extract images from word/media/ folder
+      const images: Array<{ data: string; position: number; description?: string }> = [];
+      let imageIndex = 0;
+      
+      for (const [fileName, file] of Object.entries(zip.files)) {
+        if (fileName.startsWith('word/media/') && !file.dir) {
+          try {
+            const imageData = await file.async('base64');
+            images.push({
+              data: imageData,
+              position: imageIndex * 20, // Distribute images throughout document
+              description: `Image ${imageIndex + 1} from document`
+            });
+            imageIndex++;
+            console.log('Extracted image:', fileName);
+          } catch (imageError) {
+            console.error('Error extracting image:', fileName, imageError);
+          }
+        }
+      }
+      
+      console.log('Total images extracted:', images.length);
+      
+      return {
+        text: extractedText || 'No readable text found in the document.',
+        images
+      };
+      
+    } catch (zipError) {
+      console.log('Not a valid .docx file, trying RTF parsing...');
+      
+      // Handle RTF files
+      if (binaryString.includes('\\rtf')) {
+        console.log('Detected RTF format');
+        const extractedText = binaryString
+          .replace(/\\[a-z]+\d*\s?/g, ' ') // Remove RTF control codes
+          .replace(/[{}]/g, ' ') // Remove RTF braces
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        return {
+          text: extractedText || 'No readable text found in RTF file.',
+          images: []
+        };
+      }
+      
+      // Fallback: try to extract readable text from any format
       const readableText = [];
       let currentWord = '';
       
-      for (let i = 0; i < Math.min(binaryString.length, 100000); i++) {
+      for (let i = 0; i < Math.min(binaryString.length, 50000); i++) {
         const char = binaryString[i];
         const charCode = char.charCodeAt(0);
         
-        // Check if character is printable ASCII
         if (charCode >= 32 && charCode <= 126) {
           currentWord += char;
         } else {
-          // End of word - save if it's meaningful
-          if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+          if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
             readableText.push(currentWord);
           }
           currentWord = '';
         }
       }
       
-      // Don't forget the last word
-      if (currentWord.length >= 2 && /[a-zA-Z]/.test(currentWord)) {
+      if (currentWord.length >= 3 && /[a-zA-Z]/.test(currentWord)) {
         readableText.push(currentWord);
       }
       
-      // Filter out obvious non-content words and join
       const meaningfulWords = readableText.filter(word => {
         const clean = word.trim();
-        return clean.length >= 2 && 
+        return clean.length >= 3 && 
                clean.length <= 50 &&
-               !/^[\d\s\-_.()]+$/.test(clean) && // Skip numbers/symbols only
-               /[a-zA-Z]/.test(clean); // Must contain letters
+               !/^[\d\s\-_.()]+$/.test(clean) &&
+               /[a-zA-Z]/.test(clean);
       });
       
-      extractedText = meaningfulWords.slice(0, 300).join(' ');
-      console.log('Extracted meaningful words:', meaningfulWords.length);
+      const extractedText = meaningfulWords.slice(0, 200).join(' ');
+      
+      return {
+        text: extractedText || 'Unable to extract readable text. Please save as .txt file or copy/paste the content.',
+        images: []
+      };
     }
-    
-    // Clean up the final text
-    extractedText = extractedText
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    if (extractedText.length < 10) {
-      extractedText = 'Unable to extract readable text from this document. Please copy and paste the content instead, or save your Word document as a .txt file and try again.';
-    }
-    
-    console.log('Final text length:', extractedText.length);
-    console.log('Text preview:', extractedText.substring(0, 100) + '...');
-    
-    return {
-      text: extractedText,
-      images: []
-    };
     
   } catch (error) {
     console.error('Error in document extraction:', error);
     return {
-      text: 'Document processing failed. Please try copying and pasting your content instead.',
+      text: 'Document processing failed. Please try saving as .txt file or copy/paste the content.',
       images: []
     };
   }
