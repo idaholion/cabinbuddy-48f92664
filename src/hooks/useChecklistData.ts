@@ -69,7 +69,7 @@ const mapDbResponseToSurveyResponse = (dbResponse: DbSurveyResponse): SurveyResp
 
 // Custom hook for checklists
 export const useCustomChecklists = () => {
-  const [checklists, setChecklists] = useState<Record<string, CustomChecklist>>({});
+  const [checklists, setChecklists] = useState<CustomChecklist[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,17 +80,16 @@ export const useCustomChecklists = () => {
     try {
       const { data, error } = await supabase
         .from('custom_checklists')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const checklistsMap = (data || []).reduce((acc, dbChecklist) => {
-        const checklist = mapDbChecklistToCustomChecklist(dbChecklist);
-        acc[checklist.checklist_type] = checklist;
-        return acc;
-      }, {} as Record<string, CustomChecklist>);
+      const checklistsArray = (data || []).map(dbChecklist => 
+        mapDbChecklistToCustomChecklist(dbChecklist)
+      );
       
-      setChecklists(checklistsMap);
+      setChecklists(checklistsArray);
     } catch (error) {
       console.error('Error fetching checklists:', error);
     } finally {
@@ -106,7 +105,7 @@ export const useCustomChecklists = () => {
       if (orgError) throw orgError;
       if (!organizationId) throw new Error('No organization found');
 
-      const existingChecklist = checklists[type];
+      const existingChecklist = checklists.find(c => c.checklist_type === type);
 
       if (existingChecklist) {
         // Update existing
@@ -125,7 +124,7 @@ export const useCustomChecklists = () => {
         if (error) throw error;
         if (data) {
           const mappedChecklist = mapDbChecklistToCustomChecklist(data);
-          setChecklists(prev => ({ ...prev, [type]: mappedChecklist }));
+          setChecklists(prev => prev.map(c => c.id === existingChecklist.id ? mappedChecklist : c));
         }
       } else {
         // Create new
@@ -147,7 +146,7 @@ export const useCustomChecklists = () => {
         if (error) throw error;
         if (data) {
           const mappedChecklist = mapDbChecklistToCustomChecklist(data);
-          setChecklists(prev => ({ ...prev, [type]: mappedChecklist }));
+          setChecklists(prev => [mappedChecklist, ...prev]);
         }
       }
 
@@ -158,35 +157,18 @@ export const useCustomChecklists = () => {
     }
   };
 
-  const deleteChecklist = async (type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance') => {
+  const deleteChecklist = async (id: string) => {
     try {
-      const { data: organizationId, error: orgError } = await supabase
-        .rpc('get_user_primary_organization_id');
-
-      if (orgError) throw orgError;
-      if (!organizationId) throw new Error('No organization found');
-
-      const existingChecklist = checklists[type];
-      if (!existingChecklist) {
-        toast({ title: "No checklist found to delete", variant: "destructive" });
-        return;
-      }
-
       const { error } = await supabase
         .from('custom_checklists')
         .delete()
-        .eq('id', existingChecklist.id);
+        .eq('id', id);
 
       if (error) throw error;
       
       // Remove from local state
-      setChecklists(prev => {
-        const updated = { ...prev };
-        delete updated[type];
-        return updated;
-      });
-
-      toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} checklist deleted successfully!` });
+      setChecklists(prev => prev.filter(c => c.id !== id));
+      toast({ title: "Checklist deleted successfully!" });
     } catch (error) {
       console.error('Error deleting checklist:', error);
       toast({ title: "Error deleting checklist", variant: "destructive" });

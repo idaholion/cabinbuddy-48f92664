@@ -49,16 +49,17 @@ const SeasonalChecklists = () => {
 
   const getChecklistStats = () => {
     const stats = checklistTypes.map(type => {
-      const checklist = checklists[type.key];
-      const itemCount = checklist?.items?.reduce((acc: number, section: any) => {
-        return acc + (section.items?.length || 0);
-      }, 0) || 0;
+      const typeChecklists = checklists.filter(c => c.checklist_type === type.key);
+      const totalItems = typeChecklists.reduce((total, checklist) => {
+        return total + (checklist.items?.length || 0);
+      }, 0);
       
       return {
         ...type,
-        exists: !!checklist,
-        itemCount,
-        lastUpdated: checklist ? new Date().toLocaleDateString() : null
+        exists: typeChecklists.length > 0,
+        itemCount: totalItems,
+        checklistCount: typeChecklists.length,
+        lastUpdated: typeChecklists.length > 0 ? new Date().toLocaleDateString() : null
       };
     });
     
@@ -88,9 +89,16 @@ const SeasonalChecklists = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     {stat.exists ? (
-                      <Badge className={stat.color}>
-                        {stat.itemCount} items
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge className={stat.color}>
+                          {stat.itemCount} items
+                        </Badge>
+                        {stat.checklistCount > 1 && (
+                          <Badge variant="outline" className="text-xs">
+                            {stat.checklistCount} checklists
+                          </Badge>
+                        )}
+                      </div>
                     ) : (
                       <Badge variant="outline">Not created</Badge>
                     )}
@@ -171,7 +179,9 @@ const SeasonalChecklists = () => {
                     <div className="text-left">
                       <div className="font-medium">{type.label}</div>
                       <div className="text-xs opacity-70">
-                        {checklists[type.key] ? `${checklists[type.key].items?.length || 0} sections` : 'Not created'}
+                        {checklists.filter(c => c.checklist_type === type.key).length > 0 
+                          ? `${checklists.filter(c => c.checklist_type === type.key).length} checklist(s)` 
+                          : 'Not created'}
                       </div>
                     </div>
                   </Button>
@@ -195,13 +205,15 @@ const SeasonalChecklists = () => {
                     {checklistTypes.find(t => t.key === selectedChecklistType)?.description}
                   </CardDescription>
                 </div>
-                {checklists[selectedChecklistType] && (
+                {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={async () => {
-                      if (confirm(`Are you sure you want to delete the ${selectedChecklistType} checklist? This action cannot be undone.`)) {
-                        await deleteChecklist(selectedChecklistType);
+                      const typeChecklists = checklists.filter(c => c.checklist_type === selectedChecklistType);
+                      if (typeChecklists.length > 0 && confirm(`Are you sure you want to delete the ${selectedChecklistType} checklist? This action cannot be undone.`)) {
+                        await deleteChecklist(typeChecklists[0].id);
+                        refetch();
                       }
                     }}
                     className="text-destructive hover:text-destructive"
@@ -216,11 +228,20 @@ const SeasonalChecklists = () => {
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : checklists[selectedChecklistType] ? (
-                <SeasonalChecklistViewer 
-                  checklist={checklists[selectedChecklistType]} 
-                  onUpdate={refetch}
-                />
+              ) : checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 ? (
+                <div className="space-y-4">
+                  {checklists.filter(c => c.checklist_type === selectedChecklistType).map((checklist, index) => (
+                    <div key={checklist.id}>
+                      {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 1 && (
+                        <h4 className="font-medium mb-2">Checklist {index + 1}</h4>
+                      )}
+                      <SeasonalChecklistViewer 
+                        checklist={checklist} 
+                        onUpdate={refetch}
+                      />
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8 space-y-4">
                   <div className="text-muted-foreground">
