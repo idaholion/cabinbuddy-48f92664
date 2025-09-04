@@ -385,7 +385,7 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
   }
 }
 
-// Extract image markers from text
+// Extract image markers from text with robust error handling
 function extractImageMarkers(text: string): Array<{
   marker: string;
   filename: string;
@@ -395,33 +395,57 @@ function extractImageMarkers(text: string): Array<{
 }> {
   const markers = [];
   
-  // Pattern for [IMAGE:filename.jpg:description] format
-  const imagePattern = /\[IMAGE:([^:\]]+):?([^\]]*)\]/gi;
-  let match;
-  
-  while ((match = imagePattern.exec(text)) !== null) {
-    markers.push({
-      marker: match[0],
-      filename: match[1].trim(),
-      description: match[2] ? match[2].trim() : undefined,
-      position: match.index,
-      matched: false
-    });
+  try {
+    // More robust pattern for [IMAGE:filename.jpg:description] format
+    // This pattern ensures we don't match across malformed brackets
+    const imagePattern = /\[IMAGE:([^:\[\]]+(?:\.[a-zA-Z]{2,4})?):?([^\[\]]*?)\]/gi;
+    let match;
+    
+    while ((match = imagePattern.exec(text)) !== null) {
+      const filename = match[1].trim();
+      const description = match[2] ? match[2].trim() : undefined;
+      
+      // Validate filename - should have reasonable length and no invalid characters
+      if (filename.length > 0 && filename.length < 100 && !filename.includes('[') && !filename.includes(']')) {
+        markers.push({
+          marker: match[0],
+          filename: filename,
+          description: description,
+          position: match.index,
+          matched: false
+        });
+      } else {
+        console.warn('Skipping malformed image marker:', match[0]);
+      }
+    }
+    
+    // Pattern for {{filename.jpg}} format
+    const bracketPattern = /\{\{([^{}]+)\}\}/gi;
+    while ((match = bracketPattern.exec(text)) !== null) {
+      const filename = match[1].trim();
+      
+      // Validate filename
+      if (filename.length > 0 && filename.length < 100) {
+        markers.push({
+          marker: match[0],
+          filename: filename,
+          description: undefined,
+          position: match.index,
+          matched: false
+        });
+      } else {
+        console.warn('Skipping malformed bracket marker:', match[0]);
+      }
+    }
+    
+    console.log('Successfully extracted', markers.length, 'valid image markers');
+    return markers.sort((a, b) => a.position - b.position);
+    
+  } catch (error) {
+    console.error('Error extracting image markers:', error);
+    // Return empty array on error to prevent crash
+    return [];
   }
-  
-  // Pattern for {{filename.jpg}} format
-  const bracketPattern = /\{\{([^}]+)\}\}/gi;
-  while ((match = bracketPattern.exec(text)) !== null) {
-    markers.push({
-      marker: match[0],
-      filename: match[1].trim(),
-      description: undefined,
-      position: match.index,
-      matched: false
-    });
-  }
-  
-  return markers.sort((a, b) => a.position - b.position);
 }
 
 async function processImageMarkersAndFiles(
@@ -435,6 +459,12 @@ async function processImageMarkersAndFiles(
   
   console.log('Processing image markers:', markers.length);
   console.log('Available image files:', imageFiles.map(f => f.filename));
+  
+  // Add safety check for empty markers
+  if (!markers || markers.length === 0) {
+    console.log('No image markers to process');
+    return processedItems;
+  }
   
   // Match image markers with provided files
   for (const marker of markers) {
