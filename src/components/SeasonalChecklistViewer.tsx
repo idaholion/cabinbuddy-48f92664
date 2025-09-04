@@ -398,6 +398,17 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
         )}
       </div>
 
+      {/* Display introductory text if it exists */}
+      {checklist.introductory_text && !isEditMode && (
+        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/50 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="prose prose-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+              {checklist.introductory_text}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Checklist Sections */}
       {!isEditMode && (
         <div className="space-y-4">
