@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DocumentToChecklistConverter } from '@/components/DocumentToChecklistConverter';
-import { SeasonalChecklistViewer } from '@/components/SeasonalChecklistViewer';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
+import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { PageHeader } from '@/components/ui/page-header';
-import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench, Trash2 } from 'lucide-react';
+import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench, Trash2, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const SeasonalChecklists = () => {
+  const navigate = useNavigate();
   const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
   const [isConverterOpen, setIsConverterOpen] = useState(false);
   const { checklists, loading, deleteChecklist, refetch } = useCustomChecklists();
+  const { isAdmin } = useOrgAdmin();
 
   const checklistTypes = [
     { 
@@ -127,13 +130,14 @@ const SeasonalChecklists = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Dialog open={isConverterOpen} onOpenChange={setIsConverterOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full justify-start" variant="default">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Convert Document to Checklist
-                </Button>
-              </DialogTrigger>
+            {isAdmin && (
+              <Dialog open={isConverterOpen} onOpenChange={setIsConverterOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full justify-start" variant="default">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Convert Document to Checklist
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Document to Checklist Converter</DialogTitle>
@@ -156,8 +160,9 @@ const SeasonalChecklists = () => {
                     });
                   }}
                 />
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
 
             <Button className="w-full justify-start" variant="outline" onClick={() => refetch()}>
               <CheckSquare className="h-4 w-4 mr-2" />
@@ -205,7 +210,7 @@ const SeasonalChecklists = () => {
                     {checklistTypes.find(t => t.key === selectedChecklistType)?.description}
                   </CardDescription>
                 </div>
-                {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 && (
+                {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 && isAdmin && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -231,15 +236,33 @@ const SeasonalChecklists = () => {
               ) : checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 ? (
                 <div className="space-y-4">
                   {checklists.filter(c => c.checklist_type === selectedChecklistType).map((checklist, index) => (
-                    <div key={checklist.id}>
-                      {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 1 && (
-                        <h4 className="font-medium mb-2">Checklist {index + 1}</h4>
-                      )}
-                      <SeasonalChecklistViewer 
-                        checklist={checklist} 
-                        onUpdate={refetch}
-                      />
-                    </div>
+                    <Card key={checklist.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CheckSquare className="h-5 w-5 text-primary" />
+                          <div>
+                            <h4 className="font-medium capitalize">
+                              {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 1 
+                                ? `${selectedChecklistType} Checklist ${index + 1}` 
+                                : `${selectedChecklistType} Checklist`}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {checklist.items?.length || 0} items
+                              {checklist.images && checklist.images.length > 0 && (
+                                <span> • {checklist.images.length} images</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => navigate(`/seasonal-checklist/${checklist.id}`)}
+                          className="flex items-center gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Checklist
+                        </Button>
+                      </div>
+                    </Card>
                   ))}
                 </div>
               ) : (
@@ -249,10 +272,12 @@ const SeasonalChecklists = () => {
                     <h3 className="text-lg font-medium">No {selectedChecklistType} checklist found</h3>
                     <p>Create your first {selectedChecklistType} checklist by converting a document above.</p>
                   </div>
-                  <Button onClick={() => setIsConverterOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create {selectedChecklistType} Checklist
-                  </Button>
+                  {isAdmin && (
+                    <Button onClick={() => setIsConverterOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create {selectedChecklistType} Checklist
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>

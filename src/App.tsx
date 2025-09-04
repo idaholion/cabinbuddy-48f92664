@@ -53,6 +53,7 @@ const CabinRules = React.lazy(() => import("./pages/CabinRules"));
 const Documents = React.lazy(() => import("./pages/Documents"));
 const CabinSeasonalDocs = React.lazy(() => import("./pages/CabinSeasonalDocs"));
 const SeasonalChecklists = React.lazy(() => import("./pages/SeasonalChecklists"));
+const SeasonalChecklistView = React.lazy(() => import("./pages/SeasonalChecklistView"));
 const CheckoutList = React.lazy(() => import("./pages/CheckoutList"));
 const CheckoutFinal = React.lazy(() => import("./pages/CheckoutFinal"));
 const StayHistory = React.lazy(() => import("./pages/StayHistory"));
@@ -128,7 +129,8 @@ const AppContent = () => {
         <Route path="/stay-history" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistory /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/checklist-creator" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/checklist-creator" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminTreasurerRoute>} />
         {/* Legacy routes - redirect to new consolidated page */}
         <Route path="/word-checklist-creator" element={<Navigate to="/checklist-creator" replace />} />
         <Route path="/pdf-checklist" element={<Navigate to="/checklist-creator" replace />} />
