@@ -93,13 +93,17 @@ CRITICAL INSTRUCTIONS:
 3. Skip any text that appears to be setup instructions, tool preparation, or general information
 4. Focus on actionable tasks that can be checked off
 
-IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. DO NOT include the image markers in the item text - remove them and put the marker reference in the imageMarker field.
+IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. 
+
+CRITICAL FOR CONSECUTIVE IMAGES: When multiple image markers appear together (like [IMAGE:Picture1.jpg] [IMAGE:Picture2.jpg] [IMAGE:Picture3.jpg]), ALL of these images belong to the same preceding checklist item. You MUST capture ALL consecutive image markers that follow a checklist item.
+
+DO NOT include the image markers in the item text - remove them and put ALL marker references in the imageMarker field.
 
 Return a JSON array where each item has:
 - id: unique identifier (string)  
 - text: the instruction text WITHOUT any image markers (clean text only)
 - completed: false (boolean)
-- imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item (string with comma-separated markers, optional)
+- imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item, even if they're grouped together (string with comma-separated markers like "Picture1.jpg,Picture2.jpg,Picture3.jpg,Picture4.jpg,Picture5.jpg", optional)
 - formatting: object with formatting hints:
   - bold: true if text should be bold (for important steps, warnings)
   - italic: true if text should be italic (for notes, tips)
