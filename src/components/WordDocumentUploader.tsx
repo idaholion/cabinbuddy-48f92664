@@ -82,6 +82,8 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   };
 
   const processTextContent = async () => {
+    console.log('Starting processTextContent...');
+    
     if (!textContent.trim() || !checklistType) {
       toast({
         title: "Missing Information",
@@ -91,20 +93,32 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       return;
     }
 
-    // Detect image markers in the text
-    const markers = detectImageMarkersInText(textContent);
-    
-    if (markers.length > 0) {
-      setDetectedImageMarkers(markers);
-      setShowImageUploader(true);
-      toast({
-        title: "Image Markers Detected",
-        description: `Found ${markers.length} image markers. Please upload the corresponding images.`,
-      });
-      return;
-    }
+    try {
+      console.log('Detecting image markers in text...');
+      // Detect image markers in the text
+      const markers = detectImageMarkersInText(textContent);
+      console.log('Found markers:', markers);
+      
+      if (markers.length > 0) {
+        setDetectedImageMarkers(markers);
+        setShowImageUploader(true);
+        toast({
+          title: "Image Markers Detected",
+          description: `Found ${markers.length} image markers. Please upload the corresponding images.`,
+        });
+        return;
+      }
 
-    await processWithImages();
+      console.log('No image markers found, processing without images...');
+      await processWithImages();
+    } catch (error) {
+      console.error('Error in processTextContent:', error);
+      toast({
+        title: "Processing Error",
+        description: "Failed to process text content. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // UTF-8 safe base64 encoding function
