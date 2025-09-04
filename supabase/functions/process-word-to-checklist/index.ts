@@ -508,6 +508,11 @@ async function processImageMarkersAndFiles(
   supabase: any,
   organizationId: string
 ): Promise<ChecklistItem[]> {
+  console.log('🚨 FUNCTION CALLED - processImageMarkersAndFiles');
+  console.log('🚨 Items count:', items.length);
+  console.log('🚨 Markers count:', markers.length);
+  console.log('🚨 Image files count:', imageFiles.length);
+  
   const processedItems = [...items];
   
   console.log('=== IMAGE PROCESSING DEBUG ===');
@@ -515,16 +520,17 @@ async function processImageMarkersAndFiles(
   console.log('Available image files:', imageFiles.map(f => f.filename));
   
   if (!markers || markers.length === 0) {
-    console.log('No image markers to process');
+    console.log('❌ No image markers to process');
     return processedItems;
   }
 
   // Sort markers by position to process them in document order
   const sortedMarkers = markers.sort((a, b) => a.position - b.position);
+  console.log('🚨 Sorted markers:', sortedMarkers.map(m => `${m.filename}@${m.position}`));
   
   for (let i = 0; i < sortedMarkers.length; i++) {
     const marker = sortedMarkers[i];
-    console.log(`\n--- Processing ${marker.filename} at position ${marker.position} ---`);
+    console.log(`\n🚨 --- Processing ${marker.filename} at position ${marker.position} (${i+1}/${sortedMarkers.length}) ---`);
     
     const matchingFile = imageFiles.find(file => 
       file.filename.toLowerCase().includes(marker.filename.toLowerCase()) ||
@@ -534,15 +540,21 @@ async function processImageMarkersAndFiles(
 
     if (!matchingFile) {
       console.log(`❌ No matching file found for ${marker.filename}`);
+      console.log('Available files:', imageFiles.map(f => f.filename));
       continue;
     }
+    
+    console.log(`✅ Found matching file: ${matchingFile.filename}`);
 
     let targetItemIndex = -1;
     
     // Strategy 1: Check if OpenAI put this image in an imageMarker field
+    console.log('🔍 Strategy 1: Checking imageMarker fields...');
     for (let j = 0; j < processedItems.length; j++) {
       if (processedItems[j].imageMarker) {
         const itemMarkers = processedItems[j].imageMarker.split(',').map(m => m.trim().toLowerCase());
+        console.log(`Item ${j+1} imageMarker:`, processedItems[j].imageMarker);
+        
         const searchTerms = [
           marker.filename.toLowerCase(),
           marker.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, ''),
@@ -562,10 +574,13 @@ async function processImageMarkersAndFiles(
 
     // Strategy 2: Smart consecutive grouping - if previous image was assigned, and this image is close, use same item
     if (targetItemIndex === -1 && i > 0) {
+      console.log('🔍 Strategy 2: Checking consecutive grouping...');
       const prevMarker = sortedMarkers[i - 1];
       const distance = marker.position - prevMarker.position;
+      console.log(`Distance from previous image: ${distance} characters`);
       
       if (distance <= 100 && prevMarker.matched) { // Within 100 characters
+        console.log('📏 Images are consecutive (≤100 chars), looking for previous assignment...');
         // Find where previous image was assigned
         for (let j = 0; j < processedItems.length; j++) {
           if (processedItems[j].imageUrl || processedItems[j].additionalImages?.length) {
@@ -579,11 +594,14 @@ async function processImageMarkersAndFiles(
             }
           }
         }
+      } else {
+        console.log(`❌ Not consecutive - distance: ${distance}, prev matched: ${prevMarker.matched}`);
       }
     }
 
     // Strategy 3: Assign based on position - images go to the item that logically precedes them
     if (targetItemIndex === -1) {
+      console.log('🔍 Strategy 3: Position-based assignment...');
       // Simple rule: assign to the item at roughly the same relative position in the checklist
       const relativePosition = marker.position / 10000; // Rough normalization
       const estimatedItemIndex = Math.min(
@@ -601,9 +619,12 @@ async function processImageMarkersAndFiles(
       }
     }
 
+    console.log(`🎯 Final target: Item ${targetItemIndex + 1}`);
+
     // Upload and assign the image
     if (targetItemIndex >= 0 && targetItemIndex < processedItems.length) {
       try {
+        console.log('📤 Uploading image...');
         const fileExtension = matchingFile.filename.split('.').pop() || 'jpg';
         const fileName = `${organizationId}/checklist-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
         
@@ -619,7 +640,7 @@ async function processImageMarkersAndFiles(
           });
 
         if (uploadError) {
-          console.error('Image upload error:', uploadError);
+          console.error('❌ Image upload error:', uploadError);
           continue;
         }
 
@@ -627,12 +648,16 @@ async function processImageMarkersAndFiles(
           .from('checklist-images')
           .getPublicUrl(fileName);
 
+        console.log(`✅ Image uploaded: ${publicUrl}`);
+
         // Assign to checklist item
         if (!processedItems[targetItemIndex].imageUrl) {
+          console.log('📋 Assigning as PRIMARY image');
           processedItems[targetItemIndex].imageUrl = publicUrl;
           processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
           processedItems[targetItemIndex].imagePosition = 'after';
         } else {
+          console.log('📋 Assigning as ADDITIONAL image');
           if (!processedItems[targetItemIndex].additionalImages) {
             processedItems[targetItemIndex].additionalImages = [];
           }
@@ -647,14 +672,16 @@ async function processImageMarkersAndFiles(
         console.log(`✅ ${marker.filename} assigned to item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
 
       } catch (error) {
-        console.error('Error processing image:', marker.filename, error);
+        console.error('❌ Error processing image:', marker.filename, error);
       }
+    } else {
+      console.log(`❌ Invalid target index: ${targetItemIndex}`);
     }
   }
 
   // Summary
   const totalAssigned = processedItems.filter(item => item.imageUrl || item.additionalImages?.length).length;
-  console.log(`\n=== SUMMARY: ${totalAssigned} items have images ===`);
+  console.log(`\n🚨 === SUMMARY: ${totalAssigned} items have images ===`);
   
   return processedItems;
 }
