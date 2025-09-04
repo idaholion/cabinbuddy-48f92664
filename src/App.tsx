@@ -48,7 +48,6 @@ const AddReceipt = React.lazy(() => import("./pages/AddReceipt"));
 const ShoppingList = React.lazy(() => import("./pages/ShoppingList"));
 const CabinRules = React.lazy(() => import("./pages/CabinRules"));
 const Documents = React.lazy(() => import("./pages/Documents"));
-const CabinSeasonalDocs = React.lazy(() => import("./pages/CabinSeasonalDocs"));
 const SeasonalChecklists = React.lazy(() => import("./pages/SeasonalChecklists"));
 const SeasonalChecklistView = React.lazy(() => import("./pages/SeasonalChecklistView"));
 const CheckoutList = React.lazy(() => import("./pages/CheckoutList"));
@@ -126,7 +125,6 @@ const AppContent = () => {
         <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/checklist-creator" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSeasonalDocs /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />

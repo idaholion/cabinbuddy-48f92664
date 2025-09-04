@@ -127,11 +127,6 @@ const resourcesItems = [
     icon: FileText,
   },
   {
-    title: "Seasonal Docs",
-    url: "/cabin-seasonal-docs",
-    icon: FileText,
-  },
-  {
     title: "Photos",
     url: "/photos",
     icon: Image,

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
-import { PageHeader } from '@/components/ui/page-header';
 import { CheckSquare, Settings, Calendar, Wrench, Trash2, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -81,10 +80,10 @@ const SeasonalChecklists = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <PageHeader
-        title="Seasonal Checklists"
-        subtitle="Manage your seasonal cabin tasks, maintenance schedules, and operational procedures"
-      />
+      <div className="text-center mb-8">
+        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Seasonal Checklists</h1>
+        <p className="text-muted-foreground">Manage your seasonal cabin tasks, maintenance schedules, and operational procedures</p>
+      </div>
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
