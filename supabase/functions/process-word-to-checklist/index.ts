@@ -141,6 +141,9 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
     const openAIData = await openAIResponse.json();
     let checklistItems: ChecklistItem[] = [];
     
+    // Declare responseData at function scope for proper access throughout
+    let responseData: { introductoryText?: string; items: ChecklistItem[] } = { introductoryText: "", items: [] };
+    
     try {
       const aiContent = openAIData.choices[0]?.message?.content || '{"introductoryText": "", "items": []}';
       console.log('Raw OpenAI response:', aiContent);
@@ -160,9 +163,6 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       let jsonStr = jsonMatch ? jsonMatch[0] : cleanContent;
       
       console.log('Extracted JSON string:', jsonStr.substring(0, 200) + '...');
-      
-      // Declare responseData outside try-catch for proper scoping
-      let responseData: { introductoryText?: string; items: ChecklistItem[] };
       
       // Try to parse the JSON
       try {
