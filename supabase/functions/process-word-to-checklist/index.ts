@@ -122,12 +122,68 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
     
     try {
       const aiContent = openAIData.choices[0]?.message?.content || '[]';
-      // Extract JSON from response (handle potential markdown formatting)
-      const jsonMatch = aiContent.match(/\[[\s\S]*\]/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : aiContent;
-      checklistItems = JSON.parse(jsonStr);
+      console.log('Raw OpenAI response:', aiContent);
+      
+      // Clean up the response - remove markdown formatting
+      let cleanContent = aiContent.trim();
+      
+      // Remove markdown code blocks if present
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
+      }
+      
+      // Extract JSON array from response
+      const jsonMatch = cleanContent.match(/\[[\s\S]*\]/);
+      let jsonStr = jsonMatch ? jsonMatch[0] : cleanContent;
+      
+      console.log('Extracted JSON string:', jsonStr.substring(0, 200) + '...');
+      
+      // Try to parse the JSON
+      try {
+        checklistItems = JSON.parse(jsonStr);
+        console.log('Successfully parsed JSON, items:', checklistItems.length);
+      } catch (firstParseError) {
+        console.log('First parse failed, trying to fix common JSON issues...');
+        
+        // Try to fix common JSON issues
+        jsonStr = jsonStr
+          .replace(/,\s*}/g, '}') // Remove trailing commas before }
+          .replace(/,\s*]/g, ']') // Remove trailing commas before ]
+          .replace(/\n/g, ' ')    // Replace newlines with spaces
+          .replace(/\t/g, ' ')    // Replace tabs with spaces
+          .replace(/\s+/g, ' ')   // Replace multiple spaces with single space
+          .trim();
+        
+        try {
+          checklistItems = JSON.parse(jsonStr);
+          console.log('Successfully parsed JSON after cleanup, items:', checklistItems.length);
+        } catch (secondParseError) {
+          console.error('JSON parse error after cleanup:', secondParseError);
+          console.error('Failed JSON string:', jsonStr);
+          
+          // Fallback: Create a simple checklist from the text
+          const textLines = documentContent.text.split('\n')
+            .filter(line => line.trim().length > 0)
+            .slice(0, 20); // Limit to 20 items
+          
+          checklistItems = textLines.map((line, index) => ({
+            id: `item-${index + 1}`,
+            text: line.trim(),
+            completed: false,
+            formatting: {
+              type: 'step',
+              icon: 'check-circle'
+            }
+          }));
+          
+          console.log('Created fallback checklist with', checklistItems.length, 'items');
+        }
+      }
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
+      console.error('OpenAI response data:', openAIData);
       throw new Error('Failed to parse AI response into valid JSON');
     }
 
