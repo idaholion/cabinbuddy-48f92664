@@ -185,28 +185,30 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
       <div key={item.id} className="space-y-3">
         {/* Images before text */}
         {images.length > 0 && item.imagePosition === 'before' && (
-          <div className="ml-6 space-y-3">
-            {images.map((imageUrl, imgIndex) => (
-              <div key={imgIndex} className={`${getImageSizeClass(item.imageSize)} relative`}>
-                <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                  <img 
-                    src={imageUrl} 
-                    alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
-                    className="w-full h-auto"
-                    loading="lazy"
-                    onError={(e) => {
-                      console.log('Image failed to load:', imageUrl);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+          <div className="ml-6">
+            <div className="flex flex-wrap gap-3">
+              {images.map((imageUrl, imgIndex) => (
+                <div key={imgIndex} className={`${getImageSizeClass(item.imageSize)} relative`}>
+                  <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                    <img 
+                      src={imageUrl} 
+                      alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
+                      className="w-full h-auto"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.log('Image failed to load:', imageUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  {item.imageDescription && imgIndex === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                      {item.imageDescription}
+                    </p>
+                  )}
                 </div>
-                {item.imageDescription && imgIndex === 0 && (
-                  <p className="text-xs text-muted-foreground mt-1 text-center">
-                    {item.imageDescription}
-                  </p>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -261,28 +263,30 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
 
         {/* Images after text */}
         {images.length > 0 && (!item.imagePosition || item.imagePosition === 'after') && (
-          <div className="ml-6 space-y-3">
-            {images.map((imageUrl, imgIndex) => (
-              <div key={imgIndex} className={`${getImageSizeClass(item.imageSize)} relative`}>
-                <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                  <img 
-                    src={imageUrl} 
-                    alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
-                    className="w-full h-auto"
-                    loading="lazy"
-                    onError={(e) => {
-                      console.log('Image failed to load:', imageUrl);
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+          <div className="ml-6">
+            <div className="flex flex-wrap gap-3">
+              {images.map((imageUrl, imgIndex) => (
+                <div key={imgIndex} className={`${getImageSizeClass(item.imageSize)} relative`}>
+                  <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                    <img 
+                      src={imageUrl} 
+                      alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
+                      className="w-full h-auto"
+                      loading="lazy"
+                      onError={(e) => {
+                        console.log('Image failed to load:', imageUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  {item.imageDescription && imgIndex === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                      {item.imageDescription}
+                    </p>
+                  )}
                 </div>
-                {item.imageDescription && imgIndex === 0 && (
-                  <p className="text-xs text-muted-foreground mt-1 text-center">
-                    {item.imageDescription}
-                  </p>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
