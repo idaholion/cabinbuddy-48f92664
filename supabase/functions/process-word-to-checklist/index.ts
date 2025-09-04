@@ -23,6 +23,11 @@ interface ChecklistItem {
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
   imageMarker?: string; // Original marker from text like [IMAGE:filename.jpg:description]
+  additionalImages?: Array<{
+    url: string;
+    description: string;
+    filename: string;
+  }>;
   formatting?: {
     bold?: boolean;
     italic?: boolean;
@@ -481,6 +486,9 @@ async function processImageMarkersAndFiles(
     return processedItems;
   }
   
+  // Create a list to track which items already have images
+  const itemsWithImages = new Set<number>();
+  
   // Match image markers with provided files and embed them
   for (const marker of markers) {
     const matchingFile = imageFiles.find(file => 
@@ -522,75 +530,76 @@ async function processImageMarkersAndFiles(
         console.log(`Image uploaded successfully: ${publicUrl}`);
 
         let imageAssociated = false;
+        let targetItemIndex = -1;
 
-        // Strategy 1: Find items with matching imageMarker field (preferred)
+        // Strategy 1: Find items with matching imageMarker field set by OpenAI
         for (let i = 0; i < processedItems.length; i++) {
           if (processedItems[i].imageMarker && 
-              (processedItems[i].imageMarker.includes(marker.filename) || 
-               marker.marker.includes(processedItems[i].imageMarker))) {
-            processedItems[i].imageUrl = publicUrl;
-            processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
-            processedItems[i].imagePosition = 'after';
-            
-            console.log(`Strategy 1: Associated image with item ${i + 1} via imageMarker field: ${processedItems[i].text.substring(0, 50)}...`);
-            imageAssociated = true;
+              (processedItems[i].imageMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
+               marker.marker.toLowerCase().includes(processedItems[i].imageMarker.toLowerCase().replace(/[\[\]]/g, '')))) {
+            targetItemIndex = i;
+            console.log(`Strategy 1: Found exact imageMarker match for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
             break;
           }
         }
 
         // Strategy 2: Find items that contain the exact marker in text
-        if (!imageAssociated) {
+        if (targetItemIndex === -1) {
           for (let i = 0; i < processedItems.length; i++) {
             if (processedItems[i].text.includes(marker.marker)) {
-              processedItems[i].imageMarker = marker.marker;
-              processedItems[i].imageUrl = publicUrl;
-              processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
-              processedItems[i].imagePosition = 'after';
-              
+              targetItemIndex = i;
               // Remove the marker from display text
               processedItems[i].text = processedItems[i].text.replace(marker.marker, '').trim();
-              
-              console.log(`Strategy 2: Associated image with item ${i + 1} via text marker: ${processedItems[i].text.substring(0, 50)}...`);
-              imageAssociated = true;
+              console.log(`Strategy 2: Found text marker match for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
               break;
             }
           }
         }
 
-        // Strategy 3: Find items containing filename reference
-        if (!imageAssociated) {
+        // Strategy 3: Match by filename reference in text
+        if (targetItemIndex === -1) {
+          const baseFilename = marker.filename.toLowerCase().replace(/\.[^.]+$/, '');
           for (let i = 0; i < processedItems.length; i++) {
-            if (processedItems[i].text.toLowerCase().includes(marker.filename.toLowerCase().replace(/\.[^.]+$/, ''))) {
-              processedItems[i].imageMarker = marker.marker;
-              processedItems[i].imageUrl = publicUrl;
-              processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
-              processedItems[i].imagePosition = 'after';
-              
-              console.log(`Strategy 3: Associated image with item ${i + 1} via filename reference: ${processedItems[i].text.substring(0, 50)}...`);
-              imageAssociated = true;
+            if (processedItems[i].text.toLowerCase().includes(baseFilename)) {
+              targetItemIndex = i;
+              console.log(`Strategy 3: Found filename reference for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
               break;
             }
           }
         }
 
-        // Strategy 4: Associate with first available item if none found (fallback)
-        if (!imageAssociated && processedItems.length > 0) {
-          const firstItemWithoutImage = processedItems.find(item => !item.imageUrl);
-          if (firstItemWithoutImage) {
-            firstItemWithoutImage.imageMarker = marker.marker;
-            firstItemWithoutImage.imageUrl = publicUrl;
-            firstItemWithoutImage.imageDescription = marker.description || `Image: ${marker.filename}`;
-            firstItemWithoutImage.imagePosition = 'after';
+        // If we found a target item, assign the image
+        if (targetItemIndex !== -1) {
+          // Check if this item already has an image
+          if (itemsWithImages.has(targetItemIndex)) {
+            // If the item already has an image, create additional image fields
+            const existingImageCount = processedItems[targetItemIndex].additionalImages?.length || 0;
+            if (!processedItems[targetItemIndex].additionalImages) {
+              processedItems[targetItemIndex].additionalImages = [];
+            }
             
-            console.log(`Strategy 4: Associated image with first available item as fallback: ${firstItemWithoutImage.text.substring(0, 50)}...`);
-            imageAssociated = true;
+            processedItems[targetItemIndex].additionalImages!.push({
+              url: publicUrl,
+              description: marker.description || `Image: ${marker.filename}`,
+              filename: marker.filename
+            });
+            
+            console.log(`Added additional image ${existingImageCount + 1} to item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
+          } else {
+            // First image for this item
+            processedItems[targetItemIndex].imageUrl = publicUrl;
+            processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
+            processedItems[targetItemIndex].imagePosition = 'after';
+            processedItems[targetItemIndex].imageMarker = marker.marker;
+            itemsWithImages.add(targetItemIndex);
+            
+            console.log(`Associated primary image with item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
           }
-        }
-        
-        if (imageAssociated) {
+          
+          imageAssociated = true;
           marker.matched = true;
         } else {
-          console.warn(`Could not associate image ${marker.filename} with any checklist item`);
+          console.warn(`Could not find appropriate item for image ${marker.filename} - no matching content found`);
         }
         
       } catch (error) {
