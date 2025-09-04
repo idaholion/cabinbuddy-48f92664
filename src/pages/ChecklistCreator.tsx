@@ -3,14 +3,14 @@ import { WordDocumentUploader } from '@/components/WordDocumentUploader';
 import { InteractiveChecklist } from '@/components/InteractiveChecklist';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileText, List, Plus, CheckSquare } from 'lucide-react';
+import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2 } from 'lucide-react';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ErrorBoundary, DefaultErrorFallback } from '@/components/ErrorBoundary';
 
 export default function ChecklistCreator() {
   const [createdChecklistId, setCreatedChecklistId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'upload' | 'view'>('upload');
-  const { checklists, loading, refetch } = useCustomChecklists();
+  const { checklists, loading, refetch, deleteChecklist } = useCustomChecklists();
 
   const handleChecklistCreated = (checklistId: string) => {
     setCreatedChecklistId(checklistId);
@@ -107,16 +107,26 @@ export default function ChecklistCreator() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setCreatedChecklistId(checklist.id);
-                        setViewMode('view');
-                      }}
-                    >
-                      Open Checklist
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCreatedChecklistId(checklist.id);
+                          setViewMode('view');
+                        }}
+                      >
+                        Open Checklist
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteChecklist(checklist.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
