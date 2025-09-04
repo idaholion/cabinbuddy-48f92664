@@ -161,8 +161,10 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       
       console.log('Extracted JSON string:', jsonStr.substring(0, 200) + '...');
       
-      // Try to parse the JSON
+      // Declare responseData outside try-catch for proper scoping
       let responseData: { introductoryText?: string; items: ChecklistItem[] };
+      
+      // Try to parse the JSON
       try {
         responseData = JSON.parse(jsonStr);
         checklistItems = responseData.items || [];
