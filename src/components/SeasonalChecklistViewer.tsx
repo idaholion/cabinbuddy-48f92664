@@ -154,9 +154,11 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
     const getImageSizeClass = (size?: string) => {
       switch (size) {
         case 'small': return 'max-w-xs';
-        case 'medium': return 'max-w-md';
+        case 'medium': return 'max-w-sm';
         case 'large': return 'max-w-lg';
-        default: return 'max-w-md';
+        case 'xl': return 'max-w-2xl';
+        case 'full': return 'max-w-full';
+        default: return 'max-w-sm';
       }
     };
 
