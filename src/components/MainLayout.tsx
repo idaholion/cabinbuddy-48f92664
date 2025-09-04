@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { AppBreadcrumbs } from '@/components/AppBreadcrumbs';
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { AiHelpAssistant } from '@/components/AiHelpAssistant';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/home';
+  const isMobile = useIsMobile();
 
   return (
     <ReadOnlyModeProvider>
@@ -23,6 +25,16 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <AppSidebar />
           <main className="flex-1">
             <GuestAccessBanner />
+            {/* Mobile sidebar trigger - always visible on mobile */}
+            {isMobile && (
+              <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <SidebarTrigger className="h-8 w-8" />
+                <h1 className="text-lg font-semibold truncate">
+                  {isHomePage ? 'Home' : location.pathname.split('/').pop()?.replace('-', ' ') || 'CabinBuddy'}
+                </h1>
+                <div className="w-8" /> {/* Spacer for balance */}
+              </div>
+            )}
             {/* Only show header with breadcrumbs on non-home pages */}
             {!isHomePage && (
               <div className="p-6 pb-0">
