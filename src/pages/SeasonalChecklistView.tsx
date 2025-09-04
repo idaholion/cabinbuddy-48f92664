@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckSquare, Calendar, Wrench } from 'lucide-react';
+import { Home, CheckSquare, Calendar, Wrench } from 'lucide-react';
 import { SeasonalChecklistViewer } from '@/components/SeasonalChecklistViewer';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -56,9 +56,9 @@ const SeasonalChecklistView = () => {
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground mb-4">Checklist not found.</p>
-            <Button onClick={() => navigate('/seasonal-checklists')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Seasonal Checklists
+            <Button onClick={() => navigate('/')}>
+              <Home className="h-4 w-4 mr-2" />
+              Home
             </Button>
           </CardContent>
         </Card>
@@ -73,11 +73,11 @@ const SeasonalChecklistView = () => {
       <div className="flex items-center gap-4">
         <Button 
           variant="outline" 
-          onClick={() => navigate('/seasonal-checklists')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Seasonal Checklists
+          <Home className="h-4 w-4" />
+          Home
         </Button>
         <PageHeader
           title={getChecklistTypeLabel(checklist.checklist_type)}
