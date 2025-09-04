@@ -659,7 +659,7 @@ async function processImageMarkersAndFiles(
         if (!processedItems[targetItemIndex].imageUrl) {
           console.log('📋 Assigning as PRIMARY image');
           processedItems[targetItemIndex].imageUrl = publicUrl;
-          processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
+          processedItems[targetItemIndex].imageDescription = marker.description || "";
           processedItems[targetItemIndex].imagePosition = 'after';
         } else {
           console.log('📋 Assigning as ADDITIONAL image');
