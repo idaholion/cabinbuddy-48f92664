@@ -14,6 +14,7 @@ interface ChecklistItem {
   text: string;
   completed?: boolean;
   imageUrl?: string;
+  imageUrls?: string[];
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
   imageMarker?: string;
@@ -237,23 +238,38 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                       </label>
                     </div>
                     
-                    {item.imageUrl && (
-                      <div className="max-w-lg">
-                        <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                          <img
-                            src={item.imageUrl}
-                            alt={item.imageDescription || `Step ${index + 1} illustration`}
-                            className="w-full h-auto"
-                            loading="lazy"
-                          />
-                          {item.imageDescription && (
-                            <div className="p-3 bg-gray-50 border-t">
-                              <p className="text-sm text-gray-600">
-                                {item.imageDescription}
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                    {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (
+                      <div className="max-w-lg space-y-3">
+                        {/* Display single image if imageUrl exists */}
+                        {item.imageUrl && (
+                          <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                            <img
+                              src={item.imageUrl}
+                              alt={item.imageDescription || `Step ${index + 1} illustration`}
+                              className="w-full h-auto"
+                              loading="lazy"
+                            />
+                            {item.imageDescription && (
+                              <div className="p-3 bg-gray-50 border-t">
+                                <p className="text-sm text-gray-600">
+                                  {item.imageDescription}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Display multiple images if imageUrls array exists */}
+                        {item.imageUrls && item.imageUrls.map((imageUrl, imgIndex) => (
+                          <div key={imgIndex} className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                            <img
+                              src={imageUrl}
+                              alt={`Step ${index + 1} illustration ${imgIndex + 1}`}
+                              className="w-full h-auto"
+                              loading="lazy"
+                            />
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

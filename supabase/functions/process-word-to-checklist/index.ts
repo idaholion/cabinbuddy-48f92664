@@ -658,14 +658,10 @@ async function processImageMarkersAndFiles(
           processedItems[targetItemIndex].imagePosition = 'after';
         } else {
           console.log('📋 Assigning as ADDITIONAL image');
-          if (!processedItems[targetItemIndex].additionalImages) {
-            processedItems[targetItemIndex].additionalImages = [];
+          if (!processedItems[targetItemIndex].imageUrls) {
+            processedItems[targetItemIndex].imageUrls = [];
           }
-          processedItems[targetItemIndex].additionalImages.push({
-            url: publicUrl,
-            description: marker.description || `Image: ${marker.filename}`,
-            filename: marker.filename
-          });
+          processedItems[targetItemIndex].imageUrls.push(publicUrl);
         }
         
         marker.matched = true;
