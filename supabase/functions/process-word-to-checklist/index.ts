@@ -390,10 +390,22 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
       console.log('Extracted meaningful words:', meaningfulWords.length);
     }
     
-    // Clean up the final text
+    // Clean up the final text with proper character encoding
     extractedText = extractedText
+      // Fix smart quotes and special characters first
+      .replace(/[""]/g, '"')           // Smart double quotes → regular quotes
+      .replace(/['']/g, "'")           // Smart single quotes → regular apostrophe  
+      .replace(/[‚„]/g, "'")           // Other quote variants
+      .replace(/[«»]/g, '"')           // French quotes
+      .replace(/[—–]/g, '-')           // Em dash, en dash → regular dash
+      .replace(/[…]/g, '...')          // Ellipsis → three dots
+      .replace(/[â€™]/g, "'")          // Common encoding corruption for apostrophe
+      .replace(/[â€œâ€]/g, '"')       // Common encoding corruption for quotes  
+      .replace(/[â€"]/g, '-')          // Common encoding corruption for dash
+      .replace(/[Â]/g, ' ')            // Non-breaking space corruption
+      // Normalize whitespace
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s\-.,!?()'"":;/\\&%$#@]/g, ' ') // Keep quotes, colons, semicolons and other common punctuation
+      .replace(/[^\w\s\-.,!?()'"":;/\\&%$#@\[\]]/g, ' ') // Keep quotes, brackets, and common punctuation
       .trim();
     
     if (extractedText.length < 10) {
