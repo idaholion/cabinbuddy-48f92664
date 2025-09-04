@@ -93,6 +93,13 @@ CRITICAL INSTRUCTIONS:
 3. Focus on actionable tasks that can be checked off for the checklist
 4. Keep all introductory text that appears before the first numbered/bulleted item
 
+CRITICAL TEXT PRESERVATION: 
+- NEVER abbreviate, truncate, or summarize instruction text
+- PRESERVE THE COMPLETE AND FULL text of each instruction paragraph
+- If an instruction has 6 sentences, include ALL 6 sentences in the checklist item
+- DO NOT shorten or condense any instruction content
+- Maintain the EXACT wording and complete details of each step
+
 IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. 
 
 CRITICAL FOR CONSECUTIVE IMAGES: When multiple image markers appear together (like [IMAGE:Picture1.jpg] [IMAGE:Picture2.jpg] [IMAGE:Picture3.jpg]), ALL of these images belong to the same preceding checklist item. You MUST capture ALL consecutive image markers that follow a checklist item.
@@ -107,7 +114,7 @@ Return a JSON object with this structure:
 
 Each checklist item has:
 - id: unique identifier (string)  
-- text: the instruction text WITHOUT any image markers (clean text only)
+- text: the COMPLETE AND FULL instruction text WITHOUT any image markers (preserve ALL sentences and details)
 - completed: false (boolean)
 - imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item, even if they're grouped together (string with comma-separated markers like "Picture1.jpg,Picture2.jpg,Picture3.jpg,Picture4.jpg,Picture5.jpg", optional)
 - formatting: object with formatting hints:
@@ -123,14 +130,14 @@ Parse markdown-style formatting:
 - Text with "NOTE", "TIP", "INFO" gets type: "note"
 - Detect tools and suggest appropriate icons
 
-ONLY include items that are actual tasks to be completed. When multiple image markers appear after one checklist item, include all markers separated by commas in the imageMarker field.`
+ONLY include items that are actual tasks to be completed. When multiple image markers appear after one checklist item, include all markers separated by commas in the imageMarker field. REMEMBER: PRESERVE COMPLETE INSTRUCTION TEXT WITHOUT ANY TRUNCATION OR ABBREVIATION.`
           },
           {
             role: 'user',
             content: documentContent.text
           }
         ],
-        max_tokens: 8000,
+        max_tokens: 12000,
       }),
     });
 
