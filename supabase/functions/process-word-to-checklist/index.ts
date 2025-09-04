@@ -511,7 +511,118 @@ async function processImageMarkersAndFiles(
   // Create a list to track which items already have images
   const itemsWithImages = new Set<number>();
   
-  // Match image markers with provided files and embed them
+  // Strategy 0: Group consecutive images that appear together in the text
+  console.log('=== CONSECUTIVE IMAGE GROUPING ===');
+  const consecutiveGroups = [];
+  for (let i = 0; i < markers.length; i++) {
+    const currentMarker = markers[i];
+    const group = [currentMarker];
+    
+    // Look for consecutive markers (within 100 characters of each other)
+    for (let j = i + 1; j < markers.length; j++) {
+      const nextMarker = markers[j];
+      const distance = nextMarker.position - currentMarker.position;
+      
+      if (distance <= 100) { // Consecutive if within 100 characters
+        group.push(nextMarker);
+        i = j; // Skip these markers in the main loop
+      } else {
+        break;
+      }
+    }
+    
+    if (group.length > 1) {
+      console.log(`Found consecutive group of ${group.length} images:`, group.map(g => g.filename));
+      consecutiveGroups.push(group);
+    }
+  }
+  
+  // Process consecutive groups first
+  for (const group of consecutiveGroups) {
+    const primaryMarker = group[0];
+    
+    // Find the checklist item that precedes this group
+    let targetItemIndex = -1;
+    
+    // Look backwards through the text to find the nearest checklist item
+    const groupStartPosition = primaryMarker.position;
+    const precedingText = items.map((item, idx) => ({ item, idx }))
+      .find(({ item }) => {
+        // Simple heuristic: find item whose text appears before the image group
+        const itemPosition = processedItems.map(pi => pi.text).indexOf(item.text);
+        return itemPosition !== -1;
+      });
+    
+    if (precedingText) {
+      targetItemIndex = precedingText.idx;
+      console.log(`Associating consecutive image group with item ${targetItemIndex + 1}`);
+      
+      // Associate all images in the group with this item
+      for (let i = 0; i < group.length; i++) {
+        const marker = group[i];
+        const matchingFile = imageFiles.find(file => 
+          file.filename.toLowerCase() === marker.filename.toLowerCase() ||
+          file.filename.toLowerCase().includes(marker.filename.toLowerCase()) ||
+          marker.filename.toLowerCase().includes(file.filename.toLowerCase())
+        );
+        
+        if (matchingFile) {
+          try {
+            // Upload and associate image (same logic as before)
+            const fileExtension = matchingFile.filename.split('.').pop() || 'jpg';
+            const fileName = `${organizationId}/checklist-${Date.now()}-${marker.filename}`;
+            
+            const base64Data = matchingFile.data.includes(',') ? 
+              matchingFile.data.split(',')[1] : matchingFile.data;
+            const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('checklist-images')
+              .upload(fileName, imageBuffer, {
+                contentType: matchingFile.contentType || `image/${fileExtension}`,
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('Image upload error:', uploadError);
+              continue;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('checklist-images')
+              .getPublicUrl(fileName);
+
+            // Assign to target item
+            if (i === 0) {
+              // First image becomes primary
+              processedItems[targetItemIndex].imageUrl = publicUrl;
+              processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
+              processedItems[targetItemIndex].imagePosition = 'after';
+              itemsWithImages.add(targetItemIndex);
+            } else {
+              // Additional images
+              if (!processedItems[targetItemIndex].additionalImages) {
+                processedItems[targetItemIndex].additionalImages = [];
+              }
+              processedItems[targetItemIndex].additionalImages!.push({
+                url: publicUrl,
+                description: marker.description || `Image: ${marker.filename}`,
+                filename: marker.filename
+              });
+            }
+            
+            marker.matched = true;
+            console.log(`Grouped image ${i + 1}/${group.length} (${marker.filename}) with item ${targetItemIndex + 1}`);
+            
+          } catch (error) {
+            console.error('Error processing grouped image:', marker.filename, error);
+          }
+        }
+      }
+    }
+  }
+  
+  // Match remaining image markers with provided files and embed them
   for (const marker of markers) {
     const matchingFile = imageFiles.find(file => 
       file.filename.toLowerCase() === marker.filename.toLowerCase() ||
@@ -561,7 +672,13 @@ async function processImageMarkersAndFiles(
             const itemMarkers = processedItems[i].imageMarker.split(',').map(m => m.trim());
             
             for (const itemMarker of itemMarkers) {
-              if (itemMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
+              // Clean the marker for comparison
+              const cleanItemMarker = itemMarker.toLowerCase().replace(/[\[\]IMAGE:]/g, '');
+              const cleanFilename = marker.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, '');
+              
+              if (cleanItemMarker.includes(cleanFilename) || 
+                  cleanFilename.includes(cleanItemMarker) ||
+                  itemMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
                   marker.marker.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]]/g, '')) ||
                   marker.filename.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]IMAGE:]/g, ''))) {
                 targetItemIndex = i;
