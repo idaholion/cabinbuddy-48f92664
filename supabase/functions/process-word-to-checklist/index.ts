@@ -373,7 +373,7 @@ async function extractWordContent(base64File: string): Promise<DocumentContent> 
     // Clean up the final text
     extractedText = extractedText
       .replace(/\s+/g, ' ')
-      .replace(/[^\w\s\-.,!?()]/g, ' ') // Remove special characters
+      .replace(/[^\w\s\-.,!?()'"":;/\\&%$#@]/g, ' ') // Keep quotes, colons, semicolons and other common punctuation
       .trim();
     
     if (extractedText.length < 10) {
