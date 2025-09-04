@@ -382,21 +382,21 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                               {item.imageUrls.map((imageUrl, imgIndex) => {
                                 const effectiveSize = getEffectiveIndividualImageSize(item.id, imgIndex, item.imageSize);
                                 
-                                // Determine image container size
+                                // Determine image container size with flexible widths
                                 const getImageContainerClass = (size: string) => {
                                   switch (size) {
                                     case 'small':
-                                      return 'w-32 flex-shrink-0';
+                                      return 'min-w-24 max-w-32 flex-1 sm:max-w-40';
                                     case 'medium':
-                                      return 'w-48 flex-shrink-0';
+                                      return 'min-w-32 max-w-48 flex-1 sm:max-w-56';
                                     case 'large':
-                                      return 'w-64 flex-shrink-0';
+                                      return 'min-w-48 max-w-64 flex-1 sm:max-w-72';
                                     case 'xl':
-                                      return 'w-80 flex-shrink-0';
+                                      return 'min-w-64 max-w-80 flex-1 sm:max-w-96';
                                     case 'full':
-                                      return 'w-full';
+                                      return 'w-full flex-shrink-0';
                                     default:
-                                      return 'w-48 flex-shrink-0';
+                                      return 'min-w-32 max-w-48 flex-1 sm:max-w-56';
                                   }
                                 };
                                 
