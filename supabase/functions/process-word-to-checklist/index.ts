@@ -247,7 +247,7 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       .from('custom_checklists')
       .upsert({
         organization_id: organizationId,
-        type: checklistType,
+        checklist_type: checklistType,
         items: finalItems,
         introductory_text: responseData?.introductoryText || "",
         created_at: new Date().toISOString(),
