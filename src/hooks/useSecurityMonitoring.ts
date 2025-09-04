@@ -32,9 +32,6 @@ export const useSecurityMonitoring = () => {
   // Routes that don't need security monitoring
   const exemptRoutes = [
     '/setup', // Add setup to exempt routes - it's part of onboarding flow
-    '/textresponse',
-    '/optin1', 
-    '/optin2',
     '/intro',
     '/auth',
     '/login',

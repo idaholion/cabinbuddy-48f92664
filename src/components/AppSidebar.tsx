@@ -111,6 +111,17 @@ const resourcesItems = [
     icon: Book,
   },
   {
+    title: "Seasonal Checklists",
+    url: "/seasonal-checklists",
+    icon: CheckSquare,
+  },
+  {
+    title: "Enhanced Checklist Creator",
+    url: "/checklist-creator",
+    icon: Plus,
+    adminOnly: true,
+  },
+  {
     title: "Documents",
     url: "/documents",
     icon: FileText,
@@ -299,19 +310,24 @@ export function AppSidebar() {
           <SidebarGroupLabel>Resources</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {resourcesItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {resourcesItems.map((item) => {
+                // Hide admin-only items for non-admins
+                if (item.adminOnly && !isAdmin) return null;
+                
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink 
+                        to={item.url} 
+                        className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
               
               {/* Messaging and Family Voting moved to Resources */}
               <SidebarMenuItem>

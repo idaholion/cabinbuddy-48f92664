@@ -29,9 +29,6 @@ import SelectFamilyGroup from "./pages/SelectFamilyGroup";
 import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
-import Textresponse from "./pages/Textresponse";
-import Optin1 from "./pages/Optin1";
-import Optin2 from "./pages/Optin2";
 import { ManageOrganizations } from "./pages/ManageOrganizations";
 
 
@@ -112,9 +109,6 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/guest" element={<Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense>} />
-        <Route path="/textresponse" element={<Textresponse />} />
-        <Route path="/optin1" element={<Optin1 />} />
-        <Route path="/optin2" element={<Optin2 />} />
         <Route path="/home" element={<UnifiedAuthRoute requiresOrganization={true}><MainLayout><Index /></MainLayout></UnifiedAuthRoute>} />
         <Route path="/manage-organizations" element={<UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
@@ -131,9 +125,6 @@ const AppContent = () => {
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/checklist-creator" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        {/* Legacy routes - redirect to new consolidated page */}
-        <Route path="/word-checklist-creator" element={<Navigate to="/checklist-creator" replace />} />
-        <Route path="/pdf-checklist" element={<Navigate to="/checklist-creator" replace />} />
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/cabin-seasonal-docs" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSeasonalDocs /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
