@@ -114,130 +114,49 @@ const SeasonalChecklists = () => {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Create and manage your seasonal checklists
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-
-            <Button className="w-full justify-start" variant="outline" onClick={() => refetch()}>
-              <CheckSquare className="h-4 w-4 mr-2" />
-              Refresh Checklists
-            </Button>
-
-            {/* Checklist Type Selector */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">View Checklist:</label>
-              <div className="grid grid-cols-1 gap-2">
-                {checklistTypes.map((type) => (
-                  <Button
-                    key={type.key}
-                    variant={selectedChecklistType === type.key ? "default" : "ghost"}
-                    className="justify-start h-auto p-3"
-                    onClick={() => setSelectedChecklistType(type.key)}
-                  >
-                    <type.icon className="h-4 w-4 mr-2" />
-                    <div className="text-left">
-                      <div className="font-medium">{type.label}</div>
-                      <div className="text-xs opacity-70">
-                        {checklists.filter(c => c.checklist_type === type.key).length > 0 
-                          ? `${checklists.filter(c => c.checklist_type === type.key).length} checklist(s)` 
-                          : 'Not created'}
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right Column - Checklist Viewer */}
-        <div className="lg:col-span-2">
+      <div className="flex justify-center">
+        {/* Actions Card */}
+        <div className="w-full max-w-md">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    {React.createElement(checklistTypes.find(t => t.key === selectedChecklistType)?.icon || CheckSquare, { className: "h-5 w-5" })}
-                    {checklistTypes.find(t => t.key === selectedChecklistType)?.label} Checklist
-                  </CardTitle>
-                  <CardDescription>
-                    {checklistTypes.find(t => t.key === selectedChecklistType)?.description}
-                  </CardDescription>
-                </div>
-                {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 && isAdmin && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      const typeChecklists = checklists.filter(c => c.checklist_type === selectedChecklistType);
-                      if (typeChecklists.length > 0 && confirm(`Are you sure you want to delete the ${selectedChecklistType} checklist? This action cannot be undone.`)) {
-                        await deleteChecklist(typeChecklists[0].id);
-                        refetch();
-                      }
-                    }}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Quick Actions
+              </CardTitle>
+              <CardDescription>
+                Create and manage your seasonal checklists
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : checklists.filter(c => c.checklist_type === selectedChecklistType).length > 0 ? (
-                <div className="space-y-4">
-                  {checklists.filter(c => c.checklist_type === selectedChecklistType).map((checklist, index) => (
-                    <Card key={checklist.id} className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <CheckSquare className="h-5 w-5 text-primary" />
-                          <div>
-                            <h4 className="font-medium capitalize">
-                              {checklists.filter(c => c.checklist_type === selectedChecklistType).length > 1 
-                                ? `${selectedChecklistType} Checklist ${index + 1}` 
-                                : `${selectedChecklistType} Checklist`}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {checklist.items?.length || 0} items
-                              {checklist.images && checklist.images.length > 0 && (
-                                <span> • {checklist.images.length} images</span>
-                              )}
-                            </p>
-                          </div>
+            <CardContent className="space-y-4">
+              <Button className="w-full justify-start" variant="outline" onClick={() => refetch()}>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                Refresh Checklists
+              </Button>
+
+              {/* Checklist Type Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">View Checklist:</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {checklistTypes.map((type) => (
+                    <Button
+                      key={type.key}
+                      variant={selectedChecklistType === type.key ? "default" : "ghost"}
+                      className="justify-start h-auto p-3"
+                      onClick={() => setSelectedChecklistType(type.key)}
+                    >
+                      <type.icon className="h-4 w-4 mr-2" />
+                      <div className="text-left">
+                        <div className="font-medium">{type.label}</div>
+                        <div className="text-xs opacity-70">
+                          {checklists.filter(c => c.checklist_type === type.key).length > 0 
+                            ? `${checklists.filter(c => c.checklist_type === type.key).length} checklist(s)` 
+                            : 'Not created'}
                         </div>
-                        <Button
-                          onClick={() => navigate(`/seasonal-checklist/${checklist.id}`)}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View Checklist
-                        </Button>
                       </div>
-                    </Card>
+                    </Button>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 space-y-4">
-                  <div className="text-muted-foreground">
-                    <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium">No {selectedChecklistType} checklist found</h3>
-                    <p>Create your first {selectedChecklistType} checklist using the enhanced checklist creator.</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
