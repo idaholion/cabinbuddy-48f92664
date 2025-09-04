@@ -473,6 +473,7 @@ async function processImageMarkersAndFiles(
   
   console.log('Processing image markers:', markers.length);
   console.log('Available image files:', imageFiles.map(f => f.filename));
+  console.log('Checklist items with imageMarker fields:', processedItems.filter(item => item.imageMarker).length);
   
   // Add safety check for empty markers
   if (!markers || markers.length === 0) {
@@ -480,7 +481,7 @@ async function processImageMarkersAndFiles(
     return processedItems;
   }
   
-  // Match image markers with provided files
+  // Match image markers with provided files and embed them
   for (const marker of markers) {
     const matchingFile = imageFiles.find(file => 
       file.filename.toLowerCase() === marker.filename.toLowerCase() ||
@@ -520,23 +521,77 @@ async function processImageMarkersAndFiles(
 
         console.log(`Image uploaded successfully: ${publicUrl}`);
 
-        // Find checklist items that contain this image marker
+        let imageAssociated = false;
+
+        // Strategy 1: Find items with matching imageMarker field (preferred)
         for (let i = 0; i < processedItems.length; i++) {
-          if (processedItems[i].text.includes(marker.marker)) {
-            // Replace the marker in the text with empty string or keep for reference
-            processedItems[i].imageMarker = marker.marker;
+          if (processedItems[i].imageMarker && 
+              (processedItems[i].imageMarker.includes(marker.filename) || 
+               marker.marker.includes(processedItems[i].imageMarker))) {
             processedItems[i].imageUrl = publicUrl;
             processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
             processedItems[i].imagePosition = 'after';
             
-            // Optionally remove the marker from the display text
-            processedItems[i].text = processedItems[i].text.replace(marker.marker, '').trim();
+            console.log(`Strategy 1: Associated image with item ${i + 1} via imageMarker field: ${processedItems[i].text.substring(0, 50)}...`);
+            imageAssociated = true;
+            break;
+          }
+        }
+
+        // Strategy 2: Find items that contain the exact marker in text
+        if (!imageAssociated) {
+          for (let i = 0; i < processedItems.length; i++) {
+            if (processedItems[i].text.includes(marker.marker)) {
+              processedItems[i].imageMarker = marker.marker;
+              processedItems[i].imageUrl = publicUrl;
+              processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
+              processedItems[i].imagePosition = 'after';
+              
+              // Remove the marker from display text
+              processedItems[i].text = processedItems[i].text.replace(marker.marker, '').trim();
+              
+              console.log(`Strategy 2: Associated image with item ${i + 1} via text marker: ${processedItems[i].text.substring(0, 50)}...`);
+              imageAssociated = true;
+              break;
+            }
+          }
+        }
+
+        // Strategy 3: Find items containing filename reference
+        if (!imageAssociated) {
+          for (let i = 0; i < processedItems.length; i++) {
+            if (processedItems[i].text.toLowerCase().includes(marker.filename.toLowerCase().replace(/\.[^.]+$/, ''))) {
+              processedItems[i].imageMarker = marker.marker;
+              processedItems[i].imageUrl = publicUrl;
+              processedItems[i].imageDescription = marker.description || `Image: ${marker.filename}`;
+              processedItems[i].imagePosition = 'after';
+              
+              console.log(`Strategy 3: Associated image with item ${i + 1} via filename reference: ${processedItems[i].text.substring(0, 50)}...`);
+              imageAssociated = true;
+              break;
+            }
+          }
+        }
+
+        // Strategy 4: Associate with first available item if none found (fallback)
+        if (!imageAssociated && processedItems.length > 0) {
+          const firstItemWithoutImage = processedItems.find(item => !item.imageUrl);
+          if (firstItemWithoutImage) {
+            firstItemWithoutImage.imageMarker = marker.marker;
+            firstItemWithoutImage.imageUrl = publicUrl;
+            firstItemWithoutImage.imageDescription = marker.description || `Image: ${marker.filename}`;
+            firstItemWithoutImage.imagePosition = 'after';
             
-            console.log(`Associated image with item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
+            console.log(`Strategy 4: Associated image with first available item as fallback: ${firstItemWithoutImage.text.substring(0, 50)}...`);
+            imageAssociated = true;
           }
         }
         
-        marker.matched = true;
+        if (imageAssociated) {
+          marker.matched = true;
+        } else {
+          console.warn(`Could not associate image ${marker.filename} with any checklist item`);
+        }
         
       } catch (error) {
         console.error('Error processing image for marker:', marker.marker, error);
