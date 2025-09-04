@@ -50,20 +50,31 @@ const SeasonalChecklists = () => {
   const getChecklistStats = () => {
     const stats = checklistTypes.map(type => {
       const typeChecklists = checklists.filter(c => c.checklist_type === type.key);
-      const totalItems = typeChecklists.reduce((total, checklist) => {
-        return total + (checklist.items?.length || 0);
-      }, 0);
       
       return {
         ...type,
         exists: typeChecklists.length > 0,
-        itemCount: totalItems,
         checklistCount: typeChecklists.length,
         lastUpdated: typeChecklists.length > 0 ? new Date().toLocaleDateString() : null
       };
     });
     
     return stats;
+  };
+
+  const handleCardClick = (type: string) => {
+    const typeChecklists = checklists.filter(c => c.checklist_type === type);
+    if (typeChecklists.length === 1) {
+      // If only one checklist, navigate directly to it
+      navigate(`/seasonal-checklist/${typeChecklists[0].id}`);
+    } else if (typeChecklists.length > 1) {
+      // TODO: Navigate to a list view or show selection dialog
+      // For now, navigate to the first one
+      navigate(`/seasonal-checklist/${typeChecklists[0].id}`);
+    } else {
+      // No checklists exist, redirect to creator
+      navigate(`/checklist-creator`);
+    }
   };
 
   const checklistStats = getChecklistStats();
@@ -80,7 +91,7 @@ const SeasonalChecklists = () => {
         {checklistStats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.key} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedChecklistType(stat.key)}>
+            <Card key={stat.key} className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => handleCardClick(stat.key)}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
@@ -89,18 +100,11 @@ const SeasonalChecklists = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     {stat.exists ? (
-                      <div className="flex flex-col gap-1">
-                        <Badge className={stat.color}>
-                          {stat.itemCount} items
-                        </Badge>
-                        {stat.checklistCount > 1 && (
-                          <Badge variant="outline" className="text-xs">
-                            {stat.checklistCount} checklists
-                          </Badge>
-                        )}
-                      </div>
+                      <Badge className={stat.color}>
+                        {stat.checklistCount} checklist{stat.checklistCount !== 1 ? 's' : ''}
+                      </Badge>
                     ) : (
-                      <Badge variant="outline">Not created</Badge>
+                      <Badge variant="outline">Click to create</Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -113,54 +117,39 @@ const SeasonalChecklists = () => {
         })}
       </div>
 
-      {/* Main Content */}
-      <div className="flex justify-center">
-        {/* Actions Card */}
-        <div className="w-full max-w-md">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Quick Actions
-              </CardTitle>
-              <CardDescription>
-                Create and manage your seasonal checklists
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full justify-start" variant="outline" onClick={() => refetch()}>
-                <CheckSquare className="h-4 w-4 mr-2" />
-                Refresh Checklists
-              </Button>
-
-              {/* Checklist Type Selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">View Checklist:</label>
-                <div className="grid grid-cols-1 gap-2">
-                  {checklistTypes.map((type) => (
-                    <Button
-                      key={type.key}
-                      variant={selectedChecklistType === type.key ? "default" : "ghost"}
-                      className="justify-start h-auto p-3"
-                      onClick={() => setSelectedChecklistType(type.key)}
-                    >
-                      <type.icon className="h-4 w-4 mr-2" />
-                      <div className="text-left">
-                        <div className="font-medium">{type.label}</div>
-                        <div className="text-xs opacity-70">
-                          {checklists.filter(c => c.checklist_type === type.key).length > 0 
-                            ? `${checklists.filter(c => c.checklist_type === type.key).length} checklist(s)` 
-                            : 'Not created'}
-                        </div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex justify-center gap-4">
+        <Button 
+          size="lg" 
+          onClick={() => navigate('/checklist-creator')}
+          className="flex items-center gap-2"
+        >
+          <CheckSquare className="h-5 w-5" />
+          Create New Checklist
+        </Button>
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => refetch()}
+          className="flex items-center gap-2"
+        >
+          <Settings className="h-5 w-5" />
+          Refresh Checklists
+        </Button>
       </div>
+
+      {/* Instructions */}
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="pt-6">
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold">Getting Started</h3>
+            <p className="text-muted-foreground">
+              Click on any checklist type above to view existing checklists or create new ones. 
+              Use the "Create New Checklist" button to build custom seasonal checklists from documents or templates.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
