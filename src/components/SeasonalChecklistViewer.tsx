@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { CheckSquare, Clock, Edit2, Save, X, Image as ImageIcon } from 'lucide-react';
+import { CheckSquare, Clock, Edit2, Save, X, Image as ImageIcon, Wrench, AlertTriangle, Calendar } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { CustomChecklist } from '@/hooks/useChecklistData';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
@@ -27,8 +27,17 @@ interface ChecklistItem {
   text: string;
   completed?: boolean;
   imageUrl?: string;
+  imageUrls?: string[];
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
+  imageMarker?: string;
+  imageSize?: string;
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    icon?: string;
+    type?: string;
+  };
 }
 
 interface ChecklistSection {
@@ -64,8 +73,17 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
         text: item.text || '',
         completed: item.completed || false,
         imageUrl: item.imageUrl,
+        imageUrls: item.imageUrls,
         imageDescription: item.imageDescription,
-        imagePosition: item.imagePosition || 'after'
+        imagePosition: item.imagePosition || 'after',
+        imageMarker: item.imageMarker,
+        imageSize: item.imageSize,
+        formatting: {
+          bold: item.formatting?.bold || false,
+          italic: item.formatting?.italic || false,
+          icon: item.formatting?.icon,
+          type: item.formatting?.type
+        }
       }))
     }
   ] : [];
@@ -121,55 +139,72 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
     toast({ title: "Session cancelled" });
   };
 
-  // Render individual checklist item with image support
+  // Render individual checklist item with rich formatting and multiple images
   const renderChecklistItem = (item: ChecklistItem, itemIndex: number) => {
-    // Find associated image for this item from the checklist images array
-    const itemImage = checklist.images?.find((img: any) => {
-      // Try to match by item index or ID
-      return img.itemId === item.id || img.id === item.id || 
-             (Array.isArray(checklist.images) && checklist.images.indexOf(img) === itemIndex);
-    });
+    // Get all images for this item (both single and multiple)
+    const images: string[] = [];
+    if (item.imageUrl) images.push(item.imageUrl);
+    if (item.imageUrls && Array.isArray(item.imageUrls)) {
+      images.push(...item.imageUrls);
+    }
 
-    // Also check if item has direct image data
-    const imageData = itemImage?.data || item.imageUrl;
-    const imageDesc = itemImage?.description || item.imageDescription || `Image for item ${itemIndex + 1}`;
-    const isPlaceholder = itemImage?.type === 'placeholder' || (itemImage?.data === null);
+    // Get image size class
+    const getImageSizeClass = (size?: string) => {
+      switch (size) {
+        case 'small': return 'max-w-xs';
+        case 'medium': return 'max-w-md';
+        case 'large': return 'max-w-lg';
+        default: return 'max-w-md';
+      }
+    };
+
+    // Get the icon component
+    const getIconComponent = (iconName?: string) => {
+      if (!iconName) return CheckSquare;
+      
+      // Map icon names to actual icon components
+      const iconMap: Record<string, any> = {
+        'wrench': Wrench,
+        'alert-triangle': AlertTriangle,
+        'check-square': CheckSquare,
+        'calendar': Calendar,
+        'clock': Clock,
+        'image': ImageIcon,
+      };
+      
+      return iconMap[iconName] || CheckSquare;
+    };
+
+    const IconComponent = getIconComponent(item.formatting?.icon);
     
     return (
       <div key={item.id} className="space-y-3">
-        {/* Image before or after text - handle both embedded and placeholder images */}
-        {(imageData || isPlaceholder) && (
-          <div className="relative ml-6">
-            {imageData && !isPlaceholder ? (
-              <div>
+        {/* Images before text */}
+        {images.length > 0 && item.imagePosition === 'before' && (
+          <div className="ml-6 space-y-3">
+            {images.map((imageUrl, imgIndex) => (
+              <div key={imgIndex} className="relative">
                 <img 
-                  src={imageData} 
-                  alt={imageDesc}
-                  className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
+                  src={imageUrl} 
+                  alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
+                  className={`${getImageSizeClass(item.imageSize)} mx-auto rounded-lg shadow-sm border`}
                   loading="lazy"
                   onError={(e) => {
-                    console.log('Image failed to load:', imageData);
+                    console.log('Image failed to load:', imageUrl);
                     e.currentTarget.style.display = 'none';
                   }}
                 />
-                <p className="text-xs text-muted-foreground mt-1 text-center">{imageDesc}</p>
+                {item.imageDescription && imgIndex === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 text-center">
+                    {item.imageDescription}
+                  </p>
+                )}
               </div>
-            ) : (
-              <div className="bg-muted/50 border-2 border-dashed border-muted-foreground/20 p-6 rounded-lg text-center max-w-md mx-auto">
-                <ImageIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                <p className="text-sm font-medium text-muted-foreground">Image Reference</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {itemImage?.filename || itemImage?.alt || 'External image file'}
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-2">
-                  Image was not embedded in the HTML file
-                </p>
-              </div>
-            )}
+            ))}
           </div>
         )}
 
-        {/* Checklist item */}
+        {/* Checklist item with formatting */}
         <div 
           className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
             isSessionMode 
@@ -187,13 +222,19 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
               className="mt-0.5"
             />
           ) : (
-            <CheckSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <IconComponent className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           )}
           
           <div className="flex-1">
             <span 
               className={`text-sm leading-relaxed ${
                 completedItems[item.id] ? 'line-through text-muted-foreground' : ''
+              } ${
+                item.formatting?.bold ? 'font-bold' : ''
+              } ${
+                item.formatting?.italic ? 'italic' : ''
+              } ${
+                item.formatting?.type === 'warning' ? 'text-amber-700 dark:text-amber-400' : ''
               }`}
             >
               {item.text}
@@ -201,8 +242,13 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
           </div>
 
           <div className="flex items-center gap-2">
-            {(imageData || isPlaceholder) && (
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            {images.length > 0 && (
+              <div className="flex items-center gap-1">
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                {images.length > 1 && (
+                  <span className="text-xs text-muted-foreground">{images.length}</span>
+                )}
+              </div>
             )}
             {!isSessionMode && (
               <Button 
@@ -216,6 +262,31 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
             )}
           </div>
         </div>
+
+        {/* Images after text */}
+        {images.length > 0 && (!item.imagePosition || item.imagePosition === 'after') && (
+          <div className="ml-6 space-y-3">
+            {images.map((imageUrl, imgIndex) => (
+              <div key={imgIndex} className="relative">
+                <img 
+                  src={imageUrl} 
+                  alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
+                  className={`${getImageSizeClass(item.imageSize)} mx-auto rounded-lg shadow-sm border`}
+                  loading="lazy"
+                  onError={(e) => {
+                    console.log('Image failed to load:', imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                {item.imageDescription && imgIndex === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 text-center">
+                    {item.imageDescription}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -230,7 +301,16 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
     );
   }
 
-  const totalImages = checklist.images?.length || 0;
+  const totalImages = sections.reduce((acc, section) => {
+    return acc + section.items.reduce((itemAcc, item) => {
+      let imageCount = 0;
+      if (item.imageUrl) imageCount++;
+      if (item.imageUrls && Array.isArray(item.imageUrls)) {
+        imageCount += item.imageUrls.length;
+      }
+      return itemAcc + imageCount;
+    }, 0);
+  }, 0);
 
   const handleSaveEdit = async (updatedSections: ChecklistSection[]) => {
     try {
