@@ -4,9 +4,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Circle, RotateCcw, Save } from 'lucide-react';
+import { CheckCircle, Circle, RotateCcw, Save, AlertTriangle, Info, Wrench, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useChecklistProgress } from '@/hooks/useChecklistProgress';
+import * as Icons from 'lucide-react';
 
 interface ChecklistItem {
   id: string;
@@ -15,6 +16,13 @@ interface ChecklistItem {
   imageUrl?: string;
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
+  imageMarker?: string;
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    type?: 'step' | 'warning' | 'note' | 'header';
+    icon?: string;
+  };
 }
 
 interface InteractiveChecklistProps {
@@ -147,47 +155,105 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
       </Card>
 
       {/* Checklist items */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item, index) => {
           const isCompleted = localProgress[item.id] || false;
+          const formatting = item.formatting || {};
+          
+          // Get the appropriate icon
+          const getItemIcon = () => {
+            if (formatting.icon) {
+              const IconComponent = (Icons as any)[formatting.icon];
+              return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
+            }
+            
+            switch (formatting.type) {
+              case 'warning':
+                return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+              case 'note':
+                return <Info className="h-4 w-4 text-blue-500" />;
+              case 'header':
+                return <Settings className="h-4 w-4 text-primary" />;
+              default:
+                return null;
+            }
+          };
+
+          const ItemIcon = getItemIcon();
           
           return (
-            <Card key={item.id} className={`transition-all ${isCompleted ? 'bg-green-50/50 border-green-200' : ''}`}>
-              <CardContent className="p-4">
+            <Card key={item.id} className={`transition-all ${
+              isCompleted ? 'bg-green-50/50 border-green-200' : 
+              formatting.type === 'warning' ? 'border-amber-200 bg-amber-50/30' :
+              formatting.type === 'note' ? 'border-blue-200 bg-blue-50/30' :
+              formatting.type === 'header' ? 'border-primary/20 bg-primary/5' :
+              ''
+            }`}>
+              <CardContent className={`p-4 ${formatting.type === 'header' ? 'pb-2' : ''}`}>
                 <div className="flex items-start gap-3">
-                  <Checkbox
-                    id={item.id}
-                    checked={isCompleted}
-                    onCheckedChange={(checked) => handleItemToggle(item.id, checked as boolean)}
-                    className="mt-1"
-                  />
+                  {formatting.type !== 'header' && (
+                    <Checkbox
+                      id={item.id}
+                      checked={isCompleted}
+                      onCheckedChange={(checked) => handleItemToggle(item.id, checked as boolean)}
+                      className="mt-1"
+                    />
+                  )}
                   
                   <div className="flex-1 space-y-3">
-                    <label
-                      htmlFor={item.id}
-                      className={`text-sm leading-relaxed cursor-pointer block ${
-                        isCompleted ? 'line-through text-muted-foreground' : ''
-                      }`}
-                    >
-                      <span className="font-medium text-xs text-muted-foreground mr-2">
-                        {index + 1}.
-                      </span>
-                      {item.text}
-                    </label>
+                    <div className="flex items-start gap-2">
+                      {ItemIcon && (
+                        <div className="mt-0.5">
+                          {ItemIcon}
+                        </div>
+                      )}
+                      
+                      <label
+                        htmlFor={item.id}
+                        className={`cursor-pointer block leading-relaxed ${
+                          formatting.type === 'header' ? 'text-lg font-semibold text-primary' :
+                          formatting.bold ? 'font-semibold' : ''
+                        } ${
+                          formatting.italic ? 'italic' : ''
+                        } ${
+                          isCompleted && formatting.type !== 'header' ? 'line-through text-muted-foreground' : ''
+                        } ${
+                          formatting.type === 'warning' ? 'text-amber-800' :
+                          formatting.type === 'note' ? 'text-blue-800' :
+                          ''
+                        }`}
+                      >
+                        {formatting.type !== 'header' && (
+                          <span className="font-medium text-xs text-muted-foreground mr-2">
+                            {index + 1}.
+                          </span>
+                        )}
+                        
+                        <span dangerouslySetInnerHTML={{
+                          __html: item.text
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                        }} />
+                      </label>
+                    </div>
                     
                     {item.imageUrl && (
-                      <div className="max-w-md">
-                        <img
-                          src={item.imageUrl}
-                          alt={item.imageDescription || `Step ${index + 1} illustration`}
-                          className="w-full rounded-lg border shadow-sm"
-                          loading="lazy"
-                        />
-                        {item.imageDescription && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {item.imageDescription}
-                          </p>
-                        )}
+                      <div className="max-w-lg">
+                        <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.imageDescription || `Step ${index + 1} illustration`}
+                            className="w-full h-auto"
+                            loading="lazy"
+                          />
+                          {item.imageDescription && (
+                            <div className="p-3 bg-gray-50 border-t">
+                              <p className="text-sm text-gray-600">
+                                {item.imageDescription}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

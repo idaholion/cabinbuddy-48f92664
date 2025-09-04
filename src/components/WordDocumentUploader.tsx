@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, FileText, Loader2, Type } from 'lucide-react';
+import { Upload, FileText, Loader2, Type, Image as ImageIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { EnhancedImageUploader } from './EnhancedImageUploader';
 
 interface WordDocumentUploaderProps {
   onChecklistCreated?: (checklistId: string) => void;
@@ -21,6 +22,9 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   const [textContent, setTextContent] = useState<string>('');
   const [checklistType, setChecklistType] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [detectedImageMarkers, setDetectedImageMarkers] = useState<any[]>([]);
+  const [imageFiles, setImageFiles] = useState<any[]>([]);
+  const [showImageUploader, setShowImageUploader] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -47,6 +51,36 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     });
   };
 
+  const detectImageMarkersInText = (text: string) => {
+    const markers = [];
+    
+    // Pattern for [IMAGE:filename.jpg:description] format
+    const imagePattern = /\[IMAGE:([^:\]]+):?([^\]]*)\]/gi;
+    let match;
+    
+    while ((match = imagePattern.exec(text)) !== null) {
+      markers.push({
+        marker: match[0],
+        filename: match[1].trim(),
+        description: match[2] ? match[2].trim() : undefined,
+        position: match.index
+      });
+    }
+    
+    // Pattern for {{filename.jpg}} format
+    const bracketPattern = /\{\{([^}]+)\}\}/gi;
+    while ((match = bracketPattern.exec(text)) !== null) {
+      markers.push({
+        marker: match[0],
+        filename: match[1].trim(),
+        description: undefined,
+        position: match.index
+      });
+    }
+    
+    return markers.sort((a, b) => a.position - b.position);
+  };
+
   const processTextContent = async () => {
     if (!textContent.trim() || !checklistType) {
       toast({
@@ -57,6 +91,23 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       return;
     }
 
+    // Detect image markers in the text
+    const markers = detectImageMarkersInText(textContent);
+    
+    if (markers.length > 0) {
+      setDetectedImageMarkers(markers);
+      setShowImageUploader(true);
+      toast({
+        title: "Image Markers Detected",
+        description: `Found ${markers.length} image markers. Please upload the corresponding images.`,
+      });
+      return;
+    }
+
+    await processWithImages();
+  };
+
+  const processWithImages = async () => {
     setIsProcessing(true);
 
     try {
@@ -67,12 +118,13 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       if (orgError) throw orgError;
       if (!organizationId) throw new Error('No organization found');
 
-      // Process text content directly with the edge function
+      // Process text content with images
       const { data, error } = await supabase.functions.invoke('process-word-to-checklist', {
         body: {
           wordFile: `data:text/plain;base64,${btoa(textContent)}`,
           checklistType,
-          organizationId
+          organizationId,
+          imageFiles
         }
       });
 
@@ -85,13 +137,16 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       }
 
       toast({
-        title: "Checklist Created Successfully!",
-        description: `Created checklist with ${data.itemsCount} items`
+        title: "Enhanced Checklist Created!",
+        description: `Created checklist with ${data.itemsCount} items and ${data.matchedImagesCount} images`,
       });
 
       // Clear form
       setTextContent('');
       setChecklistType('');
+      setDetectedImageMarkers([]);
+      setImageFiles([]);
+      setShowImageUploader(false);
       
       // Notify parent component
       if (onChecklistCreated) {
@@ -101,7 +156,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     } catch (error) {
       console.error('Processing error:', error);
       
-      let errorMessage = "Failed to process the text content";
+      let errorMessage = "Failed to process the content";
       if (error && error.message) {
         errorMessage = error.message;
       }
@@ -242,84 +297,123 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="word-file">Upload Document</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="word-file"
-              type="file"
-              accept=".docx,.txt,.rtf,.pdf"
-              onChange={handleFileChange}
-              className="flex-1"
-            />
-            {file && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                {file.name}
-              </div>
-            )}
-          </div>
-          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium">💡 For best results:</p>
-            <ol className="text-sm text-blue-700 mt-1 ml-4 space-y-1">
-              <li><strong>PDF files:</strong> Work great! Just upload directly</li>
-              <li><strong>Word documents:</strong> Copy content and paste as text instead</li>
-              <li><strong>Text files:</strong> Upload directly or paste content</li>
-            </ol>
-          </div>
-        </div>
-
-        <Button 
-          onClick={handleUploadAndProcess}
-          disabled={!file || !checklistType || isProcessing}
-          className="w-full"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Processing Document...
-            </>
-          ) : (
-            <>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload & Create Checklist
-            </>
-          )}
-        </Button>
-
-        <div className="border-t pt-4">
-          <details className="space-y-3">
-            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-              Alternative: Paste text content instead
-            </summary>
+        <Tabs defaultValue="text" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="text" className="flex items-center gap-2">
+              <Type className="h-4 w-4" />
+              Text + Images
+            </TabsTrigger>
+            <TabsTrigger value="file" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              Upload File
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="text" className="space-y-4">
             <div className="space-y-3">
               <Textarea
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
-                placeholder="If document upload doesn't work, paste your checklist content here..."
-                className="min-h-[120px]"
+                placeholder="Paste your checklist content here. You can include image markers like:
+[IMAGE:tool1.jpg:Photo of the wrench]
+{{picture2.png}}
+
+The text will be converted to a checklist and you can upload matching images."
+                className="min-h-[150px]"
               />
+              
+              <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                <p className="text-sm text-green-800 font-medium">✨ Enhanced Text Processing:</p>
+                <ul className="text-sm text-green-700 mt-1 ml-4 space-y-1">
+                  <li>Use **bold text** for important steps</li>
+                  <li>Use *italic text* for notes and tips</li>
+                  <li>Mark images with <code>[IMAGE:filename.jpg:description]</code></li>
+                  <li>Or use simple markers like <code>{'{{picture1.png}}'}</code></li>
+                </ul>
+              </div>
+
+              {showImageUploader && detectedImageMarkers.length > 0 && (
+                <EnhancedImageUploader
+                  detectedMarkers={detectedImageMarkers}
+                  onImagesReady={setImageFiles}
+                  isProcessing={isProcessing}
+                />
+              )}
+
               <Button 
-                onClick={processTextContent}
+                onClick={showImageUploader ? processWithImages : processTextContent}
                 disabled={!textContent.trim() || !checklistType || isProcessing}
-                variant="outline"
                 className="w-full"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Checklist...
+                    Creating Enhanced Checklist...
+                  </>
+                ) : showImageUploader ? (
+                  <>
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Create Enhanced Checklist
                   </>
                 ) : (
                   <>
                     <Type className="h-4 w-4 mr-2" />
-                    Create from Text
+                    Process Text & Detect Images
                   </>
                 )}
               </Button>
             </div>
-          </details>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="file" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="word-file">Upload Document</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="word-file"
+                  type="file"
+                  accept=".docx,.txt,.rtf,.pdf"
+                  onChange={handleFileChange}
+                  className="flex-1"
+                />
+                {file && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                    {file.name}
+                  </div>
+                )}
+              </div>
+              
+              <Button 
+                onClick={handleUploadAndProcess}
+                disabled={!file || !checklistType || isProcessing}
+                className="w-full"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing Document...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload & Create Checklist
+                  </>
+                )}
+              </Button>
+              
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">💡 For best results:</p>
+                <ol className="text-sm text-blue-700 mt-1 ml-4 space-y-1">
+                  <li><strong>Text files:</strong> Work great for plain text processing</li>
+                  <li><strong>Word documents:</strong> Basic text extraction only</li>
+                  <li><strong>For images:</strong> Use the "Text + Images" tab instead</li>
+                </ol>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
       </CardContent>
     </Card>
   );
