@@ -661,6 +661,7 @@ async function processImageMarkersAndFiles(
           processedItems[targetItemIndex].imageUrl = publicUrl;
           processedItems[targetItemIndex].imageDescription = marker.description || "";
           processedItems[targetItemIndex].imagePosition = 'after';
+          processedItems[targetItemIndex].imageSize = 'large'; // Default size
         } else {
           console.log('📋 Assigning as ADDITIONAL image');
           if (!processedItems[targetItemIndex].imageUrls) {

@@ -18,6 +18,7 @@ interface ChecklistItem {
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
   imageMarker?: string;
+  imageSize?: 'small' | 'medium' | 'large' | 'xl' | 'full';
   formatting?: {
     bold?: boolean;
     italic?: boolean;
@@ -251,40 +252,54 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                       </label>
                     </div>
                     
-                    {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (
-                      <div className="max-w-lg space-y-3">
-                        {/* Display single image if imageUrl exists */}
-                        {item.imageUrl && (
-                          <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.imageDescription || `Step ${index + 1} illustration`}
-                              className="w-full h-auto"
-                              loading="lazy"
-                            />
-                            {item.imageDescription && (
-                              <div className="p-3 bg-gray-50 border-t">
-                                <p className="text-sm text-gray-600">
-                                  {item.imageDescription}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Display multiple images if imageUrls array exists */}
-                        {item.imageUrls && item.imageUrls.map((imageUrl, imgIndex) => (
-                          <div key={imgIndex} className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                            <img
-                              src={imageUrl}
-                              alt={`Step ${index + 1} illustration ${imgIndex + 1}`}
-                              className="w-full h-auto"
-                              loading="lazy"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (() => {
+                      // Determine container size based on imageSize property
+                      const getContainerSize = () => {
+                        switch (item.imageSize) {
+                          case 'small': return 'max-w-xs';
+                          case 'medium': return 'max-w-sm';
+                          case 'large': return 'max-w-lg';
+                          case 'xl': return 'max-w-2xl';
+                          case 'full': return 'max-w-full';
+                          default: return 'max-w-lg'; // Default to large
+                        }
+                      };
+
+                      return (
+                        <div className={`${getContainerSize()} space-y-3`}>
+                          {/* Display single image if imageUrl exists */}
+                          {item.imageUrl && (
+                            <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                              <img
+                                src={item.imageUrl}
+                                alt={item.imageDescription || `Step ${index + 1} illustration`}
+                                className="w-full h-auto"
+                                loading="lazy"
+                              />
+                              {item.imageDescription && (
+                                <div className="p-3 bg-gray-50 border-t">
+                                  <p className="text-sm text-gray-600">
+                                    {item.imageDescription}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Display multiple images if imageUrls array exists */}
+                          {item.imageUrls && item.imageUrls.map((imageUrl, imgIndex) => (
+                            <div key={imgIndex} className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                              <img
+                                src={imageUrl}
+                                alt={`Step ${index + 1} illustration ${imgIndex + 1}`}
+                                className="w-full h-auto"
+                                loading="lazy"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>
