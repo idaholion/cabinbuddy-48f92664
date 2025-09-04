@@ -70,10 +70,8 @@ const SeasonalChecklists = () => {
       // TODO: Navigate to a list view or show selection dialog
       // For now, navigate to the first one
       navigate(`/seasonal-checklist/${typeChecklists[0].id}`);
-    } else {
-      // No checklists exist, redirect to creator
-      navigate(`/checklist-creator`);
     }
+    // If no checklists exist, do nothing - just show info
   };
 
   const checklistStats = getChecklistStats();
@@ -90,7 +88,7 @@ const SeasonalChecklists = () => {
         {checklistStats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.key} className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105" onClick={() => handleCardClick(stat.key)}>
+            <Card key={stat.key} className={`hover:shadow-lg transition-all duration-200 ${stat.exists ? 'cursor-pointer hover:scale-105' : 'cursor-default'}`} onClick={stat.exists ? () => handleCardClick(stat.key) : undefined}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
@@ -103,7 +101,7 @@ const SeasonalChecklists = () => {
                         {stat.checklistCount} checklist{stat.checklistCount !== 1 ? 's' : ''}
                       </Badge>
                     ) : (
-                      <Badge variant="outline">Click to create</Badge>
+                      <Badge variant="secondary">Not created yet</Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -116,16 +114,8 @@ const SeasonalChecklists = () => {
         })}
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-center gap-4">
-        <Button 
-          size="lg" 
-          onClick={() => navigate('/checklist-creator')}
-          className="flex items-center gap-2"
-        >
-          <CheckSquare className="h-5 w-5" />
-          Create New Checklist
-        </Button>
+      {/* Refresh Button */}
+      <div className="flex justify-center">
         <Button 
           variant="outline" 
           size="lg"
@@ -141,10 +131,9 @@ const SeasonalChecklists = () => {
       <Card className="max-w-2xl mx-auto">
         <CardContent className="pt-6">
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold">Getting Started</h3>
+            <h3 className="text-lg font-semibold">Seasonal Checklists Overview</h3>
             <p className="text-muted-foreground">
-              Click on any checklist type above to view existing checklists or create new ones. 
-              Use the "Create New Checklist" button to build custom seasonal checklists from documents or templates.
+              Click on any available checklist above to view and use it for your seasonal cabin tasks and maintenance.
             </p>
           </div>
         </CardContent>
