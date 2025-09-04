@@ -364,3 +364,63 @@ All colors MUST be HSL.
     background-attachment: scroll !important;
   }
 }
+
+/* Responsive image grid for checklists */
+.auto-fit-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Grid item sizing based on image size */
+.grid-item-small {
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.grid-item-medium {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.grid-item-large {
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.grid-item-xl {
+  min-width: 400px;
+  max-width: 600px;
+}
+
+.grid-item-full {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 640px) {
+  .auto-fit-grid {
+    grid-template-columns: 1fr;
+  }
+  .grid-item-large,
+  .grid-item-xl {
+    min-width: unset;
+    max-width: unset;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .auto-fit-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+@media (min-width: 769px) {
+  .grid-item-small {
+    max-width: 200px;
+  }
+  .grid-item-medium {
+    max-width: 300px;
+  }
+}

@@ -361,16 +361,59 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                           )}
                           
                           {/* Display multiple images if imageUrls array exists */}
-                          {item.imageUrls && item.imageUrls.map((imageUrl, imgIndex) => (
-                            <div key={imgIndex} className="rounded-lg overflow-hidden border shadow-sm bg-white">
-                              <img
-                                src={imageUrl}
-                                alt={`Step ${index + 1} illustration ${imgIndex + 1}`}
-                                className="w-full h-auto"
-                                loading="lazy"
-                              />
+                          {item.imageUrls && (
+                            <div className="auto-fit-grid">
+                              {item.imageUrls.map((imageUrl, imgIndex) => {
+                                const effectiveSize = getEffectiveImageSize(item.id, item.imageSize);
+                                
+                                // Determine grid item class based on image size
+                                const getGridClass = (size: string) => {
+                                  switch (size) {
+                                    case 'small':
+                                      return 'grid-item-small';
+                                    case 'medium':
+                                      return 'grid-item-medium';
+                                    case 'large':
+                                      return 'grid-item-large';
+                                    case 'xl':
+                                      return 'grid-item-xl';
+                                    case 'full':
+                                      return 'grid-item-full';
+                                    default:
+                                      return 'grid-item-medium';
+                                  }
+                                };
+                                
+                                return (
+                                  <div key={imgIndex} className={`${getGridClass(effectiveSize)} relative`}>
+                                    <div className="rounded-lg overflow-hidden border shadow-sm bg-white h-full">
+                                      <img
+                                        src={imageUrl}
+                                        alt={`Step ${index + 1} illustration ${imgIndex + 1}`}
+                                        className="w-full h-auto object-cover"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                    {hoveredImageId === item.id && (
+                                      <div className="absolute top-2 right-2 flex gap-1 bg-background/90 backdrop-blur-sm p-1 rounded-md shadow-lg">
+                                        {sizeOptions.map(option => (
+                                          <Button
+                                            key={option.value}
+                                            variant={effectiveSize === option.value ? "default" : "ghost"}
+                                            size="sm"
+                                            className="h-6 w-6 p-0 text-xs"
+                                            onClick={() => handleIndividualSizeChange(item.id, option.value)}
+                                          >
+                                            {option.label}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
-                          ))}
+                          )}
                         </div>
                       );
                     })()}
