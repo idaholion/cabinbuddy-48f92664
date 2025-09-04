@@ -93,13 +93,13 @@ CRITICAL INSTRUCTIONS:
 3. Skip any text that appears to be setup instructions, tool preparation, or general information
 4. Focus on actionable tasks that can be checked off
 
-IMPORTANT: Preserve any image markers like [IMAGE:filename.jpg:description] or {{filename.jpg}} exactly as they appear in the text.
+IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. DO NOT include the image markers in the item text - remove them and put the marker reference in the imageMarker field.
 
 Return a JSON array where each item has:
-- id: unique identifier (string)
-- text: the instruction text with preserved image markers and enhanced formatting
+- id: unique identifier (string)  
+- text: the instruction text WITHOUT any image markers (clean text only)
 - completed: false (boolean)
-- imageMarker: if text contains [IMAGE:filename.jpg:description] or similar, extract just the marker (string, optional)
+- imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item (string with comma-separated markers, optional)
 - formatting: object with formatting hints:
   - bold: true if text should be bold (for important steps, warnings)
   - italic: true if text should be italic (for notes, tips)
@@ -113,7 +113,7 @@ Parse markdown-style formatting:
 - Text with "NOTE", "TIP", "INFO" gets type: "note"
 - Detect tools and suggest appropriate icons
 
-ONLY include items that are actual tasks to be completed. Preserve numbered lists and bullet points. Make items concise but complete.`
+ONLY include items that are actual tasks to be completed. When multiple image markers appear after one checklist item, include all markers separated by commas in the imageMarker field.`
           },
           {
             role: 'user',
@@ -534,12 +534,20 @@ async function processImageMarkersAndFiles(
 
         // Strategy 1: Find items with matching imageMarker field set by OpenAI
         for (let i = 0; i < processedItems.length; i++) {
-          if (processedItems[i].imageMarker && 
-              (processedItems[i].imageMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
-               marker.marker.toLowerCase().includes(processedItems[i].imageMarker.toLowerCase().replace(/[\[\]]/g, '')))) {
-            targetItemIndex = i;
-            console.log(`Strategy 1: Found exact imageMarker match for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
-            break;
+          if (processedItems[i].imageMarker) {
+            // Handle comma-separated markers in the imageMarker field
+            const itemMarkers = processedItems[i].imageMarker.split(',').map(m => m.trim());
+            
+            for (const itemMarker of itemMarkers) {
+              if (itemMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
+                  marker.marker.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]]/g, '')) ||
+                  marker.filename.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]IMAGE:]/g, ''))) {
+                targetItemIndex = i;
+                console.log(`Strategy 1: Found imageMarker match for item ${i + 1} via marker "${itemMarker}": ${processedItems[i].text.substring(0, 50)}...`);
+                break;
+              }
+            }
+            if (targetItemIndex !== -1) break;
           }
         }
 
