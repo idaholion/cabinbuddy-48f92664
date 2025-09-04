@@ -247,6 +247,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          image_sizes: Json | null
           item_id: string
           organization_id: string | null
           updated_at: string
@@ -258,6 +259,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          image_sizes?: Json | null
           item_id: string
           organization_id?: string | null
           updated_at?: string
@@ -269,6 +271,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          image_sizes?: Json | null
           item_id?: string
           organization_id?: string | null
           updated_at?: string

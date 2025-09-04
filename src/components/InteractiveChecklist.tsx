@@ -4,7 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Circle, RotateCcw, Save, AlertTriangle, Info, Wrench, Settings } from 'lucide-react';
+import { CheckCircle, Circle, RotateCcw, Save, AlertTriangle, Info, Wrench, Settings, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useChecklistProgress } from '@/hooks/useChecklistProgress';
 import * as Icons from 'lucide-react';
@@ -47,11 +47,16 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
     loading,
     updateProgress,
     resetProgress,
-    saveProgress
+    saveProgress,
+    progressRecord,
+    updateImageSizes
   } = useChecklistProgress(checklistId);
 
   const [localProgress, setLocalProgress] = useState<Record<string, boolean>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [globalImageSize, setGlobalImageSize] = useState<string>('medium');
+  const [individualImageSizes, setIndividualImageSizes] = useState<Record<string, string>>({});
+  const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
 
   // Initialize local progress from saved progress
   useEffect(() => {
@@ -59,6 +64,13 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
       setLocalProgress(progress);
     }
   }, [progress]);
+
+  useEffect(() => {
+    if (progressRecord?.image_sizes) {
+      setGlobalImageSize(progressRecord.image_sizes.globalSize || 'medium');
+      setIndividualImageSizes(progressRecord.image_sizes.individualSizes || {});
+    }
+  }, [progressRecord]);
 
   // Calculate completion statistics
   const completedCount = Object.values(localProgress).filter(Boolean).length;
@@ -107,6 +119,29 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
     });
   };
 
+  const handleGlobalSizeChange = async (size: string) => {
+    setGlobalImageSize(size);
+    await updateImageSizes?.(size, individualImageSizes);
+  };
+
+  const handleIndividualSizeChange = async (itemId: string, size: string) => {
+    const newIndividualSizes = { ...individualImageSizes, [itemId]: size };
+    setIndividualImageSizes(newIndividualSizes);
+    await updateImageSizes?.(globalImageSize, newIndividualSizes);
+  };
+
+  const getEffectiveImageSize = (itemId: string, defaultSize?: string) => {
+    return individualImageSizes[itemId] || globalImageSize || defaultSize || 'medium';
+  };
+
+  const sizeOptions = [
+    { label: 'S', value: 'small' },
+    { label: 'M', value: 'medium' },
+    { label: 'L', value: 'large' },
+    { label: 'XL', value: 'xl' },
+    { label: 'Full', value: 'full' }
+  ];
+
   if (loading) {
     return (
       <Card>
@@ -133,6 +168,25 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
               )}
               {title}
             </CardTitle>
+            <div className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              <span className="text-sm text-muted-foreground">Image size:</span>
+              <div className="flex gap-1">
+                {sizeOptions.map(option => (
+                  <Button
+                    key={option.value}
+                    variant={globalImageSize === option.value ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => handleGlobalSizeChange(option.value)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               {hasUnsavedChanges && (
                 <Button size="sm" onClick={handleSaveProgress}>
@@ -253,23 +307,28 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                     </div>
                     
                     {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (() => {
-                      // Determine container size based on imageSize property
+                      // Determine container size based on effective image size
                       const getContainerSize = () => {
-                        switch (item.imageSize) {
+                        const effectiveSize = getEffectiveImageSize(item.id, item.imageSize);
+                        switch (effectiveSize) {
                           case 'small': return 'max-w-xs';
                           case 'medium': return 'max-w-sm';
                           case 'large': return 'max-w-lg';
                           case 'xl': return 'max-w-2xl';
                           case 'full': return 'max-w-full';
-                          default: return 'max-w-lg'; // Default to large
+                          default: return 'max-w-sm'; // Default to medium
                         }
                       };
 
                       return (
-                        <div className={`${getContainerSize()} space-y-3`}>
+                        <div 
+                          className={`${getContainerSize()} space-y-3 relative`}
+                          onMouseEnter={() => setHoveredImageId(item.id)}
+                          onMouseLeave={() => setHoveredImageId(null)}
+                        >
                           {/* Display single image if imageUrl exists */}
                           {item.imageUrl && (
-                            <div className="rounded-lg overflow-hidden border shadow-sm bg-white">
+                            <div className="rounded-lg overflow-hidden border shadow-sm bg-white relative">
                               <img
                                 src={item.imageUrl}
                                 alt={item.imageDescription || `Step ${index + 1} illustration`}
@@ -281,6 +340,21 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                                   <p className="text-sm text-gray-600">
                                     {item.imageDescription}
                                   </p>
+                                </div>
+                              )}
+                              {hoveredImageId === item.id && (
+                                <div className="absolute top-2 right-2 flex gap-1 bg-background/90 backdrop-blur-sm p-1 rounded-md shadow-lg">
+                                  {sizeOptions.map(option => (
+                                    <Button
+                                      key={option.value}
+                                      variant={getEffectiveImageSize(item.id, item.imageSize) === option.value ? "default" : "ghost"}
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-xs"
+                                      onClick={() => handleIndividualSizeChange(item.id, option.value)}
+                                    >
+                                      {option.label}
+                                    </Button>
+                                  ))}
                                 </div>
                               )}
                             </div>

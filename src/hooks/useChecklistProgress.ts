@@ -2,6 +2,24 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed?: boolean;
+  imageUrl?: string;
+  imageUrls?: string[];
+  imageDescription?: string;
+  imagePosition?: 'before' | 'after';
+  imageMarker?: string;
+  imageSize?: 'small' | 'medium' | 'large' | 'xl' | 'full';
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    type?: 'step' | 'warning' | 'note' | 'header';
+    icon?: string;
+  };
+}
+
 interface ChecklistProgress {
   id: string;
   checklist_id: string;
@@ -9,6 +27,10 @@ interface ChecklistProgress {
   completed_items: number;
   total_items: number;
   last_accessed_at: string;
+  image_sizes?: {
+    globalSize?: string;
+    individualSizes?: Record<string, string>;
+  };
 }
 
 export const useChecklistProgress = (checklistId: string) => {
@@ -147,12 +169,37 @@ export const useChecklistProgress = (checklistId: string) => {
     }
   };
 
+  const updateImageSizes = async (globalSize?: string, individualSizes?: Record<string, string>) => {
+    if (!progressRecord) return;
+    
+    const imageSizes = {
+      globalSize: globalSize || progressRecord.image_sizes?.globalSize,
+      individualSizes: individualSizes || progressRecord.image_sizes?.individualSizes || {}
+    };
+
+    const { error } = await supabase
+      .from('checklist_progress')
+      .update({ 
+        image_sizes: imageSizes,
+        last_accessed_at: new Date().toISOString()
+      })
+      .eq('id', progressRecord.id);
+
+    if (error) {
+      console.error('Error updating image sizes:', error);
+      return;
+    }
+
+    setProgressRecord(prev => prev ? { ...prev, image_sizes: imageSizes } : null);
+  };
+
   return {
     progress,
     loading,
     updateProgress,
     resetProgress,
     saveProgress,
-    progressRecord
+    progressRecord,
+    updateImageSizes
   };
 };
