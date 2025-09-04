@@ -107,6 +107,12 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     await processWithImages();
   };
 
+  // UTF-8 safe base64 encoding function
+  const utf8ToBase64 = (str: string): string => {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+      (match, p1) => String.fromCharCode(parseInt(p1, 16))));
+  };
+
   const processWithImages = async () => {
     setIsProcessing(true);
 
@@ -121,7 +127,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       // Process text content with images
       const { data, error } = await supabase.functions.invoke('process-word-to-checklist', {
         body: {
-          wordFile: `data:text/plain;base64,${btoa(textContent)}`,
+          wordFile: `data:text/plain;base64,${utf8ToBase64(textContent)}`,
           checklistType,
           organizationId,
           imageFiles
