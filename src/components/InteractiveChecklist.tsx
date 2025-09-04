@@ -56,6 +56,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [globalImageSize, setGlobalImageSize] = useState<string>('medium');
   const [individualImageSizes, setIndividualImageSizes] = useState<Record<string, string>>({});
+  const [individualImageItemSizes, setIndividualImageItemSizes] = useState<Record<string, Record<number, string>>>({});
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
 
   // Initialize local progress from saved progress
@@ -130,8 +131,23 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
     await updateImageSizes?.(globalImageSize, newIndividualSizes);
   };
 
+  const handleIndividualImageSizeChange = async (itemId: string, imageIndex: number, size: string) => {
+    const newSizes = {
+      ...individualImageItemSizes,
+      [itemId]: {
+        ...individualImageItemSizes[itemId],
+        [imageIndex]: size
+      }
+    };
+    setIndividualImageItemSizes(newSizes);
+  };
+
   const getEffectiveImageSize = (itemId: string, defaultSize?: string) => {
     return individualImageSizes[itemId] || globalImageSize || defaultSize || 'medium';
+  };
+
+  const getEffectiveIndividualImageSize = (itemId: string, imageIndex: number, defaultSize?: string) => {
+    return individualImageItemSizes[itemId]?.[imageIndex] || globalImageSize || defaultSize || 'medium';
   };
 
   const sizeOptions = [
@@ -362,30 +378,30 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                           
                           {/* Display multiple images if imageUrls array exists */}
                           {item.imageUrls && (
-                            <div className="auto-fit-grid">
+                            <div className="flex flex-wrap gap-3">
                               {item.imageUrls.map((imageUrl, imgIndex) => {
-                                const effectiveSize = getEffectiveImageSize(item.id, item.imageSize);
+                                const effectiveSize = getEffectiveIndividualImageSize(item.id, imgIndex, item.imageSize);
                                 
-                                // Determine grid item class based on image size
-                                const getGridClass = (size: string) => {
+                                // Determine image container size
+                                const getImageContainerClass = (size: string) => {
                                   switch (size) {
                                     case 'small':
-                                      return 'grid-item-small';
+                                      return 'w-32 flex-shrink-0';
                                     case 'medium':
-                                      return 'grid-item-medium';
+                                      return 'w-48 flex-shrink-0';
                                     case 'large':
-                                      return 'grid-item-large';
+                                      return 'w-64 flex-shrink-0';
                                     case 'xl':
-                                      return 'grid-item-xl';
+                                      return 'w-80 flex-shrink-0';
                                     case 'full':
-                                      return 'grid-item-full';
+                                      return 'w-full';
                                     default:
-                                      return 'grid-item-medium';
+                                      return 'w-48 flex-shrink-0';
                                   }
                                 };
                                 
                                 return (
-                                  <div key={imgIndex} className={`${getGridClass(effectiveSize)} relative`}>
+                                  <div key={imgIndex} className={`${getImageContainerClass(effectiveSize)} relative`}>
                                     <div className="rounded-lg overflow-hidden border shadow-sm bg-white h-full">
                                       <img
                                         src={imageUrl}
@@ -402,7 +418,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                                             variant={effectiveSize === option.value ? "default" : "ghost"}
                                             size="sm"
                                             className="h-6 w-6 p-0 text-xs"
-                                            onClick={() => handleIndividualSizeChange(item.id, option.value)}
+                                            onClick={() => handleIndividualImageSizeChange(item.id, imgIndex, option.value)}
                                           >
                                             {option.label}
                                           </Button>
