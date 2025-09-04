@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import type { CustomChecklist } from '@/hooks/useChecklistData';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ChecklistEditor } from './ChecklistEditor';
+import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 
 interface ChecklistImage {
   id?: string;
@@ -63,6 +64,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
   const [isEditMode, setIsEditMode] = useState(false);
   const [sessionStartTime] = useState<Date>(new Date());
   const { saveChecklist } = useCustomChecklists();
+  const { isAdmin } = useOrgAdmin();
 
   // Convert flat items array to sections structure
   const sections: ChecklistSection[] = Array.isArray(checklist.items) && checklist.items.length > 0 ? [
@@ -250,16 +252,6 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                 )}
               </div>
             )}
-            {!isSessionMode && (
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-6 w-6 p-0"
-                onClick={() => setIsEditMode(true)}
-              >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-            )}
           </div>
         </div>
 
@@ -391,10 +383,12 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsEditMode(true)}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Checklist
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" onClick={() => setIsEditMode(true)}>
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Edit Checklist
+                </Button>
+              )}
               <Button onClick={startSession}>
                 <CheckSquare className="h-4 w-4 mr-2" />
                 Start Session
