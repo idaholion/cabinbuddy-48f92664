@@ -14,6 +14,7 @@ export interface CustomChecklist {
   checklist_type: 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance';
   items: any[];
   images?: any[];
+  introductory_text?: string;
 }
 
 export interface CheckinSession {
@@ -43,7 +44,8 @@ const mapDbChecklistToCustomChecklist = (dbChecklist: DbCustomChecklist): Custom
   organization_id: dbChecklist.organization_id,
   checklist_type: dbChecklist.checklist_type as 'arrival' | 'daily' | 'closing' | 'opening' | 'seasonal' | 'maintenance',
   items: Array.isArray(dbChecklist.items) ? dbChecklist.items : [],
-  images: Array.isArray(dbChecklist.images) ? dbChecklist.images : []
+  images: Array.isArray(dbChecklist.images) ? dbChecklist.images : [],
+  introductory_text: (dbChecklist as any).introductory_text || undefined
 });
 
 const mapDbSessionToCheckinSession = (dbSession: DbCheckinSession): CheckinSession => ({

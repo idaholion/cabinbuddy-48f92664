@@ -30,6 +30,7 @@ interface InteractiveChecklistProps {
   checklistId: string;
   title: string;
   items: ChecklistItem[];
+  introductoryText?: string;
   onProgressUpdate?: (completedCount: number, totalCount: number) => void;
 }
 
@@ -37,6 +38,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
   checklistId,
   title,
   items,
+  introductoryText,
   onProgressUpdate
 }) => {
   const {
@@ -154,6 +156,17 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
           </div>
         </CardHeader>
       </Card>
+
+      {/* Display introductory text if it exists */}
+      {introductoryText && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="prose prose-sm text-gray-700 whitespace-pre-wrap">
+              {introductoryText}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Checklist items */}
       <div className="space-y-3">

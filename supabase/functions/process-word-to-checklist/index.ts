@@ -85,13 +85,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Convert the following text into a structured JSON checklist with enhanced formatting. 
+            content: `Convert the following text into a structured JSON object with both introductory content and checklist items.
 
 CRITICAL INSTRUCTIONS:
 1. ONLY convert numbered items, bullet points, and clear action steps into checklist items
-2. DO NOT convert introductory text, headers, or general instructions into checklist items
-3. Skip any text that appears to be setup instructions, tool preparation, or general information
-4. Focus on actionable tasks that can be checked off
+2. PRESERVE introductory text, headers, or general instructions as separate introductory content
+3. Focus on actionable tasks that can be checked off for the checklist
+4. Keep all introductory text that appears before the first numbered/bulleted item
 
 IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. 
 
@@ -99,7 +99,13 @@ CRITICAL FOR CONSECUTIVE IMAGES: When multiple image markers appear together (li
 
 DO NOT include the image markers in the item text - remove them and put ALL marker references in the imageMarker field.
 
-Return a JSON array where each item has:
+Return a JSON object with this structure:
+{
+  "introductoryText": "All text that appears before the first numbered/bulleted item, preserving paragraphs and formatting",
+  "items": [array of checklist items]
+}
+
+Each checklist item has:
 - id: unique identifier (string)  
 - text: the instruction text WITHOUT any image markers (clean text only)
 - completed: false (boolean)
@@ -136,7 +142,7 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
     let checklistItems: ChecklistItem[] = [];
     
     try {
-      const aiContent = openAIData.choices[0]?.message?.content || '[]';
+      const aiContent = openAIData.choices[0]?.message?.content || '{"introductoryText": "", "items": []}';
       console.log('Raw OpenAI response:', aiContent);
       
       // Clean up the response - remove markdown formatting
@@ -149,16 +155,19 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
         cleanContent = cleanContent.replace(/^```\s*/, '').replace(/```\s*$/, '');
       }
       
-      // Extract JSON array from response
-      const jsonMatch = cleanContent.match(/\[[\s\S]*\]/);
+      // Extract JSON object from response
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
       let jsonStr = jsonMatch ? jsonMatch[0] : cleanContent;
       
       console.log('Extracted JSON string:', jsonStr.substring(0, 200) + '...');
       
       // Try to parse the JSON
+      let responseData: { introductoryText?: string; items: ChecklistItem[] };
       try {
-        checklistItems = JSON.parse(jsonStr);
+        responseData = JSON.parse(jsonStr);
+        checklistItems = responseData.items || [];
         console.log('Successfully parsed JSON, items:', checklistItems.length);
+        console.log('Introductory text length:', responseData.introductoryText?.length || 0);
         
         // Debug: Check which items have imageMarker fields
         console.log('=== OPENAI IMAGE MARKER ANALYSIS ===');
@@ -183,13 +192,15 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
           .trim();
         
         try {
-          checklistItems = JSON.parse(jsonStr);
+          responseData = JSON.parse(jsonStr);
+          checklistItems = responseData.items || [];
           console.log('Successfully parsed JSON after cleanup, items:', checklistItems.length);
         } catch (secondParseError) {
           console.error('JSON parse error after cleanup:', secondParseError);
           console.error('Failed JSON string:', jsonStr);
           
           // Fallback: Create a simple checklist from numbered/bulleted items
+          responseData = { introductoryText: "", items: [] };
           const textLines = documentContent.text.split('\n')
             .filter(line => {
               const trimmed = line.trim();
@@ -201,18 +212,16 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
               );
             });
           
-          console.log('Created fallback checklist with', textLines.length, 'items');
-          checklistItems = textLines.map((line, index) => ({
+          responseData.items = textLines.map((line, index) => ({
             id: `item-${index + 1}`,
-            text: line.trim(),
+            text: line.trim().replace(/^\d+\.\s*|^[-•*]\s*|^\w+\.\s*/, ''), // Remove numbering/bullets
             completed: false,
             formatting: {
-              type: 'step',
-              icon: 'check-circle'
+              type: 'step' as const,
+              icon: 'check'
             }
-          }));
-          
-          console.log('Created fallback checklist with', checklistItems.length, 'items');
+          })) as ChecklistItem[];
+          checklistItems = responseData.items;
         }
       }
     } catch (parseError) {
@@ -223,8 +232,7 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
 
     console.log('Generated checklist items:', checklistItems.length);
 
-    // Process image markers and associate with provided image files
-    const processedItems = await processImageMarkersAndFiles(
+    const finalItems = await processImageMarkersAndFiles(
       checklistItems,
       imageMarkers,
       imageFiles,
@@ -232,22 +240,16 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       organizationId
     );
 
-    // Save the checklist to database
+    // Save to database
     const { data, error } = await supabase
       .from('custom_checklists')
       .upsert({
         organization_id: organizationId,
-        checklist_type: checklistType,
-        items: processedItems,
-        images: imageMarkers.map((marker, idx) => ({
-          id: `marker-${idx}`,
-          marker: marker.marker,
-          filename: marker.filename,
-          description: marker.description,
-          matched: marker.matched || false
-        }))
-      }, {
-        onConflict: 'organization_id,checklist_type'
+        type: checklistType,
+        items: finalItems,
+        introductory_text: responseData?.introductoryText || "",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -262,9 +264,10 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
     return new Response(JSON.stringify({
       success: true,
       checklistId: data.id,
-      itemsCount: processedItems.length,
+      itemsCount: finalItems.length,
       imageMarkersCount: imageMarkers.length,
       matchedImagesCount: imageMarkers.filter(m => m.matched).length,
+      introductoryTextLength: responseData?.introductoryText?.length || 0,
       message: 'Document successfully converted to enhanced interactive checklist'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

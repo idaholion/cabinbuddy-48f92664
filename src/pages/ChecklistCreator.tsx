@@ -48,6 +48,7 @@ export default function ChecklistCreator() {
             checklistId={selectedChecklist.id}
             title={selectedChecklist.checklist_type}
             items={selectedChecklist.items}
+            introductoryText={selectedChecklist.introductory_text}
           />
         </div>
       );
