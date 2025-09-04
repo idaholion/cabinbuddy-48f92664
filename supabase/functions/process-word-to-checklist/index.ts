@@ -159,6 +159,17 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       try {
         checklistItems = JSON.parse(jsonStr);
         console.log('Successfully parsed JSON, items:', checklistItems.length);
+        
+        // Debug: Check which items have imageMarker fields
+        console.log('=== OPENAI IMAGE MARKER ANALYSIS ===');
+        checklistItems.forEach((item, index) => {
+          if (item.imageMarker) {
+            console.log(`Item ${index + 1} has imageMarker:`, item.imageMarker);
+            console.log(`Item ${index + 1} text:`, item.text.substring(0, 100));
+          }
+        });
+        console.log('Items with imageMarker:', checklistItems.filter(item => item.imageMarker).length);
+        
       } catch (firstParseError) {
         console.log('First parse failed, trying to fix common JSON issues...');
         
@@ -419,6 +430,9 @@ function extractImageMarkers(text: string): Array<{
   const markers = [];
   
   try {
+    console.log('=== IMAGE MARKER EXTRACTION DEBUG ===');
+    console.log('Text sample around images:', text.substring(Math.max(0, text.indexOf('[IMAGE:') - 50), text.indexOf('[IMAGE:') + 200));
+    
     // More robust pattern for [IMAGE:filename.jpg:description] format
     // This pattern ensures we don't match across malformed brackets
     const imagePattern = /\[IMAGE:([^:\[\]]+(?:\.[a-zA-Z]{2,4})?):?([^\[\]]*?)\]/gi;
@@ -427,6 +441,8 @@ function extractImageMarkers(text: string): Array<{
     while ((match = imagePattern.exec(text)) !== null) {
       const filename = match[1].trim();
       const description = match[2] ? match[2].trim() : undefined;
+      
+      console.log('Found image marker:', match[0], 'Filename:', filename, 'Position:', match.index);
       
       // Validate filename - should have reasonable length and no invalid characters
       if (filename.length > 0 && filename.length < 100 && !filename.includes('[') && !filename.includes(']')) {
@@ -446,6 +462,8 @@ function extractImageMarkers(text: string): Array<{
     const bracketPattern = /\{\{([^{}]+)\}\}/gi;
     while ((match = bracketPattern.exec(text)) !== null) {
       const filename = match[1].trim();
+      
+      console.log('Found bracket marker:', match[0], 'Filename:', filename, 'Position:', match.index);
       
       // Validate filename
       if (filename.length > 0 && filename.length < 100) {
