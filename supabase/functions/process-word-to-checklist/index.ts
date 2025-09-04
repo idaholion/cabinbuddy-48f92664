@@ -498,147 +498,103 @@ async function processImageMarkersAndFiles(
 ): Promise<ChecklistItem[]> {
   const processedItems = [...items];
   
+  console.log('=== IMAGE PROCESSING DEBUG ===');
   console.log('Processing image markers:', markers.length);
   console.log('Available image files:', imageFiles.map(f => f.filename));
-  console.log('Checklist items with imageMarker fields:', processedItems.filter(item => item.imageMarker).length);
   
-  // Add safety check for empty markers
   if (!markers || markers.length === 0) {
     console.log('No image markers to process');
     return processedItems;
   }
+
+  // Sort markers by position to process them in document order
+  const sortedMarkers = markers.sort((a, b) => a.position - b.position);
   
-  // Create a list to track which items already have images
-  const itemsWithImages = new Set<number>();
-  
-  // Strategy 0: Group consecutive images that appear together in the text
-  console.log('=== CONSECUTIVE IMAGE GROUPING ===');
-  const consecutiveGroups = [];
-  for (let i = 0; i < markers.length; i++) {
-    const currentMarker = markers[i];
-    const group = [currentMarker];
+  for (let i = 0; i < sortedMarkers.length; i++) {
+    const marker = sortedMarkers[i];
+    console.log(`\n--- Processing ${marker.filename} at position ${marker.position} ---`);
     
-    // Look for consecutive markers (within 100 characters of each other)
-    for (let j = i + 1; j < markers.length; j++) {
-      const nextMarker = markers[j];
-      const distance = nextMarker.position - currentMarker.position;
-      
-      if (distance <= 100) { // Consecutive if within 100 characters
-        group.push(nextMarker);
-        i = j; // Skip these markers in the main loop
-      } else {
-        break;
-      }
+    const matchingFile = imageFiles.find(file => 
+      file.filename.toLowerCase().includes(marker.filename.toLowerCase()) ||
+      marker.filename.toLowerCase().includes(file.filename.toLowerCase()) ||
+      file.filename.toLowerCase() === marker.filename.toLowerCase()
+    );
+
+    if (!matchingFile) {
+      console.log(`❌ No matching file found for ${marker.filename}`);
+      continue;
     }
-    
-    if (group.length > 1) {
-      console.log(`Found consecutive group of ${group.length} images:`, group.map(g => g.filename));
-      consecutiveGroups.push(group);
-    }
-  }
-  
-  // Process consecutive groups first
-  for (const group of consecutiveGroups) {
-    const primaryMarker = group[0];
-    
-    // Find the checklist item that precedes this group
+
     let targetItemIndex = -1;
     
-    // Look backwards through the text to find the nearest checklist item
-    const groupStartPosition = primaryMarker.position;
-    const precedingText = items.map((item, idx) => ({ item, idx }))
-      .find(({ item }) => {
-        // Simple heuristic: find item whose text appears before the image group
-        const itemPosition = processedItems.map(pi => pi.text).indexOf(item.text);
-        return itemPosition !== -1;
-      });
-    
-    if (precedingText) {
-      targetItemIndex = precedingText.idx;
-      console.log(`Associating consecutive image group with item ${targetItemIndex + 1}`);
-      
-      // Associate all images in the group with this item
-      for (let i = 0; i < group.length; i++) {
-        const marker = group[i];
-        const matchingFile = imageFiles.find(file => 
-          file.filename.toLowerCase() === marker.filename.toLowerCase() ||
-          file.filename.toLowerCase().includes(marker.filename.toLowerCase()) ||
-          marker.filename.toLowerCase().includes(file.filename.toLowerCase())
-        );
+    // Strategy 1: Check if OpenAI put this image in an imageMarker field
+    for (let j = 0; j < processedItems.length; j++) {
+      if (processedItems[j].imageMarker) {
+        const itemMarkers = processedItems[j].imageMarker.split(',').map(m => m.trim().toLowerCase());
+        const searchTerms = [
+          marker.filename.toLowerCase(),
+          marker.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, ''),
+          marker.filename.toLowerCase().replace(/[^a-zA-Z0-9]/g, '')
+        ];
         
-        if (matchingFile) {
-          try {
-            // Upload and associate image (same logic as before)
-            const fileExtension = matchingFile.filename.split('.').pop() || 'jpg';
-            const fileName = `${organizationId}/checklist-${Date.now()}-${marker.filename}`;
-            
-            const base64Data = matchingFile.data.includes(',') ? 
-              matchingFile.data.split(',')[1] : matchingFile.data;
-            const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('checklist-images')
-              .upload(fileName, imageBuffer, {
-                contentType: matchingFile.contentType || `image/${fileExtension}`,
-                upsert: false
-              });
+        for (const searchTerm of searchTerms) {
+          if (itemMarkers.some(im => im.includes(searchTerm) || searchTerm.includes(im))) {
+            targetItemIndex = j;
+            console.log(`✅ Strategy 1: Found in imageMarker field of item ${j + 1}`);
+            break;
+          }
+        }
+        if (targetItemIndex !== -1) break;
+      }
+    }
 
-            if (uploadError) {
-              console.error('Image upload error:', uploadError);
-              continue;
+    // Strategy 2: Smart consecutive grouping - if previous image was assigned, and this image is close, use same item
+    if (targetItemIndex === -1 && i > 0) {
+      const prevMarker = sortedMarkers[i - 1];
+      const distance = marker.position - prevMarker.position;
+      
+      if (distance <= 100 && prevMarker.matched) { // Within 100 characters
+        // Find where previous image was assigned
+        for (let j = 0; j < processedItems.length; j++) {
+          if (processedItems[j].imageUrl || processedItems[j].additionalImages?.length) {
+            // Check if this item has the previous image
+            const hasImage = processedItems[j].imageUrl?.includes(prevMarker.filename) ||
+                            processedItems[j].additionalImages?.some(img => img.filename === prevMarker.filename);
+            if (hasImage) {
+              targetItemIndex = j;
+              console.log(`✅ Strategy 2: Consecutive grouping with item ${j + 1} (distance: ${distance})`);
+              break;
             }
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('checklist-images')
-              .getPublicUrl(fileName);
-
-            // Assign to target item
-            if (i === 0) {
-              // First image becomes primary
-              processedItems[targetItemIndex].imageUrl = publicUrl;
-              processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
-              processedItems[targetItemIndex].imagePosition = 'after';
-              itemsWithImages.add(targetItemIndex);
-            } else {
-              // Additional images
-              if (!processedItems[targetItemIndex].additionalImages) {
-                processedItems[targetItemIndex].additionalImages = [];
-              }
-              processedItems[targetItemIndex].additionalImages!.push({
-                url: publicUrl,
-                description: marker.description || `Image: ${marker.filename}`,
-                filename: marker.filename
-              });
-            }
-            
-            marker.matched = true;
-            console.log(`Grouped image ${i + 1}/${group.length} (${marker.filename}) with item ${targetItemIndex + 1}`);
-            
-          } catch (error) {
-            console.error('Error processing grouped image:', marker.filename, error);
           }
         }
       }
     }
-  }
-  
-  // Match remaining image markers with provided files and embed them
-  for (const marker of markers) {
-    const matchingFile = imageFiles.find(file => 
-      file.filename.toLowerCase() === marker.filename.toLowerCase() ||
-      file.filename.toLowerCase().includes(marker.filename.toLowerCase()) ||
-      marker.filename.toLowerCase().includes(file.filename.toLowerCase())
-    );
-    
-    if (matchingFile) {
-      console.log(`Matching file found for marker ${marker.marker}: ${matchingFile.filename}`);
+
+    // Strategy 3: Assign based on position - images go to the item that logically precedes them
+    if (targetItemIndex === -1) {
+      // Simple rule: assign to the item at roughly the same relative position in the checklist
+      const relativePosition = marker.position / 10000; // Rough normalization
+      const estimatedItemIndex = Math.min(
+        Math.floor(relativePosition * processedItems.length),
+        processedItems.length - 1
+      );
       
+      // Don't let images go to the very first item unless it's very early in the document
+      if (estimatedItemIndex === 0 && marker.position > 1000) {
+        targetItemIndex = Math.min(1, processedItems.length - 1);
+        console.log(`✅ Strategy 3: Avoiding first item, using item ${targetItemIndex + 1}`);
+      } else {
+        targetItemIndex = Math.max(0, estimatedItemIndex);
+        console.log(`✅ Strategy 3: Position-based assignment to item ${targetItemIndex + 1}`);
+      }
+    }
+
+    // Upload and assign the image
+    if (targetItemIndex >= 0 && targetItemIndex < processedItems.length) {
       try {
-        // Upload image to Supabase Storage
         const fileExtension = matchingFile.filename.split('.').pop() || 'jpg';
-        const fileName = `${organizationId}/checklist-${Date.now()}-${marker.filename}`;
+        const fileName = `${organizationId}/checklist-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
         
-        // Convert base64 to buffer
         const base64Data = matchingFile.data.includes(',') ? 
           matchingFile.data.split(',')[1] : matchingFile.data;
         const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
@@ -655,107 +611,38 @@ async function processImageMarkersAndFiles(
           continue;
         }
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('checklist-images')
           .getPublicUrl(fileName);
 
-        console.log(`Image uploaded successfully: ${publicUrl}`);
-
-        let imageAssociated = false;
-        let targetItemIndex = -1;
-
-        // Strategy 1: Find items with matching imageMarker field set by OpenAI
-        for (let i = 0; i < processedItems.length; i++) {
-          if (processedItems[i].imageMarker) {
-            // Handle comma-separated markers in the imageMarker field
-            const itemMarkers = processedItems[i].imageMarker.split(',').map(m => m.trim());
-            
-            for (const itemMarker of itemMarkers) {
-              // Clean the marker for comparison
-              const cleanItemMarker = itemMarker.toLowerCase().replace(/[\[\]IMAGE:]/g, '');
-              const cleanFilename = marker.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, '');
-              
-              if (cleanItemMarker.includes(cleanFilename) || 
-                  cleanFilename.includes(cleanItemMarker) ||
-                  itemMarker.toLowerCase().includes(marker.filename.toLowerCase()) || 
-                  marker.marker.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]]/g, '')) ||
-                  marker.filename.toLowerCase().includes(itemMarker.toLowerCase().replace(/[\[\]IMAGE:]/g, ''))) {
-                targetItemIndex = i;
-                console.log(`Strategy 1: Found imageMarker match for item ${i + 1} via marker "${itemMarker}": ${processedItems[i].text.substring(0, 50)}...`);
-                break;
-              }
-            }
-            if (targetItemIndex !== -1) break;
-          }
-        }
-
-        // Strategy 2: Find items that contain the exact marker in text
-        if (targetItemIndex === -1) {
-          for (let i = 0; i < processedItems.length; i++) {
-            if (processedItems[i].text.includes(marker.marker)) {
-              targetItemIndex = i;
-              // Remove the marker from display text
-              processedItems[i].text = processedItems[i].text.replace(marker.marker, '').trim();
-              console.log(`Strategy 2: Found text marker match for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
-              break;
-            }
-          }
-        }
-
-        // Strategy 3: Match by filename reference in text
-        if (targetItemIndex === -1) {
-          const baseFilename = marker.filename.toLowerCase().replace(/\.[^.]+$/, '');
-          for (let i = 0; i < processedItems.length; i++) {
-            if (processedItems[i].text.toLowerCase().includes(baseFilename)) {
-              targetItemIndex = i;
-              console.log(`Strategy 3: Found filename reference for item ${i + 1}: ${processedItems[i].text.substring(0, 50)}...`);
-              break;
-            }
-          }
-        }
-
-        // If we found a target item, assign the image
-        if (targetItemIndex !== -1) {
-          // Check if this item already has an image
-          if (itemsWithImages.has(targetItemIndex)) {
-            // If the item already has an image, create additional image fields
-            const existingImageCount = processedItems[targetItemIndex].additionalImages?.length || 0;
-            if (!processedItems[targetItemIndex].additionalImages) {
-              processedItems[targetItemIndex].additionalImages = [];
-            }
-            
-            processedItems[targetItemIndex].additionalImages!.push({
-              url: publicUrl,
-              description: marker.description || `Image: ${marker.filename}`,
-              filename: marker.filename
-            });
-            
-            console.log(`Added additional image ${existingImageCount + 1} to item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
-          } else {
-            // First image for this item
-            processedItems[targetItemIndex].imageUrl = publicUrl;
-            processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
-            processedItems[targetItemIndex].imagePosition = 'after';
-            processedItems[targetItemIndex].imageMarker = marker.marker;
-            itemsWithImages.add(targetItemIndex);
-            
-            console.log(`Associated primary image with item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
-          }
-          
-          imageAssociated = true;
-          marker.matched = true;
+        // Assign to checklist item
+        if (!processedItems[targetItemIndex].imageUrl) {
+          processedItems[targetItemIndex].imageUrl = publicUrl;
+          processedItems[targetItemIndex].imageDescription = marker.description || `Image: ${marker.filename}`;
+          processedItems[targetItemIndex].imagePosition = 'after';
         } else {
-          console.warn(`Could not find appropriate item for image ${marker.filename} - no matching content found`);
+          if (!processedItems[targetItemIndex].additionalImages) {
+            processedItems[targetItemIndex].additionalImages = [];
+          }
+          processedItems[targetItemIndex].additionalImages.push({
+            url: publicUrl,
+            description: marker.description || `Image: ${marker.filename}`,
+            filename: marker.filename
+          });
         }
         
+        marker.matched = true;
+        console.log(`✅ ${marker.filename} assigned to item ${targetItemIndex + 1}: ${processedItems[targetItemIndex].text.substring(0, 50)}...`);
+
       } catch (error) {
-        console.error('Error processing image for marker:', marker.marker, error);
+        console.error('Error processing image:', marker.filename, error);
       }
-    } else {
-      console.log(`No matching file found for marker: ${marker.marker} (looking for: ${marker.filename})`);
     }
   }
 
+  // Summary
+  const totalAssigned = processedItems.filter(item => item.imageUrl || item.additionalImages?.length).length;
+  console.log(`\n=== SUMMARY: ${totalAssigned} items have images ===`);
+  
   return processedItems;
 }
