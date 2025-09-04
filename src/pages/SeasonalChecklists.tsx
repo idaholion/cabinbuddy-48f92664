@@ -3,19 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DocumentToChecklistConverter } from '@/components/DocumentToChecklistConverter';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { PageHeader } from '@/components/ui/page-header';
-import { CheckSquare, FileText, Plus, Settings, Calendar, Wrench, Trash2, Eye } from 'lucide-react';
+import { CheckSquare, Settings, Calendar, Wrench, Trash2, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const SeasonalChecklists = () => {
   const navigate = useNavigate();
   const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
-  const [isConverterOpen, setIsConverterOpen] = useState(false);
+  
   const { checklists, loading, deleteChecklist, refetch } = useCustomChecklists();
   const { isAdmin } = useOrgAdmin();
 
@@ -130,39 +127,6 @@ const SeasonalChecklists = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isAdmin && (
-              <Dialog open={isConverterOpen} onOpenChange={setIsConverterOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full justify-start" variant="default">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Convert Document to Checklist
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Document to Checklist Converter</DialogTitle>
-                  <DialogDescription>
-                    Paste your bulleted document text and convert it into an interactive checklist
-                  </DialogDescription>
-                </DialogHeader>
-                <DocumentToChecklistConverter 
-                  onChecklistCreated={(checklist) => {
-                    // Close the converter dialog
-                    setIsConverterOpen(false);
-                    // Refresh the checklists data
-                    refetch();
-                    // Switch to the newly created checklist type
-                    setSelectedChecklistType(checklist.checklist_type);
-                    // Show success message
-                    toast({
-                      title: "Checklist Created!",
-                      description: `Your ${checklist.checklist_type} checklist has been created successfully.`
-                    });
-                  }}
-                />
-                </DialogContent>
-              </Dialog>
-            )}
 
             <Button className="w-full justify-start" variant="outline" onClick={() => refetch()}>
               <CheckSquare className="h-4 w-4 mr-2" />
@@ -270,14 +234,8 @@ const SeasonalChecklists = () => {
                   <div className="text-muted-foreground">
                     <CheckSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <h3 className="text-lg font-medium">No {selectedChecklistType} checklist found</h3>
-                    <p>Create your first {selectedChecklistType} checklist by converting a document above.</p>
+                    <p>Create your first {selectedChecklistType} checklist using the enhanced checklist creator.</p>
                   </div>
-                  {isAdmin && (
-                    <Button onClick={() => setIsConverterOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create {selectedChecklistType} Checklist
-                    </Button>
-                  )}
                 </div>
               )}
             </CardContent>
