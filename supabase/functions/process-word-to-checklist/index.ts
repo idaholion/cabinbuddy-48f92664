@@ -80,7 +80,13 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Convert the following text into a structured JSON checklist with enhanced formatting. Each item should be short, actionable, and well-formatted.
+            content: `Convert the following text into a structured JSON checklist with enhanced formatting. 
+
+CRITICAL INSTRUCTIONS:
+1. ONLY convert numbered items, bullet points, and clear action steps into checklist items
+2. DO NOT convert introductory text, headers, or general instructions into checklist items
+3. Skip any text that appears to be setup instructions, tool preparation, or general information
+4. Focus on actionable tasks that can be checked off
 
 IMPORTANT: Preserve any image markers like [IMAGE:filename.jpg:description] or {{filename.jpg}} exactly as they appear in the text.
 
@@ -102,14 +108,14 @@ Parse markdown-style formatting:
 - Text with "NOTE", "TIP", "INFO" gets type: "note"
 - Detect tools and suggest appropriate icons
 
-Preserve numbered lists and bullet points. Make items concise but complete.`
+ONLY include items that are actual tasks to be completed. Preserve numbered lists and bullet points. Make items concise but complete.`
           },
           {
             role: 'user',
             content: documentContent.text
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 8000,
       }),
     });
 
@@ -163,11 +169,19 @@ Preserve numbered lists and bullet points. Make items concise but complete.`
           console.error('JSON parse error after cleanup:', secondParseError);
           console.error('Failed JSON string:', jsonStr);
           
-          // Fallback: Create a simple checklist from the text
+          // Fallback: Create a simple checklist from numbered/bulleted items
           const textLines = documentContent.text.split('\n')
-            .filter(line => line.trim().length > 0)
-            .slice(0, 20); // Limit to 20 items
+            .filter(line => {
+              const trimmed = line.trim();
+              // Only include lines that look like actual checklist items
+              return trimmed.length > 0 && (
+                /^\d+\./.test(trimmed) || // Numbered items like "1."
+                /^[-•*]/.test(trimmed) || // Bullet points
+                /^\w+\.\s/.test(trimmed) // Letter items like "a."
+              );
+            });
           
+          console.log('Created fallback checklist with', textLines.length, 'items');
           checklistItems = textLines.map((line, index) => ({
             id: `item-${index + 1}`,
             text: line.trim(),

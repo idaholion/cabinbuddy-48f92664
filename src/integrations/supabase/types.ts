@@ -240,6 +240,39 @@ export type Database = {
           },
         ]
       }
+      checklist_progress: {
+        Row: {
+          checklist_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          item_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checklist_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checklist_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_checklists: {
         Row: {
           checklist_type: string
