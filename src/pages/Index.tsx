@@ -177,9 +177,9 @@ const Index = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/cabin-seasonal-docs">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Cabin Seasonal Docs
+                  <Link to="/seasonal-checklists">
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Seasonal Checklists
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
