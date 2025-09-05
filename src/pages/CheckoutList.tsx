@@ -333,30 +333,33 @@ const CheckoutList = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/home")}
-              className="shrink-0 text-base"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Checkout Checklist</h1>
-              <p className="text-base text-muted-foreground">
-                Complete all tasks before leaving the cabin
-              </p>
+      {/* Top Navigation Bar */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/home")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Home
+          </Button>
+          
+          {/* Center title */}
+          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Checkout Checklist</h1>
+          
+          {/* Right side - progress display */}
+          <div className="text-right">
+            <div className="text-2xl font-bold text-primary">
+              {completedTasks}/{totalTasks}
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-primary">
-                {completedTasks}/{totalTasks}
-              </div>
-              <div className="text-base text-muted-foreground">Tasks Complete</div>
-            </div>
+            <div className="text-sm text-muted-foreground">Tasks Complete</div>
           </div>
+        </div>
+
+        {/* Subtitle */}
+        <div className="text-center mb-4 -mt-2">
+          <p className="text-xl font-kaushan text-primary">Complete all tasks before leaving the cabin</p>
         </div>
       </div>
 

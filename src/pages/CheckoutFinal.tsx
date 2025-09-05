@@ -139,25 +139,28 @@ const CheckoutFinal = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/checkout-list")}
-              className="shrink-0 text-base"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Final Checkout</h1>
-              <p className="text-base text-muted-foreground">
-                Review your stay and complete payment
-              </p>
-            </div>
-          </div>
+      {/* Top Navigation Bar */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/checkout-list")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          
+          {/* Center title */}
+          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Final Checkout</h1>
+          
+          {/* Right side spacer for balance */}
+          <div className="w-20"></div>
+        </div>
+
+        {/* Subtitle */}
+        <div className="text-center mb-6 -mt-2">
+          <p className="text-xl font-kaushan text-primary">Review your stay and complete payment</p>
         </div>
       </div>
 
