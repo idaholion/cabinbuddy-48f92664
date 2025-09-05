@@ -25,8 +25,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <AppSidebar />
           <main className="flex-1">
             <GuestAccessBanner />
-            {/* Mobile sidebar trigger - always visible on mobile when sidebar is closed */}
-            {isMobile && (
+            {/* Mobile sidebar trigger - only visible on mobile screens */}
+            {isMobile === true && (
               <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <SidebarTrigger className="h-8 w-8" />
                 <h1 className="text-lg font-semibold truncate">
