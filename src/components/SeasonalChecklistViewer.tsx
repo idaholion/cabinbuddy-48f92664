@@ -296,22 +296,15 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
 
   return (
     <div className="space-y-6">
-      {/* Header with progress and actions */}
+      {/* Progress and Edit Actions */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="text-center flex-1">
-            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg capitalize">
-              {checklist.checklist_type.replace('_', ' ')} Checklist
-            </h1>
-          </div>
-          <div className="flex gap-2">
-            {isAdmin && (
-              <Button variant="outline" onClick={() => setIsEditMode(true)}>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Checklist
-              </Button>
-            )}
-          </div>
+        <div className="flex items-center justify-end">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setIsEditMode(true)}>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Checklist
+            </Button>
+          )}
         </div>
 
         {/* Progress display */}

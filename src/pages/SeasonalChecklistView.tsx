@@ -1,46 +1,20 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Home, CheckSquare, Calendar, Wrench } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { SeasonalChecklistViewer } from '@/components/SeasonalChecklistViewer';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { PageHeader } from '@/components/ui/page-header';
+import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 
 const SeasonalChecklistView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { checklists, loading, refetch } = useCustomChecklists();
+  const { isAdmin } = useOrgAdmin();
 
   const checklist = checklists?.find(c => c.id === id);
-
-  const getChecklistIcon = (type: string) => {
-    switch (type) {
-      case 'closing':
-      case 'opening':
-        return Calendar;
-      case 'maintenance':
-        return Wrench;
-      default:
-        return CheckSquare;
-    }
-  };
-
-  const getChecklistTypeLabel = (type: string) => {
-    switch (type) {
-      case 'closing':
-        return 'Cabin Closing';
-      case 'opening':
-        return 'Cabin Opening';
-      case 'seasonal':
-        return 'Seasonal Tasks';
-      case 'maintenance':
-        return 'Maintenance';
-      default:
-        return type;
-    }
-  };
 
   if (loading) {
     return (
@@ -66,11 +40,18 @@ const SeasonalChecklistView = () => {
     );
   }
 
-  const Icon = getChecklistIcon(checklist.checklist_type);
-
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-4">
+      {/* Page Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg capitalize">
+          {checklist.checklist_type.replace('_', ' ')} Checklist
+        </h1>
+        <p className="text-muted-foreground">Complete your seasonal tasks and track progress</p>
+      </div>
+
+      {/* Home Button */}
+      <div className="flex justify-end mb-6">
         <Button 
           variant="outline" 
           onClick={() => navigate('/')}
@@ -79,11 +60,6 @@ const SeasonalChecklistView = () => {
           <Home className="h-4 w-4" />
           Home
         </Button>
-        <PageHeader
-          title={getChecklistTypeLabel(checklist.checklist_type)}
-          subtitle="Complete your seasonal tasks and track progress"
-          icon={Icon}
-        />
       </div>
       
       <SeasonalChecklistViewer 
