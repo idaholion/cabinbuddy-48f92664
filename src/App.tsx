@@ -108,7 +108,7 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/guest" element={<Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense>} />
-        <Route path="/home" element={<UnifiedAuthRoute requiresOrganization={true}><MainLayout><Index /></MainLayout></UnifiedAuthRoute>} />
+        <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
         <Route path="/manage-organizations" element={<UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute>} />
         <Route path="/onboarding" element={<Navigate to="/manage-organizations" replace />} />
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
