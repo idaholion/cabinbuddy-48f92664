@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { WordDocumentUploader } from '@/components/WordDocumentUploader';
 import { InteractiveChecklist } from '@/components/InteractiveChecklist';
 import { ChecklistImageSelector } from '@/components/ChecklistImageSelector';
+import { ExistingImagesBrowser } from '@/components/ExistingImagesBrowser';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2, Save, Eye, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2, Save, Eye, Image as ImageIcon, Type, Upload } from 'lucide-react';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ErrorBoundary, DefaultErrorFallback } from '@/components/ErrorBoundary';
 import { toast } from '@/hooks/use-toast';
@@ -23,6 +25,7 @@ export default function ChecklistCreator() {
   const [selectedSeasonalType, setSelectedSeasonalType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
   const [manualItems, setManualItems] = useState<Array<{id: string, text: string, imageUrls?: string[]}>>([]);
   const [newItemText, setNewItemText] = useState('');
+  const [pasteContent, setPasteContent] = useState('');
   const { checklists, loading, refetch, deleteChecklist, saveChecklist } = useCustomChecklists();
 
   const handleChecklistCreated = (checklistId: string) => {
@@ -49,16 +52,52 @@ export default function ChecklistCreator() {
     toast({ title: "Item added successfully" });
   };
 
-  const addItemWithImage = (imageUrl: string, key: ChecklistImageKey) => {
+  const addItemWithImage = (imageUrl: string, key?: ChecklistImageKey) => {
     const newItem = {
       id: `item-${Date.now()}`,
-      text: newItemText.trim() || key.replace(/-/g, ' '),
+      text: newItemText.trim() || (key ? key.replace(/-/g, ' ') : 'New item'),
       imageUrls: [imageUrl]
     };
     
     setManualItems(prev => [...prev, newItem]);
     setNewItemText('');
     toast({ title: "Item with image added successfully" });
+  };
+
+  const addItemWithExistingImage = (imageUrl: string, description?: string) => {
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newItemText.trim() || description || 'New item with existing image',
+      imageUrls: [imageUrl]
+    };
+    
+    setManualItems(prev => [...prev, newItem]);
+    setNewItemText('');
+    toast({ title: "Item with existing image added successfully" });
+  };
+
+  const parseContentToItems = () => {
+    if (!pasteContent.trim()) {
+      toast({ 
+        title: "No content", 
+        description: "Please paste some checklist content.",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    const lines = pasteContent.split('\n').filter(line => line.trim());
+    const newItems = lines.map((line, index) => ({
+      id: `pasted-item-${Date.now()}-${index}`,
+      text: line.trim().replace(/^[-•*]\s*/, '') // Remove bullet points
+    }));
+
+    setManualItems(prev => [...prev, ...newItems]);
+    setPasteContent('');
+    toast({ 
+      title: `${newItems.length} items added`, 
+      description: "You can now assign existing images to these items." 
+    });
   };
 
   const removeManualItem = (id: string) => {
@@ -262,9 +301,44 @@ export default function ChecklistCreator() {
           </TabsContent>
           
           <TabsContent value="manual" className="space-y-6">
+            {/* Paste Content Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Build Your Checklist</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Type className="h-5 w-5" />
+                  Paste Checklist Content
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Textarea
+                  value={pasteContent}
+                  onChange={(e) => setPasteContent(e.target.value)}
+                  placeholder="Paste your checklist content here (one item per line)..."
+                  className="min-h-[120px]"
+                />
+                <div className="flex gap-2">
+                  <Button onClick={parseContentToItems} disabled={!pasteContent.trim()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Parse to Items
+                  </Button>
+                  <ExistingImagesBrowser
+                    onImageSelect={addItemWithExistingImage}
+                    currentImages={manualItems.flatMap(item => item.imageUrls || [])}
+                    sourceChecklistType="closing"
+                    trigger={
+                      <Button variant="outline">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Browse Closing Photos
+                      </Button>
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Add Individual Items</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
@@ -280,7 +354,18 @@ export default function ChecklistCreator() {
                     trigger={
                       <Button variant="outline">
                         <ImageIcon className="h-4 w-4 mr-2" />
-                        Browse Library
+                        New Image
+                      </Button>
+                    }
+                  />
+                  <ExistingImagesBrowser
+                    onImageSelect={addItemWithExistingImage}
+                    currentImages={manualItems.flatMap(item => item.imageUrls || [])}
+                    sourceChecklistType="closing"
+                    trigger={
+                      <Button variant="outline">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Existing Photo
                       </Button>
                     }
                   />
