@@ -230,7 +230,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
               className="mt-0.5"
             />
           ) : (
-            <IconComponent className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div className="w-4 h-4 mt-0.5 shrink-0" /> /* Spacer to maintain alignment */
           )}
           
           <div className="flex-1">
