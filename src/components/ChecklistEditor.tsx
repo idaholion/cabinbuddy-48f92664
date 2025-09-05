@@ -26,8 +26,16 @@ interface ChecklistItem {
   text: string;
   completed?: boolean;
   imageUrl?: string;
+  imageUrls?: string[];
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
+  imageSize?: string;
+  formatting?: {
+    bold?: boolean;
+    italic?: boolean;
+    icon?: string;
+    type?: string;
+  };
 }
 
 interface ChecklistSection {
@@ -132,29 +140,61 @@ const SortableItem: React.FC<SortableItemProps> = ({
                 <>
                   <p className="text-sm leading-relaxed">{item.text}</p>
                   
-                  {item.imageUrl && (
-                    <div className="relative">
-                      <img 
-                        src={item.imageUrl} 
-                        alt={item.imageDescription || `Image for ${item.text}`}
-                        className="w-full max-w-md rounded-lg shadow-sm border"
-                        loading="lazy"
-                      />
-                      {item.imageDescription && (
-                        <p className="text-xs text-muted-foreground mt-1">{item.imageDescription}</p>
+                  {/* Display single image or multiple images */}
+                  {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (
+                    <div className="space-y-3">
+                      {/* Single image */}
+                      {item.imageUrl && (
+                        <div className="relative max-w-md">
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.imageDescription || `Image for ${item.text}`}
+                            className="w-full rounded-lg shadow-sm border"
+                            loading="lazy"
+                          />
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="absolute top-2 right-2"
+                            onClick={() => onRegenerateImage(item)}
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                          </Button>
+                        </div>
                       )}
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute top-2 right-2"
-                        onClick={() => onRegenerateImage(item)}
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                      </Button>
+                      
+                      {/* Multiple images */}
+                      {item.imageUrls && item.imageUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-3">
+                          {item.imageUrls.map((imageUrl, index) => (
+                            <div key={index} className="relative max-w-md">
+                              <img 
+                                src={imageUrl} 
+                                alt={item.imageDescription || `Image ${index + 1} for ${item.text}`}
+                                className="w-full rounded-lg shadow-sm border"
+                                loading="lazy"
+                              />
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="absolute top-2 right-2"
+                                onClick={() => onRegenerateImage(item)}
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Image description */}
+                      {item.imageDescription && (
+                        <p className="text-xs text-muted-foreground">{item.imageDescription}</p>
+                      )}
                     </div>
                   )}
                   
-                  {item.imageDescription && !item.imageUrl && (
+                  {item.imageDescription && !item.imageUrl && (!item.imageUrls || item.imageUrls.length === 0) && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <ImageIcon className="h-4 w-4" />
                       <span>Image pending: {item.imageDescription}</span>
