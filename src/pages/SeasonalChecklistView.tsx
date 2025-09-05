@@ -73,7 +73,7 @@ const SeasonalChecklistView = () => {
                 }
               }}
             >
-              Edit Checklist
+              Edit
             </Button>
           )}
           {/* The ? button will still be in its original position */}
