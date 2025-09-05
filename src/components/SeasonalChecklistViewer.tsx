@@ -295,17 +295,17 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-checklist-viewer>
       {/* Progress and Edit Actions */}
       <div className="space-y-4">
-        <div className="flex items-center justify-end">
-          {isAdmin && (
-            <Button variant="outline" onClick={() => setIsEditMode(true)}>
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit Checklist
-            </Button>
-          )}
-        </div>
+        {/* Hidden edit button that can be triggered from parent */}
+        {isAdmin && (
+          <button 
+            data-edit-button
+            onClick={() => setIsEditMode(true)}
+            style={{ display: 'none' }}
+          />
+        )}
 
         {/* Progress display */}
         <div className="space-y-2">

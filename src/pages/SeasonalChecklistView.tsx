@@ -41,17 +41,9 @@ const SeasonalChecklistView = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Page Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg capitalize">
-          {checklist.checklist_type.replace('_', ' ')} Checklist
-        </h1>
-        <p className="text-muted-foreground">Complete your seasonal tasks and track progress</p>
-      </div>
-
-      {/* Home Button */}
-      <div className="flex justify-end mb-6">
+    <div className="container mx-auto p-6 space-y-4">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between mb-4">
         <Button 
           variant="outline" 
           onClick={() => navigate('/')}
@@ -60,6 +52,32 @@ const SeasonalChecklistView = () => {
           <Home className="h-4 w-4" />
           Home
         </Button>
+        
+        {isAdmin && (
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              // We'll pass this down to the viewer component
+              const viewer = document.querySelector('[data-checklist-viewer]');
+              if (viewer) {
+                const editButton = viewer.querySelector('[data-edit-button]');
+                if (editButton) {
+                  (editButton as HTMLButtonElement).click();
+                }
+              }
+            }}
+          >
+            Edit Checklist
+          </Button>
+        )}
+      </div>
+
+      {/* Page Header */}
+      <div className="text-center mb-4">
+        <h1 className="text-6xl mb-2 font-kaushan text-primary drop-shadow-lg capitalize">
+          {checklist.checklist_type.replace('_', ' ')} Checklist
+        </h1>
+        <p className="text-2xl font-kaushan text-primary">Complete your seasonal tasks and track progress</p>
       </div>
       
       <SeasonalChecklistViewer 
