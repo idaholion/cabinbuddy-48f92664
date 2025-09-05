@@ -302,20 +302,52 @@ export const EnhancedImageUploader: React.FC<EnhancedImageUploaderProps> = ({
                 <ExistingImagesBrowser
                   onImageSelect={handleExistingImageSelect}
                   currentImages={selectedExistingImages.map(img => img.url || '')}
+                  detectedMarkers={detectedMarkers.map(m => m.marker)}
+                  onAutoMatch={(matches) => {
+                    const newImages: ImageFile[] = [];
+                    matches.forEach(match => {
+                      const urlParts = match.imageUrl.split('/');
+                      const filename = urlParts[urlParts.length - 1] || `auto-matched-${Date.now()}.jpg`;
+                      
+                      // Check if already selected
+                      if (!selectedExistingImages.some(img => img.url === match.imageUrl)) {
+                        newImages.push({
+                          filename,
+                          data: match.imageUrl,
+                          isExisting: true,
+                          url: match.imageUrl,
+                          description: match.description,
+                          contentType: 'image/jpeg'
+                        });
+                      }
+                    });
+
+                    if (newImages.length > 0) {
+                      const updatedExisting = [...selectedExistingImages, ...newImages];
+                      setSelectedExistingImages(updatedExisting);
+                      onImagesReady([...uploadedFiles, ...updatedExisting]);
+                      
+                      toast({
+                        title: "Auto-matched images",
+                        description: `Automatically matched ${matches.length} images based on original names`
+                      });
+                    }
+                  }}
                   trigger={
                     <Button variant="outline" className="w-full">
                       <Database className="h-4 w-4 mr-2" />
-                      Browse Existing Images
+                      Browse & Auto-Match Images
                     </Button>
                   }
                 />
 
                 <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                  <p className="text-sm text-green-800 font-medium">✨ Reuse Existing Images:</p>
+                  <p className="text-sm text-green-800 font-medium">✨ Auto-Match Feature:</p>
                   <ul className="text-sm text-green-700 mt-1 ml-4 space-y-1">
-                    <li>Select images from your closing, opening, or other checklists</li>
-                    <li>Reduces storage usage and ensures consistency</li>
-                    <li>Images are automatically matched with detected markers</li>
+                    <li>System automatically matches detected markers like [IMAGE:Picture3] with existing images</li>
+                    <li>Original image names (Picture3.jpg, etc.) are preserved from when you first created checklists</li>
+                    <li>Reduces storage usage and ensures consistency across checklists</li>
+                    <li>Manual selection available for any unmatched images</li>
                   </ul>
                 </div>
               </div>

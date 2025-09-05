@@ -9,21 +9,25 @@ import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { toast } from '@/hooks/use-toast';
 
 interface ExistingImagesBrowserProps {
-  onImageSelect: (imageUrl: string, description?: string) => void;
+  onImageSelect: (imageUrl: string, description?: string, originalMarker?: string) => void;
   currentImages?: string[];
   trigger?: React.ReactNode;
   sourceChecklistType?: 'closing' | 'opening' | 'seasonal' | 'maintenance';
+  onAutoMatch?: (matches: Array<{marker: string, imageUrl: string, description?: string}>) => void;
+  detectedMarkers?: string[];
 }
 
 export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
   onImageSelect,
   currentImages = [],
   trigger,
-  sourceChecklistType = 'closing'
+  sourceChecklistType = 'closing',
+  onAutoMatch,
+  detectedMarkers = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [availableImages, setAvailableImages] = useState<Array<{url: string, description?: string}>>([]);
+  const [availableImages, setAvailableImages] = useState<Array<{url: string, description?: string, originalMarker?: string}>>([]);
   const { checklists } = useCustomChecklists();
 
   useEffect(() => {
@@ -31,7 +35,7 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
       // Find the source checklist (e.g., closing) and extract images
       const sourceChecklist = checklists.find(c => c.checklist_type === sourceChecklistType);
       if (sourceChecklist) {
-        const images: Array<{url: string, description?: string}> = [];
+        const images: Array<{url: string, description?: string, originalMarker?: string}> = [];
         
         // Extract images from top-level images field
         if (sourceChecklist.images && Array.isArray(sourceChecklist.images)) {
@@ -45,11 +49,16 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
         // Extract images from individual checklist items
         if (sourceChecklist.items && Array.isArray(sourceChecklist.items)) {
           sourceChecklist.items.forEach((item: any) => {
+            // Parse original markers from imageMarker field
+            const originalMarkers = item.imageMarker ? 
+              item.imageMarker.split(',').map((m: string) => m.trim()) : [];
+            
             // Single image URL
             if (item.imageUrl) {
               images.push({
                 url: item.imageUrl,
-                description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id}`
+                description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id}`,
+                originalMarker: originalMarkers[0] // First marker for single image
               });
             }
             
@@ -58,7 +67,8 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
               item.imageUrls.forEach((url: string, index: number) => {
                 images.push({
                   url: url,
-                  description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id} (${index + 1})`
+                  description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id} (${index + 1})`,
+                  originalMarker: originalMarkers[index] // Match marker by index
                 });
               });
             }
@@ -71,11 +81,39 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
         );
         
         setAvailableImages(uniqueImages);
+        
+        // Auto-match if markers are provided
+        if (onAutoMatch && detectedMarkers.length > 0) {
+          const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
+          
+          detectedMarkers.forEach(marker => {
+            // Remove [IMAGE:] wrapper and file extension for matching
+            const cleanMarker = marker.replace(/^\[IMAGE:/, '').replace(/\]$/, '').replace(/\.(jpg|jpeg|png|gif)$/i, '');
+            
+            const matchingImage = uniqueImages.find(img => {
+              if (!img.originalMarker) return false;
+              const cleanOriginal = img.originalMarker.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+              return cleanOriginal.toLowerCase() === cleanMarker.toLowerCase();
+            });
+            
+            if (matchingImage) {
+              matches.push({
+                marker: marker,
+                imageUrl: matchingImage.url,
+                description: matchingImage.description
+              });
+            }
+          });
+          
+          if (matches.length > 0) {
+            onAutoMatch(matches);
+          }
+        }
       } else {
         setAvailableImages([]);
       }
     }
-  }, [isOpen, checklists, sourceChecklistType]);
+  }, [isOpen, checklists, sourceChecklistType, onAutoMatch, detectedMarkers]);
 
   // Filter images based on search term
   const filteredImages = availableImages.filter(image => 
@@ -84,8 +122,8 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
     image.url.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleImageSelect = (image: {url: string, description?: string}) => {
-    onImageSelect(image.url, image.description);
+  const handleImageSelect = (image: {url: string, description?: string, originalMarker?: string}) => {
+    onImageSelect(image.url, image.description, image.originalMarker);
     setIsOpen(false);
     toast({ 
       title: "Image selected", 
@@ -182,6 +220,11 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
                       <div className="p-2 bg-background">
                         <p className="text-xs font-medium truncate">
                           {image.description || `Image ${index + 1}`}
+                          {image.originalMarker && (
+                            <Badge variant="outline" className="text-xs ml-1">
+                              {image.originalMarker}
+                            </Badge>
+                          )}
                         </p>
                         {selected && (
                           <Badge variant="secondary" className="text-xs mt-1">
