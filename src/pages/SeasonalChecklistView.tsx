@@ -41,9 +41,9 @@ const SeasonalChecklistView = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-4">
-      {/* Top Navigation Bar */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="container mx-auto space-y-4">
+      {/* Top Navigation Bar - positioned to align with existing header */}
+      <div className="flex items-center justify-between -mt-4 mb-4">
         <Button 
           variant="outline" 
           onClick={() => navigate('/')}
