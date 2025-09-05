@@ -41,9 +41,9 @@ const SeasonalChecklistView = () => {
   }
 
   return (
-    <div className="container mx-auto space-y-4">
-      {/* Top Navigation Bar - positioned to align with existing header */}
-      <div className="flex items-center justify-between -mt-4 mb-4">
+    <div className="container mx-auto">
+      {/* Override the default header with everything in one line */}
+      <div className="flex items-center justify-between -mt-10 mb-6 relative z-10">
         <Button 
           variant="outline" 
           onClick={() => navigate('/')}
@@ -53,31 +53,36 @@ const SeasonalChecklistView = () => {
           Home
         </Button>
         
-        {isAdmin && (
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              // We'll pass this down to the viewer component
-              const viewer = document.querySelector('[data-checklist-viewer]');
-              if (viewer) {
-                const editButton = viewer.querySelector('[data-edit-button]');
-                if (editButton) {
-                  (editButton as HTMLButtonElement).click();
-                }
-              }
-            }}
-          >
-            Edit Checklist
-          </Button>
-        )}
-      </div>
-
-      {/* Page Header */}
-      <div className="text-center mb-4">
-        <h1 className="text-6xl mb-2 font-kaushan text-primary drop-shadow-lg capitalize">
+        {/* Center title */}
+        <h1 className="text-4xl font-kaushan text-primary drop-shadow-lg capitalize">
           {checklist.checklist_type.replace('_', ' ')} Checklist
         </h1>
-        <p className="text-2xl font-kaushan text-primary">Complete your seasonal tasks and track progress</p>
+        
+        {/* Right side buttons */}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const viewer = document.querySelector('[data-checklist-viewer]');
+                if (viewer) {
+                  const editButton = viewer.querySelector('[data-edit-button]');
+                  if (editButton) {
+                    (editButton as HTMLButtonElement).click();
+                  }
+                }
+              }}
+            >
+              Edit Checklist
+            </Button>
+          )}
+          {/* The ? button will still be in its original position */}
+        </div>
+      </div>
+
+      {/* Subtitle */}
+      <div className="text-center mb-6 -mt-2">
+        <p className="text-xl font-kaushan text-primary">Complete your seasonal tasks and track progress</p>
       </div>
       
       <SeasonalChecklistViewer 
