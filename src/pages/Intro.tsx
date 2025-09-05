@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { DefaultFeatureShowcase } from "@/components/DefaultFeatureShowcase";
 
 const Intro = () => {
+  console.log('🚀 Intro component loaded - JavaScript is working');
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -30,7 +32,7 @@ const Intro = () => {
     });
     
     if (user && !isDebugMode) {
-      console.log('🏠 Intro - redirecting to /home');
+      console.log('🔄 Intro - attempting redirect to /home');
       navigate("/home", { replace: true });
     }
   }, [user, navigate, isDebugMode]);
