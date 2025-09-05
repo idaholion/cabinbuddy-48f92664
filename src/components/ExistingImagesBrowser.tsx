@@ -30,14 +30,47 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
     if (isOpen) {
       // Find the source checklist (e.g., closing) and extract images
       const sourceChecklist = checklists.find(c => c.checklist_type === sourceChecklistType);
-      if (sourceChecklist && sourceChecklist.images) {
-        const images = Array.isArray(sourceChecklist.images) 
-          ? sourceChecklist.images.map((img: any) => ({
-              url: typeof img === 'string' ? img : img.url,
-              description: typeof img === 'object' ? img.description || img.alt : undefined
-            }))
-          : [];
-        setAvailableImages(images);
+      if (sourceChecklist) {
+        const images: Array<{url: string, description?: string}> = [];
+        
+        // Extract images from top-level images field
+        if (sourceChecklist.images && Array.isArray(sourceChecklist.images)) {
+          const topLevelImages = sourceChecklist.images.map((img: any) => ({
+            url: typeof img === 'string' ? img : img.url,
+            description: typeof img === 'object' ? img.description || img.alt : undefined
+          }));
+          images.push(...topLevelImages);
+        }
+        
+        // Extract images from individual checklist items
+        if (sourceChecklist.items && Array.isArray(sourceChecklist.items)) {
+          sourceChecklist.items.forEach((item: any) => {
+            // Single image URL
+            if (item.imageUrl) {
+              images.push({
+                url: item.imageUrl,
+                description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id}`
+              });
+            }
+            
+            // Multiple image URLs
+            if (item.imageUrls && Array.isArray(item.imageUrls)) {
+              item.imageUrls.forEach((url: string, index: number) => {
+                images.push({
+                  url: url,
+                  description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id} (${index + 1})`
+                });
+              });
+            }
+          });
+        }
+        
+        // Remove duplicates based on URL
+        const uniqueImages = images.filter((img, index, arr) => 
+          arr.findIndex(i => i.url === img.url) === index
+        );
+        
+        setAvailableImages(uniqueImages);
       } else {
         setAvailableImages([]);
       }
