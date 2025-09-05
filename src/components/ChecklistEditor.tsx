@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,8 @@ import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ChecklistImageSelector } from './ChecklistImageSelector';
+import { ChecklistImageKey } from '@/lib/checklist-image-library';
 
 interface ChecklistItem {
   id: string;
@@ -66,6 +68,7 @@ const SortableItem: React.FC<SortableItemProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [editImageDescription, setEditImageDescription] = useState(item.imageDescription || '');
+  const [editImageUrls, setEditImageUrls] = useState<string[]>(item.imageUrls || []);
   
   const {
     attributes,
@@ -84,7 +87,8 @@ const SortableItem: React.FC<SortableItemProps> = ({
     onUpdate({
       ...item,
       text: editText,
-      imageDescription: editImageDescription
+      imageDescription: editImageDescription,
+      imageUrls: editImageUrls.length > 0 ? editImageUrls : undefined
     });
     setIsEditing(false);
     toast({ title: "Item updated successfully" });
@@ -93,7 +97,21 @@ const SortableItem: React.FC<SortableItemProps> = ({
   const handleCancel = () => {
     setEditText(item.text);
     setEditImageDescription(item.imageDescription || '');
+    setEditImageUrls(item.imageUrls || []);
     setIsEditing(false);
+  };
+
+  const handleImageSelect = (imageUrl: string, key: ChecklistImageKey) => {
+    if (!editImageUrls.includes(imageUrl)) {
+      setEditImageUrls(prev => [...prev, imageUrl]);
+      if (!editImageDescription) {
+        setEditImageDescription(`Reference image for ${key.replace(/-/g, ' ')}`);
+      }
+    }
+  };
+
+  const removeImage = (imageUrl: string) => {
+    setEditImageUrls(prev => prev.filter(url => url !== imageUrl));
   };
 
   return (
@@ -122,8 +140,53 @@ const SortableItem: React.FC<SortableItemProps> = ({
                   <Input
                     value={editImageDescription}
                     onChange={(e) => setEditImageDescription(e.target.value)}
-                    placeholder="Optional: Describe an image for this item..."
+                    placeholder="Optional: Describe images for this item..."
                   />
+                  
+                  {/* Shared Image Selector */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Add Shared Images</label>
+                      <ChecklistImageSelector
+                        onImageSelect={handleImageSelect}
+                        currentImages={editImageUrls}
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Browse Library
+                          </Button>
+                        }
+                      />
+                    </div>
+                    
+                    {/* Display selected images */}
+                    {editImageUrls.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Selected images:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {editImageUrls.map((imageUrl, index) => (
+                            <div key={index} className="relative group">
+                              <div className="w-16 h-16 rounded border overflow-hidden">
+                                <img
+                                  src={imageUrl}
+                                  alt={`Selected image ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => removeImage(imageUrl)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSave}>

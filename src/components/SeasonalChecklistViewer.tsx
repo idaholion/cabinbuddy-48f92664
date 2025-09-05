@@ -10,6 +10,7 @@ import type { CustomChecklist } from '@/hooks/useChecklistData';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ChecklistEditor } from './ChecklistEditor';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
+import { getOptimizedChecklistImage, CHECKLIST_IMAGE_LIBRARY } from '@/lib/checklist-image-library';
 
 interface ChecklistImage {
   id?: string;
@@ -155,6 +156,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                       alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
                       className="w-full h-auto"
                       loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         console.log('Image failed to load:', imageUrl);
                         e.currentTarget.style.display = 'none';
@@ -225,6 +227,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
                       alt={item.imageDescription || `Image ${imgIndex + 1} for item ${itemIndex + 1}`}
                       className="w-full h-auto"
                       loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         console.log('Image failed to load:', imageUrl);
                         e.currentTarget.style.display = 'none';
