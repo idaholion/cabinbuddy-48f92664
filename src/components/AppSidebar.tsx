@@ -36,6 +36,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
@@ -206,6 +207,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r" collapsible="icon">
+      <div className="flex items-center justify-between p-2 border-b">
+        <SidebarTrigger />
+      </div>
       <SidebarContent>
         {/* Dashboard */}
         <SidebarGroup>
