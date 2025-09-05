@@ -4,6 +4,7 @@ import { WordDocumentUploader } from '@/components/WordDocumentUploader';
 import { InteractiveChecklist } from '@/components/InteractiveChecklist';
 import { ChecklistImageSelector } from '@/components/ChecklistImageSelector';
 import { ExistingImagesBrowser } from '@/components/ExistingImagesBrowser';
+import { ImageLibraryManager } from '@/components/ImageLibraryManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -262,12 +263,13 @@ export default function ChecklistCreator() {
   return (
     <ErrorBoundary fallback={DefaultErrorFallback}>
       <div className="container mx-auto p-6 space-y-6">
-        <div className="text-center space-y-2">
+        <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-primary">Enhanced Checklist Creator</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Create interactive checklists from documents or build them manually with shared images.
-          </p>
+          <ImageLibraryManager />
         </div>
+        <p className="text-muted-foreground max-w-2xl mx-auto text-center">
+          Create interactive checklists from documents or build them manually with shared images.
+        </p>
 
         <Tabs defaultValue="upload" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

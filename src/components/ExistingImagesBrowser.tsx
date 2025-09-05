@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Image as ImageIcon, X } from 'lucide-react';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
+import { ChecklistImageKey } from "@/lib/checklist-image-library";
+import { useImageLibrary } from "@/hooks/useImageLibrary";
 import { toast } from '@/hooks/use-toast';
 
 interface ExistingImagesBrowserProps {
@@ -28,6 +30,7 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [availableImages, setAvailableImages] = useState<Array<{url: string, description?: string, originalMarker?: string}>>([]);
+  const { addImageToLibrary } = useImageLibrary();
   const { checklists } = useCustomChecklists();
 
   useEffect(() => {
@@ -122,8 +125,13 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
     image.url.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleImageSelect = (image: {url: string, description?: string, originalMarker?: string}) => {
+  const handleImageSelect = async (image: {url: string, description?: string, originalMarker?: string}) => {
     onImageSelect(image.url, image.description, image.originalMarker);
+    
+    // Add to image library if not already there
+    const filename = image.url.split('/').pop() || 'unknown';
+    await addImageToLibrary(image.url, filename, image.originalMarker);
+    
     setIsOpen(false);
     toast({ 
       title: "Image selected", 

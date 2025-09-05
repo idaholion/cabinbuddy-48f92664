@@ -240,6 +240,48 @@ export type Database = {
           },
         ]
       }
+      checklist_images: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          file_size: number | null
+          id: string
+          image_url: string
+          marker_name: string | null
+          organization_id: string
+          original_filename: string
+          updated_at: string
+          uploaded_by_user_id: string | null
+          usage_count: number
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          file_size?: number | null
+          id?: string
+          image_url: string
+          marker_name?: string | null
+          organization_id: string
+          original_filename: string
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+          usage_count?: number
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          file_size?: number | null
+          id?: string
+          image_url?: string
+          marker_name?: string | null
+          organization_id?: string
+          original_filename?: string
+          updated_at?: string
+          uploaded_by_user_id?: string | null
+          usage_count?: number
+        }
+        Relationships: []
+      }
       checklist_progress: {
         Row: {
           checklist_id: string
@@ -2302,6 +2344,14 @@ export type Database = {
         }
         Returns: string
       }
+      delete_image_safely: {
+        Args: {
+          p_force_delete?: boolean
+          p_image_url: string
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       generate_guest_access_token: {
         Args: { expires_hours?: number; org_id: string }
         Returns: string
@@ -2395,6 +2445,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      replace_image_globally: {
+        Args: {
+          p_new_image_url: string
+          p_old_image_url: string
+          p_organization_id: string
+        }
+        Returns: Json
+      }
       revoke_guest_access: {
         Args: { org_id: string }
         Returns: boolean
@@ -2456,6 +2514,10 @@ export type Database = {
       supervisor_reset_database: {
         Args: { p_confirmation_code: string }
         Returns: string
+      }
+      update_image_usage_counts: {
+        Args: { p_organization_id: string }
+        Returns: undefined
       }
       validate_guest_access: {
         Args: { org_id: string; token: string }
