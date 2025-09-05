@@ -34,6 +34,16 @@ const Index = () => {
   const { activeOrganization } = useRobustMultiOrganization();
   const { user, signOut } = useAuth();
   
+  // Debug logging
+  console.log('🏠 Index (Home) page loading:', {
+    user: user ? { id: user.id, email: user.email } : null,
+    activeOrganization: activeOrganization ? { organization_name: activeOrganization.organization_name } : null,
+    roleLoading,
+    isGroupLead,
+    isGroupMember,
+    isSupervisor
+  });
+  
   // Monitor performance
   usePerformanceMonitoring();
 
