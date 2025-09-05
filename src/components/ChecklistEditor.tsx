@@ -449,9 +449,39 @@ export const ChecklistEditor: React.FC<ChecklistEditorProps> = ({
               placeholder="Enter new checklist item..."
               onKeyPress={(e) => e.key === 'Enter' && addNewItem()}
             />
+            <ChecklistImageSelector
+              onImageSelect={(imageUrl, key) => {
+                // Auto-create item with selected image
+                const newItem: ChecklistItem = {
+                  id: `item-${Date.now()}`,
+                  text: newItemText.trim() || key.replace(/-/g, ' '),
+                  completed: false,
+                  imageUrls: [imageUrl],
+                  imageDescription: `Reference image for ${key.replace(/-/g, ' ')}`
+                };
+                
+                setEditableSections(prev => 
+                  prev.map((sec, idx) => 
+                    idx === activeSection 
+                      ? { ...sec, items: [...sec.items, newItem] }
+                      : sec
+                  )
+                );
+                
+                setNewItemText('');
+                toast({ title: "Item with image added successfully" });
+              }}
+              currentImages={[]}
+              trigger={
+                <Button variant="outline" size="default">
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Browse Library
+                </Button>
+              }
+            />
             <Button onClick={addNewItem} disabled={!newItemText.trim()}>
               <Plus className="h-4 w-4 mr-2" />
-              Add
+              Add Text
             </Button>
           </div>
         </CardContent>
