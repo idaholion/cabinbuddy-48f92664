@@ -11,12 +11,26 @@ const Intro = () => {
   const { user } = useAuth();
   const [showFeatures, setShowFeatures] = useState(false);
 
+  // Debug logging
+  console.log('🏠 Intro page loading:', {
+    user: user ? { id: user.id, email: user.email } : null,
+    location: location.pathname,
+    search: location.search
+  });
+
   // Check if we're in debug mode
   const isDebugMode = location.search.includes('debug=true');
 
   // Redirect authenticated users to their dashboard (unless in debug mode)
   useEffect(() => {
+    console.log('🏠 Intro useEffect - checking redirect:', {
+      hasUser: !!user,
+      isDebugMode,
+      willRedirect: user && !isDebugMode
+    });
+    
     if (user && !isDebugMode) {
+      console.log('🏠 Intro - redirecting to /home');
       navigate("/home", { replace: true });
     }
   }, [user, navigate, isDebugMode]);
