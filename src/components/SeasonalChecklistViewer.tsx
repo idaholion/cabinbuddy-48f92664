@@ -299,19 +299,10 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
       {/* Header with progress and actions */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h3 className="text-lg font-medium capitalize">
+          <div className="text-center flex-1">
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg capitalize">
               {checklist.checklist_type.replace('_', ' ')} Checklist
-            </h3>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{totalItems} total items across {sections.length} sections</span>
-              {totalImages > 0 && (
-                <div className="flex items-center gap-1">
-                  <ImageIcon className="h-3 w-3" />
-                  <span>{totalImages} images</span>
-                </div>
-              )}
-            </div>
+            </h1>
           </div>
           <div className="flex gap-2">
             {isAdmin && (
