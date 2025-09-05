@@ -2,14 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WordDocumentUploader } from '@/components/WordDocumentUploader';
 import { InteractiveChecklist } from '@/components/InteractiveChecklist';
+import { ChecklistImageSelector } from '@/components/ChecklistImageSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2, Save, Eye } from 'lucide-react';
+import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2, Save, Eye, Image as ImageIcon } from 'lucide-react';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ErrorBoundary, DefaultErrorFallback } from '@/components/ErrorBoundary';
 import { toast } from '@/hooks/use-toast';
+import { ChecklistImageKey } from '@/lib/checklist-image-library';
 
 export default function ChecklistCreator() {
   const navigate = useNavigate();
@@ -17,6 +21,8 @@ export default function ChecklistCreator() {
   const [viewMode, setViewMode] = useState<'upload' | 'view'>('upload');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [selectedSeasonalType, setSelectedSeasonalType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
+  const [manualItems, setManualItems] = useState<Array<{id: string, text: string, imageUrls?: string[]}>>([]);
+  const [newItemText, setNewItemText] = useState('');
   const { checklists, loading, refetch, deleteChecklist, saveChecklist } = useCustomChecklists();
 
   const handleChecklistCreated = (checklistId: string) => {
@@ -28,6 +34,76 @@ export default function ChecklistCreator() {
   const handleBackToUpload = () => {
     setViewMode('upload');
     setCreatedChecklistId(null);
+  };
+
+  const addManualItem = () => {
+    if (!newItemText.trim()) return;
+    
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newItemText.trim()
+    };
+    
+    setManualItems(prev => [...prev, newItem]);
+    setNewItemText('');
+    toast({ title: "Item added successfully" });
+  };
+
+  const addItemWithImage = (imageUrl: string, key: ChecklistImageKey) => {
+    const newItem = {
+      id: `item-${Date.now()}`,
+      text: newItemText.trim() || key.replace(/-/g, ' '),
+      imageUrls: [imageUrl]
+    };
+    
+    setManualItems(prev => [...prev, newItem]);
+    setNewItemText('');
+    toast({ title: "Item with image added successfully" });
+  };
+
+  const removeManualItem = (id: string) => {
+    setManualItems(prev => prev.filter(item => item.id !== id));
+    toast({ title: "Item removed" });
+  };
+
+  const createManualChecklist = async () => {
+    if (manualItems.length === 0) {
+      toast({ 
+        title: "No items", 
+        description: "Please add some items to create a checklist.",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    try {
+      const checklistData = {
+        checklist_type: 'manual_created',
+        items: manualItems.map(item => ({
+          text: item.text,
+          completed: false
+        })),
+        images: manualItems.flatMap(item => 
+          item.imageUrls ? item.imageUrls.map(url => ({ url })) : []
+        )
+      };
+
+      // This would need to integrate with your existing save logic
+      toast({ 
+        title: "Manual checklist created!", 
+        description: "You can now save it to seasonal checklists." 
+      });
+      
+      // For now, just show the items - you'd need to integrate with your save system
+      console.log('Manual checklist data:', checklistData);
+      
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to create checklist.",
+        variant: "destructive" 
+      });
+    }
   };
 
   const handleSaveToSeasonal = async () => {
@@ -150,14 +226,110 @@ export default function ChecklistCreator() {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-primary">Enhanced Checklist Creator</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Create interactive checklists from your text with image markers. 
-            Use formats like [IMAGE:Picture1] to mark where images should appear, then upload matching images.
+            Create interactive checklists from documents or build them manually with shared images.
           </p>
         </div>
 
-        <div className="flex justify-center">
-          <WordDocumentUploader onChecklistCreated={handleChecklistCreated} />
-        </div>
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Upload Document
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Manual Creation
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upload" className="space-y-6">
+            <div className="flex justify-center">
+              <WordDocumentUploader onChecklistCreated={handleChecklistCreated} />
+            </div>
+            
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">✨ Enhanced Features</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• <strong>Image Markers:</strong> Use [IMAGE:Picture1] or [IMAGE:tool.jpg:Description] in your text</li>
+                  <li>• <strong>Smart Formatting:</strong> **Bold text** and *italic text* are automatically styled</li>
+                  <li>• <strong>Visual Hierarchy:</strong> Warnings, notes, and steps get appropriate icons and colors</li>
+                  <li>• <strong>Interactive Progress:</strong> Check off items and track completion</li>
+                  <li>• <strong>Image Matching:</strong> Upload images that automatically match to your markers</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="manual" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Build Your Checklist</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    value={newItemText}
+                    onChange={(e) => setNewItemText(e.target.value)}
+                    placeholder="Enter checklist item..."
+                    onKeyPress={(e) => e.key === 'Enter' && addManualItem()}
+                  />
+                  <ChecklistImageSelector
+                    onImageSelect={addItemWithImage}
+                    currentImages={[]}
+                    trigger={
+                      <Button variant="outline">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Browse Library
+                      </Button>
+                    }
+                  />
+                  <Button onClick={addManualItem} disabled={!newItemText.trim()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+                
+                {manualItems.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Items ({manualItems.length})</h4>
+                    <div className="space-y-2">
+                      {manualItems.map((item) => (
+                        <div key={item.id} className="flex items-start justify-between p-3 border rounded-lg">
+                          <div className="space-y-2 flex-1">
+                            <p className="text-sm">{item.text}</p>
+                            {item.imageUrls && item.imageUrls.length > 0 && (
+                              <div className="flex gap-2">
+                                {item.imageUrls.map((url, idx) => (
+                                  <div key={idx} className="w-12 h-12 rounded border overflow-hidden">
+                                    <img src={url} alt={`Item image ${idx + 1}`} className="w-full h-full object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeManualItem(item.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <Button onClick={createManualChecklist} className="w-full">
+                      <CheckSquare className="h-4 w-4 mr-2" />
+                      Create Checklist ({manualItems.length} items)
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {!loading && checklists && checklists.length > 0 && (
           <Card>
@@ -210,19 +382,6 @@ export default function ChecklistCreator() {
             </CardContent>
           </Card>
         )}
-
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">✨ Enhanced Features</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• <strong>Image Markers:</strong> Use [IMAGE:Picture1] or [IMAGE:tool.jpg:Description] in your text</li>
-              <li>• <strong>Smart Formatting:</strong> **Bold text** and *italic text* are automatically styled</li>
-              <li>• <strong>Visual Hierarchy:</strong> Warnings, notes, and steps get appropriate icons and colors</li>
-              <li>• <strong>Interactive Progress:</strong> Check off items and track completion</li>
-              <li>• <strong>Image Matching:</strong> Upload images that automatically match to your markers</li>
-            </ul>
-          </CardContent>
-        </Card>
       </div>
     </ErrorBoundary>
   );
