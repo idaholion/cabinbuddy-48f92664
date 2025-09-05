@@ -2437,6 +2437,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      migrate_existing_checklist_images: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       rename_family_group: {
         Args: {
           p_new_name: string
