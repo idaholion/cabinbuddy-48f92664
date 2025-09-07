@@ -21,6 +21,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>('');
   const [checklistType, setChecklistType] = useState<string>('');
+  const [customTypeName, setCustomTypeName] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectedImageMarkers, setDetectedImageMarkers] = useState<any[]>([]);
   const [imageFiles, setImageFiles] = useState<any[]>([]);
@@ -81,13 +82,20 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     return markers.sort((a, b) => a.position - b.position);
   };
 
+  const getEffectiveChecklistType = () => {
+    return checklistType === 'custom' ? customTypeName.trim() : checklistType;
+  };
+
   const processTextContent = async () => {
     console.log('Starting processTextContent...');
     
-    if (!textContent.trim() || !checklistType) {
+    const effectiveType = getEffectiveChecklistType();
+    if (!textContent.trim() || !effectiveType) {
       toast({
         title: "Missing Information",
-        description: "Please enter text content and select checklist type",
+        description: checklistType === 'custom' 
+          ? "Please enter text content and custom type name"
+          : "Please enter text content and select checklist type",
         variant: "destructive"
       });
       return;
@@ -142,7 +150,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       const { data, error } = await supabase.functions.invoke('process-word-to-checklist', {
         body: {
           wordFile: `data:text/plain;base64,${utf8ToBase64(textContent)}`,
-          checklistType,
+          checklistType: getEffectiveChecklistType(),
           organizationId,
           imageFiles
         }
@@ -164,6 +172,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       // Clear form
       setTextContent('');
       setChecklistType('');
+      setCustomTypeName('');
       setDetectedImageMarkers([]);
       setImageFiles([]);
       setShowImageUploader(false);
@@ -192,10 +201,13 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   };
 
   const handleUploadAndProcess = async () => {
-    if (!file || !checklistType) {
+    const effectiveType = getEffectiveChecklistType();
+    if (!file || !effectiveType) {
       toast({
         title: "Missing Information",
-        description: "Please select a Word document and checklist type",
+        description: checklistType === 'custom' 
+          ? "Please select a document and enter custom type name"
+          : "Please select a Word document and checklist type",
         variant: "destructive"
       });
       return;
@@ -223,7 +235,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
           [bodyKey]: base64File,
-          checklistType,
+          checklistType: effectiveType,
           organizationId
         }
       });
@@ -252,6 +264,7 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       // Clear form
       setFile(null);
       setChecklistType('');
+      setCustomTypeName('');
       
       // Notify parent component
       if (onChecklistCreated) {
@@ -313,9 +326,23 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
               <SelectItem value="closing">Closing</SelectItem>
               <SelectItem value="arrival">Arrival</SelectItem>
               <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="custom">Custom Type...</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {checklistType === 'custom' && (
+          <div className="space-y-2">
+            <Label htmlFor="custom-type">Custom Type Name</Label>
+            <Input
+              id="custom-type"
+              value={customTypeName}
+              onChange={(e) => setCustomTypeName(e.target.value)}
+              placeholder="Enter custom checklist type (e.g., Pool Opening, Deep Clean)"
+              className="w-full"
+            />
+          </div>
+        )}
 
         <Tabs defaultValue="text" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -362,7 +389,7 @@ The text will be converted to a checklist and you can upload matching images."
 
               <Button 
                 onClick={showImageUploader ? processWithImages : processTextContent}
-                disabled={!textContent.trim() || !checklistType || isProcessing}
+                disabled={!textContent.trim() || !getEffectiveChecklistType() || isProcessing}
                 className="w-full"
               >
                 {isProcessing ? (
@@ -406,7 +433,7 @@ The text will be converted to a checklist and you can upload matching images."
               
               <Button 
                 onClick={handleUploadAndProcess}
-                disabled={!file || !checklistType || isProcessing}
+                disabled={!file || !getEffectiveChecklistType() || isProcessing}
                 className="w-full"
               >
                 {isProcessing ? (
