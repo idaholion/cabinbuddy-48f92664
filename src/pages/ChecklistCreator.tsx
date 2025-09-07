@@ -23,7 +23,9 @@ export default function ChecklistCreator() {
   const [createdChecklistId, setCreatedChecklistId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'upload' | 'view'>('upload');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
-  const [selectedSeasonalType, setSelectedSeasonalType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
+  const [selectedSeasonalType, setSelectedSeasonalType] = useState<string>('seasonal');
+  const [isCustomType, setIsCustomType] = useState(false);
+  const [customTypeName, setCustomTypeName] = useState('');
   const [manualItems, setManualItems] = useState<Array<{id: string, text: string, imageUrls?: string[]}>>([]);
   const [newItemText, setNewItemText] = useState('');
   const [pasteContent, setPasteContent] = useState('');
@@ -150,16 +152,31 @@ export default function ChecklistCreator() {
     const selectedChecklist = checklists?.find(c => c.id === createdChecklistId);
     if (selectedChecklist) {
       try {
+        const typeToSave = isCustomType && customTypeName.trim() 
+          ? customTypeName.trim() 
+          : selectedSeasonalType;
+        
+        if (!typeToSave) {
+          toast({
+            title: "Error",
+            description: "Please enter a valid checklist type name.",
+            variant: "destructive"
+          });
+          return;
+        }
+
         await saveChecklist(
-          selectedSeasonalType,
+          typeToSave,
           selectedChecklist.items || [],
           selectedChecklist.images || []
         );
         toast({
           title: "Checklist Saved!",
-          description: `Checklist saved to ${selectedSeasonalType} checklists successfully.`
+          description: `Checklist saved to ${typeToSave} checklists successfully.`
         });
         setIsSaveDialogOpen(false);
+        setIsCustomType(false);
+        setCustomTypeName('');
         navigate('/seasonal-checklists');
       } catch (error) {
         toast({
@@ -210,7 +227,16 @@ export default function ChecklistCreator() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Checklist Type</label>
-                    <Select value={selectedSeasonalType} onValueChange={(value: any) => setSelectedSeasonalType(value)}>
+                    <Select value={isCustomType ? 'custom' : selectedSeasonalType} onValueChange={(value) => {
+                      if (value === 'custom') {
+                        setIsCustomType(true);
+                        setSelectedSeasonalType('');
+                      } else {
+                        setIsCustomType(false);
+                        setSelectedSeasonalType(value);
+                        setCustomTypeName('');
+                      }
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select checklist type" />
                       </SelectTrigger>
@@ -219,11 +245,31 @@ export default function ChecklistCreator() {
                         <SelectItem value="opening">Cabin Opening</SelectItem>
                         <SelectItem value="seasonal">Seasonal Tasks</SelectItem>
                         <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="arrival">Arrival Checklist</SelectItem>
+                        <SelectItem value="daily">Daily Tasks</SelectItem>
+                        <SelectItem value="custom">Custom Type...</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {isCustomType && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Custom Type Name</label>
+                      <Input
+                        value={customTypeName}
+                        onChange={(e) => setCustomTypeName(e.target.value)}
+                        placeholder="Enter custom checklist type name..."
+                        className="w-full"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setIsSaveDialogOpen(false);
+                      setIsCustomType(false);
+                      setCustomTypeName('');
+                    }}>
                       Cancel
                     </Button>
                     <Button onClick={handleSaveToSeasonal}>

@@ -10,12 +10,12 @@ import { toast } from '@/hooks/use-toast';
 
 const SeasonalChecklists = () => {
   const navigate = useNavigate();
-  const [selectedChecklistType, setSelectedChecklistType] = useState<'closing' | 'opening' | 'seasonal' | 'maintenance'>('seasonal');
+  const [selectedChecklistType, setSelectedChecklistType] = useState<string>('seasonal');
   
   const { checklists, loading, deleteChecklist, refetch } = useCustomChecklists();
   const { isAdmin } = useOrgAdmin();
 
-  const checklistTypes = [
+  const predefinedTypes = [
     { 
       key: 'closing', 
       label: 'Cabin Closing', 
@@ -43,10 +43,57 @@ const SeasonalChecklists = () => {
       icon: Wrench, 
       description: 'General maintenance and repair checklists',
       color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+    },
+    { 
+      key: 'arrival', 
+      label: 'Arrival Tasks', 
+      icon: CheckSquare, 
+      description: 'Tasks to complete upon cabin arrival',
+      color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200'
+    },
+    { 
+      key: 'daily', 
+      label: 'Daily Tasks', 
+      icon: CheckSquare, 
+      description: 'Daily cabin maintenance and operations',
+      color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'
     }
   ] as const;
 
+  const getChecklistTypes = () => {
+    // Get all unique checklist types from existing checklists
+    const existingTypes = [...new Set(checklists.map(c => c.checklist_type))];
+    
+    // Create type objects for all types (predefined + custom)
+    const allTypes = existingTypes.map(type => {
+      const predefined = predefinedTypes.find(p => p.key === type);
+      if (predefined) {
+        return predefined;
+      } else {
+        // Custom type
+        return {
+          key: type,
+          label: type.charAt(0).toUpperCase() + type.slice(1).replace(/[_-]/g, ' '),
+          icon: CheckSquare,
+          description: `Custom checklist type: ${type}`,
+          color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+        };
+      }
+    });
+
+    // Also include predefined types that don't exist yet (for display purposes)
+    predefinedTypes.forEach(predefined => {
+      if (!allTypes.find(t => t.key === predefined.key)) {
+        allTypes.push(predefined);
+      }
+    });
+
+    return allTypes;
+  };
+
   const getChecklistStats = () => {
+    const checklistTypes = getChecklistTypes();
+    
     const stats = checklistTypes.map(type => {
       const typeChecklists = checklists.filter(c => c.checklist_type === type.key);
       
@@ -84,7 +131,7 @@ const SeasonalChecklists = () => {
       </div>
 
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {checklistStats.map((stat) => {
           const Icon = stat.icon;
           return (
