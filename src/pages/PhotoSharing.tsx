@@ -222,12 +222,13 @@ export default function PhotoSharing() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="container mx-auto px-4 py-8">
         <PageHeader 
           title="Family Photo Gallery"
           subtitle="Share your cabin memories with family"
           icon={Camera}
+          backgroundImage={true}
         >
           <NavigationHeader />
         </PageHeader>

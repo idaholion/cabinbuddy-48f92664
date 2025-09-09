@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import { useNavigate } from "react-router-dom";
 import { FeatureOverviewDialog } from "@/components/FeatureOverviewDialog";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -16,24 +17,25 @@ const FeaturesPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">CabinBuddy Features</h1>
-          <p className="text-muted-foreground mt-1">
-            Explore all the features available to help manage your family cabin experience
-          </p>
-        </div>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate(-1)}
-          className="hover:scale-105 hover:shadow-md transition-all duration-200"
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <PageHeader 
+          title="CabinBuddy Features"
+          subtitle="Explore all the features available to help manage your family cabin experience"
+          icon={Star}
+          backgroundImage={true}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-      </div>
+          <div className="flex justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate(-1)}
+              className="hover:scale-105 hover:shadow-md transition-all duration-200"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </div>
+        </PageHeader>
 
       {/* Show Features Button when dialog is closed */}
       {!showDialog && (
@@ -55,6 +57,7 @@ const FeaturesPage = () => {
         userRole={isAdmin ? "admin" : "host"}
         onFeatureClick={handleFeatureClick}
       />
+      </div>
     </div>
   );
 };

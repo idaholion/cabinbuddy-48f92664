@@ -90,6 +90,7 @@ const ShoppingList = () => {
           title="Family Shopping List"
           subtitle="Collaborative shopping list for cabin stays"
           icon={ShoppingCart}
+          backgroundImage={true}
         >
           <NavigationHeader />
         </PageHeader>

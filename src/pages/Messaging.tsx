@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Mail, MessageSquare, Send, Users, User, Shield, UserCog } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { NavigationHeader } from '@/components/ui/navigation-header';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
 import { supabase } from '@/integrations/supabase/client';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
@@ -92,12 +94,14 @@ const Messaging = () => {
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="container mx-auto py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Messaging Center</h1>
-        <p className="text-muted-foreground mt-2 text-base">
-          Send messages to administrators, calendar keepers, group leads, or all users
-        </p>
-      </div>
+        <PageHeader 
+          title="Messaging Center"
+          subtitle="Send messages to administrators, calendar keepers, group leads, or all users"
+          icon={MessageSquare}
+          backgroundImage={true}
+        >
+          <NavigationHeader />
+        </PageHeader>
 
       <Card>
         <CardHeader>

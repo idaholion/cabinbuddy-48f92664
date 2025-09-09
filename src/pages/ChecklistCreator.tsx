@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, FileText, List, Plus, CheckSquare, Trash2, Save, Eye, Image as ImageIcon, Type, Upload } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 import { useCustomChecklists } from '@/hooks/useChecklistData';
 import { ErrorBoundary, DefaultErrorFallback } from '@/components/ErrorBoundary';
 import { toast } from '@/hooks/use-toast';
@@ -308,14 +309,18 @@ export default function ChecklistCreator() {
 
   return (
     <ErrorBoundary fallback={DefaultErrorFallback}>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-primary">Enhanced Checklist Creator</h1>
-          <ImageLibraryManager />
-        </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto text-center">
-          Create interactive checklists from documents or build them manually with shared images.
-        </p>
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+        <div className="container mx-auto p-6 space-y-6">
+          <PageHeader 
+            title="Enhanced Checklist Creator"
+            subtitle="Create interactive checklists from documents or build them manually with shared images"
+            icon={CheckSquare}
+            backgroundImage={true}
+          >
+            <div className="flex justify-end">
+              <ImageLibraryManager />
+            </div>
+          </PageHeader>
 
         <Tabs defaultValue="upload" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -515,6 +520,7 @@ export default function ChecklistCreator() {
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
     </ErrorBoundary>
   );

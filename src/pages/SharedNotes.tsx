@@ -13,6 +13,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Edit, Trash2, StickyNote, Tag, Calendar, ArrowUpDown, ExternalLink, ArrowRight, FileText } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { NavigationHeader } from '@/components/ui/navigation-header';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -98,28 +100,28 @@ export default function SharedNotes() {
   )].sort();
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {activeTab === 'all' ? 'All Notes' : activeTab === 'shared' ? 'Shared Notes' : 'Legacy Notes'}
-          </h1>
-          <p className="text-muted-foreground text-base">
-            {activeTab === 'all' 
-              ? 'View all notes from across your organization'
-              : activeTab === 'shared' 
-                ? 'Organize and manage your organization\'s structured notes'
-                : 'Notes from payments, bills, and check-in sessions'
-            }
-          </p>
-        </div>
-        <SharedNotesDialog>
-          <Button className="text-base">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Note
-          </Button>
-        </SharedNotesDialog>
-      </div>
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <PageHeader 
+          title={activeTab === 'all' ? 'All Notes' : activeTab === 'shared' ? 'Shared Notes' : 'Legacy Notes'}
+          subtitle={activeTab === 'all' 
+            ? 'View all notes from across your organization'
+            : activeTab === 'shared' 
+              ? 'Organize and manage your organization\'s structured notes'
+              : 'Notes from payments, bills, and check-in sessions'
+          }
+          icon={StickyNote}
+          backgroundImage={true}
+        >
+          <div className="flex justify-end">
+            <SharedNotesDialog>
+              <Button className="text-base">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Note
+              </Button>
+            </SharedNotesDialog>
+          </div>
+        </PageHeader>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="grid w-full grid-cols-3">
@@ -277,6 +279,7 @@ export default function SharedNotes() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

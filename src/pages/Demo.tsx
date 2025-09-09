@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { NavigationHeader } from '@/components/ui/navigation-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { useNavigate } from 'react-router-dom';
 
 interface DemoSlide {
