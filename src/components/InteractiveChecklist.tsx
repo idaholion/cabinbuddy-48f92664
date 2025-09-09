@@ -4,9 +4,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, Circle, RotateCcw, Save, AlertTriangle, Info, Wrench, Settings, Image } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle, Circle, RotateCcw, Save, AlertTriangle, Info, Wrench, Settings, Image, StickyNote } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useChecklistProgress } from '@/hooks/useChecklistProgress';
+import { useCheckinSessions } from '@/hooks/useChecklistData';
+import { useDebounce } from '@/hooks/useDebounce';
 import * as Icons from 'lucide-react';
 
 interface ChecklistItem {
@@ -52,12 +55,17 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
     updateImageSizes
   } = useChecklistProgress(checklistId);
 
+  const { sessions, createSession, updateSession } = useCheckinSessions();
+
   const [localProgress, setLocalProgress] = useState<Record<string, boolean>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [globalImageSize, setGlobalImageSize] = useState<string>('medium');
   const [individualImageSizes, setIndividualImageSizes] = useState<Record<string, string>>({});
   const [individualImageItemSizes, setIndividualImageItemSizes] = useState<Record<string, Record<number, string>>>({});
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<string>('');
+  const [currentSession, setCurrentSession] = useState<any>(null);
+  const debouncedNotes = useDebounce(notes, 1000);
 
   // Initialize local progress from saved progress
   useEffect(() => {
@@ -72,6 +80,25 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
       setIndividualImageSizes(progressRecord.image_sizes.individualSizes || {});
     }
   }, [progressRecord]);
+
+  // Find existing session for this checklist
+  useEffect(() => {
+    const existingSession = sessions.find(session => 
+      session.session_type === `checklist_${checklistId}` && 
+      !session.completed_at
+    );
+    if (existingSession) {
+      setCurrentSession(existingSession);
+      setNotes(existingSession.notes || '');
+    }
+  }, [sessions, checklistId]);
+
+  // Auto-save notes when they change (debounced)
+  useEffect(() => {
+    if (debouncedNotes !== (currentSession?.notes || '')) {
+      saveNotesToSession();
+    }
+  }, [debouncedNotes]);
 
   // Calculate completion statistics
   const completedCount = Object.values(localProgress).filter(Boolean).length;
@@ -140,6 +167,30 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
       }
     };
     setIndividualImageItemSizes(newSizes);
+  };
+
+  const saveNotesToSession = async () => {
+    if (!notes.trim() && !currentSession) return;
+
+    try {
+      if (currentSession) {
+        // Update existing session
+        await updateSession(currentSession.id, { notes: notes.trim() });
+      } else {
+        // Create new session
+        const newSession = await createSession({
+          session_type: `checklist_${checklistId}`,
+          check_date: new Date().toISOString().split('T')[0],
+          checklist_responses: {},
+          notes: notes.trim()
+        });
+        if (newSession) {
+          setCurrentSession(newSession);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving notes:', error);
+    }
   };
 
   const getEffectiveImageSize = (itemId: string, defaultSize?: string) => {
@@ -441,6 +492,29 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
         })}
       </div>
 
+      {/* Notes section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <StickyNote className="h-4 w-4" />
+            Notes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Add any notes about this checklist completion..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="min-h-[100px] resize-none"
+          />
+          {notes.trim() && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Notes are automatically saved and will appear in your shared notes.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Completion summary */}
       {completionPercentage === 100 && (
         <Card className="bg-green-50 border-green-200">
@@ -451,6 +525,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
             </div>
             <p className="text-sm text-green-600 mt-1">
               Congratulations! You've completed all {totalCount} items in this checklist.
+              {notes.trim() && " Your notes have been saved to shared notes."}
             </p>
           </CardContent>
         </Card>
