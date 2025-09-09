@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSharedNotes } from '@/hooks/useSharedNotes';
 import { useAggregatedNotes, type AggregatedNote } from '@/hooks/useAggregatedNotes';
 import { SharedNotesDialog } from '@/components/SharedNotesDialog';
+import { LegacyNoteEditDialog } from '@/components/LegacyNoteEditDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Search, Edit, Trash2, StickyNote, Tag, Calendar, ArrowUpDown, ExternalLink, ArrowRight, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useOrganization } from '@/hooks/useOrganization';
 import type { SharedNote } from '@/hooks/useSharedNotes';
 
 export default function SharedNotes() {
@@ -25,8 +27,11 @@ export default function SharedNotes() {
     getSourceIcon, 
     getSourceColor, 
     convertToSharedNote, 
+    updateLegacyNote,
+    deleteLegacyNote,
     getNavigationPath 
   } = useAggregatedNotes();
+  const { organization } = useOrganization();
   
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
@@ -258,6 +263,8 @@ export default function SharedNotes() {
               key={note.id}
               note={note}
               onDelete={note.source === 'shared_notes' ? deleteNote : undefined}
+              onDeleteLegacy={note.source !== 'shared_notes' ? deleteLegacyNote : undefined}
+              onUpdateLegacy={note.source !== 'shared_notes' ? updateLegacyNote : undefined}
               onConvertToShared={note.source !== 'shared_notes' ? convertToSharedNote : undefined}
               onNavigateToSource={(path) => navigate(path)}
               getSourceColor={getSourceColor}
@@ -265,6 +272,7 @@ export default function SharedNotes() {
               getPriorityColor={getPriorityColor}
               getStatusColor={getStatusColor}
               getNavigationPath={getNavigationPath}
+              isAdmin={organization?.role === 'admin'}
             />
           ))}
         </div>
@@ -276,6 +284,8 @@ export default function SharedNotes() {
 interface AggregatedNoteCardProps {
   note: AggregatedNote;
   onDelete?: (id: string) => void;
+  onDeleteLegacy?: (note: AggregatedNote) => Promise<any>;
+  onUpdateLegacy?: (note: AggregatedNote, content: string) => Promise<any>;
   onConvertToShared?: (note: AggregatedNote) => void;
   onNavigateToSource: (path: string) => void;
   getSourceColor: (source: string) => string;
@@ -283,18 +293,22 @@ interface AggregatedNoteCardProps {
   getPriorityColor: (priority: string) => string;
   getStatusColor: (status: string) => string;
   getNavigationPath: (note: AggregatedNote) => string;
+  isAdmin?: boolean;
 }
 
 const AggregatedNoteCard: React.FC<AggregatedNoteCardProps> = ({ 
   note, 
   onDelete, 
+  onDeleteLegacy,
+  onUpdateLegacy,
   onConvertToShared, 
   onNavigateToSource, 
   getSourceColor, 
   getSourceIcon, 
   getPriorityColor, 
   getStatusColor, 
-  getNavigationPath 
+  getNavigationPath,
+  isAdmin = false
 }) => {
   const isSharedNote = note.source === 'shared_notes';
 
@@ -398,17 +412,66 @@ const AggregatedNoteCard: React.FC<AggregatedNoteCardProps> = ({
                 )}
               </>
             ) : (
-              onConvertToShared && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs"
-                  onClick={() => onConvertToShared(note)}
-                >
-                  <ArrowRight className="h-3 w-3 mr-1" />
-                  Convert
-                </Button>
-              )
+              <>
+                {/* Admin controls for legacy notes */}
+                {isAdmin && onUpdateLegacy && (
+                  <LegacyNoteEditDialog note={note} onUpdate={onUpdateLegacy}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 hover:bg-muted"
+                      title="Edit note"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </LegacyNoteEditDialog>
+                )}
+                
+                {isAdmin && onDeleteLegacy && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                        title="Delete note"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Note</AlertDialogTitle>
+                        <AlertDialogDescription className="text-base">
+                          Are you sure you want to delete this note? This will remove the note from the original record and cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="text-base">Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => onDeleteLegacy(note)}
+                          className="text-base bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                
+                {onConvertToShared && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => onConvertToShared(note)}
+                    title="Convert to shared note"
+                  >
+                    <ArrowRight className="h-3 w-3 mr-1" />
+                    Convert
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>

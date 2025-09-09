@@ -242,6 +242,118 @@ export const useAggregatedNotes = () => {
     }
   };
 
+  const updateLegacyNote = async (note: AggregatedNote, newContent: string) => {
+    if (!activeOrganization?.organization_id || note.source === 'shared_notes') return null;
+
+    try {
+      let error;
+      
+      switch (note.source) {
+        case 'payments':
+          ({ error } = await supabase
+            .from('payments')
+            .update({ notes: newContent })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        case 'recurring_bills':
+          ({ error } = await supabase
+            .from('recurring_bills')
+            .update({ notes: newContent })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        case 'checkin_sessions':
+          ({ error } = await supabase
+            .from('checkin_sessions')
+            .update({ notes: newContent })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        default:
+          throw new Error('Unsupported note source');
+      }
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Note updated successfully"
+      });
+
+      // Refresh notes
+      fetchAllNotes();
+      return true;
+    } catch (error) {
+      console.error('Error updating legacy note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update note",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const deleteLegacyNote = async (note: AggregatedNote) => {
+    if (!activeOrganization?.organization_id || note.source === 'shared_notes') return null;
+
+    try {
+      let error;
+      
+      switch (note.source) {
+        case 'payments':
+          ({ error } = await supabase
+            .from('payments')
+            .update({ notes: null })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        case 'recurring_bills':
+          ({ error } = await supabase
+            .from('recurring_bills')
+            .update({ notes: null })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        case 'checkin_sessions':
+          ({ error } = await supabase
+            .from('checkin_sessions')
+            .update({ notes: null })
+            .eq('id', note.sourceId)
+            .eq('organization_id', activeOrganization.organization_id));
+          break;
+          
+        default:
+          throw new Error('Unsupported note source');
+      }
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Note deleted successfully"
+      });
+
+      // Refresh notes
+      fetchAllNotes();
+      return true;
+    } catch (error) {
+      console.error('Error deleting legacy note:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete note",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
   const getNavigationPath = (note: AggregatedNote) => {
     switch (note.source) {
       case 'payments':
@@ -268,6 +380,8 @@ export const useAggregatedNotes = () => {
     getSourceIcon,
     getSourceColor,
     convertToSharedNote,
+    updateLegacyNote,
+    deleteLegacyNote,
     getNavigationPath,
     refetch: fetchAllNotes
   };
