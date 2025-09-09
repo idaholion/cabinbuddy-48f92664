@@ -42,15 +42,15 @@ const STATUS_COLORS = {
 export default function SharedNotes() {
   const { notes, loading, deleteNote, filterNotes } = useSharedNotes();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
-  const [filterPriority, setFilterPriority] = useState<string>('');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('active');
 
   const filteredNotes = filterNotes(
-    filterCategory || undefined,
+    filterCategory === 'all' ? undefined : filterCategory,
     undefined,
-    filterStatus || undefined,
-    filterPriority || undefined
+    filterStatus === 'all' ? undefined : filterStatus,
+    filterPriority === 'all' ? undefined : filterPriority
   ).filter(note => 
     note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,7 +111,7 @@ export default function SharedNotes() {
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="maintenance">Maintenance</SelectItem>
                   <SelectItem value="cleaning">Cleaning</SelectItem>
@@ -129,7 +129,7 @@ export default function SharedNotes() {
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Priorities</SelectItem>
+                  <SelectItem value="all">All Priorities</SelectItem>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
@@ -142,7 +142,7 @@ export default function SharedNotes() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="archived">Archived</SelectItem>
