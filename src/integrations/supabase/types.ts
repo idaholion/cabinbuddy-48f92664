@@ -1691,6 +1691,51 @@ export type Database = {
           },
         ]
       }
+      shared_notes: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          organization_id: string
+          priority: string
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          organization_id: string
+          priority?: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       shopping_list_items: {
         Row: {
           added_by_user_id: string | null
