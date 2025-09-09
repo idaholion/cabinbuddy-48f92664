@@ -24,7 +24,8 @@ import {
   Vote,
   Sparkles,
   User,
-  Shield
+  Shield,
+  StickyNote
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -322,7 +323,19 @@ export function AppSidebar() {
                 );
               })}
               
-              {/* Messaging and Family Voting moved to Resources */}
+               {/* Messaging and Family Voting moved to Resources */}
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Shared Notes">
+                  <NavLink 
+                    to="/shared-notes" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <StickyNote className="h-4 w-4" />
+                    <span>Shared Notes</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Messaging">
                   <NavLink 
