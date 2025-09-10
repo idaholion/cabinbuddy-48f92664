@@ -117,7 +117,7 @@ const resourcesItems = [
     icon: CheckSquare,
   },
   {
-    title: "Enhanced Checklist Creator",
+    title: "Checklist Creator",
     url: "/checklist-creator",
     icon: Plus,
     adminOnly: true,

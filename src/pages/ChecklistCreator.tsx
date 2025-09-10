@@ -312,7 +312,7 @@ export default function ChecklistCreator() {
       <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
         <div className="container mx-auto p-6 space-y-6">
           <PageHeader 
-            title="Enhanced Checklist Creator"
+            title="Checklist Creator"
             subtitle="Create interactive checklists from documents or build them manually with shared images"
             icon={CheckSquare}
             backgroundImage={true}
