@@ -17,6 +17,11 @@ export interface AggregatedNote {
   created_at: string;
   updated_at: string;
   created_by_user_id?: string | null;
+  // User attribution fields
+  user_display_name?: string;
+  user_email?: string;
+  user_first_name?: string;
+  user_last_name?: string;
   // Context-specific fields
   family_group?: string;
   amount?: number;
@@ -52,7 +57,7 @@ export const useAggregatedNotes = () => {
       // Fetch payment notes
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
-        .select('id, family_group, payment_type, amount, notes, created_at, updated_at')
+        .select('id, family_group, payment_type, amount, notes, created_at, updated_at, created_by_user_id, updated_by_user_id')
         .eq('organization_id', orgId)
         .not('notes', 'is', null)
         .neq('notes', '');
@@ -72,7 +77,7 @@ export const useAggregatedNotes = () => {
       // Fetch checkin session notes
       const { data: checkinSessions, error: checkinError } = await supabase
         .from('checkin_sessions')
-        .select('id, family_group, session_type, check_date, notes, created_at, updated_at')
+        .select('id, family_group, session_type, check_date, notes, created_at, updated_at, user_id')
         .eq('organization_id', orgId)
         .not('notes', 'is', null)
         .neq('notes', '');
@@ -112,6 +117,7 @@ export const useAggregatedNotes = () => {
           payment_type: payment.payment_type,
           created_at: payment.created_at,
           updated_at: payment.updated_at,
+          created_by_user_id: payment.created_by_user_id,
         })),
 
         // Recurring bill notes
@@ -145,6 +151,7 @@ export const useAggregatedNotes = () => {
           date: session.check_date,
           created_at: session.created_at,
           updated_at: session.updated_at,
+          created_by_user_id: session.user_id,
         }))
       ];
 
