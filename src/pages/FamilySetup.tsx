@@ -146,15 +146,9 @@ const FamilySetup = () => {
     });
     
     if (!roleLoading && !isCreatingNew) {
-      // NEW USERS: If someone just signed up and is both admin and group lead,
-      // they should go to family-group-setup to manage their group
-      if (isGroupLead && isAdmin) {
-        console.log('🚀 [FAMILY SETUP] Admin who is also group lead - redirecting to family-group-setup');
-        toast({
-          title: "Redirecting", 
-          description: "Please use the Family Group Setup page to manage your group.",
-        });
-        navigate("/family-group-setup");
+      // Admins can always access family setup for organization-wide management
+      if (isAdmin) {
+        console.log('✅ [FAMILY SETUP] Admin access granted to family setup page');
         return;
       }
       
@@ -166,12 +160,6 @@ const FamilySetup = () => {
           description: "Group leads should use the Family Group Setup page.",
         });
         navigate("/family-group-setup");
-        return;
-      }
-      
-      // Pure admins (not group leads) can stay on family-setup
-      if (isAdmin && !isGroupLead) {
-        console.log('✅ [FAMILY SETUP] Pure admin staying on family setup page');
         return;
       }
       
