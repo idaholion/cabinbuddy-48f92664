@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation, UNSAFE_NavigationContext } from 'react-router-dom';
+import { useContext } from 'react';
 
 interface UseUnsavedChangesOptions {
   hasUnsavedChanges: boolean;
@@ -14,6 +15,12 @@ export const useUnsavedChanges = ({
 }: UseUnsavedChangesOptions) => {
   const [showNavigationDialog, setShowNavigationDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const navigationContext = useContext(UNSAFE_NavigationContext);
+  const originalNavigate = useRef<any>(null);
+
+  // Block browser navigation (refresh, back button, tab close)
   useEffect(() => {
     if (!hasUnsavedChanges) return;
 
@@ -30,10 +37,46 @@ export const useUnsavedChanges = ({
     };
   }, [hasUnsavedChanges, message]);
 
-  const navigate = useNavigate();
-  const location = useLocation();
+  // Block React Router navigation (sidebar, programmatic navigation)
+  useEffect(() => {
+    if (!navigationContext?.navigator) return;
 
-  // Listen for navigation attempts (simplified approach without useBlocker)
+    if (hasUnsavedChanges) {
+      // Store original navigate function
+      if (!originalNavigate.current) {
+        originalNavigate.current = navigationContext.navigator.go;
+      }
+
+      // Override the navigate function
+      const originalGo = navigationContext.navigator.go;
+      const originalPush = navigationContext.navigator.push;
+      const originalReplace = navigationContext.navigator.replace;
+
+      navigationContext.navigator.go = (delta: number) => {
+        setShowNavigationDialog(true);
+        setPendingNavigation(() => () => originalGo(delta));
+      };
+
+      navigationContext.navigator.push = (to: any, state?: any) => {
+        setShowNavigationDialog(true);
+        setPendingNavigation(() => () => originalPush(to, state));
+      };
+
+      navigationContext.navigator.replace = (to: any, state?: any) => {
+        setShowNavigationDialog(true);
+        setPendingNavigation(() => () => originalReplace(to, state));
+      };
+
+      return () => {
+        // Restore original functions
+        navigationContext.navigator.go = originalGo;
+        navigationContext.navigator.push = originalPush;
+        navigationContext.navigator.replace = originalReplace;
+      };
+    }
+  }, [hasUnsavedChanges, navigationContext]);
+
+  // Listen for popstate events (browser back/forward)
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       if (hasUnsavedChanges) {
@@ -56,11 +99,9 @@ export const useUnsavedChanges = ({
 
   const confirmNavigation = (callback: () => void) => {
     if (hasUnsavedChanges) {
-      const confirmed = window.confirm(message);
-      if (confirmed) {
-        callback();
-      }
-      return confirmed;
+      setShowNavigationDialog(true);
+      setPendingNavigation(() => callback);
+      return false;
     } else {
       callback();
       return true;
