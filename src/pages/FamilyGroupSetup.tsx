@@ -202,12 +202,17 @@ const FamilyGroupSetup = () => {
       
       // Populate host members
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
-        const formattedHostMembers = selectedFamilyGroup.host_members.map(member => ({
-          name: member.name || "",
-          phone: member.phone || "",
-          email: member.email || "",
-          canHost: member.canHost || false,
-        }));
+        const formattedHostMembers = selectedFamilyGroup.host_members.map(member => {
+          const { firstName, lastName } = parseFullName(member.name || "");
+          return {
+            firstName,
+            lastName,
+            name: member.name || "",
+            phone: member.phone || "",
+            email: member.email || "",
+            canHost: member.canHost || false,
+          };
+        });
         setValue("groupMembers", formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
