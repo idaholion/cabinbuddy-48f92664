@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { NavigationConfirmationDialog } from "@/components/ui/navigation-confirmation-dialog";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
 import { parseFullName } from "@/lib/name-utils";
@@ -72,9 +73,19 @@ const FamilyGroupSetup = () => {
   const watchedData = watch();
 
   // Unsaved changes protection
-  const { confirmNavigation } = useUnsavedChanges({
+  const { 
+    confirmNavigation,
+    showNavigationDialog,
+    handleSaveAndContinue,
+    handleDiscardAndContinue,
+    handleCancelNavigation
+  } = useUnsavedChanges({
     hasUnsavedChanges: isDirty && !isSaving,
-    message: "You have unsaved changes to your family group. Are you sure you want to leave?"
+    message: "You have unsaved changes to your family group. Are you sure you want to leave?",
+    onSave: async () => {
+      const formData = getValues();
+      await onSubmit(formData);
+    }
   });
 
   // Auto-save form data
@@ -908,6 +919,16 @@ const FamilyGroupSetup = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <NavigationConfirmationDialog
+          open={showNavigationDialog}
+          onSaveAndContinue={handleSaveAndContinue}
+          onDiscardAndContinue={handleDiscardAndContinue}
+          onCancel={handleCancelNavigation}
+          title="You have unsaved changes"
+          description="You have unsaved changes to your family group setup. What would you like to do?"
+          showSaveOption={true}
+        />
       </div>
     </div>
   );
