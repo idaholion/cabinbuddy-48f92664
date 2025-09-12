@@ -18,10 +18,12 @@ import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
 import { parseFullName } from "@/lib/name-utils";
 import { GroupMemberCard } from "@/components/GroupMemberCard";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
 
@@ -41,6 +43,7 @@ const FamilyGroupSetup = () => {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
   const [showAlternateLeadDialog, setShowAlternateLeadDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const hasLoadedAutoSave = useRef(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
@@ -60,13 +63,19 @@ const FamilyGroupSetup = () => {
     mode: "onChange",
   });
 
-  const { control, watch, setValue, getValues, handleSubmit, formState: { errors, isValid } } = form;
+  const { control, watch, setValue, getValues, handleSubmit, formState: { errors, isValid, isDirty } } = form;
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "groupMembers",
   });
 
   const watchedData = watch();
+
+  // Unsaved changes protection
+  const { confirmNavigation } = useUnsavedChanges({
+    hasUnsavedChanges: isDirty && !isSaving,
+    message: "You have unsaved changes to your family group. Are you sure you want to leave?"
+  });
 
   // Auto-save form data
   const { loadSavedData, clearSavedData } = useAutoSave({
@@ -268,16 +277,17 @@ const FamilyGroupSetup = () => {
     }
   }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave]);
 
-  const onSubmit = async (data: FamilyGroupSetupFormData) => {
+  const onSubmit = async (data: FamilyGroupSetupFormData): Promise<boolean> => {
     if (!data.selectedGroup) {
       toast({
         title: "Error",
         description: "Please select a family group.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
+    setIsSaving(true);
     const groupMembersList = data.groupMembers
       .filter(member => (member.firstName?.trim() !== '' || member.lastName?.trim() !== ''))
       .map(member => ({
@@ -329,8 +339,12 @@ const FamilyGroupSetup = () => {
       }
       
       clearSavedData();
+      setIsSaving(false);
+      return true;
     } catch (error) {
+      setIsSaving(false);
       // Error is handled by the hook
+      return false;
     }
   };
 
@@ -414,15 +428,35 @@ const FamilyGroupSetup = () => {
       return;
     }
     
-    // Save the form and navigate
-    await handleSubmit(onSubmit)();
-    navigate("/");
+    // Save the form and wait for completion before navigating
+    try {
+      await handleSubmit(async (data) => {
+        const success = await onSubmit(data);
+        if (success) {
+          navigate("/");
+        }
+      })();
+    } catch (error) {
+      // Form validation failed or save failed - stay on page
+    }
   };
 
   const handleContinueWithoutAlternateLead = async () => {
-    await handleSubmit(onSubmit)();
-    setShowAlternateLeadDialog(false);
-    navigate("/");
+    try {
+      await handleSubmit(async (data) => {
+        const success = await onSubmit(data);
+        if (success) {
+          setShowAlternateLeadDialog(false);
+          navigate("/");
+        }
+      })();
+    } catch (error) {
+      // Form validation failed or save failed - stay on page
+    }
+  };
+
+  const handleBackToSetup = () => {
+    confirmNavigation(() => navigate("/setup"));
   };
 
   // Show loading state while auth or organization data is loading
@@ -457,8 +491,8 @@ const FamilyGroupSetup = () => {
       }}>
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
-            <Button variant="outline" asChild className="mb-4">
-              <Link to="/setup">← Back to Setup</Link>
+            <Button variant="outline" onClick={handleBackToSetup} className="mb-4">
+              ← Back to Setup
             </Button>
             <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Setup</h1>
             <p className="text-2xl text-primary text-center font-medium">Setting up your Family Groups</p>
@@ -491,16 +525,17 @@ const FamilyGroupSetup = () => {
               <p className="text-2xl text-primary font-medium">Setting up your Family Groups</p>
             </div>
             <div className="absolute top-6 left-6">
-              <Button variant="outline" asChild className="text-sm">
-                <Link to="/setup">← Back to Setup</Link>
+              <Button variant="outline" onClick={handleBackToSetup} className="text-sm">
+                ← Back to Setup
               </Button>
             </div>
             <div className="absolute top-6 right-6 flex flex-col gap-2">
               <Button 
                 onClick={handleSubmit(onSubmit)}
-                disabled={familyGroupsLoading || !isValid}
+                disabled={isSaving || familyGroupsLoading || !isValid}
+                className="flex items-center gap-2"
               >
-                {familyGroupsLoading ? "Saving..." : "Save Family Group Setup"}
+                {isSaving ? "Saving..." : "Save Family Group Setup"}
               </Button>
             </div>
             
@@ -844,11 +879,11 @@ const FamilyGroupSetup = () => {
             <div className="flex justify-center">
               <Button 
                 onClick={saveAndContinue} 
-                disabled={familyGroupsLoading}
+                disabled={isSaving || familyGroupsLoading}
                 className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground text-xl font-bold"
                 size="lg"
               >
-                {familyGroupsLoading ? "Saving..." : "Save and Go to Home"}
+                {(isSaving || familyGroupsLoading) ? "Saving..." : "Save and Go to Home"}
               </Button>
             </div>
           </CardContent>
