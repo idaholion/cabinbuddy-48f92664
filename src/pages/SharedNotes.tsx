@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useSharedNotes } from '@/hooks/useSharedNotes';
-import { useAggregatedNotes, type AggregatedNote } from '@/hooks/useAggregatedNotes';
 import { SharedNotesDialog } from '@/components/SharedNotesDialog';
 import { NotesTimeline } from '@/components/NotesTimeline';
 import { SearchInput } from '@/components/ui/search-input';
@@ -8,73 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, StickyNote } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
-import { useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/hooks/useOrganization';
 import type { SharedNote } from '@/hooks/useSharedNotes';
 
 export default function SharedNotes() {
-  const { notes: sharedNotes, loading: sharedLoading, deleteNote } = useSharedNotes();
-  const { 
-    notes: aggregatedNotes, 
-    loading: aggregatedLoading, 
-    filterNotes, 
-    getSourceIcon, 
-    getSourceColor, 
-    convertToSharedNote, 
-    updateLegacyNote,
-    deleteLegacyNote,
-    getNavigationPath 
-  } = useAggregatedNotes();
+  const { notes: sharedNotes, loading, deleteNote, filterNotes } = useSharedNotes();
   const { organization } = useOrganization();
   
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterSource, setFilterSource] = useState<string>('all');
-  const [filterFamilyGroup, setFilterFamilyGroup] = useState<string>('all');
-
-  const loading = sharedLoading || aggregatedLoading;
-
-  // Get current notes based on active tab
-  const currentNotes = activeTab === 'shared' ? 
-    sharedNotes.map(note => ({
-      ...note,
-      source: 'shared_notes' as const,
-      sourceId: note.id,
-      sourceLabel: 'Shared Note',
-      id: `shared_${note.id}`
-    } as AggregatedNote)) : 
-    aggregatedNotes;
 
   const filteredNotes = filterNotes(
-    filterSource === 'all' ? undefined : filterSource,
     filterCategory === 'all' ? undefined : filterCategory,
-    undefined,
+    undefined, // tags
     filterStatus === 'all' ? undefined : filterStatus,
-    filterPriority === 'all' ? undefined : filterPriority,
-    filterFamilyGroup === 'all' ? undefined : filterFamilyGroup
+    filterPriority === 'all' ? undefined : filterPriority
   ).filter(note => {
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
+    return (
       note.title.toLowerCase().includes(searchLower) ||
       note.content.toLowerCase().includes(searchLower) ||
-      (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchLower))) ||
-      (note.user_display_name && note.user_display_name.toLowerCase().includes(searchLower)) ||
-      (note.user_first_name && note.user_first_name.toLowerCase().includes(searchLower)) ||
-      (note.user_last_name && note.user_last_name.toLowerCase().includes(searchLower)) ||
-      (note.family_group && note.family_group.toLowerCase().includes(searchLower));
-    
-    return matchesSearch;
-  }).filter(note => {
-    if (activeTab === 'shared') return note.source === 'shared_notes';
-    if (activeTab === 'all') return true;
-    return note.source !== 'shared_notes';
+      (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+    );
   });
 
   const getPriorityColor = (priority: string) => {
@@ -96,23 +54,13 @@ export default function SharedNotes() {
     }
   };
 
-  // Get unique family groups for filtering
-  const familyGroups = [...new Set(aggregatedNotes
-    .map(note => note.family_group)
-    .filter(Boolean)
-  )].sort();
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <PageHeader 
-          title={activeTab === 'all' ? 'All Notes' : activeTab === 'shared' ? 'Shared Notes' : 'Legacy Notes'}
-          subtitle={activeTab === 'all' 
-            ? 'View all notes from across your organization in chronological order'
-            : activeTab === 'shared' 
-              ? 'Organize and manage your organization\'s structured notes'
-              : 'Notes from payments, bills, and check-in sessions'
-          }
+          title="Shared Notes"
+          subtitle="Organize and manage your organization's structured notes in chronological order"
           icon={StickyNote}
           backgroundImage={true}
         >
@@ -126,13 +74,6 @@ export default function SharedNotes() {
           </div>
         </PageHeader>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all" className="text-base">All Notes ({aggregatedNotes.length})</TabsTrigger>
-          <TabsTrigger value="shared" className="text-base">Shared Notes ({sharedNotes.length})</TabsTrigger>
-          <TabsTrigger value="legacy" className="text-base">Legacy Notes ({aggregatedNotes.filter(n => n.source !== 'shared_notes').length})</TabsTrigger>
-        </TabsList>
-      </Tabs>
 
       {/* Search and Filters */}
       <div className="bg-muted/30 rounded-lg p-4 mb-6 space-y-4">
@@ -147,23 +88,6 @@ export default function SharedNotes() {
         </div>
         
         <div className="flex flex-wrap gap-4">
-          {activeTab === 'all' && (
-            <div className="min-w-[140px]">
-              <Select value={filterSource} onValueChange={setFilterSource}>
-                <SelectTrigger className="text-base">
-                  <SelectValue placeholder="Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  <SelectItem value="shared_notes">📝 Shared Notes</SelectItem>
-                  <SelectItem value="payments">💰 Payment Records</SelectItem>
-                  <SelectItem value="recurring_bills">🧾 Recurring Bills</SelectItem>
-                  <SelectItem value="checkin_sessions">🏠 Check-in Sessions</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
           <div className="min-w-[120px]">
             <Select value={filterCategory} onValueChange={setFilterCategory}>
               <SelectTrigger className="text-base">
@@ -185,54 +109,34 @@ export default function SharedNotes() {
             </Select>
           </div>
           
-          {familyGroups.length > 0 && (
-            <div className="min-w-[140px]">
-              <Select value={filterFamilyGroup} onValueChange={setFilterFamilyGroup}>
-                <SelectTrigger className="text-base">
-                  <SelectValue placeholder="Family Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Family Groups</SelectItem>
-                  {familyGroups.map(group => (
-                    <SelectItem key={group} value={group}>{group}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="min-w-[120px]">
+            <Select value={filterPriority} onValueChange={setFilterPriority}>
+              <SelectTrigger className="text-base">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
-          {activeTab !== 'legacy' && (
-            <>
-              <div className="min-w-[120px]">
-                <Select value={filterPriority} onValueChange={setFilterPriority}>
-                  <SelectTrigger className="text-base">
-                    <SelectValue placeholder="Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priorities</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="min-w-[120px]">
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="text-base">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
-          )}
+          <div className="min-w-[120px]">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="text-base">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -245,33 +149,20 @@ export default function SharedNotes() {
         <EmptyState
           icon={<StickyNote className="h-6 w-6" />}
           title="No notes found"
-          description={
-            activeTab === 'shared' 
-              ? "Create your first shared note to get started organizing your information."
-              : activeTab === 'all'
-                ? "No notes have been created yet across your organization."
-                : "No legacy notes found from payments, bills, or check-in sessions."
-          }
-          action={activeTab === 'shared' ? {
+          description="Create your first shared note to get started organizing your information."
+          action={{
             label: "Create Note",
             onClick: () => {
               // This will be handled by the SharedNotesDialog trigger
             }
-          } : undefined}
+          }}
         />
       ) : (
         <NotesTimeline
           notes={filteredNotes}
           onDelete={deleteNote}
-          onDeleteLegacy={deleteLegacyNote}
-          onUpdateLegacy={updateLegacyNote}
-          onConvertToShared={convertToSharedNote}
-          onNavigateToSource={(path) => navigate(path)}
-          getSourceColor={getSourceColor}
-          getSourceIcon={getSourceIcon}
           getPriorityColor={getPriorityColor}
           getStatusColor={getStatusColor}
-          getNavigationPath={getNavigationPath}
           isAdmin={organization?.role === 'admin'}
           searchTerm={searchTerm}
         />
