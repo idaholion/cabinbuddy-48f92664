@@ -360,8 +360,8 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {/* Group Member Profile - accessible to name-matched members and admins */}
-              {(isNameMatchedMember || isAdmin || canAccessSupervisorFeatures) && (
+              {/* Group Member Profile - accessible to members, group leads, and admins */}
+              {(isNameMatchedMember || isGroupLead || isNameMatchedGroupLead  || isAdmin || canAccessSupervisorFeatures) && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Group Member Profile">
                     <NavLink 
