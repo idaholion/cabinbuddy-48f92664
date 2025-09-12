@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 import { familyGroupSetupSchema, type FamilyGroupSetupFormData } from "@/lib/validations";
+import { parseFullName } from "@/lib/name-utils";
 import { GroupMemberCard } from "@/components/GroupMemberCard";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
@@ -50,9 +51,9 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       groupMembers: [
-        { name: "", phone: "", email: "", canHost: false },
-        { name: "", phone: "", email: "", canHost: false },
-        { name: "", phone: "", email: "", canHost: false }
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
       ],
       alternateLeadId: "none",
     },
@@ -212,7 +213,10 @@ const FamilyGroupSetup = () => {
       } else {
         // Automatically copy Group Lead info to Group Member 1
         const leadEmail = selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : "");
+        const { firstName, lastName } = parseFullName(selectedFamilyGroup.lead_name || "");
         const leadAsHostMember = {
+          firstName,
+          lastName,
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
           email: leadEmail,
@@ -221,8 +225,8 @@ const FamilyGroupSetup = () => {
         
         setValue("groupMembers", [
           leadAsHostMember,
-          { name: "", phone: "", email: "", canHost: false },
-          { name: "", phone: "", email: "", canHost: false }
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
         ]);
       }
     } else if (watchedData.selectedGroup === "") {
@@ -270,9 +274,11 @@ const FamilyGroupSetup = () => {
     }
 
     const groupMembersList = data.groupMembers
-      .filter(member => member.name?.trim() !== '')
+      .filter(member => (member.firstName?.trim() !== '' || member.lastName?.trim() !== ''))
       .map(member => ({
-        name: member.name || "",
+        firstName: member.firstName || "",
+        lastName: member.lastName || "",
+        name: `${member.firstName || ""} ${member.lastName || ""}`.trim() || "",
         phone: member.phone || "",
         email: member.email || "",
         canHost: member.canHost || false,
@@ -324,7 +330,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addGroupMember = () => {
-    append({ name: "", phone: "", email: "", canHost: false });
+    append({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
     setShowAllMembers(true);
   };
 
@@ -338,9 +344,9 @@ const FamilyGroupSetup = () => {
 
   const clearAllGroupMembers = () => {
     setValue("groupMembers", [
-      { name: "", phone: "", email: "", canHost: false },
-      { name: "", phone: "", email: "", canHost: false },
-      { name: "", phone: "", email: "", canHost: false }
+      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
     ]);
     setShowAllMembers(false);
   };
@@ -348,12 +354,12 @@ const FamilyGroupSetup = () => {
   const removeEmptySlots = () => {
     const currentMembers = getValues("groupMembers");
     const filledMembers = currentMembers.filter(member => 
-      member.name?.trim() || member.email?.trim() || member.phone?.trim()
+      member.firstName?.trim() || member.lastName?.trim() || member.email?.trim() || member.phone?.trim()
     );
     
     // Ensure at least 3 slots
     while (filledMembers.length < 3) {
-      filledMembers.push({ name: "", phone: "", email: "", canHost: false });
+      filledMembers.push({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
     }
     
     setValue("groupMembers", filledMembers);

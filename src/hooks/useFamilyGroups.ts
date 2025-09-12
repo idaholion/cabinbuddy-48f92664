@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { GroupMember, FamilyGroupData } from '@/types/group-member';
+import { parseFullName } from '@/lib/name-utils';
 
 export const useFamilyGroups = () => {
   const { user } = useAuth();
@@ -93,7 +94,10 @@ export const useFamilyGroups = () => {
       );
       
       if (!leadExists) {
+        const { firstName, lastName } = parseFullName(groupData.lead_name);
         const leadAsMember = {
+          firstName,
+          lastName,
           name: groupData.lead_name,
           phone: groupData.lead_phone || '',
           email: groupData.lead_email,

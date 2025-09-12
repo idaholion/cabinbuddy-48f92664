@@ -56,10 +56,9 @@ export const familyGroupSetupSchema = z.object({
     return z.string().email().safeParse(val).success;
   }, "Please enter a valid email address"),
   groupMembers: z.array(z.object({
-    name: z.string().refine((val) => {
-      if (!val || val.trim() === "") return false;
-      return validateFullName(val);
-    }, "Please enter both first and last name"),
+    firstName: requiredStringSchema.min(1, "First name is required"),
+    lastName: requiredStringSchema.min(1, "Last name is required"),
+    name: z.string().optional(), // Computed field, will be auto-generated
     phone: z.string().refine((val) => {
       if (!val || val === "") return true;
       // Remove all non-digit characters and check if it's a valid phone number
@@ -73,8 +72,8 @@ export const familyGroupSetupSchema = z.object({
     canHost: z.boolean().optional().default(false),
   }))
     .refine((members) => {
-      // Check for duplicate names (non-empty only)
-      const names = members.map(m => m.name.toLowerCase().trim()).filter(Boolean);
+      // Check for duplicate names (non-empty only)  
+      const names = members.map(m => `${m.firstName} ${m.lastName}`.toLowerCase().trim()).filter(Boolean);
       return new Set(names).size === names.length;
     }, "Group member names must be unique")
     .refine((members) => {

@@ -46,9 +46,9 @@ const SupervisorOrganizationFamilyGroups = () => {
   const [leadPhone, setLeadPhone] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [groupMembers, setGroupMembers] = useState<GroupMember[]>([
-    { name: "", phone: "", email: "", canHost: false },
-    { name: "", phone: "", email: "", canHost: false },
-    { name: "", phone: "", email: "", canHost: false }
+    { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+    { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+    { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
   ]);
   const [newGroupName, setNewGroupName] = useState("");
   const [groupColor, setGroupColor] = useState("");
@@ -110,7 +110,7 @@ const SupervisorOrganizationFamilyGroups = () => {
         
         // Handle group members - ensure we have at least 3 empty slots
         const existingMembers = group.host_members || [];
-        const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ name: "", phone: "", email: "", canHost: false });
+        const emptyMembers = Array(Math.max(3 - existingMembers.length, 0)).fill({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
         setGroupMembers([...existingMembers, ...emptyMembers]);
         
         // Fetch available colors for this group
@@ -122,9 +122,9 @@ const SupervisorOrganizationFamilyGroups = () => {
       setLeadEmail("");
       setGroupColor("");
       setGroupMembers([
-        { name: "", phone: "", email: "", canHost: false },
-        { name: "", phone: "", email: "", canHost: false },
-        { name: "", phone: "", email: "", canHost: false }
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
       ]);
       fetchAvailableColors();
     }
@@ -231,7 +231,7 @@ const SupervisorOrganizationFamilyGroups = () => {
   };
 
   const addGroupMember = () => {
-    setGroupMembers([...groupMembers, { name: "", phone: "", email: "", canHost: false }]);
+    setGroupMembers([...groupMembers, { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }]);
   };
 
   const handleBulkAssignColors = () => {

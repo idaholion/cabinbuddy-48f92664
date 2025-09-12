@@ -1,7 +1,7 @@
 export interface GroupMember {
-  name: string; // Full display name (for backward compatibility)
-  firstName?: string; // First name (optional for backward compatibility)
-  lastName?: string; // Last name (optional for backward compatibility)
+  firstName: string; // First name (required)
+  lastName: string; // Last name (required)
+  name: string; // Full display name (computed from firstName + lastName)
   phone: string;
   email: string;
   canHost?: boolean;

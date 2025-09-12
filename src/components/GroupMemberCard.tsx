@@ -45,11 +45,12 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
     transition,
   };
 
-  const isEmpty = !currentMember?.name && !currentMember?.email && !currentMember?.phone;
-  const isFilled = currentMember?.name || currentMember?.email || currentMember?.phone;
+  const isEmpty = !currentMember?.firstName && !currentMember?.lastName && !currentMember?.email && !currentMember?.phone;
+  const isFilled = currentMember?.firstName || currentMember?.lastName || currentMember?.email || currentMember?.phone;
 
   // Check for duplicates
-  const nameError = errors.groupMembers?.[index]?.name;
+  const firstNameError = errors.groupMembers?.[index]?.firstName;
+  const lastNameError = errors.groupMembers?.[index]?.lastName;
   const emailError = errors.groupMembers?.[index]?.email;
   const phoneError = errors.groupMembers?.[index]?.phone;
   const hasRootError = errors.groupMembers?.root;
@@ -111,20 +112,36 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-          <FormField
-            control={control}
-            name={`groupMembers.${index}.name`}
-            render={({ field }) => (
-              <FormItem>
-                 <FormLabel className="text-xl">Name</FormLabel>
-                 <FormControl>
-                   <Input {...field} placeholder="Enter name" className="text-lg placeholder:text-lg" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={control}
+              name={`groupMembers.${index}.firstName`}
+              render={({ field }) => (
+                <FormItem>
+                   <FormLabel className="text-xl">First Name</FormLabel>
+                   <FormControl>
+                     <Input {...field} placeholder="Enter first name" className="text-lg placeholder:text-lg" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name={`groupMembers.${index}.lastName`}
+              render={({ field }) => (
+                <FormItem>
+                   <FormLabel className="text-xl">Last Name</FormLabel>
+                   <FormControl>
+                     <Input {...field} placeholder="Enter last name" className="text-lg placeholder:text-lg" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -160,7 +177,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
             />
           </div>
 
-           <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4">
             <FormField
               control={control}
               name={`groupMembers.${index}.canHost`}
