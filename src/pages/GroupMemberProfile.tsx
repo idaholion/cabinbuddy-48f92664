@@ -96,18 +96,20 @@ const GroupMemberProfile = () => {
       setSelectedGroup(group);
       if (group) {
         const members = [
-          ...(group.lead_name ? [{ 
+          ...(group.lead_name && group.lead_name.trim() ? [{ 
             name: group.lead_name, 
             email: group.lead_email, 
             phone: group.lead_phone,
             isLead: true 
           }] : []),
-          ...(group.host_members || []).map((member: any) => ({ 
-            name: member.name, 
-            email: member.email, 
-            phone: member.phone,
-            isLead: false 
-          }))
+          ...(group.host_members || [])
+            .filter((member: any) => member.name && member.name.trim())
+            .map((member: any) => ({ 
+              name: member.name, 
+              email: member.email, 
+              phone: member.phone,
+              isLead: false 
+            }))
         ];
         setAvailableMembers(members);
       } else {
@@ -726,13 +728,15 @@ const GroupMemberProfile = () => {
                             <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your family group"} className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
                           </SelectTrigger>
                         </FormControl>
-                      <SelectContent>
-                        {familyGroups.map((group) => (
-                          <SelectItem key={group.id} value={group.name}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                       <SelectContent>
+                        {familyGroups
+                          .filter(group => group.name && group.name.trim())
+                          .map((group) => (
+                            <SelectItem key={group.id} value={group.name}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                       </SelectContent>
                     </Select>
                     <FormMessage />
                     {autoPopulated && (
@@ -756,16 +760,18 @@ const GroupMemberProfile = () => {
                               <SelectValue placeholder="Choose your name from the list" className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
                             </SelectTrigger>
                           </FormControl>
-                         <SelectContent>
-                           {availableMembers.map((member, index) => (
-                             <SelectItem key={index} value={member.name}>
-                               {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
-                             </SelectItem>
-                           ))}
-                           <SelectItem value="NOT_FOUND" className="text-muted-foreground">
-                             I don&apos;t see my name
-                           </SelectItem>
-                        </SelectContent>
+                          <SelectContent>
+                            {availableMembers
+                              .filter(member => member.name && member.name.trim())
+                              .map((member, index) => (
+                                <SelectItem key={`${member.name}-${index}`} value={member.name}>
+                                  {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
+                                </SelectItem>
+                              ))}
+                            <SelectItem value="NOT_FOUND" className="text-muted-foreground">
+                              I don&apos;t see my name
+                            </SelectItem>
+                         </SelectContent>
                       </Select>
                       <FormMessage />
                       {autoPopulated && (
