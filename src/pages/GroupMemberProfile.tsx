@@ -839,38 +839,65 @@ const GroupMemberProfile = () => {
               />
 
               {/* Member Name Selection */}
-              {availableMembers.length > 0 && (
+              {(() => {
+                console.log('🚨 DROPDOWN RENDER CHECK:', {
+                  availableMembersLength: availableMembers.length,
+                  availableMembers: availableMembers,
+                  shouldShowDropdown: availableMembers.length > 0,
+                  autoPopulated,
+                  watchedFamilyGroup
+                });
+                return availableMembers.length > 0;
+              })() && (
                 <FormField
                   control={form.control}
                   name="selectedMemberName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">Select Your Name</FormLabel>
-                       <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
-                          <FormControl>
-                            <SelectTrigger className={autoPopulated ? "text-base text-foreground font-medium" : "text-base"}>
-                              <SelectValue placeholder="Choose your name from the list" className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-background border shadow-lg z-50">
-                            {availableMembers
-                              .filter(member => member.name && member.name.trim())
-                              .map((member, index) => (
-                                <SelectItem key={`${member.name}-${index}`} value={member.name}>
-                                  {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
-                                </SelectItem>
-                              ))}
-                            <SelectItem value="NOT_FOUND" className="text-muted-foreground">
-                              I don&apos;t see my name
-                            </SelectItem>
-                         </SelectContent>
-                      </Select>
-                      <FormMessage />
-                      {autoPopulated && (
-                        <p className="text-xs text-green-600 mt-1">✓ Auto-detected based on your account information</p>
-                      )}
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    console.log('🚨 DROPDOWN FIELD RENDER:', {
+                      fieldValue: field.value,
+                      availableMembers: availableMembers
+                    });
+                    return (
+                      <FormItem>
+                        <FormLabel className="text-base">Select Your Name</FormLabel>
+                         <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated && !!selectedGroupMember}>
+                             <FormControl>
+                               <SelectTrigger className={autoPopulated && selectedGroupMember ? "text-base text-foreground font-medium" : "text-base"}>
+                                 <SelectValue placeholder={autoPopulated && selectedGroupMember ? field.value || "Auto-detected from your profile" : "Choose your name from the list"} className={autoPopulated && selectedGroupMember ? "text-foreground font-medium text-lg" : "text-base"} />
+                               </SelectTrigger>
+                             </FormControl>
+                            <SelectContent className="bg-background border shadow-lg z-50">
+                              {availableMembers
+                                .filter(member => {
+                                  const hasName = member.name && member.name.trim();
+                                  console.log('🚨 DROPDOWN ITEM:', {
+                                    member,
+                                    hasName,
+                                    name: member.name,
+                                    trimmed: member.name?.trim()
+                                  });
+                                  return hasName;
+                                })
+                                .map((member, index) => (
+                                  <SelectItem key={`${member.name}-${index}`} value={member.name}>
+                                    {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
+                                  </SelectItem>
+                                ))}
+                              <SelectItem value="NOT_FOUND" className="text-muted-foreground">
+                                I don&apos;t see my name
+                              </SelectItem>
+                           </SelectContent>
+                         </Select>
+                         <FormMessage />
+                         {autoPopulated && selectedGroupMember && (
+                           <p className="text-xs text-green-600 mt-1">✓ Auto-detected based on your account information</p>
+                         )}
+                         {autoPopulated && !selectedGroupMember && (
+                           <p className="text-xs text-orange-600 mt-1">⚠️ Auto-detection failed - please select your name manually</p>
+                         )}
+                       </FormItem>
+                    );
+                  }}
                 />
               )}
 
