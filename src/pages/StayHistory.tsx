@@ -3,16 +3,29 @@ import { Calendar, DollarSign, Users, FileText, ChevronRight, Clock, MapPin } fr
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { formatDistanceToNow } from "date-fns";
 
 const StayHistory = () => {
   const navigate = useNavigate();
-  const { reservations, loading: reservationsLoading } = useReservations();
+  const { isAdmin, loading: adminLoading } = useOrgAdmin();
+  const { familyGroups, loading: familyGroupsLoading } = useFamilyGroups();
+  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
+  
+  // Configure admin view mode for reservations
+  const adminViewMode = {
+    enabled: isAdmin,
+    familyGroup: selectedFamilyGroup
+  };
+  
+  const { reservations, loading: reservationsLoading } = useReservations(adminViewMode);
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings } = useFinancialSettings();
   
@@ -73,7 +86,7 @@ const StayHistory = () => {
     };
   };
 
-  const isLoading = reservationsLoading || receiptsLoading;
+  const isLoading = reservationsLoading || receiptsLoading || adminLoading || familyGroupsLoading;
 
   if (isLoading) {
     return (
@@ -99,8 +112,29 @@ const StayHistory = () => {
           <div className="text-center">
             <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Stay History</h1>
             <p className="text-muted-foreground text-base">
-              Review your past cabin stays and checkout information
+              {isAdmin ? "Review cabin stays and checkout information for all family groups" : "Review your past cabin stays and checkout information"}
             </p>
+            
+            {/* Admin Family Group Selector */}
+            {isAdmin && (
+              <div className="mt-4 flex justify-center">
+                <div className="w-64">
+                  <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select family group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Family Groups</SelectItem>
+                      {familyGroups.map((group) => (
+                        <SelectItem key={group.id} value={group.name}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -177,7 +211,10 @@ const StayHistory = () => {
 
             {/* Stay List */}
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">Your Stays</h2>
+              <h2 className="text-2xl font-semibold">
+                {isAdmin && selectedFamilyGroup === "all" ? "All Family Group Stays" : 
+                 isAdmin ? `${selectedFamilyGroup} Stays` : "Your Stays"}
+              </h2>
               
               {pastReservations.map((reservation) => {
                 const stayData = calculateStayData(reservation);
@@ -247,7 +284,14 @@ const StayHistory = () => {
                       {/* Expandable details section - could be implemented later */}
                       <div className="mt-4 pt-4 border-t">
                         <div className="flex gap-2">
-                          <Badge variant="outline" className="text-base">
+                          <Badge 
+                            variant="outline" 
+                            className="text-base"
+                            style={{
+                              borderColor: familyGroups.find(fg => fg.name === reservation.family_group)?.color,
+                              backgroundColor: `${familyGroups.find(fg => fg.name === reservation.family_group)?.color}10`
+                            }}
+                          >
                             {reservation.family_group}
                           </Badge>
                           {reservation.status && (

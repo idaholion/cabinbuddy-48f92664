@@ -21,7 +21,7 @@ interface ReservationData {
   host_assignments?: any[];
 }
 
-export const useReservations = () => {
+export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?: string } = { enabled: false }) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
@@ -36,11 +36,17 @@ export const useReservations = () => {
     console.log('Fetching reservations from database...');
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('reservations')
         .select('*')
-        .eq('organization_id', organization.id)
-        .order('start_date', { ascending: true });
+        .eq('organization_id', organization.id);
+
+      // If admin view mode is enabled and a specific family group is selected
+      if (adminViewMode.enabled && adminViewMode.familyGroup && adminViewMode.familyGroup !== 'all') {
+        query = query.eq('family_group', adminViewMode.familyGroup);
+      }
+
+      const { data, error } = await query.order('start_date', { ascending: true });
 
       if (error) {
         console.error('Error fetching reservations:', error);
@@ -352,7 +358,7 @@ export const useReservations = () => {
     if (organization?.id) {
       fetchReservations();
     }
-  }, [organization?.id]);
+  }, [organization?.id, adminViewMode.enabled, adminViewMode.familyGroup]);
 
   return {
     reservations,
