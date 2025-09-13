@@ -115,11 +115,16 @@ export const useWorkWeekends = () => {
         workWeekendData.end_date
       );
 
+      // Determine initial status based on conflicts
+      const initialStatus = conflicts.length === 0 ? 'fully_approved' : 'proposed';
+      
       const dataToSave = {
         ...workWeekendData,
         organization_id: organization.id,
         proposer_user_id: user.id,
         conflict_reservations: conflicts,
+        status: initialStatus,
+        ...(initialStatus === 'fully_approved' && { fully_approved_at: new Date().toISOString() })
       };
 
       const { data: newWorkWeekend, error } = await supabase
@@ -138,7 +143,7 @@ export const useWorkWeekends = () => {
         return null;
       }
 
-      // Create approval records for affected family groups
+      // Only create approval records if there are conflicts
       if (conflicts.length > 0 && newWorkWeekend) {
         const approvalRecords = conflicts.reduce((acc: any[], reservation: any) => {
           if (!acc.find(a => a.family_group === reservation.family_group)) {
@@ -160,10 +165,20 @@ export const useWorkWeekends = () => {
       }
 
       setWorkWeekends(prev => [...prev, newWorkWeekend]);
+      
+      const successMessage = conflicts.length === 0 
+        ? "Work weekend approved and added to calendar!" 
+        : "Work weekend proposed - awaiting family group approvals.";
+        
       toast({
         title: "Success",
-        description: "Work weekend proposed successfully!",
+        description: successMessage,
       });
+
+      // If immediately approved, send notifications
+      if (initialStatus === 'fully_approved') {
+        await sendWorkWeekendNotifications((newWorkWeekend as any).id);
+      }
 
       return newWorkWeekend;
     } catch (error) {
@@ -179,50 +194,6 @@ export const useWorkWeekends = () => {
     }
   };
 
-  const supervisorApprove = async (workWeekendId: string) => {
-    if (!user || !organization?.id) return null;
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('work_weekends' as any)
-        .update({
-          status: 'supervisor_approved',
-          supervisor_approved_at: new Date().toISOString(),
-          supervisor_approved_by: user.email,
-        })
-        .eq('id', workWeekendId)
-        .eq('organization_id', organization.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error approving work weekend:', error);
-        toast({
-          title: "Error",
-          description: "Failed to approve work weekend.",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      setWorkWeekends(prev => 
-        prev.map(ww => ww.id === workWeekendId ? data : ww)
-      );
-
-      toast({
-        title: "Success",
-        description: "Work weekend approved by supervisor!",
-      });
-
-      return data;
-    } catch (error) {
-      console.error('Error in supervisorApprove:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const approveAsGroupLead = async (approvalId: string) => {
     if (!user) return null;
@@ -338,7 +309,6 @@ export const useWorkWeekends = () => {
     pendingApprovals,
     loading,
     proposeWorkWeekend,
-    supervisorApprove,
     approveAsGroupLead,
     refetchWorkWeekends: fetchWorkWeekends,
     refetchPendingApprovals: fetchPendingApprovals,

@@ -13,8 +13,6 @@ export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false }: Wor
     switch (status) {
       case 'proposed':
         return <Clock className="h-3 w-3" />;
-      case 'supervisor_approved':
-        return <AlertTriangle className="h-3 w-3" />;
       case 'fully_approved':
         return <CheckCircle className="h-3 w-3" />;
       default:
@@ -26,8 +24,6 @@ export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false }: Wor
     switch (status) {
       case 'proposed':
         return 'bg-yellow-100 border-yellow-300 text-yellow-800';
-      case 'supervisor_approved':
-        return 'bg-orange-100 border-orange-300 text-orange-800';
       case 'fully_approved':
         return 'bg-green-100 border-green-300 text-green-800';
       case 'rejected':

@@ -2296,8 +2296,6 @@ export type Database = {
           rejection_reason: string | null
           start_date: string
           status: string
-          supervisor_approved_at: string | null
-          supervisor_approved_by: string | null
           title: string
           updated_at: string
         }
@@ -2318,8 +2316,6 @@ export type Database = {
           rejection_reason?: string | null
           start_date: string
           status?: string
-          supervisor_approved_at?: string | null
-          supervisor_approved_by?: string | null
           title: string
           updated_at?: string
         }
@@ -2340,8 +2336,6 @@ export type Database = {
           rejection_reason?: string | null
           start_date?: string
           status?: string
-          supervisor_approved_at?: string | null
-          supervisor_approved_by?: string | null
           title?: string
           updated_at?: string
         }

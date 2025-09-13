@@ -23,11 +23,13 @@ import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
+import { WorkWeekendCalendarEvent } from "@/components/WorkWeekendCalendarEvent";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { EnhancedMonthPicker } from "@/components/EnhancedMonthPicker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
+import { useWorkWeekends } from "@/hooks/useWorkWeekends";  
 import { useOrganization } from "@/hooks/useOrganization";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +51,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
   const { tradeRequests } = useTradeRequests();
+  const { workWeekends, refetchWorkWeekends } = useWorkWeekends();
   const { toast } = useToast();
   
   // Check if user is calendar keeper (case-insensitive email comparison)
@@ -105,6 +108,7 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     showOtherBookings: true, // Make sure other bookings are shown by default
     showTimePeriods: false, // Hidden by default to avoid confusion with actual reservations
     showTradeRequests: true,
+    showWorkWeekends: true,
     familyGroupFilter: 'all'
   });
   const [viewMode, setViewMode] = useState<'calendar' | 'mini'>('calendar');
@@ -149,6 +153,23 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
     });
   };
 
+  // Get work weekends for a specific date
+  const getWorkWeekendsForDate = (date: Date) => {
+    if (!filterOptions.showWorkWeekends) return [];
+    
+    return workWeekends.filter(ww => {
+      if (ww.status !== 'fully_approved') return false;
+      const startDate = parseLocalDate(ww.start_date);
+      const endDate = parseLocalDate(ww.end_date);
+      
+      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const workWeekendStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const workWeekendEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return checkDate >= workWeekendStart && checkDate <= workWeekendEnd;
+    });
+  };
+
   // Function to determine text color based on background color for better contrast
   const getContrastTextColor = (backgroundColor: string) => {
     if (!backgroundColor) return '';
@@ -180,9 +201,10 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   );
 
   const handleBookingComplete = () => {
-    console.log('Booking completed - refreshing reservations');
+    console.log('Booking completed - refreshing reservations and work weekends');
     console.log('Current reservations before refetch:', reservations.length);
     refetchReservations();
+    refetchWorkWeekends();
     
     // Force a re-render after a short delay to ensure state updates
     setTimeout(() => {
@@ -700,6 +722,15 @@ const getBookingsForDate = (date: Date) => {
                         />
                         <span>Trade requests</span>
                       </label>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input 
+                          type="checkbox" 
+                          checked={filterOptions.showWorkWeekends}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showWorkWeekends: e.target.checked}))}
+                          className="rounded border-border"
+                        />
+                        <span>Work weekends</span>
+                      </label>
                     </div>
                   </div>
                   
@@ -846,12 +877,14 @@ const getBookingsForDate = (date: Date) => {
                   <div className="grid grid-cols-7 gap-1">
                      {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
+                const dayWorkWeekends = getWorkWeekendsForDate(day);
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
                 const isToday = day.toDateString() === new Date().toDateString();
                 const hasMyBooking = dayBookings.some(b => b.family_group === userFamilyGroup);
                 const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
+                const hasWorkWeekend = dayWorkWeekends.length > 0;
                 const isSelected = isDateSelected(day);
                 
                 return (
@@ -865,6 +898,8 @@ const getBookingsForDate = (date: Date) => {
                       hasMyBooking ? 'bg-primary/5 border-primary/20' : ''
                     } ${
                       hasPendingTrade ? 'bg-destructive/5 border-destructive/20' : ''
+                    } ${
+                      hasWorkWeekend ? 'bg-green-50 border-green-200' : ''
                     } ${
                       isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
                     } hover:bg-accent/10 hover:shadow-cabin cursor-pointer group`}
@@ -894,6 +929,9 @@ const getBookingsForDate = (date: Date) => {
                         )}
                         {hasPendingTrade && (
                           <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" title="Pending trade" />
+                        )}
+                        {hasWorkWeekend && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full" title="Work weekend" />
                         )}
                         {dayBookings.some(b => b.time_period_number) && (
                           <div className="w-2 h-2 bg-secondary rounded-full" title="Multi-period booking" />
@@ -959,6 +997,15 @@ const getBookingsForDate = (date: Date) => {
                           Trade Request
                         </div>
                       )}
+                      
+                      {/* Work weekends display */}
+                      {dayWorkWeekends.map((workWeekend, i) => (
+                        <WorkWeekendCalendarEvent
+                          key={`${workWeekend.id}-${i}`}
+                          workWeekend={workWeekend}
+                          isCompact={true}
+                        />
+                      ))}
                       
                       {dayBookings.length > 2 && (
                         <div className="text-xs text-muted-foreground bg-muted/30 px-1 rounded">
