@@ -25,7 +25,8 @@ import {
   Sparkles,
   User,
   Shield,
-  StickyNote
+  StickyNote,
+  CreditCard
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -102,6 +103,11 @@ const cabinItems = [
     title: "Check Out",
     url: "/checkout-list",
     icon: CheckSquare,
+  },
+  {
+    title: "Final Checkout",
+    url: "/checkout-final",
+    icon: CreditCard,
   },
 ];
 
