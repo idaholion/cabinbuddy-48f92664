@@ -31,7 +31,8 @@ const customStorage = {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: customStorage,
+    // Temporarily disable custom storage to test navigation
+    // storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,

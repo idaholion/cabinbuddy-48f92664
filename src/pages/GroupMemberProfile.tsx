@@ -35,9 +35,11 @@ const groupMemberProfileSchema = z.object({
 type GroupMemberProfileFormData = z.infer<typeof groupMemberProfileSchema>;
 
 const GroupMemberProfile = () => {
-  console.log('🚨 GroupMemberProfile - Component Loading');
-  console.log('🚨 Current URL:', window.location.href);
-  console.log('🚨 Current pathname:', window.location.pathname);
+  console.log('=== GROUP MEMBER PROFILE COMPONENT LOADING ===');
+  console.log('Current URL:', window.location.href);
+  console.log('Browser history length:', window.history.length);
+  console.log('Document referrer:', document.referrer);
+  console.log('Performance navigation type:', performance.navigation?.type);
   
   const { toast } = useToast();
   const { user, signOut, resetPassword } = useAuth();
