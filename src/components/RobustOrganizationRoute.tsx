@@ -17,6 +17,11 @@ interface RobustOrganizationRouteProps {
 }
 
 export const RobustOrganizationRoute = ({ children }: RobustOrganizationRouteProps) => {
+  console.log('🚨 RobustOrganizationRoute - Starting analysis');
+  console.log('🚨 Current URL:', window.location.href);
+  console.log('🚨 Navigation history length:', window.history.length);
+  console.log('🚨 Document referrer:', document.referrer);
+  
   const { user, loading: authLoading } = useAuth();
   const { 
     organizations, 
@@ -29,6 +34,18 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   const { securityData } = useSecurityMonitoring();
   const location = useLocation();
   const [retryAttempts, setRetryAttempts] = useState(0);
+
+  console.log('🚨 RobustOrganizationRoute - Auth & Org Status:', {
+    hasUser: !!user,
+    userId: user?.id?.substring(0, 8) + '...',
+    userEmail: user?.email,
+    organizationsCount: organizations.length,
+    authLoading,
+    orgLoading,
+    setupLoading,
+    currentPath: location.pathname,
+    setupState: setupState
+  });
 
   // Routes that don't require organization checks
   const exemptRoutes = [
@@ -99,8 +116,16 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   // Check if user needs setup flow - but only redirect if they don't have organizations
   if (setupState.isInSetupFlow && organizations.length === 0) {
     const setupPath = getSetupRedirectPath();
+    console.log('🚨 POTENTIAL REDIRECT TO SETUP:', {
+      currentPath: location.pathname,
+      setupPath,
+      setupState,
+      organizationsLength: organizations.length,
+      willRedirect: setupPath && location.pathname !== setupPath
+    });
+    
     if (setupPath && location.pathname !== setupPath) {
-      console.log('Redirecting to setup flow:', { currentPath: location.pathname, setupPath, setupState });
+      console.log('🚨 REDIRECTING TO SETUP FLOW:', { currentPath: location.pathname, setupPath, setupState });
       return <Navigate to={setupPath} replace />;
     }
   }
