@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,11 +44,28 @@ interface PropertyCalendarProps {
   selectedFamilyGroupFilter?: string;
 }
 
-export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: PropertyCalendarProps) => {
+export interface PropertyCalendarRef {
+  scrollToWorkWeekend: () => void;
+}
+
+export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendarProps>(({ onMonthChange, selectedFamilyGroupFilter }, ref) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { reservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
+  
+  // Work weekend accordion state and ref
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
+  const workWeekendSectionRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollToWorkWeekend: () => {
+      setAccordionValue(prev => prev.includes('work-weekend') ? prev : [...prev, 'work-weekend']);
+      setTimeout(() => {
+        workWeekendSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }));
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { rotationData } = useRotationOrder();
   const { familyGroups } = useFamilyGroups();
@@ -1252,6 +1270,25 @@ const getBookingsForDate = (date: Date) => {
         </CardContent>
       </Card>
 
+      {/* Work Weekend Proposals - Between calendar and upcoming reservations */}
+      <div ref={workWeekendSectionRef}>
+        <Accordion 
+          type="multiple" 
+          className="space-y-2"
+          value={accordionValue}
+          onValueChange={setAccordionValue}
+        >
+          <AccordionItem value="work-weekend" className="border rounded-lg">
+            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
+              Work Weekend Proposals
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 animate-accordion-down">
+              <WorkWeekendProposalForm />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
       {/* Upcoming Reservations */}
       <Card>
         <CardHeader>
@@ -1563,4 +1600,6 @@ const getBookingsForDate = (date: Date) => {
       />
     </div>
   );
-};
+});
+
+PropertyCalendar.displayName = "PropertyCalendar";

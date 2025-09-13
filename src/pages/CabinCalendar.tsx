@@ -5,13 +5,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon, ArrowRight } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon, ArrowRight, Hammer } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
-import { PropertyCalendar } from "@/components/PropertyCalendar";
+import { PropertyCalendar, PropertyCalendarRef } from "@/components/PropertyCalendar";
 import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
-
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
@@ -34,11 +33,17 @@ const CabinCalendar = () => {
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
   const { toast } = useToast();
+  
+  // State variables
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [tradeRequestOpen, setTradeRequestOpen] = useState(false);
+  const [multiPeriodBookingOpen, setMultiPeriodBookingOpen] = useState(false);
+  const [manualDateSelectionOpen, setManualDateSelectionOpen] = useState(false);
+  const propertyCalendarRef = useRef<PropertyCalendarRef>(null);
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
-  const [manualDateSelectionOpen, setManualDateSelectionOpen] = useState(false);
   const workWeekendSectionRef = useRef<HTMLDivElement>(null);
 
   // Get user role information
@@ -314,17 +319,11 @@ const CabinCalendar = () => {
                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => {
-                                setAccordionValue(["work-weekend"]);
-                                setTimeout(() => {
-                                  workWeekendSectionRef.current?.scrollIntoView({ 
-                                    behavior: 'smooth', 
-                                    block: 'start' 
-                                  });
-                                }, 100);
+                                propertyCalendarRef.current?.scrollToWorkWeekend();
                               }}
                               className="hover-scale"
                             >
-                              <Clock className="h-4 w-4 mr-2" />
+                              <Hammer className="mr-2 h-4 w-4" />
                               Work Weekend
                             </DropdownMenuItem>
                            <DropdownMenuSeparator />
@@ -420,28 +419,10 @@ const CabinCalendar = () => {
             {/* Calendar - Main focus */}
             <div className="grid grid-cols-1 gap-4">
               <PropertyCalendar 
+                ref={propertyCalendarRef}
                 onMonthChange={setCurrentCalendarMonth}
                 selectedFamilyGroupFilter=""
               />
-            </div>
-
-            {/* Work Weekend Proposals - Right below calendar */}
-            <div ref={workWeekendSectionRef} className="mt-4">
-              <Accordion 
-                type="multiple" 
-                className="space-y-2"
-                value={accordionValue}
-                onValueChange={setAccordionValue}
-              >
-                <AccordionItem value="work-weekend" className="border rounded-lg">
-                  <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                    Work Weekend Proposals
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 animate-accordion-down">
-                    <WorkWeekendProposalForm />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
             </div>
 
 
