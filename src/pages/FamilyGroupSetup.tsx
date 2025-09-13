@@ -275,10 +275,9 @@ const FamilyGroupSetup = () => {
     });
     
     // Only update if we have group members and any lead info
-    // Skip if we're loading an existing group (selectedGroup is not empty)
+    // Allow updates for both new groups and existing groups when lead info changes
     if (currentGroupMembers && currentGroupMembers.length > 0 && 
-        (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail) &&
-        !watchedData.selectedGroup) {
+        (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail)) {
       
       // Create a copy to avoid mutations
       const updatedGroupMembers = [...currentGroupMembers];
