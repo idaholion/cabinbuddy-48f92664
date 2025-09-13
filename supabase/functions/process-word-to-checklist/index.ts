@@ -101,9 +101,14 @@ CRITICAL TEXT PRESERVATION:
 - DO NOT shorten or condense any instruction content
 - Maintain the EXACT wording and complete details of each step
 
-IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text. 
+IMPORTANT: When you see image markers like [IMAGE:filename.jpg] or {{filename.jpg}}, associate them with the checklist item that immediately precedes them in the text.
 
 CRITICAL FOR CONSECUTIVE IMAGES: When multiple image markers appear together (like [IMAGE:Picture1.jpg] [IMAGE:Picture2.jpg] [IMAGE:Picture3.jpg]), ALL of these images belong to the same preceding checklist item. You MUST capture ALL consecutive image markers that follow a checklist item.
+
+CRITICAL MARKER PRESERVATION: When extracting image markers, preserve the EXACT marker name as it appears in the source text. Do NOT add file extensions like .jpg or .png if they are not present in the original marker. For example:
+- If the text has [IMAGE:Bear1], the imageMarker should be "Bear1" (not "Bear1.jpg")  
+- If the text has [IMAGE:Camera2], the imageMarker should be "Camera2" (not "Camera2.jpg")
+- Only include file extensions if they appear in the original text
 
 DO NOT include the image markers in the item text - remove them and put ALL marker references in the imageMarker field.
 
@@ -117,7 +122,7 @@ Each checklist item has:
 - id: unique identifier (string)  
 - text: the COMPLETE AND FULL instruction text WITHOUT any image markers (preserve ALL sentences and details)
 - completed: false (boolean)
-- imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item, even if they're grouped together (string with comma-separated markers like "Picture1.jpg,Picture2.jpg,Picture3.jpg,Picture4.jpg,Picture5.jpg", optional)
+- imageMarker: if image markers appear after this item in the original text, include ALL markers that follow this item, preserving EXACT marker names from source text without adding file extensions (string with comma-separated markers like "Picture1,Picture2,Picture3" - only add extensions if present in original text, optional)
 - formatting: object with formatting hints:
   - bold: true if text should be bold (for important steps, warnings)
   - italic: true if text should be italic (for notes, tips)
@@ -185,6 +190,11 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
           if (item.imageMarker) {
             console.log(`Item ${index + 1} has imageMarker:`, item.imageMarker);
             console.log(`Item ${index + 1} text:`, item.text.substring(0, 100));
+            
+            // Check for inconsistency: marker contains file extensions when it shouldn't
+            if (item.imageMarker.includes('.jpg') || item.imageMarker.includes('.png')) {
+              console.log('⚠️ WARNING: AI added file extension to marker:', item.imageMarker);
+            }
           }
         });
         console.log('Items with imageMarker:', checklistItems.filter(item => item.imageMarker).length);
@@ -545,7 +555,7 @@ async function processImageMarkersAndFiles(
   for (const match of matchedImages) {
     console.log(`\n🚨 --- Processing matched image: ${match.marker} ---`);
     
-    // Find the marker in our markers array
+    // Find the marker in our markers array - improve matching
     const markerObj = markers.find(m => {
       const cleanMarkerName = m.marker
         .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
@@ -553,6 +563,7 @@ async function processImageMarkersAndFiles(
         .replace(/\]$/, '') // Remove ] suffix
         .replace(/^\{\{/, '') // Remove {{ prefix
         .replace(/\}\}$/, '') // Remove }} suffix
+        .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
         .trim();
       
       const cleanMatchMarker = match.marker
@@ -561,9 +572,13 @@ async function processImageMarkersAndFiles(
         .replace(/\]$/, '') // Remove ] suffix
         .replace(/^\{\{/, '') // Remove {{ prefix
         .replace(/\}\}$/, '') // Remove }} suffix
+        .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
         .trim();
         
-      return cleanMarkerName.toLowerCase() === cleanMatchMarker.toLowerCase();
+      console.log(`🔍 Comparing markers: "${cleanMarkerName}" vs "${cleanMatchMarker}"`);
+      return cleanMarkerName.toLowerCase() === cleanMatchMarker.toLowerCase() ||
+             cleanMarkerName.toLowerCase().includes(cleanMatchMarker.toLowerCase()) ||
+             cleanMatchMarker.toLowerCase().includes(cleanMarkerName.toLowerCase());
     });
 
     if (!markerObj) {

@@ -92,14 +92,14 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           detectedMarkers.forEach(marker => {
             console.log('🚨 Processing marker:', marker);
             
-            // Normalize the detected marker for comparison
+            // Normalize the detected marker for comparison - be more aggressive with cleaning
             let cleanMarker = marker
               .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
               .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
               .replace(/\]$/, '') // Remove ] suffix
               .replace(/^\{\{/, '') // Remove {{ prefix
               .replace(/\}\}$/, '') // Remove }} suffix
-              .replace(/\.(jpg|jpeg|png|gif|webp)$/i, '') // Remove file extension
+              .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
               .toLowerCase()
               .trim();
             
@@ -115,9 +115,14 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
               const matchingImage = uniqueImages.find(img => {
                 if (!img.originalMarker) return false;
                 
-                // Normalize the original marker from the image
+                // Normalize the original marker from the image - be more aggressive with cleaning
                 let cleanOriginal = img.originalMarker
-                  .replace(/\.(jpg|jpeg|png|gif|webp)$/i, '') // Remove file extension
+                  .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix (in case it's stored with brackets)
+                  .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
+                  .replace(/\]$/, '') // Remove ] suffix
+                  .replace(/^\{\{/, '') // Remove {{ prefix
+                  .replace(/\}\}$/, '') // Remove }} suffix
+                  .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
                   .toLowerCase()
                   .trim();
                 
