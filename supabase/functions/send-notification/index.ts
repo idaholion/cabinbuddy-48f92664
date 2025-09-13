@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved';
   reservation?: {
     id: string;
     family_group_name: string;
@@ -52,6 +52,20 @@ interface NotificationRequest {
     selection_start_date: string;
     selection_end_date: string;
     available_periods: string;
+  };
+  // For work weekend notifications
+  work_weekend_data?: {
+    id: string;
+    title: string;
+    description?: string;
+    start_date: string;
+    end_date: string;
+    proposer_name: string;
+    proposer_family_group?: string;
+    invitation_message?: string;
+    recipient_name: string;
+    recipient_email: string;
+    recipient_family_group?: string;
   };
 }
 
@@ -355,6 +369,94 @@ const handler = async (req: Request): Promise<Response> => {
         }
         
         smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
+        break;
+
+      case 'work_weekend_proposed':
+        if (!work_weekend_data) throw new Error('Work weekend data required for work weekend proposal');
+        
+        subject = `Work Weekend Proposed: ${work_weekend_data.title}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #2d5d2d; text-align: center;">🔨 Work Weekend Proposed</h1>
+            <p>Hi ${work_weekend_data.recipient_name},</p>
+            <p>A work weekend has been proposed for the cabin and your approval may be needed.</p>
+            
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0;">📋 Work Weekend Details:</h3>
+              <p><strong>Title:</strong> ${work_weekend_data.title}</p>
+              <p><strong>Proposed by:</strong> ${work_weekend_data.proposer_name} (${work_weekend_data.proposer_family_group || 'Unknown Group'})</p>
+              <p><strong>Dates:</strong> ${new Date(work_weekend_data.start_date).toLocaleDateString()} - ${new Date(work_weekend_data.end_date).toLocaleDateString()}</p>
+              ${work_weekend_data.description ? `<p><strong>Description:</strong> ${work_weekend_data.description}</p>` : ''}
+              ${work_weekend_data.invitation_message ? `<p><strong>Message:</strong> ${work_weekend_data.invitation_message}</p>` : ''}
+            </div>
+            
+            <p>Please review this proposal and provide your approval if needed.</p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `Work weekend proposed: "${work_weekend_data.title}" ${new Date(work_weekend_data.start_date).toLocaleDateString()}-${new Date(work_weekend_data.end_date).toLocaleDateString()} by ${work_weekend_data.proposer_name}. - ${organizationName}`;
+        break;
+
+      case 'work_weekend_invitation':
+        if (!work_weekend_data) throw new Error('Work weekend data required for work weekend invitation');
+        
+        subject = `Join Us: ${work_weekend_data.title}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #2d5d2d; text-align: center;">🏡 You're Invited to Help!</h1>
+            <p>Hi ${work_weekend_data.recipient_name},</p>
+            <p>You're invited to participate in an upcoming work weekend at the cabin.</p>
+            
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #2d5d2d;">🔨 Work Weekend Details:</h3>
+              <p><strong>Title:</strong> ${work_weekend_data.title}</p>
+              <p><strong>Organized by:</strong> ${work_weekend_data.proposer_name} (${work_weekend_data.proposer_family_group || 'Unknown Group'})</p>
+              <p><strong>Dates:</strong> ${new Date(work_weekend_data.start_date).toLocaleDateString()} - ${new Date(work_weekend_data.end_date).toLocaleDateString()}</p>
+              ${work_weekend_data.description ? `<p><strong>What we'll be doing:</strong> ${work_weekend_data.description}</p>` : ''}
+            </div>
+            
+            ${work_weekend_data.invitation_message ? `
+              <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2d5d2d;">
+                <p style="margin: 0; font-style: italic;">"${work_weekend_data.invitation_message}"</p>
+              </div>
+            ` : ''}
+            
+            <p>Your help would be greatly appreciated! Please let us know if you can participate.</p>
+            <p style="margin-top: 30px;">Looking forward to working together,<br><strong>${organizationName} Team</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `You're invited to work weekend: "${work_weekend_data.title}" ${new Date(work_weekend_data.start_date).toLocaleDateString()}-${new Date(work_weekend_data.end_date).toLocaleDateString()}. Can you help? - ${organizationName}`;
+        break;
+
+      case 'work_weekend_approved':
+        if (!work_weekend_data) throw new Error('Work weekend data required for work weekend approval');
+        
+        subject = `Work Weekend Approved: ${work_weekend_data.title}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #2d5d2d; text-align: center;">✅ Work Weekend Approved</h1>
+            <p>Hi ${work_weekend_data.recipient_name},</p>
+            <p>Great news! The following work weekend has been approved and is now scheduled.</p>
+            
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #2d5d2d;">📅 Scheduled Work Weekend:</h3>
+              <p><strong>Title:</strong> ${work_weekend_data.title}</p>
+              <p><strong>Organized by:</strong> ${work_weekend_data.proposer_name} (${work_weekend_data.proposer_family_group || 'Unknown Group'})</p>
+              <p><strong>Dates:</strong> ${new Date(work_weekend_data.start_date).toLocaleDateString()} - ${new Date(work_weekend_data.end_date).toLocaleDateString()}</p>
+              ${work_weekend_data.description ? `<p><strong>Planned work:</strong> ${work_weekend_data.description}</p>` : ''}
+            </div>
+            
+            <p>Mark your calendars and consider joining us if you're available. Every helping hand makes a difference!</p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `Work weekend approved: "${work_weekend_data.title}" ${new Date(work_weekend_data.start_date).toLocaleDateString()}-${new Date(work_weekend_data.end_date).toLocaleDateString()}. Join us if available! - ${organizationName}`;
         break;
       
       // Keep existing cases for confirmation, cancellation, assistance_request...

@@ -2278,6 +2278,48 @@ export type Database = {
           },
         ]
       }
+      work_weekend_comments: {
+        Row: {
+          comment: string
+          commenter_email: string
+          commenter_family_group: string | null
+          commenter_name: string
+          created_at: string
+          id: string
+          interest_level: string | null
+          organization_id: string
+          updated_at: string
+          user_id: string
+          work_weekend_id: string
+        }
+        Insert: {
+          comment: string
+          commenter_email: string
+          commenter_family_group?: string | null
+          commenter_name: string
+          created_at?: string
+          id?: string
+          interest_level?: string | null
+          organization_id: string
+          updated_at?: string
+          user_id: string
+          work_weekend_id: string
+        }
+        Update: {
+          comment?: string
+          commenter_email?: string
+          commenter_family_group?: string | null
+          commenter_name?: string
+          created_at?: string
+          id?: string
+          interest_level?: string | null
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+          work_weekend_id?: string
+        }
+        Relationships: []
+      }
       work_weekends: {
         Row: {
           conflict_reservations: Json | null
@@ -2286,6 +2328,10 @@ export type Database = {
           end_date: string
           fully_approved_at: string | null
           id: string
+          invitation_message: string | null
+          invited_all_members: boolean | null
+          invited_family_leads: boolean | null
+          notifications_sent_at: string | null
           organization_id: string
           proposer_email: string
           proposer_family_group: string | null
@@ -2306,6 +2352,10 @@ export type Database = {
           end_date: string
           fully_approved_at?: string | null
           id?: string
+          invitation_message?: string | null
+          invited_all_members?: boolean | null
+          invited_family_leads?: boolean | null
+          notifications_sent_at?: string | null
           organization_id: string
           proposer_email: string
           proposer_family_group?: string | null
@@ -2326,6 +2376,10 @@ export type Database = {
           end_date?: string
           fully_approved_at?: string | null
           id?: string
+          invitation_message?: string | null
+          invited_all_members?: boolean | null
+          invited_family_leads?: boolean | null
+          notifications_sent_at?: string | null
           organization_id?: string
           proposer_email?: string
           proposer_family_group?: string | null

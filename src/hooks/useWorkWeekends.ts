@@ -13,6 +13,9 @@ interface WorkWeekendData {
   proposer_name: string;
   proposer_email: string;
   proposer_family_group?: string;
+  invitation_message?: string;
+  invite_family_leads?: boolean;
+  invite_all_members?: boolean;
 }
 
 export const useWorkWeekends = () => {
@@ -177,7 +180,7 @@ export const useWorkWeekends = () => {
 
       // If immediately approved, send notifications
       if (initialStatus === 'fully_approved') {
-        await sendWorkWeekendNotifications((newWorkWeekend as any).id);
+        await sendWorkWeekendNotifications((newWorkWeekend as any).id, 'work_weekend_approved');
       }
 
       return newWorkWeekend;
@@ -266,32 +269,89 @@ export const useWorkWeekends = () => {
           .eq('id', workWeekendId);
 
         // Send notifications to all family groups and hosts
-        await sendWorkWeekendNotifications(workWeekendId);
+        await sendWorkWeekendNotifications(workWeekendId, 'work_weekend_approved');
       }
     } catch (error) {
       console.error('Error checking for full approval:', error);
     }
   };
 
-  const sendWorkWeekendNotifications = async (workWeekendId: string) => {
+  const sendWorkWeekendNotifications = async (
+    workWeekendId: string, 
+    notificationType: 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved',
+    targetFamilyGroups?: string[]
+  ) => {
     try {
-      // Get work weekend details
-      const { data: workWeekend } = await supabase
-        .from('work_weekends' as any)
+      if (!organization?.id) return;
+
+      // Get the work weekend details
+      const { data: workWeekend, error: weekendError } = await supabase
+        .from('work_weekends')
         .select('*')
         .eq('id', workWeekendId)
         .single();
 
-      if (!workWeekend) return;
+      if (weekendError || !workWeekend) {
+        console.error('Error fetching work weekend:', weekendError);
+        return;
+      }
 
-      // Send notification via existing edge function
-      await supabase.functions.invoke('send-notification', {
-        body: {
-          type: 'work_weekend_approved',
-          organization_id: organization?.id,
-          work_weekend: workWeekend,
+      // Get family groups to notify
+      let familyGroupsToNotify: string[] = [];
+
+      if (targetFamilyGroups) {
+        // Specific family groups (for approval notifications)
+        familyGroupsToNotify = targetFamilyGroups;
+      } else if (workWeekend.invited_all_members) {
+        // All family groups
+        const { data: allGroups } = await supabase
+          .from('family_groups')
+          .select('name')
+          .eq('organization_id', organization.id);
+        familyGroupsToNotify = allGroups?.map(g => g.name) || [];
+      } else if (workWeekend.invited_family_leads || notificationType === 'work_weekend_approved') {
+        // Just family leads
+        const { data: leadGroups } = await supabase
+          .from('family_groups')
+          .select('name')
+          .eq('organization_id', organization.id)
+          .not('lead_email', 'is', null);
+        familyGroupsToNotify = leadGroups?.map(g => g.name) || [];
+      }
+
+      // Send notifications to each family group
+      for (const familyGroupName of familyGroupsToNotify) {
+        const { data: familyGroup } = await supabase
+          .from('family_groups')
+          .select('lead_name, lead_email, lead_phone')
+          .eq('organization_id', organization.id)
+          .eq('name', familyGroupName)
+          .single();
+
+        if (familyGroup?.lead_email) {
+          await supabase.functions.invoke('send-notification', {
+            body: {
+              type: notificationType,
+              organization_id: organization.id,
+              work_weekend_data: {
+                id: workWeekend.id,
+                title: workWeekend.title,
+                description: workWeekend.description,
+                start_date: workWeekend.start_date,
+                end_date: workWeekend.end_date,
+                proposer_name: workWeekend.proposer_name,
+                proposer_family_group: workWeekend.proposer_family_group,
+                invitation_message: workWeekend.invitation_message,
+                recipient_name: familyGroup.lead_name || 'Family Lead',
+                recipient_email: familyGroup.lead_email,
+                recipient_family_group: familyGroupName,
+              }
+            }
+          });
         }
-      });
+      }
+
+      console.log(`Sent ${notificationType} notifications for work weekend:`, workWeekendId);
     } catch (error) {
       console.error('Error sending work weekend notifications:', error);
     }

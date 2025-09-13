@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { WorkWeekendCommentsSection } from './WorkWeekendCommentsSection';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { CheckCircle, Clock, AlertTriangle, Calendar, Users } from 'lucide-react';
 import { format } from 'date-fns';
@@ -135,6 +136,9 @@ export const WorkWeekendApprovals = () => {
                     </p>
                   </div>
                 )}
+
+                {/* Comments Section */}
+                <WorkWeekendCommentsSection workWeekendId={workWeekend.id} />
               </div>
             ))
           )}

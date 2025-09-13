@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '@/contexts/AuthContext';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { CalendarIcon, Users, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, Users, AlertTriangle, Mail } from 'lucide-react';
 
 interface WorkWeekendProposalFormProps {
   onSuccess?: () => void;
@@ -22,6 +23,9 @@ export const WorkWeekendProposalForm = ({ onSuccess }: WorkWeekendProposalFormPr
     description: '',
     start_date: '',
     end_date: '',
+    invitation_message: '',
+    invite_family_leads: true,
+    invite_all_members: false,
   });
 
   // Get user's family group
@@ -52,12 +56,15 @@ export const WorkWeekendProposalForm = ({ onSuccess }: WorkWeekendProposalFormPr
         description: '',
         start_date: '',
         end_date: '',
+        invitation_message: '',
+        invite_family_leads: true,
+        invite_all_members: false,
       });
       onSuccess?.();
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -74,9 +81,9 @@ export const WorkWeekendProposalForm = ({ onSuccess }: WorkWeekendProposalFormPr
             <p className="font-medium mb-1">How Work Weekends Work:</p>
             <ul className="space-y-1 text-xs">
               <li>• Anyone can propose work weekend dates</li>
-              <li>• Supervisor must approve first</li>
-              <li>• Affected family groups (with overlapping reservations) must also approve</li>
-              <li>• Once fully approved, all organization members are notified</li>
+              <li>• If conflicts exist, affected family groups must approve</li>
+              <li>• Otherwise work weekends are automatically approved</li>
+              <li>• You can invite people to participate and comment</li>
             </ul>
           </div>
         </div>
@@ -127,6 +134,52 @@ export const WorkWeekendProposalForm = ({ onSuccess }: WorkWeekendProposalFormPr
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
             />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">Invitation Options</Label>
+            </div>
+            
+            <div className="space-y-3 ml-6">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="invite_family_leads"
+                  checked={formData.invite_family_leads}
+                  onCheckedChange={(checked) => 
+                    handleInputChange('invite_family_leads', checked as boolean)
+                  }
+                />
+                <Label htmlFor="invite_family_leads" className="text-sm">
+                  Notify family group leads
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="invite_all_members"
+                  checked={formData.invite_all_members}
+                  onCheckedChange={(checked) => 
+                    handleInputChange('invite_all_members', checked as boolean)
+                  }
+                />
+                <Label htmlFor="invite_all_members" className="text-sm">
+                  Invite all organization members
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="invitation_message">Personal Message (Optional)</Label>
+              <Textarea
+                id="invitation_message"
+                placeholder="Add a personal message for the invitation..."
+                rows={2}
+                value={formData.invitation_message}
+                onChange={(e) => handleInputChange('invitation_message', e.target.value)}
+              />
+            </div>
           </div>
 
           {userFamilyGroup && (
