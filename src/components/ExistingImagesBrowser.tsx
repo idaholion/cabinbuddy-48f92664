@@ -90,6 +90,8 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
           
           detectedMarkers.forEach(marker => {
+            console.log('🚨 Processing marker:', marker);
+            
             // Normalize the detected marker for comparison
             let cleanMarker = marker
               .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
@@ -101,11 +103,13 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
               .toLowerCase()
               .trim();
             
+            console.log('🚨 Cleaned marker:', cleanMarker);
+            
             // Handle comma-separated markers by splitting
-            const markerParts = cleanMarker.split(',').map(part => part.trim());
+            const markerParts = cleanMarker.split(',').map(part => part.trim()).filter(part => part);
             
             markerParts.forEach(markerPart => {
-              if (!markerPart) return;
+              console.log('🚨 Looking for matches for marker part:', markerPart);
               
               // Try to find a matching image
               const matchingImage = uniqueImages.find(img => {
@@ -117,23 +121,31 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
                   .toLowerCase()
                   .trim();
                 
+                console.log('🚨   Comparing with original:', img.originalMarker, '-> cleaned:', cleanOriginal);
+                
                 // Handle comma-separated original markers
-                const originalParts = cleanOriginal.split(',').map(part => part.trim());
+                const originalParts = cleanOriginal.split(',').map(part => part.trim()).filter(part => part);
                 
                 // Check if any part matches
-                return originalParts.some(origPart => {
-                  return origPart === markerPart ||
-                         origPart.includes(markerPart) ||
-                         markerPart.includes(origPart);
+                const isMatch = originalParts.some(origPart => {
+                  const exactMatch = origPart === markerPart;
+                  const containsMatch = origPart.includes(markerPart) || markerPart.includes(origPart);
+                  console.log(`🚨     "${origPart}" vs "${markerPart}" - exact: ${exactMatch}, contains: ${containsMatch}`);
+                  return exactMatch || containsMatch;
                 });
+                
+                return isMatch;
               });
               
               if (matchingImage && !matches.find(m => m.imageUrl === matchingImage.url)) {
+                console.log('🚨 ✅ FOUND MATCH:', markerPart, '->', matchingImage.originalMarker);
                 matches.push({
                   marker: marker,
                   imageUrl: matchingImage.url,
                   description: matchingImage.description
                 });
+              } else if (!matchingImage) {
+                console.log('🚨 ❌ NO MATCH for:', markerPart);
               }
             });
           });
