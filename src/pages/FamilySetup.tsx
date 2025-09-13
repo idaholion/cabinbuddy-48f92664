@@ -373,6 +373,27 @@ const FamilySetup = () => {
     }
   }, [reservationSettings, isCreatingNew]);
 
+  // Auto-populate admin fields with current user data if empty
+  useEffect(() => {
+    if (user && !adminName && !adminEmail) {
+      console.log('🔍 [FAMILY SETUP] Auto-populating admin fields from user data:', {
+        userMetadata: user.user_metadata,
+        email: user.email
+      });
+      
+      const firstName = user.user_metadata?.first_name || '';
+      const lastName = user.user_metadata?.last_name || '';
+      const fullName = user.user_metadata?.display_name || `${firstName} ${lastName}`.trim();
+      
+      if (fullName) {
+        setAdminName(fullName);
+      }
+      if (user.email) {
+        setAdminEmail(user.email);
+      }
+    }
+  }, [user, adminName, adminEmail]);
+
   // Save organization setup
   const saveOrganizationSetup = async () => {
     if (!orgName.trim() || !organizationCode.trim()) {
