@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -9,6 +9,7 @@ import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
+import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -25,6 +26,9 @@ const CheckoutFinal = () => {
     totalTasks: number;
     completedTasks: number;
   } | null>(null);
+
+  // Early checkout dialog state
+  const [earlyCheckoutOpen, setEarlyCheckoutOpen] = useState(false);
 
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
@@ -136,6 +140,16 @@ const CheckoutFinal = () => {
 
   // Check if we have the necessary data to show checkout
   const hasStayData = currentReservation && checkoutData.checkInDate && checkoutData.checkOutDate;
+
+  // Check if early checkout is possible (reservation extends beyond today)
+  const canEarlyCheckout = currentReservation && 
+    new Date(currentReservation.end_date) > new Date() && 
+    checklistStatus?.isComplete;
+
+  const handleEarlyCheckoutComplete = () => {
+    // Refresh reservations data after early checkout
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -418,6 +432,41 @@ const CheckoutFinal = () => {
                 </CardContent>
               </Card>
 
+              {/* Early Checkout Option */}
+              {canEarlyCheckout && (
+                <Card className="mb-6 border-orange-200 dark:border-orange-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                      <Clock className="h-5 w-5" />
+                      Early Checkout Available
+                    </CardTitle>
+                    <CardDescription>
+                      Leaving early? Manage your remaining reservation time.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Your reservation continues until {new Date(currentReservation.end_date).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm font-medium">
+                          Cancel remaining days, transfer to family, or offer to others
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => setEarlyCheckoutOpen(true)}
+                        className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        Early Checkout
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Payment Options */}
               <Card className="mb-6">
                 <CardHeader>
@@ -509,6 +558,14 @@ const CheckoutFinal = () => {
             </div>
           </>
         )}
+
+        {/* Early Checkout Dialog */}
+        <EarlyCheckoutDialog
+          open={earlyCheckoutOpen}
+          onOpenChange={setEarlyCheckoutOpen}
+          reservation={currentReservation}
+          onComplete={handleEarlyCheckoutComplete}
+        />
       </div>
     </div>
   );
