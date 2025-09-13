@@ -41,74 +41,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   useEffect(() => {
-    // Clear any mock authentication data
-    localStorage.removeItem('mock-auth-user');
-    localStorage.removeItem('mock-auth-token');
-    
-    console.log('🔐 AuthProvider initializing...');
-    console.log('🔐 Current localStorage keys:', Object.keys(localStorage));
-    console.log('🔐 Auth-related localStorage:', Object.keys(localStorage).filter(k => k.includes('auth') || k.includes('supabase')));
-    
-    // Log all auth-related localStorage items
-    Object.keys(localStorage).forEach(key => {
-      if (key.includes('auth') || key.includes('supabase')) {
-        const value = localStorage.getItem(key);
-        console.log(`🔐 localStorage[${key}]:`, value ? value.substring(0, 100) + '...' : value);
-      }
-    });
+    let mounted = true;
 
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         console.log('🔐 Auth state change:', { 
           event, 
           hasSession: !!session, 
           userId: session?.user?.id,
           userEmail: session?.user?.email,
-          userMetadata: session?.user?.user_metadata,
-          previousUserId: user?.id,
-          previousUserEmail: user?.email,
           timestamp: new Date().toISOString()
         });
-        
-        // CRITICAL DEBUG: Alert what account is actually logged in
-        if (session?.user) {
-          console.log('🚨 CRITICAL DEBUG: User logged in as:', session.user.email);
-          console.log('🚨 User ID:', session.user.id);
-          console.log('🚨 Full user object:', session.user);
-        } else {
-          console.log('🚨 CRITICAL DEBUG: No user session found');
-        }
-        
-        // Log session details if available
-        if (session) {
-          console.log('🔐 Session details:', {
-            expires_at: session.expires_at,
-            token_type: session.token_type,
-            user: {
-              id: session.user.id,
-              email: session.user.email,
-              email_confirmed_at: session.user.email_confirmed_at,
-              created_at: session.user.created_at,
-              user_metadata: session.user.user_metadata
-            }
-          });
-        }
         
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        // Organization routing is now handled by RobustOrganizationRoute
       }
     );
 
-    // Get initial session
+    // THEN get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       console.log('🔐 Initial session loaded:', {
         hasSession: !!session,
         userId: session?.user?.id,
         userEmail: session?.user?.email,
-        userMetadata: session?.user?.user_metadata,
         timestamp: new Date().toISOString()
       });
       
@@ -117,7 +78,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {

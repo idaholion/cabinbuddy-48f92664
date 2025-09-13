@@ -31,10 +31,9 @@ const customStorage = {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    // Temporarily disable custom storage to test navigation
-    // storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
+    storage: window.localStorage, // Force localStorage for session persistence
   }
 });
