@@ -1,6 +1,5 @@
 import { Component, ReactNode } from 'react';
 import { ErrorState } from '@/components/ui/error-boundary';
-import { useProductionLogger } from '@/hooks/useProductionLogger';
 
 interface Props {
   children: ReactNode;

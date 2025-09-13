@@ -21,24 +21,12 @@ const Login = () => {
 
   // Only redirect if not in debug mode (check for debug query param or debug mode indicator)
   useEffect(() => {
-    console.log('=== LOGIN PAGE EFFECT ===');
-    console.log('Current URL:', window.location.href);
-    console.log('Has user:', !!user);
-    console.log('User ID:', user?.id?.substring(0, 8) + '...');
-    console.log('User email:', user?.email);
-    
     const urlParams = new URLSearchParams(window.location.search);
     const isDebugMode = urlParams.has('debug') || window.location.hostname === 'localhost' || process.env.NODE_ENV === 'development';
-    console.log('Is debug mode:', isDebugMode);
     
     if (user && !isDebugMode) {
-      console.log('✅ User is authenticated, determining redirect...');
       const setupPath = getSetupRedirectPath();
-      console.log('Setup path:', setupPath);
-      console.log('Will navigate to:', setupPath || "/home");
       navigate(setupPath || "/home");
-    } else {
-      console.log('❌ Not redirecting - user:', !!user, 'debugMode:', isDebugMode);
     }
   }, [user, navigate, getSetupRedirectPath]);
 
