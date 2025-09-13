@@ -1306,6 +1306,9 @@ const getBookingsForDate = (date: Date) => {
                 const next60Days = new Date(today);
                 next60Days.setDate(today.getDate() + 60);
                 
+                // Debug logging to see what's happening
+                console.log(`Checking reservation ${reservation.id}: ${reservation.start_date}, startDate: ${startDate}, today: ${today}, next60Days: ${next60Days}, passes filter: ${startDate >= today && startDate <= next60Days}`);
+                
                 // Show reservations that start today or in the future, but within the next 60 days
                 return startDate >= today && startDate <= next60Days;
               })
