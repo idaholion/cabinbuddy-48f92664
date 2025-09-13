@@ -182,6 +182,12 @@ const GroupMemberProfile = () => {
 
   // Update form fields when member name changes
   useEffect(() => {
+    console.log('🚨 MEMBER NAME SELECTION EFFECT - START:', {
+      watchedMemberName,
+      availableMembersCount: availableMembers.length,
+      availableMembers: availableMembers.map(m => ({ name: m.name, trimmed: m.name?.trim() }))
+    });
+
     if (watchedMemberName && availableMembers.length > 0) {
       if (watchedMemberName === "NOT_FOUND") {
         // Handle "I don't see my name" selection
@@ -199,12 +205,42 @@ const GroupMemberProfile = () => {
         return;
       }
       
-      const member = availableMembers.find(m => m.name === watchedMemberName);
+      // Trim both the watched name and member names for comparison
+      const trimmedWatchedName = watchedMemberName.trim();
+      console.log('🚨 LOOKING FOR MEMBER:', {
+        original: watchedMemberName,
+        trimmed: trimmedWatchedName
+      });
+      
+      const member = availableMembers.find(m => {
+        const memberNameTrimmed = m.name?.trim();
+        const matches = memberNameTrimmed === trimmedWatchedName;
+        console.log('🚨 COMPARING:', {
+          memberName: m.name,
+          memberNameTrimmed,
+          trimmedWatchedName,
+          matches
+        });
+        return matches;
+      });
+      
+      console.log('🚨 MEMBER FOUND:', member);
+      
       if (member) {
         setSelectedGroupMember(member);
         setValue("email", member.email || "");
         setValue("phone", member.phone || "");
+        console.log('🚨 SET MEMBER DATA:', {
+          name: member.name,
+          email: member.email,
+          phone: member.phone
+        });
+      } else {
+        console.log('🚨 NO MEMBER MATCH FOUND!');
+        setSelectedGroupMember(null);
       }
+    } else {
+      console.log('🚨 NO MEMBER NAME OR NO AVAILABLE MEMBERS');
     }
   }, [watchedMemberName, availableMembers, setValue, toast]);
 
