@@ -86,56 +86,97 @@ const GroupMemberProfile = () => {
     selectedGroupMember: selectedGroupMember?.name,
     hasClaimedProfile,
     formIsValid: isValid,
-    autoPopulated
+    autoPopulated,
+    familyGroupsLength: familyGroups.length,
+    loading
   });
+
+  // Add this prominent debug logging
+  useEffect(() => {
+    console.log('🚨 FAMILY GROUPS DEBUG - Raw Data:', familyGroups);
+    if (familyGroups.length > 0) {
+      familyGroups.forEach((group, index) => {
+        console.log(`🚨 Group ${index + 1}:`, {
+          name: group.name,
+          lead_name: group.lead_name,
+          lead_email: group.lead_email,
+          host_members: group.host_members,
+          host_members_length: group.host_members?.length || 0
+        });
+      });
+    }
+  }, [familyGroups]);
 
   // Update available members when family group changes
   useEffect(() => {
+    console.log('🚨 PROCESSING FAMILY GROUP:', watchedFamilyGroup);
+    
     if (watchedFamilyGroup) {
-      const group = familyGroups.find(g => g.name === watchedFamilyGroup);
-      setSelectedGroup(group);
-      
-      console.log('🔍 [DEBUG] Selected family group data:', {
-        groupName: watchedFamilyGroup,
-        group: group,
-        leadName: group?.lead_name,
-        leadEmail: group?.lead_email,
-        hostMembers: group?.host_members,
-        hostMembersCount: group?.host_members?.length || 0
-      });
-      
-      if (group) {
-        const members = [
-          ...(group.lead_name && group.lead_name.trim() ? [{ 
+      try {
+        const group = familyGroups.find(g => g.name === watchedFamilyGroup);
+        console.log('🚨 FOUND GROUP:', group);
+        
+        setSelectedGroup(group);
+        
+        if (group) {
+          console.log('🚨 GROUP DETAILS:', {
+            leadName: group.lead_name,
+            leadNameTrimmed: group.lead_name?.trim(),
+            leadNameExists: !!(group.lead_name && group.lead_name.trim()),
+            hostMembers: group.host_members,
+            hostMembersIsArray: Array.isArray(group.host_members),
+            hostMembersLength: group.host_members?.length || 0
+          });
+
+          const leadMember = group.lead_name && group.lead_name.trim() ? [{ 
             name: group.lead_name, 
             email: group.lead_email, 
             phone: group.lead_phone,
             isLead: true 
-          }] : []),
-          ...(group.host_members || [])
+          }] : [];
+
+          console.log('🚨 LEAD MEMBER:', leadMember);
+
+          const hostMembers = (group.host_members || [])
             .filter((member: any) => {
-              console.log('🔍 [DEBUG] Checking host member:', member);
-              return member.name && member.name.trim();
+              const hasName = member.name && member.name.trim();
+              console.log('🚨 CHECKING HOST MEMBER:', {
+                member,
+                hasName,
+                memberName: member.name
+              });
+              return hasName;
             })
             .map((member: any) => ({ 
               name: member.name, 
               email: member.email, 
               phone: member.phone,
               isLead: false 
-            }))
-        ];
+            }));
+
+          console.log('🚨 HOST MEMBERS AFTER FILTERING:', hostMembers);
+
+          const allMembers = [...leadMember, ...hostMembers];
+          console.log('🚨 ALL MEMBERS COMBINED:', allMembers);
+          
+          setAvailableMembers(allMembers);
+        } else {
+          console.log('🚨 NO GROUP FOUND - CLEARING MEMBERS');
+          setAvailableMembers([]);
+        }
         
-        console.log('🔍 [DEBUG] Available members after processing:', members);
-        setAvailableMembers(members);
-      } else {
+        // Only clear member name if not auto-populated to prevent conflict
+        if (!autoPopulated) {
+          setValue("selectedMemberName", "");
+          setSelectedGroupMember(null);
+        }
+      } catch (error) {
+        console.error('🚨 ERROR PROCESSING FAMILY GROUP:', error);
         setAvailableMembers([]);
       }
-      
-      // Only clear member name if not auto-populated to prevent conflict
-      if (!autoPopulated) {
-        setValue("selectedMemberName", "");
-        setSelectedGroupMember(null);
-      }
+    } else {
+      console.log('🚨 NO FAMILY GROUP SELECTED');
+      setAvailableMembers([]);
     }
   }, [watchedFamilyGroup, familyGroups, setValue, autoPopulated]);
 
