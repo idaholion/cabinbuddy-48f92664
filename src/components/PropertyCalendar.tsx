@@ -284,10 +284,16 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
     
+    // Calculate the end date dynamically to show only necessary weeks
+    const endDate = new Date(lastDay);
+    const remainingDays = 6 - lastDay.getDay();
+    endDate.setDate(endDate.getDate() + remainingDays);
+    
     const days = [];
     const current = new Date(startDate);
     
-    for (let i = 0; i < 42; i++) {
+    // Generate days until we reach the calculated end date
+    while (current <= endDate) {
       days.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
@@ -1297,33 +1303,65 @@ const getBookingsForDate = (date: Date) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reservations
-              .filter(reservation => {
-                const startDate = parseLocalDate(reservation.start_date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const next60Days = new Date(today);
+              next60Days.setDate(today.getDate() + 60);
+              
+              // Combine reservations and work weekends
+              const upcomingItems = [
+                // Regular reservations
+                ...reservations
+                  .filter(reservation => {
+                    const startDate = parseLocalDate(reservation.start_date);
+                    return startDate >= today && startDate <= next60Days;
+                  })
+                  .map(reservation => ({
+                    ...reservation,
+                    type: 'reservation',
+                    sortDate: parseLocalDate(reservation.start_date)
+                  })),
                 
-                const next60Days = new Date(today);
-                next60Days.setDate(today.getDate() + 60);
-                
-                // Debug logging to see what's happening
-                console.log(`Checking reservation ${reservation.id}: ${reservation.start_date}, startDate: ${startDate}, today: ${today}, next60Days: ${next60Days}, passes filter: ${startDate >= today && startDate <= next60Days}`);
-                
-                // Show reservations that start today or in the future, but within the next 60 days
-                return startDate >= today && startDate <= next60Days;
-              })
-              .sort((a, b) => parseLocalDate(a.start_date).getTime() - parseLocalDate(b.start_date).getTime())
-              .slice(0, 15)
-              .map((reservation) => (
-                 <div key={reservation.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                // Work weekends
+                ...workWeekends
+                  .filter(workWeekend => {
+                    const startDate = parseLocalDate(workWeekend.start_date);
+                    return startDate >= today && startDate <= next60Days;
+                  })
+                  .map(workWeekend => ({
+                    ...workWeekend,
+                    type: 'work_weekend',
+                    sortDate: parseLocalDate(workWeekend.start_date),
+                    // Map work weekend fields to reservation-like structure
+                    family_group: workWeekend.proposing_family_group,
+                    start_date: workWeekend.start_date,
+                    end_date: workWeekend.end_date,
+                    status: workWeekend.status
+                  }))
+              ];
+              
+              return upcomingItems
+                .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime())
+                .slice(0, 15)
+                .map((item) => (
+                 <div key={item.type === 'reservation' ? item.id : `work-weekend-${item.id}`} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                    <div className="flex items-center space-x-4">
-                     <div className="h-10 w-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
-                       <User className="h-5 w-5 text-primary-foreground" />
+                     <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                       item.type === 'work_weekend' 
+                         ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                         : 'bg-gradient-to-r from-primary to-accent'
+                     }`}>
+                       {item.type === 'work_weekend' ? (
+                         <Calendar className="h-5 w-5 text-white" />
+                       ) : (
+                         <User className="h-5 w-5 text-primary-foreground" />
+                       )}
                      </div>
                      <div>
                        <div className="flex items-center gap-2">
                          {(() => {
-                           const familyGroup = familyGroups.find(fg => fg.name === reservation.family_group);
+                           const familyGroup = familyGroups.find(fg => fg.name === item.family_group);
                            return familyGroup?.color && (
                              <div
                                className="w-3 h-3 rounded-full border border-border"
@@ -1331,78 +1369,103 @@ const getBookingsForDate = (date: Date) => {
                              />
                            );
                          })()}
-                         <div className="font-medium">{getHostFirstName(reservation)}</div>
+                         <div className="font-medium">
+                           {item.type === 'work_weekend' ? item.title : getHostFirstName(item)}
+                         </div>
+                         {item.type === 'work_weekend' && (
+                           <Badge variant="outline" className="text-xs">Work Weekend</Badge>
+                         )}
                        </div>
                        <div className="text-sm text-muted-foreground flex items-center">
                          <MapPin className="h-3 w-3 mr-1" />
-                         {reservation.property_name || propertyName}
+                         {item.property_name || propertyName}
                        </div>
                         <div className="text-sm text-muted-foreground flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          {parseLocalDate(reservation.start_date).toLocaleDateString()} to {parseLocalDate(reservation.end_date).toLocaleDateString()}
+                          {parseLocalDate(item.start_date).toLocaleDateString()} to {parseLocalDate(item.end_date).toLocaleDateString()}
                         </div>
-                       {reservation.nights_used && (
+                       {item.type === 'reservation' && item.nights_used && (
                          <div className="text-xs text-muted-foreground">
-                           {reservation.nights_used} nights • Period #{reservation.time_period_number}
+                           {item.nights_used} nights • Period #{item.time_period_number}
                          </div>
                        )}
                      </div>
                    </div>
                    <div className="flex items-center space-x-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Edit2 className="h-4 w-4 mr-1" />
-                            Edit <ChevronDown className="h-3 w-3 ml-1" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                         <DropdownMenuContent>
-                           <DropdownMenuItem onClick={() => {
-                             setEditingReservation(reservation);
-                             setShowBookingForm(true);
-                           }}>
-                             <Edit2 className="h-4 w-4 mr-2" />
-                             Edit Booking
-                           </DropdownMenuItem>
+                     {item.type === 'reservation' ? (
+                       <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                           <Button variant="outline" size="sm">
+                             <Edit2 className="h-4 w-4 mr-1" />
+                             Edit <ChevronDown className="h-3 w-3 ml-1" />
+                           </Button>
+                         </DropdownMenuTrigger>
+                          <DropdownMenuContent>
                             <DropdownMenuItem onClick={() => {
-                              setEditingReservation(reservation);
-                              setShowSplitDialog(true);
+                              setEditingReservation(item);
+                              setShowBookingForm(true);
                             }}>
-                              <Calendar className="h-4 w-4 mr-2" />
-                              Split into Periods
+                              <Edit2 className="h-4 w-4 mr-2" />
+                              Edit Booking
                             </DropdownMenuItem>
-                           <DropdownMenuSeparator />
-                           <DropdownMenuItem 
-                             onClick={() => {
-                               setReservationToDelete(reservation);
-                               setShowDeleteDialog(true);
-                             }}
-                             className="text-destructive"
-                           >
-                             <Trash2 className="h-4 w-4 mr-2" />
-                             Delete Reservation
-                           </DropdownMenuItem>
-                         </DropdownMenuContent>
-                      </DropdownMenu>
-                     <Badge variant={reservation.status === "confirmed" ? "default" : "secondary"}>
-                       {reservation.status}
+                             <DropdownMenuItem onClick={() => {
+                               setEditingReservation(item);
+                               setShowSplitDialog(true);
+                             }}>
+                               <Calendar className="h-4 w-4 mr-2" />
+                               Split into Periods
+                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setReservationToDelete(item);
+                                setShowDeleteDialog(true);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Reservation
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                       </DropdownMenu>
+                     ) : (
+                       <Button variant="outline" size="sm" disabled>
+                         <Calendar className="h-4 w-4 mr-1" />
+                         Work Weekend
+                       </Button>
+                     )}
+                     <Badge variant={item.status === "confirmed" || item.status === "fully_approved" ? "default" : "secondary"}>
+                       {item.type === 'work_weekend' && item.status === 'fully_approved' ? 'approved' : item.status}
                      </Badge>
                    </div>
                  </div>
-              ))}
+              ));
+            })()}
             
-            {reservations.filter(reservation => {
-              const startDate = parseLocalDate(reservation.start_date);
+            {(() => {
               const today = new Date();
-              today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
-              
+              today.setHours(0, 0, 0, 0);
               const next60Days = new Date(today);
               next60Days.setDate(today.getDate() + 60);
               
-              // Show reservations that start today or in the future, but within the next 60 days
-              return startDate >= today && startDate <= next60Days;
-            }).length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No reservations in the next 60 days</p>
+              const upcomingReservations = reservations.filter(reservation => {
+                const startDate = parseLocalDate(reservation.start_date);
+                return startDate >= today && startDate <= next60Days;
+              });
+              
+              const upcomingWorkWeekends = workWeekends.filter(workWeekend => {
+                const startDate = parseLocalDate(workWeekend.start_date);
+                return startDate >= today && startDate <= next60Days;
+              });
+              
+              const totalUpcoming = upcomingReservations.length + upcomingWorkWeekends.length;
+              
+              return totalUpcoming === 0;
+            })() && (
+              <div className="text-center text-muted-foreground py-8">
+                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No upcoming reservations or work weekends in the next 60 days</p>
+              </div>
             )}
           </div>
         </CardContent>
