@@ -773,7 +773,10 @@ const GroupMemberProfile = () => {
                      <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated}>
                         <FormControl>
                           <SelectTrigger className={autoPopulated ? "text-base text-foreground font-medium" : "text-base"}>
-                            <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your family group"} className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
+                            <SelectValue 
+                              placeholder="Choose your family group" 
+                              className={autoPopulated ? "text-foreground font-medium" : "text-base"} 
+                            />
                           </SelectTrigger>
                         </FormControl>
                        <SelectContent className="bg-background border shadow-lg z-50">
@@ -817,11 +820,14 @@ const GroupMemberProfile = () => {
                       <FormItem>
                         <FormLabel className="text-base">Select Your Name</FormLabel>
                          <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated && !!selectedGroupMember}>
-                             <FormControl>
-                               <SelectTrigger className={autoPopulated && selectedGroupMember ? "text-base text-foreground font-medium" : "text-base"}>
-                                 <SelectValue placeholder={autoPopulated && selectedGroupMember ? field.value || "Auto-detected from your profile" : "Choose your name from the list"} className={autoPopulated && selectedGroupMember ? "text-foreground font-medium text-lg" : "text-base"} />
-                               </SelectTrigger>
-                             </FormControl>
+                              <FormControl>
+                                <SelectTrigger className={autoPopulated && selectedGroupMember ? "text-base text-foreground font-medium" : "text-base"}>
+                                  <SelectValue 
+                                    placeholder="Choose your name from the list"
+                                    className={autoPopulated && selectedGroupMember ? "text-foreground font-medium" : "text-base"} 
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
                             <SelectContent className="bg-background border shadow-lg z-50">
                               {availableMembers
                                 .filter(member => {
