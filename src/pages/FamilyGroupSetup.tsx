@@ -181,8 +181,11 @@ const FamilyGroupSetup = () => {
       if (currentGroupMembers && currentGroupMembers.length > 0) {
         const updatedGroupMembers = [...currentGroupMembers];
         // Only update the first member (index 0), leave others unchanged
+        const { firstName, lastName } = parseFullName(fullName);
         updatedGroupMembers[0] = {
           name: fullName,
+          firstName,
+          lastName,
           phone: userPhone,
           email: userEmail,
           canHost: true // Group leads can always host
@@ -269,8 +272,11 @@ const FamilyGroupSetup = () => {
       const updatedGroupMembers = [...currentGroupMembers];
       
       // ONLY update the first group member (index 0) with Group Lead info
+      const { firstName, lastName } = parseFullName(watchedData.leadName || "");
       updatedGroupMembers[0] = {
         name: watchedData.leadName || "",
+        firstName,
+        lastName,
         phone: watchedData.leadPhone || "",
         email: watchedData.leadEmail || "",
         canHost: true // Group leads can always host
