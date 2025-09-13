@@ -64,7 +64,7 @@ const FamilyGroupSetup = () => {
     mode: "onChange",
   });
 
-  const { control, watch, setValue, getValues, handleSubmit, formState: { errors, isValid, isDirty } } = form;
+  const { control, watch, setValue, getValues, handleSubmit, trigger, formState: { errors, isValid, isDirty } } = form;
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: "groupMembers",
@@ -266,8 +266,20 @@ const FamilyGroupSetup = () => {
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
     
-    // Only update if we have group members and any lead info, and avoid interference with pre-population
-    if (currentGroupMembers && currentGroupMembers.length > 0 && (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail) && !hasLoadedAutoSave.current) {
+    console.log('🔍 [AUTO_UPDATE_CHECK] Effect triggered:', {
+      hasGroupMembers: !!currentGroupMembers?.length,
+      leadName: watchedData.leadName,
+      leadEmail: watchedData.leadEmail,
+      hasLoadedAutoSave: hasLoadedAutoSave.current,
+      selectedGroup: watchedData.selectedGroup
+    });
+    
+    // Only update if we have group members and any lead info
+    // Skip if we're loading an existing group (selectedGroup is not empty)
+    if (currentGroupMembers && currentGroupMembers.length > 0 && 
+        (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail) &&
+        !watchedData.selectedGroup) {
+      
       // Create a copy to avoid mutations
       const updatedGroupMembers = [...currentGroupMembers];
       
@@ -285,7 +297,10 @@ const FamilyGroupSetup = () => {
       // Keep all other members exactly as they were
       setValue("groupMembers", updatedGroupMembers);
       
-      console.log('🔄 [FAMILY_GROUP_SETUP] Updated ONLY first group member with lead info:', {
+      // Trigger form validation to ensure the changes are recognized
+      trigger("groupMembers");
+      
+      console.log('✅ [FAMILY_GROUP_SETUP] Updated ONLY first group member with lead info:', {
         leadName: watchedData.leadName,
         leadEmail: watchedData.leadEmail,
         memberIndex: 0,
