@@ -279,7 +279,9 @@ const GroupMemberProfile = () => {
       const group = familyGroups.find(g => g.name === claimedProfile.family_group_name);
       if (group) {
         setValue("selectedFamilyGroup", claimedProfile.family_group_name);
-        setValue("selectedMemberName", claimedProfile.member_name);
+        // Trim the member name to match available members
+        const trimmedMemberName = claimedProfile.member_name.trim();
+        setValue("selectedMemberName", trimmedMemberName);
         setSelectedGroup(group);
         
         // Find the member in the group data
@@ -294,8 +296,8 @@ const GroupMemberProfile = () => {
             isLead: true
           };
         } else {
-          // Find in host_members
-          const hostMember = group.host_members?.find((m: any) => m.name === claimedProfile.member_name);
+          // Find in host_members using trimmed name
+          const hostMember = group.host_members?.find((m: any) => m.name?.trim() === trimmedMemberName);
           if (hostMember) {
             selectedMember = {
               name: hostMember.name,
