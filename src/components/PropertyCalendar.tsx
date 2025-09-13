@@ -1293,7 +1293,7 @@ const getBookingsForDate = (date: Date) => {
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
-          <CardDescription>Reservations starting today or later</CardDescription>
+          <CardDescription>Reservations in the next 60 days</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -1303,8 +1303,11 @@ const getBookingsForDate = (date: Date) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
                 
-                // Only show reservations that start today or in the future
-                return startDate >= today;
+                const next60Days = new Date(today);
+                next60Days.setDate(today.getDate() + 60);
+                
+                // Show reservations that start today or in the future, but within the next 60 days
+                return startDate >= today && startDate <= next60Days;
               })
               .sort((a, b) => parseLocalDate(a.start_date).getTime() - parseLocalDate(b.start_date).getTime())
               .slice(0, 15)
@@ -1390,10 +1393,13 @@ const getBookingsForDate = (date: Date) => {
               const today = new Date();
               today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
               
-              // Only show reservations that start today or in the future
-              return startDate >= today;
+              const next60Days = new Date(today);
+              next60Days.setDate(today.getDate() + 60);
+              
+              // Show reservations that start today or in the future, but within the next 60 days
+              return startDate >= today && startDate <= next60Days;
             }).length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No upcoming reservations</p>
+              <p className="text-muted-foreground text-center py-4">No reservations in the next 60 days</p>
             )}
           </div>
         </CardContent>
