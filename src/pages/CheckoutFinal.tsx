@@ -143,8 +143,7 @@ const CheckoutFinal = () => {
 
   // Check if early checkout is possible (reservation extends beyond today)
   const canEarlyCheckout = currentReservation && 
-    new Date(currentReservation.end_date) > new Date() && 
-    checklistStatus?.isComplete;
+    new Date(currentReservation.end_date) > new Date();
 
   const handleEarlyCheckoutComplete = () => {
     // Refresh reservations data after early checkout
