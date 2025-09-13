@@ -42,6 +42,16 @@ const GroupMemberProfile = () => {
   const { claimedProfile, hasClaimedProfile, isGroupLead, refreshClaimedProfile } = useProfileClaiming();
   const { updateProfile: updateUserProfile } = useProfile();
   const navigate = useNavigate();
+
+  // Debug: Log user and profile data on component mount
+  console.log('🔍 Profile Debug - Component Data:', {
+    userEmail: user?.email,
+    hasClaimedProfile,
+    claimedProfile,
+    isGroupLead,
+    familyGroupsCount: familyGroups.length,
+    organization: organization?.organization_name
+  });
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedGroupMember, setSelectedGroupMember] = useState<any>(null);
@@ -78,17 +88,12 @@ const GroupMemberProfile = () => {
   const watchedMemberName = watch("selectedMemberName");
 
   // Debug logging for form state
-  console.log('📋 [GROUP_MEMBER_PROFILE] Form State:', {
+  console.log('📋 Form State:', {
     watchedFamilyGroup,
     watchedMemberName,
-    availableMembersCount: availableMembers.length,
-    selectedGroupMemberExists: !!selectedGroupMember,
-    selectedGroupMember: selectedGroupMember?.name,
     hasClaimedProfile,
-    formIsValid: isValid,
-    autoPopulated,
-    familyGroupsLength: familyGroups.length,
-    loading
+    claimedProfileName: claimedProfile?.member_name,
+    formIsValid: isValid
   });
 
   // Add this prominent debug logging

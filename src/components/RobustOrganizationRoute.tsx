@@ -17,11 +17,6 @@ interface RobustOrganizationRouteProps {
 }
 
 export const RobustOrganizationRoute = ({ children }: RobustOrganizationRouteProps) => {
-  console.log('🚨 RobustOrganizationRoute - Starting analysis');
-  console.log('🚨 Current URL:', window.location.href);
-  console.log('🚨 Navigation history length:', window.history.length);
-  console.log('🚨 Document referrer:', document.referrer);
-  
   const { user, loading: authLoading } = useAuth();
   const { 
     organizations, 
@@ -35,18 +30,6 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   const location = useLocation();
   const [retryAttempts, setRetryAttempts] = useState(0);
 
-  console.log('🚨 RobustOrganizationRoute - Auth & Org Status:', {
-    hasUser: !!user,
-    userId: user?.id?.substring(0, 8) + '...',
-    userEmail: user?.email,
-    organizationsCount: organizations.length,
-    authLoading,
-    orgLoading,
-    setupLoading,
-    currentPath: location.pathname,
-    setupState: setupState
-  });
-
   // Routes that don't require organization checks
   const exemptRoutes = [
     '/setup', 
@@ -56,7 +39,8 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/select-family-group',
     '/family-setup',
     '/auth',
-    '/reset-password'
+    '/reset-password',
+    '/group-member-profile'  // Add this to prevent redirect
   ];
   
   const isExemptRoute = exemptRoutes.some(route => location.pathname.startsWith(route));
@@ -81,7 +65,6 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
 
   // Show loading state during initial auth and org checks
   if (authLoading || (orgLoading && !error) || setupLoading) {
-    console.log('RobustOrganizationRoute - Loading state:', { authLoading, orgLoading, setupLoading, pathname: location.pathname });
     return (
       <LoadingState 
         message="Loading your organizations..." 
@@ -89,19 +72,6 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
       />
     );
   }
-
-  // Debug: Log all state when not loading  
-  console.log('RobustOrganizationRoute - Current state:', { 
-    user: !!user, 
-    userId: user?.id,
-    organizations: organizations.length, 
-    error: error?.message,
-    offline,
-    pathname: location.pathname,
-    isExemptRoute,
-    orgLoading,
-    authLoading
-  });
 
   // Not authenticated - let ProtectedRoute handle this
   if (!user) {
@@ -116,16 +86,7 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   // Check if user needs setup flow - but only redirect if they don't have organizations
   if (setupState.isInSetupFlow && organizations.length === 0) {
     const setupPath = getSetupRedirectPath();
-    console.log('🚨 POTENTIAL REDIRECT TO SETUP:', {
-      currentPath: location.pathname,
-      setupPath,
-      setupState,
-      organizationsLength: organizations.length,
-      willRedirect: setupPath && location.pathname !== setupPath
-    });
-    
     if (setupPath && location.pathname !== setupPath) {
-      console.log('🚨 REDIRECTING TO SETUP FLOW:', { currentPath: location.pathname, setupPath, setupState });
       return <Navigate to={setupPath} replace />;
     }
   }
