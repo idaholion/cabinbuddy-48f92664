@@ -94,6 +94,16 @@ const GroupMemberProfile = () => {
     if (watchedFamilyGroup) {
       const group = familyGroups.find(g => g.name === watchedFamilyGroup);
       setSelectedGroup(group);
+      
+      console.log('🔍 [DEBUG] Selected family group data:', {
+        groupName: watchedFamilyGroup,
+        group: group,
+        leadName: group?.lead_name,
+        leadEmail: group?.lead_email,
+        hostMembers: group?.host_members,
+        hostMembersCount: group?.host_members?.length || 0
+      });
+      
       if (group) {
         const members = [
           ...(group.lead_name && group.lead_name.trim() ? [{ 
@@ -103,7 +113,10 @@ const GroupMemberProfile = () => {
             isLead: true 
           }] : []),
           ...(group.host_members || [])
-            .filter((member: any) => member.name && member.name.trim())
+            .filter((member: any) => {
+              console.log('🔍 [DEBUG] Checking host member:', member);
+              return member.name && member.name.trim();
+            })
             .map((member: any) => ({ 
               name: member.name, 
               email: member.email, 
@@ -111,6 +124,8 @@ const GroupMemberProfile = () => {
               isLead: false 
             }))
         ];
+        
+        console.log('🔍 [DEBUG] Available members after processing:', members);
         setAvailableMembers(members);
       } else {
         setAvailableMembers([]);
@@ -728,7 +743,7 @@ const GroupMemberProfile = () => {
                             <SelectValue placeholder={autoPopulated ? field.value || "Auto-detected from your profile" : "Choose your family group"} className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
                           </SelectTrigger>
                         </FormControl>
-                       <SelectContent>
+                       <SelectContent className="bg-background border shadow-lg z-50">
                         {familyGroups
                           .filter(group => group.name && group.name.trim())
                           .map((group) => (
@@ -760,7 +775,7 @@ const GroupMemberProfile = () => {
                               <SelectValue placeholder="Choose your name from the list" className={autoPopulated ? "text-foreground font-medium text-lg" : "text-base"} />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-background border shadow-lg z-50">
                             {availableMembers
                               .filter(member => member.name && member.name.trim())
                               .map((member, index) => (
