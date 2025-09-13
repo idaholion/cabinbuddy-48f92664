@@ -59,7 +59,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
-    const { wordFile, checklistType, organizationId, imageFiles = [] } = await req.json();
+    const { wordFile, checklistType, organizationId, imageFiles = [], matchedImages = [] } = await req.json();
     
     console.log('Processing Word document for checklist type:', checklistType);
     console.log('Organization ID:', organizationId);
@@ -72,6 +72,7 @@ serve(async (req) => {
     const imageMarkers = extractImageMarkers(documentContent.text);
     console.log('Found image markers:', imageMarkers.length);
     console.log('Provided image files:', imageFiles.length);
+    console.log('Matched images from library:', matchedImages.length);
 
     // Send text to OpenAI for checklist conversion
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -246,7 +247,8 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       imageMarkers,
       imageFiles,
       supabase,
-      organizationId
+      organizationId,
+      matchedImages
     );
 
     // Save to database
@@ -275,7 +277,7 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
       checklistId: data.id,
       itemsCount: finalItems.length,
       imageMarkersCount: imageMarkers.length,
-      matchedImagesCount: imageMarkers.filter(m => m.matched).length,
+      matchedImagesCount: [...imageMarkers.filter(m => m.matched), ...matchedImages].length,
       introductoryTextLength: responseData?.introductoryText?.length || 0,
       message: 'Document successfully converted to enhanced interactive checklist'
     }), {
@@ -518,27 +520,134 @@ async function processImageMarkersAndFiles(
   markers: Array<{marker: string; filename: string; description?: string; position: number; matched?: boolean}>,
   imageFiles: Array<{filename: string; data: string; contentType?: string}>,
   supabase: any,
-  organizationId: string
+  organizationId: string,
+  matchedImages: Array<{marker: string, imageUrl: string, description?: string}> = []
 ): Promise<ChecklistItem[]> {
   console.log('🚨 FUNCTION CALLED - processImageMarkersAndFiles');
   console.log('🚨 Items count:', items.length);
   console.log('🚨 Markers count:', markers.length);
   console.log('🚨 Image files count:', imageFiles.length);
+  console.log('🚨 Matched images count:', matchedImages.length);
   
   const processedItems = [...items];
   
   console.log('=== IMAGE PROCESSING DEBUG ===');
   console.log('Processing image markers:', markers.length);
   console.log('Available image files:', imageFiles.map(f => f.filename));
+  console.log('Matched images:', matchedImages.map(m => m.marker));
   
   if (!markers || markers.length === 0) {
     console.log('❌ No image markers to process');
     return processedItems;
   }
 
-  // Sort markers by position to process them in document order
-  const sortedMarkers = markers.sort((a, b) => a.position - b.position);
-  console.log('🚨 Sorted markers:', sortedMarkers.map(m => `${m.filename}@${m.position}`));
+  // First, process matched images (existing images from library)
+  for (const match of matchedImages) {
+    console.log(`\n🚨 --- Processing matched image: ${match.marker} ---`);
+    
+    // Find the marker in our markers array
+    const markerObj = markers.find(m => {
+      const cleanMarkerName = m.marker
+        .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
+        .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
+        .replace(/\]$/, '') // Remove ] suffix
+        .replace(/^\{\{/, '') // Remove {{ prefix
+        .replace(/\}\}$/, '') // Remove }} suffix
+        .trim();
+      
+      const cleanMatchMarker = match.marker
+        .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
+        .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
+        .replace(/\]$/, '') // Remove ] suffix
+        .replace(/^\{\{/, '') // Remove {{ prefix
+        .replace(/\}\}$/, '') // Remove }} suffix
+        .trim();
+        
+      return cleanMarkerName.toLowerCase() === cleanMatchMarker.toLowerCase();
+    });
+
+    if (!markerObj) {
+      console.log(`❌ No corresponding marker found for ${match.marker}`);
+      continue;
+    }
+
+    console.log(`✅ Found corresponding marker at position ${markerObj.position}`);
+
+    // Find the appropriate checklist item for this marker
+    let targetItemIndex = -1;
+
+    // Strategy 1: Check if OpenAI put this image in an imageMarker field
+    console.log('🔍 Strategy 1: Checking imageMarker fields...');
+    for (let j = 0; j < processedItems.length; j++) {
+      if (processedItems[j].imageMarker) {
+        const itemMarkers = processedItems[j].imageMarker.split(',').map(m => m.trim().toLowerCase());
+        const searchTerms = [
+          markerObj.filename.toLowerCase(),
+          markerObj.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, ''),
+        ];
+        
+        for (const searchTerm of searchTerms) {
+          if (itemMarkers.some(im => im.includes(searchTerm) || searchTerm.includes(im))) {
+            targetItemIndex = j;
+            console.log(`✅ Strategy 1: Found in imageMarker field of item ${j + 1}`);
+            break;
+          }
+        }
+        if (targetItemIndex !== -1) break;
+      }
+    }
+
+    // Strategy 2: Position-based assignment if no imageMarker match
+    if (targetItemIndex === -1) {
+      console.log('🔍 Strategy 2: Position-based assignment...');
+      const relativePosition = markerObj.position / 10000;
+      const estimatedItemIndex = Math.min(
+        Math.floor(relativePosition * processedItems.length),
+        processedItems.length - 1
+      );
+      
+      if (estimatedItemIndex === 0 && markerObj.position > 1000) {
+        targetItemIndex = Math.min(1, processedItems.length - 1);
+        console.log(`✅ Strategy 2: Avoiding first item, using item ${targetItemIndex + 1}`);
+      } else {
+        targetItemIndex = Math.max(0, estimatedItemIndex);
+        console.log(`✅ Strategy 2: Position-based assignment to item ${targetItemIndex + 1}`);
+      }
+    }
+
+    // Assign the matched image to the checklist item
+    if (targetItemIndex >= 0 && targetItemIndex < processedItems.length) {
+      console.log(`🎯 Assigning matched image to item ${targetItemIndex + 1}`);
+      
+      if (!processedItems[targetItemIndex].imageUrl) {
+        console.log('📋 Assigning as PRIMARY image');
+        processedItems[targetItemIndex].imageUrl = match.imageUrl;
+        processedItems[targetItemIndex].imageDescription = match.description || markerObj.description || "";
+        processedItems[targetItemIndex].imagePosition = 'after';
+        processedItems[targetItemIndex].imageSize = 'medium';
+      } else {
+        console.log('📋 Assigning as ADDITIONAL image');
+        if (!processedItems[targetItemIndex].imageUrls) {
+          processedItems[targetItemIndex].imageUrls = [];
+        }
+        processedItems[targetItemIndex].imageUrls.push(match.imageUrl);
+      }
+      
+      markerObj.matched = true;
+      console.log(`✅ Matched image ${match.marker} assigned to item ${targetItemIndex + 1}`);
+    }
+  }
+
+  // Now process remaining markers with uploaded files (skip already matched markers)
+  const unprocessedMarkers = markers.filter(m => !m.matched);
+  // Sort unprocessed markers by position to process them in document order
+  const sortedMarkers = unprocessedMarkers.sort((a, b) => a.position - b.position);
+  console.log('🚨 Unprocessed markers to handle:', sortedMarkers.map(m => `${m.filename}@${m.position}`));
+  
+  if (sortedMarkers.length === 0) {
+    console.log('✅ All markers already matched from library');
+    return processedItems;
+  }
   
   for (let i = 0; i < sortedMarkers.length; i++) {
     const marker = sortedMarkers[i];

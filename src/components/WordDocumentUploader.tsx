@@ -10,6 +10,7 @@ import { Upload, FileText, Loader2, Type, Image as ImageIcon } from 'lucide-reac
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { EnhancedImageUploader } from './EnhancedImageUploader';
+import { ExistingImagesBrowser } from './ExistingImagesBrowser';
 
 interface WordDocumentUploaderProps {
   onChecklistCreated?: (checklistId: string) => void;
@@ -26,6 +27,8 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
   const [detectedImageMarkers, setDetectedImageMarkers] = useState<any[]>([]);
   const [imageFiles, setImageFiles] = useState<any[]>([]);
   const [showImageUploader, setShowImageUploader] = useState(false);
+  const [matchedImages, setMatchedImages] = useState<Array<{marker: string, imageUrl: string, description?: string}>>([]);
+  const [showBrowseLibrary, setShowBrowseLibrary] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -110,9 +113,10 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       if (markers.length > 0) {
         setDetectedImageMarkers(markers);
         setShowImageUploader(true);
+        setShowBrowseLibrary(true);
         toast({
           title: "Image Markers Detected",
-          description: `Found ${markers.length} image markers. Please upload the corresponding images.`,
+          description: `Found ${markers.length} image markers. You can upload new images or browse existing ones.`,
         });
         return;
       }
@@ -152,7 +156,8 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
           wordFile: `data:text/plain;base64,${utf8ToBase64(textContent)}`,
           checklistType: getEffectiveChecklistType(),
           organizationId,
-          imageFiles
+          imageFiles,
+          matchedImages: matchedImages // Pass matched images from auto-match
         }
       });
 
@@ -176,6 +181,8 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
       setDetectedImageMarkers([]);
       setImageFiles([]);
       setShowImageUploader(false);
+      setMatchedImages([]);
+      setShowBrowseLibrary(false);
       
       // Notify parent component
       if (onChecklistCreated) {
@@ -304,6 +311,16 @@ export const WordDocumentUploader: React.FC<WordDocumentUploaderProps> = ({
     }
   };
 
+  const handleAutoMatch = (matches: Array<{marker: string, imageUrl: string, description?: string}>) => {
+    setMatchedImages(matches);
+    toast({
+      title: "Auto-Match Complete",
+      description: `Found ${matches.length} matching images from existing checklists.`,
+    });
+  };
+
+  const currentImageUrls = [...imageFiles.map(f => f.url || ''), ...matchedImages.map(m => m.imageUrl)];
+
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
@@ -380,11 +397,55 @@ The text will be converted to a checklist and you can upload matching images."
               </div>
 
               {showImageUploader && detectedImageMarkers.length > 0 && (
-                <EnhancedImageUploader
-                  detectedMarkers={detectedImageMarkers}
-                  onImagesReady={setImageFiles}
-                  isProcessing={isProcessing}
-                />
+                <div className="space-y-4">
+                  {showBrowseLibrary && (
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg space-y-3">
+                      <h4 className="font-medium text-blue-800">Browse Existing Images</h4>
+                      <p className="text-sm text-blue-700">
+                        First, try auto-matching with images from your closing checklist.
+                      </p>
+                      <ExistingImagesBrowser
+                        onImageSelect={() => {}} // Not used in auto-match mode
+                        currentImages={currentImageUrls}
+                        sourceChecklistType="closing"
+                        onAutoMatch={handleAutoMatch}
+                        detectedMarkers={detectedImageMarkers.map(m => m.marker)}
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            <ImageIcon className="h-4 w-4 mr-2" />
+                            Browse and Auto-Match Images
+                          </Button>
+                        }
+                      />
+                      {matchedImages.length > 0 && (
+                        <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
+                          <p className="text-sm text-green-800 font-medium">
+                            ✅ Found {matchedImages.length} matching images
+                          </p>
+                          <ul className="text-xs text-green-700 mt-1 space-y-1">
+                            {matchedImages.map((match, idx) => (
+                              <li key={idx}>• {match.marker} → {match.description}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <EnhancedImageUploader
+                    detectedMarkers={detectedImageMarkers}
+                    onImagesReady={setImageFiles}
+                    isProcessing={isProcessing}
+                  />
+                  
+                  {(imageFiles.length > 0 || matchedImages.length > 0) && (
+                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                      <p className="text-sm text-amber-800">
+                        <strong>Ready to create:</strong> {detectedImageMarkers.length} markers detected, {matchedImages.length} auto-matched, {imageFiles.length} new images uploaded
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
 
               <Button 

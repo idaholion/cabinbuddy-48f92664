@@ -90,23 +90,57 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
           
           detectedMarkers.forEach(marker => {
-            // Remove [IMAGE:] wrapper and file extension for matching
-            const cleanMarker = marker.replace(/^\[IMAGE:/, '').replace(/\]$/, '').replace(/\.(jpg|jpeg|png|gif)$/i, '');
+            // Normalize the detected marker for comparison
+            let cleanMarker = marker
+              .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
+              .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
+              .replace(/\]$/, '') // Remove ] suffix
+              .replace(/^\{\{/, '') // Remove {{ prefix
+              .replace(/\}\}$/, '') // Remove }} suffix
+              .replace(/\.(jpg|jpeg|png|gif|webp)$/i, '') // Remove file extension
+              .toLowerCase()
+              .trim();
             
-            const matchingImage = uniqueImages.find(img => {
-              if (!img.originalMarker) return false;
-              const cleanOriginal = img.originalMarker.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-              return cleanOriginal.toLowerCase() === cleanMarker.toLowerCase();
-            });
+            // Handle comma-separated markers by splitting
+            const markerParts = cleanMarker.split(',').map(part => part.trim());
             
-            if (matchingImage) {
-              matches.push({
-                marker: marker,
-                imageUrl: matchingImage.url,
-                description: matchingImage.description
+            markerParts.forEach(markerPart => {
+              if (!markerPart) return;
+              
+              // Try to find a matching image
+              const matchingImage = uniqueImages.find(img => {
+                if (!img.originalMarker) return false;
+                
+                // Normalize the original marker from the image
+                let cleanOriginal = img.originalMarker
+                  .replace(/\.(jpg|jpeg|png|gif|webp)$/i, '') // Remove file extension
+                  .toLowerCase()
+                  .trim();
+                
+                // Handle comma-separated original markers
+                const originalParts = cleanOriginal.split(',').map(part => part.trim());
+                
+                // Check if any part matches
+                return originalParts.some(origPart => {
+                  return origPart === markerPart ||
+                         origPart.includes(markerPart) ||
+                         markerPart.includes(origPart);
+                });
               });
-            }
+              
+              if (matchingImage && !matches.find(m => m.imageUrl === matchingImage.url)) {
+                matches.push({
+                  marker: marker,
+                  imageUrl: matchingImage.url,
+                  description: matchingImage.description
+                });
+              }
+            });
           });
+          
+          console.log('Auto-match results:', matches);
+          console.log('Detected markers:', detectedMarkers);
+          console.log('Available images with markers:', uniqueImages.filter(img => img.originalMarker));
           
           if (matches.length > 0) {
             onAutoMatch(matches);
