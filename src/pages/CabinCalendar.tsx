@@ -21,7 +21,7 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -37,8 +37,9 @@ const CabinCalendar = () => {
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("");
   const [selectedHost, setSelectedHost] = useState<string>("");
-  
+  const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const [manualDateSelectionOpen, setManualDateSelectionOpen] = useState(false);
+  const workWeekendSectionRef = useRef<HTMLDivElement>(null);
 
   // Get user role information
   const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
@@ -311,10 +312,21 @@ const CabinCalendar = () => {
                              <Calendar className="h-4 w-4 mr-2" />
                              Manual Date Selection
                            </DropdownMenuItem>
-                           <DropdownMenuItem>
-                             <Clock className="h-4 w-4 mr-2" />
-                             Work Weekend
-                           </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setAccordionValue(["work-weekend"]);
+                                setTimeout(() => {
+                                  workWeekendSectionRef.current?.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'start' 
+                                  });
+                                }, 100);
+                              }}
+                              className="hover-scale"
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              Work Weekend
+                            </DropdownMenuItem>
                            <DropdownMenuSeparator />
                            <DropdownMenuSub>
                              <DropdownMenuSubTrigger className="relative">
@@ -414,16 +426,23 @@ const CabinCalendar = () => {
             </div>
 
             {/* Collapsible sections for secondary tools */}
-            <Accordion type="multiple" className="mt-4 space-y-2">
-              <AccordionItem value="work-weekend" className="border rounded-lg">
-                <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
-                  Work Weekend Proposals
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 animate-accordion-down">
-                  <WorkWeekendProposalForm />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <div ref={workWeekendSectionRef}>
+              <Accordion 
+                type="multiple" 
+                className="mt-4 space-y-2"
+                value={accordionValue}
+                onValueChange={setAccordionValue}
+              >
+                <AccordionItem value="work-weekend" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline">
+                    Work Weekend Proposals
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 animate-accordion-down">
+                    <WorkWeekendProposalForm />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
 
 
             {/* Manual Date Selection Dialog */}
