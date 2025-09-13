@@ -24,6 +24,7 @@ import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
 
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { WorkWeekendCalendarEvent } from "@/components/WorkWeekendCalendarEvent";
+import { WorkWeekendDetailDialog } from "@/components/WorkWeekendDetailDialog";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { EnhancedMonthPicker } from "@/components/EnhancedMonthPicker";
 import { useAuth } from "@/contexts/AuthContext";
@@ -130,6 +131,8 @@ export const PropertyCalendar = ({ onMonthChange, selectedFamilyGroupFilter }: P
   const [manualEndDate, setManualEndDate] = useState<Date | undefined>();
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showManualDateDialog, setShowManualDateDialog] = useState(false);
+  const [selectedWorkWeekend, setSelectedWorkWeekend] = useState<any>(null);
+  const [showWorkWeekendDetail, setShowWorkWeekendDetail] = useState(false);
   
   // Test override toggle
   const [testOverrideMode, setTestOverrideMode] = useState(false);
@@ -441,6 +444,11 @@ const getBookingsForDate = (date: Date) => {
     }
     
     return { selectable: true };
+  };
+
+  const handleWorkWeekendClick = (workWeekend: any) => {
+    setSelectedWorkWeekend(workWeekend);
+    setShowWorkWeekendDetail(true);
   };
 
   const handleDateClick = (date: Date) => {
@@ -1004,6 +1012,7 @@ const getBookingsForDate = (date: Date) => {
                           key={`${workWeekend.id}-${i}`}
                           workWeekend={workWeekend}
                           isCompact={true}
+                          onClick={handleWorkWeekendClick}
                         />
                       ))}
                       
@@ -1547,6 +1556,13 @@ const getBookingsForDate = (date: Date) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Work Weekend Detail Dialog */}
+      <WorkWeekendDetailDialog
+        workWeekend={selectedWorkWeekend}
+        open={showWorkWeekendDetail}
+        onOpenChange={setShowWorkWeekendDetail}
+      />
     </div>
   );
 };

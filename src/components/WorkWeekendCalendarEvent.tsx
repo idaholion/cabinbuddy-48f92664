@@ -6,9 +6,16 @@ import { format } from 'date-fns';
 interface WorkWeekendCalendarEventProps {
   workWeekend: any;
   isCompact?: boolean;
+  onClick?: (workWeekend: any) => void;
 }
 
-export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false }: WorkWeekendCalendarEventProps) => {
+export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false, onClick }: WorkWeekendCalendarEventProps) => {
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick?.(workWeekend);
+  };
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'proposed':
@@ -38,11 +45,14 @@ export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false }: Wor
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className={`
-              px-2 py-1 rounded text-xs border-2 border-dashed 
-              ${getStatusColor(workWeekend.status)}
-              cursor-help
-            `}>
+            <div 
+              className={`
+                px-2 py-1 rounded text-xs border-2 border-dashed 
+                ${getStatusColor(workWeekend.status)}
+                cursor-pointer hover:opacity-80 transition-opacity
+              `}
+              onClick={handleClick}
+            >
               <div className="flex items-center gap-1">
                 <Hammer className="h-3 w-3" />
                 Work Weekend
@@ -79,10 +89,13 @@ export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false }: Wor
   }
 
   return (
-    <div className={`
-      p-3 rounded-lg border-2 border-dashed space-y-2
-      ${getStatusColor(workWeekend.status)}
-    `}>
+    <div 
+      className={`
+        p-3 rounded-lg border-2 border-dashed space-y-2 cursor-pointer hover:opacity-80 transition-opacity
+        ${getStatusColor(workWeekend.status)}
+      `}
+      onClick={handleClick}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Hammer className="h-4 w-4" />
