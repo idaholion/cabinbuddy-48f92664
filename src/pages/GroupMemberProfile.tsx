@@ -35,6 +35,12 @@ const groupMemberProfileSchema = z.object({
 type GroupMemberProfileFormData = z.infer<typeof groupMemberProfileSchema>;
 
 const GroupMemberProfile = () => {
+  console.log('🔍 PROFILE PAGE - Component Mount:', {
+    currentUrl: window.location.href,
+    pathname: window.location.pathname,
+    timestamp: new Date().toISOString()
+  });
+
   const { toast } = useToast();
   const { user, signOut, resetPassword } = useAuth();
   const { organization } = useOrganization();
@@ -52,6 +58,11 @@ const GroupMemberProfile = () => {
     familyGroupsCount: familyGroups.length,
     organization: organization?.organization_name
   });
+
+  // Check for any automatic redirects
+  useEffect(() => {
+    console.log('🔍 PROFILE - Mount check, no redirects should happen from this component');
+  }, []);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
   const [selectedGroupMember, setSelectedGroupMember] = useState<any>(null);
@@ -249,170 +260,110 @@ const GroupMemberProfile = () => {
     }
   }, [watchedMemberName, availableMembers, setValue, toast]);
 
-  // Auto-populate user information when family groups load
+  // Auto-population effect - tries to match user's email with family group data or use claimed profile
   useEffect(() => {
-    if (!loading && familyGroups.length > 0 && user?.email && !autoPopulated) {
-      const userEmail = user.email.toLowerCase();
-      
-      console.log('👤 [GROUP_MEMBER_PROFILE] Auto-population check:', {
-        userEmail,
-        hasClaimedProfile,
-        claimedProfile: claimedProfile,
-        familyGroupsCount: familyGroups.length
-      });
+    if (!user?.email || familyGroups.length === 0 || loading || autoPopulated) {
+      return;
+    }
 
-      // If user has a claimed profile, use that
-      if (hasClaimedProfile && claimedProfile) {
-        console.log('✅ [GROUP_MEMBER_PROFILE] Using claimed profile data');
-        const group = familyGroups.find(g => g.name === claimedProfile.family_group_name);
-        if (group) {
-          setValue("selectedFamilyGroup", claimedProfile.family_group_name);
-          setValue("selectedMemberName", claimedProfile.member_name);
-          setSelectedGroup(group);
-          
-          // Find and set the selected member
-          const members = [
-            ...(group.lead_name ? [{ 
-              name: group.lead_name, 
-              email: group.lead_email, 
-              phone: group.lead_phone,
-              isLead: true 
-            }] : []),
-            ...(group.host_members || []).map((member: any) => ({ 
-              name: member.name, 
-              email: member.email, 
-              phone: member.phone,
-              isLead: false 
-            }))
-          ];
-          
-          const selectedMember = members.find(m => m.name === claimedProfile.member_name);
-          if (selectedMember) {
-            setSelectedGroupMember(selectedMember);
-            setValue("email", selectedMember.email || "");
-            setValue("phone", selectedMember.phone || "");
-          }
-          
-          setAutoPopulated(true);
-        }
-        return;
-      }
+    console.log('👤 Auto-population check:', {
+      userEmail: user.email,
+      hasClaimedProfile,
+      claimedProfile,
+      familyGroupsCount: familyGroups.length
+    });
 
-      // Otherwise, try to auto-detect based on email matching
-      for (const group of familyGroups) {
-        console.log('🔍 [GROUP_MEMBER_PROFILE] Checking group:', {
-          groupName: group.name,
-          leadEmail: group.lead_email,
-          hostMembersCount: group.host_members?.length || 0
-        });
+    // FIRST: If user has a claimed profile, use that data
+    if (hasClaimedProfile && claimedProfile) {
+      console.log('✅ Using claimed profile:', claimedProfile);
+      const group = familyGroups.find(g => g.name === claimedProfile.family_group_name);
+      if (group) {
+        setValue("selectedFamilyGroup", claimedProfile.family_group_name);
+        setValue("selectedMemberName", claimedProfile.member_name);
+        setSelectedGroup(group);
         
-        // Check if user is the group lead
-        if (group.lead_email && group.lead_email.toLowerCase() === userEmail) {
-          console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as group lead:', {
-            groupName: group.name,
-            leadName: group.lead_name,
-            leadEmail: group.lead_email
-          });
-          
-          setValue("selectedFamilyGroup", group.name);
-          setValue("selectedMemberName", group.lead_name);
-          setSelectedGroup(group);
-          
-          // Set available members for this group
-          const members = [
-            ...(group.lead_name ? [{ 
-              name: group.lead_name, 
-              email: group.lead_email, 
-              phone: group.lead_phone,
-              isLead: true 
-            }] : []),
-            ...(group.host_members || []).map((member: any) => ({ 
-              name: member.name, 
-              email: member.email, 
-              phone: member.phone,
-              isLead: false 
-            }))
-          ];
-          setAvailableMembers(members);
-          
-          const leadMember = {
-            name: group.lead_name, 
-            email: group.lead_email, 
+        // Find the member in the group data
+        const isLead = claimedProfile.member_type === 'group_lead';
+        let selectedMember = null;
+        
+        if (isLead && group.lead_name) {
+          selectedMember = {
+            name: group.lead_name,
+            email: group.lead_email,
             phone: group.lead_phone,
             isLead: true
           };
-          setSelectedGroupMember(leadMember);
-          setValue("email", leadMember.email || "");
-          setValue("phone", leadMember.phone || "");
-          
-          setAutoPopulated(true);
-          return;
+        } else {
+          // Find in host_members
+          const hostMember = group.host_members?.find((m: any) => m.name === claimedProfile.member_name);
+          if (hostMember) {
+            selectedMember = {
+              name: hostMember.name,
+              email: hostMember.email,
+              phone: hostMember.phone,
+              isLead: false
+            };
+          }
         }
+        
+        if (selectedMember) {
+          setSelectedGroupMember(selectedMember);
+          setValue("email", selectedMember.email || "");
+          setValue("phone", selectedMember.phone || "");
+          
+          // Set available members for the dropdown
+          const leadMember = group.lead_name ? [{ 
+            name: group.lead_name, 
+            email: group.lead_email, 
+            phone: group.lead_phone,
+            isLead: true 
+          }] : [];
+          
+          const hostMembers = (group.host_members || [])
+            .filter((member: any) => member.name && member.name.trim())
+            .map((member: any) => ({ 
+              name: member.name, 
+              email: member.email, 
+              phone: member.phone,
+              isLead: false 
+            }));
+          
+          setAvailableMembers([...leadMember, ...hostMembers]);
+        }
+        
+        setAutoPopulated(true);
+        return;
+      }
+    }
 
-        // Check if user is in host_members
-        if (group.host_members) {
-          for (const member of group.host_members) {
-            console.log('🔍 [GROUP_MEMBER_PROFILE] Checking host member:', {
-              memberName: member.name,
-              memberEmail: member.email
-            });
-            
-            if (member.email && member.email.toLowerCase() === userEmail) {
-              console.log('✅ [GROUP_MEMBER_PROFILE] Auto-detected as host member:', {
-                groupName: group.name,
-                memberName: member.name,
-                memberEmail: member.email
-              });
-              
-              console.log('🔧 [GROUP_MEMBER_PROFILE] Setting form values:', {
-                familyGroup: group.name,
-                memberName: member.name,
-                email: member.email || "",
-                phone: member.phone || ""
-              });
-              
-              setValue("selectedFamilyGroup", group.name);
-              setValue("selectedMemberName", member.name);
-              setSelectedGroup(group);
-              
-              // Set available members for this group
-              const members = [
-                ...(group.lead_name ? [{ 
-                  name: group.lead_name, 
-                  email: group.lead_email, 
-                  phone: group.lead_phone,
-                  isLead: true 
-                }] : []),
-                ...(group.host_members || []).map((m: any) => ({ 
-                  name: m.name, 
-                  email: m.email, 
-                  phone: m.phone,
-                  isLead: false 
-                }))
-              ];
-              setAvailableMembers(members);
-              
-              const hostMember = {
-                name: member.name,
-                email: member.email,
-                phone: member.phone,
-                isLead: false
-              };
-              setSelectedGroupMember(hostMember);
-              setValue("email", hostMember.email || "");
-              setValue("phone", hostMember.phone || "");
-              
-              setAutoPopulated(true);
-              return;
-            }
+    // FALLBACK: Try email-based auto-detection for unclaimed profiles
+    const userEmail = user.email.toLowerCase();
+    for (const group of familyGroups) {
+      // Check if user is the group lead
+      if (group.lead_email?.toLowerCase() === userEmail && group.lead_name) {
+        console.log('✅ Auto-detected as group lead:', { groupName: group.name, leadName: group.lead_name });
+        setValue("selectedFamilyGroup", group.name);
+        setValue("selectedMemberName", group.lead_name);
+        setAutoPopulated(true);
+        return;
+      }
+
+      // Check if user is in host_members
+      if (group.host_members) {
+        for (const member of group.host_members) {
+          if (member.email?.toLowerCase() === userEmail && member.name) {
+            console.log('✅ Auto-detected as host member:', { groupName: group.name, memberName: member.name });
+            setValue("selectedFamilyGroup", group.name);
+            setValue("selectedMemberName", member.name);
+            setAutoPopulated(true);
+            return;
           }
         }
       }
-      
-      console.log('⚠️ [GROUP_MEMBER_PROFILE] No automatic match found - user must select manually');
     }
-   }, [loading, familyGroups, user?.email, hasClaimedProfile, claimedProfile, setValue, autoPopulated]);
 
+    console.log('❌ No auto-detection match found for email:', userEmail);
+  }, [user?.email, familyGroups, loading, hasClaimedProfile, claimedProfile, autoPopulated, setValue]);
   // Fetch user profile data
   useEffect(() => {
     const fetchUserProfile = async () => {

@@ -23,19 +23,23 @@ const Intro = () => {
   // Check if we're in debug mode
   const isDebugMode = location.search.includes('debug=true');
 
-  // Redirect authenticated users to their dashboard (unless in debug mode)
+  // Redirect authenticated users to their dashboard (unless in debug mode or they're trying to access a specific page)
   useEffect(() => {
     console.log('🏠 Intro useEffect - checking redirect:', {
       hasUser: !!user,
       isDebugMode,
-      willRedirect: user && !isDebugMode
+      pathname: location.pathname,
+      search: location.search
     });
     
-    if (user && !isDebugMode) {
+    // Don't redirect if user is trying to access a specific page (indicated by search params or hash)
+    const hasSpecificDestination = location.search || location.hash;
+    
+    if (user && !isDebugMode && !hasSpecificDestination && location.pathname === '/') {
       console.log('🔄 Intro - attempting redirect to /home');
       navigate("/home", { replace: true });
     }
-  }, [user, navigate, isDebugMode]);
+  }, [user, navigate, isDebugMode, location]);
 
 
   const handleGetStarted = () => {
