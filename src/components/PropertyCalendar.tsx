@@ -1256,19 +1256,18 @@ const getBookingsForDate = (date: Date) => {
       <Card>
         <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
-          <CardDescription>Next 2 months reservations</CardDescription>
+          <CardDescription>Reservations starting today or later</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {reservations
               .filter(reservation => {
                 const startDate = parseLocalDate(reservation.start_date);
-                const nextMonth = new Date(currentMonth);
-                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
                 
-                // Include current month and next month reservations
-                return (startDate.getMonth() === currentMonth.getMonth() && startDate.getFullYear() === currentMonth.getFullYear()) ||
-                       (startDate.getMonth() === nextMonth.getMonth() && startDate.getFullYear() === nextMonth.getFullYear());
+                // Only show reservations that start today or in the future
+                return startDate >= today;
               })
               .sort((a, b) => parseLocalDate(a.start_date).getTime() - parseLocalDate(b.start_date).getTime())
               .slice(0, 15)
@@ -1351,14 +1350,13 @@ const getBookingsForDate = (date: Date) => {
             
             {reservations.filter(reservation => {
               const startDate = parseLocalDate(reservation.start_date);
-              const nextMonth = new Date(currentMonth);
-              nextMonth.setMonth(nextMonth.getMonth() + 1);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0); // Reset time to beginning of day for accurate comparison
               
-              // Include current month and next month reservations
-              return (startDate.getMonth() === currentMonth.getMonth() && startDate.getFullYear() === currentMonth.getFullYear()) ||
-                     (startDate.getMonth() === nextMonth.getMonth() && startDate.getFullYear() === nextMonth.getFullYear());
+              // Only show reservations that start today or in the future
+              return startDate >= today;
             }).length === 0 && (
-              <p className="text-muted-foreground text-center py-4">No upcoming reservations in the next 2 months</p>
+              <p className="text-muted-foreground text-center py-4">No upcoming reservations</p>
             )}
           </div>
         </CardContent>

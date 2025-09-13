@@ -425,11 +425,11 @@ const CabinCalendar = () => {
               />
             </div>
 
-            {/* Collapsible sections for secondary tools */}
-            <div ref={workWeekendSectionRef}>
+            {/* Work Weekend Proposals - Right below calendar */}
+            <div ref={workWeekendSectionRef} className="mt-4">
               <Accordion 
                 type="multiple" 
-                className="mt-4 space-y-2"
+                className="space-y-2"
                 value={accordionValue}
                 onValueChange={setAccordionValue}
               >
