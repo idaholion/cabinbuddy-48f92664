@@ -5,25 +5,8 @@ import type { Database } from './types';
 const SUPABASE_URL = "https://ftaxzdnrnhktzbcsejoy.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXh6ZG5ybmhrdHpiY3Nlam95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NTgwNDMsImV4cCI6MjA2OTAzNDA0M30.EqvoCt1QJpe3UWFzbhgS_9EUOzoKw-Ze7BnstPBFdNQ";
 
-// Create a custom storage adapter that forces session isolation
-const customStorage = {
-  getItem: (key: string) => {
-    return localStorage.getItem(key);
-  },
-  setItem: (key: string, value: string) => {
-    localStorage.setItem(key, value);
-  },
-  removeItem: (key: string) => {
-    localStorage.removeItem(key);
-  }
-};
-
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
-
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
