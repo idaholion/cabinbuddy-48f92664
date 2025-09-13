@@ -8,21 +8,13 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Create a custom storage adapter that forces session isolation
 const customStorage = {
   getItem: (key: string) => {
-    // Add session isolation by prefixing with current tab ID
-    const tabId = sessionStorage.getItem('tab-id') || Math.random().toString(36);
-    sessionStorage.setItem('tab-id', tabId);
-    return sessionStorage.getItem(`${tabId}-${key}`);
+    return localStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
-    const tabId = sessionStorage.getItem('tab-id') || Math.random().toString(36);
-    sessionStorage.setItem('tab-id', tabId);
-    sessionStorage.setItem(`${tabId}-${key}`, value);
+    localStorage.setItem(key, value);
   },
   removeItem: (key: string) => {
-    const tabId = sessionStorage.getItem('tab-id');
-    if (tabId) {
-      sessionStorage.removeItem(`${tabId}-${key}`);
-    }
+    localStorage.removeItem(key);
   }
 };
 
@@ -31,9 +23,9 @@ const customStorage = {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
+    storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: false,
-    storage: window.localStorage, // Force localStorage for session persistence
   }
 });
