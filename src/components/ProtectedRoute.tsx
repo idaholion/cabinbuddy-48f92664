@@ -12,12 +12,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const { logInfo } = useProductionLogger();
 
-  console.log('🔒 ProtectedRoute check:', { 
-    hasUser: !!user, 
-    loading, 
-    userId: user?.id,
-    userEmail: user?.email 
-  });
+  console.log('=== PROTECTED ROUTE CHECK ===');
+  console.log('Current URL:', window.location.href);
+  console.log('Has user:', !!user);
+  console.log('User ID:', user?.id?.substring(0, 8) + '...');
+  console.log('User email:', user?.email);
+  console.log('Loading:', loading);
+  console.log('Will redirect:', !user && !loading);
 
   // Show loading only during initial auth check to prevent flashing
   if (loading) {
