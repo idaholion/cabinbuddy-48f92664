@@ -54,6 +54,11 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
         
         if (checklistImages && checklistImages.length > 0) {
           console.log('Found images in checklist_images table:', checklistImages.length);
+          console.log('🔍 Database images with markers:', checklistImages.map(img => ({
+            url: img.image_url.substring(img.image_url.lastIndexOf('/') + 1),
+            marker_name: img.marker_name
+          })));
+          
           images = checklistImages.map(img => ({
             url: img.image_url,
             description: img.marker_name || 'Uploaded image',
@@ -228,6 +233,9 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           console.log('Auto-match results:', matches);
           console.log('Detected markers:', detectedMarkers);
           console.log('Available images with markers:', uniqueImages.filter(img => img.originalMarker));
+          console.log('🔍 DEBUGGING - All available markers in database:', 
+            uniqueImages.map(img => img.originalMarker).filter(Boolean));
+          console.log('🔍 DEBUGGING - All detected markers from items:', detectedMarkers);
           
           if (matches.length > 0) {
             onAutoMatch(matches);
