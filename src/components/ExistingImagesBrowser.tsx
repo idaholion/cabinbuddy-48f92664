@@ -32,93 +32,126 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [availableImages, setAvailableImages] = useState<Array<{url: string, description?: string, originalMarker?: string}>>([]);
+  const [hasAutoMatched, setHasAutoMatched] = useState(false);
+  const [lastMatchedMarkers, setLastMatchedMarkers] = useState<string[]>([]);
   const { addImageToLibrary } = useImageLibrary();
   const { checklists } = useCustomChecklists();
   const { organization } = useOrganization();
 
+  // Reset auto-match state when detected markers change
   useEffect(() => {
-    if (isOpen) {
+    const markersChanged = JSON.stringify(detectedMarkers) !== JSON.stringify(lastMatchedMarkers);
+    if (markersChanged) {
+      setHasAutoMatched(false);
+      setLastMatchedMarkers([...detectedMarkers]);
+    }
+  }, [detectedMarkers, lastMatchedMarkers]);
+
+  // Reset auto-match state when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasAutoMatched(false);
+      setSearchTerm('');
+    }
+  }, [isOpen]);
+
+  // Load images when dialog opens
+  useEffect(() => {
+    if (isOpen && organization?.id) {
       const loadImages = async () => {
-        if (!organization?.id) {
-          console.log('No organization ID available');
-          return;
-        }
-
-        // Strategy 1: Get images from checklist_images table (preferred for auto-matching)
-        const { data: checklistImages } = await supabase
-          .from('checklist_images')
-          .select('*')
-          .eq('organization_id', organization.id);
-
-        let images: Array<{url: string, description?: string, originalMarker?: string}> = [];
-        
-        if (checklistImages && checklistImages.length > 0) {
-          console.log('Found images in checklist_images table:', checklistImages.length);
-          console.log('🔍 Database images with markers:', checklistImages.map(img => ({
-            url: img.image_url.substring(img.image_url.lastIndexOf('/') + 1),
-            marker_name: img.marker_name
-          })));
+        try {
+          console.log('Loading images for organization:', organization.id);
           
-          images = checklistImages.map(img => ({
-            url: img.image_url,
-            description: img.marker_name || 'Uploaded image',
-            originalMarker: img.marker_name
-          }));
-        } else {
-          console.log('No images in checklist_images table, falling back to scanning checklists');
-          // Strategy 2: Fallback - scan existing checklist items
-          const sourceChecklist = checklists.find(c => c.checklist_type === sourceChecklistType);
-          if (sourceChecklist) {
-            // Extract images from top-level images field
-            if (sourceChecklist.images && Array.isArray(sourceChecklist.images)) {
-              const topLevelImages = sourceChecklist.images.map((img: any) => ({
-                url: typeof img === 'string' ? img : img.url,
-                description: typeof img === 'object' ? img.description || img.alt : undefined
-              }));
-              images.push(...topLevelImages);
-            }
+          // Strategy 1: Get images from checklist_images table (preferred for auto-matching)
+          const { data: checklistImages } = await supabase
+            .from('checklist_images')
+            .select('*')
+            .eq('organization_id', organization.id);
+
+          let images: Array<{url: string, description?: string, originalMarker?: string}> = [];
+          
+          if (checklistImages && checklistImages.length > 0) {
+            console.log('Found images in checklist_images table:', checklistImages.length);
             
-            // Extract images from individual checklist items
-            if (sourceChecklist.items && Array.isArray(sourceChecklist.items)) {
-              sourceChecklist.items.forEach((item: any) => {
-                // Parse original markers from imageMarker field
-                const originalMarkers = item.imageMarker ? 
-                  item.imageMarker.split(',').map((m: string) => m.trim()) : [];
-                
-                // Single image URL
-                if (item.imageUrl) {
-                  images.push({
-                    url: item.imageUrl,
-                    description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id}`,
-                    originalMarker: originalMarkers[0] // First marker for single image
-                  });
-                }
-                
-                // Multiple image URLs
-                if (item.imageUrls && Array.isArray(item.imageUrls)) {
-                  item.imageUrls.forEach((url: string, index: number) => {
+            images = checklistImages.map(img => ({
+              url: img.image_url,
+              description: img.marker_name || 'Uploaded image',
+              originalMarker: img.marker_name
+            }));
+          } else {
+            console.log('No images in checklist_images table, falling back to scanning checklists');
+            // Strategy 2: Fallback - scan existing checklist items
+            const sourceChecklist = checklists.find(c => c.checklist_type === sourceChecklistType);
+            if (sourceChecklist) {
+              // Extract images from top-level images field
+              if (sourceChecklist.images && Array.isArray(sourceChecklist.images)) {
+                const topLevelImages = sourceChecklist.images.map((img: any) => ({
+                  url: typeof img === 'string' ? img : img.url,
+                  description: typeof img === 'object' ? img.description || img.alt : undefined
+                }));
+                images.push(...topLevelImages);
+              }
+              
+              // Extract images from individual checklist items
+              if (sourceChecklist.items && Array.isArray(sourceChecklist.items)) {
+                sourceChecklist.items.forEach((item: any) => {
+                  // Parse original markers from imageMarker field
+                  const originalMarkers = item.imageMarker ? 
+                    item.imageMarker.split(',').map((m: string) => m.trim()) : [];
+                  
+                  // Single image URL
+                  if (item.imageUrl) {
                     images.push({
-                      url: url,
-                      description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id} (${index + 1})`,
-                      originalMarker: originalMarkers[index] // Match marker by index
+                      url: item.imageUrl,
+                      description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id}`,
+                      originalMarker: originalMarkers[0] // First marker for single image
                     });
-                  });
-                }
-              });
+                  }
+                  
+                  // Multiple image URLs
+                  if (item.imageUrls && Array.isArray(item.imageUrls)) {
+                    item.imageUrls.forEach((url: string, index: number) => {
+                      images.push({
+                        url: url,
+                        description: item.imageDescription || item.text?.substring(0, 50) + '...' || `Item ${item.id} (${index + 1})`,
+                        originalMarker: originalMarkers[index] // Match marker by index
+                      });
+                    });
+                  }
+                });
+              }
             }
           }
+          
+          // Remove duplicates based on URL
+          const uniqueImages = images.filter((img, index, arr) => 
+            arr.findIndex(i => i.url === img.url) === index
+          );
+          
+          setAvailableImages(uniqueImages);
+          console.log('Total unique images found:', uniqueImages.length);
+        } catch (error) {
+          console.error('Error loading images:', error);
+          toast({
+            title: "Error loading images",
+            description: "Failed to load existing images. Please try again.",
+            variant: "destructive"
+          });
         }
-        
-        // Remove duplicates based on URL
-        const uniqueImages = images.filter((img, index, arr) => 
-          arr.findIndex(i => i.url === img.url) === index
-        );
-        
-        setAvailableImages(uniqueImages);
-        console.log('Total unique images found:', uniqueImages.length);
-        
-        // Auto-match if markers are provided
-        if (onAutoMatch && detectedMarkers.length > 0) {
+      };
+
+      loadImages();
+    }
+  }, [isOpen, organization?.id, checklists, sourceChecklistType]);
+
+  // Auto-match logic - separate from image loading to prevent loops
+  useEffect(() => {
+    if (isOpen && !hasAutoMatched && onAutoMatch && detectedMarkers.length > 0 && availableImages.length > 0) {
+      const performAutoMatch = async () => {
+        try {
+          console.log('🔄 Starting auto-match process...');
+          setHasAutoMatched(true); // Set flag immediately to prevent re-runs
+          
           const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
           
           // Enhanced normalization function
@@ -201,7 +234,7 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
               console.log('🚨 Looking for matches for marker part:', markerPart);
               
               // Try to find a matching image using fuzzy matching
-              const matchingImage = uniqueImages.find(img => {
+              const matchingImage = availableImages.find(img => {
                 if (!img.originalMarker) return false;
                 
                 console.log('🚨   Comparing detected marker "' + markerPart + '" with image marker:', img.originalMarker);
@@ -233,11 +266,6 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           });
           
           console.log('Auto-match results:', matches);
-          console.log('Detected markers:', detectedMarkers);
-          console.log('Available images with markers:', uniqueImages.filter(img => img.originalMarker));
-          console.log('🔍 DEBUGGING - All available markers in database:', 
-            uniqueImages.map(img => img.originalMarker).filter(Boolean));
-          console.log('🔍 DEBUGGING - All detected markers from items:', detectedMarkers);
           
           if (matches.length > 0) {
             onAutoMatch(matches);
@@ -251,12 +279,17 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
             console.log('🚨 2. Images in database don\'t have marker names stored');
             console.log('🚨 3. The images need to be backfilled first');
           }
+        } catch (error) {
+          console.error('Error during auto-match:', error);
+          setHasAutoMatched(false); // Reset flag on error to allow retry
         }
       };
 
-      loadImages();
+      // Add a small delay to ensure component is fully mounted and to debounce
+      const timeoutId = setTimeout(performAutoMatch, 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [isOpen, checklists, sourceChecklistType, onAutoMatch, detectedMarkers, organization?.id]);
+  }, [isOpen, hasAutoMatched, onAutoMatch, detectedMarkers, availableImages]);
 
   // Filter images based on search term
   const filteredImages = availableImages.filter(image => 
