@@ -2404,6 +2404,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      backfill_checklist_images: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       claim_family_member_profile: {
         Args: {
           p_family_group_name: string

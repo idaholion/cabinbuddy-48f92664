@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WordDocumentUploader } from '@/components/WordDocumentUploader';
+import { BackfillImages } from '@/components/BackfillImages';
 import { InteractiveChecklist } from '@/components/InteractiveChecklist';
 import { ChecklistImageSelector } from '@/components/ChecklistImageSelector';
 import { ExistingImagesBrowser } from '@/components/ExistingImagesBrowser';
@@ -321,6 +322,11 @@ export default function ChecklistCreator() {
               <ImageLibraryManager />
             </div>
           </PageHeader>
+
+        {/* One-time setup for auto-matching */}
+        <div className="flex justify-center">
+          <BackfillImages />
+        </div>
 
         <Tabs defaultValue="upload" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
