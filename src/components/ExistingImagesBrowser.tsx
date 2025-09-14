@@ -157,13 +157,15 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           setHasAutoMatched(true); // Set flag immediately to prevent re-runs
           
           const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
+          const usedImages = new Set<string>(); // Track used images to prevent duplicates
           
-          // Less aggressive normalization - preserve more distinguishing characters
+          // Improved normalization - handle brackets properly
           const normalizeMarker = (marker: string): string => {
             return marker
               .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
               .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
-              .replace(/\]$/, '') // Remove ] suffix
+              .replace(/^\[/, '') // Remove opening bracket
+              .replace(/\]$/, '') // Remove closing bracket
               .replace(/^\{\{/, '') // Remove {{ prefix
               .replace(/\}\}$/, '') // Remove }} suffix
               .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
@@ -176,76 +178,55 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
             return str.replace(/[^a-z0-9]/g, '').toLowerCase();
           };
 
-          // Check if two markers match using multiple strategies
-          const matchMarkers = (detected: string, available: string): boolean => {
-            console.log(`\n--- Comparing "${detected}" vs "${available}" ---`);
-            
+          // Check for exact matches first (highest priority)
+          const isExactMatch = (detected: string, available: string): boolean => {
             const normDetected = normalizeMarker(detected);
             const normAvailable = normalizeMarker(available);
             
-            console.log(`Normalized: "${normDetected}" vs "${normAvailable}"`);
-            
-            // Strategy 1: Exact match (case insensitive)
+            // Strategy 1: Perfect exact match
             if (normDetected === normAvailable) {
-              console.log('✅ EXACT MATCH');
               return true;
             }
             
             // Strategy 2: Exact match ignoring spaces and separators
             const cleanDetected = normDetected.replace(/[\s\-_]/g, '');
             const cleanAvailable = normAvailable.replace(/[\s\-_]/g, '');
-            if (cleanDetected === cleanAvailable) {
-              console.log('✅ EXACT MATCH (ignoring separators)');
-              return true;
+            return cleanDetected === cleanAvailable;
+          };
+
+          // Check for fuzzy matches (lower priority)
+          const isFuzzyMatch = (detected: string, available: string): boolean => {
+            console.log(`\n--- Fuzzy comparing "${detected}" vs "${available}" ---`);
+            
+            const normDetected = normalizeMarker(detected);
+            const normAvailable = normalizeMarker(available);
+            
+            console.log(`Normalized: "${normDetected}" vs "${normAvailable}"`);
+            
+            // Skip fuzzy matching if strings are too different in length
+            if (Math.abs(normDetected.length - normAvailable.length) > 3) {
+              console.log('❌ Length difference too large');
+              return false;
             }
             
-            // Strategy 3: Contains match (both directions)
-            if (normDetected.includes(normAvailable) || normAvailable.includes(normDetected)) {
-              console.log('✅ CONTAINS MATCH');
-              return true;
-            }
-            
-            // Strategy 4: Starts/ends with match for longer strings
-            if (cleanDetected.length >= 4 && cleanAvailable.length >= 4) {
-              if (cleanDetected.startsWith(cleanAvailable.substring(0, 4)) || 
-                  cleanAvailable.startsWith(cleanDetected.substring(0, 4)) ||
-                  cleanDetected.endsWith(cleanAvailable.substring(-4)) || 
-                  cleanAvailable.endsWith(cleanDetected.substring(-4))) {
-                console.log('✅ STARTS/ENDS WITH MATCH');
-                return true;
-              }
-            }
-            
-            // Strategy 5: Fuzzy matching for alphanumeric only (reduced threshold)
+            // Only allow fuzzy matching for strings with reasonable similarity
             const fuzzyDetected = cleanForFuzzy(normDetected);
             const fuzzyAvailable = cleanForFuzzy(normAvailable);
             
-            if (fuzzyDetected.length >= 2 && fuzzyAvailable.length >= 2) {
+            if (fuzzyDetected.length >= 3 && fuzzyAvailable.length >= 3) {
               console.log(`Fuzzy comparison: "${fuzzyDetected}" vs "${fuzzyAvailable}"`);
               
-              // Direct match on cleaned strings
-              if (fuzzyDetected === fuzzyAvailable) {
-                console.log('✅ FUZZY EXACT MATCH');
-                return true;
-              }
-              
-              // Contains match on cleaned strings
-              if (fuzzyDetected.includes(fuzzyAvailable) || fuzzyAvailable.includes(fuzzyDetected)) {
-                console.log('✅ FUZZY CONTAINS MATCH');
-                return true;
-              }
-              
-              // Levenshtein distance similarity (lowered threshold to 60%)
+              // Levenshtein distance similarity (increased threshold to 85%)
               const similarity = calculateSimilarity(fuzzyDetected, fuzzyAvailable);
               console.log(`Similarity score: ${Math.round(similarity * 100)}%`);
               
-              if (similarity >= 0.6) {
-                console.log('✅ FUZZY SIMILARITY MATCH');
+              if (similarity >= 0.85) {
+                console.log('✅ HIGH SIMILARITY MATCH');
                 return true;
               }
             }
             
-            console.log('❌ NO MATCH');
+            console.log('❌ NO FUZZY MATCH');
             return false;
           };
 
@@ -281,15 +262,19 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
             return matrix[str2.length][str1.length];
           };
           
-          // Process each detected marker
+          // STEP 1: Process exact matches first (highest priority)
+          console.log('\n🎯 STEP 1: Processing EXACT matches...');
           detectedMarkers.forEach(marker => {
+            if (usedImages.has(marker)) return; // Skip if already matched
+            
             console.log(`\n🔍 Processing detected marker: "${marker}"`);
             
             // Clean the marker of prefixes/suffixes
             const cleanMarker = marker
               .replace(/^\[IMAGE:/, '')
               .replace(/:[^:\]]*\]$/, '')
-              .replace(/\]$/, '')
+              .replace(/^\[/, '') // Remove opening bracket
+              .replace(/\]$/, '') // Remove closing bracket
               .trim();
             
             console.log(`Cleaned marker: "${cleanMarker}"`);
@@ -298,30 +283,78 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
             const markerParts = cleanMarker.split(',').map(part => part.trim()).filter(part => part);
             
             markerParts.forEach(markerPart => {
-              console.log(`\n🎯 Looking for matches for: "${markerPart}"`);
+              console.log(`\n🎯 Looking for EXACT matches for: "${markerPart}"`);
               
-              // Find matching image
+              // Find exact matching image
               const matchingImage = availableImages.find(img => {
-                if (!img.originalMarker) {
-                  console.log('  Skipping image with no originalMarker');
+                if (!img.originalMarker || usedImages.has(img.url)) {
                   return false;
                 }
                 
                 // Handle comma-separated original markers
                 const originalParts = img.originalMarker.split(',').map(part => part.trim()).filter(part => part);
                 
-                // Check if any part matches
-                return originalParts.some(origPart => matchMarkers(markerPart, origPart));
+                // Check if any part matches exactly
+                return originalParts.some(origPart => isExactMatch(markerPart, origPart));
               });
               
-              if (matchingImage && !matches.find(m => m.imageUrl === matchingImage.url)) {
-                console.log(`🎉 MATCH FOUND: "${markerPart}" -> "${matchingImage.originalMarker}"`);
+              if (matchingImage) {
+                console.log(`🎉 EXACT MATCH FOUND: "${markerPart}" -> "${matchingImage.originalMarker}"`);
                 matches.push({
                   marker: marker,
                   imageUrl: matchingImage.url,
                   description: matchingImage.description
                 });
-              } else if (!matchingImage) {
+                usedImages.add(matchingImage.url); // Mark image as used
+                usedImages.add(marker); // Mark marker as matched
+              }
+            });
+          });
+          
+          // STEP 2: Process fuzzy matches for remaining markers (lower priority)
+          console.log('\n🎯 STEP 2: Processing FUZZY matches for remaining markers...');
+          detectedMarkers.forEach(marker => {
+            if (usedImages.has(marker)) return; // Skip if already matched exactly
+            
+            console.log(`\n🔍 Processing remaining marker: "${marker}"`);
+            
+            // Clean the marker of prefixes/suffixes
+            const cleanMarker = marker
+              .replace(/^\[IMAGE:/, '')
+              .replace(/:[^:\]]*\]$/, '')
+              .replace(/^\[/, '') // Remove opening bracket
+              .replace(/\]$/, '') // Remove closing bracket
+              .trim();
+            
+            // Handle comma-separated markers
+            const markerParts = cleanMarker.split(',').map(part => part.trim()).filter(part => part);
+            
+            markerParts.forEach(markerPart => {
+              console.log(`\n🎯 Looking for FUZZY matches for: "${markerPart}"`);
+              
+              // Find fuzzy matching image
+              const matchingImage = availableImages.find(img => {
+                if (!img.originalMarker || usedImages.has(img.url)) {
+                  return false;
+                }
+                
+                // Handle comma-separated original markers
+                const originalParts = img.originalMarker.split(',').map(part => part.trim()).filter(part => part);
+                
+                // Check if any part matches with fuzzy logic
+                return originalParts.some(origPart => isFuzzyMatch(markerPart, origPart));
+              });
+              
+              if (matchingImage) {
+                console.log(`🎉 FUZZY MATCH FOUND: "${markerPart}" -> "${matchingImage.originalMarker}"`);
+                matches.push({
+                  marker: marker,
+                  imageUrl: matchingImage.url,
+                  description: matchingImage.description
+                });
+                usedImages.add(matchingImage.url); // Mark image as used
+                usedImages.add(marker); // Mark marker as matched
+              } else {
                 console.log(`💔 NO MATCH for: "${markerPart}"`);
               }
             });
