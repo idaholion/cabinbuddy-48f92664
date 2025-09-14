@@ -2624,6 +2624,14 @@ export type Database = {
         Args: { p_confirmation_code: string }
         Returns: string
       }
+      supervisor_reset_user_password: {
+        Args: {
+          p_confirmation_code: string
+          p_new_password: string
+          p_user_email: string
+        }
+        Returns: Json
+      }
       update_image_usage_counts: {
         Args: { p_organization_id: string }
         Returns: undefined
