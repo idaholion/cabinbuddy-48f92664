@@ -116,54 +116,97 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
         if (onAutoMatch && detectedMarkers.length > 0) {
           const matches: Array<{marker: string, imageUrl: string, description?: string}> = [];
           
-          detectedMarkers.forEach(marker => {
-            console.log('🚨 Processing marker:', marker);
-            
-            // Normalize the detected marker for comparison - be more aggressive with cleaning
-            let cleanMarker = marker
+          // Enhanced normalization function
+          const normalizeMarker = (marker: string): string => {
+            return marker
               .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
               .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
               .replace(/\]$/, '') // Remove ] suffix
               .replace(/^\{\{/, '') // Remove {{ prefix
               .replace(/\}\}$/, '') // Remove }} suffix
               .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
+              .replace(/[^a-z0-9]/gi, '') // Remove all non-alphanumeric characters
               .toLowerCase()
+              .trim();
+          };
+
+          // Fuzzy matching function for similar markers
+          const fuzzyMatch = (marker1: string, marker2: string): boolean => {
+            const norm1 = normalizeMarker(marker1);
+            const norm2 = normalizeMarker(marker2);
+            
+            console.log(`🚨   Fuzzy matching: "${norm1}" vs "${norm2}"`);
+            
+            // Exact match
+            if (norm1 === norm2) {
+              console.log(`🚨   ✅ Exact match: ${norm1}`);
+              return true;
+            }
+            
+            // Skip very short markers to avoid false matches
+            if (norm1.length < 3 || norm2.length < 3) return false;
+            
+            // Check if one contains the other (for cases like "drain" vs "draina")
+            if (norm1.includes(norm2) || norm2.includes(norm1)) {
+              console.log(`🚨   ✅ Contains match: ${norm1} <-> ${norm2}`);
+              return true;
+            }
+            
+            // Check for partial similarity (at least 70% of the shorter string should match)
+            const longer = norm1.length > norm2.length ? norm1 : norm2;
+            const shorter = norm1.length <= norm2.length ? norm1 : norm2;
+            
+            if (shorter.length >= 4) {
+              // Count matching characters in order
+              let matchCount = 0;
+              let j = 0;
+              for (let i = 0; i < shorter.length && j < longer.length; i++) {
+                while (j < longer.length && longer[j] !== shorter[i]) j++;
+                if (j < longer.length) {
+                  matchCount++;
+                  j++;
+                }
+              }
+              
+              const similarity = matchCount / shorter.length;
+              if (similarity >= 0.7) {
+                console.log(`🚨   ✅ Partial match: ${shorter} in ${longer} (${Math.round(similarity * 100)}% similar)`);
+                return true;
+              }
+            }
+            
+            return false;
+          };
+          
+          detectedMarkers.forEach(marker => {
+            console.log('🚨 Processing marker:', marker);
+            
+            // Handle comma-separated markers by splitting
+            const cleanMarker = marker
+              .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix
+              .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
+              .replace(/\]$/, '') // Remove ] suffix
               .trim();
             
             console.log('🚨 Cleaned marker:', cleanMarker);
             
-            // Handle comma-separated markers by splitting
             const markerParts = cleanMarker.split(',').map(part => part.trim()).filter(part => part);
             
             markerParts.forEach(markerPart => {
               console.log('🚨 Looking for matches for marker part:', markerPart);
               
-              // Try to find a matching image
+              // Try to find a matching image using fuzzy matching
               const matchingImage = uniqueImages.find(img => {
                 if (!img.originalMarker) return false;
                 
-                // Normalize the original marker from the image - be more aggressive with cleaning
-                let cleanOriginal = img.originalMarker
-                  .replace(/^\[IMAGE:/, '') // Remove [IMAGE: prefix (in case it's stored with brackets)
-                  .replace(/:[^:\]]*\]$/, '') // Remove :description] suffix
-                  .replace(/\]$/, '') // Remove ] suffix
-                  .replace(/^\{\{/, '') // Remove {{ prefix
-                  .replace(/\}\}$/, '') // Remove }} suffix
-                  .replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, '') // Remove file extension
-                  .toLowerCase()
-                  .trim();
-                
-                console.log('🚨   Comparing with original:', img.originalMarker, '-> cleaned:', cleanOriginal);
+                console.log('🚨   Comparing with original:', img.originalMarker);
                 
                 // Handle comma-separated original markers
-                const originalParts = cleanOriginal.split(',').map(part => part.trim()).filter(part => part);
+                const originalParts = img.originalMarker.split(',').map(part => part.trim()).filter(part => part);
                 
-                // Check if any part matches
+                // Check if any part matches using fuzzy logic
                 const isMatch = originalParts.some(origPart => {
-                  const exactMatch = origPart === markerPart;
-                  const containsMatch = origPart.includes(markerPart) || markerPart.includes(origPart);
-                  console.log(`🚨     "${origPart}" vs "${markerPart}" - exact: ${exactMatch}, contains: ${containsMatch}`);
-                  return exactMatch || containsMatch;
+                  return fuzzyMatch(markerPart, origPart);
                 });
                 
                 return isMatch;
@@ -188,6 +231,15 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
           
           if (matches.length > 0) {
             onAutoMatch(matches);
+            toast({
+              title: "Auto-match found images!",
+              description: `Found ${matches.length} matching images based on marker names`
+            });
+          } else {
+            console.log('🚨 No matches found - this could be because:');
+            console.log('🚨 1. Marker names are too different between checklists');
+            console.log('🚨 2. Images in database don\'t have marker names stored');
+            console.log('🚨 3. The images need to be backfilled first');
           }
         }
       };
