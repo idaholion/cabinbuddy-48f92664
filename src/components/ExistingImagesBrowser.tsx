@@ -204,14 +204,16 @@ export const ExistingImagesBrowser: React.FC<ExistingImagesBrowserProps> = ({
               const matchingImage = uniqueImages.find(img => {
                 if (!img.originalMarker) return false;
                 
-                console.log('🚨   Comparing with original:', img.originalMarker);
+                console.log('🚨   Comparing detected marker "' + markerPart + '" with image marker:', img.originalMarker);
                 
                 // Handle comma-separated original markers
                 const originalParts = img.originalMarker.split(',').map(part => part.trim()).filter(part => part);
                 
                 // Check if any part matches using fuzzy logic
                 const isMatch = originalParts.some(origPart => {
-                  return fuzzyMatch(markerPart, origPart);
+                  const match = fuzzyMatch(markerPart, origPart);
+                  console.log(`🚨     Testing: "${markerPart}" vs "${origPart}" = ${match}`);
+                  return match;
                 });
                 
                 return isMatch;
