@@ -630,7 +630,23 @@ async function processImageMarkersAndFiles(
       }
     }
 
-    // Assign the matched image to the checklist item
+      // Save matched image to checklist_images table if not already there
+      const { error: dbError } = await supabase
+        .from('checklist_images')
+        .upsert({
+          organization_id: organizationId,
+          image_url: match.imageUrl,
+          original_filename: match.marker,
+          marker_name: match.marker.replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, ''),
+          usage_count: 1,
+          uploaded_by_user_id: null
+        });
+
+      if (dbError) {
+        console.warn('⚠️ Failed to update checklist_images table for matched image:', dbError);
+      }
+
+      // Assign the matched image to the checklist item
     if (targetItemIndex >= 0 && targetItemIndex < processedItems.length) {
       console.log(`🎯 Assigning matched image to item ${targetItemIndex + 1}`);
       
@@ -785,6 +801,26 @@ async function processImageMarkersAndFiles(
           .getPublicUrl(fileName);
 
         console.log(`✅ Image uploaded: ${publicUrl}`);
+
+        // Save to checklist_images table for future auto-matching
+        const { error: dbError } = await supabase
+          .from('checklist_images')
+          .upsert({
+            organization_id: organizationId,
+            image_url: publicUrl,
+            original_filename: matchingFile.filename,
+            marker_name: marker.filename.replace(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i, ''),
+            usage_count: 0,
+            uploaded_by_user_id: null, // Edge function upload
+            file_size: imageBuffer.length,
+            content_type: matchingFile.contentType || `image/${fileExtension}`
+          });
+
+        if (dbError) {
+          console.warn('⚠️ Failed to save image to checklist_images table:', dbError);
+        } else {
+          console.log('✅ Image saved to checklist_images table');
+        }
 
         // Assign to checklist item
         if (!processedItems[targetItemIndex].imageUrl) {
