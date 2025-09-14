@@ -103,6 +103,15 @@ export const BackfillImages: React.FC = () => {
             Your existing images are now available for auto-matching in future checklists.
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <Button 
+            onClick={() => setIsComplete(false)}
+            variant="outline"
+            className="w-full"
+          >
+            Run Again
+          </Button>
+        </CardContent>
       </Card>
     );
   }
