@@ -15,31 +15,75 @@ export const BackfillImages: React.FC = () => {
     try {
       console.log('Starting image backfill process...');
       
-      const { data, error } = await supabase.rpc('backfill_checklist_images');
-      
-      if (error) {
-        console.error('Backfill error:', error);
-        toast({
-          title: "Backfill Failed",
-          description: `Error: ${error.message}`,
-          variant: "destructive"
-        });
-        return;
+      // First, let's try a direct approach to populate marker names
+      const { data: checklistData, error: fetchError } = await supabase
+        .from('custom_checklists')
+        .select('id, organization_id, items')
+        .eq('checklist_type', 'closing');
+        
+      if (fetchError || !checklistData?.length) {
+        throw new Error('Could not fetch checklist data');
       }
       
-      console.log('Backfill completed successfully:', data);
+      console.log('Found checklist data, processing images...');
+      
+      let imagesProcessed = 0;
+      const checklist = checklistData[0];
+      
+      if (checklist.items && Array.isArray(checklist.items)) {
+        for (const item of checklist.items) {
+          // Cast item to any to access properties from JSON
+          const itemData = item as any;
+          
+          // Process single imageUrl
+          if (itemData.imageUrl && itemData.imageMarker) {
+            const markers = itemData.imageMarker.split(',').map((m: string) => m.trim());
+            const markerName = markers[0]; // First marker for single image
+            
+            const { error: updateError } = await supabase
+              .from('checklist_images')
+              .update({ marker_name: markerName })
+              .eq('organization_id', checklist.organization_id)
+              .eq('image_url', itemData.imageUrl);
+              
+            if (!updateError) imagesProcessed++;
+          }
+          
+          // Process multiple imageUrls
+          if (itemData.imageUrls && Array.isArray(itemData.imageUrls) && itemData.imageMarker) {
+            const markers = itemData.imageMarker.split(',').map((m: string) => m.trim());
+            
+            for (let i = 0; i < itemData.imageUrls.length; i++) {
+              const imageUrl = itemData.imageUrls[i];
+              const markerName = markers[i] || null;
+              
+              if (markerName) {
+                const { error: updateError } = await supabase
+                  .from('checklist_images')
+                  .update({ marker_name: markerName })
+                  .eq('organization_id', checklist.organization_id)
+                  .eq('image_url', imageUrl);
+                  
+                if (!updateError) imagesProcessed++;
+              }
+            }
+          }
+        }
+      }
+      
+      console.log('Backfill completed successfully:', imagesProcessed);
       setIsComplete(true);
       
       toast({
         title: "Images Backfilled Successfully!",
-        description: `${data} images have been processed and are now available for auto-matching.`,
+        description: `${imagesProcessed} images have been processed and are now available for auto-matching.`,
       });
       
     } catch (error) {
-      console.error('Unexpected error during backfill:', error);
+      console.error('Backfill error:', error);
       toast({
-        title: "Backfill Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Backfill Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
