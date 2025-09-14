@@ -41,8 +41,26 @@ export const useImageLibrary = () => {
   const { toast } = useToast();
 
   const fetchImages = async () => {
-    if (!organization?.id) return;
+    console.log('📸 [useImageLibrary] Fetching images for organization:', organization?.id);
     
+    if (!organization?.id) {
+      console.log('📸 [useImageLibrary] No organization found, skipping fetch');
+      return;
+    }
+
+    // CRITICAL FIX: Check auth state before making database calls
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      console.error('📸 [useImageLibrary] No authenticated session found');
+      return;
+    }
+    
+    console.log('📸 [useImageLibrary] Authentication context:', {
+      userId: session.user.id,
+      userEmail: session.user.email,
+      organizationId: organization.id
+    });
+
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -51,10 +69,15 @@ export const useImageLibrary = () => {
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('📸 [useImageLibrary] Error fetching images:', error);
+        return;
+      }
+
+      console.log('📸 [useImageLibrary] Successfully fetched images:', data?.length || 0);
       setImages(data || []);
     } catch (error) {
-      console.error('Error fetching images:', error);
+      console.error('📸 [useImageLibrary] Exception fetching images:', error);
       toast({
         title: "Error",
         description: "Failed to fetch image library",

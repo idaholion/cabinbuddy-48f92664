@@ -2441,6 +2441,10 @@ export type Database = {
         }
         Returns: string
       }
+      debug_auth_context: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       delete_image_safely: {
         Args: {
           p_force_delete?: boolean
@@ -2599,6 +2603,10 @@ export type Database = {
       supervisor_delete_organization: {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
+      }
+      supervisor_fix_primary_organization_duplicates: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       supervisor_normalize_emails_and_fix_membership: {
         Args: Record<PropertyKey, never>
