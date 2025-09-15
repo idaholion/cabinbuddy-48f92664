@@ -175,7 +175,7 @@ export const VoteForm = () => {
       // Update proposal vote counts
       const { data: currentProposal, error: fetchError } = await supabase
         .from('voting_proposals')
-        .select('total_shares_voted, shares_for, shares_against')
+        .select('total_shares_voted, shares_for, shares_against, shares_abstain')
         .eq('id', selectedProposal)
         .single();
 
@@ -188,13 +188,17 @@ export const VoteForm = () => {
       const newSharesAgainst = voteChoice === 'against' 
         ? currentProposal.shares_against + votingShares 
         : currentProposal.shares_against;
+      const newSharesAbstain = voteChoice === 'abstain'
+        ? (currentProposal.shares_abstain || 0) + votingShares
+        : (currentProposal.shares_abstain || 0);
 
       const { error: updateError } = await supabase
         .from('voting_proposals')
         .update({
           total_shares_voted: newTotalVoted,
           shares_for: newSharesFor,
-          shares_against: newSharesAgainst
+          shares_against: newSharesAgainst,
+          shares_abstain: newSharesAbstain
         })
         .eq('id', selectedProposal);
 
@@ -293,6 +297,7 @@ export const VoteForm = () => {
               <SelectContent>
                 <SelectItem value="for">For</SelectItem>
                 <SelectItem value="against">Against</SelectItem>
+                <SelectItem value="abstain">Abstain</SelectItem>
               </SelectContent>
             </Select>
           </div>
