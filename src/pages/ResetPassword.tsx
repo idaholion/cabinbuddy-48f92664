@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,29 +14,53 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [hasValidSession, setHasValidSession] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if we're in debug mode
-    const isDebugMode = searchParams.get('debug') === 'true';
-    
-    if (!isDebugMode) {
-      // Check if we have the required tokens from the URL
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
-      
-      if (!accessToken || !refreshToken) {
-        toast({
-          title: "Invalid Reset Link",
-          description: "This password reset link is invalid or has expired.",
-          variant: "destructive",
-        });
-        navigate("/login");
+    // Check for existing session and set up auth state listener
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setHasValidSession(!!session);
+      } catch (error) {
+        console.error("Session check error:", error);
+        setHasValidSession(false);
+      } finally {
+        setSessionLoading(false);
       }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setHasValidSession(true);
+          setSessionLoading(false);
+        } else if (event === 'SIGNED_OUT') {
+          setHasValidSession(false);
+        }
+      }
+    );
+
+    checkSession();
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // If no valid session after loading, redirect to login with error
+    if (!sessionLoading && !hasValidSession) {
+      toast({
+        title: "Invalid Reset Link",
+        description: "This password reset link is invalid or has expired. Please request a new one.",
+        variant: "destructive",
+      });
+      navigate("/login");
     }
-  }, [searchParams, navigate, toast]);
+  }, [sessionLoading, hasValidSession, navigate, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,6 +113,32 @@ const ResetPassword = () => {
     
     setLoading(false);
   };
+
+  // Show loading while checking session
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+        <Card className="w-full max-w-xs bg-white/60 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-kaushan text-red-500">
+              Reset Password
+            </CardTitle>
+            <CardDescription>
+              Validating reset link...
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Don't render form if no valid session (will redirect)
+  if (!hasValidSession) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
