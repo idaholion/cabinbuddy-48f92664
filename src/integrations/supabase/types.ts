@@ -2183,6 +2183,7 @@ export type Database = {
           description: string | null
           id: string
           organization_id: string
+          shares_abstain: number
           shares_against: number | null
           shares_for: number | null
           status: string
@@ -2199,6 +2200,7 @@ export type Database = {
           description?: string | null
           id?: string
           organization_id: string
+          shares_abstain?: number
           shares_against?: number | null
           shares_for?: number | null
           status?: string
@@ -2215,6 +2217,7 @@ export type Database = {
           description?: string | null
           id?: string
           organization_id?: string
+          shares_abstain?: number
           shares_against?: number | null
           shares_for?: number | null
           status?: string

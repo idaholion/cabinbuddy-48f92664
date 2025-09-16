@@ -181,16 +181,17 @@ export const VoteForm = () => {
 
       if (fetchError) throw fetchError;
 
-      const newTotalVoted = currentProposal.total_shares_voted + votingShares;
+      const proposal = currentProposal as any; // Type assertion to handle new column
+      const newTotalVoted = proposal.total_shares_voted + votingShares;
       const newSharesFor = voteChoice === 'for' 
-        ? currentProposal.shares_for + votingShares 
-        : currentProposal.shares_for;
+        ? proposal.shares_for + votingShares 
+        : proposal.shares_for;
       const newSharesAgainst = voteChoice === 'against' 
-        ? currentProposal.shares_against + votingShares 
-        : currentProposal.shares_against;
+        ? proposal.shares_against + votingShares 
+        : proposal.shares_against;
       const newSharesAbstain = voteChoice === 'abstain'
-        ? (currentProposal.shares_abstain || 0) + votingShares
-        : (currentProposal.shares_abstain || 0);
+        ? (proposal.shares_abstain || 0) + votingShares
+        : (proposal.shares_abstain || 0);
 
       const { error: updateError } = await supabase
         .from('voting_proposals')
