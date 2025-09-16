@@ -478,6 +478,15 @@ const getBookingsForDate = (date: Date) => {
   const handleDateClick = (date: Date) => {
     if (isDragging) return;
     
+    // First check if there are existing reservations on this date
+    const dayBookings = getBookingsForDate(date);
+    
+    // If there are existing reservations, prioritize opening the first one for editing
+    if (dayBookings.length > 0) {
+      handleEditReservation(dayBookings[0]);
+      return;
+    }
+    
     const validation = isDateSelectable(date);
     if (!validation.selectable) {
       toast({
