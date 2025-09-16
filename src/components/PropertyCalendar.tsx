@@ -479,14 +479,24 @@ const getBookingsForDate = (date: Date) => {
   const handleDateClick = (date: Date) => {
     if (isDragging) return;
     
-    // First check if there are existing reservations on this date
-    const dayBookings = getBookingsForDate(date);
-    console.log('Date clicked:', date, 'Bookings found:', dayBookings);
+    // First check if there are existing reservations on this date (unfiltered)
+    const allBookings = reservations.filter(reservation => {
+      const startDate = parseLocalDate(reservation.start_date);
+      const endDate = parseLocalDate(reservation.end_date);
+      
+      // Normalize dates to avoid timezone issues
+      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return checkDate >= reservationStart && checkDate <= reservationEnd;
+    });
+    console.log('Date clicked:', date, 'Unfiltered bookings found:', allBookings);
     
     // If there are existing reservations, prioritize opening the first one for editing
-    if (dayBookings.length > 0) {
-      console.log('Opening existing reservation for editing:', dayBookings[0]);
-      handleEditReservation(dayBookings[0]);
+    if (allBookings.length > 0) {
+      console.log('Opening existing reservation for editing:', allBookings[0]);
+      handleEditReservation(allBookings[0]);
       return;
     }
     
