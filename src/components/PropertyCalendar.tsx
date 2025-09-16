@@ -245,6 +245,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   };
 
   const handleEditReservation = (reservation: any) => {
+    console.log('handleEditReservation called with:', reservation);
     setEditingReservation(reservation);
     setShowBookingForm(true);
   };
@@ -480,9 +481,11 @@ const getBookingsForDate = (date: Date) => {
     
     // First check if there are existing reservations on this date
     const dayBookings = getBookingsForDate(date);
+    console.log('Date clicked:', date, 'Bookings found:', dayBookings);
     
     // If there are existing reservations, prioritize opening the first one for editing
     if (dayBookings.length > 0) {
+      console.log('Opening existing reservation for editing:', dayBookings[0]);
       handleEditReservation(dayBookings[0]);
       return;
     }
