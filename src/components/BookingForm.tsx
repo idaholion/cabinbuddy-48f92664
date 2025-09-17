@@ -102,7 +102,14 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Populate form when editing
   useEffect(() => {
+    console.log('=== BookingForm useEffect triggered ===', {
+      editingReservation: editingReservation,
+      editingReservationId: editingReservation?.id,
+      hasEditingReservation: !!editingReservation
+    });
+    
     if (editingReservation) {
+      console.log('=== Editing existing reservation ===', editingReservation);
       // Parse existing host assignments if available
       const existingAssignments = editingReservation.host_assignments || [];
       const parsedAssignments = Array.isArray(existingAssignments) ? 
@@ -121,6 +128,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         hostAssignments: parsedAssignments
       });
     } else {
+      console.log('=== Creating new reservation ===', {
+        selectedStartDate,
+        selectedEndDate,
+        prefilledFamilyGroup,
+        prefilledHost
+      });
       // Use selected dates from calendar if provided, otherwise default to today
       const defaultStartDate = selectedStartDate || new Date();
       const defaultEndDate = selectedEndDate || new Date();

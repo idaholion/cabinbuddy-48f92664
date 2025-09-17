@@ -245,9 +245,17 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   };
 
   const handleEditReservation = (reservation: any) => {
-    console.log('handleEditReservation called with:', reservation);
+    console.log('=== handleEditReservation called ===', {
+      reservation: reservation,
+      reservationId: reservation?.id,
+      familyGroup: reservation?.family_group
+    });
     setEditingReservation(reservation);
     setShowBookingForm(true);
+    console.log('=== State updated ===', {
+      editingReservation: reservation,
+      showBookingForm: true
+    });
   };
 
   const handleEditBookingAction = (action: string) => {
@@ -477,6 +485,12 @@ const getBookingsForDate = (date: Date) => {
   };
 
   const handleDateClick = (date: Date) => {
+    console.log('=== handleDateClick called ===', {
+      date: date.toISOString(),
+      isDragging,
+      reservationsCount: reservations.length
+    });
+    
     if (isDragging) return;
     
     // First check if there are existing reservations on this date (unfiltered)
@@ -491,11 +505,21 @@ const getBookingsForDate = (date: Date) => {
       
       return checkDate >= reservationStart && checkDate <= reservationEnd;
     });
-    console.log('Date clicked:', date, 'Unfiltered bookings found:', allBookings);
+    
+    console.log('=== Date click analysis ===', {
+      clickedDate: date.toDateString(),
+      allBookingsFound: allBookings.length,
+      bookingDetails: allBookings.map(b => ({
+        id: b.id,
+        family: b.family_group,
+        start: b.start_date,
+        end: b.end_date
+      }))
+    });
     
     // If there are existing reservations, prioritize opening the first one for editing
     if (allBookings.length > 0) {
-      console.log('Opening existing reservation for editing:', allBookings[0]);
+      console.log('=== Opening existing reservation for editing ===', allBookings[0]);
       handleEditReservation(allBookings[0]);
       return;
     }
