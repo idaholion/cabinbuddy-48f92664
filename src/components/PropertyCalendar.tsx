@@ -980,10 +980,10 @@ const getBookingsForDate = (date: Date) => {
                       hasWorkWeekend ? 'bg-green-50 border-green-200' : ''
                     } ${
                       isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
-                    } hover:bg-accent/10 hover:shadow-cabin cursor-pointer group`}
-                    onClick={() => handleDateClick(day)}
-                    onMouseDown={() => handleDateMouseDown(day)}
-                    onMouseEnter={() => handleDateMouseEnter(day)}
+                    } hover:bg-accent/10 hover:shadow-cabin ${dayBookings.length > 0 ? '' : 'cursor-pointer'} group`}
+                    onClick={dayBookings.length > 0 ? undefined : () => handleDateClick(day)}
+                    onMouseDown={dayBookings.length > 0 ? undefined : () => handleDateMouseDown(day)}
+                    onMouseEnter={dayBookings.length > 0 ? undefined : () => handleDateMouseEnter(day)}
                   >
                     <div className={`text-sm font-medium ${
                       !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
@@ -1034,7 +1034,7 @@ const getBookingsForDate = (date: Date) => {
                          return (
                             <div
                               key={i}
-                              className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold cursor-pointer hover:opacity-80 ${
+                              className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold cursor-pointer hover:opacity-80 relative z-10 ${
                                 groupColor 
                                   ? '' // We'll handle color via style for custom colors
                                   : isMyBooking 
@@ -1051,7 +1051,8 @@ const getBookingsForDate = (date: Date) => {
                                 color: groupColor ? getContrastTextColor(groupColor) : undefined,
                                 textShadow: groupColor ? 
                                   getContrastTextColor(groupColor) === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' 
-                                  : undefined
+                                  : undefined,
+                                pointerEvents: 'auto'
                               }}
                               onClick={(e) => {
                                 console.log('=== Booking bar clicked ===', {
