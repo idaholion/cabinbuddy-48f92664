@@ -10,11 +10,12 @@ import { CabinRule } from '@/hooks/useCabinRules';
 interface CabinRulesEditorProps {
   rule: CabinRule;
   onSave: (id: string, updates: Partial<CabinRule>) => Promise<any>;
+  onDelete?: (id: string) => Promise<void>;
   isEditing: boolean;
   onEditToggle: () => void;
 }
 
-export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: CabinRulesEditorProps) => {
+export const CabinRulesEditor = ({ rule, onSave, onDelete, isEditing, onEditToggle }: CabinRulesEditorProps) => {
   const [editedRule, setEditedRule] = useState<CabinRule>(rule);
 
   const handleSave = async () => {
@@ -302,10 +303,18 @@ export const CabinRulesEditor = ({ rule, onSave, isEditing, onEditToggle }: Cabi
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={onEditToggle}>
-                <Edit3 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={onEditToggle}>
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                {onDelete && (
+                  <Button variant="outline" size="sm" onClick={() => onDelete(rule.id)}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>

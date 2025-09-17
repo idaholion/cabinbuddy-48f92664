@@ -7,13 +7,19 @@ import { Shield, Clock, Users, Trash2, Wifi, Car, Home, AlertTriangle, Edit3 } f
 import { Link } from "react-router-dom";
 import { useCabinRules } from "@/hooks/useCabinRules";
 import { CabinRulesEditor } from "@/components/CabinRulesEditor";
+import { CreateCabinRuleDialog } from "@/components/CreateCabinRuleDialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 const CabinRules = () => {
-  const { cabinRules, loading, updateCabinRule } = useCabinRules();
+  const { cabinRules, loading, updateCabinRule, deleteCabinRule, createCabinRule } = useCabinRules();
   const { organization } = useOrganization();
   const { isAdmin } = useOrgAdmin();
   const [editingSection, setEditingSection] = useState<string | null>(null);
+
+  const handleDeleteRule = async (id: string) => {
+    await deleteCabinRule(id);
+  };
   // Show loading state
   if (loading) {
     return (
@@ -61,13 +67,24 @@ const CabinRules = () => {
 
     if (isAdmin) {
       return (
-        <CabinRulesEditor
+        <ConfirmationDialog
           key={rule.id}
-          rule={rule}
-          onSave={updateCabinRule}
-          isEditing={isEditing}
-          onEditToggle={() => setEditingSection(isEditing ? null : rule.id)}
-        />
+          title="Delete Section"
+          description="Are you sure you want to delete this cabin rule section? This action cannot be undone."
+          confirmText="Delete"
+          variant="destructive"
+          onConfirm={() => handleDeleteRule(rule.id)}
+        >
+          <div className="w-full">
+            <CabinRulesEditor
+              rule={rule}
+              onSave={updateCabinRule}
+              onDelete={handleDeleteRule}
+              isEditing={isEditing}
+              onEditToggle={() => setEditingSection(isEditing ? null : rule.id)}
+            />
+          </div>
+        </ConfirmationDialog>
       );
     }
 
@@ -206,42 +223,91 @@ const CabinRules = () => {
           </div>
         </div>
 
+        {isAdmin && (
+          <div className="flex justify-center">
+            <CreateCabinRuleDialog onCreateRule={createCabinRule} />
+          </div>
+        )}
+
         <div className="space-y-6">
-          {/* General Rules - always first */}
-          {cabinRules
-            .filter(rule => rule.section_type === 'general')
-            .map(renderRule)}
+          {cabinRules.length === 0 ? (
+            <Card className="bg-card/95">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-muted-foreground text-base">
+                    {isAdmin 
+                      ? "No cabin rules have been created yet. Click 'Add New Section' to get started."
+                      : "No cabin rules are currently available."
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* General Rules - always first */}
+              {cabinRules
+                .filter(rule => rule.section_type === 'general')
+                .map(renderRule)}
 
-          {/* Check-in/Guest Policy Row */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {cabinRules
-              .filter(rule => ['checkin_checkout', 'guest_policy'].includes(rule.section_type))
-              .map(renderRule)}
-          </div>
+              {/* Check-in/Guest Policy Row - only if both exist */}
+              {(() => {
+                const checkinRules = cabinRules.filter(rule => ['checkin_checkout', 'guest_policy'].includes(rule.section_type));
+                if (checkinRules.length === 2) {
+                  return (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {checkinRules.map(renderRule)}
+                    </div>
+                  );
+                } else {
+                  return checkinRules.map(renderRule);
+                }
+              })()}
 
-          {/* Property Care/Cleaning Row */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {cabinRules
-              .filter(rule => ['property_care', 'cleaning_trash'].includes(rule.section_type))
-              .map(renderRule)}
-          </div>
+              {/* Property Care/Cleaning Row - only if both exist */}
+              {(() => {
+                const careRules = cabinRules.filter(rule => ['property_care', 'cleaning_trash'].includes(rule.section_type));
+                if (careRules.length === 2) {
+                  return (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {careRules.map(renderRule)}
+                    </div>
+                  );
+                } else {
+                  return careRules.map(renderRule);
+                }
+              })()}
 
-          {/* Parking/Amenities Row */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {cabinRules
-              .filter(rule => ['parking', 'amenities'].includes(rule.section_type))
-              .map(renderRule)}
-          </div>
+              {/* Parking/Amenities Row - only if both exist */}
+              {(() => {
+                const amenityRules = cabinRules.filter(rule => ['parking', 'amenities'].includes(rule.section_type));
+                if (amenityRules.length === 2) {
+                  return (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {amenityRules.map(renderRule)}
+                    </div>
+                  );
+                } else {
+                  return amenityRules.map(renderRule);
+                }
+              })()}
 
-          {/* Emergency Information */}
-          {cabinRules
-            .filter(rule => rule.section_type === 'emergency')
-            .map(renderRule)}
+              {/* Emergency Information */}
+              {cabinRules
+                .filter(rule => rule.section_type === 'emergency')
+                .map(renderRule)}
 
-          {/* Violation Policy */}
-          {cabinRules
-            .filter(rule => rule.section_type === 'violation_policy')
-            .map(renderRule)}
+              {/* All other sections (including custom ones) */}
+              {cabinRules
+                .filter(rule => !['general', 'checkin_checkout', 'guest_policy', 'property_care', 'cleaning_trash', 'parking', 'amenities', 'emergency', 'violation_policy'].includes(rule.section_type))
+                .map(renderRule)}
+
+              {/* Violation Policy - always last */}
+              {cabinRules
+                .filter(rule => rule.section_type === 'violation_policy')
+                .map(renderRule)}
+            </>
+          )}
         </div>
       </div>
     </div>

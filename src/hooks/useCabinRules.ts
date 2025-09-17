@@ -214,10 +214,75 @@ export const useCabinRules = () => {
     }
   };
 
+  const deleteCabinRule = async (id: string) => {
+    if (!organization?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('cabin_rules')
+        .delete()
+        .eq('id', id)
+        .eq('organization_id', organization.id);
+
+      if (error) throw error;
+
+      setCabinRules(prev => prev.filter(rule => rule.id !== id));
+
+      toast({
+        title: "Success",
+        description: "Cabin rule section deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting cabin rule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete cabin rule section.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createCabinRule = async (newRule: Omit<CabinRule, 'id'>) => {
+    if (!organization?.id) return;
+
+    try {
+      const ruleWithOrgId = {
+        ...newRule,
+        organization_id: organization.id
+      };
+
+      const { data, error } = await supabase
+        .from('cabin_rules')
+        .insert(ruleWithOrgId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setCabinRules(prev => [...prev, data]);
+
+      toast({
+        title: "Success",
+        description: "New cabin rule section created successfully.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error creating cabin rule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create cabin rule section.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     cabinRules,
     loading,
     updateCabinRule,
+    deleteCabinRule,
+    createCabinRule,
     refetch: () => {
       if (organization?.id) {
         setLoading(true);
