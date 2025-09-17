@@ -1024,6 +1024,13 @@ const getBookingsForDate = (date: Date) => {
                         const familyGroup = familyGroups.find(fg => fg.name === booking.family_group);
                         const groupColor = familyGroup?.color;
                         
+                        console.log('=== Rendering booking bar ===', {
+                          bookingId: booking.id,
+                          familyGroup: booking.family_group,
+                          host: booking.host_assignments?.[0]?.host_name,
+                          date: day.toDateString()
+                        });
+                        
                          return (
                             <div
                               key={i}
@@ -1046,7 +1053,14 @@ const getBookingsForDate = (date: Date) => {
                                   getContrastTextColor(groupColor) === '#ffffff' ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.8)' 
                                   : undefined
                               }}
-                              onClick={() => handleEditReservation(booking)}
+                              onClick={(e) => {
+                                console.log('=== Booking bar clicked ===', {
+                                  bookingId: booking.id,
+                                  booking: booking
+                                });
+                                e.stopPropagation(); // Prevent date click
+                                handleEditReservation(booking);
+                              }}
                             >
                              <div className="flex items-center justify-between">
                                <span className="truncate font-bold text-sm">{getHostFirstName(booking)}</span>
