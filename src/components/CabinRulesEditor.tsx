@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
 import { CabinRule } from '@/hooks/useCabinRules';
 
@@ -309,10 +310,18 @@ export const CabinRulesEditor = ({ rule, onSave, onDelete, isEditing, onEditTogg
                   Edit
                 </Button>
                 {onDelete && (
-                  <Button variant="outline" size="sm" onClick={() => onDelete(rule.id)}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
+                  <ConfirmationDialog
+                    title="Delete Section"
+                    description="Are you sure you want to delete this cabin rule section? This action cannot be undone."
+                    confirmText="Delete"
+                    variant="destructive"
+                    onConfirm={() => onDelete(rule.id)}
+                  >
+                    <Button variant="outline" size="sm">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </ConfirmationDialog>
                 )}
               </>
             )}

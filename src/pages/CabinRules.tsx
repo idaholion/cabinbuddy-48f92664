@@ -67,24 +67,14 @@ const CabinRules = () => {
 
     if (isAdmin) {
       return (
-        <ConfirmationDialog
+        <CabinRulesEditor
           key={rule.id}
-          title="Delete Section"
-          description="Are you sure you want to delete this cabin rule section? This action cannot be undone."
-          confirmText="Delete"
-          variant="destructive"
-          onConfirm={() => handleDeleteRule(rule.id)}
-        >
-          <div className="w-full">
-            <CabinRulesEditor
-              rule={rule}
-              onSave={updateCabinRule}
-              onDelete={handleDeleteRule}
-              isEditing={isEditing}
-              onEditToggle={() => setEditingSection(isEditing ? null : rule.id)}
-            />
-          </div>
-        </ConfirmationDialog>
+          rule={rule}
+          onSave={updateCabinRule}
+          onDelete={handleDeleteRule}
+          isEditing={isEditing}
+          onEditToggle={() => setEditingSection(isEditing ? null : rule.id)}
+        />
       );
     }
 
