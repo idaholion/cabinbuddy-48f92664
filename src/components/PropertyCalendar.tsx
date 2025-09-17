@@ -140,6 +140,10 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
   const [dragPreviewDates, setDragPreviewDates] = useState<Date[]>([]);
   
+  // Mouse tracking for drag threshold
+  const [mouseDownPosition, setMouseDownPosition] = useState<{x: number, y: number} | null>(null);
+  const [hasMovedBeyondThreshold, setHasMovedBeyondThreshold] = useState(false);
+  
   // Selected date range for booking form
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
@@ -534,25 +538,57 @@ const getBookingsForDate = (date: Date) => {
       return;
     }
     
-    setSelectedDates(prev => {
-      const isSelected = prev.some(d => d.toDateString() === date.toDateString());
-      if (isSelected) {
-        return prev.filter(d => d.toDateString() !== date.toDateString());
-      } else {
-        return [...prev, date];
+    // Create 8-day forward selection (clicked date + 7 days after)
+    const eightDayRange: Date[] = [];
+    for (let i = 0; i < 8; i++) {
+      const currentDate = new Date(date);
+      currentDate.setDate(currentDate.getDate() + i);
+      eightDayRange.push(currentDate);
+    }
+    
+    // Validate that the entire 8-day range is selectable
+    const invalidDates = eightDayRange.filter(rangeDate => !isDateSelectable(rangeDate).selectable);
+    
+    if (invalidDates.length > 0) {
+      // If the 8-day range isn't fully valid, just select the single date
+      setSelectedDates(prev => {
+        const isSelected = prev.some(d => d.toDateString() === date.toDateString());
+        if (isSelected) {
+          return prev.filter(d => d.toDateString() !== date.toDateString());
+        } else {
+          return [date];
+        }
+      });
+      
+      if (invalidDates.length < 8) {
+        toast({
+          title: "Partial Selection",
+          description: `Selected single date only - ${invalidDates.length} of the 8 days would be invalid.`,
+          variant: "default",
+        });
       }
-    });
+    } else {
+      // Select the full 8-day range
+      setSelectedDates(eightDayRange);
+      toast({
+        title: "8-Day Selection",
+        description: `Selected ${date.toLocaleDateString()} + 7 following days`,
+        variant: "default",
+      });
+    }
   };
 
-  const handleDateMouseDown = (date: Date) => {
-    // Allow initial selection - validation happens on range completion
-    setIsDragging(true);
+  const handleDateMouseDown = (date: Date, event: React.MouseEvent) => {
+    // Track initial mouse position for drag threshold
+    setMouseDownPosition({ x: event.clientX, y: event.clientY });
     setDragStartDate(date);
-    setSelectedDates([date]);
+    setHasMovedBeyondThreshold(false);
+    // Don't set isDragging true yet - wait for movement threshold
   };
 
   const handleDateMouseEnter = (date: Date) => {
-    if (!isDragging || !dragStartDate) return;
+    // Only create range selections when actively dragging beyond threshold
+    if (!isDragging || !dragStartDate || !hasMovedBeyondThreshold) return;
     
     const startDate = dragStartDate < date ? dragStartDate : date;
     const endDate = dragStartDate < date ? date : dragStartDate;
@@ -570,6 +606,8 @@ const getBookingsForDate = (date: Date) => {
   const handleMouseUp = () => {
     setIsDragging(false);
     setDragStartDate(null);
+    setMouseDownPosition(null);
+    setHasMovedBeyondThreshold(false);
   };
 
   const clearSelection = () => {
@@ -655,6 +693,30 @@ const getBookingsForDate = (date: Date) => {
     document.addEventListener('mouseup', handleMouseUp);
     return () => document.removeEventListener('mouseup', handleMouseUp);
   }, []);
+
+  // Track mouse movement for drag threshold
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!mouseDownPosition || hasMovedBeyondThreshold) return;
+      
+      const dragThreshold = 5; // pixels
+      const deltaX = Math.abs(e.clientX - mouseDownPosition.x);
+      const deltaY = Math.abs(e.clientY - mouseDownPosition.y);
+      
+      if (deltaX > dragThreshold || deltaY > dragThreshold) {
+        setHasMovedBeyondThreshold(true);
+        setIsDragging(true);
+        if (dragStartDate) {
+          setSelectedDates([dragStartDate]);
+        }
+      }
+    };
+
+    if (mouseDownPosition) {
+      document.addEventListener('mousemove', handleMouseMove);
+      return () => document.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [mouseDownPosition, hasMovedBeyondThreshold, dragStartDate]);
 
   const isDateSelected = (date: Date) => {
     return selectedDates.some(d => d.toDateString() === date.toDateString());
@@ -982,7 +1044,7 @@ const getBookingsForDate = (date: Date) => {
                       isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
                     } hover:bg-accent/10 hover:shadow-cabin ${dayBookings.length > 0 ? '' : 'cursor-pointer'} group`}
                     onClick={dayBookings.length > 0 ? undefined : () => handleDateClick(day)}
-                    onMouseDown={dayBookings.length > 0 ? undefined : () => handleDateMouseDown(day)}
+                    onMouseDown={dayBookings.length > 0 ? undefined : (e) => handleDateMouseDown(day, e)}
                     onMouseEnter={dayBookings.length > 0 ? undefined : () => handleDateMouseEnter(day)}
                   >
                     <div className={`text-sm font-medium ${
