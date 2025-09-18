@@ -998,7 +998,7 @@ const getBookingsForDate = (date: Date) => {
                     variant="ghost"
                     size="icon"
                     onClick={() => navigateMonth(-1)}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-10 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg border border-border/20 backdrop-blur-sm"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 z-10 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg border border-border/20 backdrop-blur-sm"
                     title="Previous month (←)"
                   >
                     <ChevronLeft className="h-6 w-6" />
@@ -1008,7 +1008,7 @@ const getBookingsForDate = (date: Date) => {
                     variant="ghost"
                     size="icon"
                     onClick={() => navigateMonth(1)}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 z-10 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg border border-border/20 backdrop-blur-sm"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-8 z-10 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg border border-border/20 backdrop-blur-sm"
                     title="Next month (→)"
                   >
                     <ChevronRight className="h-6 w-6" />
