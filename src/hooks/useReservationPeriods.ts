@@ -83,12 +83,25 @@ export const useReservationPeriods = () => {
         currentStartDate.setDate(currentStartDate.getDate() + 1);
       }
 
+      // Check if periods already exist for this organization and year
+      const { data: existingPeriods } = await supabase
+        .from('reservation_periods')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', reservationYear)
+        .limit(1);
+
+      // Only insert if no periods exist yet
+      if (existingPeriods && existingPeriods.length > 0) {
+        console.log('Periods already exist for', reservationYear);
+        await fetchReservationPeriods();
+        return;
+      }
+
       // Insert the periods into the database
       const { data, error } = await supabase
         .from('reservation_periods')
-        .upsert(periodsToInsert, {
-          onConflict: 'organization_id,rotation_year,current_group_index'
-        })
+        .insert(periodsToInsert)
         .select();
 
       if (error) {
@@ -167,8 +180,13 @@ export const useReservationPeriods = () => {
   // Auto-generate periods for 2026 if none exist and rotation data is available
   useEffect(() => {
     if (organization?.id && rotationData && periods.length === 0 && !loading) {
-      console.log('No reservation periods found, generating for 2025 selections (2026 reservations)');
-      generateReservationPeriods(2025);
+      // Only generate once - add a flag to prevent repeated attempts
+      const hasAttemptedGeneration = sessionStorage.getItem(`periods-generated-${organization.id}`);
+      if (!hasAttemptedGeneration) {
+        console.log('No reservation periods found, generating for 2025 selections (2026 reservations)');
+        sessionStorage.setItem(`periods-generated-${organization.id}`, 'true');
+        generateReservationPeriods(2025);
+      }
     }
   }, [organization?.id, rotationData, periods.length, loading]);
 
