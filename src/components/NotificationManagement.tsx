@@ -380,21 +380,21 @@ export const NotificationManagement = () => {
 
     // Add selection periods
     upcomingSelectionPeriods.forEach(period => {
-      const startDate = new Date(period.start_date);
+      const startDate = new Date(period.selection_start_date);
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
       events.push({
         id: `selection-${period.id}`,
         type: 'selection_period',
-        title: `${period.contact_name} Selection Period`,
-        subtitle: `Selection window: ${period.start_date} to ${period.end_date}`,
-        start_date: period.start_date, // Already a string in YYYY-MM-DD format
-        end_date: period.end_date,     // Already a string in YYYY-MM-DD format
-        contact_email: period.contact_email,
-        contact_name: period.contact_name,
+        title: `${period.current_family_group} Selection Period`,
+        subtitle: `Selection window: ${period.selection_start_date} to ${period.selection_end_date}`,
+        start_date: period.selection_start_date,
+        end_date: period.selection_end_date,
+        contact_email: '', // No email field in ReservationPeriod
+        contact_name: period.current_family_group,
         days_until: daysUntil,
-        family_group: period.contact_name
+        family_group: period.current_family_group
       });
     });
 
