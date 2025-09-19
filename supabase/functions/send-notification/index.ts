@@ -458,6 +458,85 @@ const handler = async (req: Request): Promise<Response> => {
         
         smsMessage = `Work weekend approved: "${work_weekend_data.title}" ${new Date(work_weekend_data.start_date).toLocaleDateString()}-${new Date(work_weekend_data.end_date).toLocaleDateString()}. Join us if available! - ${organizationName}`;
         break;
+
+      case 'selection_period_start':
+        if (!reservation) throw new Error('Reservation data required for selection period start');
+        subject = `Selection Period Starting Soon - ${reservation.period?.period_name}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #2d5d2d; text-align: center;">📅 Selection Period Starting Soon</h1>
+            <p>Dear ${reservation.guest_name || 'Guest'},</p>
+            <p>The selection period "<strong>${reservation.period?.period_name}</strong>" will start in 3 days on ${reservation.period?.start_date}.</p>
+            <p>Make sure you're ready to make your selections when the period opens.</p>
+            
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #1565c0; margin-top: 0;">📋 Selection Period Details:</h3>
+              <p><strong>Period Name:</strong> ${reservation.period?.period_name}</p>
+              <p><strong>Start Date:</strong> ${reservation.period?.start_date}</p>
+              <p><strong>End Date:</strong> ${reservation.period?.end_date}</p>
+            </div>
+            
+            <p>Please log into the cabin management system to make your selections as soon as the period opens.</p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `Selection period "${reservation.period?.period_name}" starts in 3 days on ${reservation.period?.start_date}. Be ready! - ${organizationName}`;
+        break;
+
+      case 'selection_period_end':
+        if (!reservation) throw new Error('Reservation data required for selection period end');
+        subject = `Selection Period Ending Today - ${reservation.period?.period_name}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #d32f2f; text-align: center;">⏰ Selection Period Ending Today</h1>
+            <p>Dear ${reservation.guest_name || 'Guest'},</p>
+            <p>The selection period "<strong>${reservation.period?.period_name}</strong>" ends today!</p>
+            <p>This is your last chance to make any selections for this period.</p>
+            
+            <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d32f2f;">
+              <h3 style="color: #d32f2f; margin-top: 0;">⚠️ Urgent: Selection Period Details:</h3>
+              <p><strong>Period Name:</strong> ${reservation.period?.period_name}</p>
+              <p><strong>Start Date:</strong> ${reservation.period?.start_date}</p>
+              <p><strong>End Date:</strong> ${reservation.period?.end_date}</p>
+            </div>
+            
+            <p><strong>Don't miss out!</strong> Log into the cabin management system now to complete your selections before the period closes.</p>
+            <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `Last chance! Selection period "${reservation.period?.period_name}" ends today. Make your selections now! - ${organizationName}`;
+        break;
+
+      case 'work_weekend_reminder':
+        if (!reservation) throw new Error('Reservation data required for work weekend reminder');
+        const daysText = reservation.days_until === 1 ? 'tomorrow' : `in ${reservation.days_until} days`;
+        subject = `Work Weekend Reminder - ${reservation.work_weekend?.title} starts ${daysText}`;
+        
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <h1 style="color: #2d5d2d; text-align: center;">🔨 Work Weekend Reminder</h1>
+            <p>Dear ${reservation.guest_name || 'Guest'},</p>
+            <p>This is a reminder that the work weekend "<strong>${reservation.work_weekend?.title}</strong>" starts ${daysText}.</p>
+            
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #2d5d2d; margin-top: 0;">🔨 Work Weekend Details:</h3>
+              <p><strong>Title:</strong> ${reservation.work_weekend?.title}</p>
+              <p><strong>Start Date:</strong> ${reservation.work_weekend?.start_date}</p>
+              <p><strong>End Date:</strong> ${reservation.work_weekend?.end_date}</p>
+              <p><strong>Proposed by:</strong> ${reservation.work_weekend?.proposer_family_group}</p>
+            </div>
+            
+            <p>Please make sure you're prepared and available for the activities planned. Your participation helps maintain and improve our shared cabin facilities.</p>
+            <p style="margin-top: 30px;">Looking forward to working together,<br><strong>${organizationName} Team</strong></p>
+          </div>
+        `;
+        
+        smsMessage = `Work weekend "${reservation.work_weekend?.title}" starts ${daysText}. Proposed by ${reservation.work_weekend?.proposer_family_group}. Be ready! - ${organizationName}`;
+        break;
       
       // Keep existing cases for confirmation, cancellation, assistance_request...
       case 'confirmation':

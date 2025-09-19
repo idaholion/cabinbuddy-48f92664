@@ -3,14 +3,24 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Settings, AlertTriangle } from "lucide-react";
+import { Clock, Settings, AlertTriangle, Calendar, Hammer } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface AutomatedSettings {
+  automated_reminders_enabled: boolean;
+  automated_selection_reminders_enabled: boolean;
+  automated_work_weekend_reminders_enabled: boolean;
+}
+
 export const AutomatedReminderSettings = () => {
   const { organization, loading: orgLoading } = useOrganization();
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [settings, setSettings] = useState<AutomatedSettings>({
+    automated_reminders_enabled: false,
+    automated_selection_reminders_enabled: false,
+    automated_work_weekend_reminders_enabled: false,
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,7 +35,7 @@ export const AutomatedReminderSettings = () => {
     try {
       const { data, error } = await supabase
         .from('organizations')
-        .select('automated_reminders_enabled')
+        .select('automated_reminders_enabled, automated_selection_reminders_enabled, automated_work_weekend_reminders_enabled')
         .eq('id', organization.id)
         .single();
 
@@ -35,7 +45,11 @@ export const AutomatedReminderSettings = () => {
         return;
       }
 
-      setIsEnabled(data?.automated_reminders_enabled || false);
+      setSettings({
+        automated_reminders_enabled: data?.automated_reminders_enabled || false,
+        automated_selection_reminders_enabled: data?.automated_selection_reminders_enabled || false,
+        automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
+      });
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load automated reminder settings');
@@ -44,13 +58,13 @@ export const AutomatedReminderSettings = () => {
     }
   };
 
-  const handleToggle = async (enabled: boolean) => {
+  const handleToggle = async (field: keyof AutomatedSettings, enabled: boolean) => {
     if (!organization) return;
 
     try {
       const { error } = await supabase
         .from('organizations')
-        .update({ automated_reminders_enabled: enabled })
+        .update({ [field]: enabled })
         .eq('id', organization.id);
 
       if (error) {
@@ -59,11 +73,18 @@ export const AutomatedReminderSettings = () => {
         return;
       }
 
-      setIsEnabled(enabled);
+      setSettings(prev => ({ ...prev, [field]: enabled }));
+      
+      const settingNames = {
+        automated_reminders_enabled: 'reservation reminders',
+        automated_selection_reminders_enabled: 'selection period reminders',
+        automated_work_weekend_reminders_enabled: 'work weekend reminders',
+      };
+      
       toast.success(
         enabled 
-          ? 'Automated reminders enabled successfully' 
-          : 'Automated reminders disabled successfully'
+          ? `Automated ${settingNames[field]} enabled successfully` 
+          : `Automated ${settingNames[field]} disabled successfully`
       );
     } catch (error) {
       console.error('Error:', error);
@@ -79,6 +100,10 @@ export const AutomatedReminderSettings = () => {
     );
   }
 
+  const anyEnabled = settings.automated_reminders_enabled || 
+                    settings.automated_selection_reminders_enabled || 
+                    settings.automated_work_weekend_reminders_enabled;
+
   return (
     <div className="space-y-6">
       <Card>
@@ -86,59 +111,127 @@ export const AutomatedReminderSettings = () => {
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             <CardTitle>Automated Reminder System</CardTitle>
-            <Badge variant={isEnabled ? "default" : "secondary"}>
-              {isEnabled ? "Active" : "Inactive"}
+            <Badge variant={anyEnabled ? "default" : "secondary"}>
+              {anyEnabled ? "Active" : "Inactive"}
             </Badge>
           </div>
           <CardDescription>
-            Control whether the system automatically sends reminder notifications to guests
-            based on your reminder templates.
+            Control which automated notifications the system sends based on your reminder templates.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+        <CardContent className="space-y-8">
+          {/* Reservation Reminders */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Clock className="h-4 w-4 text-primary" />
+                <div>
+                  <Label htmlFor="reservation-reminders" className="text-sm font-medium">
+                    Reservation Reminders
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically send 7-day, 3-day, and 1-day reminders for upcoming reservations
+                  </p>
+                </div>
+              </div>
               <Switch
-                id="automated-reminders"
-                checked={isEnabled}
-                onCheckedChange={handleToggle}
+                id="reservation-reminders"
+                checked={settings.automated_reminders_enabled}
+                onCheckedChange={(enabled) => handleToggle('automated_reminders_enabled', enabled)}
               />
-              <Label htmlFor="automated-reminders" className="text-sm font-medium">
-                Enable Automated Reminders
-              </Label>
+            </div>
+            
+            <div className="border-l-4 border-muted pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • Sends reminders based on your configured templates
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Respects family group preferences and contact methods
+              </p>
             </div>
           </div>
 
-          <div className="border-l-4 border-muted pl-4 space-y-2">
-            <h4 className="font-medium text-sm">How it works:</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• System checks for upcoming reservations daily</li>
-              <li>• Sends reminders based on your configured templates</li>
-              <li>• Automatically triggers 7-day, 3-day, and 1-day notifications</li>
-              <li>• Respects family group preferences and contact methods</li>
-            </ul>
+          {/* Selection Period Reminders */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <div>
+                  <Label htmlFor="selection-reminders" className="text-sm font-medium">
+                    Selection Period Reminders
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Send notifications when selection periods start (3 days ahead) and end (same day)
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="selection-reminders"
+                checked={settings.automated_selection_reminders_enabled}
+                onCheckedChange={(enabled) => handleToggle('automated_selection_reminders_enabled', enabled)}
+              />
+            </div>
+            
+            <div className="border-l-4 border-blue-200 pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • Alerts families 3 days before selection periods open
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Final reminder on the last day of selection periods
+              </p>
+            </div>
           </div>
 
-          {!isEnabled && (
+          {/* Work Weekend Reminders */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Hammer className="h-4 w-4 text-orange-600" />
+                <div>
+                  <Label htmlFor="work-weekend-reminders" className="text-sm font-medium">
+                    Work Weekend Reminders
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Send reminders 7, 3, and 1 day before scheduled work weekends
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="work-weekend-reminders"
+                checked={settings.automated_work_weekend_reminders_enabled}
+                onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
+              />
+            </div>
+            
+            <div className="border-l-4 border-orange-200 pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • Reminds all families about upcoming work weekends
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Includes work weekend details and organizer information
+              </p>
+            </div>
+          </div>
+
+          {!anyEnabled && (
             <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
               <AlertTriangle className="h-4 w-4 text-warning mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium">System is currently disabled</p>
+                <p className="font-medium">All automated reminders are currently disabled</p>
                 <p className="text-muted-foreground">
-                  Enable automated reminders to start sending notifications based on your templates.
-                  You can disable this at any time.
+                  Enable the reminder types you want to automate. You can disable them at any time.
                 </p>
               </div>
             </div>
           )}
 
-          {isEnabled && (
+          {anyEnabled && (
             <div className="flex items-start gap-3 p-4 bg-primary/10 rounded-lg">
               <Settings className="h-4 w-4 text-primary mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-primary">System is active</p>
+                <p className="font-medium text-primary">Automated reminders are active</p>
                 <p className="text-muted-foreground">
-                  Automated reminders are now being sent according to your template configuration.
+                  The system is now sending automated notifications according to your enabled settings.
                   Monitor the notification logs to track delivery.
                 </p>
               </div>

@@ -811,6 +811,8 @@ export type Database = {
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
           automated_reminders_enabled: boolean | null
+          automated_selection_reminders_enabled: boolean | null
+          automated_work_weekend_reminders_enabled: boolean | null
           calendar_keeper_email: string | null
           calendar_keeper_name: string | null
           calendar_keeper_phone: string | null
@@ -833,6 +835,8 @@ export type Database = {
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_enabled?: boolean | null
+          automated_selection_reminders_enabled?: boolean | null
+          automated_work_weekend_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
@@ -855,6 +859,8 @@ export type Database = {
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_enabled?: boolean | null
+          automated_selection_reminders_enabled?: boolean | null
+          automated_work_weekend_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
