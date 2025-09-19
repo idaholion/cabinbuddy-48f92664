@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useNotifications } from "@/hooks/useNotifications";
+import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 
 const REMINDER_TYPES = [
   { value: 'reminder_7', label: '7-Day Reminder', days: 7 },
@@ -44,6 +45,33 @@ export const NotificationManagement = () => {
     }
   }, [organization?.id]);
 
+  // Add real-time subscription for reservation changes
+  useEffect(() => {
+    if (!organization?.id) return;
+
+    const channel = supabase
+      .channel('notification-reservations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        (payload) => {
+          console.log('Real-time reservation change in notifications:', payload);
+          // Refetch upcoming reservations to show latest data
+          fetchUpcomingReservations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organization?.id]);
+
   const fetchUpcomingReservations = async () => {
     if (!organization?.id) return;
     
@@ -58,7 +86,8 @@ export const NotificationManagement = () => {
           id,
           family_group,
           start_date,
-          end_date
+          end_date,
+          host_assignments
         `)
         .eq('organization_id', organization.id)
         .eq('status', 'confirmed')
@@ -89,19 +118,30 @@ export const NotificationManagement = () => {
       const processedReservations = reservations?.map(reservation => {
         const checkInDate = new Date(reservation.start_date);
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+        checkInDate.setHours(0, 0, 0, 0); // Reset time to start of day
         const timeDiff = checkInDate.getTime() - today.getTime();
         const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-        // Find matching family group
+        // Get host email if available, otherwise fallback to family group lead
+        const hostEmail = getHostEmail(reservation);
+        
+        // Find matching family group for fallback contact info
         const familyGroup = familyGroups?.find(fg => fg.name === reservation.family_group);
+        
+        // Use host email if available, otherwise family group lead email
+        const contactEmail = hostEmail || familyGroup?.lead_email || '';
+        
+        // Get display name (host first name or family group name)
+        const displayName = getHostFirstName(reservation);
 
         return {
           id: reservation.id,
-          family_group: reservation.family_group,
+          family_group: displayName, // Use host name for display
           start_date: reservation.start_date,
           end_date: reservation.end_date,
-          guest_email: familyGroup?.lead_email || '',
-          guest_name: familyGroup?.lead_name || '',
+          guest_email: contactEmail,
+          guest_name: displayName,
           guest_phone: familyGroup?.lead_phone || undefined,
           days_until: daysUntil
         };

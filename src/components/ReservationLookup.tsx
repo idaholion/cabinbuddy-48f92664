@@ -10,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Calendar, Search, Eye, Users, Clock } from "lucide-react";
 import { useReservations } from "@/hooks/useReservations";
 import { format } from "date-fns";
+import { getHostFirstName } from "@/lib/reservation-utils";
 
 export const ReservationLookup = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,8 +31,10 @@ export const ReservationLookup = () => {
 
     return reservations.filter((reservation) => {
       const searchLower = searchQuery.toLowerCase();
+      const displayName = getHostFirstName(reservation);
       return (
         reservation.family_group?.toLowerCase().includes(searchLower) ||
+        displayName.toLowerCase().includes(searchLower) ||
         reservation.id?.toLowerCase().includes(searchLower) ||
         reservation.property_name?.toLowerCase().includes(searchLower) ||
         reservation.status?.toLowerCase().includes(searchLower)
@@ -79,7 +82,8 @@ export const ReservationLookup = () => {
     {
       key: 'family_group',
       title: 'Family Group',
-      className: 'font-medium'
+      className: 'font-medium',
+      render: (value: any, reservation: any) => getHostFirstName(reservation)
     },
     {
       key: 'dates',

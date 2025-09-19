@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getHostFirstName } from "@/lib/reservation-utils";
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -273,20 +274,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
     }
   };
 
-  // Helper function to get the primary host's first name
-  const getHostFirstName = (reservation: any): string => {
-    // Check if there are host assignments and get the primary host (first one)
-    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-      const primaryHost = reservation.host_assignments[0];
-      if (primaryHost?.host_name) {
-        // Extract first name (everything before the first space)
-        return primaryHost.host_name.split(' ')[0];
-      }
-    }
-    
-    // Fallback to family group name if no host information
-    return reservation.family_group || 'Unknown';
-  };
+  // Local getHostFirstName function removed - now using shared utility from @/lib/reservation-utils
 
   // Generate calendar days for the current month
   const generateCalendarDays = () => {

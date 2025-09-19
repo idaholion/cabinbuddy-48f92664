@@ -167,6 +167,47 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
     }
   };
 
+  // Helper function to get family group from host assignments
+  const getFamilyGroupFromHostAssignments = async (hostAssignments: any[]): Promise<string | null> => {
+    if (!hostAssignments || !Array.isArray(hostAssignments) || hostAssignments.length === 0) {
+      return null;
+    }
+
+    const primaryHost = hostAssignments[0];
+    if (!primaryHost?.host_email || !organization?.id) {
+      return null;
+    }
+
+    // Find the family group that contains this host
+    const { data: familyGroups, error } = await supabase
+      .from('family_groups')
+      .select('name, lead_email, host_members')
+      .eq('organization_id', organization.id);
+
+    if (error || !familyGroups) {
+      return null;
+    }
+
+    for (const familyGroup of familyGroups) {
+      // Check if the host is the family group lead
+      if (familyGroup.lead_email === primaryHost.host_email) {
+        return familyGroup.name;
+      }
+
+      // Check if the host is in the host_members array
+      if (familyGroup.host_members && Array.isArray(familyGroup.host_members)) {
+        const isHostMember = familyGroup.host_members.some((member: any) => 
+          member.email === primaryHost.host_email
+        );
+        if (isHostMember) {
+          return familyGroup.name;
+        }
+      }
+    }
+
+    return null;
+  };
+
   const updateReservation = async (reservationId: string, updates: Partial<ReservationData>, testOverrideMode: boolean = false) => {
     if (!user || !organization?.id) {
       toast({
@@ -237,9 +278,18 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
     setLoading(true);
     try {
+      // If host assignments are being updated, sync the family_group field
+      let finalUpdates = { ...updates };
+      if (updates.host_assignments && Array.isArray(updates.host_assignments)) {
+        const inferredFamilyGroup = await getFamilyGroupFromHostAssignments(updates.host_assignments);
+        if (inferredFamilyGroup) {
+          finalUpdates.family_group = inferredFamilyGroup;
+        }
+      }
+
       const { data: updatedReservation, error } = await supabase
         .from('reservations')
-        .update(updates)
+        .update(finalUpdates)
         .eq('id', reservationId)
         .eq('organization_id', organization.id)
         .select()
@@ -359,6 +409,33 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       fetchReservations();
     }
   }, [organization?.id, adminViewMode.enabled, adminViewMode.familyGroup]);
+
+  // Add real-time subscription for reservations
+  useEffect(() => {
+    if (!organization?.id) return;
+
+    const channel = supabase
+      .channel('reservations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reservations',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        (payload) => {
+          console.log('Real-time reservation change:', payload);
+          // Refetch reservations to ensure all components have latest data
+          fetchReservations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organization?.id]);
 
   return {
     reservations,
