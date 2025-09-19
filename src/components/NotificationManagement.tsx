@@ -86,7 +86,7 @@ export const NotificationManagement = () => {
   const { sendNotification } = useNotifications();
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
-  const { getUpcomingSelectionPeriods } = useReservationPeriods();
+  const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
 
   // Fetch upcoming events
   useEffect(() => {
@@ -96,6 +96,13 @@ export const NotificationManagement = () => {
       console.log('Organization loaded, fetching selection periods');
     }
   }, [organization?.id]); // Remove getUpcomingSelectionPeriods dependency to prevent infinite loop
+
+  // Fetch selection periods when periods data is loaded
+  useEffect(() => {
+    if (!periodsLoading && periods.length > 0) {
+      fetchUpcomingSelectionPeriods();
+    }
+  }, [periods, periodsLoading]);
 
   // Sync work weekends from hook
   useEffect(() => {
