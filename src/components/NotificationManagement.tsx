@@ -467,6 +467,7 @@ export const NotificationManagement = () => {
               ) : (
                 (() => {
                   const allEvents = convertToUnifiedEvents();
+                  console.log('All events for rendering:', allEvents);
                   return allEvents.length === 0 ? (
                     <div className="text-center py-8">
                       <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -474,74 +475,77 @@ export const NotificationManagement = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {allEvents.map((event) => (
-                        <Card key={`${event.type}-${event.id}`} className="border-l-4 border-l-primary">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  {getEventIcon(event.type)}
-                                  <h4 className="font-medium">{event.title}</h4>
-                                  <Badge variant={getReminderBadgeVariant(event.days_until)}>
-                                    {event.days_until} day{event.days_until !== 1 ? 's' : ''} away
-                                  </Badge>
-                                  {event.status && (
-                                    <Badge variant="outline">{event.status}</Badge>
+                      {allEvents.map((event) => {
+                        console.log('Rendering event:', event);
+                        return (
+                          <Card key={`${event.type}-${event.id}`} className="border-l-4 border-l-primary">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    {getEventIcon(event.type)}
+                                    <h4 className="font-medium">{event.title}</h4>
+                                    <Badge variant={getReminderBadgeVariant(event.days_until)}>
+                                      {event.days_until} day{event.days_until !== 1 ? 's' : ''} away
+                                    </Badge>
+                                    {event.status && (
+                                      <Badge variant="outline">{event.status}</Badge>
+                                    )}
+                                  </div>
+                                  {event.subtitle && (
+                                    <p className="text-sm text-muted-foreground mt-1">{event.subtitle}</p>
+                                  )}
+                                  <p className="text-base text-muted-foreground mt-1">
+                                    {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
+                                  </p>
+                                  {event.contact_name && event.contact_email && (
+                                    <p className="text-base text-muted-foreground">
+                                      {event.contact_name} • {event.contact_email}
+                                    </p>
+                                  )}
+                                  {event.description && (
+                                    <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                                   )}
                                 </div>
-                                {event.subtitle && (
-                                  <p className="text-sm text-muted-foreground mt-1">{event.subtitle}</p>
-                                )}
-                                <p className="text-base text-muted-foreground mt-1">
-                                  {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
-                                </p>
-                                {event.contact_name && event.contact_email && (
-                                  <p className="text-base text-muted-foreground">
-                                    {event.contact_name} • {event.contact_email}
-                                  </p>
-                                )}
-                                {event.description && (
-                                  <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
-                                )}
+                                <div className="flex items-center space-x-2 ml-4">
+                                  <Select
+                                    value={selectedReminderTypes[event.id] || ''}
+                                    onValueChange={(value) => handleReminderTypeChange(event.id, value)}
+                                  >
+                                    <SelectTrigger className="w-[180px]">
+                                      <SelectValue placeholder="Select notification type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getReminderOptions(event.type).map((type) => (
+                                        <SelectItem key={type.value} value={type.value}>
+                                          {type.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <Button
+                                    onClick={() => event.type === 'reservation' 
+                                      ? handleSendReminder(upcomingReservations.find(r => r.id === event.id)!)
+                                      : handleSendEventNotification(event)
+                                    }
+                                    disabled={sendingReminder === event.id || !selectedReminderTypes[event.id]}
+                                    size="sm"
+                                  >
+                                    {sendingReminder === event.id ? (
+                                      "Sending..."
+                                    ) : (
+                                      <>
+                                        <Send className="h-4 w-4 mr-2" />
+                                        Send
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2 ml-4">
-                                <Select
-                                  value={selectedReminderTypes[event.id] || ''}
-                                  onValueChange={(value) => handleReminderTypeChange(event.id, value)}
-                                >
-                                  <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Select notification type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {getReminderOptions(event.type).map((type) => (
-                                      <SelectItem key={type.value} value={type.value}>
-                                        {type.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  onClick={() => event.type === 'reservation' 
-                                    ? handleSendReminder(upcomingReservations.find(r => r.id === event.id)!)
-                                    : handleSendEventNotification(event)
-                                  }
-                                  disabled={sendingReminder === event.id || !selectedReminderTypes[event.id]}
-                                  size="sm"
-                                >
-                                  {sendingReminder === event.id ? (
-                                    "Sending..."
-                                  ) : (
-                                    <>
-                                      <Send className="h-4 w-4 mr-2" />
-                                      Send
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                     </div>
                   );
                 })()
