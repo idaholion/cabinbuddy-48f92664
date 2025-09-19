@@ -80,6 +80,7 @@ export const NotificationManagement = () => {
   const [loading, setLoading] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [selectedReminderTypes, setSelectedReminderTypes] = useState<Record<string, string>>({});
+  const [isFetching, setIsFetching] = useState(false);
   const { toast } = useToast();
   const { organization } = useOrganization();
   const { sendNotification } = useNotifications();
@@ -124,7 +125,12 @@ export const NotificationManagement = () => {
         },
         (payload) => {
           console.log('Real-time reservation change in notifications:', payload);
-          fetchUpcomingReservations();
+          // Debounce the fetch call to prevent rapid-fire calls
+          setTimeout(() => {
+            if (!isFetching) {
+              fetchUpcomingReservations();
+            }
+          }, 500);
         }
       )
       .on(
@@ -161,8 +167,9 @@ export const NotificationManagement = () => {
   }, [organization?.id]);
 
   const fetchUpcomingReservations = async () => {
-    if (!organization?.id) return;
+    if (!organization?.id || isFetching) return;
     
+    setIsFetching(true);
     setLoading(true);
     try {
       const today = new Date().toISOString().split('T')[0];
@@ -185,11 +192,7 @@ export const NotificationManagement = () => {
 
       if (error) {
         console.error('Error fetching reservations:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch upcoming reservations",
-          variant: "destructive",
-        });
+        // Don't show toast for network errors to prevent flashing
         return;
       }
 
@@ -243,13 +246,10 @@ export const NotificationManagement = () => {
       setUpcomingReservations(processedReservations);
     } catch (error) {
       console.error('Error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
+      // Don't show toast for network errors to prevent flashing
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   };
 
