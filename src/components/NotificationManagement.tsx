@@ -243,21 +243,8 @@ export const NotificationManagement = () => {
   const fetchUpcomingSelectionPeriods = () => {
     const upcomingPeriods = getUpcomingSelectionPeriods();
     console.log('Fetching upcoming selection periods:', upcomingPeriods);
-    
-    const now = new Date();
-    const upcoming = upcomingPeriods.map(period => ({
-      id: period.id,
-      type: 'selection_period' as const,
-      title: `${period.current_family_group} Selection Period`,
-      start_date: period.selection_start_date,
-      end_date: period.selection_end_date,
-      contact_email: '', // We'll need to get this from family groups if needed
-      contact_name: period.current_family_group,
-      days_until: Math.ceil((new Date(period.selection_start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    }));
-    
-    console.log('Upcoming selection periods processed:', upcoming);
-    setUpcomingSelectionPeriods(upcoming);
+    // Don't set state here - let convertToUnifiedEvents handle the processing
+    // The original ReservationPeriod structure is needed for convertToUnifiedEvents
   };
 
 
@@ -361,7 +348,9 @@ export const NotificationManagement = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    console.log('Converting to unified events. Selection periods:', upcomingSelectionPeriods);
+    // Get fresh selection periods directly from the hook
+    const upcomingPeriods = getUpcomingSelectionPeriods();
+    console.log('Converting to unified events. Selection periods:', upcomingPeriods);
 
     // Add reservations
     upcomingReservations.forEach(reservation => {
@@ -381,7 +370,7 @@ export const NotificationManagement = () => {
     });
 
     // Add selection periods
-    upcomingSelectionPeriods.forEach(period => {
+    upcomingPeriods.forEach(period => {
       const startDate = new Date(period.selection_start_date);
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -657,14 +646,16 @@ export const NotificationManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {upcomingSelectionPeriods.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground text-base">No upcoming selection periods in the next 30 days</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {upcomingSelectionPeriods.map((period) => {
+              {(() => {
+                const periods = getUpcomingSelectionPeriods();
+                return periods.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground text-base">No upcoming selection periods in the next 30 days</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {periods.map((period) => {
                     const startDate = new Date(period.selection_start_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -731,14 +722,16 @@ export const NotificationManagement = () => {
                             </div>
                           </div>
                         </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                       </Card>
+                     );
+                   })}
+                 </div>
+               );
+             })()
+           }
+         </CardContent>
+       </Card>
+     </TabsContent>
 
         <TabsContent value="work-weekends">
           <Card>
