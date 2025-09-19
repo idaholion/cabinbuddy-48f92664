@@ -361,6 +361,8 @@ export const NotificationManagement = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log('Converting to unified events. Selection periods:', upcomingSelectionPeriods);
+
     // Add reservations
     upcomingReservations.forEach(reservation => {
       events.push({
@@ -384,7 +386,7 @@ export const NotificationManagement = () => {
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-      events.push({
+      const event: UpcomingEvent = {
         id: `selection-${period.id}`,
         type: 'selection_period',
         title: `${period.current_family_group} Selection Period`,
@@ -395,7 +397,9 @@ export const NotificationManagement = () => {
         contact_name: period.current_family_group,
         days_until: daysUntil,
         family_group: period.current_family_group
-      });
+      };
+      console.log('Adding selection period event:', event);
+      events.push(event);
     });
 
     // Add work weekends
@@ -420,7 +424,9 @@ export const NotificationManagement = () => {
       });
     });
 
-    return events.sort((a, b) => a.days_until - b.days_until);
+    const sortedEvents = events.sort((a, b) => a.days_until - b.days_until);
+    console.log('Final unified events:', sortedEvents);
+    return sortedEvents;
   };
 
   const getEventIcon = (type: string) => {
