@@ -116,10 +116,15 @@ export const NotificationManagement = () => {
       }
 
       const processedReservations = reservations?.map(reservation => {
-        const checkInDate = new Date(reservation.start_date);
+        // Parse date string properly to avoid timezone issues
+        const parseLocalDate = (dateStr: string): Date => {
+          const [year, month, day] = dateStr.split('-').map(Number);
+          return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+        };
+
+        const checkInDate = parseLocalDate(reservation.start_date);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-        checkInDate.setHours(0, 0, 0, 0); // Reset time to start of day
         const timeDiff = checkInDate.getTime() - today.getTime();
         const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -243,7 +248,15 @@ export const NotificationManagement = () => {
                           </Badge>
                         </div>
                         <p className="text-base text-muted-foreground mt-1">
-                          {new Date(reservation.start_date).toLocaleDateString()} - {new Date(reservation.end_date).toLocaleDateString()}
+                          {(() => {
+                            const parseLocalDate = (dateStr: string): Date => {
+                              const [year, month, day] = dateStr.split('-').map(Number);
+                              return new Date(year, month - 1, day);
+                            };
+                            const startDate = parseLocalDate(reservation.start_date);
+                            const endDate = parseLocalDate(reservation.end_date);
+                            return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+                          })()}
                         </p>
                         <p className="text-base text-muted-foreground">
                           {reservation.guest_name} • {reservation.guest_email}
