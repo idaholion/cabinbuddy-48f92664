@@ -259,7 +259,6 @@ export const NotificationManagement = () => {
 
   const fetchUpcomingSelectionPeriods = () => {
     const periods = getUpcomingSelectionPeriods();
-    console.log('Fetched upcoming selection periods:', periods);
     setUpcomingSelectionPeriods(periods);
   };
 

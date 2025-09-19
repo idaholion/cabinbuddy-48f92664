@@ -166,21 +166,14 @@ export const useReservationPeriods = () => {
     const thirtyDaysFromNow = new Date(now);
     thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-    console.log('Getting upcoming periods. Current periods:', periods.length);
-    console.log('Date range:', now.toISOString().split('T')[0], 'to', thirtyDaysFromNow.toISOString().split('T')[0]);
-
     const upcoming = periods.filter(period => {
-      // Parse date string properly to avoid timezone issues
-      const [year, month, day] = period.selection_start_date.split('-').map(Number);
-      const startDate = new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+      // Use UTC parsing to avoid timezone issues with date strings
+      const startDate = new Date(period.selection_start_date + 'T00:00:00');
       startDate.setHours(0, 0, 0, 0);
       
-      const isUpcoming = startDate >= now && startDate <= thirtyDaysFromNow;
-      console.log(`Period ${period.current_family_group}: ${period.selection_start_date}, startDate: ${startDate.toISOString().split('T')[0]}, upcoming: ${isUpcoming}`);
-      return isUpcoming;
+      return startDate >= now && startDate <= thirtyDaysFromNow;
     });
 
-    console.log('Filtered upcoming periods:', upcoming.length, upcoming);
     return upcoming;
   };
 
