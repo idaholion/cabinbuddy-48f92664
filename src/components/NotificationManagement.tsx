@@ -93,6 +93,7 @@ export const NotificationManagement = () => {
     if (organization?.id) {
       fetchUpcomingReservations();
       fetchUpcomingSelectionPeriods();
+      console.log('Organization loaded, fetching selection periods');
     }
   }, [organization?.id]); // Remove getUpcomingSelectionPeriods dependency to prevent infinite loop
 
@@ -258,6 +259,7 @@ export const NotificationManagement = () => {
 
   const fetchUpcomingSelectionPeriods = () => {
     const periods = getUpcomingSelectionPeriods();
+    console.log('Fetched upcoming selection periods:', periods);
     setUpcomingSelectionPeriods(periods);
   };
 
