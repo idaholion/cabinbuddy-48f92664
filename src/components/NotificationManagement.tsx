@@ -80,7 +80,7 @@ export const NotificationManagement = () => {
       fetchUpcomingReservations();
       fetchUpcomingSelectionPeriods();
     }
-  }, [organization?.id]);
+  }, [organization?.id, getUpcomingSelectionPeriods]); // Add dependency
 
   // Sync work weekends from hook
   useEffect(() => {
@@ -242,6 +242,7 @@ export const NotificationManagement = () => {
 
   const fetchUpcomingSelectionPeriods = () => {
     const upcomingPeriods = getUpcomingSelectionPeriods();
+    console.log('Fetching upcoming selection periods:', upcomingPeriods);
     
     const now = new Date();
     const upcoming = upcomingPeriods.map(period => ({
@@ -255,6 +256,7 @@ export const NotificationManagement = () => {
       days_until: Math.ceil((new Date(period.selection_start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
     }));
     
+    console.log('Upcoming selection periods processed:', upcoming);
     setUpcomingSelectionPeriods(upcoming);
   };
 
