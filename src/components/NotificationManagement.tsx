@@ -11,6 +11,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useWorkWeekends } from "@/hooks/useWorkWeekends";
+import { useReservationPeriods } from "@/hooks/useReservationPeriods";
 import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 
 const REMINDER_TYPES = [
@@ -71,6 +72,7 @@ export const NotificationManagement = () => {
   const { sendNotification } = useNotifications();
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
+  const { getUpcomingSelectionPeriods } = useReservationPeriods();
 
   // Fetch upcoming events
   useEffect(() => {
@@ -238,32 +240,22 @@ export const NotificationManagement = () => {
     }
   };
 
-  const fetchUpcomingSelectionPeriods = async () => {
-    if (!organization?.id) return;
-
-    try {
-      const today = new Date();
-      const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-      // Calculate time period windows for the next month
-      const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-      
-      const currentPeriods = calculateTimePeriodWindows(today.getFullYear(), currentMonth);
-      const nextPeriods = calculateTimePeriodWindows(today.getFullYear(), nextMonth);
-      
-      const allPeriods = [...currentPeriods, ...nextPeriods];
-      
-      // Filter to upcoming periods
-      const upcomingPeriods = allPeriods.filter(period => {
-        const startDate = new Date(period.start_date);
-        return startDate >= today && startDate <= thirtyDaysFromNow;
-      });
-
-      setUpcomingSelectionPeriods(upcomingPeriods);
-    } catch (error) {
-      console.error('Error fetching selection periods:', error);
-    }
+  const fetchUpcomingSelectionPeriods = () => {
+    const upcomingPeriods = getUpcomingSelectionPeriods();
+    
+    const now = new Date();
+    const upcoming = upcomingPeriods.map(period => ({
+      id: period.id,
+      type: 'selection_period' as const,
+      title: `${period.current_family_group} Selection Period`,
+      start_date: period.selection_start_date,
+      end_date: period.selection_end_date,
+      contact_email: '', // We'll need to get this from family groups if needed
+      contact_name: period.current_family_group,
+      days_until: Math.ceil((new Date(period.selection_start_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    }));
+    
+    setUpcomingSelectionPeriods(upcoming);
   };
 
 
