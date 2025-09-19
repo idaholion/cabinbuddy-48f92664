@@ -655,11 +655,11 @@ export const NotificationManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {upcomingSelectionPeriods.map((period) => {
-                    const startDate = new Date(period.start_date);
+                    const startDate = new Date(period.selection_start_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const daysUntil = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                    const periodId = `selection-${period.period_number}`;
+                    const periodId = `selection-${period.id}`;
 
                     return (
                       <Card key={periodId} className="border-l-4 border-l-secondary">
@@ -668,14 +668,14 @@ export const NotificationManagement = () => {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2">
                                 <Users className="h-4 w-4" />
-                                <h4 className="font-medium">Selection Period {period.period_number}</h4>
+                                <h4 className="font-medium">{period.current_family_group} Selection Period</h4>
                                 <Badge variant={getReminderBadgeVariant(daysUntil)}>
                                   {daysUntil} day{daysUntil !== 1 ? 's' : ''} away
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{period.family_group}'s turn</p>
+                              <p className="text-sm text-muted-foreground mt-1">{period.current_family_group}'s turn</p>
                               <p className="text-base text-muted-foreground">
-                                {startDate.toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
+                                {startDate.toLocaleDateString()} - {new Date(period.selection_end_date).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2 ml-4">
@@ -698,13 +698,13 @@ export const NotificationManagement = () => {
                                 onClick={() => handleSendEventNotification({
                                   id: periodId,
                                   type: 'selection_period',
-                                  title: `Selection Period ${period.period_number}`,
-                                  start_date: period.start_date.toISOString().split('T')[0],
-                                  end_date: period.end_date.toISOString().split('T')[0],
+                                  title: `${period.current_family_group} Selection Period`,
+                                  start_date: period.selection_start_date,
+                                  end_date: period.selection_end_date,
                                   contact_email: '',
-                                  contact_name: period.family_group,
+                                  contact_name: period.current_family_group,
                                   days_until: daysUntil,
-                                  family_group: period.family_group
+                                  family_group: period.current_family_group
                                 })}
                                 disabled={sendingReminder === periodId || !selectedReminderTypes[periodId]}
                                 size="sm"
