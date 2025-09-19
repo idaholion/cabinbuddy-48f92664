@@ -14,6 +14,19 @@ import { useWorkWeekends } from "@/hooks/useWorkWeekends";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
 import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 
+interface ReservationPeriod {
+  id: string;
+  organization_id: string;
+  rotation_year: number;
+  current_family_group: string;
+  current_group_index: number;
+  selection_start_date: string;
+  selection_end_date: string;
+  reservations_completed: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const REMINDER_TYPES = [
   { value: 'reminder_7', label: '7-Day Reminder', days: 7 },
   { value: 'reminder_3', label: '3-Day Reminder', days: 3 },
@@ -62,7 +75,7 @@ interface UpcomingReservation {
 
 export const NotificationManagement = () => {
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
-  const [upcomingSelectionPeriods, setUpcomingSelectionPeriods] = useState<any[]>([]);
+  const [upcomingSelectionPeriods, setUpcomingSelectionPeriods] = useState<ReservationPeriod[]>([]);
   const [upcomingWorkWeekends, setUpcomingWorkWeekends] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
@@ -241,7 +254,8 @@ export const NotificationManagement = () => {
   };
 
   const fetchUpcomingSelectionPeriods = () => {
-    // Periods are fetched directly from the hook when needed
+    const periods = getUpcomingSelectionPeriods();
+    setUpcomingSelectionPeriods(periods);
   };
 
 
@@ -345,9 +359,6 @@ export const NotificationManagement = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get fresh selection periods directly from the hook
-    const upcomingPeriods = getUpcomingSelectionPeriods();
-
     // Add reservations
     upcomingReservations.forEach(reservation => {
       events.push({
@@ -366,7 +377,7 @@ export const NotificationManagement = () => {
     });
 
     // Add selection periods
-    upcomingPeriods.forEach(period => {
+    upcomingSelectionPeriods.forEach(period => {
       const startDate = new Date(period.selection_start_date);
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -635,16 +646,14 @@ export const NotificationManagement = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {(() => {
-                const periods = getUpcomingSelectionPeriods();
-                return periods.length === 0 ? (
+              {upcomingSelectionPeriods.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground text-base">No upcoming selection periods in the next 30 days</p>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {periods.map((period) => {
+              ) : (
+                <div className="space-y-4">
+                  {upcomingSelectionPeriods.map((period) => {
                     const startDate = new Date(period.selection_start_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -713,11 +722,9 @@ export const NotificationManagement = () => {
                         </CardContent>
                        </Card>
                      );
-                   })}
-                 </div>
-               );
-             })()
-           }
+                  })}
+                </div>
+              )}
          </CardContent>
        </Card>
      </TabsContent>
