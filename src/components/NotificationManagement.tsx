@@ -94,7 +94,7 @@ export const NotificationManagement = () => {
       fetchUpcomingReservations();
       fetchUpcomingSelectionPeriods();
     }
-  }, [organization?.id, getUpcomingSelectionPeriods]); // Add dependency
+  }, [organization?.id]); // Remove getUpcomingSelectionPeriods dependency to prevent infinite loop
 
   // Sync work weekends from hook
   useEffect(() => {
@@ -143,7 +143,10 @@ export const NotificationManagement = () => {
         },
         (payload) => {
           console.log('Real-time selection period change in notifications:', payload);
-          fetchUpcomingSelectionPeriods();
+          // Debounce the fetch call to prevent rapid-fire calls
+          setTimeout(() => {
+            fetchUpcomingSelectionPeriods();
+          }, 500);
         }
       )
       .on(
