@@ -385,16 +385,16 @@ export const NotificationManagement = () => {
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
       events.push({
-        id: `selection-${period.period_number}`,
+        id: `selection-${period.id}`,
         type: 'selection_period',
-        title: `Selection Period ${period.period_number}`,
-        subtitle: `${period.family_group}'s turn`,
-        start_date: period.start_date.toISOString().split('T')[0],
-        end_date: period.end_date.toISOString().split('T')[0],
-        contact_email: '', // Would need to fetch family group lead email
-        contact_name: period.family_group,
+        title: `${period.contact_name} Selection Period`,
+        subtitle: `Selection window: ${period.start_date} to ${period.end_date}`,
+        start_date: period.start_date, // Already a string in YYYY-MM-DD format
+        end_date: period.end_date,     // Already a string in YYYY-MM-DD format
+        contact_email: period.contact_email,
+        contact_name: period.contact_name,
         days_until: daysUntil,
-        family_group: period.family_group
+        family_group: period.contact_name
       });
     });
 
