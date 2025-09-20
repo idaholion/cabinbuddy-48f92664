@@ -403,7 +403,7 @@ export const NotificationManagement = () => {
         id: `selection-${period.id}`,
         type: 'selection_period',
         title: `${period.current_family_group} Selection Period`,
-        subtitle: `Selection window: ${period.selection_start_date} to ${period.selection_end_date}`,
+        subtitle: `Selection window: ${parseLocalDate(period.selection_start_date).toLocaleDateString()} to ${parseLocalDate(period.selection_end_date).toLocaleDateString()}`,
         start_date: period.selection_start_date,
         end_date: period.selection_end_date,
         contact_email: '', // No email field in ReservationPeriod
