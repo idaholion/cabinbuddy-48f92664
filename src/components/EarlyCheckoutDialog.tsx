@@ -28,6 +28,7 @@ interface EarlyCheckoutDialogProps {
     family_group: string;
     guest_count: number;
     total_cost?: number;
+    property_name?: string;
   } | null;
   onComplete?: () => void;
 }
@@ -48,7 +49,7 @@ export function EarlyCheckoutDialog({
 }: EarlyCheckoutDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
+  const { updateReservation, deleteReservation, loading: reservationLoading, createReservation } = useReservations();
   const { createTradeRequest, loading: tradeLoading } = useTradeRequests();
   const { familyGroups } = useFamilyGroups();
   
@@ -122,17 +123,49 @@ export function EarlyCheckoutDialog({
             });
             return;
           }
-          // Update reservation to end early
+          
+          // Update original reservation to end early and mark as transferred
           await updateReservation(reservation.id, {
-            end_date: newEndDateString
+            end_date: newEndDateString,
+            transfer_type: 'transferred_out',
+            transferred_to: data.familyMember
           });
           
-          // Note: In a full implementation, you'd create a new reservation for the family member
-          // for the remaining time period. For now, we'll just notify about the remaining time.
-          toast({
-            title: "Success",
-            description: `Reservation transferred to ${data.familyMember}. Remaining ${calculateRemainingNights()} nights are now available.`
-          });
+          // Create continuation reservation for family member
+          const continuationStartDate = new Date(data.newEndDate);
+          continuationStartDate.setDate(continuationStartDate.getDate() + 1);
+          
+          const continuationData = {
+            start_date: continuationStartDate.toISOString().split('T')[0],
+            end_date: reservation.end_date,
+            family_group: reservation.family_group,
+            guest_count: reservation.guest_count,
+            total_cost: 0, // Will be calculated separately
+            property_name: reservation.property_name || 'Main Property',
+            status: 'confirmed',
+            original_reservation_id: reservation.id,
+            transfer_type: 'transferred_in',
+            transferred_from: user?.email || 'Unknown',
+            host_assignments: [{
+              host_name: data.familyMember,
+              host_email: userFamilyGroup?.host_members?.find((m: any) => m.name === data.familyMember)?.email || ''
+            }]
+          };
+          
+          const continuationReservation = await createReservation(continuationData);
+          
+          if (continuationReservation) {
+            toast({
+              title: "Success",
+              description: `Reservation split successfully. ${data.familyMember} now has a reservation for the remaining ${calculateRemainingNights()} nights.`
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: "Original reservation updated but failed to create continuation reservation. Please contact support.",
+              variant: "destructive"
+            });
+          }
           break;
 
         case 'offer_other':

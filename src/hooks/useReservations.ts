@@ -19,6 +19,10 @@ interface ReservationData {
   time_period_number?: number;
   nights_used?: number;
   host_assignments?: any[];
+  original_reservation_id?: string;
+  transfer_type?: string;
+  transferred_from?: string;
+  transferred_to?: string;
 }
 
 export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?: string } = { enabled: false }) => {

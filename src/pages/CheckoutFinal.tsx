@@ -41,10 +41,24 @@ const CheckoutFinal = () => {
     }
   }, []);
 
-  // Get the most recent reservation for checkout data
-  const currentReservation = reservations
-    .filter(r => r.status === 'confirmed')
-    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0];
+  // Get the most recent reservation for the current user's stay
+  // Prioritize original reservations, then transferred-in reservations
+  const getCurrentUserReservation = () => {
+    const userReservations = reservations.filter(r => {
+      // Only show confirmed reservations
+      if (r.status !== 'confirmed') return false;
+      
+      // If it's a transferred-out reservation, don't show it for checkout (original person already checked out)
+      if (r.transfer_type === 'transferred_out') return false;
+      
+      return true;
+    });
+    
+    // Sort by start date descending to get most recent
+    return userReservations.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0];
+  };
+
+  const currentReservation = getCurrentUserReservation();
 
   // Calculate stay dates from the current reservation
   const checkInDate = currentReservation ? new Date(currentReservation.start_date) : null;
@@ -230,6 +244,27 @@ const CheckoutFinal = () => {
                   </Button>
                 </div>
               </div>
+            )}
+
+            {/* Transferred Reservation Notice */}
+            {currentReservation?.transfer_type === 'transferred_in' && (
+              <Card className="mb-6 border-blue-200 dark:border-blue-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                    <Users className="h-5 w-5" />
+                    Transferred Reservation
+                  </CardTitle>
+                  <CardDescription>
+                    This stay was transferred to you from {currentReservation.transferred_from || 'another family member'}.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Your stay summary includes only the time period you are responsible for 
+                    ({new Date(currentReservation.start_date).toLocaleDateString()} - {new Date(currentReservation.end_date).toLocaleDateString()}).
+                  </p>
+                </CardContent>
+              </Card>
             )}
 
             {/* Early Checkout Option - Available even when checklist is incomplete */}

@@ -1486,11 +1486,15 @@ export type Database = {
           id: string
           nights_used: number | null
           organization_id: string
+          original_reservation_id: string | null
           property_name: string | null
           start_date: string
           status: string | null
           time_period_number: number | null
           total_cost: number | null
+          transfer_type: string | null
+          transferred_from: string | null
+          transferred_to: string | null
           updated_at: string
           user_id: string | null
         }
@@ -1505,11 +1509,15 @@ export type Database = {
           id?: string
           nights_used?: number | null
           organization_id: string
+          original_reservation_id?: string | null
           property_name?: string | null
           start_date: string
           status?: string | null
           time_period_number?: number | null
           total_cost?: number | null
+          transfer_type?: string | null
+          transferred_from?: string | null
+          transferred_to?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1524,11 +1532,15 @@ export type Database = {
           id?: string
           nights_used?: number | null
           organization_id?: string
+          original_reservation_id?: string | null
           property_name?: string | null
           start_date?: string
           status?: string | null
           time_period_number?: number | null
           total_cost?: number | null
+          transfer_type?: string | null
+          transferred_from?: string | null
+          transferred_to?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1538,6 +1550,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_original_reservation_id_fkey"
+            columns: ["original_reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
             referencedColumns: ["id"]
           },
         ]
