@@ -88,6 +88,12 @@ export const NotificationManagement = () => {
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
 
+  // Utility function to parse date strings without timezone conversion
+  const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+  };
+
   // Fetch upcoming events
   useEffect(() => {
     if (organization?.id) {
@@ -376,7 +382,7 @@ export const NotificationManagement = () => {
         id: reservation.id,
         type: 'reservation',
         title: `${reservation.family_group} Reservation`,
-        subtitle: `Check-in: ${new Date(reservation.start_date).toLocaleDateString()}`,
+        subtitle: `Check-in: ${parseLocalDate(reservation.start_date).toLocaleDateString()}`,
         start_date: reservation.start_date,
         end_date: reservation.end_date,
         contact_email: reservation.guest_email,
@@ -389,7 +395,7 @@ export const NotificationManagement = () => {
 
     // Add selection periods
     upcomingSelectionPeriods.forEach(period => {
-      const startDate = new Date(period.selection_start_date);
+      const startDate = parseLocalDate(period.selection_start_date);
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -410,7 +416,7 @@ export const NotificationManagement = () => {
 
     // Add work weekends
     upcomingWorkWeekends.forEach(workWeekend => {
-      const startDate = new Date(workWeekend.start_date);
+      const startDate = parseLocalDate(workWeekend.start_date);
       const timeDiff = startDate.getTime() - today.getTime();
       const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -665,7 +671,7 @@ export const NotificationManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {upcomingSelectionPeriods.map((period) => {
-                    const startDate = new Date(period.selection_start_date);
+                    const startDate = parseLocalDate(period.selection_start_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const daysUntil = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
@@ -685,7 +691,7 @@ export const NotificationManagement = () => {
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">{period.current_family_group}'s turn</p>
                               <p className="text-base text-muted-foreground">
-                                {startDate.toLocaleDateString()} - {new Date(period.selection_end_date).toLocaleDateString()}
+                                {startDate.toLocaleDateString()} - {parseLocalDate(period.selection_end_date).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2 ml-4">
