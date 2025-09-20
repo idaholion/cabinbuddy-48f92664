@@ -100,7 +100,7 @@ const cabinItems = [
     icon: Receipt,
   },
   {
-    title: "Check Out",
+    title: "Check out Checklist",
     url: "/checkout-list",
     icon: CheckSquare,
   },
