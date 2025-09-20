@@ -159,6 +159,12 @@ export const useReservationPeriods = () => {
     }
   };
 
+  // Utility function to parse date strings without timezone conversion
+  const parseLocalDate = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+  };
+
   // Get upcoming selection periods (within next 30 days)
   const getUpcomingSelectionPeriods = () => {
     const now = new Date();
@@ -167,8 +173,8 @@ export const useReservationPeriods = () => {
     thirtyDaysFromNow.setDate(now.getDate() + 30);
 
     const upcoming = periods.filter(period => {
-      // Use UTC parsing to avoid timezone issues with date strings
-      const startDate = new Date(period.selection_start_date + 'T00:00:00');
+      // Use local date parsing to avoid timezone issues
+      const startDate = parseLocalDate(period.selection_start_date);
       startDate.setHours(0, 0, 0, 0);
       
       return startDate >= now && startDate <= thirtyDaysFromNow;
