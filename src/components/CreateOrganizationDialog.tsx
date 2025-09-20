@@ -6,6 +6,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSetupState } from '@/hooks/useSetupState';
+import { useTrialCodes } from '@/hooks/useTrialCodes';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
@@ -35,8 +36,9 @@ export const CreateOrganizationDialog = ({
   trigger 
 }: CreateOrganizationDialogProps) => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth(); 
   const { clearSetupState } = useSetupState();
+  const { consumeTrialCode } = useTrialCodes();
   const [internalOpen, setInternalOpen] = useState(false);
   
   // Use external open state if provided, otherwise use internal
@@ -110,6 +112,35 @@ export const CreateOrganizationDialog = ({
     try {
       console.log('🚀 [CREATE_ORG] Starting atomic organization creation...');
       console.log('👤 [CREATE_ORG] User authenticated:', { userId: user.id, email: user.email });
+      
+      // Check for trial code from signup flow
+      const signupData = localStorage.getItem('signupData');
+      let trialCode = null;
+      
+      if (signupData) {
+        try {
+          const parsed = JSON.parse(signupData);
+          trialCode = parsed.trialCode;
+          console.log('📝 [CREATE_ORG] Found trial code from signup:', trialCode ? 'Yes' : 'No');
+        } catch (e) {
+          console.log('⚠️ [CREATE_ORG] Could not parse signup data');
+        }
+      }
+      
+      // If we have a trial code, consume it before creating organization
+      if (trialCode) {
+        console.log('🎫 [CREATE_ORG] Consuming trial code...');
+        const codeConsumed = await consumeTrialCode(trialCode, user.id);
+        
+        if (!codeConsumed) {
+          console.error('❌ [CREATE_ORG] Failed to consume trial code');
+          throw new Error('Invalid or expired trial code. Please contact support.');
+        }
+        
+        console.log('✅ [CREATE_ORG] Trial code consumed successfully');
+        // Clear signup data after successful consumption
+        localStorage.removeItem('signupData');
+      }
       
       // Use the atomic database function to create both organization and user link
       const { data, error } = await supabase.rpc('create_organization_with_user_link', {

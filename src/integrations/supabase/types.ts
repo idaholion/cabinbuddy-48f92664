@@ -2060,6 +2060,45 @@ export type Database = {
           },
         ]
       }
+      trial_access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by_user_id: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          updated_at: string
+          used_at: string | null
+          used_by_user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by_user_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by_user_id?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          updated_at?: string
+          used_at?: string | null
+          used_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       user_organizations: {
         Row: {
           created_at: string
@@ -2426,6 +2465,10 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_trial_code: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: boolean
+      }
       create_organization_with_user_link: {
         Args: {
           p_admin_email?: string
@@ -2448,6 +2491,10 @@ export type Database = {
           p_reservation_id: string
           p_split_deposit?: boolean
         }
+        Returns: string
+      }
+      create_trial_code: {
+        Args: { p_expires_days?: number; p_notes?: string }
         Returns: string
       }
       debug_auth_context: {
@@ -2651,6 +2698,10 @@ export type Database = {
       }
       validate_organization_access: {
         Args: { operation_name?: string; target_org_id: string }
+        Returns: boolean
+      }
+      validate_trial_code: {
+        Args: { p_code: string }
         Returns: boolean
       }
     }

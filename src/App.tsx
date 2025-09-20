@@ -66,6 +66,7 @@ const AccountSecurity = React.lazy(() => import("./pages/AccountSecurity"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
+const TrialCodeManagement = React.lazy(() => import("./pages/TrialCodeManagement"));
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));

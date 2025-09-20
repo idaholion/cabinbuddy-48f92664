@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
+import { useTrialCodes } from "@/hooks/useTrialCodes";
 import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
@@ -22,9 +23,11 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [organizationType, setOrganizationType] = useState("");
   const [organizationCode, setOrganizationCode] = useState("");
+  const [trialCode, setTrialCode] = useState("");
   const [error, setError] = useState("");
   const { signUp, user } = useAuth();
   const { joinOrganization, createOrganization } = useMultiOrganization();
+  const { validateTrialCode, consumeTrialCode } = useTrialCodes();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -125,6 +128,22 @@ const Signup = () => {
       setError("Please enter an organization code to join.");
       setLoading(false);
       return;
+    }
+
+    if (organizationType === "start" && !trialCode) {
+      setError("Please enter a trial access code to start a new organization.");
+      setLoading(false);
+      return;
+    }
+
+    // Validate trial code if starting new organization
+    if (organizationType === "start") {
+      const isValidCode = await validateTrialCode(trialCode);
+      if (!isValidCode) {
+        setError("Invalid or expired trial code. Please check your code and try again.");
+        setLoading(false);
+        return;
+      }
     }
 
     // Validate password confirmation
@@ -278,6 +297,7 @@ const Signup = () => {
           firstName,
           lastName,
           email,
+          trialCode: trialCode.trim().toUpperCase(),
           timestamp: Date.now()
         }));
         navigate("/setup");
@@ -342,6 +362,24 @@ const Signup = () => {
                   maxLength={6}
                   className="uppercase"
                 />
+              </div>
+            )}
+
+            {organizationType === "start" && (
+              <div className="space-y-2">
+                <Label htmlFor="trialCode">Trial Access Code</Label>
+                <Input
+                  id="trialCode"
+                  type="text"
+                  placeholder="Enter your trial code"
+                  value={trialCode}
+                  onChange={(e) => setTrialCode(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  className="uppercase"
+                />
+                <p className="text-sm text-muted-foreground">
+                  You need a trial access code to start a new organization
+                </p>
               </div>
             )}
           </div>
