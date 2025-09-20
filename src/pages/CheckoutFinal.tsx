@@ -232,6 +232,41 @@ const CheckoutFinal = () => {
               </div>
             )}
 
+            {/* Early Checkout Option - Available even when checklist is incomplete */}
+            {canEarlyCheckout && (
+              <Card className="mb-6 border-orange-200 dark:border-orange-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+                    <Clock className="h-5 w-5" />
+                    Early Checkout Available
+                  </CardTitle>
+                  <CardDescription>
+                    Leaving early? Manage your remaining reservation time.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Your reservation continues until {new Date(currentReservation.end_date).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm font-medium">
+                        Cancel remaining days, transfer to family, or offer to others
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setEarlyCheckoutOpen(true)}
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      Early Checkout
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Wrapper div with conditional opacity for preview mode */}
             <div className={`space-y-6 ${!checklistStatus?.isComplete ? 'opacity-60 pointer-events-none select-none' : ''}`}>
               {/* Stay Summary */}
@@ -430,41 +465,6 @@ const CheckoutFinal = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Early Checkout Option */}
-              {canEarlyCheckout && (
-                <Card className="mb-6 border-orange-200 dark:border-orange-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                      <Clock className="h-5 w-5" />
-                      Early Checkout Available
-                    </CardTitle>
-                    <CardDescription>
-                      Leaving early? Manage your remaining reservation time.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          Your reservation continues until {new Date(currentReservation.end_date).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm font-medium">
-                          Cancel remaining days, transfer to family, or offer to others
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => setEarlyCheckoutOpen(true)}
-                        className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
-                      >
-                        <Clock className="h-4 w-4 mr-2" />
-                        Early Checkout
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Payment Options */}
               <Card className="mb-6">

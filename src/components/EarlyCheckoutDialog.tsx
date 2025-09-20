@@ -358,30 +358,49 @@ export function EarlyCheckoutDialog({
 
                 {/* Conditional Fields Based on Action */}
                 {watchedAction === 'transfer_family' && (
-                  <FormField
-                    control={form.control}
-                    name="familyMember"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Select Family Member</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choose family member" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {familyMembers.map((member, index) => (
-                              <SelectItem key={index} value={member.name}>
-                                {member.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="familyMember"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Family Member</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose family member" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {familyMembers.map((member, index) => (
+                                <SelectItem key={index} value={member.name}>
+                                  {member.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {/* Checkout Responsibility Notice */}
+                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <Users className="h-5 w-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                            Checkout Responsibility Transfer
+                          </h4>
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            The selected family member will be responsible for completing the checkout checklist 
+                            and final checkout process when they leave. They can access the checkout checklist 
+                            from the cabin menu.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 {watchedAction === 'offer_other' && (
