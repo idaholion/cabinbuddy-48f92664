@@ -324,21 +324,34 @@ const DailyCheckIn = () => {
             </CardContent>
           </Card>
 
-          {/* Only show occupancy tracking if there's an active reservation */}
-          {currentReservation && stayDays.length > 0 && (
-            <Card className="bg-card/95">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Guest Occupancy Tracking
-                </CardTitle>
-                <CardDescription>
-                  Track the number of people staying each day. You can fill this out day by day as you go, 
-                  or complete it all at once - whatever works best for you. You can always come back and update it.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Helpful info box */}
+          {/* Show occupancy tracking - functional if active reservation, preview if not */}
+          <Card className="bg-card/95">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Guest Occupancy Tracking
+                {!currentReservation && (
+                  <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground">
+                    Preview Mode
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription>
+                Track the number of people staying each day. You can fill this out day by day as you go, 
+                or complete it all at once - whatever works best for you. You can always come back and update it.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!currentReservation && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="text-sm text-orange-800">
+                    <strong>📋 Preview:</strong> This shows what the occupancy tracking will look like during your reservation. 
+                    The form will be fully functional when you have an active reservation.
+                  </div>
+                </div>
+              )}
+              
+              {currentReservation && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="text-sm text-blue-800">
                     <strong>💡 Tip:</strong> You don't need to fill out everything at once! You can:
@@ -349,41 +362,63 @@ const DailyCheckIn = () => {
                     </ul>
                   </div>
                 </div>
-                
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
-                  {stayDays.map((day) => (
-                    <div key={day.key} className="space-y-2">
-                      <Label htmlFor={day.key}>
-                        {day.label}
-                      </Label>
-                      <Input
-                        id={day.key}
-                        type="number"
-                        placeholder="0"
-                        min="0"
-                        className="w-20"
-                        value={dailyOccupancy[day.key] || ""}
-                        onChange={(e) => handleOccupancyChange(day.key, e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+              
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
+                {(currentReservation ? stayDays : [
+                  { key: 'day-1', label: 'Day 1 (Dec 15)' },
+                  { key: 'day-2', label: 'Day 2 (Dec 16)' },
+                  { key: 'day-3', label: 'Day 3 (Dec 17)' },
+                  { key: 'day-4', label: 'Day 4 (Dec 18)' }
+                ]).map((day) => (
+                  <div key={day.key} className="space-y-2">
+                    <Label htmlFor={day.key}>
+                      {day.label}
+                    </Label>
+                    <Input
+                      id={day.key}
+                      type="number"
+                      placeholder="0"
+                      min="0"
+                      className="w-20"
+                      value={currentReservation ? (dailyOccupancy[day.key] || "") : ""}
+                      onChange={(e) => currentReservation && handleOccupancyChange(day.key, e.target.value)}
+                      disabled={!currentReservation}
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="bg-card/95">
             <CardHeader>
-              <CardTitle>Daily Tasks</CardTitle>
+              <CardTitle>Daily Tasks
+                {!currentReservation && (
+                  <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground">
+                    Preview Mode
+                  </span>
+                )}
+              </CardTitle>
               <CardDescription>Complete these daily maintenance checks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {!currentReservation && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="text-sm text-orange-800">
+                    <strong>📋 Preview:</strong> This shows what your daily tasks will look like. 
+                    Tasks will be functional during your active reservation.
+                  </div>
+                </div>
+              )}
+              
               {dailyTasks.map((task) => (
                 <div key={task.id} className="flex items-center space-x-3 group">
                   <Checkbox
                     id={task.id}
-                    checked={checkedItems[task.id] || false}
-                    onCheckedChange={(checked) => handleCheckChange(task.id, checked as boolean)}
+                    checked={currentReservation ? (checkedItems[task.id] || false) : false}
+                    onCheckedChange={(checked) => currentReservation && handleCheckChange(task.id, checked as boolean)}
+                    disabled={!currentReservation}
                   />
                   {editingItemId === task.id ? (
                     <div className="flex items-center space-x-2 flex-1">
@@ -475,15 +510,29 @@ const DailyCheckIn = () => {
 
           <Card className="bg-card/95">
             <CardHeader>
-              <CardTitle>Daily Notes</CardTitle>
+              <CardTitle>Daily Notes
+                {!currentReservation && (
+                  <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground">
+                    Preview Mode
+                  </span>
+                )}
+              </CardTitle>
               <CardDescription>Any observations or issues to report?</CardDescription>
             </CardHeader>
             <CardContent>
+              {!currentReservation && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="text-sm text-orange-800">
+                    <strong>📋 Preview:</strong> This notes section will be functional during your active reservation.
+                  </div>
+                </div>
+              )}
               <Textarea
                 placeholder="Enter daily observations, maintenance notes, or issues..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                value={currentReservation ? notes : ""}
+                onChange={(e) => currentReservation && setNotes(e.target.value)}
                 className="min-h-[100px]"
+                disabled={!currentReservation}
               />
             </CardContent>
           </Card>
@@ -497,8 +546,13 @@ const DailyCheckIn = () => {
                     Check-in time: {new Date().toLocaleString()}
                   </span>
                 </div>
-                <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary">
-                  {isSubmitting ? "Saving..." : "Save Check-In Data"}
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isSubmitting || !currentReservation} 
+                  className="bg-primary"
+                >
+                  {!currentReservation ? "Preview Mode - No Active Reservation" : 
+                   isSubmitting ? "Saving..." : "Save Check-In Data"}
                 </Button>
               </div>
             </CardContent>
