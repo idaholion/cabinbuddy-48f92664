@@ -114,7 +114,7 @@ export const NotificationManagement = () => {
   useEffect(() => {
     if (workWeekends) {
       const upcoming = workWeekends.filter(ww => {
-        const startDate = new Date(ww.start_date);
+        const startDate = parseLocalDate(ww.start_date);
         const today = new Date();
         const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         return startDate >= today && startDate <= thirtyDaysFromNow;
@@ -509,7 +509,7 @@ export const NotificationManagement = () => {
                                   <p className="text-sm text-muted-foreground mt-1">{event.subtitle}</p>
                                 )}
                                 <p className="text-base text-muted-foreground mt-1">
-                                  {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
+                                  {parseLocalDate(event.start_date).toLocaleDateString()} - {parseLocalDate(event.end_date).toLocaleDateString()}
                                 </p>
                                 {event.contact_name && event.contact_email && (
                                   <p className="text-base text-muted-foreground">
@@ -763,7 +763,7 @@ export const NotificationManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {upcomingWorkWeekends.map((workWeekend) => {
-                    const startDate = new Date(workWeekend.start_date);
+                    const startDate = parseLocalDate(workWeekend.start_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const daysUntil = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
@@ -783,7 +783,7 @@ export const NotificationManagement = () => {
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">Proposed by {workWeekend.proposer_name}</p>
                               <p className="text-base text-muted-foreground">
-                                {new Date(workWeekend.start_date).toLocaleDateString()} - {new Date(workWeekend.end_date).toLocaleDateString()}
+                                {parseLocalDate(workWeekend.start_date).toLocaleDateString()} - {parseLocalDate(workWeekend.end_date).toLocaleDateString()}
                               </p>
                               {workWeekend.description && (
                                 <p className="text-sm text-muted-foreground mt-1">{workWeekend.description}</p>
