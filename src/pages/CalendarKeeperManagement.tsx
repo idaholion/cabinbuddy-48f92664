@@ -21,6 +21,7 @@ const CalendarKeeperManagement = () => {
         <PageHeader
           title="Calendar Keeper Management"
           subtitle="Send manual reminders, run automatic notifications, and manage reservation communications."
+          backgroundImage={true}
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">

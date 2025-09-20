@@ -17,17 +17,18 @@ export default function FamilyVoting() {
   const [activeTab, setActiveTab] = useState('proposals');
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Vote className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Family Voting</h1>
-            <p className="text-muted-foreground">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <main className="container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center">
+              <Vote className="h-10 w-10 mr-3" />
+              Family Voting
+            </h1>
+            <p className="text-2xl text-primary text-center font-medium">
               Participate in organizational decisions using your allocated shares
             </p>
           </div>
-        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : isGroupLead ? 'grid-cols-4' : 'grid-cols-2'}`}>
@@ -149,7 +150,8 @@ export default function FamilyVoting() {
             </TabsContent>
           )}
         </Tabs>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

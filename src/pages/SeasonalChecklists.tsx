@@ -124,7 +124,8 @@ const SeasonalChecklists = () => {
   const checklistStats = getChecklistStats();
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
+      <main className="container mx-auto p-6 space-y-6">
       <div className="text-center mb-8">
         <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Seasonal Checklists</h1>
         <p className="text-muted-foreground">Manage your seasonal cabin tasks, maintenance schedules, and operational procedures</p>
@@ -185,6 +186,7 @@ const SeasonalChecklists = () => {
           </div>
         </CardContent>
       </Card>
+      </main>
     </div>
   );
 };
