@@ -329,7 +329,7 @@ const DailyCheckIn = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="h-5 w-5 mr-2" />
-                Guest Occupancy Tracking
+                Guest Update
                 {!currentReservation && (
                   <span className="ml-2 text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground">
                     Preview Mode
