@@ -228,7 +228,7 @@ export default function PhotoSharing() {
           title="Family Photo Gallery"
           subtitle="Share your cabin memories with family"
           icon={Camera}
-          backgroundImage={false}
+          backgroundImage={true}
         >
           <NavigationHeader />
         </PageHeader>
