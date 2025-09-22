@@ -118,8 +118,6 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
       breadcrumbs.push({ title: "Final Checkout", isActive: true });
     } else if (path === "/photos") {
       breadcrumbs.push({ title: "Photo Sharing", isActive: true });
-    } else if (path === "/select-family-group") {
-      breadcrumbs.push({ title: "Select Family Group", isActive: true });
     } else if (path === "/select-organization") {
       breadcrumbs.push({ title: "Select Organization", isActive: true });
     } else if (path === "/finance-reports") {

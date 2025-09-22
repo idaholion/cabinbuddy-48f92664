@@ -567,8 +567,6 @@ const FamilySetup = () => {
       // Clear auto-saved data after successful save
       clearSavedData();
       
-      // Also save just the family groups for the SelectFamilyGroup page
-      localStorage.setItem('familyGroupsList', JSON.stringify(validGroups.map(g => g.name)));
       
     } catch (error) {
       toast({

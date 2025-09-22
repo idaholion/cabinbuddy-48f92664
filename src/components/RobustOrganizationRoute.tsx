@@ -36,7 +36,6 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     '/signup', 
     '/login', 
     '/manage-organizations', 
-    '/select-family-group',
     '/family-setup',
     '/auth',
     '/reset-password',

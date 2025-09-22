@@ -25,7 +25,7 @@ import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Setup from "./pages/Setup";
-import SelectFamilyGroup from "./pages/SelectFamilyGroup";
+
 import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
@@ -132,7 +132,7 @@ const AppContent = () => {
         <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />
         
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/select-family-group" element={<ProtectedRoute><MainLayout><SelectFamilyGroup /></MainLayout></ProtectedRoute>} />
+        
         <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/group-member-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GroupMemberProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
