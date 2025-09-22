@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home, UserCircle } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 // Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
+import { PageHeader } from "@/components/ui/page-header";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -644,19 +645,22 @@ const GroupMemberProfile = () => {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header with Home and Logout */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
+      <PageHeader 
+        title="Profile Settings"
+        icon={UserCircle}
+        backgroundImage={true}
+      >
+        <div className="flex justify-between items-center mb-6">
           <Button variant="outline" onClick={() => navigate('/')} className="flex items-center space-x-2 text-base">
             <Home className="h-4 w-4" />
             <span>Home</span>
           </Button>
-          <h1 className="text-2xl font-bold">Profile Settings</h1>
+          <Button variant="outline" onClick={signOut} className="flex items-center space-x-2 text-base">
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </Button>
         </div>
-        <Button variant="outline" onClick={signOut} className="flex items-center space-x-2 text-base">
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </Button>
-      </div>
+      </PageHeader>
 
       {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet AND auto-population failed */}
       {!hasClaimedProfile && !autoPopulated && familyGroups.length > 0 && (
