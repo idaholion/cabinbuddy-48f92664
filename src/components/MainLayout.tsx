@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { AppBreadcrumbs } from '@/components/AppBreadcrumbs';
+
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { AiHelpAssistant } from '@/components/AiHelpAssistant';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
@@ -35,11 +35,10 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="w-8" /> {/* Spacer for balance */}
               </div>
             )}
-            {/* Only show header with breadcrumbs on non-home pages */}
+            {/* Only show header with contextual help on non-home pages */}
             {!isHomePage && (
               <div className="p-6 pb-0">
-                <div className="flex items-center justify-between mb-4">
-                  <AppBreadcrumbs />
+                <div className="flex items-center justify-end mb-4">
                   <ContextualHelp />
                 </div>
               </div>
