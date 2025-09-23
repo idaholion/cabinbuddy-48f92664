@@ -152,14 +152,20 @@ const FamilyGroupSetup = () => {
     }
   }, [isGroupMember, isGroupLead, isAdmin, isSupervisor, roleLoading, authLoading, organizationLoading, navigate, toast, user?.email, userFamilyGroup, familyGroups.length, organization]);
 
-  // Pre-populate user information for new signups
+  // Pre-populate user information for new signups AND auto-populate family group for non-admin users
   useEffect(() => {
     // Only run if user is authenticated and no auto-save data was loaded
     if (!user || hasLoadedAutoSave.current) return;
 
+    // Auto-populate family group for non-admin users who have one
+    if (!isAdmin && !isSupervisor && userFamilyGroup && !getValues("selectedGroup")) {
+      console.log('🔧 [FAMILY_GROUP_SETUP] Auto-populating family group for non-admin user:', userFamilyGroup.name);
+      setValue("selectedGroup", userFamilyGroup.name);
+    }
+
     // Only pre-populate if form is empty (no group selected and lead fields are empty)
     const currentValues = getValues();
-    if (currentValues.selectedGroup || currentValues.leadName || currentValues.leadEmail) return;
+    if (currentValues.leadName || currentValues.leadEmail) return;
 
     console.log('🔧 [FAMILY_GROUP_SETUP] Pre-populating user information for new signup');
 
@@ -200,7 +206,7 @@ const FamilyGroupSetup = () => {
         memberIndex: 0
       });
     }
-  }, [user, setValue, getValues, hasLoadedAutoSave]);
+  }, [user, setValue, getValues, hasLoadedAutoSave, isAdmin, isSupervisor, userFamilyGroup]);
 
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
@@ -585,24 +591,35 @@ const FamilyGroupSetup = () => {
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="w-full text-lg">
-                              <SelectValue placeholder="Select a family group" className="text-lg" />
-                            </SelectTrigger>
-                             <SelectContent className="bg-background z-50 text-lg">
-                               {allGroups.length > 0 ? (
-                                 allGroups.map((group, index) => (
-                                   <SelectItem key={index} value={group} className="text-lg">
-                                     {group}
+                          {/* Show dropdown only for admins/supervisors OR users without a family group */}
+                          {(isAdmin || isSupervisor || (!userFamilyGroup && allGroups.length > 0)) ? (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger className="w-full text-lg">
+                                <SelectValue placeholder="Select a family group" className="text-lg" />
+                              </SelectTrigger>
+                               <SelectContent className="bg-background z-50 text-lg">
+                                 {allGroups.length > 0 ? (
+                                   allGroups.map((group, index) => (
+                                     <SelectItem key={index} value={group} className="text-lg">
+                                       {group}
+                                     </SelectItem>
+                                   ))
+                                 ) : (
+                                   <SelectItem value="no-groups" disabled className="text-lg">
+                                     No family groups found - Please set them up in Family Setup first
                                    </SelectItem>
-                                 ))
-                               ) : (
-                                 <SelectItem value="no-groups" disabled className="text-lg">
-                                   No family groups found - Please set them up in Family Setup first
-                                 </SelectItem>
-                               )}
-                             </SelectContent>
-                          </Select>
+                                 )}
+                               </SelectContent>
+                            </Select>
+                          ) : (
+                            /* Show read-only input for non-admin users with a family group */
+                            <Input
+                              value={field.value || userFamilyGroup?.name || ""}
+                              readOnly
+                              className="w-full text-lg bg-muted/50 cursor-not-allowed"
+                              placeholder="Your family group"
+                            />
+                          )}
                           
                           {/* Rename Group Section */}
                           {field.value && field.value !== "no-groups" && (
