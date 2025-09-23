@@ -398,30 +398,6 @@ const FamilyGroupSetup = () => {
     }
   };
 
-  const clearAllGroupMembers = () => {
-    setValue("groupMembers", [
-      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-      { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
-    ]);
-    setShowAllMembers(false);
-  };
-
-  const removeEmptySlots = () => {
-    const currentMembers = getValues("groupMembers");
-    const filledMembers = currentMembers.filter(member => 
-      member.firstName?.trim() || member.lastName?.trim() || member.email?.trim() || member.phone?.trim()
-    );
-    
-    // Ensure at least 3 slots
-    while (filledMembers.length < 3) {
-      filledMembers.push({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
-    }
-    
-    setValue("groupMembers", filledMembers);
-    setShowAllMembers(filledMembers.length > 3);
-  };
-
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
@@ -777,59 +753,24 @@ const FamilyGroupSetup = () => {
                 {/* Group Members Section */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                 <div className="text-center flex-1">
-                   <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
-                     <Users className="h-5 w-5" />
-                     Family Group: {watch("selectedGroup")} ({filledMembersCount})
-                   </h3>
-                   
-                   {/* Unique Email Address Requirement */}
-                   <div className="mt-2 mb-3">
-                     <p className="text-lg font-bold text-foreground">
-                       Each Group Member must have a Unique Email Address
-                     </p>
-                   </div>
-                   
-                   <p className="text-lg text-muted-foreground mt-1">
-                     Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
-                   </p>
-                 </div>
+                  <div className="text-center flex-1">
+                    <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Family Group: {watch("selectedGroup")} ({filledMembersCount})
+                    </h3>
                     
-                    {fields.length > 3 && (
-                      <div className="flex gap-2">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button type="button" variant="outline" size="sm">
-                              Clear All
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Clear All Group Members</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will clear all group member information and reset to 3 empty slots. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={clearAllGroupMembers}>
-                                Clear All
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={removeEmptySlots}
-                        >
-                          Remove Empty
-                        </Button>
-                      </div>
-                    )}
+                    {/* Unique Email Address Requirement */}
+                    <div className="mt-2 mb-3">
+                      <p className="text-lg font-bold text-foreground">
+                        Each Group Member must have a Unique Email Address
+                      </p>
+                    </div>
+                    
+                    <p className="text-lg text-muted-foreground mt-1">
+                      Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
+                    </p>
                   </div>
+                   </div>
 
 
                   {/* Duplicate validation errors */}
