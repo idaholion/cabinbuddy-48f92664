@@ -71,7 +71,7 @@ const Intro = () => {
               variant="outline"
               className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
             >
-              Sign Up
+              Start a New Organization
             </Button>
             <Button 
               onClick={() => navigate("/login")}
