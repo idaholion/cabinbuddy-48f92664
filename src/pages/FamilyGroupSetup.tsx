@@ -621,6 +621,15 @@ const FamilyGroupSetup = () => {
                             />
                           )}
                           
+                          {/* Unique Email Address Requirement */}
+                          {field.value && field.value !== "no-groups" && (
+                            <div className="text-center">
+                              <p className="text-sm font-bold text-muted-foreground">
+                                Each Group Member must have a Unique Email Address
+                              </p>
+                            </div>
+                          )}
+                          
                           {/* Rename Group Section */}
                           {field.value && field.value !== "no-groups" && (
                             <div className="p-3 bg-muted/30 rounded border">
