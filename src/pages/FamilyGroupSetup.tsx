@@ -621,15 +621,6 @@ const FamilyGroupSetup = () => {
                             />
                           )}
                           
-                          {/* Unique Email Address Requirement */}
-                          {field.value && field.value !== "no-groups" && (
-                            <div className="text-center">
-                              <p className="text-sm font-bold text-muted-foreground">
-                                Each Group Member must have a Unique Email Address
-                              </p>
-                            </div>
-                          )}
-                          
                           {/* Rename Group Section */}
                           {field.value && field.value !== "no-groups" && (
                             <div className="p-3 bg-muted/30 rounded border">
@@ -786,15 +777,23 @@ const FamilyGroupSetup = () => {
                 {/* Group Members Section */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                <div className="text-center flex-1">
-                  <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Family Group: {watch("selectedGroup")} ({filledMembersCount})
-                  </h3>
-                  <p className="text-lg text-muted-foreground mt-1">
-                    Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
-                  </p>
-                </div>
+                 <div className="text-center flex-1">
+                   <h3 className="text-3xl font-semibold flex items-center justify-center gap-2">
+                     <Users className="h-5 w-5" />
+                     Family Group: {watch("selectedGroup")} ({filledMembersCount})
+                   </h3>
+                   
+                   {/* Unique Email Address Requirement */}
+                   <div className="mt-2 mb-3">
+                     <p className="text-lg font-bold text-foreground">
+                       Each Group Member must have a Unique Email Address
+                     </p>
+                   </div>
+                   
+                   <p className="text-lg text-muted-foreground mt-1">
+                     Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
+                   </p>
+                 </div>
                     
                     {fields.length > 3 && (
                       <div className="flex gap-2">
