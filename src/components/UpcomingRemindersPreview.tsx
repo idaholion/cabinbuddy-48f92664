@@ -235,7 +235,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: startReminder,
               recipient: `${currentGroup.lead_name} (${currentGroup.lead_email})`,
               familyGroup: currentGroup.name,
-              subject: `Selection Period Opening Soon - ${period.current_family_group} Selection`,
+              subject: generateSelectionSubject('start', period),
               content: generateSelectionContent('start', period),
               eventDate: startDate,
               eventTitle: `${period.current_family_group} Selection Period`,
@@ -252,7 +252,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: endDate,
               recipient: `${currentGroup.lead_name} (${currentGroup.lead_email})`,
               familyGroup: currentGroup.name,
-              subject: `Last Day: Selection Period Ending - ${period.current_family_group} Selection`,
+              subject: generateSelectionSubject('end', period),
               content: generateSelectionContent('end', period),
               eventDate: endDate,
               eventTitle: `${period.current_family_group} Selection Period`,
@@ -313,13 +313,29 @@ ${workWeekend.description || 'Please plan to participate in this important cabin
 Thank you for your participation!`;
   };
 
+  // Helper function to substitute template variables
+  const substituteTemplateVariables = (template: string, variables: Record<string, any>) => {
+    let result = template;
+    Object.entries(variables).forEach(([key, value]) => {
+      const placeholder = `{{${key}}}`;
+      result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value || '');
+    });
+    return result;
+  };
+
+  // Helper function to generate selection reminder content using templates
   const generateSelectionContent = (type: 'start' | 'end', period: any) => {
+    const templateType = type === 'start' ? 'selection_period_start' : 'selection_deadline';
+    const template = reminderTemplates.find(t => t.reminder_type === templateType);
+    
     // Parse dates correctly to avoid timezone issues
     const startDate = new Date(period.selection_start_date + 'T00:00:00');
     const endDate = new Date(period.selection_end_date + 'T00:00:00');
     
-    if (type === 'start') {
-      return `Hello Family Groups!
+    if (!template) {
+      // Fallback to hardcoded content if template not found
+      if (type === 'start') {
+        return `Hello Family Groups!
 
 The ${period.current_family_group} selection period will begin in 3 days on ${format(startDate, 'EEEE, MMMM do, yyyy')}.
 
@@ -328,15 +344,65 @@ Period: ${format(startDate, 'MMM do')} - ${format(endDate, 'MMM do, yyyy')}
 Please be ready to make your selections when the period opens.
 
 Good luck!`;
-    } else {
-      return `Hello Family Groups!
+      } else {
+        return `Hello Family Groups!
 
 This is the FINAL DAY for the ${period.current_family_group} selection period.
 
 The selection period ends today: ${format(endDate, 'EEEE, MMMM do, yyyy')}
 
 Don't miss out on making your reservations!`;
+      }
     }
+
+    // Find the current family group for this period
+    const currentGroup = familyGroups.find(group => group.name === period.current_family_group);
+
+    // Prepare variables for template substitution
+    const variables = {
+      family_group_name: period.current_family_group,
+      guest_name: currentGroup?.lead_name || 'Family Lead',
+      selection_year: startDate.getFullYear().toString(),
+      selection_start_date: format(startDate, 'MMMM d, yyyy'),
+      selection_end_date: format(endDate, 'MMMM d, yyyy'),
+      organization_name: organization?.name || 'Your Organization',
+      current_family_group: period.current_family_group
+    };
+
+    return substituteTemplateVariables(template.custom_message || template.subject_template, variables);
+  };
+
+  // Helper function to generate selection subject using templates
+  const generateSelectionSubject = (type: 'start' | 'end', period: any) => {
+    const templateType = type === 'start' ? 'selection_period_start' : 'selection_deadline';
+    const template = reminderTemplates.find(t => t.reminder_type === templateType);
+    
+    if (!template) {
+      // Fallback to hardcoded subject if template not found
+      return type === 'start' 
+        ? `Selection Period Opening Soon - ${period.current_family_group} Selection`
+        : `Last Day: Selection Period Ending - ${period.current_family_group} Selection`;
+    }
+
+    // Parse dates correctly to avoid timezone issues
+    const startDate = new Date(period.selection_start_date + 'T00:00:00');
+    const endDate = new Date(period.selection_end_date + 'T00:00:00');
+
+    // Find the current family group for this period
+    const currentGroup = familyGroups.find(group => group.name === period.current_family_group);
+
+    // Prepare variables for template substitution
+    const variables = {
+      family_group_name: period.current_family_group,
+      guest_name: currentGroup?.lead_name || 'Family Lead',
+      selection_year: startDate.getFullYear().toString(),
+      selection_start_date: format(startDate, 'MMMM d, yyyy'),
+      selection_end_date: format(endDate, 'MMMM d, yyyy'),
+      organization_name: organization?.name || 'Your Organization',
+      current_family_group: period.current_family_group
+    };
+
+    return substituteTemplateVariables(template.subject_template, variables);
   };
 
   const toggleExpanded = (reminderId: string) => {
