@@ -358,6 +358,23 @@ Don't miss out on making your reservations!`;
     // Find the current family group for this period
     const currentGroup = familyGroups.find(group => group.name === period.current_family_group);
 
+    // Calculate time remaining for deadline reminders
+    const now = new Date();
+    const timeDiff = endDate.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    let timeRemaining = '';
+    if (daysRemaining > 1) {
+      timeRemaining = `${daysRemaining} days`;
+    } else if (daysRemaining === 1) {
+      timeRemaining = '1 day';
+    } else if (daysRemaining === 0) {
+      const hoursRemaining = Math.ceil(timeDiff / (1000 * 3600));
+      timeRemaining = hoursRemaining > 0 ? `${hoursRemaining} hours` : 'Less than 1 hour';
+    } else {
+      timeRemaining = 'Deadline has passed';
+    }
+
     // Prepare variables for template substitution
     const variables = {
       family_group_name: period.current_family_group,
@@ -365,6 +382,9 @@ Don't miss out on making your reservations!`;
       selection_year: startDate.getFullYear().toString(),
       selection_start_date: format(startDate, 'MMMM d, yyyy'),
       selection_end_date: format(endDate, 'MMMM d, yyyy'),
+      deadline_date: format(endDate, 'MMMM d, yyyy'),
+      selection_status: 'In Progress',
+      time_remaining: timeRemaining,
       organization_name: organization?.name || 'Your Organization',
       current_family_group: period.current_family_group
     };
@@ -391,6 +411,23 @@ Don't miss out on making your reservations!`;
     // Find the current family group for this period
     const currentGroup = familyGroups.find(group => group.name === period.current_family_group);
 
+    // Calculate time remaining for deadline reminders
+    const now = new Date();
+    const timeDiff = endDate.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    let timeRemaining = '';
+    if (daysRemaining > 1) {
+      timeRemaining = `${daysRemaining} days`;
+    } else if (daysRemaining === 1) {
+      timeRemaining = '1 day';
+    } else if (daysRemaining === 0) {
+      const hoursRemaining = Math.ceil(timeDiff / (1000 * 3600));
+      timeRemaining = hoursRemaining > 0 ? `${hoursRemaining} hours` : 'Less than 1 hour';
+    } else {
+      timeRemaining = 'Deadline has passed';
+    }
+
     // Prepare variables for template substitution
     const variables = {
       family_group_name: period.current_family_group,
@@ -398,6 +435,9 @@ Don't miss out on making your reservations!`;
       selection_year: startDate.getFullYear().toString(),
       selection_start_date: format(startDate, 'MMMM d, yyyy'),
       selection_end_date: format(endDate, 'MMMM d, yyyy'),
+      deadline_date: format(endDate, 'MMMM d, yyyy'),
+      selection_status: 'In Progress',
+      time_remaining: timeRemaining,
       organization_name: organization?.name || 'Your Organization',
       current_family_group: period.current_family_group
     };
