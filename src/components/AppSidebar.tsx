@@ -62,6 +62,11 @@ const setupItems = [
     icon: Users,
   },
   {
+    title: "Use Fee Setup",
+    url: "/use-fee-setup",
+    icon: DollarSign,
+  },
+  {
     title: "Financial Dashboard",
     url: "/finance-reports",
     icon: DollarSign,
