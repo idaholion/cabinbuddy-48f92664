@@ -3,10 +3,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Settings, AlertTriangle, Calendar, Hammer } from "lucide-react";
+import { Clock, Settings, AlertTriangle, Calendar, Hammer, Eye, EyeOff } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview";
 
 interface AutomatedSettings {
   automated_reminders_enabled: boolean;
@@ -22,6 +23,7 @@ export const AutomatedReminderSettings = () => {
     automated_work_weekend_reminders_enabled: false,
   });
   const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (organization) {
@@ -238,6 +240,30 @@ export const AutomatedReminderSettings = () => {
             </div>
           )}
         </CardContent>
+      </Card>
+
+      {/* Upcoming Reminders Preview */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              <CardTitle>Preview Upcoming Reminders</CardTitle>
+            </div>
+            <Switch
+              checked={showPreview}
+              onCheckedChange={setShowPreview}
+            />
+          </div>
+          <CardDescription>
+            See exactly what automated reminders will be sent in the next 30 days
+          </CardDescription>
+        </CardHeader>
+        {showPreview && (
+          <CardContent>
+            <UpcomingRemindersPreview automatedSettings={settings} />
+          </CardContent>
+        )}
       </Card>
     </div>
   );
