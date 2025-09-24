@@ -215,8 +215,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     // Generate selection period reminders
     if (automatedSettings.automated_selection_reminders_enabled) {
       periods.forEach(period => {
-        const startDate = new Date(period.start_date);
-        const endDate = new Date(period.end_date);
+        const startDate = new Date(period.selection_start_date);
+        const endDate = new Date(period.selection_end_date);
 
         // Start reminder (3 days before)
         const startReminder = addDays(startDate, -3);
@@ -228,10 +228,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
             sendDate: startReminder,
             recipient: 'All Family Groups',
             familyGroup: 'All',
-            subject: `Selection Period Opening Soon - ${period.period_name || 'Reservation Period'}`,
+            subject: `Selection Period Opening Soon - ${period.current_family_group} Selection`,
             content: generateSelectionContent('start', period),
             eventDate: startDate,
-            eventTitle: period.period_name || 'Selection Period',
+            eventTitle: `${period.current_family_group} Selection Period`,
             enabled: true
           });
         }
@@ -245,10 +245,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
             sendDate: endDate,
             recipient: 'All Family Groups',
             familyGroup: 'All',
-            subject: `Last Day: Selection Period Ending - ${period.period_name || 'Reservation Period'}`,
+            subject: `Last Day: Selection Period Ending - ${period.current_family_group} Selection`,
             content: generateSelectionContent('end', period),
             eventDate: endDate,
-            eventTitle: period.period_name || 'Selection Period',
+            eventTitle: `${period.current_family_group} Selection Period`,
             enabled: true
           });
         }
@@ -309,9 +309,9 @@ Thank you for your participation!`;
     if (type === 'start') {
       return `Hello Family Groups!
 
-The ${period.period_name || 'reservation selection period'} will begin in 3 days on ${format(new Date(period.start_date), 'EEEE, MMMM do, yyyy')}.
+The ${period.current_family_group} selection period will begin in 3 days on ${format(new Date(period.selection_start_date), 'EEEE, MMMM do, yyyy')}.
 
-Period: ${format(new Date(period.start_date), 'MMM do')} - ${format(new Date(period.end_date), 'MMM do, yyyy')}
+Period: ${format(new Date(period.selection_start_date), 'MMM do')} - ${format(new Date(period.selection_end_date), 'MMM do, yyyy')}
 
 Please be ready to make your selections when the period opens.
 
@@ -319,9 +319,9 @@ Good luck!`;
     } else {
       return `Hello Family Groups!
 
-This is the FINAL DAY for the ${period.period_name || 'reservation selection period'}.
+This is the FINAL DAY for the ${period.current_family_group} selection period.
 
-The selection period ends today: ${format(new Date(period.end_date), 'EEEE, MMMM do, yyyy')}
+The selection period ends today: ${format(new Date(period.selection_end_date), 'EEEE, MMMM do, yyyy')}
 
 Don't miss out on making your reservations!`;
     }
