@@ -116,7 +116,7 @@ const FamilyGroupSetup = () => {
     if (savedData && savedData.selectedGroup) {
       hasLoadedAutoSave.current = true;
       Object.keys(savedData).forEach((key) => {
-        setValue(key as keyof FamilyGroupSetupFormData, savedData[key]);
+        setValue(key as keyof FamilyGroupSetupFormData, savedData[key], { shouldDirty: false });
       });
       
       toast({
@@ -160,7 +160,7 @@ const FamilyGroupSetup = () => {
     // Auto-populate family group for non-admin users who have one
     if (!isAdmin && !isSupervisor && userFamilyGroup && !getValues("selectedGroup")) {
       console.log('🔧 [FAMILY_GROUP_SETUP] Auto-populating family group for non-admin user:', userFamilyGroup.name);
-      setValue("selectedGroup", userFamilyGroup.name);
+      setValue("selectedGroup", userFamilyGroup.name, { shouldDirty: false });
     }
 
     // Only pre-populate if form is empty (no group selected and lead fields are empty)
@@ -178,9 +178,9 @@ const FamilyGroupSetup = () => {
 
     if (fullName || userEmail) {
       // Pre-populate Group Lead fields
-      if (fullName) setValue("leadName", fullName);
-      if (userEmail) setValue("leadEmail", userEmail);
-      if (userPhone) setValue("leadPhone", userPhone);
+      if (fullName) setValue("leadName", fullName, { shouldDirty: false });
+      if (userEmail) setValue("leadEmail", userEmail, { shouldDirty: false });
+      if (userPhone) setValue("leadPhone", userPhone, { shouldDirty: false });
 
       // Also pre-populate ONLY Group Member 1 with same info (group lead is typically first member)
       const currentGroupMembers = getValues("groupMembers");
@@ -197,7 +197,7 @@ const FamilyGroupSetup = () => {
           canHost: true // Group leads can always host
         };
         // Keep other members as they are (empty by default)
-        setValue("groupMembers", updatedGroupMembers);
+        setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
       }
 
       console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information for first member only:', {
@@ -214,18 +214,18 @@ const FamilyGroupSetup = () => {
   // Load form data when a family group is selected
   useEffect(() => {
     if (selectedFamilyGroup) {
-      setValue("leadName", selectedFamilyGroup.lead_name || "");
-      setValue("leadPhone", selectedFamilyGroup.lead_phone || "");
+      setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
+      setValue("leadPhone", selectedFamilyGroup.lead_phone || "", { shouldDirty: false });
       
       // Preserve user's email if family group doesn't have lead email set
       const currentEmail = getValues("leadEmail");
       const shouldUseUserEmail = !selectedFamilyGroup.lead_email && currentEmail && user?.email === currentEmail;
-      setValue("leadEmail", selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : ""));
+      setValue("leadEmail", selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : ""), { shouldDirty: false });
       
       // Force override alternate lead from database (don't let auto-save interfere)
       setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none", { 
         shouldValidate: true,
-        shouldDirty: true,
+        shouldDirty: false,
         shouldTouch: true 
       });
       
@@ -242,7 +242,7 @@ const FamilyGroupSetup = () => {
             canHost: member.canHost || false,
           };
         });
-        setValue("groupMembers", formattedHostMembers);
+        setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // Automatically copy Group Lead info to Group Member 1
@@ -261,7 +261,7 @@ const FamilyGroupSetup = () => {
           leadAsHostMember,
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
-        ]);
+        ], { shouldDirty: false });
       }
     } else if (watchedData.selectedGroup === "") {
       form.reset();
@@ -300,7 +300,7 @@ const FamilyGroupSetup = () => {
       };
       
       // Keep all other members exactly as they were
-      setValue("groupMembers", updatedGroupMembers);
+      setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
       
       // Trigger form validation to ensure the changes are recognized
       trigger("groupMembers");
