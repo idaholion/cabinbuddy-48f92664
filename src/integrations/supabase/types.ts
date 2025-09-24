@@ -810,8 +810,14 @@ export type Database = {
           admin_phone: string | null
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
+          automated_reminders_1_day_enabled: boolean | null
+          automated_reminders_3_day_enabled: boolean | null
+          automated_reminders_7_day_enabled: boolean | null
           automated_reminders_enabled: boolean | null
           automated_selection_reminders_enabled: boolean | null
+          automated_work_weekend_1_day_enabled: boolean | null
+          automated_work_weekend_3_day_enabled: boolean | null
+          automated_work_weekend_7_day_enabled: boolean | null
           automated_work_weekend_reminders_enabled: boolean | null
           calendar_keeper_email: string | null
           calendar_keeper_name: string | null
@@ -834,8 +840,14 @@ export type Database = {
           admin_phone?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          automated_reminders_1_day_enabled?: boolean | null
+          automated_reminders_3_day_enabled?: boolean | null
+          automated_reminders_7_day_enabled?: boolean | null
           automated_reminders_enabled?: boolean | null
           automated_selection_reminders_enabled?: boolean | null
+          automated_work_weekend_1_day_enabled?: boolean | null
+          automated_work_weekend_3_day_enabled?: boolean | null
+          automated_work_weekend_7_day_enabled?: boolean | null
           automated_work_weekend_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
@@ -858,8 +870,14 @@ export type Database = {
           admin_phone?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          automated_reminders_1_day_enabled?: boolean | null
+          automated_reminders_3_day_enabled?: boolean | null
+          automated_reminders_7_day_enabled?: boolean | null
           automated_reminders_enabled?: boolean | null
           automated_selection_reminders_enabled?: boolean | null
+          automated_work_weekend_1_day_enabled?: boolean | null
+          automated_work_weekend_3_day_enabled?: boolean | null
+          automated_work_weekend_7_day_enabled?: boolean | null
           automated_work_weekend_reminders_enabled?: boolean | null
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null

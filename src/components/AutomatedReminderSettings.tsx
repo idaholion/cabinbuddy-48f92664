@@ -13,6 +13,12 @@ interface AutomatedSettings {
   automated_reminders_enabled: boolean;
   automated_selection_reminders_enabled: boolean;
   automated_work_weekend_reminders_enabled: boolean;
+  automated_reminders_7_day_enabled: boolean;
+  automated_reminders_3_day_enabled: boolean;
+  automated_reminders_1_day_enabled: boolean;
+  automated_work_weekend_7_day_enabled: boolean;
+  automated_work_weekend_3_day_enabled: boolean;
+  automated_work_weekend_1_day_enabled: boolean;
 }
 
 export const AutomatedReminderSettings = () => {
@@ -21,6 +27,12 @@ export const AutomatedReminderSettings = () => {
     automated_reminders_enabled: false,
     automated_selection_reminders_enabled: false,
     automated_work_weekend_reminders_enabled: false,
+    automated_reminders_7_day_enabled: true,
+    automated_reminders_3_day_enabled: true,
+    automated_reminders_1_day_enabled: true,
+    automated_work_weekend_7_day_enabled: true,
+    automated_work_weekend_3_day_enabled: true,
+    automated_work_weekend_1_day_enabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -37,7 +49,17 @@ export const AutomatedReminderSettings = () => {
     try {
       const { data, error } = await supabase
         .from('organizations')
-        .select('automated_reminders_enabled, automated_selection_reminders_enabled, automated_work_weekend_reminders_enabled')
+        .select(`
+          automated_reminders_enabled, 
+          automated_selection_reminders_enabled, 
+          automated_work_weekend_reminders_enabled,
+          automated_reminders_7_day_enabled,
+          automated_reminders_3_day_enabled, 
+          automated_reminders_1_day_enabled,
+          automated_work_weekend_7_day_enabled,
+          automated_work_weekend_3_day_enabled,
+          automated_work_weekend_1_day_enabled
+        `)
         .eq('id', organization.id)
         .single();
 
@@ -51,6 +73,12 @@ export const AutomatedReminderSettings = () => {
         automated_reminders_enabled: data?.automated_reminders_enabled || false,
         automated_selection_reminders_enabled: data?.automated_selection_reminders_enabled || false,
         automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
+        automated_reminders_7_day_enabled: data?.automated_reminders_7_day_enabled ?? true,
+        automated_reminders_3_day_enabled: data?.automated_reminders_3_day_enabled ?? true,
+        automated_reminders_1_day_enabled: data?.automated_reminders_1_day_enabled ?? true,
+        automated_work_weekend_7_day_enabled: data?.automated_work_weekend_7_day_enabled ?? true,
+        automated_work_weekend_3_day_enabled: data?.automated_work_weekend_3_day_enabled ?? true,
+        automated_work_weekend_1_day_enabled: data?.automated_work_weekend_1_day_enabled ?? true,
       });
     } catch (error) {
       console.error('Error:', error);
@@ -81,6 +109,12 @@ export const AutomatedReminderSettings = () => {
         automated_reminders_enabled: 'reservation reminders',
         automated_selection_reminders_enabled: 'selection period reminders',
         automated_work_weekend_reminders_enabled: 'work weekend reminders',
+        automated_reminders_7_day_enabled: 'reservation 7-day reminders',
+        automated_reminders_3_day_enabled: 'reservation 3-day reminders',
+        automated_reminders_1_day_enabled: 'reservation 1-day reminders',
+        automated_work_weekend_7_day_enabled: 'work weekend 7-day reminders',
+        automated_work_weekend_3_day_enabled: 'work weekend 3-day reminders',
+        automated_work_weekend_1_day_enabled: 'work weekend 1-day reminders',
       };
       
       toast.success(
@@ -104,7 +138,13 @@ export const AutomatedReminderSettings = () => {
 
   const anyEnabled = settings.automated_reminders_enabled || 
                     settings.automated_selection_reminders_enabled || 
-                    settings.automated_work_weekend_reminders_enabled;
+                    settings.automated_work_weekend_reminders_enabled ||
+                    settings.automated_reminders_7_day_enabled ||
+                    settings.automated_reminders_3_day_enabled ||
+                    settings.automated_reminders_1_day_enabled ||
+                    settings.automated_work_weekend_7_day_enabled ||
+                    settings.automated_work_weekend_3_day_enabled ||
+                    settings.automated_work_weekend_1_day_enabled;
 
   return (
     <div className="space-y-6">
@@ -132,7 +172,7 @@ export const AutomatedReminderSettings = () => {
                     Reservation Reminders
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Automatically send 7-day, 3-day, and 1-day reminders for upcoming reservations
+                    Send automated email reminders about upcoming cabin reservations
                   </p>
                 </div>
               </div>
@@ -142,6 +182,35 @@ export const AutomatedReminderSettings = () => {
                 onCheckedChange={(enabled) => handleToggle('automated_reminders_enabled', enabled)}
               />
             </div>
+            
+            {settings.automated_reminders_enabled && (
+              <div className="ml-6 mt-3 space-y-3 border-l-2 border-muted pl-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="reservation-7-day"
+                    checked={settings.automated_reminders_7_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_reminders_7_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="reservation-7-day" className="text-sm">7-day reminders</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="reservation-3-day"
+                    checked={settings.automated_reminders_3_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_reminders_3_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="reservation-3-day" className="text-sm">3-day reminders</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="reservation-1-day"
+                    checked={settings.automated_reminders_1_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_reminders_1_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="reservation-1-day" className="text-sm">1-day reminders</Label>
+                </div>
+              </div>
+            )}
             
             <div className="border-l-4 border-muted pl-4 space-y-1">
               <p className="text-xs text-muted-foreground">
@@ -194,7 +263,7 @@ export const AutomatedReminderSettings = () => {
                     Work Weekend Reminders
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Send reminders 7, 3, and 1 day before scheduled work weekends
+                    Send reminders about scheduled work weekends
                   </p>
                 </div>
               </div>
@@ -204,6 +273,35 @@ export const AutomatedReminderSettings = () => {
                 onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
               />
             </div>
+            
+            {settings.automated_work_weekend_reminders_enabled && (
+              <div className="ml-6 mt-3 space-y-3 border-l-2 border-muted pl-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="work-weekend-7-day"
+                    checked={settings.automated_work_weekend_7_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_work_weekend_7_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="work-weekend-7-day" className="text-sm">7-day reminders</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="work-weekend-3-day"
+                    checked={settings.automated_work_weekend_3_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_work_weekend_3_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="work-weekend-3-day" className="text-sm">3-day reminders</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="work-weekend-1-day"
+                    checked={settings.automated_work_weekend_1_day_enabled}
+                    onCheckedChange={(enabled) => handleToggle('automated_work_weekend_1_day_enabled', enabled)}
+                  />
+                  <Label htmlFor="work-weekend-1-day" className="text-sm">1-day reminders</Label>
+                </div>
+              </div>
+            )}
             
             <div className="border-l-4 border-orange-200 pl-4 space-y-1">
               <p className="text-xs text-muted-foreground">

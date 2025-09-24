@@ -31,6 +31,12 @@ interface Props {
     automated_reminders_enabled: boolean;
     automated_selection_reminders_enabled: boolean;
     automated_work_weekend_reminders_enabled: boolean;
+    automated_reminders_7_day_enabled: boolean;
+    automated_reminders_3_day_enabled: boolean;
+    automated_reminders_1_day_enabled: boolean;
+    automated_work_weekend_7_day_enabled: boolean;
+    automated_work_weekend_3_day_enabled: boolean;
+    automated_work_weekend_1_day_enabled: boolean;
   };
 }
 
@@ -105,7 +111,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           // 7-day reminder
           const sevenDayTemplate = templates.find(t => t.reminder_type === 'seven_day');
           const sevenDayReminder = addDays(checkInDate, -7);
-          if (isAfter(sevenDayReminder, now)) {
+          if (isAfter(sevenDayReminder, now) && automatedSettings.automated_reminders_7_day_enabled) {
             previews.push({
               id: `res-7-${reservation.id}`,
               type: 'reservation',
@@ -124,7 +130,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           // 3-day reminder
           const threeDayTemplate = templates.find(t => t.reminder_type === 'three_day');
           const threeDayReminder = addDays(checkInDate, -3);
-          if (isAfter(threeDayReminder, now)) {
+          if (isAfter(threeDayReminder, now) && automatedSettings.automated_reminders_3_day_enabled) {
             previews.push({
               id: `res-3-${reservation.id}`,
               type: 'reservation',
@@ -143,7 +149,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           // 1-day reminder
           const oneDayTemplate = templates.find(t => t.reminder_type === 'one_day');
           const oneDayReminder = addDays(checkInDate, -1);
-          if (isAfter(oneDayReminder, now)) {
+          if (isAfter(oneDayReminder, now) && automatedSettings.automated_reminders_1_day_enabled) {
             previews.push({
               id: `res-1-${reservation.id}`,
               type: 'reservation',
@@ -185,7 +191,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           
           // 7-day reminder
           const sevenDayReminder = addDays(workDate, -7);
-          if (isAfter(sevenDayReminder, now)) {
+          if (isAfter(sevenDayReminder, now) && automatedSettings.automated_work_weekend_7_day_enabled) {
             previews.push({
               id: `work-7-${workWeekend.id}`,
               type: 'work_weekend',
@@ -203,7 +209,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
           // 3-day reminder
           const threeDayReminder = addDays(workDate, -3);
-          if (isAfter(threeDayReminder, now)) {
+          if (isAfter(threeDayReminder, now) && automatedSettings.automated_work_weekend_3_day_enabled) {
             previews.push({
               id: `work-3-${workWeekend.id}`,
               type: 'work_weekend',
@@ -221,7 +227,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
           // 1-day reminder
           const oneDayReminder = addDays(workDate, -1);
-          if (isAfter(oneDayReminder, now)) {
+          if (isAfter(oneDayReminder, now) && automatedSettings.automated_work_weekend_1_day_enabled) {
             previews.push({
               id: `work-1-${workWeekend.id}`,
               type: 'work_weekend',
