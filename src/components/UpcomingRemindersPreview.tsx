@@ -87,14 +87,23 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
     // Generate reservation reminders
     if (automatedSettings.automated_reminders_enabled) {
-      const reservationTemplate = templates.find(t => t.reminder_type === 'check_in');
-      
       reservations.forEach(reservation => {
         const checkInDate = new Date(reservation.start_date);
+        const checkOutDate = new Date(reservation.end_date);
         if (isAfter(checkInDate, now) && isBefore(checkInDate, thirtyDaysFromNow)) {
           const hostName = getHostFirstName(reservation);
           
+          // Common variables for all reservation reminders
+          const variables = {
+            guest_name: hostName,
+            family_group_name: reservation.family_group,
+            check_in_date: format(checkInDate, 'EEEE, MMMM do, yyyy'),
+            check_out_date: format(checkOutDate, 'EEEE, MMMM do, yyyy'),
+            organization_name: organization?.name || 'Your Organization'
+          };
+          
           // 7-day reminder
+          const sevenDayTemplate = templates.find(t => t.reminder_type === 'seven_day');
           const sevenDayReminder = addDays(checkInDate, -7);
           if (isAfter(sevenDayReminder, now)) {
             previews.push({
@@ -104,8 +113,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: sevenDayReminder,
               recipient: hostName,
               familyGroup: reservation.family_group,
-              subject: generateSubject(reservationTemplate, '7-day', reservation),
-              content: generateContent(reservationTemplate, '7-day', reservation),
+              subject: generateReservationSubject(sevenDayTemplate, '7-day', variables),
+              content: generateReservationContent(sevenDayTemplate, '7-day', variables),
               eventDate: checkInDate,
               eventTitle: `${reservation.family_group} Check-in`,
               enabled: true
@@ -113,6 +122,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           }
 
           // 3-day reminder
+          const threeDayTemplate = templates.find(t => t.reminder_type === 'three_day');
           const threeDayReminder = addDays(checkInDate, -3);
           if (isAfter(threeDayReminder, now)) {
             previews.push({
@@ -122,8 +132,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: threeDayReminder,
               recipient: hostName,
               familyGroup: reservation.family_group,
-              subject: generateSubject(reservationTemplate, '3-day', reservation),
-              content: generateContent(reservationTemplate, '3-day', reservation),
+              subject: generateReservationSubject(threeDayTemplate, '3-day', variables),
+              content: generateReservationContent(threeDayTemplate, '3-day', variables),
               eventDate: checkInDate,
               eventTitle: `${reservation.family_group} Check-in`,
               enabled: true
@@ -131,6 +141,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           }
 
           // 1-day reminder
+          const oneDayTemplate = templates.find(t => t.reminder_type === 'one_day');
           const oneDayReminder = addDays(checkInDate, -1);
           if (isAfter(oneDayReminder, now)) {
             previews.push({
@@ -140,8 +151,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: oneDayReminder,
               recipient: hostName,
               familyGroup: reservation.family_group,
-              subject: generateSubject(reservationTemplate, '1-day', reservation),
-              content: generateContent(reservationTemplate, '1-day', reservation),
+              subject: generateReservationSubject(oneDayTemplate, '1-day', variables),
+              content: generateReservationContent(oneDayTemplate, '1-day', variables),
               eventDate: checkInDate,
               eventTitle: `${reservation.family_group} Check-in`,
               enabled: true
@@ -153,9 +164,24 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
     // Generate work weekend reminders
     if (automatedSettings.automated_work_weekend_reminders_enabled) {
+      const workWeekendTemplate = templates.find(t => t.reminder_type === 'work_weekend_reminder');
+      
       workWeekends.forEach(workWeekend => {
         const workDate = new Date(workWeekend.start_date);
+        const endDate = new Date(workWeekend.end_date);
         if (isAfter(workDate, now) && isBefore(workDate, thirtyDaysFromNow) && workWeekend.status === 'fully_approved') {
+          
+          // Common variables for all work weekend reminders
+          const variables = {
+            participant_name: 'Family Groups',
+            work_weekend_date: format(workDate, 'EEEE, MMMM do, yyyy'),
+            start_time: format(workDate, 'h:mm a'),
+            location: 'Cabin Property',
+            coordinator_name: workWeekend.proposer_name || 'Work Weekend Coordinator',
+            work_weekend_title: workWeekend.title,
+            work_weekend_description: workWeekend.description || '',
+            organization_name: organization?.name || 'Your Organization'
+          };
           
           // 7-day reminder
           const sevenDayReminder = addDays(workDate, -7);
@@ -167,8 +193,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: sevenDayReminder,
               recipient: 'All Family Groups',
               familyGroup: 'All',
-              subject: `Work Weekend Reminder - ${workWeekend.title}`,
-              content: generateWorkWeekendContent('7-day', workWeekend),
+              subject: generateWorkWeekendSubject(workWeekendTemplate, '7-day', variables),
+              content: generateWorkWeekendContent(workWeekendTemplate, '7-day', variables),
               eventDate: workDate,
               eventTitle: workWeekend.title,
               enabled: true
@@ -185,8 +211,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: threeDayReminder,
               recipient: 'All Family Groups',
               familyGroup: 'All',
-              subject: `Work Weekend Reminder - ${workWeekend.title}`,
-              content: generateWorkWeekendContent('3-day', workWeekend),
+              subject: generateWorkWeekendSubject(workWeekendTemplate, '3-day', variables),
+              content: generateWorkWeekendContent(workWeekendTemplate, '3-day', variables),
               eventDate: workDate,
               eventTitle: workWeekend.title,
               enabled: true
@@ -203,8 +229,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               sendDate: oneDayReminder,
               recipient: 'All Family Groups',
               familyGroup: 'All',
-              subject: `Work Weekend Tomorrow - ${workWeekend.title}`,
-              content: generateWorkWeekendContent('1-day', workWeekend),
+              subject: generateWorkWeekendSubject(workWeekendTemplate, '1-day', variables),
+              content: generateWorkWeekendContent(workWeekendTemplate, '1-day', variables),
               eventDate: workDate,
               eventTitle: workWeekend.title,
               enabled: true
@@ -268,21 +294,20 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     setReminderPreviews(previews);
   };
 
-  const generateSubject = (template: any, timing: string, reservation: any) => {
+  // Helper function to generate reservation reminder subjects using templates
+  const generateReservationSubject = (template: any, timing: string, variables: Record<string, any>) => {
     if (!template?.subject_template) {
-      return `${timing.replace('_', '-')} Cabin Reminder - ${reservation.family_group}`;
+      return `${timing} Cabin Reminder - ${variables.family_group_name}`;
     }
     
-    return template.subject_template
-      .replace(/\{timing\}/g, timing.replace('_', '-'))
-      .replace(/\{family_group\}/g, reservation.family_group)
-      .replace(/\{host_name\}/g, getHostFirstName(reservation));
+    return substituteTemplateVariables(template.subject_template, variables);
   };
 
-  const generateContent = (template: any, timing: string, reservation: any) => {
-    const defaultContent = `Hi ${getHostFirstName(reservation)},
+  // Helper function to generate reservation reminder content using templates
+  const generateReservationContent = (template: any, timing: string, variables: Record<string, any>) => {
+    const defaultContent = `Hi ${variables.guest_name},
 
-This is a ${timing.replace('_', '-')} reminder that your family has a cabin reservation starting ${format(new Date(reservation.start_date), 'EEEE, MMMM do, yyyy')}.
+This is a ${timing} reminder that your family has a cabin reservation starting ${variables.check_in_date}.
 
 Please review the check-in procedures and make sure everything is ready for your arrival.
 
@@ -293,24 +318,36 @@ The Cabin Management Team`;
       return defaultContent;
     }
 
-    return template.custom_message
-      .replace(/\{host_name\}/g, getHostFirstName(reservation))
-      .replace(/\{family_group\}/g, reservation.family_group)
-      .replace(/\{timing\}/g, timing.replace('_', '-'))
-      .replace(/\{check_in_date\}/g, format(new Date(reservation.start_date), 'EEEE, MMMM do, yyyy'));
+    return substituteTemplateVariables(template.custom_message, variables);
   };
 
-  const generateWorkWeekendContent = (timing: string, workWeekend: any) => {
-    return `Hello!
+  // Helper function to generate work weekend reminder subjects using templates
+  const generateWorkWeekendSubject = (template: any, timing: string, variables: Record<string, any>) => {
+    if (!template?.subject_template) {
+      return `Work Weekend ${timing} Reminder - ${variables.work_weekend_title}`;
+    }
+    
+    return substituteTemplateVariables(template.subject_template, variables);
+  };
 
-This is a ${timing.replace('_', '-')} reminder about the upcoming work weekend: ${workWeekend.title}
+  // Helper function to generate work weekend reminder content using templates
+  const generateWorkWeekendContent = (template: any, timing: string, variables: Record<string, any>) => {
+    const defaultContent = `Hello!
 
-Date: ${format(new Date(workWeekend.start_date), 'EEEE, MMMM do')} - ${format(new Date(workWeekend.end_date), 'EEEE, MMMM do, yyyy')}
-Organizer: ${workWeekend.proposer_name}
+This is a ${timing} reminder about the upcoming work weekend: ${variables.work_weekend_title}
 
-${workWeekend.description || 'Please plan to participate in this important cabin maintenance event.'}
+Date: ${variables.work_weekend_date}
+Organizer: ${variables.coordinator_name}
+
+${variables.work_weekend_description || 'Please plan to participate in this important cabin maintenance event.'}
 
 Thank you for your participation!`;
+
+    if (!template?.custom_message) {
+      return defaultContent;
+    }
+
+    return substituteTemplateVariables(template.custom_message, variables);
   };
 
   // Helper function to substitute template variables
