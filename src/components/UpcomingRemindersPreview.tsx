@@ -8,6 +8,7 @@ import { ChevronDown, ChevronRight, Calendar, Clock, Hammer, Users } from 'lucid
 import { useOrganization } from '@/hooks/useOrganization';
 import { useReservations } from '@/hooks/useReservations';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
+import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { getHostFirstName } from '@/lib/reservation-utils';
 
@@ -37,6 +38,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const { organization } = useOrganization();
   const { reservations } = useReservations();
   const { workWeekends } = useWorkWeekends();
+  const { familyGroups } = useFamilyGroups();
   const [reminderPreviews, setReminderPreviews] = useState<ReminderPreview[]>([]);
   const [reminderTemplates, setReminderTemplates] = useState<any[]>([]);
   const [reservationPeriods, setReservationPeriods] = useState<any[]>([]);
@@ -219,40 +221,45 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
         const startDate = new Date(period.selection_start_date + 'T00:00:00');
         const endDate = new Date(period.selection_end_date + 'T00:00:00');
 
-        // Start reminder (3 days before)
-        const startReminder = addDays(startDate, -3);
-        if (isAfter(startReminder, now) && isBefore(startReminder, thirtyDaysFromNow)) {
-          previews.push({
-            id: `sel-start-${period.id}`,
-            type: 'selection_period',
-            reminderType: 'selection_start',
-            sendDate: startReminder,
-            recipient: 'All Family Groups',
-            familyGroup: 'All',
-            subject: `Selection Period Opening Soon - ${period.current_family_group} Selection`,
-            content: generateSelectionContent('start', period),
-            eventDate: startDate,
-            eventTitle: `${period.current_family_group} Selection Period`,
-            enabled: true
-          });
-        }
+        // Generate reminders for each family group lead
+        familyGroups.forEach(group => {
+          if (!group.lead_name || !group.lead_email) return;
 
-        // End reminder (same day)
-        if (isAfter(endDate, now) && isBefore(endDate, thirtyDaysFromNow)) {
-          previews.push({
-            id: `sel-end-${period.id}`,
-            type: 'selection_period',
-            reminderType: 'selection_end',
-            sendDate: endDate,
-            recipient: 'All Family Groups',
-            familyGroup: 'All',
-            subject: `Last Day: Selection Period Ending - ${period.current_family_group} Selection`,
-            content: generateSelectionContent('end', period),
-            eventDate: endDate,
-            eventTitle: `${period.current_family_group} Selection Period`,
-            enabled: true
-          });
-        }
+          // Start reminder (3 days before)
+          const startReminder = addDays(startDate, -3);
+          if (isAfter(startReminder, now) && isBefore(startReminder, thirtyDaysFromNow)) {
+            previews.push({
+              id: `sel-start-${period.id}-${group.id}`,
+              type: 'selection_period',
+              reminderType: 'selection_start',
+              sendDate: startReminder,
+              recipient: `${group.lead_name} (${group.lead_email})`,
+              familyGroup: group.name,
+              subject: `Selection Period Opening Soon - ${period.current_family_group} Selection`,
+              content: generateSelectionContent('start', period),
+              eventDate: startDate,
+              eventTitle: `${period.current_family_group} Selection Period`,
+              enabled: true
+            });
+          }
+
+          // End reminder (same day)
+          if (isAfter(endDate, now) && isBefore(endDate, thirtyDaysFromNow)) {
+            previews.push({
+              id: `sel-end-${period.id}-${group.id}`,
+              type: 'selection_period',
+              reminderType: 'selection_end',
+              sendDate: endDate,
+              recipient: `${group.lead_name} (${group.lead_email})`,
+              familyGroup: group.name,
+              subject: `Last Day: Selection Period Ending - ${period.current_family_group} Selection`,
+              content: generateSelectionContent('end', period),
+              eventDate: endDate,
+              eventTitle: `${period.current_family_group} Selection Period`,
+              enabled: true
+            });
+          }
+        });
       });
     }
 
