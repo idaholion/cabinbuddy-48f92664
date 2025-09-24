@@ -215,8 +215,9 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     // Generate selection period reminders
     if (automatedSettings.automated_selection_reminders_enabled) {
       periods.forEach(period => {
-        const startDate = new Date(period.selection_start_date);
-        const endDate = new Date(period.selection_end_date);
+        // Parse dates correctly to avoid timezone issues
+        const startDate = new Date(period.selection_start_date + 'T00:00:00');
+        const endDate = new Date(period.selection_end_date + 'T00:00:00');
 
         // Start reminder (3 days before)
         const startReminder = addDays(startDate, -3);
@@ -306,12 +307,16 @@ Thank you for your participation!`;
   };
 
   const generateSelectionContent = (type: 'start' | 'end', period: any) => {
+    // Parse dates correctly to avoid timezone issues
+    const startDate = new Date(period.selection_start_date + 'T00:00:00');
+    const endDate = new Date(period.selection_end_date + 'T00:00:00');
+    
     if (type === 'start') {
       return `Hello Family Groups!
 
-The ${period.current_family_group} selection period will begin in 3 days on ${format(new Date(period.selection_start_date), 'EEEE, MMMM do, yyyy')}.
+The ${period.current_family_group} selection period will begin in 3 days on ${format(startDate, 'EEEE, MMMM do, yyyy')}.
 
-Period: ${format(new Date(period.selection_start_date), 'MMM do')} - ${format(new Date(period.selection_end_date), 'MMM do, yyyy')}
+Period: ${format(startDate, 'MMM do')} - ${format(endDate, 'MMM do, yyyy')}
 
 Please be ready to make your selections when the period opens.
 
@@ -321,7 +326,7 @@ Good luck!`;
 
 This is the FINAL DAY for the ${period.current_family_group} selection period.
 
-The selection period ends today: ${format(new Date(period.selection_end_date), 'EEEE, MMMM do, yyyy')}
+The selection period ends today: ${format(endDate, 'EEEE, MMMM do, yyyy')}
 
 Don't miss out on making your reservations!`;
     }
