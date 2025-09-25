@@ -379,14 +379,14 @@ const CabinCalendar = () => {
                          {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
                            <ConfirmationDialog
                              title="Confirm Selection Complete"
-                             description={(() => {
-                               const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                               if (!usageInfo) return "Are you sure you want to complete your selection?";
-                               if (usageInfo.remaining > 0) {
-                                 return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you are all done?`;
-                               }
-                               return "Confirm that you have completed your selection period.";
-                             })()}
+                              description={(() => {
+                                const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                                if (!usageInfo) return "Are you sure you want to complete your selection and pass it to the next family?";
+                                if (usageInfo.remaining > 0) {
+                                  return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you want to finish early and pass the selection to the next family group?`;
+                                }
+                                return "Confirm that you have completed your selection period and are ready to pass the selection to the next family group.";
+                              })()}
                              confirmText="Yes, I'm Done"
                              onConfirm={async () => {
                                try {
