@@ -222,9 +222,9 @@ const handler = async (req: Request): Promise<Response> => {
         if (!reservation) throw new Error('Reservation data required for reminder');
         
         // Determine reminder type based on days_until
-        let reminderType = 'stay_1_day';
-        if (days_until === 7) reminderType = 'stay_7_day';
-        else if (days_until === 3) reminderType = 'stay_3_day';
+        let reminderType = 'one_day';
+        if (days_until === 7) reminderType = 'seven_day';
+        else if (days_until === 3) reminderType = 'three_day';
         
         const template = await getTemplate(organization_id, reminderType);
         
