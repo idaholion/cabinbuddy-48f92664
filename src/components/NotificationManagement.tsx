@@ -242,8 +242,12 @@ export const NotificationManagement = () => {
         // Find matching family group for fallback contact info
         const familyGroup = familyGroups?.find(fg => fg.name === reservation.family_group);
         
-        // Use host email if available, otherwise family group lead email
-        const contactEmail = hostEmail || familyGroup?.lead_email || '';
+        // Prioritize family group lead email over host email if:
+        // 1. Host email appears to be test data (contains @example.com)
+        // 2. Family group has a valid lead email
+        const isTestEmail = hostEmail && hostEmail.includes('@example.com');
+        const useHostEmail = hostEmail && !isTestEmail && familyGroup?.lead_email !== hostEmail;
+        const contactEmail = useHostEmail ? hostEmail : (familyGroup?.lead_email || hostEmail || '');
         
         // Get display name (host first name or family group name)
         const displayName = getHostFirstName(reservation);
