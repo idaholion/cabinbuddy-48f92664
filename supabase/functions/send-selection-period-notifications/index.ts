@@ -55,8 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('reservation_periods')
         .select('*')
         .eq('organization_id', org.id)
-        .eq('start_date', threeDaysFromNow.toISOString().split('T')[0])
-        .eq('is_active', true);
+        .eq('selection_start_date', threeDaysFromNow.toISOString().split('T')[0]);
 
       if (startError) {
         console.error('Error fetching starting periods:', startError);
@@ -68,8 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from('reservation_periods')
         .select('*')
         .eq('organization_id', org.id)
-        .eq('end_date', today.toISOString().split('T')[0])
-        .eq('is_active', true);
+        .eq('selection_end_date', today.toISOString().split('T')[0]);
 
       if (endError) {
         console.error('Error fetching ending periods:', endError);
@@ -79,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Send notifications for starting periods
       if (startingPeriods && startingPeriods.length > 0) {
         for (const period of startingPeriods) {
-          console.log(`Sending start notification for period: ${period.period_name}`);
+          console.log(`Sending start notification for period: Year ${period.rotation_year}`);
           
           // Get all family groups in this organization
           const { data: familyGroups, error: fgError } = await supabase
@@ -101,14 +99,15 @@ const handler = async (req: Request): Promise<Response> => {
                     body: {
                       type: 'selection_period_start',
                       organization_id: org.id,
-                      family_group: group.name,
-                      guest_name: group.lead_name,
-                      guest_email: group.lead_email,
-                      guest_phone: group.lead_phone,
-                      period: {
-                        period_name: period.period_name,
-                        start_date: period.start_date,
-                        end_date: period.end_date
+                      selection_data: {
+                        family_group_name: group.name,
+                        guest_email: group.lead_email,
+                        guest_name: group.lead_name || group.name,
+                        guest_phone: group.lead_phone,
+                        selection_year: period.rotation_year.toString(),
+                        selection_start_date: period.selection_start_date,
+                        selection_end_date: period.selection_end_date,
+                        available_periods: 'All available periods'
                       }
                     }
                   });
@@ -117,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
                     console.error('Error sending notification:', notifyError);
                   } else {
                     totalNotifications++;
-                    console.log(`Notification sent to ${group.name} (${group.lead_email})`);
+                    console.log(`Start notification sent to ${group.name} (${group.lead_email})`);
                   }
                 } catch (error) {
                   console.error('Error invoking send-notification:', error);
@@ -131,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Send notifications for ending periods
       if (endingPeriods && endingPeriods.length > 0) {
         for (const period of endingPeriods) {
-          console.log(`Sending end notification for period: ${period.period_name}`);
+          console.log(`Sending end notification for period: Year ${period.rotation_year}`);
           
           // Get all family groups in this organization
           const { data: familyGroups, error: fgError } = await supabase
@@ -153,14 +152,15 @@ const handler = async (req: Request): Promise<Response> => {
                     body: {
                       type: 'selection_period_end',
                       organization_id: org.id,
-                      family_group: group.name,
-                      guest_name: group.lead_name,
-                      guest_email: group.lead_email,
-                      guest_phone: group.lead_phone,
-                      period: {
-                        period_name: period.period_name,
-                        start_date: period.start_date,
-                        end_date: period.end_date
+                      selection_data: {
+                        family_group_name: group.name,
+                        guest_email: group.lead_email,
+                        guest_name: group.lead_name || group.name,
+                        guest_phone: group.lead_phone,
+                        selection_year: period.rotation_year.toString(),
+                        selection_start_date: period.selection_start_date,
+                        selection_end_date: period.selection_end_date,
+                        available_periods: 'Selection period ending'
                       }
                     }
                   });

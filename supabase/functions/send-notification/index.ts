@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_reminder';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'work_weekend_reminder';
   reservation?: {
     id: string;
     family_group_name: string;
@@ -65,6 +65,7 @@ interface NotificationRequest {
     family_group_name: string;
     guest_email: string;
     guest_name: string;
+    guest_phone?: string;
     selection_year: string;
     selection_start_date: string;
     selection_end_date: string;
@@ -388,6 +389,128 @@ const handler = async (req: Request): Promise<Response> => {
         smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
         break;
 
+      case 'selection_period_start':
+        if (!selection_data) throw new Error('Selection data required for selection period start notification');
+        
+        const startTemplate = await getTemplate(organization_id, 'selection_period_start');
+        
+        const startVariables = {
+          guest_name: selection_data.guest_name,
+          family_group_name: selection_data.family_group_name,
+          selection_year: selection_data.selection_year,
+          selection_start_date: selection_data.selection_start_date,
+          selection_end_date: selection_data.selection_end_date,
+          available_periods: selection_data.available_periods,
+          organization_name: organizationName,
+        };
+
+        if (startTemplate) {
+          subject = replaceVariables(startTemplate.subject_template, startVariables);
+          
+          const customMessage = replaceVariables(startTemplate.custom_message, startVariables);
+          const checklistItems = startTemplate.checklist_items || [];
+          
+          const checklistHtml = checklistItems.length > 0 ? `
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #1565c0; margin-top: 0;">📋 Selection Checklist</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${checklistItems.map((item: any) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : '';
+          
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${customMessage.split('\n').map(line => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+            </div>
+          `;
+        } else {
+          // Default selection period start template
+          subject = `Calendar Selection Period Starting Soon - ${selection_data.selection_year}`;
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              <h1 style="color: #2d5d2d; text-align: center;">📅 Your Selection Period Starts Soon!</h1>
+              <p>Hi ${selection_data.guest_name},</p>
+              <p>Just a reminder that your calendar selection period for <strong>${selection_data.selection_year}</strong> starts in 3 days!</p>
+              
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">📋 Selection Details:</h3>
+                <p><strong>Family Group:</strong> ${selection_data.family_group_name}</p>
+                <p><strong>Selection Period:</strong> ${selection_data.selection_start_date} to ${selection_data.selection_end_date}</p>
+                <p><strong>Available Periods:</strong> ${selection_data.available_periods}</p>
+              </div>
+              
+              <p>Please be ready to log into the cabin management system when your selection period opens.</p>
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+            </div>
+          `;
+        }
+        
+        smsMessage = `Hi ${selection_data.guest_name}! Your calendar selection for ${selection_data.selection_year} starts in 3 days (${selection_data.selection_start_date}). Be ready! - ${organizationName}`;
+        break;
+
+      case 'selection_period_end':
+        if (!selection_data) throw new Error('Selection data required for selection period end notification');
+        
+        const endTemplate = await getTemplate(organization_id, 'selection_period_end');
+        
+        const endVariables = {
+          guest_name: selection_data.guest_name,
+          family_group_name: selection_data.family_group_name,
+          selection_year: selection_data.selection_year,
+          selection_start_date: selection_data.selection_start_date,
+          selection_end_date: selection_data.selection_end_date,
+          available_periods: selection_data.available_periods,
+          organization_name: organizationName,
+        };
+
+        if (endTemplate) {
+          subject = replaceVariables(endTemplate.subject_template, endVariables);
+          
+          const customMessage = replaceVariables(endTemplate.custom_message, endVariables);
+          const checklistItems = endTemplate.checklist_items || [];
+          
+          const checklistHtml = checklistItems.length > 0 ? `
+            <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #f57c00; margin-top: 0;">⏰ Final Reminders</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${checklistItems.map((item: any) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : '';
+          
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${customMessage.split('\n').map(line => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+            </div>
+          `;
+        } else {
+          // Default selection period end template
+          subject = `LAST DAY: Calendar Selection Period Ends Today - ${selection_data.selection_year}`;
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              <h1 style="color: #d32f2f; text-align: center;">⏰ Final Call for Calendar Selection!</h1>
+              <p>Hi ${selection_data.guest_name},</p>
+              <p><strong>This is your final reminder</strong> that your calendar selection period for <strong>${selection_data.selection_year}</strong> ends TODAY!</p>
+              
+              <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #d32f2f;">
+                <h3 style="margin-top: 0; color: #d32f2f;">🚨 Urgent - Action Required:</h3>
+                <p><strong>Family Group:</strong> ${selection_data.family_group_name}</p>
+                <p><strong>Selection Ends:</strong> ${selection_data.selection_end_date}</p>
+                <p><strong>Available Periods:</strong> ${selection_data.available_periods}</p>
+              </div>
+              
+              <p><strong>Please log into the cabin management system immediately to make your selections before the deadline!</strong></p>
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+            </div>
+          `;
+        }
+        
+        smsMessage = `FINAL CALL: ${selection_data.guest_name}, your calendar selection for ${selection_data.selection_year} ends TODAY (${selection_data.selection_end_date})! Make your selections now! - ${organizationName}`;
+        break;
+
       case 'work_weekend_proposed':
         if (!work_weekend_data) throw new Error('Work weekend data required for work weekend proposal');
         
@@ -621,7 +744,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email notification
     const emailResponse = await resend.emails.send({
       from: `${organizationName} <onboarding@resend.dev>`,
-      to: [reservation?.guest_email || selection_data?.guest_email || ''],
+      to: [reservation?.guest_email || selection_data?.guest_email || work_weekend_data?.recipient_email || ''],
       subject: subject,
       html: htmlContent,
     });
@@ -630,15 +753,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send SMS notification if phone number is provided
     console.log("📱 SMS Check:");
-    console.log("  - Has guest_phone:", !!reservation?.guest_phone);
-    console.log("  - Guest phone:", reservation?.guest_phone || "Not provided");
+    const guestPhone = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_name;
+    console.log("  - Has guest_phone:", !!guestPhone);
+    console.log("  - Guest phone:", guestPhone || "Not provided");
     console.log("  - Has SMS message:", !!smsMessage);
     console.log("  - SMS message length:", smsMessage ? smsMessage.length : 0);
     
     let smsResponse = null;
-    if (reservation?.guest_phone && smsMessage) {
+    if (guestPhone && smsMessage) {
       console.log("🚀 Attempting to send SMS...");
-      smsResponse = await sendSMS(reservation.guest_phone, smsMessage);
+      smsResponse = await sendSMS(guestPhone, smsMessage);
       if (smsResponse && !smsResponse.error) {
         console.log(`✅ ${type} SMS sent successfully`);
       } else if (smsResponse && smsResponse.error) {
