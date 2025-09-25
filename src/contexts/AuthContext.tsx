@@ -11,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
+  resetPasswordWithPhone: (phone: string) => Promise<{ error: any }>;
   checkOrganizationStatus: () => Promise<void>;
 }
 
@@ -273,6 +274,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const resetPasswordWithPhone = async (phone: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-phone-reset', {
+        body: { phone }
+      });
+
+      if (error) {
+        toast({
+          title: "Phone Reset Error",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      toast({
+        title: "Verification Code Sent",
+        description: "Check your phone for a verification code.",
+      });
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('Phone reset error:', error);
+      toast({
+        title: "Phone Reset Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     try {
       console.log('🔐 Signing out...');
@@ -361,6 +394,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signIn,
     signOut,
     resetPassword,
+    resetPasswordWithPhone,
     checkOrganizationStatus,
   };
 

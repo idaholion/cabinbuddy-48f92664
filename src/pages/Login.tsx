@@ -3,19 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn, Eye, EyeOff, Mail, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSetupState } from "@/hooks/useSetupState";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetMode, setResetMode] = useState(false);
+  const [resetMethod, setResetMethod] = useState<'email' | 'phone'>('email');
   const [error, setError] = useState("");
-  const { signIn, resetPassword, user } = useAuth();
+  const { signIn, resetPassword, resetPasswordWithPhone, user } = useAuth();
   const { getSetupRedirectPath } = useSetupState();
   const navigate = useNavigate();
 
@@ -64,14 +67,33 @@ const Login = () => {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    
+    if (resetMethod === 'email' && !email) {
+      setError("Please enter your email address");
+      return;
+    }
+    
+    if (resetMethod === 'phone' && !phone) {
+      setError("Please enter your phone number");
+      return;
+    }
     
     setLoading(true);
-    await resetPassword(email);
+    setError("");
+    
+    if (resetMethod === 'email') {
+      await resetPassword(email);
+    } else {
+      await resetPasswordWithPhone(phone);
+    }
+    
     setLoading(false);
     setResetMode(false);
   };
 
+  const handlePhoneChange = (value: string, rawValue: string) => {
+    setPhone(rawValue);
+  };
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -81,59 +103,114 @@ const Login = () => {
             {resetMode ? "Reset Password" : "Login to Cabin Buddy"}
           </CardTitle>
           <CardDescription>
-            {resetMode ? "Enter your email to reset your password" : "Welcome back! Please sign in to continue."}
+            {resetMode ? `Enter your ${resetMethod} to reset your password` : "Welcome back! Please sign in to continue."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && !resetMode && (
+          {error && (
             <div className="mb-4 p-3 text-sm bg-destructive/10 border border-destructive/20 rounded-md text-destructive">
               {error}
             </div>
           )}
           <form onSubmit={resetMode ? handleReset : handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            {!resetMode && (
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+            {resetMode ? (
+              <>
+                <div className="flex gap-2 mb-4 p-1 bg-muted rounded-lg">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant={resetMethod === 'email' ? 'default' : 'ghost'}
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
+                    className="flex-1"
+                    onClick={() => setResetMethod('email')}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    <Mail className="h-4 w-4 mr-1" />
+                    Email
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={resetMethod === 'phone' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => setResetMethod('phone')}
+                  >
+                    <Phone className="h-4 w-4 mr-1" />
+                    Phone
                   </Button>
                 </div>
-              </div>
+
+                {resetMethod === 'email' ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-phone">Phone Number</Label>
+                    <PhoneInput
+                      id="reset-phone"
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      autoFormat={true}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
             
             {resetMode ? (
               <div className="space-y-2">
-                <Button type="submit" className="w-full" disabled={loading || !email}>
-                  {loading ? "Sending..." : "Send Reset Link"}
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading || (resetMethod === 'email' ? !email : !phone)}
+                >
+                  {loading ? "Sending..." : `Send ${resetMethod === 'phone' ? 'Code' : 'Link'}`}
                 </Button>
                 <Button 
                   type="button" 
