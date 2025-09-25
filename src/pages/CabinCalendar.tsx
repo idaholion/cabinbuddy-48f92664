@@ -391,10 +391,10 @@ const CabinCalendar = () => {
                              onConfirm={async () => {
                                try {
                                  await advanceSelection(true);
-                                 toast({
-                                   title: "Selection Complete",
-                                   description: "Your selection period has been marked complete. The next family group has been notified.",
-                                 });
+                                  toast({
+                                    title: "Selection Complete",
+                                    description: "Your selection period has been marked complete. The next family group has been notified that it's their turn.",
+                                  });
                                } catch (error) {
                                  console.error('Error advancing selection:', error);
                                  toast({

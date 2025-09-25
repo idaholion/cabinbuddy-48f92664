@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'work_weekend_reminder' | 'manual_template';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'selection_period_start' | 'selection_period_end' | 'selection_turn_ready' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'work_weekend_reminder' | 'manual_template';
   reservation?: {
     id: string;
     family_group_name: string;
@@ -523,6 +523,70 @@ const handler = async (req: Request): Promise<Response> => {
         }
         
         smsMessage = `FINAL CALL: ${selection_data.guest_name}, your calendar selection for ${selection_data.selection_year} ends TODAY (${selection_data.selection_end_date})! Make your selections now! - ${organizationName}`;
+        break;
+
+      case 'selection_turn_ready':
+        if (!selection_data) throw new Error('Selection data required for selection turn ready notification');
+        
+        const turnReadyTemplate = await getTemplate(organization_id, 'selection_turn_ready');
+        
+        const turnReadyVariables = {
+          guest_name: selection_data.guest_name,
+          family_group_name: selection_data.family_group_name,
+          selection_year: selection_data.selection_year,
+          available_periods: selection_data.available_periods,
+          organization_name: organizationName,
+        };
+
+        if (turnReadyTemplate) {
+          subject = replaceVariables(turnReadyTemplate.subject_template, turnReadyVariables);
+          
+          const customMessage = replaceVariables(turnReadyTemplate.custom_message, turnReadyVariables);
+          const checklistItems = turnReadyTemplate.checklist_items || [];
+          
+          const checklistHtml = checklistItems.length > 0 ? `
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #2d5d2d; margin-top: 0;">📋 Selection Checklist</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${checklistItems.map((item: any) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : '';
+          
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${customMessage.split('\n').map(line => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+            </div>
+          `;
+        } else {
+          // Default selection turn ready template
+          subject = `It's Your Turn to Select! - ${selection_data.selection_year}`;
+          htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              <h1 style="color: #2d5d2d; text-align: center;">🎉 It's Your Turn to Select!</h1>
+              <p>Hi ${selection_data.guest_name},</p>
+              <p>Great news! The previous family has completed their selection, and it's now your turn to select your cabin dates for <strong>${selection_data.selection_year}</strong>.</p>
+              
+              <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">📋 Your Selection Details:</h3>
+                <p><strong>Family Group:</strong> ${selection_data.family_group_name}</p>
+                <p><strong>Available Periods:</strong> ${selection_data.available_periods}</p>
+                <p><strong>Selection Status:</strong> Ready to start!</p>
+              </div>
+              
+              <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #f57c00; margin-top: 0;">⏰ Action Needed</h3>
+                <p>Please log into the cabin management system as soon as possible to make your selections. Remember to click "I'm Done" when you've finished selecting all your dates.</p>
+              </div>
+              
+              <p>Happy selecting!</p>
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
+            </div>
+          `;
+        }
+        
+        smsMessage = `Hi ${selection_data.guest_name}! It's now your turn to select cabin dates for ${selection_data.selection_year}. Log in to make your selections! - ${organizationName}`;
         break;
 
       case 'work_weekend_proposed':

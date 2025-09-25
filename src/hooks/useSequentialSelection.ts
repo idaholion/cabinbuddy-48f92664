@@ -4,6 +4,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { getFirstNameFromFullName } from '@/lib/reservation-utils';
 
 export type SelectionPhase = 'primary' | 'secondary';
 export type SelectionStatus = 'waiting' | 'active' | 'completed' | 'skipped';
@@ -210,12 +211,64 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       if (used < allowed) {
         setPrimaryCurrentFamily(nextFamily);
+        
+        // Send notification to the next family
+        await sendSelectionTurnNotification(nextFamily, rotationYear);
         return;
       }
     }
     
     // If no one has remaining selections, end primary phase
     setPrimaryCurrentFamily(null);
+  };
+
+  const sendSelectionTurnNotification = async (familyGroup: string, year: number): Promise<void> => {
+    if (!organization?.id) return;
+
+    try {
+      // Get family group lead contact information
+      const { data: familyData, error: familyError } = await supabase
+        .from('family_groups')
+        .select('lead_name, lead_email, lead_phone')
+        .eq('organization_id', organization.id)
+        .eq('name', familyGroup)
+        .maybeSingle();
+
+      if (familyError || !familyData?.lead_email) {
+        console.error('Could not find family group contact info:', familyError);
+        return;
+      }
+
+      // Calculate available periods (simplified - you may want to make this more accurate)
+      const remainingUsage = timePeriodUsage.find(u => u.family_group === familyGroup);
+      const used = remainingUsage?.time_periods_used || 0;
+      const allowed = rotationData?.max_time_slots || 2;
+      const availablePeriods = `${allowed - used} time periods remaining`;
+
+      // Send the notification
+      const { error: notificationError } = await supabase.functions.invoke('send-notification', {
+        body: {
+          type: 'selection_turn_ready',
+          organization_id: organization.id,
+          selection_data: {
+            family_group_name: familyGroup,
+            guest_email: familyData.lead_email,
+            guest_name: getFirstNameFromFullName(familyData.lead_name || familyGroup),
+            guest_phone: familyData.lead_phone,
+            selection_year: year.toString(),
+            available_periods: availablePeriods,
+          }
+        }
+      });
+
+      if (notificationError) {
+        console.error('Error sending selection turn notification:', notificationError);
+      } else {
+        console.log(`Selection turn notification sent to ${familyGroup}`);
+      }
+    } catch (error) {
+      console.error('Error in sendSelectionTurnNotification:', error);
+    }
   };
 
   const getDaysRemaining = (familyGroup: string): number | null => {
