@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'work_weekend_reminder';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'work_weekend_reminder' | 'manual_template';
   reservation?: {
     id: string;
     family_group_name: string;
@@ -86,6 +86,19 @@ interface NotificationRequest {
     recipient_phone?: string;
     recipient_family_group?: string;
   };
+  // For manual template notifications
+  template?: {
+    id: string;
+    subject_template: string;
+    custom_message: string;
+    checklist_items: string[];
+  };
+  recipients?: Array<{
+    name: string;
+    email: string;
+    familyGroup: string;
+  }>;
+  template_variables?: Record<string, string>;
 }
 
 async function sendSMS(to: string, message: string) {
@@ -209,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data }: NotificationRequest = await req.json();
+    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data, template, recipients, template_variables }: NotificationRequest = await req.json();
 
     let subject = "";
     let htmlContent = "";
@@ -740,39 +753,103 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Best regards,<br>${organizationName} Team</p>
         `;
         break;
+
+      case 'manual_template':
+        if (!template || !recipients) throw new Error('Template and recipients required for manual template notification');
+        
+        // For manual templates, we'll send to each recipient individually
+        const emailPromises = recipients.map(async (recipient) => {
+          // Replace recipient-specific variables
+          let personalizedSubject = template.subject_template;
+          let personalizedContent = template.custom_message;
+          
+          // Apply recipient-specific variables
+          const recipientVariables = {
+            recipient_name: recipient.name,
+            family_group_name: recipient.familyGroup,
+            ...template_variables
+          };
+          
+          Object.entries(recipientVariables).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            personalizedSubject = personalizedSubject.replace(regex, value || '');
+            personalizedContent = personalizedContent.replace(regex, value || '');
+          });
+          
+          // Add checklist items if they exist
+          const checklistHtml = template.checklist_items && template.checklist_items.length > 0 ? `
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #2d5d2d; margin-top: 0;">📋 Important Items</h3>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                ${template.checklist_items.map((item: string) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+              </ul>
+            </div>
+          ` : '';
+          
+          const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+              ${personalizedContent.split('\n').map((line: string) => `<p>${line}</p>`).join('')}
+              ${checklistHtml}
+              <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
+            </div>
+          `;
+          
+          return resend.emails.send({
+            from: "CabinBuddy <noreply@cabinbuddy.com>",
+            to: [recipient.email],
+            subject: personalizedSubject,
+            html: htmlContent,
+          });
+        });
+        
+        // Wait for all emails to send
+        const emailResults = await Promise.allSettled(emailPromises);
+        const successfulSends = emailResults.filter(result => result.status === 'fulfilled').length;
+        const failedSends = emailResults.filter(result => result.status === 'rejected').length;
+        
+        console.log(`Manual template sent: ${successfulSends} successful, ${failedSends} failed`);
+        
+        // For manual templates, we'll use the first recipient's info for the response format
+        subject = template.subject_template;
+        htmlContent = template.custom_message;
+        smsMessage = `Notification sent from ${organizationName}`;
+        break;
     }
 
-    // Send email notification
-    const emailResponse = await resend.emails.send({
-      from: `${organizationName} <onboarding@resend.dev>`,
-      to: [reservation?.guest_email || selection_data?.guest_email || work_weekend_data?.recipient_email || ''],
-      subject: subject,
-      html: htmlContent,
-    });
-
-    console.log(`${type} email sent successfully:`, emailResponse);
-
-    // Send SMS notification if phone number is provided
-    console.log("📱 SMS Check:");
-    const guestPhone = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_phone;
-    console.log("  - Has guest_phone:", !!guestPhone);
-    console.log("  - Guest phone:", guestPhone || "Not provided");
-    console.log("  - Has SMS message:", !!smsMessage);
-    console.log("  - SMS message length:", smsMessage ? smsMessage.length : 0);
-    
-    let smsResponse = null;
-    if (guestPhone && smsMessage) {
-      console.log("🚀 Attempting to send SMS...");
-      smsResponse = await sendSMS(guestPhone, smsMessage);
-      if (smsResponse && !smsResponse.error) {
-        console.log(`✅ ${type} SMS sent successfully`);
-      } else if (smsResponse && smsResponse.error) {
-        console.error(`❌ ${type} SMS failed:`, smsResponse.error);
-      } else {
-        console.log(`⚠️ ${type} SMS skipped (credentials not configured)`);
-      }
+    // Send email using Resend
+    let emailResponse;
+    if (type === 'manual_template') {
+      // Manual templates handle their own email sending
+      emailResponse = { message: 'Manual template emails sent individually' };
     } else {
-      console.log("⏭️ SMS skipped - missing phone number or message");
+      emailResponse = await resend.emails.send({
+        from: "CabinBuddy <noreply@cabinbuddy.com>",
+        to: [reservation?.guest_email, selection_data?.guest_email, work_weekend_data?.recipient_email].filter(Boolean) as string[],
+        subject: subject,
+        html: htmlContent,
+      });
+      
+      console.log("📧 Email sent:", emailResponse);
+    }
+
+    // Send SMS if phone number is provided and SMS message is not empty
+    let smsResponse = null;
+    if (type !== 'manual_template') {
+      const phoneNumber = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_phone;
+      if (phoneNumber && smsMessage) {
+        console.log("📱 Attempting to send SMS...");
+        smsResponse = await sendSMS(phoneNumber, smsMessage);
+        
+        if (smsResponse && !smsResponse.error) {
+          console.log(`✅ ${type} SMS sent successfully`);
+        } else if (smsResponse && smsResponse.error) {
+          console.error(`❌ ${type} SMS failed:`, smsResponse.error);
+        } else {
+          console.log(`⚠️ ${type} SMS skipped (credentials not configured)`);
+        }
+      } else {
+        console.log("⏭️ SMS skipped - missing phone number or message");
+      }
     }
 
     return new Response(JSON.stringify({

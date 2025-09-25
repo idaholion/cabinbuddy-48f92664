@@ -626,6 +626,60 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_template_sends: {
+        Row: {
+          created_at: string
+          email_content: string
+          email_subject: string
+          failed_sends: number
+          id: string
+          organization_id: string
+          recipient_type: string
+          recipients: Json
+          sent_at: string
+          sent_by_user_id: string
+          successful_sends: number
+          template_id: string
+          template_variables: Json
+          total_recipients: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_content: string
+          email_subject: string
+          failed_sends?: number
+          id?: string
+          organization_id: string
+          recipient_type: string
+          recipients?: Json
+          sent_at?: string
+          sent_by_user_id: string
+          successful_sends?: number
+          template_id: string
+          template_variables?: Json
+          total_recipients?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_content?: string
+          email_subject?: string
+          failed_sends?: number
+          id?: string
+          organization_id?: string
+          recipient_type?: string
+          recipients?: Json
+          sent_at?: string
+          sent_by_user_id?: string
+          successful_sends?: number
+          template_id?: string
+          template_variables?: Json
+          total_recipients?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       member_profile_links: {
         Row: {
           claimed_at: string | null
