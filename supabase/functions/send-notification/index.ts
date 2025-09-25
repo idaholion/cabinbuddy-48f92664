@@ -83,6 +83,7 @@ interface NotificationRequest {
     invitation_message?: string;
     recipient_name: string;
     recipient_email: string;
+    recipient_phone?: string;
     recipient_family_group?: string;
   };
 }
@@ -753,7 +754,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send SMS notification if phone number is provided
     console.log("📱 SMS Check:");
-    const guestPhone = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_name;
+    const guestPhone = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_phone;
     console.log("  - Has guest_phone:", !!guestPhone);
     console.log("  - Guest phone:", guestPhone || "Not provided");
     console.log("  - Has SMS message:", !!smsMessage);
