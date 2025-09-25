@@ -320,11 +320,27 @@ Please review the check-in procedures and make sure everything is ready for your
 Best regards,
 The Cabin Management Team`;
 
-    if (!template?.custom_message) {
+    if (!template?.custom_message && !template?.checklist_items) {
       return defaultContent;
     }
 
-    return substituteTemplateVariables(template.custom_message, variables);
+    let content = '';
+    
+    // Add custom message if it exists
+    if (template.custom_message) {
+      content += substituteTemplateVariables(template.custom_message, variables);
+    }
+    
+    // Add checklist items if they exist
+    if (template.checklist_items && Array.isArray(template.checklist_items) && template.checklist_items.length > 0) {
+      if (content) content += '\n\n';
+      content += 'CHECKLIST ITEMS:\n';
+      template.checklist_items.forEach((item: string) => {
+        content += `• ${item}\n`;
+      });
+    }
+
+    return content || defaultContent;
   };
 
   // Helper function to generate work weekend reminder subjects using templates
