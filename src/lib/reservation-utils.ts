@@ -31,6 +31,13 @@ export const getEffectiveFamilyGroup = (reservation: any): string => {
   return reservation.family_group || 'Unknown';
 };
 
+// Get the first name from a full name string
+export const getFirstNameFromFullName = (fullName: string): string => {
+  if (!fullName) return 'Guest';
+  // Extract first name (everything before the first space)
+  return fullName.split(' ')[0];
+};
+
 // Get the primary host's email from host assignments
 export const getHostEmail = (reservation: any): string => {
   // Check if there are host assignments and get the primary host's email

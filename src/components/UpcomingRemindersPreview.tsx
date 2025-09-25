@@ -10,7 +10,7 @@ import { useReservations } from '@/hooks/useReservations';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { supabase } from '@/integrations/supabase/client';
-import { getHostFirstName } from '@/lib/reservation-utils';
+import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
 
 interface ReminderPreview {
   id: string;
@@ -437,7 +437,7 @@ Don't miss out on making your reservations!`;
     // Prepare variables for template substitution
     const variables = {
       family_group_name: period.current_family_group,
-      guest_name: currentGroup?.lead_name || 'Family Lead',
+      guest_name: getFirstNameFromFullName(currentGroup?.lead_name || 'Family Lead'),
       selection_year: startDate.getFullYear().toString(),
       selection_start_date: format(startDate, 'MMMM d, yyyy'),
       selection_end_date: format(endDate, 'MMMM d, yyyy'),
@@ -490,7 +490,7 @@ Don't miss out on making your reservations!`;
     // Prepare variables for template substitution
     const variables = {
       family_group_name: period.current_family_group,
-      guest_name: currentGroup?.lead_name || 'Family Lead',
+      guest_name: getFirstNameFromFullName(currentGroup?.lead_name || 'Family Lead'),
       selection_year: startDate.getFullYear().toString(),
       selection_start_date: format(startDate, 'MMMM d, yyyy'),
       selection_end_date: format(endDate, 'MMMM d, yyyy'),
