@@ -141,15 +141,15 @@ Preserve numbered lists and bullet points from the HTML. Make items concise but 
   } catch (error) {
     console.error('Error processing PDF:', error);
     console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown',
+      cause: error instanceof Error ? (error as any).cause : undefined
     });
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Failed to process PDF',
+      error: error instanceof Error ? error.message : 'Failed to process PDF',
       details: 'Please ensure you uploaded a valid PDF file and try again'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

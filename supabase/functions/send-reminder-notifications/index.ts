@@ -100,9 +100,9 @@ const handler = async (req: Request): Promise<Response> => {
                 family_group_name: reservation.family_group,
                 check_in_date: reservation.start_date,
                 check_out_date: reservation.end_date,
-                guest_email: reservation.family_groups.lead_email,
-                guest_name: reservation.family_groups.lead_name,
-                guest_phone: reservation.family_groups.lead_phone,
+                guest_email: reservation.family_groups?.[0]?.lead_email || '',
+                guest_name: reservation.family_groups?.[0]?.lead_name || '',
+                guest_phone: reservation.family_groups?.[0]?.lead_phone || '',
               },
               days_until: days,
             }

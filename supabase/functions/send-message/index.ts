@@ -145,12 +145,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         recipients = [
-          ...userOrgs.map(userOrg => ({
-            email: userOrg.profiles.first_name ? `${userOrg.profiles.first_name}@example.com` : null, // Note: profiles don't store emails
-            name: `${userOrg.profiles.first_name || ''} ${userOrg.profiles.last_name || ''}`.trim()
-          })),
+          // Skip userOrgs for now since profile structure is unclear
           ...familyGroupsAll.map(group => ({
-            email: group.lead_email,
+            email: group.lead_email || undefined,
             phone: group.lead_phone,
             name: group.lead_name || `Lead of ${group.name}`
           }))

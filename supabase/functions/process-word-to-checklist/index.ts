@@ -23,6 +23,8 @@ interface ChecklistItem {
   imageDescription?: string;
   imagePosition?: 'before' | 'after';
   imageMarker?: string; // Original marker from text like [IMAGE:filename.jpg:description]
+  imageSize?: 'small' | 'medium' | 'large'; // Add missing imageSize property
+  imageUrls?: string[]; // Add missing imageUrls property
   additionalImages?: Array<{
     url: string;
     description: string;
@@ -297,15 +299,15 @@ ONLY include items that are actual tasks to be completed. When multiple image ma
   } catch (error) {
     console.error('Error processing Word document:', error);
     console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown',
+      cause: error instanceof Error ? (error as any).cause : undefined
     });
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Failed to process Word document',
+      error: error instanceof Error ? error.message : 'Failed to process Word document',
       details: 'Please ensure you uploaded a valid .docx file and try again'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -595,7 +597,7 @@ async function processImageMarkersAndFiles(
     console.log('🔍 Strategy 1: Checking imageMarker fields...');
     for (let j = 0; j < processedItems.length; j++) {
       if (processedItems[j].imageMarker) {
-        const itemMarkers = processedItems[j].imageMarker.split(',').map(m => m.trim().toLowerCase());
+        const itemMarkers = processedItems[j].imageMarker!.split(',').map(m => m.trim().toLowerCase());
         const searchTerms = [
           markerObj.filename.toLowerCase(),
           markerObj.filename.toLowerCase().replace(/\.(jpg|jpeg|png|gif)$/i, ''),
@@ -608,8 +610,8 @@ async function processImageMarkersAndFiles(
             break;
           }
         }
-        if (targetItemIndex !== -1) break;
       }
+      if (targetItemIndex !== -1) break;
     }
 
     // Strategy 2: Position-based assignment if no imageMarker match
@@ -661,7 +663,7 @@ async function processImageMarkersAndFiles(
         if (!processedItems[targetItemIndex].imageUrls) {
           processedItems[targetItemIndex].imageUrls = [];
         }
-        processedItems[targetItemIndex].imageUrls.push(match.imageUrl);
+        processedItems[targetItemIndex].imageUrls!.push(match.imageUrl);
       }
       
       markerObj.matched = true;
@@ -704,7 +706,7 @@ async function processImageMarkersAndFiles(
     console.log('🔍 Strategy 1: Checking imageMarker fields...');
     for (let j = 0; j < processedItems.length; j++) {
       if (processedItems[j].imageMarker) {
-        const itemMarkers = processedItems[j].imageMarker.split(',').map(m => m.trim().toLowerCase());
+        const itemMarkers = processedItems[j].imageMarker!.split(',').map(m => m.trim().toLowerCase());
         console.log(`Item ${j+1} imageMarker:`, processedItems[j].imageMarker);
         
         const searchTerms = [
@@ -834,7 +836,7 @@ async function processImageMarkersAndFiles(
           if (!processedItems[targetItemIndex].imageUrls) {
             processedItems[targetItemIndex].imageUrls = [];
           }
-          processedItems[targetItemIndex].imageUrls.push(publicUrl);
+          processedItems[targetItemIndex].imageUrls!.push(publicUrl);
         }
         
         marker.matched = true;

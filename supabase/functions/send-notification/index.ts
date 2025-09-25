@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved';
+  type: 'reminder' | 'confirmation' | 'cancellation' | 'assistance_request' | 'selection_period' | 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved' | 'selection_period_start' | 'selection_period_end' | 'work_weekend_reminder';
   reservation?: {
     id: string;
     family_group_name: string;
@@ -35,6 +35,23 @@ interface NotificationRequest {
     guest_email: string;
     guest_name: string;
     guest_phone?: string;
+    days_until?: number;
+    period?: {
+      period_name: string;
+      start_date: string;
+      end_date: string;
+    };
+    work_weekend?: {
+      title: string;
+      start_date: string;
+      end_date: string;
+      proposer_family_group: string;
+    };
+    family_groups?: {
+      lead_email: string;
+      lead_name: string;
+      lead_phone: string;
+    };
   };
   organization_id: string;
   days_until?: number;
@@ -127,10 +144,10 @@ async function sendSMS(to: string, message: string) {
     return result;
   } catch (error) {
     console.error("❌ Exception while sending SMS:", error);
-    console.error("  - Error name:", error.name);
-    console.error("  - Error message:", error.message);
-    console.error("  - Error stack:", error.stack);
-    return { error: error.message };
+    console.error("  - Error name:", error instanceof Error ? error.name : 'Unknown');
+    console.error("  - Error message:", error instanceof Error ? error.message : 'Unknown error');
+    console.error("  - Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    return { error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -190,7 +207,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, reservation, organization_id, days_until, selection_data }: NotificationRequest = await req.json();
+    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data }: NotificationRequest = await req.json();
 
     let subject = "";
     let htmlContent = "";
@@ -230,7 +247,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #2d5d2d; margin-top: 0;">📋 Pre-Arrival Checklist (${days_until} day${days_until !== 1 ? 's' : ''} out)</h3>
               <ul style="margin: 10px 0; padding-left: 20px;">
-                ${checklistItems.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+                ${checklistItems.map((item: any) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
               </ul>
               <p style="font-size: 14px; color: #666; margin-bottom: 0;"><em>💡 Tip: You can access your shopping list and documents in the cabin management system!</em></p>
             </div>
@@ -335,7 +352,7 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #1565c0; margin-top: 0;">📋 Selection Checklist</h3>
               <ul style="margin: 10px 0; padding-left: 20px;">
-                ${checklistItems.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+                ${checklistItems.map((item: any) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
               </ul>
             </div>
           ` : '';

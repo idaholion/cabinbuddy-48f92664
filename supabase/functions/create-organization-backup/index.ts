@@ -228,7 +228,7 @@ Deno.serve(async (req) => {
           organization_id: org.id,
           organization_name: org.name,
           status: 'error',
-          error: error.message
+          error: error instanceof Error ? error.message : 'Unknown error'
         });
       }
     }
@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Backup function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -43,7 +43,7 @@ serve(async (req) => {
     // Build context-aware prompt
     const currentPage = context?.route || "/";
     const userRole = context?.userRole || "member";
-    const pageContext = HELP_CONTENT[currentPage] || "General cabin management";
+    const pageContext = HELP_CONTENT[currentPage as keyof typeof HELP_CONTENT] || "General cabin management";
     
     const systemPrompt = `You are a helpful assistant for a cabin management application. 
 
@@ -96,7 +96,7 @@ USER MESSAGE: ${message}`;
     console.error('Error in ai-help-assistant:', error);
     return new Response(JSON.stringify({ 
       error: 'Failed to get AI assistance',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
