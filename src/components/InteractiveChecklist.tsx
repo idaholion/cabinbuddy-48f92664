@@ -10,6 +10,7 @@ import { toast } from '@/hooks/use-toast';
 import { useChecklistProgress } from '@/hooks/useChecklistProgress';
 import { useCheckinSessions } from '@/hooks/useChecklistData';
 import { useDebounce } from '@/hooks/useDebounce';
+import { renderSafeText, createSafeHTML } from '@/lib/safe-text';
 import * as Icons from 'lucide-react';
 
 interface ChecklistItem {
@@ -365,11 +366,7 @@ export const InteractiveChecklist: React.FC<InteractiveChecklistProps> = ({
                           </span>
                         )}
                         
-                        <span dangerouslySetInnerHTML={{
-                          __html: item.text
-                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                        }} />
+                        <span dangerouslySetInnerHTML={createSafeHTML(renderSafeText(item.text))} />
                       </label>
                     </div>
                     
