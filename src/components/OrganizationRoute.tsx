@@ -45,8 +45,8 @@ export const OrganizationRoute = ({ children }: OrganizationRouteProps) => {
     return <Navigate to="/manage-organizations" replace />;
   }
 
-  // Authenticated user with 2+ organizations but not selected one - redirect to manage organizations
-  if (organizations.length > 1 && !organizations.find(org => org.is_primary)) {
+  // Authenticated user with 2+ organizations - always redirect to selection
+  if (organizations.length > 1) {
     return <Navigate to="/manage-organizations" replace />;
   }
 

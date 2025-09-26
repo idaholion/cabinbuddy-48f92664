@@ -96,8 +96,8 @@ export const useRobustMultiOrganization = () => {
         
         if (cachedData) {
           setOrganizations(cachedData);
-          const primary = cachedData.find(org => org.is_primary);
-          setActiveOrganization(primary || cachedData[0] || null);
+          // Don't auto-select - let user choose if multiple exist
+          setActiveOrganization(null);
           setInitialLoad(false); // Set initial load to false immediately when cache is found
           
           if (!offline) {
@@ -141,9 +141,8 @@ export const useRobustMultiOrganization = () => {
 
         setOrganizations(transformedData);
         
-        // Set active organization (primary or first)
-        const primary = transformedData.find(org => org.is_primary);
-        setActiveOrganization(primary || transformedData[0] || null);
+        // Don't auto-select any organization - let user choose if multiple exist
+        setActiveOrganization(null);
         
         // Cache the results with shorter TTL for critical data
         apiCache.set(cacheKeys.userOrganizations(user.id), transformedData, 3 * 60 * 1000);
@@ -162,8 +161,8 @@ export const useRobustMultiOrganization = () => {
       );
       if (cachedData) {
         setOrganizations(cachedData);
-        const primary = cachedData.find(org => org.is_primary);
-        setActiveOrganization(primary || cachedData[0] || null);
+        // Don't auto-select - let user choose if multiple exist
+        setActiveOrganization(null);
       }
     } finally {
       setIsRequestInProgress(false);

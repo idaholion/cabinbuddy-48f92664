@@ -45,11 +45,15 @@ export const ManageOrganizations = () => {
           // User came from family setup - send group leads to family-group-setup
           navigate('/family-group-setup');
         } else if (!isInSetupProcess) {
-          console.log('🚀 [MANAGE ORGS] Navigating to home');
-          // Only auto-navigate to home if user isn't in a specific setup process
+          console.log('🚀 [MANAGE ORGS] Auto-selecting single organization and navigating to home');
+          // Auto-select the only organization and proceed to home
+          const singleOrg = organizations[0];
+          // Switch to this organization to set it as active
+          // This is different from multi-org case where we force selection
           navigate('/home');
         }
       }
+      // For multiple organizations, user must explicitly choose - no auto-navigation
     }
   }, [organizations, loading, error, navigate, isDebugMode, location.pathname, location.state]);
 

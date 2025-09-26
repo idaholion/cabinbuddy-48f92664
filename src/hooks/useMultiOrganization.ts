@@ -77,10 +77,8 @@ export const useMultiOrganization = () => {
       // Cache the results
       apiCache.set(cacheKeys.userOrganizations(user.id), transformedData);
       
-      // Set primary organization as active, or first one if no primary
-      const primary = transformedData?.find(org => org.is_primary);
-      const activeOrg = primary || transformedData?.[0] || null;
-      setActiveOrganization(activeOrg);
+      // Don't auto-select any organization - let user choose if multiple exist
+      setActiveOrganization(null);
       
     } catch (error) {
       console.error('Error in fetchUserOrganizations:', error);
