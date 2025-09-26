@@ -246,11 +246,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const resetPassword = async (email: string) => {
     try {
+      console.log('🔑 Initiating password reset for:', email);
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      console.log('🔑 Redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: redirectUrl,
       });
 
       if (error) {
+        console.error('🔑 Reset password error:', error);
         toast({
           title: "Reset Password Error",
           description: error.message,
@@ -259,12 +264,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { error };
       }
 
+      console.log('🔑 Password reset email sent successfully');
       toast({
         title: "Check your email",
         description: "We've sent you a password reset link.",
       });
       return { error: null };
     } catch (error: any) {
+      console.error('🔑 Reset password exception:', error);
       toast({
         title: "Connection Error",
         description: "Unable to send reset email. Please try again.",

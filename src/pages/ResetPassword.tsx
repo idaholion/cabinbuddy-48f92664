@@ -20,34 +20,60 @@ const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for existing session and set up auth state listener
-    const checkSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setHasValidSession(!!session);
-      } catch (error) {
-        console.error("Session check error:", error);
-        setHasValidSession(false);
-      } finally {
-        setSessionLoading(false);
-      }
-    };
-
-    // Set up auth state listener
+    let timeoutId: NodeJS.Timeout;
+    
+    // Set up auth state listener first to catch PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', { event, session: !!session });
+        
         if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected');
           setHasValidSession(true);
           setSessionLoading(false);
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setHasValidSession(false);
+        } else if (session) {
+          console.log('Session found:', session.user?.email);
+          setHasValidSession(true);
+          setSessionLoading(false);
         }
       }
     );
 
+    // Check for existing session
+    const checkSession = async () => {
+      try {
+        console.log('Checking for existing session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session check error:", error);
+          setHasValidSession(false);
+        } else if (session) {
+          console.log('Existing session found:', session.user?.email);
+          setHasValidSession(true);
+        } else {
+          console.log('No existing session');
+          // Give some time for the PASSWORD_RECOVERY event to fire
+          timeoutId = setTimeout(() => {
+            setSessionLoading(false);
+          }, 3000);
+        }
+      } catch (error) {
+        console.error("Session check exception:", error);
+        setHasValidSession(false);
+        setSessionLoading(false);
+      }
+    };
+
     checkSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
