@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 interface OrganizationUser {
   user_id: string;
   role: string;
+  actual_role: string; // The computed role (admin, Group Lead, or member)
   joined_at: string;
   is_primary: boolean;
   email: string;
@@ -95,13 +96,37 @@ export const UserManagement = () => {
 
       if (detailsError) throw detailsError;
 
+      // Get family groups to determine group leads
+      const { data: familyGroups, error: familyError } = await supabase
+        .from('family_groups')
+        .select('lead_email')
+        .eq('organization_id', organization.id);
+
+      if (familyError) throw familyError;
+
+      const groupLeadEmails = new Set(
+        familyGroups?.map(fg => fg.lead_email?.toLowerCase()).filter(Boolean) || []
+      );
+
       // Combine the data
       const enrichedUsers = orgUsers?.map(orgUser => {
         const details = userDetails?.find((detail) => detail.user_id === orgUser.user_id);
+        const userEmail = details?.email?.toLowerCase() || '';
+        
+        // Determine actual role: admin takes precedence, then group lead, then member
+        let actualRole = orgUser.role;
+        if (orgUser.role === 'admin') {
+          actualRole = 'admin';
+        } else if (groupLeadEmails.has(userEmail)) {
+          actualRole = 'Group Lead';
+        } else {
+          actualRole = 'member';
+        }
         
         return {
           user_id: orgUser.user_id,
           role: orgUser.role,
+          actual_role: actualRole,
           joined_at: orgUser.joined_at,
           is_primary: orgUser.is_primary,
           email: details?.email || 'Unknown',
@@ -228,8 +253,8 @@ export const UserManagement = () => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                    {user.role}
+                  <Badge variant={user.actual_role === 'admin' ? 'default' : user.actual_role === 'Group Lead' ? 'outline' : 'secondary'}>
+                    {user.actual_role}
                   </Badge>
                 </TableCell>
                 <TableCell>
