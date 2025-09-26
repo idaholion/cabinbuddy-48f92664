@@ -2626,6 +2626,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_password_reset_template_variables: {
+        Args: {
+          p_organization_id: string
+          p_reset_link?: string
+          p_user_email?: string
+          p_user_name?: string
+        }
+        Returns: Json
+      }
       get_safe_guest_family_groups: {
         Args: { org_id: string }
         Returns: {
