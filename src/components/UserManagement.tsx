@@ -239,7 +239,6 @@ export const UserManagement = () => {
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Joined</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -259,11 +258,6 @@ export const UserManagement = () => {
                 </TableCell>
                 <TableCell>
                   {new Date(user.joined_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell>
-                  {user.is_primary && (
-                    <Badge variant="outline">Primary Org</Badge>
-                  )}
                 </TableCell>
                 <TableCell>
                   {canRemoveUser(user) ? (
