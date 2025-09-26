@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.send-work-weekend-notifications]
 verify_jwt = false
+
+[functions.send-phone-reset]
+verify_jwt = false
+
+[functions.verify-phone-reset]
+verify_jwt = false
+
+[functions.complete-phone-reset]
+verify_jwt = false

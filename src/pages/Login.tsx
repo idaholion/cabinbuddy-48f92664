@@ -81,10 +81,20 @@ const Login = () => {
     setLoading(true);
     setError("");
     
-    if (resetMethod === 'email') {
-      await resetPassword(email);
-    } else {
-      await resetPasswordWithPhone(phone);
+    try {
+      if (resetMethod === 'email') {
+        await resetPassword(email);
+      } else {
+        const result = await resetPasswordWithPhone(phone);
+        
+        // If phone reset was successful (no error), redirect to verification
+        if (!result.error) {
+          navigate(`/verify-phone-reset?phone=${encodeURIComponent(phone)}`);
+          return; // Don't reset the form state if redirecting
+        }
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.");
     }
     
     setLoading(false);

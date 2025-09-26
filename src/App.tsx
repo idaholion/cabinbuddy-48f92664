@@ -29,6 +29,7 @@ import Setup from "./pages/Setup";
 import CabinCalendar from "./pages/CabinCalendar";
 import NotFound from "./pages/NotFound";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyPhoneReset from "./pages/VerifyPhoneReset";
 import { ManageOrganizations } from "./pages/ManageOrganizations";
 
 
@@ -109,6 +110,7 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-phone-reset" element={<VerifyPhoneReset />} />
         <Route path="/guest" element={<Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense>} />
         <Route path="/home" element={<ProtectedRoute><MainLayout><Index /></MainLayout></ProtectedRoute>} />
         <Route path="/manage-organizations" element={<UnifiedAuthRoute requiresOrganization={false}><ManageOrganizations /></UnifiedAuthRoute>} />
