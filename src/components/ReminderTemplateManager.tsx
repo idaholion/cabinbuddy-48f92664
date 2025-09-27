@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, Clock, Calendar, Edit, Save, X, Settings, ToggleLeft, ToggleRight, Plus } from "lucide-react";
+import { Mail, Clock, Calendar, Edit, Save, X, Settings, ToggleLeft, ToggleRight, Plus, KeyRound } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -207,6 +207,7 @@ export const ReminderTemplateManager = () => {
   };
 
   const getTemplateIcon = (type: string) => {
+    if (type === 'password_reset') return <KeyRound className="h-4 w-4" />;
     if (type.includes('selection') || type.includes('calendar')) return <Calendar className="h-4 w-4" />;
     if (type.includes('work') || type.includes('weekend')) return <Settings className="h-4 w-4" />;
     return <Clock className="h-4 w-4" />;

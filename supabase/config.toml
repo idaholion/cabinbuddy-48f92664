@@ -1,5 +1,8 @@
 project_id = "ftaxzdnrnhktzbcsejoy"
 
+[functions.send-password-reset]
+verify_jwt = false
+
 [functions.process-pdf-to-checklist]
 verify_jwt = false
 

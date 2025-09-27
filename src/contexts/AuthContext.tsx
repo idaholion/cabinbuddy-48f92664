@@ -247,6 +247,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const resetPassword = async (email: string) => {
     try {
       console.log('🔑 Initiating password reset for:', email);
+      
+      // Try custom password reset first (if user belongs to organization)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      
+      let organizationId = null;
+      if (currentUser) {
+        const { data: userOrgs } = await supabase
+          .from('user_organizations')
+          .select('organization_id')
+          .eq('user_id', currentUser.id)
+          .eq('is_primary', true)
+          .single();
+        
+        organizationId = userOrgs?.organization_id;
+      }
+
       const redirectUrl = `${window.location.origin}/reset-password`;
       console.log('🔑 Redirect URL:', redirectUrl);
       
@@ -262,6 +278,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           variant: "destructive",
         });
         return { error };
+      }
+
+      // If we have an organization, also send custom email
+      if (organizationId) {
+        try {
+          await supabase.functions.invoke('send-password-reset', {
+            body: {
+              email,
+              resetLink: redirectUrl,
+              organizationId
+            }
+          });
+          
+          console.log('Custom password reset email sent');
+        } catch (customError) {
+          console.error('Custom email failed, but default reset still works:', customError);
+          // Don't return error here - the default reset still works
+        }
       }
 
       console.log('🔑 Password reset email sent successfully');
