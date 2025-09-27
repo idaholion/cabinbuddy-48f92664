@@ -36,17 +36,6 @@ export const ReminderTemplateManager = () => {
   const [templates, setTemplates] = useState<ReminderTemplate[]>([]);
   const [newTemplateType, setNewTemplateType] = useState("");
 
-  if (!activeOrganization?.organization_id) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Select an Organization</h3>
-          <p className="text-muted-foreground">Please select an organization to manage reminder templates.</p>
-        </div>
-      </div>
-    );
-  }
-
   // Fetch templates from database
   useEffect(() => {
     if (activeOrganization?.organization_id) {
@@ -230,6 +219,17 @@ export const ReminderTemplateManager = () => {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
+
+  if (!activeOrganization?.organization_id) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold mb-2">Select an Organization</h3>
+          <p className="text-muted-foreground">Please select an organization to manage reminder templates.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return <LoadingSpinner size="lg" />;
