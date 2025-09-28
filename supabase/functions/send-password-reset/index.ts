@@ -37,23 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Get user information
-    const { data: user } = await supabase.auth.admin.getUserByEmail(email);
-    
-    let userName = 'there';
-    if (user?.user?.user_metadata) {
-      const firstName = user.user.user_metadata.first_name;
-      const lastName = user.user.user_metadata.last_name;
-      const displayName = user.user.user_metadata.display_name;
-      
-      if (displayName) {
-        userName = displayName;
-      } else if (firstName && lastName) {
-        userName = `${firstName} ${lastName}`;
-      } else if (firstName) {
-        userName = firstName;
-      }
-    }
+    // Use email for personalization (remove getUserByEmail which doesn't exist)
+    const userName = email.split('@')[0] || 'there';
 
     // If organization ID provided, try to get custom template
     let emailSubject = 'Reset Your Password';
