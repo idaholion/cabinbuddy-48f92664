@@ -859,7 +859,7 @@ const handler = async (req: Request): Promise<Response> => {
           `;
           
           return resend.emails.send({
-            from: "CabinBuddy <noreply@cabinbuddy.com>",
+            from: "CabinBuddy <noreply@cabinbuddy.org>",
             to: [recipient.email],
             subject: personalizedSubject,
             html: htmlContent,
@@ -887,7 +887,7 @@ const handler = async (req: Request): Promise<Response> => {
       emailResponse = { message: 'Manual template emails sent individually' };
     } else {
       emailResponse = await resend.emails.send({
-        from: "CabinBuddy <noreply@cabinbuddy.com>",
+        from: "CabinBuddy <noreply@cabinbuddy.org>",
         to: [reservation?.guest_email, selection_data?.guest_email, work_weekend_data?.recipient_email].filter(Boolean) as string[],
         subject: subject,
         html: htmlContent,
