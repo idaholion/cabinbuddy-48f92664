@@ -77,52 +77,63 @@ const handler = async (req: Request): Promise<Response> => {
       // Send notifications for starting periods
       if (startingPeriods && startingPeriods.length > 0) {
         for (const period of startingPeriods) {
-          console.log(`Sending start notification for period: Year ${period.rotation_year}`);
+          console.log(`Checking start notification for period: Year ${period.rotation_year}, Current family: ${period.current_family_group || 'none'}`);
           
-          // Get all family groups in this organization
-          const { data: familyGroups, error: fgError } = await supabase
-            .from('family_groups')
-            .select('name, lead_name, lead_email, lead_phone')
-            .eq('organization_id', org.id);
-
-          if (fgError) {
-            console.error('Error fetching family groups:', fgError);
+          // Only send notification if there's a current family group assigned
+          if (!period.current_family_group) {
+            console.log(`Skipping notification - no current family group set for period ${period.rotation_year}`);
             continue;
           }
 
-          // Send notifications to each family group
-          if (familyGroups) {
-            for (const group of familyGroups) {
-              if (group.lead_email) {
-                try {
-                  const { error: notifyError } = await supabase.functions.invoke('send-notification', {
-                    body: {
-                      type: 'selection_period_start',
-                      organization_id: org.id,
-                      selection_data: {
-                        family_group_name: group.name,
-                        guest_email: group.lead_email,
-                        guest_name: group.lead_name || group.name,
-                        guest_phone: group.lead_phone,
-                        selection_year: period.rotation_year.toString(),
-                        selection_start_date: period.selection_start_date,
-                        selection_end_date: period.selection_end_date,
-                        available_periods: 'All available periods'
-                      }
-                    }
-                  });
+          // Get the specific family group whose turn it is
+          const { data: familyGroup, error: fgError } = await supabase
+            .from('family_groups')
+            .select('name, lead_name, lead_email, lead_phone')
+            .eq('organization_id', org.id)
+            .eq('name', period.current_family_group)
+            .single();
 
-                  if (notifyError) {
-                    console.error('Error sending notification:', notifyError);
-                  } else {
-                    totalNotifications++;
-                    console.log(`Start notification sent to ${group.name} (${group.lead_email})`);
+          if (fgError) {
+            console.error('Error fetching current family group:', fgError);
+            continue;
+          }
+
+          if (!familyGroup) {
+            console.error(`Current family group '${period.current_family_group}' not found`);
+            continue;
+          }
+
+          // Send notification only to the current family group
+          if (familyGroup.lead_email) {
+            try {
+              const { error: notifyError } = await supabase.functions.invoke('send-notification', {
+                body: {
+                  type: 'selection_period_start',
+                  organization_id: org.id,
+                  selection_data: {
+                    family_group_name: familyGroup.name,
+                    guest_email: familyGroup.lead_email,
+                    guest_name: familyGroup.lead_name || familyGroup.name,
+                    guest_phone: familyGroup.lead_phone,
+                    selection_year: period.rotation_year.toString(),
+                    selection_start_date: period.selection_start_date,
+                    selection_end_date: period.selection_end_date,
+                    available_periods: 'Your selection period is starting'
                   }
-                } catch (error) {
-                  console.error('Error invoking send-notification:', error);
                 }
+              });
+
+              if (notifyError) {
+                console.error('Error sending notification:', notifyError);
+              } else {
+                totalNotifications++;
+                console.log(`Start notification sent to ${familyGroup.name} (${familyGroup.lead_email}) - it's their turn`);
               }
+            } catch (error) {
+              console.error('Error invoking send-notification:', error);
             }
+          } else {
+            console.log(`No email address for family group ${familyGroup.name}, skipping notification`);
           }
         }
       }
@@ -130,52 +141,63 @@ const handler = async (req: Request): Promise<Response> => {
       // Send notifications for ending periods
       if (endingPeriods && endingPeriods.length > 0) {
         for (const period of endingPeriods) {
-          console.log(`Sending end notification for period: Year ${period.rotation_year}`);
+          console.log(`Checking end notification for period: Year ${period.rotation_year}, Current family: ${period.current_family_group || 'none'}`);
           
-          // Get all family groups in this organization
-          const { data: familyGroups, error: fgError } = await supabase
-            .from('family_groups')
-            .select('name, lead_name, lead_email, lead_phone')
-            .eq('organization_id', org.id);
-
-          if (fgError) {
-            console.error('Error fetching family groups:', fgError);
+          // Only send notification if there's a current family group assigned
+          if (!period.current_family_group) {
+            console.log(`Skipping notification - no current family group set for period ${period.rotation_year}`);
             continue;
           }
 
-          // Send notifications to each family group
-          if (familyGroups) {
-            for (const group of familyGroups) {
-              if (group.lead_email) {
-                try {
-                  const { error: notifyError } = await supabase.functions.invoke('send-notification', {
-                    body: {
-                      type: 'selection_period_end',
-                      organization_id: org.id,
-                      selection_data: {
-                        family_group_name: group.name,
-                        guest_email: group.lead_email,
-                        guest_name: group.lead_name || group.name,
-                        guest_phone: group.lead_phone,
-                        selection_year: period.rotation_year.toString(),
-                        selection_start_date: period.selection_start_date,
-                        selection_end_date: period.selection_end_date,
-                        available_periods: 'Selection period ending'
-                      }
-                    }
-                  });
+          // Get the specific family group whose turn it is
+          const { data: familyGroup, error: fgError } = await supabase
+            .from('family_groups')
+            .select('name, lead_name, lead_email, lead_phone')
+            .eq('organization_id', org.id)
+            .eq('name', period.current_family_group)
+            .single();
 
-                  if (notifyError) {
-                    console.error('Error sending notification:', notifyError);
-                  } else {
-                    totalNotifications++;
-                    console.log(`End notification sent to ${group.name} (${group.lead_email})`);
+          if (fgError) {
+            console.error('Error fetching current family group:', fgError);
+            continue;
+          }
+
+          if (!familyGroup) {
+            console.error(`Current family group '${period.current_family_group}' not found`);
+            continue;
+          }
+
+          // Send notification only to the current family group
+          if (familyGroup.lead_email) {
+            try {
+              const { error: notifyError } = await supabase.functions.invoke('send-notification', {
+                body: {
+                  type: 'selection_period_end',
+                  organization_id: org.id,
+                  selection_data: {
+                    family_group_name: familyGroup.name,
+                    guest_email: familyGroup.lead_email,
+                    guest_name: familyGroup.lead_name || familyGroup.name,
+                    guest_phone: familyGroup.lead_phone,
+                    selection_year: period.rotation_year.toString(),
+                    selection_start_date: period.selection_start_date,
+                    selection_end_date: period.selection_end_date,
+                    available_periods: 'Your selection period is ending'
                   }
-                } catch (error) {
-                  console.error('Error invoking send-notification:', error);
                 }
+              });
+
+              if (notifyError) {
+                console.error('Error sending notification:', notifyError);
+              } else {
+                totalNotifications++;
+                console.log(`End notification sent to ${familyGroup.name} (${familyGroup.lead_email}) - their selection period is ending`);
               }
+            } catch (error) {
+              console.error('Error invoking send-notification:', error);
             }
+          } else {
+            console.log(`No email address for family group ${familyGroup.name}, skipping notification`);
           }
         }
       }
