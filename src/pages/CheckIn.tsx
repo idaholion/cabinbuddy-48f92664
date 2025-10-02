@@ -81,7 +81,12 @@ const CheckIn = () => {
   };
 
   const saveChecklist = async (itemsToSave = checklistItems) => {
+    console.log('=== SAVE CHECKLIST DEBUG ===');
+    console.log('1. Organization:', organization);
+    console.log('2. Items to save:', itemsToSave);
+    
     if (!organization?.id) {
+      console.error('No organization ID available');
       toast({
         title: "Error",
         description: "No organization selected. Please select an organization first.",
@@ -91,25 +96,48 @@ const CheckIn = () => {
     }
 
     try {
+      // Verify user's organization access
+      console.log('3. Verifying user organization access...');
+      const { data: userOrg, error: userOrgError } = await supabase
+        .rpc('get_user_organization_id');
+      
+      console.log('4. User org from RPC:', userOrg, 'Error:', userOrgError);
+      
+      if (userOrg !== organization.id) {
+        console.error('Organization mismatch!', { userOrg, organizationId: organization.id });
+        toast({
+          title: "Error",
+          description: "Organization access mismatch. Please refresh the page.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // First, check if a record exists
-      const { data: existing } = await supabase
+      console.log('5. Checking for existing record...');
+      const { data: existing, error: existingError } = await supabase
         .from('custom_checklists')
         .select('id')
         .eq('organization_id', organization.id)
         .eq('checklist_type', 'arrival')
         .maybeSingle();
 
+      console.log('6. Existing record:', existing, 'Error:', existingError);
+
       let result;
       if (existing) {
         // Update existing record
+        console.log('7. Updating existing record...');
         result = await supabase
           .from('custom_checklists')
           .update({ items: itemsToSave, updated_at: new Date().toISOString() })
           .eq('organization_id', organization.id)
           .eq('checklist_type', 'arrival')
           .select();
+        console.log('8. Update result:', result);
       } else {
         // Insert new record
+        console.log('7. Inserting new record...');
         result = await supabase
           .from('custom_checklists')
           .insert({
@@ -118,18 +146,21 @@ const CheckIn = () => {
             items: itemsToSave
           })
           .select();
+        console.log('8. Insert result:', result);
       }
 
       if (result.error) {
+        console.error('9. Database error:', result.error);
         throw result.error;
       }
 
+      console.log('10. Save successful!');
       toast({
         title: "Checklist Saved",
         description: "Checklist has been saved to database.",
       });
     } catch (error: any) {
-      console.error('Failed to save checklist:', error);
+      console.error('11. Caught error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save checklist",
