@@ -240,22 +240,24 @@ const DailyCheckIn = () => {
     }
   };
 
-  const addNewTask = () => {
+  const addNewTask = async () => {
     if (newItemLabel.trim()) {
       const newTask = {
         id: `custom_${Date.now()}`,
         label: newItemLabel.trim(),
         category: "custom"
       };
-      setDailyTasks(prev => [...prev, newTask]);
+      const updatedTasks = [...dailyTasks, newTask];
+      setDailyTasks(updatedTasks);
       setNewItemLabel("");
-      saveDailyTasks();
+      await saveDailyTasks(updatedTasks);
     }
   };
 
-  const deleteTask = (taskId: string) => {
-    setDailyTasks(prev => prev.filter(task => task.id !== taskId));
-    saveDailyTasks();
+  const deleteTask = async (taskId: string) => {
+    const updatedTasks = dailyTasks.filter(task => task.id !== taskId);
+    setDailyTasks(updatedTasks);
+    await saveDailyTasks(updatedTasks);
     toast({
       title: "Task Deleted",
       description: "Daily task has been removed.",
@@ -267,18 +269,17 @@ const DailyCheckIn = () => {
     setEditingLabel(task.label);
   };
 
-  const saveEditTask = () => {
+  const saveEditTask = async () => {
     if (editingLabel.trim() && editingItemId) {
-      setDailyTasks(prev => 
-        prev.map(task => 
-          task.id === editingItemId 
-            ? { ...task, label: editingLabel.trim() }
-            : task
-        )
+      const updatedTasks = dailyTasks.map(task => 
+        task.id === editingItemId 
+          ? { ...task, label: editingLabel.trim() }
+          : task
       );
+      setDailyTasks(updatedTasks);
       setEditingItemId(null);
       setEditingLabel("");
-      saveDailyTasks();
+      await saveDailyTasks(updatedTasks);
       toast({
         title: "Task Updated",
         description: "Daily task has been updated.",
