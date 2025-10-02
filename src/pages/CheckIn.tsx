@@ -240,7 +240,12 @@ const CheckIn = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsEditing(!isEditing)}
+                      onClick={() => {
+                        if (isEditing) {
+                          saveChecklist();
+                        }
+                        setIsEditing(!isEditing);
+                      }}
                       className="flex items-center gap-2 text-base"
                     >
                       <Edit3 className="h-4 w-4" />
