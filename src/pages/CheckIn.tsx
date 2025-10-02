@@ -81,12 +81,7 @@ const CheckIn = () => {
   };
 
   const saveChecklist = async (itemsToSave = checklistItems) => {
-    console.log('saveChecklist called');
-    console.log('organization:', organization);
-    console.log('itemsToSave:', itemsToSave);
-    
     if (!organization?.id) {
-      console.error('No organization ID available');
       toast({
         title: "Error",
         description: "No organization selected. Please select an organization first.",
@@ -95,39 +90,49 @@ const CheckIn = () => {
       return;
     }
 
-    console.log('Attempting to save to organization:', organization.id);
     try {
-      const payload = {
-        organization_id: organization.id,
-        checklist_type: 'arrival',
-        items: itemsToSave
-      };
-      console.log('Save payload:', payload);
-
-      const { data, error } = await supabase
+      // First, check if a record exists
+      const { data: existing } = await supabase
         .from('custom_checklists')
-        .upsert(payload, {
-          onConflict: 'organization_id,checklist_type'
-        })
-        .select();
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('checklist_type', 'arrival')
+        .maybeSingle();
 
-      console.log('Save response:', { data, error });
-
-      if (error) {
-        console.error('Save error:', error);
-        throw error;
+      let result;
+      if (existing) {
+        // Update existing record
+        result = await supabase
+          .from('custom_checklists')
+          .update({ items: itemsToSave, updated_at: new Date().toISOString() })
+          .eq('organization_id', organization.id)
+          .eq('checklist_type', 'arrival')
+          .select();
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('custom_checklists')
+          .insert({
+            organization_id: organization.id,
+            checklist_type: 'arrival',
+            items: itemsToSave
+          })
+          .select();
       }
 
-      console.log('Save successful');
+      if (result.error) {
+        throw result.error;
+      }
+
       toast({
         title: "Checklist Saved",
         description: "Checklist has been saved to database.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to save checklist:', error);
       toast({
         title: "Error",
-        description: `Failed to save checklist: ${error.message}`,
+        description: error.message || "Failed to save checklist",
         variant: "destructive"
       });
     }
