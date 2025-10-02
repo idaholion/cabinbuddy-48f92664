@@ -10,12 +10,14 @@ import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 
+console.log('🚨 CheckoutList.tsx file is being executed');
+
 const CheckoutList = () => {
-  console.log('🚀 CheckoutList component rendering');
+  console.log('🚀🚀🚀 CheckoutList component IS RENDERING');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { organization } = useOrganization();
-  console.log('🔍 Organization:', organization);
+  console.log('🔍 CheckoutList organization:', organization);
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
