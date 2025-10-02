@@ -35,11 +35,14 @@ const CheckIn = () => {
   // Load checklist from database
   useEffect(() => {
     const loadChecklist = async () => {
+      console.log('loadChecklist - organization:', organization);
       if (!organization?.id) {
+        console.log('No organization ID, skipping load');
         setLoading(false);
         return;
       }
 
+      console.log('Loading checklist for organization:', organization.id);
       try {
         const { data, error } = await supabase
           .from('custom_checklists')
@@ -48,12 +51,15 @@ const CheckIn = () => {
           .eq('checklist_type', 'arrival')
           .single();
 
+        console.log('Load response:', { data, error });
+
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
           console.error('Error loading checklist:', error);
           throw error;
         }
 
         if (data?.items && Array.isArray(data.items)) {
+          console.log('Setting items from DB:', data.items);
           setChecklistItems(data.items as any[]);
         }
       } catch (error) {
@@ -75,28 +81,44 @@ const CheckIn = () => {
   };
 
   const saveChecklist = async (itemsToSave = checklistItems) => {
+    console.log('saveChecklist called');
+    console.log('organization:', organization);
+    console.log('itemsToSave:', itemsToSave);
+    
     if (!organization?.id) {
+      console.error('No organization ID available');
       toast({
         title: "Error",
-        description: "No organization selected",
+        description: "No organization selected. Please select an organization first.",
         variant: "destructive"
       });
       return;
     }
 
+    console.log('Attempting to save to organization:', organization.id);
     try {
-      const { error } = await supabase
+      const payload = {
+        organization_id: organization.id,
+        checklist_type: 'arrival',
+        items: itemsToSave
+      };
+      console.log('Save payload:', payload);
+
+      const { data, error } = await supabase
         .from('custom_checklists')
-        .upsert({
-          organization_id: organization.id,
-          checklist_type: 'arrival',
-          items: itemsToSave
-        }, {
+        .upsert(payload, {
           onConflict: 'organization_id,checklist_type'
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      console.log('Save response:', { data, error });
 
+      if (error) {
+        console.error('Save error:', error);
+        throw error;
+      }
+
+      console.log('Save successful');
       toast({
         title: "Checklist Saved",
         description: "Checklist has been saved to database.",
@@ -105,7 +127,7 @@ const CheckIn = () => {
       console.error('Failed to save checklist:', error);
       toast({
         title: "Error",
-        description: "Failed to save checklist",
+        description: `Failed to save checklist: ${error.message}`,
         variant: "destructive"
       });
     }
