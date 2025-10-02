@@ -115,7 +115,7 @@ const CheckoutList = () => {
           .from('custom_checklists')
           .select('*')
           .eq('organization_id', organization.id)
-          .eq('checklist_type', 'departure')
+          .eq('checklist_type', 'closing')
           .maybeSingle();
 
         console.log('🟢 [CHECKOUT-LOAD] Query result:', { 
@@ -194,7 +194,7 @@ const CheckoutList = () => {
         .from('custom_checklists')
         .select('id')
         .eq('organization_id', organization.id)
-        .eq('checklist_type', 'departure')
+        .eq('checklist_type', 'closing')
         .maybeSingle();
 
       console.log('🔵 Existing checkout check:', { existing, existingError });
@@ -213,7 +213,7 @@ const CheckoutList = () => {
           .from('custom_checklists')
           .insert({
             organization_id: organization.id,
-            checklist_type: 'departure',
+            checklist_type: 'closing',
             items: sectionsToSave
           })
           .select();
