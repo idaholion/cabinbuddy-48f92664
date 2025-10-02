@@ -132,8 +132,18 @@ const CheckoutList = () => {
         }
 
         if (data?.items && Array.isArray(data.items)) {
-          console.log('🟢 [CHECKOUT-LOAD] Setting sections from DB:', data.items);
-          setChecklistSections(data.items as any[]);
+          // Check if the items have the expected structure (sections with title and tasks)
+          const hasValidStructure = data.items.every(
+            item => item && typeof item === 'object' && 'title' in item && 'tasks' in item && Array.isArray(item.tasks)
+          );
+          
+          if (hasValidStructure) {
+            console.log('🟢 [CHECKOUT-LOAD] Setting sections from DB:', data.items);
+            setChecklistSections(data.items as any[]);
+          } else {
+            console.log('⚠️ [CHECKOUT-LOAD] Data structure mismatch, using default sections');
+            // Keep the default sections
+          }
         } else {
           console.log('🟢 [CHECKOUT-LOAD] No data found, using default sections');
         }
@@ -407,7 +417,10 @@ const CheckoutList = () => {
     setEditingLabel("");
   };
 
-  const totalTasks = checklistSections.reduce((total, section) => total + section.tasks.length, 0);
+  const totalTasks = checklistSections.reduce((total, section) => {
+    const tasks = section?.tasks || [];
+    return total + tasks.length;
+  }, 0);
   const completedTasks = checkedTasks.size;
   const progressPercentage = (completedTasks / totalTasks) * 100;
   const isChecklistComplete = totalTasks > 0 && completedTasks === totalTasks;
