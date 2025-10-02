@@ -534,7 +534,12 @@ const CheckoutList = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setIsEditing(!isEditing)}
+                      onClick={() => {
+                        if (isEditing) {
+                          saveCheckoutList();
+                        }
+                        setIsEditing(!isEditing);
+                      }}
                       className="flex items-center gap-2 text-base"
                     >
                       <Edit3 className="h-4 w-4" />
@@ -685,7 +690,12 @@ const CheckoutList = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => {
+                      if (isEditing) {
+                        saveSurveyItems();
+                      }
+                      setIsEditing(!isEditing);
+                    }}
                     className="flex items-center gap-2 text-base"
                   >
                     <Edit3 className="h-4 w-4" />
@@ -730,6 +740,10 @@ const CheckoutList = () => {
               {isAdmin && (
                 <Button
                   onClick={() => {
+                    if (isEditing) {
+                      saveCheckoutList();
+                      saveSurveyItems();
+                    }
                     setIsEditing(!isEditing);
                     setEditingTaskId(null);
                     setEditingLabel("");
