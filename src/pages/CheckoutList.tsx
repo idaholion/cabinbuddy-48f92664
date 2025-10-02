@@ -7,10 +7,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const CheckoutList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { organization } = useOrganization();
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
@@ -19,6 +22,7 @@ const CheckoutList = () => {
   const [editingLabel, setEditingLabel] = useState("");
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState("");
+  const [loading, setLoading] = useState(true);
   const [checklistSections, setChecklistSections] = useState([
     {
       title: "Lower Level Inside",
@@ -86,35 +90,49 @@ const CheckoutList = () => {
   ]);
   const [surveyData, setSurveyData] = useState<Record<string, string>>({});
 
+  // Load checkout checklist from database
   useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      
-      const savedCheckoutList = localStorage.getItem(`checkout_checklist_${organizationCode}`);
-      if (savedCheckoutList) {
-        setChecklistSections(JSON.parse(savedCheckoutList));
+    const loadCheckoutChecklist = async () => {
+      console.log('🟢 [LOAD] Loading checkout checklist for org:', organization?.id);
+      if (!organization?.id) {
+        console.log('🟢 [LOAD] No organization, skipping');
+        setLoading(false);
+        return;
       }
-      
-      const savedSurveyItems = localStorage.getItem(`survey_items_${organizationCode}`);
-      if (savedSurveyItems) {
-        setSurveyItems(JSON.parse(savedSurveyItems));
+
+      try {
+        const { data, error } = await supabase
+          .from('custom_checklists')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('checklist_type', 'departure')
+          .maybeSingle();
+
+        console.log('🟢 [LOAD] Checkout load result:', { data, error });
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading checkout checklist:', error);
+          throw error;
+        }
+
+        if (data?.items && Array.isArray(data.items)) {
+          console.log('🟢 [LOAD] Setting sections from DB:', data.items);
+          setChecklistSections(data.items as any[]);
+        }
+      } catch (error) {
+        console.error('Failed to load checkout checklist:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load checkout checklist",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
-      
-      // Load saved checklist completion state
-      const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
-      if (savedCompletion) {
-        const completionData = JSON.parse(savedCompletion);
-        setCheckedTasks(new Set(completionData.checkedTasks || []));
-      }
-      
-      const initialSurveyData: Record<string, string> = {};
-      surveyItems.forEach(item => {
-        initialSurveyData[item.id] = "";
-      });
-      setSurveyData(initialSurveyData);
-    }
-  }, []);
+    };
+
+    loadCheckoutChecklist();
+  }, [organization?.id]);
 
   const handleSurveyChange = (field: string, value: string) => {
     const numericValue = value.replace(/\D/g, "").slice(0, 6);
@@ -134,14 +152,72 @@ const CheckoutList = () => {
     setCheckedTasks(newCheckedTasks);
   };
 
-  const saveCheckoutList = (sectionsToSave = checklistSections) => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`checkout_checklist_${organizationCode}`, JSON.stringify(sectionsToSave));
+  // Save checkout checklist to database
+  const saveCheckoutList = async (sectionsToSave = checklistSections) => {
+    console.log('🔵 [SAVE] Starting checkout save', {
+      sectionCount: sectionsToSave.length,
+      orgId: organization?.id
+    });
+
+    if (!organization?.id) {
+      console.error('❌ No organization ID');
+      toast({
+        title: "Error",
+        description: "No organization selected.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log('🔵 Checking for existing checkout record...');
+      const { data: existing, error: existingError } = await supabase
+        .from('custom_checklists')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('checklist_type', 'departure')
+        .maybeSingle();
+
+      console.log('🔵 Existing checkout check:', { existing, existingError });
+
+      let result;
+      if (existing) {
+        console.log('🔵 Updating existing checkout record');
+        result = await supabase
+          .from('custom_checklists')
+          .update({ items: sectionsToSave })
+          .eq('id', existing.id)
+          .select();
+      } else {
+        console.log('🔵 Inserting new checkout record');
+        result = await supabase
+          .from('custom_checklists')
+          .insert({
+            organization_id: organization.id,
+            checklist_type: 'departure',
+            items: sectionsToSave
+          })
+          .select();
+      }
+
+      console.log('🔵 Checkout save result:', result);
+
+      if (result.error) {
+        console.error('❌ Database error:', result.error);
+        throw result.error;
+      }
+
+      console.log('✅ Checkout save successful!');
       toast({
         title: "Checkout Checklist Saved",
-        description: "Checkout checklist has been saved for your organization.",
+        description: "Changes saved successfully.",
+      });
+    } catch (error: any) {
+      console.error('❌ Checkout save error:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save checkout checklist.",
+        variant: "destructive"
       });
     }
   };
@@ -163,14 +239,14 @@ const CheckoutList = () => {
     setEditingSectionTitle(currentTitle);
   };
 
-  const saveEditSectionTitle = () => {
+  const saveEditSectionTitle = async () => {
     if (editingSectionTitle.trim() && editingSectionId !== null) {
       const updatedSections = [...checklistSections];
       updatedSections[editingSectionId].title = editingSectionTitle.trim();
       setChecklistSections(updatedSections);
       setEditingSectionId(null);
       setEditingSectionTitle("");
-      saveCheckoutList(updatedSections);
+      await saveCheckoutList(updatedSections);
       toast({
         title: "Section Title Updated",
         description: "Section title has been updated.",
@@ -183,17 +259,17 @@ const CheckoutList = () => {
     setEditingSectionTitle("");
   };
 
-  const deleteSection = (sectionIndex: number) => {
+  const deleteSection = async (sectionIndex: number) => {
     const updatedSections = checklistSections.filter((_, index) => index !== sectionIndex);
     setChecklistSections(updatedSections);
-    saveCheckoutList(updatedSections);
+    await saveCheckoutList(updatedSections);
     toast({
       title: "Section Deleted",
       description: "Checkout section has been removed.",
     });
   };
 
-  const addNewSection = () => {
+  const addNewSection = async () => {
     if (newTaskLabel.trim()) {
       const newSection = {
         title: newTaskLabel.trim(),
@@ -202,7 +278,7 @@ const CheckoutList = () => {
       const updatedSections = [...checklistSections, newSection];
       setChecklistSections(updatedSections);
       setNewTaskLabel("");
-      saveCheckoutList(updatedSections);
+      await saveCheckoutList(updatedSections);
       toast({
         title: "Section Added",
         description: "New checkout section has been added.",
@@ -261,21 +337,21 @@ const CheckoutList = () => {
     }
   };
 
-  const addNewTask = (sectionIndex: number) => {
+  const addNewTask = async (sectionIndex: number) => {
     if (newTaskLabel.trim()) {
       const updatedSections = [...checklistSections];
       updatedSections[sectionIndex].tasks.push(newTaskLabel.trim());
       setChecklistSections(updatedSections);
       setNewTaskLabel("");
-      saveCheckoutList(updatedSections);
+      await saveCheckoutList(updatedSections);
     }
   };
 
-  const deleteTask = (sectionIndex: number, taskIndex: number) => {
+  const deleteTask = async (sectionIndex: number, taskIndex: number) => {
     const updatedSections = [...checklistSections];
     updatedSections[sectionIndex].tasks.splice(taskIndex, 1);
     setChecklistSections(updatedSections);
-    saveCheckoutList(updatedSections);
+    await saveCheckoutList(updatedSections);
     toast({
       title: "Task Deleted",
       description: "Checkout task has been removed.",
@@ -287,7 +363,7 @@ const CheckoutList = () => {
     setEditingLabel(taskLabel);
   };
 
-  const saveEditTask = () => {
+  const saveEditTask = async () => {
     if (editingLabel.trim() && editingTaskId) {
       const [sectionIndex, taskIndex] = editingTaskId.split('-').map(Number);
       const updatedSections = [...checklistSections];
@@ -295,7 +371,7 @@ const CheckoutList = () => {
       setChecklistSections(updatedSections);
       setEditingTaskId(null);
       setEditingLabel("");
-      saveCheckoutList(updatedSections);
+      await saveCheckoutList(updatedSections);
       toast({
         title: "Task Updated",
         description: "Checkout task has been updated.",
