@@ -15,9 +15,13 @@ import { useReservations } from "@/hooks/useReservations";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/hooks/useOrganization";
+
 const DailyCheckIn = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const { createSession, updateSession, sessions, refetch: refetchSessions } = useCheckinSessions();
   const { reservations } = useReservations();
   const { familyGroups } = useFamilyGroups();
@@ -51,17 +55,46 @@ const DailyCheckIn = () => {
     fg.host_members?.some((member: any) => member.email?.toLowerCase() === user?.email?.toLowerCase())
   )?.name;
 
-  // Check admin status and load saved daily tasks
+  // Load saved daily tasks from database
   useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      const savedDailyTasks = localStorage.getItem(`daily_tasks_${organizationCode}`);
-      if (savedDailyTasks) {
-        setDailyTasks(JSON.parse(savedDailyTasks));
+    const loadDailyTasks = async () => {
+      console.log('🟢 [DAILY-LOAD] Loading daily tasks for org:', organization?.id);
+      if (!organization?.id) {
+        console.log('🟢 [DAILY-LOAD] No organization, skipping');
+        return;
       }
-    }
-  }, []);
+
+      try {
+        const { data, error } = await supabase
+          .from('custom_checklists')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('checklist_type', 'daily')
+          .maybeSingle();
+
+        console.log('🟢 [DAILY-LOAD] Daily tasks result:', { data, error });
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading daily tasks:', error);
+          throw error;
+        }
+
+        if (data?.items && Array.isArray(data.items)) {
+          console.log('🟢 [DAILY-LOAD] Setting tasks from DB:', data.items);
+          setDailyTasks(data.items as any[]);
+        }
+      } catch (error) {
+        console.error('Failed to load daily tasks:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load daily tasks",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadDailyTasks();
+  }, [organization?.id, toast]);
   // Find current active reservation for the user
   useEffect(() => {
     if (!userFamilyGroup || !reservations.length) {
@@ -138,14 +171,71 @@ const DailyCheckIn = () => {
     setDailyOccupancy(prev => ({ ...prev, [dayKey]: value }));
   };
 
-  const saveDailyTasks = () => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`daily_tasks_${organizationCode}`, JSON.stringify(dailyTasks));
+  const saveDailyTasks = async (tasksToSave = dailyTasks) => {
+    console.log('🔵 [DAILY-SAVE] Starting save', {
+      taskCount: tasksToSave.length,
+      orgId: organization?.id
+    });
+
+    if (!organization?.id) {
+      console.error('❌ No organization ID');
+      toast({
+        title: "Error",
+        description: "No organization selected.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      console.log('🔵 Checking for existing daily tasks record...');
+      const { data: existing, error: existingError } = await supabase
+        .from('custom_checklists')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('checklist_type', 'daily')
+        .maybeSingle();
+
+      console.log('🔵 Existing daily check:', { existing, existingError });
+
+      let result;
+      if (existing) {
+        console.log('🔵 Updating existing daily record');
+        result = await supabase
+          .from('custom_checklists')
+          .update({ items: tasksToSave })
+          .eq('id', existing.id)
+          .select();
+      } else {
+        console.log('🔵 Inserting new daily record');
+        result = await supabase
+          .from('custom_checklists')
+          .insert({
+            organization_id: organization.id,
+            checklist_type: 'daily',
+            items: tasksToSave
+          })
+          .select();
+      }
+
+      console.log('🔵 Daily save result:', result);
+
+      if (result.error) {
+        console.error('❌ Database error:', result.error);
+        throw result.error;
+      }
+
+      console.log('✅ Daily save successful!');
       toast({
         title: "Daily Tasks Saved",
-        description: "Daily task list has been saved for your organization.",
+        description: "Daily task list has been saved.",
+      });
+    } catch (error: any) {
+      console.error('❌ Daily save error:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save daily tasks.",
+        variant: "destructive"
       });
     }
   };
