@@ -25,6 +25,7 @@ const CheckIn = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [newItemLabel, setNewItemLabel] = useState("");
   const { isAdmin } = useOrgAdmin();
+  console.log('CheckIn component - isAdmin:', isAdmin);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
@@ -253,6 +254,7 @@ const CheckIn = () => {
                 
                 {isAdmin && (
                   <div className="flex items-center space-x-2">
+                    <div className="text-xs text-muted-foreground">Admin: {String(isAdmin)}</div>
                     <Button
                       variant="outline"
                       size="sm"
