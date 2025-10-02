@@ -11,9 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 
 const CheckoutList = () => {
+  console.log('🚀 CheckoutList component rendering');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { organization } = useOrganization();
+  console.log('🔍 Organization:', organization);
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
@@ -93,14 +95,20 @@ const CheckoutList = () => {
   // Load checkout checklist from database
   useEffect(() => {
     const loadCheckoutChecklist = async () => {
-      console.log('🟢 [LOAD] Loading checkout checklist for org:', organization?.id);
+      console.log('🟢 [CHECKOUT-LOAD] Starting load for org:', {
+        orgId: organization?.id,
+        orgCode: organization?.code,
+        timestamp: new Date().toISOString()
+      });
+      
       if (!organization?.id) {
-        console.log('🟢 [LOAD] No organization, skipping');
+        console.log('🟢 [CHECKOUT-LOAD] No organization, skipping');
         setLoading(false);
         return;
       }
 
       try {
+        console.log('🟢 [CHECKOUT-LOAD] Querying database...');
         const { data, error } = await supabase
           .from('custom_checklists')
           .select('*')
@@ -108,31 +116,40 @@ const CheckoutList = () => {
           .eq('checklist_type', 'departure')
           .maybeSingle();
 
-        console.log('🟢 [LOAD] Checkout load result:', { data, error });
+        console.log('🟢 [CHECKOUT-LOAD] Query result:', { 
+          hasData: !!data, 
+          dataId: data?.id,
+          checklistType: data?.checklist_type,
+          itemCount: Array.isArray(data?.items) ? data.items.length : 0,
+          error: error 
+        });
 
         if (error && error.code !== 'PGRST116') {
-          console.error('Error loading checkout checklist:', error);
+          console.error('❌ [CHECKOUT-LOAD] Database error:', error);
           throw error;
         }
 
         if (data?.items && Array.isArray(data.items)) {
-          console.log('🟢 [LOAD] Setting sections from DB:', data.items);
+          console.log('🟢 [CHECKOUT-LOAD] Setting sections from DB:', data.items);
           setChecklistSections(data.items as any[]);
+        } else {
+          console.log('🟢 [CHECKOUT-LOAD] No data found, using default sections');
         }
-      } catch (error) {
-        console.error('Failed to load checkout checklist:', error);
+      } catch (error: any) {
+        console.error('❌ [CHECKOUT-LOAD] Failed to load:', error);
         toast({
-          title: "Error",
-          description: "Failed to load checkout checklist",
+          title: "Error Loading Checklist",
+          description: error.message || "Failed to load checkout checklist",
           variant: "destructive"
         });
       } finally {
+        console.log('🟢 [CHECKOUT-LOAD] Load complete, setting loading=false');
         setLoading(false);
       }
     };
 
     loadCheckoutChecklist();
-  }, [organization?.id]);
+  }, [organization?.id, toast]);
 
   const handleSurveyChange = (field: string, value: string) => {
     const numericValue = value.replace(/\D/g, "").slice(0, 6);
