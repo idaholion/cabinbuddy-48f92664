@@ -72,6 +72,7 @@ const CheckIn = () => {
   };
 
   const addNewItem = () => {
+    console.log('addNewItem called - newItemLabel:', newItemLabel);
     if (newItemLabel.trim()) {
       const newItem = {
         id: `custom_${Date.now()}`,
@@ -79,6 +80,7 @@ const CheckIn = () => {
         category: "arrival"
       };
       const updatedItems = [...checklistItems, newItem];
+      console.log('Adding new item, updated items:', updatedItems);
       setChecklistItems(updatedItems);
       setNewItemLabel("");
       saveChecklist(updatedItems);
@@ -101,12 +103,14 @@ const CheckIn = () => {
   };
 
   const saveEditItem = () => {
+    console.log('saveEditItem called - editingLabel:', editingLabel, 'editingItemId:', editingItemId);
     if (editingLabel.trim() && editingItemId) {
       const updatedItems = checklistItems.map(item => 
         item.id === editingItemId 
           ? { ...item, label: editingLabel.trim() }
           : item
       );
+      console.log('Updated items:', updatedItems);
       setChecklistItems(updatedItems);
       setEditingItemId(null);
       setEditingLabel("");
@@ -115,6 +119,8 @@ const CheckIn = () => {
         title: "Item Updated",
         description: "Checklist item has been updated.",
       });
+    } else {
+      console.log('saveEditItem validation failed');
     }
   };
 
