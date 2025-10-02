@@ -257,7 +257,10 @@ const CheckIn = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => {
+                        console.log('Done Editing button clicked! isEditing:', isEditing);
+                        console.log('Current checklistItems:', checklistItems);
                         if (isEditing) {
+                          console.log('Calling saveChecklist...');
                           saveChecklist();
                         }
                         setIsEditing(!isEditing);
