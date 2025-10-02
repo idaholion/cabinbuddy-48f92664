@@ -43,11 +43,11 @@ const CheckIn = () => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
   };
 
-  const saveChecklist = () => {
+  const saveChecklist = (itemsToSave = checklistItems) => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`checklist_${organizationCode}`, JSON.stringify(checklistItems));
+      localStorage.setItem(`checklist_${organizationCode}`, JSON.stringify(itemsToSave));
       toast({
         title: "Checklist Saved",
         description: "Checklist has been saved for your organization.",
@@ -62,15 +62,17 @@ const CheckIn = () => {
         label: newItemLabel.trim(),
         category: "arrival"
       };
-      setChecklistItems(prev => [...prev, newItem]);
+      const updatedItems = [...checklistItems, newItem];
+      setChecklistItems(updatedItems);
       setNewItemLabel("");
-      saveChecklist();
+      saveChecklist(updatedItems);
     }
   };
 
   const deleteItem = (itemId: string) => {
-    setChecklistItems(prev => prev.filter(item => item.id !== itemId));
-    saveChecklist();
+    const updatedItems = checklistItems.filter(item => item.id !== itemId);
+    setChecklistItems(updatedItems);
+    saveChecklist(updatedItems);
     toast({
       title: "Item Deleted",
       description: "Checklist item has been removed.",
@@ -84,16 +86,15 @@ const CheckIn = () => {
 
   const saveEditItem = () => {
     if (editingLabel.trim() && editingItemId) {
-      setChecklistItems(prev => 
-        prev.map(item => 
-          item.id === editingItemId 
-            ? { ...item, label: editingLabel.trim() }
-            : item
-        )
+      const updatedItems = checklistItems.map(item => 
+        item.id === editingItemId 
+          ? { ...item, label: editingLabel.trim() }
+          : item
       );
+      setChecklistItems(updatedItems);
       setEditingItemId(null);
       setEditingLabel("");
-      saveChecklist();
+      saveChecklist(updatedItems);
       toast({
         title: "Item Updated",
         description: "Checklist item has been updated.",

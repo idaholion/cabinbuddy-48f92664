@@ -134,11 +134,11 @@ const CheckoutList = () => {
     setCheckedTasks(newCheckedTasks);
   };
 
-  const saveCheckoutList = () => {
+  const saveCheckoutList = (sectionsToSave = checklistSections) => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`checkout_checklist_${organizationCode}`, JSON.stringify(checklistSections));
+      localStorage.setItem(`checkout_checklist_${organizationCode}`, JSON.stringify(sectionsToSave));
       toast({
         title: "Checkout Checklist Saved",
         description: "Checkout checklist has been saved for your organization.",
@@ -146,11 +146,11 @@ const CheckoutList = () => {
     }
   };
 
-  const saveSurveyItems = () => {
+  const saveSurveyItems = (itemsToSave = surveyItems) => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`survey_items_${organizationCode}`, JSON.stringify(surveyItems));
+      localStorage.setItem(`survey_items_${organizationCode}`, JSON.stringify(itemsToSave));
       toast({
         title: "Survey Items Saved",
         description: "Survey items have been saved for your organization.",
@@ -170,7 +170,7 @@ const CheckoutList = () => {
       setChecklistSections(updatedSections);
       setEditingSectionId(null);
       setEditingSectionTitle("");
-      saveCheckoutList();
+      saveCheckoutList(updatedSections);
       toast({
         title: "Section Title Updated",
         description: "Section title has been updated.",
@@ -186,7 +186,7 @@ const CheckoutList = () => {
   const deleteSection = (sectionIndex: number) => {
     const updatedSections = checklistSections.filter((_, index) => index !== sectionIndex);
     setChecklistSections(updatedSections);
-    saveCheckoutList();
+    saveCheckoutList(updatedSections);
     toast({
       title: "Section Deleted",
       description: "Checkout section has been removed.",
@@ -199,9 +199,10 @@ const CheckoutList = () => {
         title: newTaskLabel.trim(),
         tasks: []
       };
-      setChecklistSections(prev => [...prev, newSection]);
+      const updatedSections = [...checklistSections, newSection];
+      setChecklistSections(updatedSections);
       setNewTaskLabel("");
-      saveCheckoutList();
+      saveCheckoutList(updatedSections);
       toast({
         title: "Section Added",
         description: "New checkout section has been added.",
@@ -215,20 +216,22 @@ const CheckoutList = () => {
         id: `custom_${Date.now()}`,
         label: newTaskLabel.trim()
       };
-      setSurveyItems(prev => [...prev, newItem]);
+      const updatedItems = [...surveyItems, newItem];
+      setSurveyItems(updatedItems);
       setSurveyData(prev => ({ ...prev, [newItem.id]: "" }));
       setNewTaskLabel("");
-      saveSurveyItems();
+      saveSurveyItems(updatedItems);
     }
   };
 
   const deleteSurveyItem = (itemId: string) => {
-    setSurveyItems(prev => prev.filter(item => item.id !== itemId));
+    const updatedItems = surveyItems.filter(item => item.id !== itemId);
+    setSurveyItems(updatedItems);
     setSurveyData(prev => {
       const { [itemId]: deleted, ...rest } = prev;
       return rest;
     });
-    saveSurveyItems();
+    saveSurveyItems(updatedItems);
     toast({
       title: "Survey Item Deleted",
       description: "Survey item has been removed.",
@@ -242,16 +245,15 @@ const CheckoutList = () => {
 
   const saveEditSurveyItem = () => {
     if (editingLabel.trim() && editingTaskId) {
-      setSurveyItems(prev => 
-        prev.map(item => 
-          item.id === editingTaskId 
-            ? { ...item, label: editingLabel.trim() }
-            : item
-        )
+      const updatedItems = surveyItems.map(item => 
+        item.id === editingTaskId 
+          ? { ...item, label: editingLabel.trim() }
+          : item
       );
+      setSurveyItems(updatedItems);
       setEditingTaskId(null);
       setEditingLabel("");
-      saveSurveyItems();
+      saveSurveyItems(updatedItems);
       toast({
         title: "Survey Item Updated",
         description: "Survey item has been updated.",
@@ -265,7 +267,7 @@ const CheckoutList = () => {
       updatedSections[sectionIndex].tasks.push(newTaskLabel.trim());
       setChecklistSections(updatedSections);
       setNewTaskLabel("");
-      saveCheckoutList();
+      saveCheckoutList(updatedSections);
     }
   };
 
@@ -273,7 +275,7 @@ const CheckoutList = () => {
     const updatedSections = [...checklistSections];
     updatedSections[sectionIndex].tasks.splice(taskIndex, 1);
     setChecklistSections(updatedSections);
-    saveCheckoutList();
+    saveCheckoutList(updatedSections);
     toast({
       title: "Task Deleted",
       description: "Checkout task has been removed.",
@@ -293,7 +295,7 @@ const CheckoutList = () => {
       setChecklistSections(updatedSections);
       setEditingTaskId(null);
       setEditingLabel("");
-      saveCheckoutList();
+      saveCheckoutList(updatedSections);
       toast({
         title: "Task Updated",
         description: "Checkout task has been updated.",
