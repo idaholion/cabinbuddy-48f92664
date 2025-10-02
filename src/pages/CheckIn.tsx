@@ -32,17 +32,15 @@ const CheckIn = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
-  // Load checklist from database
+  // Load checklist from database on mount
   useEffect(() => {
     const loadChecklist = async () => {
-      console.log('loadChecklist - organization:', organization);
+      console.log('🟢 [LOAD] Loading checklist for org:', organization?.id);
       if (!organization?.id) {
-        console.log('No organization ID, skipping load');
+        console.log('🟢 [LOAD] No organization, skipping');
         setLoading(false);
         return;
       }
-
-      console.log('Loading checklist for organization:', organization.id);
       try {
         const { data, error } = await supabase
           .from('custom_checklists')
@@ -80,11 +78,11 @@ const CheckIn = () => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
   };
 
+  // IMPORTANT: Save function for checklist persistence
   const saveChecklist = async (itemsToSave = checklistItems) => {
-    console.log('🔵 saveChecklist START', {
-      itemsToSave: itemsToSave.length,
-      orgId: organization?.id,
-      orgExists: !!organization
+    console.log('🔵 [SAVE] Starting save operation', {
+      itemCount: itemsToSave.length,
+      orgId: organization?.id
     });
 
     if (!organization?.id) {
