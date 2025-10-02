@@ -33,17 +33,21 @@ const CheckIn = () => {
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
     console.log('Loading checklist - familyData:', familyData);
+    
+    // Use organization-specific key if available, otherwise use default key
+    let key = 'checklist_default';
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
       console.log('organizationCode:', organizationCode);
-      const key = `checklist_${organizationCode}`;
-      const savedChecklist = localStorage.getItem(key);
-      console.log('Loaded checklist from key:', key, 'data:', savedChecklist);
-      if (savedChecklist) {
-        const parsed = JSON.parse(savedChecklist);
-        console.log('Setting checklist items to:', parsed);
-        setChecklistItems(parsed);
-      }
+      key = `checklist_${organizationCode}`;
+    }
+    
+    const savedChecklist = localStorage.getItem(key);
+    console.log('Loaded checklist from key:', key, 'data:', savedChecklist);
+    if (savedChecklist) {
+      const parsed = JSON.parse(savedChecklist);
+      console.log('Setting checklist items to:', parsed);
+      setChecklistItems(parsed);
     }
   }, []);
   const handleCheckChange = (itemId: string, checked: boolean) => {
@@ -54,21 +58,23 @@ const CheckIn = () => {
     console.log('saveChecklist called with:', itemsToSave);
     const familyData = localStorage.getItem('familySetupData');
     console.log('familyData:', familyData);
+    
+    // Use organization-specific key if available, otherwise use default key
+    let key = 'checklist_default';
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
       console.log('organizationCode:', organizationCode);
-      const key = `checklist_${organizationCode}`;
-      console.log('Saving to localStorage key:', key);
-      localStorage.setItem(key, JSON.stringify(itemsToSave));
-      const saved = localStorage.getItem(key);
-      console.log('Verified saved data:', saved);
-      toast({
-        title: "Checklist Saved",
-        description: "Checklist has been saved for your organization.",
-      });
-    } else {
-      console.error('No familySetupData found in localStorage');
+      key = `checklist_${organizationCode}`;
     }
+    
+    console.log('Saving to localStorage key:', key);
+    localStorage.setItem(key, JSON.stringify(itemsToSave));
+    const saved = localStorage.getItem(key);
+    console.log('Verified saved data:', saved);
+    toast({
+      title: "Checklist Saved",
+      description: "Checklist has been saved.",
+    });
   };
 
   const addNewItem = () => {
