@@ -10,8 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/hooks/useOrganization";
 const CheckIn = () => {
   const { toast } = useToast();
+  const { organization } = useOrganization();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
   const [checklistItems, setChecklistItems] = useState([
@@ -24,61 +27,91 @@ const CheckIn = () => {
   ]);
   const [isEditing, setIsEditing] = useState(false);
   const [newItemLabel, setNewItemLabel] = useState("");
+  const [loading, setLoading] = useState(true);
   const { isAdmin } = useOrgAdmin();
-  console.log('CheckIn component - isAdmin:', isAdmin);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
-  // Load organization-specific checklist on mount
+  // Load checklist from database
   useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    console.log('Loading checklist - familyData:', familyData);
-    
-    // Use organization-specific key if available, otherwise use default key
-    let key = 'checklist_default';
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      console.log('organizationCode:', organizationCode);
-      key = `checklist_${organizationCode}`;
-    }
-    
-    const savedChecklist = localStorage.getItem(key);
-    console.log('Loaded checklist from key:', key, 'data:', savedChecklist);
-    if (savedChecklist) {
-      const parsed = JSON.parse(savedChecklist);
-      console.log('Setting checklist items to:', parsed);
-      setChecklistItems(parsed);
-    }
-  }, []);
+    const loadChecklist = async () => {
+      if (!organization?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('custom_checklists')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('checklist_type', 'arrival')
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error('Error loading checklist:', error);
+          throw error;
+        }
+
+        if (data?.items && Array.isArray(data.items)) {
+          setChecklistItems(data.items as any[]);
+        }
+      } catch (error) {
+        console.error('Failed to load checklist:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load checklist from database",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChecklist();
+  }, [organization?.id]);
   const handleCheckChange = (itemId: string, checked: boolean) => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
   };
 
-  const saveChecklist = (itemsToSave = checklistItems) => {
-    console.log('saveChecklist called with:', itemsToSave);
-    const familyData = localStorage.getItem('familySetupData');
-    console.log('familyData:', familyData);
-    
-    // Use organization-specific key if available, otherwise use default key
-    let key = 'checklist_default';
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      console.log('organizationCode:', organizationCode);
-      key = `checklist_${organizationCode}`;
+  const saveChecklist = async (itemsToSave = checklistItems) => {
+    if (!organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization selected",
+        variant: "destructive"
+      });
+      return;
     }
-    
-    console.log('Saving to localStorage key:', key);
-    localStorage.setItem(key, JSON.stringify(itemsToSave));
-    const saved = localStorage.getItem(key);
-    console.log('Verified saved data:', saved);
-    toast({
-      title: "Checklist Saved",
-      description: "Checklist has been saved.",
-    });
+
+    try {
+      const { error } = await supabase
+        .from('custom_checklists')
+        .upsert({
+          organization_id: organization.id,
+          checklist_type: 'arrival',
+          items: itemsToSave
+        }, {
+          onConflict: 'organization_id,checklist_type'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Checklist Saved",
+        description: "Checklist has been saved to database.",
+      });
+    } catch (error) {
+      console.error('Failed to save checklist:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save checklist",
+        variant: "destructive"
+      });
+    }
   };
 
-  const addNewItem = () => {
-    console.log('addNewItem called - newItemLabel:', newItemLabel);
+  const addNewItem = async () => {
     if (newItemLabel.trim()) {
       const newItem = {
         id: `custom_${Date.now()}`,
@@ -86,17 +119,16 @@ const CheckIn = () => {
         category: "arrival"
       };
       const updatedItems = [...checklistItems, newItem];
-      console.log('Adding new item, updated items:', updatedItems);
       setChecklistItems(updatedItems);
       setNewItemLabel("");
-      saveChecklist(updatedItems);
+      await saveChecklist(updatedItems);
     }
   };
 
-  const deleteItem = (itemId: string) => {
+  const deleteItem = async (itemId: string) => {
     const updatedItems = checklistItems.filter(item => item.id !== itemId);
     setChecklistItems(updatedItems);
-    saveChecklist(updatedItems);
+    await saveChecklist(updatedItems);
     toast({
       title: "Item Deleted",
       description: "Checklist item has been removed.",
@@ -108,25 +140,21 @@ const CheckIn = () => {
     setEditingLabel(item.label);
   };
 
-  const saveEditItem = () => {
-    console.log('saveEditItem called - editingLabel:', editingLabel, 'editingItemId:', editingItemId);
+  const saveEditItem = async () => {
     if (editingLabel.trim() && editingItemId) {
       const updatedItems = checklistItems.map(item => 
         item.id === editingItemId 
           ? { ...item, label: editingLabel.trim() }
           : item
       );
-      console.log('Updated items:', updatedItems);
       setChecklistItems(updatedItems);
       setEditingItemId(null);
       setEditingLabel("");
-      saveChecklist(updatedItems);
+      await saveChecklist(updatedItems);
       toast({
         title: "Item Updated",
         description: "Checklist item has been updated.",
       });
-    } else {
-      console.log('saveEditItem validation failed');
     }
   };
 
@@ -266,16 +294,12 @@ const CheckIn = () => {
                 
                 {isAdmin && (
                   <div className="flex items-center space-x-2">
-                    <div className="text-xs text-muted-foreground">Admin: {String(isAdmin)}</div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        console.log('Done Editing button clicked! isEditing:', isEditing);
-                        console.log('Current checklistItems:', checklistItems);
+                      onClick={async () => {
                         if (isEditing) {
-                          console.log('Calling saveChecklist...');
-                          saveChecklist();
+                          await saveChecklist();
                         }
                         setIsEditing(!isEditing);
                       }}
