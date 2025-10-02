@@ -31,11 +31,17 @@ const CheckIn = () => {
   // Load organization-specific checklist on mount
   useEffect(() => {
     const familyData = localStorage.getItem('familySetupData');
+    console.log('Loading checklist - familyData:', familyData);
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
-      const savedChecklist = localStorage.getItem(`checklist_${organizationCode}`);
+      console.log('organizationCode:', organizationCode);
+      const key = `checklist_${organizationCode}`;
+      const savedChecklist = localStorage.getItem(key);
+      console.log('Loaded checklist from key:', key, 'data:', savedChecklist);
       if (savedChecklist) {
-        setChecklistItems(JSON.parse(savedChecklist));
+        const parsed = JSON.parse(savedChecklist);
+        console.log('Setting checklist items to:', parsed);
+        setChecklistItems(parsed);
       }
     }
   }, []);
@@ -44,14 +50,23 @@ const CheckIn = () => {
   };
 
   const saveChecklist = (itemsToSave = checklistItems) => {
+    console.log('saveChecklist called with:', itemsToSave);
     const familyData = localStorage.getItem('familySetupData');
+    console.log('familyData:', familyData);
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
-      localStorage.setItem(`checklist_${organizationCode}`, JSON.stringify(itemsToSave));
+      console.log('organizationCode:', organizationCode);
+      const key = `checklist_${organizationCode}`;
+      console.log('Saving to localStorage key:', key);
+      localStorage.setItem(key, JSON.stringify(itemsToSave));
+      const saved = localStorage.getItem(key);
+      console.log('Verified saved data:', saved);
       toast({
         title: "Checklist Saved",
         description: "Checklist has been saved for your organization.",
       });
+    } else {
+      console.error('No familySetupData found in localStorage');
     }
   };
 
