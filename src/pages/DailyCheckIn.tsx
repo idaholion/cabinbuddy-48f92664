@@ -178,7 +178,7 @@ const DailyCheckIn = () => {
     });
 
     if (!organization?.id) {
-      console.error('❌ No organization ID');
+      console.error('❌ [DAILY-SAVE] No organization ID');
       toast({
         title: "Error",
         description: "No organization selected.",
@@ -188,7 +188,7 @@ const DailyCheckIn = () => {
     }
 
     try {
-      console.log('🔵 Checking for existing daily tasks record...');
+      console.log('🔵 [DAILY-SAVE] Checking for existing daily tasks record...');
       const { data: existing, error: existingError } = await supabase
         .from('custom_checklists')
         .select('id')
@@ -196,18 +196,18 @@ const DailyCheckIn = () => {
         .eq('checklist_type', 'daily')
         .maybeSingle();
 
-      console.log('🔵 Existing daily check:', { existing, existingError });
+      console.log('🔵 [DAILY-SAVE] Existing daily check:', { existing, existingError });
 
       let result;
       if (existing) {
-        console.log('🔵 Updating existing daily record');
+        console.log('🔵 [DAILY-SAVE] Updating existing daily record, id:', existing.id);
         result = await supabase
           .from('custom_checklists')
-          .update({ items: tasksToSave })
+          .update({ items: tasksToSave, updated_at: new Date().toISOString() })
           .eq('id', existing.id)
           .select();
       } else {
-        console.log('🔵 Inserting new daily record');
+        console.log('🔵 [DAILY-SAVE] Inserting new daily record');
         result = await supabase
           .from('custom_checklists')
           .insert({
@@ -218,20 +218,20 @@ const DailyCheckIn = () => {
           .select();
       }
 
-      console.log('🔵 Daily save result:', result);
+      console.log('🔵 [DAILY-SAVE] Result:', result);
 
       if (result.error) {
-        console.error('❌ Database error:', result.error);
+        console.error('❌ [DAILY-SAVE] Database error:', result.error);
         throw result.error;
       }
 
-      console.log('✅ Daily save successful!');
+      console.log('✅ [DAILY-SAVE] Save successful!');
       toast({
         title: "Daily Tasks Saved",
         description: "Daily task list has been saved.",
       });
     } catch (error: any) {
-      console.error('❌ Daily save error:', error);
+      console.error('❌ [DAILY-SAVE] Save error:', error);
       toast({
         title: "Save Failed",
         description: error.message || "Failed to save daily tasks.",
@@ -241,49 +241,68 @@ const DailyCheckIn = () => {
   };
 
   const addNewTask = async () => {
-    if (newItemLabel.trim()) {
-      const newTask = {
-        id: `custom_${Date.now()}`,
-        label: newItemLabel.trim(),
-        category: "custom"
-      };
-      const updatedTasks = [...dailyTasks, newTask];
-      setDailyTasks(updatedTasks);
-      setNewItemLabel("");
-      await saveDailyTasks(updatedTasks);
+    console.log('🟡 [ADD-TASK] Starting add task');
+    try {
+      if (newItemLabel.trim()) {
+        const newTask = {
+          id: `custom_${Date.now()}`,
+          label: newItemLabel.trim(),
+          category: "custom"
+        };
+        const updatedTasks = [...dailyTasks, newTask];
+        console.log('🟡 [ADD-TASK] New task created, saving...', newTask);
+        setDailyTasks(updatedTasks);
+        setNewItemLabel("");
+        await saveDailyTasks(updatedTasks);
+      }
+    } catch (error) {
+      console.error('❌ [ADD-TASK] Error:', error);
     }
   };
 
   const deleteTask = async (taskId: string) => {
-    const updatedTasks = dailyTasks.filter(task => task.id !== taskId);
-    setDailyTasks(updatedTasks);
-    await saveDailyTasks(updatedTasks);
-    toast({
-      title: "Task Deleted",
-      description: "Daily task has been removed.",
-    });
+    console.log('🔴 [DELETE-TASK] Starting delete task:', taskId);
+    try {
+      const updatedTasks = dailyTasks.filter(task => task.id !== taskId);
+      console.log('🔴 [DELETE-TASK] Filtered tasks, saving...');
+      setDailyTasks(updatedTasks);
+      await saveDailyTasks(updatedTasks);
+      toast({
+        title: "Task Deleted",
+        description: "Daily task has been removed.",
+      });
+    } catch (error) {
+      console.error('❌ [DELETE-TASK] Error:', error);
+    }
   };
 
   const startEditTask = (task: any) => {
+    console.log('✏️ [EDIT-TASK] Starting edit:', task);
     setEditingItemId(task.id);
     setEditingLabel(task.label);
   };
 
   const saveEditTask = async () => {
-    if (editingLabel.trim() && editingItemId) {
-      const updatedTasks = dailyTasks.map(task => 
-        task.id === editingItemId 
-          ? { ...task, label: editingLabel.trim() }
-          : task
-      );
-      setDailyTasks(updatedTasks);
-      setEditingItemId(null);
-      setEditingLabel("");
-      await saveDailyTasks(updatedTasks);
-      toast({
-        title: "Task Updated",
-        description: "Daily task has been updated.",
-      });
+    console.log('💾 [SAVE-EDIT] Starting save edit');
+    try {
+      if (editingLabel.trim() && editingItemId) {
+        const updatedTasks = dailyTasks.map(task => 
+          task.id === editingItemId 
+            ? { ...task, label: editingLabel.trim() }
+            : task
+        );
+        console.log('💾 [SAVE-EDIT] Updated tasks, saving...');
+        setDailyTasks(updatedTasks);
+        setEditingItemId(null);
+        setEditingLabel("");
+        await saveDailyTasks(updatedTasks);
+        toast({
+          title: "Task Updated",
+          description: "Daily task has been updated.",
+        });
+      }
+    } catch (error) {
+      console.error('❌ [SAVE-EDIT] Error:', error);
     }
   };
 
