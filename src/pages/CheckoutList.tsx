@@ -257,6 +257,7 @@ const CheckoutList = () => {
   };
 
   const saveEditSectionTitle = async () => {
+    console.log('📝 [EDIT] saveEditSectionTitle called');
     if (editingSectionTitle.trim() && editingSectionId !== null) {
       const updatedSections = [...checklistSections];
       updatedSections[editingSectionId].title = editingSectionTitle.trim();
@@ -277,6 +278,7 @@ const CheckoutList = () => {
   };
 
   const deleteSection = async (sectionIndex: number) => {
+    console.log('🗑️ [DELETE] deleteSection called for index:', sectionIndex);
     const updatedSections = checklistSections.filter((_, index) => index !== sectionIndex);
     setChecklistSections(updatedSections);
     await saveCheckoutList(updatedSections);
@@ -355,6 +357,7 @@ const CheckoutList = () => {
   };
 
   const addNewTask = async (sectionIndex: number) => {
+    console.log('➕ [ADD-TASK] addNewTask called for section:', sectionIndex, 'label:', newTaskLabel);
     if (newTaskLabel.trim()) {
       const updatedSections = [...checklistSections];
       updatedSections[sectionIndex].tasks.push(newTaskLabel.trim());
@@ -381,6 +384,7 @@ const CheckoutList = () => {
   };
 
   const saveEditTask = async () => {
+    console.log('💾 [SAVE-TASK] saveEditTask called for taskId:', editingTaskId, 'label:', editingLabel);
     if (editingLabel.trim() && editingTaskId) {
       const [sectionIndex, taskIndex] = editingTaskId.split('-').map(Number);
       const updatedSections = [...checklistSections];
