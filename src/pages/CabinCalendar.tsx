@@ -176,6 +176,13 @@ const CabinCalendar = () => {
     currentFamilyGroup,
     getUserUsageInfo
   } = useSequentialSelection(rotationYear);
+  
+  // Get selection status for next year (for the status dropdown)
+  const { 
+    familyStatuses: nextYearStatuses,
+    currentFamilyGroup: nextYearCurrentFamily
+  } = useSequentialSelection(rotationYear + 1);
+  
   const { userFamilyGroup } = useUserRole();
 
   return (
@@ -253,17 +260,47 @@ const CabinCalendar = () => {
                                {rotationYear + 1} Selection Status
                              </div>
                              <div className="space-y-1">
-                               {/* Get next year rotation order (reversed) */}
-                               {rotationData && getRotationForYear(rotationYear + 1).map((familyGroup, index) => {
+                               {nextYearStatuses.map((familyStatus, index) => {
+                                 const getStatusDisplay = () => {
+                                   switch (familyStatus.status) {
+                                     case 'active':
+                                       return {
+                                         icon: '🟢',
+                                         text: familyStatus.dayCountText || 'selecting',
+                                         title: 'Currently selecting'
+                                       };
+                                     case 'completed':
+                                       return {
+                                         icon: '✅',
+                                         text: 'completed',
+                                         title: 'Selection completed'
+                                       };
+                                     case 'waiting':
+                                       return {
+                                         icon: '⏳',
+                                         text: 'waiting',
+                                         title: 'Waiting to select'
+                                       };
+                                     default:
+                                       return {
+                                         icon: '⏳',
+                                         text: 'waiting',
+                                         title: 'Waiting to select'
+                                       };
+                                   }
+                                 };
+                                 
+                                 const statusDisplay = getStatusDisplay();
+                                 
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
                                      <span className="font-semibold w-6">{index + 1}.</span>
-                                     <span className="flex-1">{familyGroup}</span>
+                                     <span className="flex-1">{familyStatus.familyGroup}</span>
                                      <div className="flex items-center gap-1">
-                                       <div title="Waiting to select">
-                                         ⏳
+                                       <div title={statusDisplay.title}>
+                                         {statusDisplay.icon}
                                        </div>
-                                       <span className="text-xs text-muted-foreground">(waiting)</span>
+                                       <span className="text-xs text-muted-foreground">({statusDisplay.text})</span>
                                      </div>
                                    </div>
                                  );
@@ -271,7 +308,9 @@ const CabinCalendar = () => {
                              </div>
                              <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                                <p className="font-medium">Selection begins October 1st</p>
-                               <p>{getRotationForYear(rotationYear + 1)[0]} starts selecting first</p>
+                               {nextYearCurrentFamily && (
+                                 <p>{nextYearCurrentFamily} is currently selecting</p>
+                               )}
                              </div>
                            </div>
                          </SelectContent>
