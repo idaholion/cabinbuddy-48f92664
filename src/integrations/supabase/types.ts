@@ -1788,6 +1788,45 @@ export type Database = {
           },
         ]
       }
+      selection_period_extensions: {
+        Row: {
+          created_at: string
+          extended_by_user_id: string | null
+          extended_until: string
+          extension_reason: string | null
+          family_group: string
+          id: string
+          organization_id: string
+          original_end_date: string
+          rotation_year: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          extended_by_user_id?: string | null
+          extended_until: string
+          extension_reason?: string | null
+          family_group: string
+          id?: string
+          organization_id: string
+          original_end_date: string
+          rotation_year: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          extended_by_user_id?: string | null
+          extended_until?: string
+          extension_reason?: string | null
+          family_group?: string
+          id?: string
+          organization_id?: string
+          original_end_date?: string
+          rotation_year?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shared_notes: {
         Row: {
           category: string

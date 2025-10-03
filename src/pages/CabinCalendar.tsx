@@ -16,6 +16,8 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useSequentialSelection, SelectionStatus } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSelectionExtensions } from "@/hooks/useSelectionExtensions";
+import { ExtendSelectionDialog } from "@/components/ExtendSelectionDialog";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -45,6 +47,9 @@ const CabinCalendar = () => {
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const workWeekendSectionRef = useRef<HTMLDivElement>(null);
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [selectedFamilyForExtension, setSelectedFamilyForExtension] = useState<string | null>(null);
+  const [extensionEndDate, setExtensionEndDate] = useState<Date>(new Date());
 
   // Get user role information
   const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
@@ -220,6 +225,13 @@ const CabinCalendar = () => {
   const nextYearStatuses = getNextYearStatuses();
   const nextYearCurrentFamily = nextYearStatuses.find(s => s.isCurrentTurn)?.familyGroup || null;
   
+  // Get selection period extensions for next year
+  const { 
+    getExtensionForFamily, 
+    createOrUpdateExtension,
+    loading: extensionsLoading 
+  } = useSelectionExtensions(rotationYear + 1);
+  
   const { userFamilyGroup } = useUserRole();
 
   return (
@@ -359,15 +371,48 @@ const CabinCalendar = () => {
                   const startDate = new Date(baseStartDate);
                   startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
                   
-                  const endDate = new Date(startDate);
-                  endDate.setDate(endDate.getDate() + selectionDays - 1);
+                  // Check for extension
+                  const extension = getExtensionForFamily(nextYearCurrentFamily);
+                  const originalEndDate = new Date(startDate);
+                  originalEndDate.setDate(originalEndDate.getDate() + selectionDays - 1);
+                  
+                  const endDate = extension 
+                    ? new Date(extension.extended_until)
+                    : originalEndDate;
                   
                   const formatDate = (date: Date) => {
                     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                   };
                   
+                  const handleExtendClick = () => {
+                    setSelectedFamilyForExtension(nextYearCurrentFamily);
+                    setExtensionEndDate(endDate);
+                    setExtendDialogOpen(true);
+                  };
+                  
                   return (
-                    <p>Selection period: {formatDate(startDate)} - {formatDate(endDate)}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p>Selection period: {formatDate(startDate)} - {formatDate(endDate)}</p>
+                        {(isCalendarKeeper || isGroupLead) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleExtendClick}
+                            className="h-6 px-2 text-xs"
+                          >
+                            <Clock className="h-3 w-3 mr-1" />
+                            Extend
+                          </Button>
+                        )}
+                      </div>
+                      {extension && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          ⚠️ Extended from {formatDate(originalEndDate)}
+                          {extension.extension_reason && ` - ${extension.extension_reason}`}
+                        </p>
+                      )}
+                    </div>
                   );
                 })()}
               </div>
@@ -513,6 +558,35 @@ const CabinCalendar = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            
+            {/* Extend Selection Period Dialog */}
+            {selectedFamilyForExtension && (
+              <ExtendSelectionDialog
+                open={extendDialogOpen}
+                onOpenChange={setExtendDialogOpen}
+                familyGroup={selectedFamilyForExtension}
+                currentEndDate={extensionEndDate}
+                onExtend={async (newEndDate, reason) => {
+                  const selectionDays = rotationData?.selection_days || 7;
+                  const nextYear = rotationYear + 1;
+                  const selectionStartYear = nextYear - 1;
+                  const baseStartDate = new Date(selectionStartYear, 9, 1);
+                  const nextYearOrder = getRotationForYear(nextYear);
+                  const currentFamilyIndex = nextYearOrder.indexOf(selectedFamilyForExtension);
+                  const startDate = new Date(baseStartDate);
+                  startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
+                  const originalEndDate = new Date(startDate);
+                  originalEndDate.setDate(originalEndDate.getDate() + selectionDays - 1);
+                  
+                  await createOrUpdateExtension(
+                    selectedFamilyForExtension,
+                    originalEndDate.toISOString().split('T')[0],
+                    newEndDate,
+                    reason
+                  );
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
