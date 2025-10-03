@@ -138,7 +138,9 @@ export const useReservationConflicts = () => {
     endDate: string | Date,
     familyGroup: string,
     propertyName?: string,
-    excludeReservationId?: string
+    excludeReservationId?: string,
+    isEditMode: boolean = false,
+    adminOverride: boolean = false
   ): Promise<{ isValid: boolean; errors: string[]; warnings: string[] }> => {
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -151,14 +153,28 @@ export const useReservationConflicts = () => {
       errors.push('Check-out date must be after check-in date');
     }
 
-    // Compare dates at midnight to avoid time-of-day issues
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const startDateMidnight = new Date(start);
-    startDateMidnight.setHours(0, 0, 0, 0);
-    
-    if (startDateMidnight < today) {
-      errors.push('Cannot make reservations for past dates');
+    // Past date validation - skip if admin override is enabled
+    if (!adminOverride) {
+      // Compare dates at midnight to avoid time-of-day issues
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startDateMidnight = new Date(start);
+      startDateMidnight.setHours(0, 0, 0, 0);
+      const endDateMidnight = new Date(end);
+      endDateMidnight.setHours(0, 0, 0, 0);
+      
+      // If editing an existing reservation, only check that end date is not in the past
+      // This allows extending reservations that have already started
+      if (isEditMode) {
+        if (endDateMidnight < today) {
+          errors.push('Check-out date cannot be in the past');
+        }
+      } else {
+        // For new reservations, check that start date is not in the past
+        if (startDateMidnight < today) {
+          errors.push('Cannot make reservations for past dates');
+        }
+      }
     }
 
     // Check for conflicts

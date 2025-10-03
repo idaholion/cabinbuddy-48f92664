@@ -106,7 +106,10 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       reservationData.start_date,
       reservationData.end_date,
       reservationData.family_group,
-      reservationData.property_name
+      reservationData.property_name,
+      undefined, // No exclusion for new reservations
+      false, // isEditMode
+      testOverrideMode // adminOverride
     );
 
     if (!validation.isValid) {
@@ -259,7 +262,9 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
         endDate,
         familyGroup,
         updates.property_name || currentReservation?.property_name,
-        reservationId // Exclude current reservation from conflict check
+        reservationId, // Exclude current reservation from conflict check
+        true, // isEditMode
+        testOverrideMode || isCalendarKeeper // adminOverride
       );
 
       if (!validation.isValid) {
