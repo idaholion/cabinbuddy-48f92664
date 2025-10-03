@@ -14,7 +14,7 @@ import { SecondarySelectionManager } from "@/components/SecondarySelectionManage
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
-import { useSequentialSelection } from "@/hooks/useSequentialSelection";
+import { useSequentialSelection, SelectionStatus } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -177,11 +177,48 @@ const CabinCalendar = () => {
     getUserUsageInfo
   } = useSequentialSelection(rotationYear);
   
-  // Get selection status for next year (for the status dropdown)
-  const { 
-    familyStatuses: nextYearStatuses,
-    currentFamilyGroup: nextYearCurrentFamily
-  } = useSequentialSelection(rotationYear + 1);
+  // For next year status, manually calculate since useSequentialSelection shares time period data
+  const getNextYearStatuses = (): Array<{
+    familyGroup: string;
+    status: SelectionStatus;
+    isCurrentTurn: boolean;
+    daysRemaining: number | null;
+    dayCountText?: string;
+  }> => {
+    if (!rotationData) return [];
+    
+    const nextYear = rotationYear + 1;
+    const nextYearOrder = getRotationForYear(nextYear);
+    const today = new Date();
+    
+    // Check if selection period for next year has started
+    // Selection starts on October 1st of the year before (e.g., Oct 1, 2025 for 2026 selection)
+    const selectionStartYear = nextYear - 1;
+    const selectionStartDate = new Date(selectionStartYear, 9, 1); // October 1st (month 9)
+    const selectionHasStarted = today >= selectionStartDate;
+    
+    // If selection hasn't started, everyone is waiting
+    if (!selectionHasStarted) {
+      return nextYearOrder.map(familyGroup => ({
+        familyGroup,
+        status: 'waiting' as SelectionStatus,
+        isCurrentTurn: false,
+        daysRemaining: null
+      }));
+    }
+    
+    // Selection has started, first family in order is selecting, rest are waiting
+    return nextYearOrder.map((familyGroup, index) => ({
+      familyGroup,
+      status: index === 0 ? 'active' as SelectionStatus : 'waiting' as SelectionStatus,
+      isCurrentTurn: index === 0,
+      daysRemaining: null,
+      dayCountText: index === 0 ? 'selecting' : undefined
+    }));
+  };
+  
+  const nextYearStatuses = getNextYearStatuses();
+  const nextYearCurrentFamily = nextYearStatuses.find(s => s.isCurrentTurn)?.familyGroup || null;
   
   const { userFamilyGroup } = useUserRole();
 
