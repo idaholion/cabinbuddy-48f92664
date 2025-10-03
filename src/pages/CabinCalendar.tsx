@@ -148,42 +148,19 @@ const CabinCalendar = () => {
     }
   }, [familyGroups, assignDefaultColorsWithProtection]);
   
-  // Calculate the rotation year based on current calendar month and start month
+  // Calculate the rotation year based on current calendar month being viewed
   const getRotationYear = () => {
     if (!rotationData || !rotationData.start_month) {
       return new Date().getFullYear();
     }
     
     const calendarYear = currentCalendarMonth.getFullYear();
-    const calendarMonthIndex = currentCalendarMonth.getMonth();
     const baseRotationYear = rotationData.rotation_year;
-    const startMonth = rotationData.start_month;
     
-    // Convert month name to number (0-11)
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"];
-    const startMonthIndex = monthNames.indexOf(startMonth);
-    
-    // Calculate which rotation year this calendar month/year represents
-    let rotationYear = baseRotationYear;
-    
-    // If we're before the start month in the current calendar year, use current rotation year
-    if (calendarMonthIndex < startMonthIndex) {
-      rotationYear = baseRotationYear;
-    } else {
-      // If we're at or after the start month, we're viewing next year's rotation
-      rotationYear = baseRotationYear + 1;
-    }
-    
-    // Adjust for years after the base year
-    if (calendarYear > baseRotationYear) {
-      const yearDiff = calendarYear - baseRotationYear;
-      if (calendarMonthIndex >= startMonthIndex) {
-        rotationYear = baseRotationYear + yearDiff;
-      } else {
-        rotationYear = baseRotationYear + yearDiff - 1;
-      }
-    }
+    // The rotation year should match the calendar year being viewed
+    // This ensures 2025 calendar shows 2025 rotation order, regardless of what month we're in
+    const yearsSinceBase = calendarYear - baseRotationYear;
+    const rotationYear = baseRotationYear + yearsSinceBase;
     
     return rotationYear;
   };
