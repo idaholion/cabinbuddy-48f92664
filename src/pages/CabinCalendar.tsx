@@ -343,12 +343,34 @@ const CabinCalendar = () => {
                                  );
                                })}
                              </div>
-                             <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-                               <p className="font-medium">Selection begins October 1st</p>
-                               {nextYearCurrentFamily && (
-                                 <p>{nextYearCurrentFamily} is currently selecting</p>
-                               )}
-                             </div>
+              <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                <p className="font-medium">Selection begins October 1st</p>
+                {nextYearCurrentFamily && (() => {
+                  const selectionDays = rotationData?.selection_days || 7;
+                  const nextYear = rotationYear + 1;
+                  const selectionStartYear = nextYear - 1;
+                  const baseStartDate = new Date(selectionStartYear, 9, 1); // October 1st
+                  
+                  // Calculate how many families have already completed their selection
+                  const nextYearOrder = getRotationForYear(nextYear);
+                  const currentFamilyIndex = nextYearOrder.indexOf(nextYearCurrentFamily);
+                  
+                  // Add days for each family that has already selected
+                  const startDate = new Date(baseStartDate);
+                  startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
+                  
+                  const endDate = new Date(startDate);
+                  endDate.setDate(endDate.getDate() + selectionDays - 1);
+                  
+                  const formatDate = (date: Date) => {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  };
+                  
+                  return (
+                    <p>Selection period: {formatDate(startDate)} - {formatDate(endDate)}</p>
+                  );
+                })()}
+              </div>
                            </div>
                          </SelectContent>
                        </Select>
