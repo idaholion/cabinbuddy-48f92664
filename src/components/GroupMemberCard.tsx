@@ -18,6 +18,7 @@ interface GroupMemberCardProps {
   onRemove: (index: number) => void;
   canRemove: boolean;
   isDragOver?: boolean;
+  onFieldChange?: () => void;
 }
 
 export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
@@ -26,6 +27,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   onRemove,
   canRemove,
   isDragOver = false,
+  onFieldChange,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
   const groupMembers = watch('groupMembers');
@@ -118,10 +120,18 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
               control={control}
               name={`groupMembers.${index}.firstName`}
               render={({ field }) => (
-                <FormItem>
+                 <FormItem>
                    <FormLabel className="text-xl">First Name</FormLabel>
                    <FormControl>
-                     <Input {...field} placeholder="Enter first name" className="text-lg placeholder:text-lg" />
+                     <Input 
+                       {...field} 
+                       placeholder="Enter first name" 
+                       className="text-lg placeholder:text-lg"
+                       onChange={(e) => {
+                         onFieldChange?.();
+                         field.onChange(e);
+                       }}
+                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,7 +145,15 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                 <FormItem>
                    <FormLabel className="text-xl">Last Name</FormLabel>
                    <FormControl>
-                     <Input {...field} placeholder="Enter last name" className="text-lg placeholder:text-lg" />
+                     <Input 
+                       {...field} 
+                       placeholder="Enter last name" 
+                       className="text-lg placeholder:text-lg"
+                       onChange={(e) => {
+                         onFieldChange?.();
+                         field.onChange(e);
+                       }}
+                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -151,7 +169,16 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                 <FormItem>
                    <FormLabel className="text-xl">Email</FormLabel>
                    <FormControl>
-                     <Input {...field} type="email" placeholder="Enter email" className="text-lg placeholder:text-lg" />
+                     <Input 
+                       {...field} 
+                       type="email" 
+                       placeholder="Enter email" 
+                       className="text-lg placeholder:text-lg"
+                       onChange={(e) => {
+                         onFieldChange?.();
+                         field.onChange(e);
+                       }}
+                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +194,10 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                   <FormControl>
                      <PhoneInput 
                        value={field.value}
-                       onChange={field.onChange}
+                       onChange={(value) => {
+                         onFieldChange?.();
+                         field.onChange(value);
+                       }}
                        className="text-lg placeholder:text-lg"
                      />
                   </FormControl>
@@ -189,7 +219,10 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                         type="checkbox"
                         id={`host-${index}`}
                         checked={field.value || false}
-                        onChange={(e) => field.onChange(e.target.checked)}
+                        onChange={(e) => {
+                          onFieldChange?.();
+                          field.onChange(e.target.checked);
+                        }}
                         className="h-4 w-4"
                       />
                     </FormControl>

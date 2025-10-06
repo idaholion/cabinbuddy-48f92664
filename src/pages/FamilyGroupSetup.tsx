@@ -46,6 +46,7 @@ const FamilyGroupSetup = () => {
   const [showAlternateLeadDialog, setShowAlternateLeadDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const hasLoadedAutoSave = useRef(false);
+  const hasUserMadeChanges = useRef(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -72,7 +73,7 @@ const FamilyGroupSetup = () => {
 
   const watchedData = watch();
 
-  // Unsaved changes protection
+  // Unsaved changes protection - track actual user changes
   const { 
     confirmNavigation,
     showNavigationDialog,
@@ -80,7 +81,7 @@ const FamilyGroupSetup = () => {
     handleDiscardAndContinue,
     handleCancelNavigation
   } = useUnsavedChanges({
-    hasUnsavedChanges: isDirty && !isSaving,
+    hasUnsavedChanges: hasUserMadeChanges.current && !isSaving,
     message: "You have unsaved changes to your family group. Are you sure you want to leave?",
     onSave: async () => {
       const formData = getValues();
@@ -119,12 +120,16 @@ const FamilyGroupSetup = () => {
         setValue(key as keyof FamilyGroupSetupFormData, savedData[key], { shouldDirty: false });
       });
       
+      // Reset the form to clear dirty state after loading
+      form.reset(getValues());
+      hasUserMadeChanges.current = false;
+      
       toast({
         title: "Draft Restored",
         description: "Your previous work has been restored from auto-save.",
       });
     }
-  }, [loadSavedData, setValue, toast]);
+  }, [loadSavedData, setValue, toast, form, getValues]);
 
   // Redirect regular group members to their profile page
   useEffect(() => {
@@ -242,7 +247,7 @@ const FamilyGroupSetup = () => {
             canHost: member.canHost || false,
           };
         });
-        setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
+      setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // Automatically copy Group Lead info to Group Member 1
@@ -263,8 +268,13 @@ const FamilyGroupSetup = () => {
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
         ], { shouldDirty: false });
       }
+      
+      // Reset the form to clear dirty state after loading data from database
+      form.reset(getValues());
+      hasUserMadeChanges.current = false;
     } else if (watchedData.selectedGroup === "") {
       form.reset();
+      hasUserMadeChanges.current = false;
     }
   }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
 
@@ -376,6 +386,7 @@ const FamilyGroupSetup = () => {
       }
       
       clearSavedData();
+      hasUserMadeChanges.current = false;
       setIsSaving(false);
       return true;
     } catch (error) {
@@ -568,8 +579,14 @@ const FamilyGroupSetup = () => {
                       <FormControl>
                         <div className="space-y-4">
                           {/* Show dropdown only for admins/supervisors OR users without a family group */}
-                          {(isAdmin || isSupervisor || (!userFamilyGroup && allGroups.length > 0)) ? (
-                            <Select value={field.value} onValueChange={field.onChange}>
+                           {(isAdmin || isSupervisor || (!userFamilyGroup && allGroups.length > 0)) ? (
+                            <Select 
+                              value={field.value} 
+                              onValueChange={(value) => {
+                                hasUserMadeChanges.current = true;
+                                field.onChange(value);
+                              }}
+                            >
                               <SelectTrigger className="w-full text-lg">
                                 <SelectValue placeholder="Select a family group" className="text-lg" />
                               </SelectTrigger>
@@ -703,6 +720,10 @@ const FamilyGroupSetup = () => {
                              placeholder="Family Group Lead's full name"
                              className="text-lg placeholder:text-lg"
                              {...field}
+                             onChange={(e) => {
+                               hasUserMadeChanges.current = true;
+                               field.onChange(e);
+                             }}
                            />
                         </FormControl>
                         <FormMessage />
@@ -720,7 +741,10 @@ const FamilyGroupSetup = () => {
                           <FormControl>
                               <PhoneInput 
                                 value={field.value}
-                                onChange={field.onChange}
+                                onChange={(value) => {
+                                  hasUserMadeChanges.current = true;
+                                  field.onChange(value);
+                                }}
                                 className="text-lg placeholder:text-lg"
                               />
                           </FormControl>
@@ -741,6 +765,10 @@ const FamilyGroupSetup = () => {
                                placeholder="lead@example.com"
                                className="text-lg placeholder:text-lg"
                                {...field}
+                               onChange={(e) => {
+                                 hasUserMadeChanges.current = true;
+                                 field.onChange(e);
+                               }}
                              />
                           </FormControl>
                           <FormMessage />
@@ -798,6 +826,7 @@ const FamilyGroupSetup = () => {
                             control={control}
                             onRemove={removeGroupMember}
                             canRemove={fields.length > 1}
+                            onFieldChange={() => hasUserMadeChanges.current = true}
                           />
                         ))}
                       </div>
@@ -839,7 +868,13 @@ const FamilyGroupSetup = () => {
                          Select which group member serves as the alternate group lead
                        </p>
                       <FormControl>
-                        <Select value={field.value} onValueChange={field.onChange}>
+                        <Select 
+                          value={field.value} 
+                          onValueChange={(value) => {
+                            hasUserMadeChanges.current = true;
+                            field.onChange(value);
+                          }}
+                        >
                            <SelectTrigger className="w-full text-lg">
                              <SelectValue placeholder="Select alternate lead" className="text-lg" />
                            </SelectTrigger>
