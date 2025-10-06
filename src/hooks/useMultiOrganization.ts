@@ -77,8 +77,13 @@ export const useMultiOrganization = () => {
       // Cache the results
       apiCache.set(cacheKeys.userOrganizations(user.id), transformedData);
       
-      // Don't auto-select any organization - let user choose if multiple exist
-      setActiveOrganization(null);
+      // Auto-select if user has exactly one organization
+      if (transformedData.length === 1) {
+        setActiveOrganization(transformedData[0]);
+      } else {
+        // For 0 or 2+ orgs, don't auto-select - let user choose or create
+        setActiveOrganization(null);
+      }
       
     } catch (error) {
       console.error('Error in fetchUserOrganizations:', error);
