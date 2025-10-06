@@ -25,6 +25,7 @@ import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { PageHeader } from "@/components/ui/page-header";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useProfile } from "@/hooks/useProfile";
+import { parseFullName, sanitizeName } from "@/lib/name-utils";
 
 const groupMemberProfileSchema = z.object({
   selectedFamilyGroup: z.string().min(1, "Please select your family group"),
@@ -599,9 +600,15 @@ const GroupMemberProfile = () => {
     try {
       const phoneFormatted = data.phone ? unformatPhoneNumber(data.phone) : "";
       
-      // Update user profile first - this will trigger the sync to family groups
+      // Sanitize and parse the member name
+      const sanitizedName = sanitizeName(selectedGroupMember.name);
+      const { firstName, lastName, displayName } = parseFullName(sanitizedName);
+      
+      // Update user profile first with parsed name fields
       await updateUserProfile({
-        display_name: selectedGroupMember.name,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: displayName,
         family_group: selectedGroup.name,
         family_role: selectedGroupMember.isLead ? 'lead' : 'member'
       });
@@ -697,7 +704,7 @@ const GroupMemberProfile = () => {
           </CardHeader>
           <CardContent className="text-green-700">
             <p className="text-base mb-4">
-              You are linked to <strong>{claimedProfile.member_name}</strong> in the <strong>{claimedProfile.family_group_name}</strong> family group
+              You are linked to the <strong>{claimedProfile.family_group_name}</strong> family group
               {isGroupLead && ' as the Group Lead'}.
             </p>
             {isGroupLead && (
@@ -846,11 +853,20 @@ const GroupMemberProfile = () => {
                                   });
                                   return hasName;
                                 })
-                                .map((member, index) => (
-                                  <SelectItem key={`${member.name}-${index}`} value={member.name}>
-                                    {member.name}{member.isLead && !member.name.includes('(Group Lead)') && ' (Group Lead)'}
-                                  </SelectItem>
-                                ))}
+                                .map((member, index) => {
+                                  const trimmedName = member.name.trim();
+                                  const displayText = member.isLead 
+                                    ? `${trimmedName} (Group Lead)` 
+                                    : trimmedName;
+                                  // Use unique key combining name, email, and type to avoid duplicate warnings
+                                  const uniqueKey = `${trimmedName}-${member.email}-${member.isLead ? 'lead' : 'member'}-${index}`;
+                                  
+                                  return (
+                                    <SelectItem key={uniqueKey} value={trimmedName}>
+                                      {displayText}
+                                    </SelectItem>
+                                  );
+                                })}
                               <SelectItem value="NOT_FOUND" className="text-muted-foreground">
                                 I don&apos;t see my name
                               </SelectItem>

@@ -10,17 +10,18 @@ export interface NameParts {
 
 /**
  * Parse a full name into first name, last name, and display name
+ * Automatically sanitizes the input by trimming and removing extra spaces
  */
 export const parseFullName = (fullName: string): NameParts => {
-  const trimmed = fullName.trim();
-  if (!trimmed) {
+  const sanitized = sanitizeName(fullName);
+  if (!sanitized) {
     return { firstName: '', lastName: '', displayName: '' };
   }
 
-  const parts = trimmed.split(/\s+/);
+  const parts = sanitized.split(/\s+/);
   const firstName = parts[0] || '';
   const lastName = parts.slice(1).join(' ') || '';
-  const displayName = trimmed;
+  const displayName = sanitized;
 
   return { firstName, lastName, displayName };
 };
@@ -41,6 +42,13 @@ export const getInitials = (name: string): string => {
     .map(part => part.charAt(0).toUpperCase())
     .join('')
     .substring(0, 3); // Limit to 3 characters for display
+};
+
+/**
+ * Sanitize a name by trimming and removing extra whitespace
+ */
+export const sanitizeName = (name: string): string => {
+  return name.trim().replace(/\s+/g, ' ');
 };
 
 /**

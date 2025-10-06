@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { parseFullName, sanitizeName } from '@/lib/name-utils';
 
 interface Profile {
   id: string;
@@ -76,11 +77,28 @@ export const useProfile = () => {
     try {
       setUpdating(true);
       
+      // Parse display_name into first/last if not already provided
+      let parsedUpdates = { ...updates };
+      if (updates.display_name && (!updates.first_name || !updates.last_name)) {
+        const { firstName, lastName, displayName } = parseFullName(updates.display_name);
+        parsedUpdates = {
+          ...parsedUpdates,
+          first_name: firstName,
+          last_name: lastName,
+          display_name: displayName,
+        };
+      }
+      
+      // Sanitize all name fields
+      if (parsedUpdates.first_name) parsedUpdates.first_name = sanitizeName(parsedUpdates.first_name);
+      if (parsedUpdates.last_name) parsedUpdates.last_name = sanitizeName(parsedUpdates.last_name);
+      if (parsedUpdates.display_name) parsedUpdates.display_name = sanitizeName(parsedUpdates.display_name);
+      
       // Prepare the profile data
       const profileData = {
         user_id: user.id,
         organization_id: activeOrganization?.organization_id,
-        ...updates,
+        ...parsedUpdates,
         updated_at: new Date().toISOString()
       };
 
