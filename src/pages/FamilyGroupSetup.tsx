@@ -257,16 +257,6 @@ const FamilyGroupSetup = () => {
         hostMembers: selectedFamilyGroup.host_members
       });
       
-      // CRITICAL: Clear ALL form data first to prevent contamination
-      form.reset({
-        selectedGroup: selectedFamilyGroup.name,
-        leadName: "",
-        leadPhone: "",
-        leadEmail: "",
-        groupMembers: [],
-        alternateLeadId: "none"
-      });
-      
       setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "", { shouldDirty: false });
       
