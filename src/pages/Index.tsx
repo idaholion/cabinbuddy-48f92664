@@ -3,7 +3,7 @@ import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCir
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useRobustUserRole } from "@/hooks/useRobustUserRole";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSupervisor } from "@/hooks/useSupervisor";
@@ -33,6 +33,7 @@ const Index = () => {
   const { isGroupLead, isGroupMember, loading: roleLoading } = useRobustUserRole();
   const { activeOrganization } = useRobustMultiOrganization();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   
   // Debug logging
   console.log('🏠 Index (Home) page loading:', {
@@ -47,8 +48,36 @@ const Index = () => {
   // Monitor performance
   usePerformanceMonitoring();
 
-  // Allow regular members to access home page freely
-  // The profile link in the navigation will guide them to their profile when needed
+  // Role-based redirect logic for first-time users after login
+  useEffect(() => {
+    // Don't redirect while loading or if user is not authenticated
+    if (roleLoading || !user) return;
+    
+    // Check if this is a first-time login (no setup completed flag)
+    const hasCompletedSetup = localStorage.getItem('setupCompleted');
+    
+    // Only redirect if user hasn't completed initial setup
+    if (!hasCompletedSetup && activeOrganization) {
+      console.log('🏠 First-time user detected, checking role-based redirect...');
+      
+      // Group leads should go to family group setup
+      if (isGroupLead && !isGroupMember) {
+        console.log('🏠 Redirecting group lead to family-group-setup');
+        navigate('/family-group-setup');
+        return;
+      }
+      
+      // Regular group members should go to profile page to claim their profile
+      if (isGroupMember && !isGroupLead) {
+        console.log('🏠 Redirecting group member to group-member-profile');
+        navigate('/group-member-profile');
+        return;
+      }
+      
+      // Admins stay on home page (they have access to everything)
+      console.log('🏠 Admin user, staying on home page');
+    }
+  }, [user, roleLoading, isGroupLead, isGroupMember, activeOrganization, navigate]);
 
 
 
