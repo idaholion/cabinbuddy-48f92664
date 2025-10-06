@@ -250,9 +250,21 @@ const FamilyGroupSetup = () => {
     if (selectedFamilyGroup) {
       console.log('📝 [FORM_LOAD] Loading data for family group:', {
         groupName: selectedFamilyGroup.name,
+        groupId: selectedFamilyGroup.id,
         leadName: selectedFamilyGroup.lead_name,
         leadEmail: selectedFamilyGroup.lead_email,
-        hostMembersCount: selectedFamilyGroup.host_members?.length || 0
+        hostMembersCount: selectedFamilyGroup.host_members?.length || 0,
+        hostMembers: selectedFamilyGroup.host_members
+      });
+      
+      // CRITICAL: Clear ALL form data first to prevent contamination
+      form.reset({
+        selectedGroup: selectedFamilyGroup.name,
+        leadName: "",
+        leadPhone: "",
+        leadEmail: "",
+        groupMembers: [],
+        alternateLeadId: "none"
       });
       
       setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
@@ -272,19 +284,26 @@ const FamilyGroupSetup = () => {
       
       // Populate host members - DEFENSIVE: Only use data from THIS family group
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
-        console.log('📋 [FORM_LOAD] Populating host members from database:', selectedFamilyGroup.host_members);
+        console.log('📋 [FORM_LOAD] Populating host members from database:', {
+          groupName: selectedFamilyGroup.name,
+          members: selectedFamilyGroup.host_members.map(m => m.name)
+        });
         
-        const formattedHostMembers = selectedFamilyGroup.host_members.map(member => {
+        // Create completely new member objects to avoid any reference issues
+        const formattedHostMembers = selectedFamilyGroup.host_members.map((member, idx) => {
           const { firstName, lastName } = parseFullName(member.name || "");
-          return {
-            firstName,
-            lastName,
+          const newMember = {
+            firstName: firstName || "",
+            lastName: lastName || "",
             name: member.name || "",
             phone: member.phone || "",
             email: member.email || "",
             canHost: member.canHost || false,
           };
+          console.log(`📋 [FORM_LOAD] Member ${idx}:`, newMember);
+          return newMember;
         });
+        
         setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
@@ -292,8 +311,8 @@ const FamilyGroupSetup = () => {
         const leadEmail = selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : "");
         const { firstName, lastName } = parseFullName(selectedFamilyGroup.lead_name || "");
         const leadAsHostMember = {
-          firstName,
-          lastName,
+          firstName: firstName || "",
+          lastName: lastName || "",
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
           email: leadEmail,
@@ -309,7 +328,15 @@ const FamilyGroupSetup = () => {
       }
       
       // Reset the form to clear dirty state after loading data from database
-      form.reset(getValues());
+      const finalValues = getValues();
+      console.log('✅ [FORM_LOAD] Final form values:', {
+        groupName: finalValues.selectedGroup,
+        leadName: finalValues.leadName,
+        memberCount: finalValues.groupMembers?.length,
+        memberNames: finalValues.groupMembers?.map(m => m.name)
+      });
+      
+      form.reset(finalValues);
       hasUserMadeChanges.current = false;
       
       console.log('✅ [FORM_LOAD] Form populated successfully for group:', selectedFamilyGroup.name);
@@ -318,9 +345,11 @@ const FamilyGroupSetup = () => {
       form.reset();
       hasUserMadeChanges.current = false;
     }
-  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
+  }, [selectedFamilyGroup, setValue, form, getValues, user?.email, setShowAllMembers, parseFullName]);
 
-  // Auto-update ONLY Group Member 1 when Group Lead info changes - with defensive checks
+  // Auto-update ONLY Group Member 1 when Group Lead info changes - DISABLED to prevent contamination
+  // This was causing data bleed between family groups
+  /*
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
     const currentSelectedGroup = getValues("selectedGroup");
@@ -373,6 +402,7 @@ const FamilyGroupSetup = () => {
       });
     }
   }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave, trigger]);
+  */
 
   const onSubmit = async (data: FamilyGroupSetupFormData): Promise<boolean> => {
     if (!data.selectedGroup) {
