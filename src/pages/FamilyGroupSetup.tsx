@@ -230,25 +230,8 @@ const FamilyGroupSetup = () => {
 
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
-  
-  // Clear auto-save when switching family groups to prevent data cross-contamination
-  useEffect(() => {
-    const currentSelectedGroup = watchedData.selectedGroup;
-    
-    if (currentSelectedGroup && hasLoadedAutoSave.current) {
-      // Check if there's cached data for a different group
-      const savedData = loadSavedData();
-      if (savedData && savedData.selectedGroup && savedData.selectedGroup !== currentSelectedGroup) {
-        console.warn('🧹 [DATA_SAFETY] Clearing cached data from different group:', {
-          cached: savedData.selectedGroup,
-          current: currentSelectedGroup
-        });
-        clearSavedData();
-      }
-    }
-  }, [watchedData.selectedGroup, loadSavedData, clearSavedData]);
 
-  // Load form data when a family group is selected - with defensive checks
+  // Load form data when a family group is selected
   useEffect(() => {
     if (selectedFamilyGroup) {
       console.log('📝 [FORM_LOAD] Loading data for family group:', {
@@ -257,16 +240,6 @@ const FamilyGroupSetup = () => {
         leadEmail: selectedFamilyGroup.lead_email,
         hostMembersCount: selectedFamilyGroup.host_members?.length || 0
       });
-      
-      // DEFENSIVE CHECK: Clear any cached data that doesn't match this group
-      const currentSelectedGroup = getValues("selectedGroup");
-      if (currentSelectedGroup && currentSelectedGroup !== selectedFamilyGroup.name) {
-        console.warn('⚠️ [FORM_LOAD] Clearing mismatched cached data:', {
-          cached: currentSelectedGroup,
-          actual: selectedFamilyGroup.name
-        });
-        clearSavedData();
-      }
       
       setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "", { shouldDirty: false });
@@ -331,7 +304,7 @@ const FamilyGroupSetup = () => {
       form.reset();
       hasUserMadeChanges.current = false;
     }
-  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email, clearSavedData]);
+  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
 
   // Auto-update ONLY Group Member 1 when Group Lead info changes - with defensive checks
   useEffect(() => {
