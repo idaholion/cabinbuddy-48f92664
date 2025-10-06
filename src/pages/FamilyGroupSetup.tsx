@@ -31,6 +31,8 @@ import { LoadingState } from "@/components/ui/loading-spinner";
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSupervisor } from "@/hooks/useSupervisor";
+import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
+import { useProfile } from "@/hooks/useProfile";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
@@ -40,6 +42,8 @@ const FamilyGroupSetup = () => {
   const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
   const { isGroupLead, userFamilyGroup, isAdmin, loading: roleLoading, isGroupMember } = useUserRole();
   const { isSupervisor } = useSupervisor();
+  const { claimProfile } = useEnhancedProfileClaim(organization?.organization_id);
+  const { updateProfile: updateUserProfile } = useProfile();
   const [showAllMembers, setShowAllMembers] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingGroupName, setEditingGroupName] = useState("");
@@ -453,6 +457,45 @@ const FamilyGroupSetup = () => {
         
         // Refresh family groups data to update user roles
         await refetchFamilyGroups();
+      }
+      
+      // Smart Auto-Claim: If group lead is saving their own group, auto-claim profile
+      const isGroupLeadSavingOwnGroup = 
+        user?.email && 
+        data.leadEmail && 
+        user.email.toLowerCase() === data.leadEmail.toLowerCase() &&
+        !isAdmin && 
+        !isSupervisor;
+      
+      if (isGroupLeadSavingOwnGroup) {
+        try {
+          console.log('🔐 Auto-claiming profile for group lead:', {
+            familyGroup: data.selectedGroup,
+            memberName: data.leadName,
+            userEmail: user.email
+          });
+          
+          // Create/update profile in profiles table
+          await updateUserProfile({
+            first_name: data.leadName?.split(' ')[0] || '',
+            last_name: data.leadName?.split(' ').slice(1).join(' ') || '',
+            display_name: data.leadName || '',
+            family_group: data.selectedGroup,
+            organization_id: organization?.organization_id
+          });
+          
+          // Auto-claim the profile link
+          await claimProfile(
+            data.selectedGroup, 
+            data.leadName || '', 
+            'group_lead'
+          );
+          
+          console.log('✅ Profile auto-claimed successfully');
+        } catch (error) {
+          console.error('❌ Auto-claim error:', error);
+          // Don't show error toast - this is a background operation
+        }
       }
       
       clearSavedData();
