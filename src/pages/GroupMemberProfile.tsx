@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home, UserCircle } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -886,6 +886,30 @@ const GroupMemberProfile = () => {
                        </FormItem>
                     );
                   }}
+                />
+              )}
+
+              {/* Editable Name Field */}
+              {selectedGroupMember && (
+                <FormField
+                  control={form.control}
+                  name="selectedMemberName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Your Name (Editable)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field}
+                          placeholder="Edit your name if needed"
+                          className="text-base placeholder:text-base"
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        You can edit your name here if you need to change the format or fix any issues
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               )}
 
