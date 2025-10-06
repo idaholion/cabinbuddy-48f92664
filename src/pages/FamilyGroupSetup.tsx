@@ -89,11 +89,15 @@ const FamilyGroupSetup = () => {
     }
   });
 
-  // Auto-save form data
+  // Auto-save form data with group-specific keys to prevent cross-contamination
+  const autoSaveKey = watchedData.selectedGroup 
+    ? `family-group-setup-${watchedData.selectedGroup}` 
+    : 'family-group-setup';
+    
   const { loadSavedData, clearSavedData } = useAutoSave({
-    key: 'family-group-setup',
+    key: autoSaveKey,
     data: watchedData,
-    enabled: true, // Always enable auto-save
+    enabled: true,
   });
 
   // Drag and drop sensors
@@ -108,6 +112,16 @@ const FamilyGroupSetup = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Clear stale auto-save data on mount
+  useEffect(() => {
+    // Clear any old generic auto-save keys that could cause contamination
+    const oldKeys = ['family-group-setup'];
+    oldKeys.forEach(key => {
+      const storageKey = `auto-save-${key}-${user?.id}`;
+      localStorage.removeItem(storageKey);
+    });
+  }, [user?.id]);
 
   // Load auto-saved data on mount (only once) with validation
   useEffect(() => {
@@ -144,7 +158,7 @@ const FamilyGroupSetup = () => {
     } else {
       hasLoadedAutoSave.current = true;
     }
-  }, [loadSavedData, setValue, toast, form, getValues, familyGroups, clearSavedData]);
+  }, [loadSavedData, setValue, toast, form, getValues, familyGroups, clearSavedData, user?.id]);
 
   // Redirect regular group members to their profile page
   useEffect(() => {
