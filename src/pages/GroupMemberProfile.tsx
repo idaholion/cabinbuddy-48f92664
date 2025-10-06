@@ -158,12 +158,16 @@ const GroupMemberProfile = () => {
           const hostMembers = (group.host_members || [])
             .filter((member: any) => {
               const hasName = member.name && member.name.trim();
+              // Filter out the lead to prevent duplicates
+              const isNotLead = member.name !== group.lead_name;
               console.log('🚨 CHECKING HOST MEMBER:', {
                 member,
                 hasName,
-                memberName: member.name
+                isNotLead,
+                memberName: member.name,
+                leadName: group.lead_name
               });
-              return hasName;
+              return hasName && isNotLead;
             })
             .map((member: any) => ({ 
               name: member.name, 
