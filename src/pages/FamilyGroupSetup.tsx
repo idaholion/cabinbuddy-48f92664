@@ -109,12 +109,25 @@ const FamilyGroupSetup = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Load auto-saved data on mount (only once)
+  // Load auto-saved data on mount (only once) with validation
   useEffect(() => {
     if (hasLoadedAutoSave.current) return;
     
     const savedData = loadSavedData();
+    console.log('🔍 [AUTO_SAVE_LOAD] Loaded saved data:', savedData);
+    
     if (savedData && savedData.selectedGroup) {
+      // Verify that the saved data belongs to an existing family group
+      const groupExists = familyGroups.some(g => g.name === savedData.selectedGroup);
+      
+      if (!groupExists) {
+        console.warn('⚠️ [AUTO_SAVE_LOAD] Saved data references non-existent group, clearing:', savedData.selectedGroup);
+        clearSavedData();
+        hasLoadedAutoSave.current = true;
+        return;
+      }
+      
+      console.log('✅ [AUTO_SAVE_LOAD] Restoring auto-saved data for group:', savedData.selectedGroup);
       hasLoadedAutoSave.current = true;
       Object.keys(savedData).forEach((key) => {
         setValue(key as keyof FamilyGroupSetupFormData, savedData[key], { shouldDirty: false });
@@ -128,8 +141,10 @@ const FamilyGroupSetup = () => {
         title: "Draft Restored",
         description: "Your previous work has been restored from auto-save.",
       });
+    } else {
+      hasLoadedAutoSave.current = true;
     }
-  }, [loadSavedData, setValue, toast, form, getValues]);
+  }, [loadSavedData, setValue, toast, form, getValues, familyGroups, clearSavedData]);
 
   // Redirect regular group members to their profile page
   useEffect(() => {
@@ -215,10 +230,44 @@ const FamilyGroupSetup = () => {
 
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
+  
+  // Clear auto-save when switching family groups to prevent data cross-contamination
+  useEffect(() => {
+    const currentSelectedGroup = watchedData.selectedGroup;
+    
+    if (currentSelectedGroup && hasLoadedAutoSave.current) {
+      // Check if there's cached data for a different group
+      const savedData = loadSavedData();
+      if (savedData && savedData.selectedGroup && savedData.selectedGroup !== currentSelectedGroup) {
+        console.warn('🧹 [DATA_SAFETY] Clearing cached data from different group:', {
+          cached: savedData.selectedGroup,
+          current: currentSelectedGroup
+        });
+        clearSavedData();
+      }
+    }
+  }, [watchedData.selectedGroup, loadSavedData, clearSavedData]);
 
-  // Load form data when a family group is selected
+  // Load form data when a family group is selected - with defensive checks
   useEffect(() => {
     if (selectedFamilyGroup) {
+      console.log('📝 [FORM_LOAD] Loading data for family group:', {
+        groupName: selectedFamilyGroup.name,
+        leadName: selectedFamilyGroup.lead_name,
+        leadEmail: selectedFamilyGroup.lead_email,
+        hostMembersCount: selectedFamilyGroup.host_members?.length || 0
+      });
+      
+      // DEFENSIVE CHECK: Clear any cached data that doesn't match this group
+      const currentSelectedGroup = getValues("selectedGroup");
+      if (currentSelectedGroup && currentSelectedGroup !== selectedFamilyGroup.name) {
+        console.warn('⚠️ [FORM_LOAD] Clearing mismatched cached data:', {
+          cached: currentSelectedGroup,
+          actual: selectedFamilyGroup.name
+        });
+        clearSavedData();
+      }
+      
       setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
       setValue("leadPhone", selectedFamilyGroup.lead_phone || "", { shouldDirty: false });
       
@@ -234,8 +283,10 @@ const FamilyGroupSetup = () => {
         shouldTouch: true 
       });
       
-      // Populate host members
+      // Populate host members - DEFENSIVE: Only use data from THIS family group
       if (selectedFamilyGroup.host_members && selectedFamilyGroup.host_members.length > 0) {
+        console.log('📋 [FORM_LOAD] Populating host members from database:', selectedFamilyGroup.host_members);
+        
         const formattedHostMembers = selectedFamilyGroup.host_members.map(member => {
           const { firstName, lastName } = parseFullName(member.name || "");
           return {
@@ -247,7 +298,7 @@ const FamilyGroupSetup = () => {
             canHost: member.canHost || false,
           };
         });
-      setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
+        setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // Automatically copy Group Lead info to Group Member 1
@@ -262,6 +313,7 @@ const FamilyGroupSetup = () => {
           canHost: true // Group leads can always host
         };
         
+        console.log('📋 [FORM_LOAD] Creating default member list with lead:', leadAsHostMember);
         setValue("groupMembers", [
           leadAsHostMember,
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
@@ -272,23 +324,33 @@ const FamilyGroupSetup = () => {
       // Reset the form to clear dirty state after loading data from database
       form.reset(getValues());
       hasUserMadeChanges.current = false;
+      
+      console.log('✅ [FORM_LOAD] Form populated successfully for group:', selectedFamilyGroup.name);
     } else if (watchedData.selectedGroup === "") {
+      console.log('🔄 [FORM_LOAD] Clearing form - no group selected');
       form.reset();
       hasUserMadeChanges.current = false;
     }
-  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email]);
+  }, [selectedFamilyGroup, setValue, form, watchedData.selectedGroup, getValues, user?.email, clearSavedData]);
 
-  // Auto-update ONLY Group Member 1 when Group Lead info changes
+  // Auto-update ONLY Group Member 1 when Group Lead info changes - with defensive checks
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
+    const currentSelectedGroup = getValues("selectedGroup");
     
     console.log('🔍 [AUTO_UPDATE_CHECK] Effect triggered:', {
       hasGroupMembers: !!currentGroupMembers?.length,
       leadName: watchedData.leadName,
       leadEmail: watchedData.leadEmail,
       hasLoadedAutoSave: hasLoadedAutoSave.current,
-      selectedGroup: watchedData.selectedGroup
+      selectedGroup: currentSelectedGroup
     });
+    
+    // DEFENSIVE CHECK: Don't update if no group is selected or if data doesn't match
+    if (!currentSelectedGroup || currentSelectedGroup === "") {
+      console.log('⏸️ [AUTO_UPDATE_CHECK] Skipping - no group selected');
+      return;
+    }
     
     // Only update if we have group members and any lead info
     // Allow updates for both new groups and existing groups when lead info changes
@@ -315,14 +377,15 @@ const FamilyGroupSetup = () => {
       // Trigger form validation to ensure the changes are recognized
       trigger("groupMembers");
       
-      console.log('✅ [FAMILY_GROUP_SETUP] Updated ONLY first group member with lead info:', {
+      console.log('✅ [AUTO_UPDATE] Updated ONLY first group member with lead info for group:', {
+        groupName: currentSelectedGroup,
         leadName: watchedData.leadName,
         leadEmail: watchedData.leadEmail,
         memberIndex: 0,
         totalMembers: updatedGroupMembers.length
       });
     }
-  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave]);
+  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave, trigger]);
 
   const onSubmit = async (data: FamilyGroupSetupFormData): Promise<boolean> => {
     if (!data.selectedGroup) {
