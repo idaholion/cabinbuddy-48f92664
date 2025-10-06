@@ -38,6 +38,7 @@ const FamilySetup = React.lazy(() => import("./pages/FamilySetup"));
 const FamilyGroupSetup = React.lazy(() => import("./pages/FamilyGroupSetup"));
 const GroupMemberProfile = React.lazy(() => import("./pages/GroupMemberProfile"));
 const FinancialDashboard = React.lazy(() => import("./pages/FinancialDashboard"));
+const SurveyResponses = React.lazy(() => import("./pages/SurveyResponses"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
 const UseFeeSetupPage = React.lazy(() => import("./pages/UseFeeSetupPage"));
 const GoogleCalendarSetup = React.lazy(() => import("./pages/GoogleCalendarSetup"));
@@ -138,6 +139,7 @@ const AppContent = () => {
         <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/group-member-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GroupMemberProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/survey-responses" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SurveyResponses /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/google-calendar-setup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-treasurer" element={<Navigate to="/finance-reports" replace />} />

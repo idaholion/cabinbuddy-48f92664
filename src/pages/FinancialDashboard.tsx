@@ -12,7 +12,7 @@ import { ExpenseTracker } from "@/components/ExpenseTracker";
 import PaymentTracker from "@/components/PaymentTracker";
 import { RecurringBills } from "@/components/RecurringBills";
 import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw, History } from "lucide-react";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw, History, FileBarChart } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useConversationReminders } from "@/hooks/useConversationReminders";
@@ -137,7 +137,7 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-6 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-2 text-base">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
@@ -157,6 +157,10 @@ const FinancialDashboard = () => {
                 <TabsTrigger value="reports" className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4" />
                   Financial Reports
+                </TabsTrigger>
+                <TabsTrigger value="survey" className="flex items-center gap-2 text-base">
+                  <FileBarChart className="h-4 w-4" />
+                  Survey Data
                 </TabsTrigger>
               </TabsList>
 
@@ -320,6 +324,29 @@ const FinancialDashboard = () => {
                     </Card>
                   </div>
                 )}
+              </TabsContent>
+
+              {/* Survey Data Tab */}
+              <TabsContent value="survey" className="p-6 pt-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Economic Survey Data</CardTitle>
+                    <CardDescription>
+                      View detailed survey responses on the dedicated page
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Survey data from checkout processes is available for review, showing economic impact in the local area.
+                    </p>
+                    <Button asChild>
+                      <Link to="/survey-responses">
+                        <FileBarChart className="h-4 w-4 mr-2" />
+                        View Survey Responses
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </CardContent>

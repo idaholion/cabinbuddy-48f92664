@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useSurveyResponses } from "@/hooks/useChecklistData";
+import { useProfile } from "@/hooks/useProfile";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
 
@@ -21,6 +23,8 @@ const CheckoutList = () => {
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
+  const { createResponse } = useSurveyResponses();
+  const { profile } = useProfile();
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
@@ -425,8 +429,8 @@ const CheckoutList = () => {
   const progressPercentage = (completedTasks / totalTasks) * 100;
   const isChecklistComplete = totalTasks > 0 && completedTasks === totalTasks;
 
-  // Save checklist completion status
-  const saveChecklistCompletion = () => {
+  // Save checklist completion status and survey responses
+  const saveChecklistCompletion = async () => {
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
@@ -442,6 +446,19 @@ const CheckoutList = () => {
         title: "Checklist Saved",
         description: `Checkout checklist saved (${completedTasks}/${totalTasks} tasks completed)`,
       });
+      
+      // Save survey responses to database if any data was entered
+      if (Object.keys(surveyData).length > 0 && Object.values(surveyData).some(val => val)) {
+        try {
+          await createResponse({
+            family_group: profile?.family_group || 'Unknown',
+            responses: surveyData
+          });
+          console.log('✅ Survey responses saved to database');
+        } catch (error) {
+          console.error('❌ Failed to save survey responses:', error);
+        }
+      }
     }
   };
 

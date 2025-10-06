@@ -36,6 +36,7 @@ export interface SurveyResponse {
   user_id?: string;
   family_group?: string;
   responses: Record<string, any>;
+  created_at?: string;
 }
 
 // Type conversion helpers
@@ -66,7 +67,8 @@ const mapDbResponseToSurveyResponse = (dbResponse: DbSurveyResponse): SurveyResp
   organization_id: dbResponse.organization_id,
   user_id: dbResponse.user_id || undefined,
   family_group: dbResponse.family_group || undefined,
-  responses: typeof dbResponse.responses === 'object' ? dbResponse.responses as Record<string, any> : {}
+  responses: typeof dbResponse.responses === 'object' ? dbResponse.responses as Record<string, any> : {},
+  created_at: dbResponse.created_at
 });
 
 // Custom hook for checklists
