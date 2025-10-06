@@ -835,8 +835,8 @@ const GroupMemberProfile = () => {
                     });
                     return (
                       <FormItem>
-                        <FormLabel className="text-base">Select Your Name</FormLabel>
-                         <Select onValueChange={field.onChange} value={field.value} disabled={autoPopulated && !!selectedGroupMember}>
+                         <FormLabel className="text-base">Select Your Name</FormLabel>
+                         <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className={autoPopulated && selectedGroupMember ? "text-base text-foreground font-medium" : "text-base"}>
                                   <SelectValue 
