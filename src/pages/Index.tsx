@@ -48,16 +48,19 @@ const Index = () => {
   // Monitor performance
   usePerformanceMonitoring();
 
-  // Role-based redirect logic for first-time users after login
+  // Role-based redirect logic for first-time users after login (only on initial mount)
   useEffect(() => {
     // Don't redirect while loading or if user is not authenticated
     if (roleLoading || !user) return;
     
+    // Check if we've already shown the home page in this session
+    const hasSeenHomePage = sessionStorage.getItem('hasSeenHomePage');
+    
     // Check if this is a first-time login (no setup completed flag)
     const hasCompletedSetup = localStorage.getItem('setupCompleted');
     
-    // Only redirect if user hasn't completed initial setup
-    if (!hasCompletedSetup && activeOrganization) {
+    // Only redirect if user hasn't completed initial setup AND hasn't seen home page yet in this session
+    if (!hasCompletedSetup && !hasSeenHomePage && activeOrganization) {
       console.log('🏠 First-time user detected, checking role-based redirect...');
       
       // Group leads should go to family group setup
@@ -77,6 +80,9 @@ const Index = () => {
       // Admins stay on home page (they have access to everything)
       console.log('🏠 Admin user, staying on home page');
     }
+    
+    // Mark that user has seen the home page in this session
+    sessionStorage.setItem('hasSeenHomePage', 'true');
   }, [user, roleLoading, isGroupLead, isGroupMember, activeOrganization, navigate]);
 
 
