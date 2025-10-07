@@ -232,6 +232,11 @@ export const useSeasonSummary = (seasonYear?: number) => {
               endDate: new Date(reservation.end_date),
             }
           );
+          
+          // Apply manual adjustment if billing is locked
+          if (payment.billing_locked && payment.manual_adjustment_amount !== undefined) {
+            billing.total = (payment.amount || 0) + (payment.manual_adjustment_amount || 0);
+          }
 
           // Calculate actual guest averages from payment data
           payment.daily_occupancy.forEach((day: any) => {
@@ -268,7 +273,16 @@ export const useSeasonSummary = (seasonYear?: number) => {
             totalActualDays++;
           });
         } 
-        // Priority 3: Fallback to reserved guests if no occupancy data
+        // Priority 3: Use payment amount directly if it exists and billing is locked
+        else if (payment?.amount && payment.billing_locked) {
+          billing = {
+            total: (payment.amount || 0) + (payment.manual_adjustment_amount || 0),
+            breakdown: {
+              note: 'Using locked payment amount'
+            }
+          };
+        }
+        // Priority 4: Fallback to reserved guests if no occupancy data
         else {
           billing = BillingCalculator.calculateStayBilling(
             {
@@ -478,9 +492,48 @@ export const useSeasonSummary = (seasonYear?: number) => {
   };
 
   const updateOccupancy = async (paymentId: string, occupancy: any[]) => {
+    if (!financialSettings) {
+      throw new Error('Financial settings not loaded');
+    }
+
+    // Get the payment and reservation details
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .select('*, reservations(*)')
+      .eq('id', paymentId)
+      .single();
+
+    if (paymentError) throw paymentError;
+
+    // Calculate billing from the new occupancy data
+    const dailyOccupancy: Record<string, number> = {};
+    occupancy.forEach((day: any) => {
+      dailyOccupancy[day.date] = day.guests || 0;
+    });
+
+    const billing = BillingCalculator.calculateFromDailyOccupancy(
+      {
+        method: financialSettings.billing_method as any || 'per_person_per_night',
+        amount: financialSettings.billing_amount || 0,
+        taxRate: financialSettings.tax_rate,
+        cleaningFee: financialSettings.cleaning_fee,
+        petFee: financialSettings.pet_fee,
+        damageDeposit: financialSettings.damage_deposit,
+      },
+      dailyOccupancy,
+      {
+        startDate: new Date(payment.reservations.start_date),
+        endDate: new Date(payment.reservations.end_date),
+      }
+    );
+
+    // Update both occupancy and amount
     const { error } = await supabase
       .from('payments')
-      .update({ daily_occupancy: occupancy })
+      .update({ 
+        daily_occupancy: occupancy,
+        amount: billing.total
+      })
       .eq('id', paymentId);
 
     if (error) throw error;
