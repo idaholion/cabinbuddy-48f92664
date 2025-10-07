@@ -47,17 +47,6 @@ export const EditOccupancyDialog = ({
     });
   };
 
-  const handleNamesChange = (dateStr: string, namesStr: string) => {
-    setOccupancy(prev => {
-      const names = namesStr.split(',').map(n => n.trim()).filter(Boolean);
-      const existing = prev.find(o => o.date === dateStr);
-      if (existing) {
-        return prev.map(o => o.date === dateStr ? { ...o, names } : o);
-      }
-      return [...prev, { date: dateStr, guests: names.length, names }];
-    });
-  };
-
   const getOccupancyForDate = (dateStr: string) => {
     return occupancy.find(o => o.date === dateStr);
   };
@@ -98,29 +87,16 @@ export const EditOccupancyDialog = ({
               <div key={dateStr} className="border rounded-lg p-4 space-y-3">
                 <h4 className="font-medium">{format(day, 'EEEE, MMM d')}</h4>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor={`guests-${dateStr}`}>Number of Guests</Label>
-                    <Input
-                      id={`guests-${dateStr}`}
-                      type="number"
-                      min="0"
-                      value={dayOccupancy?.guests || 0}
-                      onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
-                      className="mt-1"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor={`names-${dateStr}`}>Guest Names (comma-separated)</Label>
-                    <Input
-                      id={`names-${dateStr}`}
-                      value={dayOccupancy?.names?.join(', ') || ''}
-                      onChange={(e) => handleNamesChange(dateStr, e.target.value)}
-                      placeholder="John, Jane, Bob"
-                      className="mt-1"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor={`guests-${dateStr}`}>Number of Guests</Label>
+                  <Input
+                    id={`guests-${dateStr}`}
+                    type="number"
+                    min="0"
+                    value={dayOccupancy?.guests || 0}
+                    onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
+                    className="mt-1"
+                  />
                 </div>
               </div>
             );
