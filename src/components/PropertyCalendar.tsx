@@ -412,6 +412,40 @@ const getBookingsForDate = (date: Date) => {
     );
   };
 
+  // Check if a date is available for booking (no bookings or only checkout days)
+  const isDateAvailableForBooking = (date: Date) => {
+    const bookingsOnDate = reservations.filter(reservation => {
+      const startDate = parseLocalDate(reservation.start_date);
+      const endDate = parseLocalDate(reservation.end_date);
+      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      return checkDate >= reservationStart && checkDate <= reservationEnd;
+    });
+    
+    if (bookingsOnDate.length === 0) return true;
+    
+    // If there are bookings, check if this date is ONLY an end date (checkout day)
+    const isOnlyCheckoutDay = bookingsOnDate.every(booking => {
+      const endDate = parseLocalDate(booking.end_date);
+      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return reservationEnd.toDateString() === checkDate.toDateString();
+    });
+    
+    return isOnlyCheckoutDay;
+  };
+
+  // Check if a date is a checkout day (visual indicator)
+  const isCheckoutDay = (date: Date, bookings: typeof reservations) => {
+    return bookings.length > 0 && bookings.every(booking => {
+      const endDate = parseLocalDate(booking.end_date);
+      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      return reservationEnd.toDateString() === date.toDateString();
+    });
+  };
+
   // Date selection handlers
   // Validate if a date is selectable based on time period constraints
   const isDateSelectable = (date: Date): { selectable: boolean; reason?: string } => {
@@ -1014,6 +1048,8 @@ const getBookingsForDate = (date: Date) => {
                 const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
                 const hasWorkWeekend = dayWorkWeekends.length > 0;
                 const isSelected = isDateSelected(day);
+                const isAvailableForDrag = isDateAvailableForBooking(day);
+                const isCheckout = isCheckoutDay(day, dayBookings);
                 
                 return (
                   <div
@@ -1030,10 +1066,16 @@ const getBookingsForDate = (date: Date) => {
                       hasWorkWeekend ? 'bg-green-50 border-green-200' : ''
                     } ${
                       isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
-                    } hover:bg-accent/10 hover:shadow-cabin ${dayBookings.length > 0 ? '' : 'cursor-pointer'} group`}
-                    onClick={dayBookings.length > 0 ? undefined : () => handleDateClick(day)}
-                    onMouseDown={dayBookings.length > 0 ? undefined : (e) => handleDateMouseDown(day, e)}
-                    onMouseEnter={dayBookings.length > 0 ? undefined : () => handleDateMouseEnter(day)}
+                    } ${
+                      isCheckout ? 'border-l-2 border-l-blue-400 border-dashed' : ''
+                    } hover:bg-accent/10 hover:shadow-cabin ${isAvailableForDrag ? 'cursor-pointer' : ''} group`}
+                    onClick={isAvailableForDrag ? () => handleDateClick(day) : () => {
+                      if (dayBookings.length > 0) {
+                        handleEditReservation(dayBookings[0]);
+                      }
+                    }}
+                    onMouseDown={isAvailableForDrag ? (e) => handleDateMouseDown(day, e) : undefined}
+                    onMouseEnter={isAvailableForDrag ? () => handleDateMouseEnter(day) : undefined}
                   >
                     <div className={`text-sm font-medium ${
                       !isCurrentMonth ? 'text-muted-foreground' : isToday ? 'text-primary' : 'text-foreground'
