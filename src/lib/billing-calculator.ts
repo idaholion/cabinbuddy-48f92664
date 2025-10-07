@@ -127,4 +127,93 @@ export class BillingCalculator {
       currency: 'USD',
     }).format(amount);
   }
+
+  /**
+   * Calculate billing from daily occupancy data (actual guest counts per day)
+   */
+  static calculateFromDailyOccupancy(
+    config: BillingConfig,
+    dailyOccupancyData: Record<string, number>, // { "day-1": 4, "day-2": 3, etc. }
+    stayDates: { startDate: Date; endDate: Date }
+  ): BillingBreakdown & { dayBreakdown: Array<{ date: string; guests: number; cost: number }> } {
+    const dayBreakdown: Array<{ date: string; guests: number; cost: number }> = [];
+    let baseAmount = 0;
+
+    // Calculate per-day based on billing method
+    const days = Object.keys(dailyOccupancyData).sort();
+    
+    if (days.length === 0) {
+      // Fallback to standard calculation if no daily data
+      const nights = Math.ceil((stayDates.endDate.getTime() - stayDates.startDate.getTime()) / (1000 * 3600 * 24));
+      return {
+        ...this.calculateStayBilling(config, {
+          guests: 0,
+          nights,
+          checkInDate: stayDates.startDate,
+          checkOutDate: stayDates.endDate
+        }),
+        dayBreakdown: []
+      };
+    }
+
+    // Calculate cost for each day
+    days.forEach((dayKey, index) => {
+      const guests = dailyOccupancyData[dayKey] || 0;
+      const date = new Date(stayDates.startDate);
+      date.setDate(date.getDate() + index);
+      
+      let dayCost = 0;
+      
+      switch (config.method) {
+        case 'per-person-per-day':
+          dayCost = guests * config.amount;
+          break;
+          
+        case 'per-person-per-week':
+          // Pro-rate weekly cost to daily
+          dayCost = (guests * config.amount) / 7;
+          break;
+          
+        case 'flat-rate-per-day':
+          dayCost = config.amount;
+          break;
+          
+        case 'flat-rate-per-week':
+          // Pro-rate weekly cost to daily
+          dayCost = config.amount / 7;
+          break;
+          
+        default:
+          dayCost = 0;
+      }
+      
+      baseAmount += dayCost;
+      dayBreakdown.push({
+        date: date.toISOString().split('T')[0],
+        guests,
+        cost: dayCost
+      });
+    });
+
+    // Add fees and calculate totals
+    const cleaningFee = config.cleaningFee || 0;
+    const petFee = config.petFee || 0;
+    const damageDeposit = config.damageDeposit || 0;
+    
+    const subtotal = baseAmount + cleaningFee + petFee;
+    const tax = config.taxRate ? (subtotal * config.taxRate) / 100 : 0;
+    const total = subtotal + tax + damageDeposit;
+
+    return {
+      baseAmount,
+      cleaningFee,
+      petFee,
+      damageDeposit,
+      subtotal,
+      tax,
+      total,
+      details: `Calculated from ${days.length} days of actual occupancy`,
+      dayBreakdown
+    };
+  }
 }

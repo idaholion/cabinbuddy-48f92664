@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History, Clock } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History, Clock, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +10,7 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
+import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -146,11 +147,49 @@ const CheckoutFinal = () => {
     return BillingCalculator.calculateStayBilling(billingConfig, stayDetails);
   };
 
+  // Use new billing hook for daily occupancy
+  const billingConfig = financialSettings ? {
+    method: financialSettings.billing_method as any,
+    amount: financialSettings.billing_amount,
+    taxRate: financialSettings.tax_rate,
+    cleaningFee: financialSettings.cleaning_fee,
+    petFee: financialSettings.pet_fee,
+    damageDeposit: financialSettings.damage_deposit,
+  } : null;
+
+  const { 
+    dailyBreakdown, 
+    billing: enhancedBilling, 
+    totalDays,
+    averageGuests,
+    loading: billingLoading,
+    createDeferredPayment 
+  } = useCheckoutBilling(
+    currentReservation?.id,
+    checkInDate,
+    checkOutDate,
+    checkoutData.guests,
+    billingConfig
+  );
+
   const billing = calculateBilling();
-  const totalAmount = Math.max(0, billing.total - checkoutData.receiptsTotal);
+  const totalAmount = Math.max(0, enhancedBilling.total - checkoutData.receiptsTotal);
+
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+
+  const handlePayLater = async () => {
+    setIsCreatingPayment(true);
+    const success = await createDeferredPayment();
+    setIsCreatingPayment(false);
+    
+    if (success) {
+      // Navigate to home or stay history after successful deferral
+      setTimeout(() => navigate("/stay-history"), 1500);
+    }
+  };
 
   // Show loading state if any data is still loading
-  const isLoading = sessionsLoading || surveyLoading || financialLoading || receiptsLoading || reservationsLoading;
+  const isLoading = sessionsLoading || surveyLoading || financialLoading || receiptsLoading || reservationsLoading || billingLoading;
 
   // Check if we have the necessary data to show checkout
   const hasStayData = currentReservation && checkoutData.checkInDate && checkoutData.checkOutDate;
@@ -327,12 +366,56 @@ const CheckoutFinal = () => {
                       <span className="font-medium">{checkoutData.nights}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Number of guests:</span>
+                      <span className="text-muted-foreground">Reserved guests:</span>
                       <span className="font-medium">{checkoutData.guests}</span>
                     </div>
+                    {totalDays > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Actual average guests:</span>
+                        <span className="font-medium">{averageGuests.toFixed(1)} per day</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Daily Occupancy Breakdown */}
+              {dailyBreakdown.length > 0 && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5" />
+                      Daily Occupancy & Charges
+                    </CardTitle>
+                    <CardDescription>
+                      Billing calculated from actual daily guest counts
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                        <span>Date</span>
+                        <span className="text-center">Guests</span>
+                        <span className="text-right">Cost</span>
+                      </div>
+                      {dailyBreakdown.map((day, index) => (
+                        <div key={index} className="grid grid-cols-3 gap-2 text-sm py-1">
+                          <span>{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          <span className="text-center font-medium">{day.guests}</span>
+                          <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
+                        </div>
+                      ))}
+                      <div className="pt-2 border-t mt-2">
+                        <div className="grid grid-cols-3 gap-2 text-sm font-semibold">
+                          <span>Total ({totalDays} days)</span>
+                          <span className="text-center">{averageGuests.toFixed(1)} avg</span>
+                          <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Stay Report */}
               {(!sessionsLoading && !surveyLoading && (arrivalSessions.length > 0 || dailySessions.length > 0 || surveyResponses.length > 0)) && (
@@ -447,42 +530,42 @@ const CheckoutFinal = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Base rate:</span>
-                      <span className="font-medium">{BillingCalculator.formatCurrency(billing.baseAmount)}</span>
+                      <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
                     </div>
-                    <div className="text-base text-muted-foreground mb-2">
-                      {billing.details}
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {enhancedBilling.details}
                     </div>
                     
-                    {billing.cleaningFee > 0 && (
+                    {enhancedBilling.cleaningFee > 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Cleaning fee:</span>
-                        <span className="font-medium">{BillingCalculator.formatCurrency(billing.cleaningFee)}</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.cleaningFee)}</span>
                       </div>
                     )}
                     
-                    {billing.petFee > 0 && (
+                    {enhancedBilling.petFee > 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Pet fee:</span>
-                        <span className="font-medium">{BillingCalculator.formatCurrency(billing.petFee)}</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.petFee)}</span>
                       </div>
                     )}
                     
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal:</span>
-                      <span className="font-medium">{BillingCalculator.formatCurrency(billing.subtotal)}</span>
+                      <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.subtotal)}</span>
                     </div>
                     
-                    {billing.tax > 0 && (
+                    {enhancedBilling.tax > 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Tax:</span>
-                        <span className="font-medium">{BillingCalculator.formatCurrency(billing.tax)}</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.tax)}</span>
                       </div>
                     )}
                     
-                    {billing.damageDeposit > 0 && (
+                    {enhancedBilling.damageDeposit > 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Damage deposit:</span>
-                        <span className="font-medium">{BillingCalculator.formatCurrency(billing.damageDeposit)}</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.damageDeposit)}</span>
                       </div>
                     )}
                     
@@ -505,8 +588,39 @@ const CheckoutFinal = () => {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle>Payment Options</CardTitle>
+                  <CardDescription>
+                    Choose to pay now or defer payment to end of season
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Pay Later Option */}
+                  <div className="space-y-4">
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
+                            <Clock className="h-5 w-5 text-amber-600" />
+                            Pay at End of Season
+                          </h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Defer this payment until the end of the season (Oct 31). 
+                            You can pay your full season balance at once.
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={handlePayLater}
+                            disabled={isCreatingPayment}
+                            className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
+                          >
+                            {isCreatingPayment ? "Processing..." : "Defer Payment"}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   {/* Venmo Option */}
                   {checkoutData.venmoHandle && (
                     <div className="space-y-4">

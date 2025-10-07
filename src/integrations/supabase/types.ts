@@ -2861,6 +2861,7 @@ export type Database = {
         | "overdue"
         | "cancelled"
         | "refunded"
+        | "deferred"
       payment_type:
         | "reservation_deposit"
         | "reservation_balance"
@@ -2871,6 +2872,7 @@ export type Database = {
         | "late_fee"
         | "refund"
         | "other"
+        | "use_fee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3014,6 +3016,7 @@ export const Constants = {
         "overdue",
         "cancelled",
         "refunded",
+        "deferred",
       ],
       payment_type: [
         "reservation_deposit",
@@ -3025,6 +3028,7 @@ export const Constants = {
         "late_fee",
         "refund",
         "other",
+        "use_fee",
       ],
     },
   },
