@@ -15,6 +15,11 @@ interface ReservationSettingsData {
   pet_fee?: number;
   damage_deposit?: number;
   financial_method?: string;
+  season_start_month?: number;
+  season_start_day?: number;
+  season_end_month?: number;
+  season_end_day?: number;
+  season_payment_deadline_offset_days?: number;
 }
 
 export const useReservationSettings = () => {

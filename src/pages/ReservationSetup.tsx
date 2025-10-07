@@ -52,6 +52,13 @@ export default function ReservationSetup() {
   const [bathrooms, setBathrooms] = useState("");
   const [maxGuests, setMaxGuests] = useState("");
   
+  // Season configuration
+  const [seasonStartMonth, setSeasonStartMonth] = useState("1");
+  const [seasonStartDay, setSeasonStartDay] = useState("1");
+  const [seasonEndMonth, setSeasonEndMonth] = useState("12");
+  const [seasonEndDay, setSeasonEndDay] = useState("31");
+  const [paymentDeadlineOffset, setPaymentDeadlineOffset] = useState("30");
+  
   // Secondary selection
   const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
   const [secondaryMaxPeriods, setSecondaryMaxPeriods] = useState("1");
@@ -78,6 +85,45 @@ export default function ReservationSetup() {
       }
     }
   }, [familyGroups]);
+
+  // Load existing reservation settings including season data
+  useEffect(() => {
+    const loadReservationSettings = async () => {
+      if (!organization?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('reservation_settings')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading reservation settings:', error);
+          return;
+        }
+        
+        if (data) {
+          setPropertyName(data.property_name || "");
+          setAddress(data.address || "");
+          setBedrooms(data.bedrooms?.toString() || "");
+          setBathrooms(data.bathrooms?.toString() || "");
+          setMaxGuests(data.max_guests?.toString() || "");
+          setSeasonStartMonth(data.season_start_month?.toString() || "1");
+          setSeasonStartDay(data.season_start_day?.toString() || "1");
+          setSeasonEndMonth(data.season_end_month?.toString() || "12");
+          setSeasonEndDay(data.season_end_day?.toString() || "31");
+          setPaymentDeadlineOffset(data.season_payment_deadline_offset_days?.toString() || "30");
+        }
+      } catch (error) {
+        console.error('Error in loadReservationSettings:', error);
+      }
+    };
+    
+    if (organization?.id) {
+      loadReservationSettings();
+    }
+  }, [organization?.id]);
 
   // Load existing rotation order from database
   useEffect(() => {
@@ -248,6 +294,11 @@ export default function ReservationSetup() {
       bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
       bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
       max_guests: maxGuests ? parseInt(maxGuests) : undefined,
+      season_start_month: seasonStartMonth ? parseInt(seasonStartMonth) : undefined,
+      season_start_day: seasonStartDay ? parseInt(seasonStartDay) : undefined,
+      season_end_month: seasonEndMonth ? parseInt(seasonEndMonth) : undefined,
+      season_end_day: seasonEndDay ? parseInt(seasonEndDay) : undefined,
+      season_payment_deadline_offset_days: paymentDeadlineOffset ? parseInt(paymentDeadlineOffset) : undefined,
     };
 
     // Save to database
@@ -978,6 +1029,130 @@ export default function ReservationSetup() {
                   onChange={(e) => setMaxGuests(e.target.value)}
                   className="text-lg placeholder:text-lg md:text-lg"
                 />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Season Configuration Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Season Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-base text-muted-foreground">
+              Define your cabin's usage season for billing calculations and payment tracking. This determines which reservations are included in season summaries.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Season Start Date */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Season Start Date</Label>
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="seasonStartMonth" className="text-sm text-muted-foreground">Month</Label>
+                    <Select value={seasonStartMonth} onValueChange={setSeasonStartMonth}>
+                      <SelectTrigger id="seasonStartMonth" className="text-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="text-lg">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                          <SelectItem key={month} value={month.toString()} className="text-lg">
+                            {new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24 space-y-2">
+                    <Label htmlFor="seasonStartDay" className="text-sm text-muted-foreground">Day</Label>
+                    <Select value={seasonStartDay} onValueChange={setSeasonStartDay}>
+                      <SelectTrigger id="seasonStartDay" className="text-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="text-lg max-h-[300px]">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={day.toString()} className="text-lg">
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Season End Date */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Season End Date</Label>
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="seasonEndMonth" className="text-sm text-muted-foreground">Month</Label>
+                    <Select value={seasonEndMonth} onValueChange={setSeasonEndMonth}>
+                      <SelectTrigger id="seasonEndMonth" className="text-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="text-lg">
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                          <SelectItem key={month} value={month.toString()} className="text-lg">
+                            {new Date(2000, month - 1, 1).toLocaleString('default', { month: 'long' })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-24 space-y-2">
+                    <Label htmlFor="seasonEndDay" className="text-sm text-muted-foreground">Day</Label>
+                    <Select value={seasonEndDay} onValueChange={setSeasonEndDay}>
+                      <SelectTrigger id="seasonEndDay" className="text-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="text-lg max-h-[300px]">
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <SelectItem key={day} value={day.toString()} className="text-lg">
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Deadline Offset */}
+            <div className="space-y-2">
+              <Label htmlFor="paymentDeadline" className="text-base font-medium">
+                Payment Deadline (Days Before Season Start)
+              </Label>
+              <Input 
+                id="paymentDeadline"
+                type="number"
+                min="0"
+                placeholder="e.g., 30"
+                value={paymentDeadlineOffset}
+                onChange={(e) => setPaymentDeadlineOffset(e.target.value)}
+                className="text-lg placeholder:text-lg md:text-lg max-w-xs"
+              />
+              <p className="text-sm text-muted-foreground">
+                Payments will be due this many days before the season starts
+              </p>
+            </div>
+
+            {/* Example Display */}
+            <div className="p-4 bg-muted rounded-lg">
+              <h5 className="font-medium mb-2">Season Example:</h5>
+              <div className="text-base space-y-1">
+                <p>
+                  <span className="font-medium">Season runs:</span>{" "}
+                  {new Date(2000, parseInt(seasonStartMonth) - 1, parseInt(seasonStartDay)).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} 
+                  {" to "}
+                  {new Date(2000, parseInt(seasonEndMonth) - 1, parseInt(seasonEndDay)).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}
+                  {parseInt(seasonStartMonth) > parseInt(seasonEndMonth) && " (crosses calendar year)"}
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Common examples: Year-round (Jan 1 - Dec 31), Summer cabin (May 1 - Sep 30), Ski season (Nov 1 - Apr 30)
+                </p>
               </div>
             </div>
           </CardContent>
