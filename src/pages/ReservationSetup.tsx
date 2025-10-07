@@ -108,10 +108,18 @@ export default function ReservationSetup() {
           setBedrooms(data.bedrooms?.toString() || "");
           setBathrooms(data.bathrooms?.toString() || "");
           setMaxGuests(data.max_guests?.toString() || "");
-          setSeasonStartMonth(data.season_start_month?.toString() || "1");
-          setSeasonStartDay(data.season_start_day?.toString() || "1");
-          setSeasonEndMonth(data.season_end_month?.toString() || "12");
-          setSeasonEndDay(data.season_end_day?.toString() || "31");
+          
+          // Only load season dates if they're not the old default (October 1-31)
+          // Otherwise keep the new defaults (January 1 - December 31)
+          const isOldDefault = data.season_start_month === 10 && data.season_start_day === 1 
+                             && data.season_end_month === 10 && data.season_end_day === 31;
+          
+          if (!isOldDefault) {
+            setSeasonStartMonth(data.season_start_month?.toString() || "1");
+            setSeasonStartDay(data.season_start_day?.toString() || "1");
+            setSeasonEndMonth(data.season_end_month?.toString() || "12");
+            setSeasonEndDay(data.season_end_day?.toString() || "31");
+          }
         }
       } catch (error) {
         console.error('Error in loadReservationSettings:', error);
