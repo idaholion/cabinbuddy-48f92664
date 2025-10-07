@@ -412,7 +412,7 @@ const getBookingsForDate = (date: Date) => {
     );
   };
 
-  // Check if a date is available for booking (no bookings or only checkout days)
+  // Check if a date is available for booking (no bookings or only checkout/checkin days)
   const isDateAvailableForBooking = (date: Date) => {
     const bookingsOnDate = reservations.filter(reservation => {
       const startDate = parseLocalDate(reservation.start_date);
@@ -426,15 +426,20 @@ const getBookingsForDate = (date: Date) => {
     
     if (bookingsOnDate.length === 0) return true;
     
-    // If there are bookings, check if this date is ONLY an end date (checkout day)
-    const isOnlyCheckoutDay = bookingsOnDate.every(booking => {
+    // If there are bookings, check if this date is ONLY a transition day
+    // (end date for checkout OR start date for checkin - both happen at noon)
+    const isOnlyTransitionDay = bookingsOnDate.every(booking => {
+      const startDate = parseLocalDate(booking.start_date);
       const endDate = parseLocalDate(booking.end_date);
+      const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      return reservationEnd.toDateString() === checkDate.toDateString();
+      
+      return reservationEnd.toDateString() === checkDate.toDateString() || 
+             reservationStart.toDateString() === checkDate.toDateString();
     });
     
-    return isOnlyCheckoutDay;
+    return isOnlyTransitionDay;
   };
 
   // Check if a date is a checkout day (visual indicator)
