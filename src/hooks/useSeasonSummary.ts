@@ -172,7 +172,14 @@ export const useSeasonSummary = (seasonYear?: number) => {
       let totalActualDays = 0;
 
       for (const reservation of reservations || []) {
-        // Fetch daily check-in data
+        // First, check if there's already a payment with daily_occupancy data
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('reservation_id', reservation.id)
+          .maybeSingle();
+
+        // Fetch daily check-in data (fallback if no payment occupancy)
         const { data: checkIns } = await supabase
           .from('checkin_sessions')
           .select('check_date, guest_names')
@@ -187,7 +194,37 @@ export const useSeasonSummary = (seasonYear?: number) => {
           (new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        if (checkIns && checkIns.length > 0 && financialSettings) {
+        // Priority 1: Use payment's daily_occupancy if it exists
+        if (payment?.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
+          const dailyOccupancy: Record<string, number> = {};
+          payment.daily_occupancy.forEach((day: any) => {
+            dailyOccupancy[day.date] = day.guests || 0;
+          });
+
+          billing = BillingCalculator.calculateFromDailyOccupancy(
+            {
+              method: financialSettings?.billing_method as any || 'per_person_per_night',
+              amount: financialSettings?.billing_amount || 0,
+              taxRate: financialSettings?.tax_rate,
+              cleaningFee: financialSettings?.cleaning_fee,
+              petFee: financialSettings?.pet_fee,
+              damageDeposit: financialSettings?.damage_deposit,
+            },
+            dailyOccupancy,
+            {
+              startDate: new Date(reservation.start_date),
+              endDate: new Date(reservation.end_date),
+            }
+          );
+
+          // Calculate actual guest averages from payment data
+          payment.daily_occupancy.forEach((day: any) => {
+            actualGuestDays += day.guests || 0;
+            totalActualDays++;
+          });
+        }
+        // Priority 2: Use checkin_sessions data
+        else if (checkIns && checkIns.length > 0 && financialSettings) {
           const dailyOccupancy: Record<string, number> = {};
           checkIns.forEach(ci => {
             dailyOccupancy[ci.check_date] = ci.guest_names?.length || 0;
@@ -214,8 +251,9 @@ export const useSeasonSummary = (seasonYear?: number) => {
             actualGuestDays += ci.guest_names?.length || 0;
             totalActualDays++;
           });
-        } else {
-          // Fallback to reserved guests if no check-in data
+        } 
+        // Priority 3: Fallback to reserved guests if no occupancy data
+        else {
           billing = BillingCalculator.calculateStayBilling(
             {
               method: financialSettings?.billing_method as any || 'per_person_per_night',
@@ -233,13 +271,6 @@ export const useSeasonSummary = (seasonYear?: number) => {
             }
           );
         }
-
-        // Find linked payment
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('*')
-          .eq('reservation_id', reservation.id)
-          .maybeSingle();
 
         // Identify missing check-ins
         const missingCheckIns = identifyMissingCheckIns(reservation, checkIns || []);
