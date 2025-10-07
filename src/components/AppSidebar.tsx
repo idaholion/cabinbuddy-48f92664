@@ -114,6 +114,11 @@ const cabinItems = [
     url: "/checkout-final",
     icon: CreditCard,
   },
+  {
+    title: "Season Summary",
+    url: "/season-summary",
+    icon: Calendar,
+  },
 ];
 
 const resourcesItems = [

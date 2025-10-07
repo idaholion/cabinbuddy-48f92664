@@ -11,9 +11,11 @@ import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
+import { useToast } from "@/hooks/use-toast";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
   const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
@@ -183,8 +185,13 @@ const CheckoutFinal = () => {
     setIsCreatingPayment(false);
     
     if (success) {
-      // Navigate to home or stay history after successful deferral
-      setTimeout(() => navigate("/stay-history"), 1500);
+      toast({
+        title: "Payment Deferred",
+        description: "This payment has been added to your season balance. View Season Summary to see your total.",
+      });
+      
+      // Navigate to season summary after successful deferral
+      setTimeout(() => navigate("/season-summary"), 1500);
     }
   };
 

@@ -1461,6 +1461,11 @@ export type Database = {
           pet_fee: number | null
           preferred_payment_method: string | null
           property_name: string | null
+          season_end_day: number | null
+          season_end_month: number | null
+          season_payment_deadline_offset_days: number | null
+          season_start_day: number | null
+          season_start_month: number | null
           tax_id: string | null
           tax_jurisdiction: string | null
           tax_rate: number | null
@@ -1492,6 +1497,11 @@ export type Database = {
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
+          season_end_day?: number | null
+          season_end_month?: number | null
+          season_payment_deadline_offset_days?: number | null
+          season_start_day?: number | null
+          season_start_month?: number | null
           tax_id?: string | null
           tax_jurisdiction?: string | null
           tax_rate?: number | null
@@ -1523,6 +1533,11 @@ export type Database = {
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
+          season_end_day?: number | null
+          season_end_month?: number | null
+          season_payment_deadline_offset_days?: number | null
+          season_start_day?: number | null
+          season_start_month?: number | null
           tax_id?: string | null
           tax_jurisdiction?: string | null
           tax_rate?: number | null
