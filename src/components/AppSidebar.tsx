@@ -371,20 +371,6 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {/* Group Member Profile - accessible to members, group leads, and admins */}
-              {(isNameMatchedMember || isGroupLead || isNameMatchedGroupLead  || isAdmin || canAccessSupervisorFeatures) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="Group Member Profile">
-                    <NavLink 
-                      to="/group-member-profile" 
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Group Member Profile</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
