@@ -57,7 +57,6 @@ export default function ReservationSetup() {
   const [seasonStartDay, setSeasonStartDay] = useState("1");
   const [seasonEndMonth, setSeasonEndMonth] = useState("12");
   const [seasonEndDay, setSeasonEndDay] = useState("31");
-  const [paymentDeadlineOffset, setPaymentDeadlineOffset] = useState("30");
   
   // Secondary selection
   const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
@@ -113,7 +112,6 @@ export default function ReservationSetup() {
           setSeasonStartDay(data.season_start_day?.toString() || "1");
           setSeasonEndMonth(data.season_end_month?.toString() || "12");
           setSeasonEndDay(data.season_end_day?.toString() || "31");
-          setPaymentDeadlineOffset(data.season_payment_deadline_offset_days?.toString() || "30");
         }
       } catch (error) {
         console.error('Error in loadReservationSettings:', error);
@@ -294,11 +292,10 @@ export default function ReservationSetup() {
       bedrooms: bedrooms ? parseInt(bedrooms) : undefined,
       bathrooms: bathrooms ? parseInt(bathrooms) : undefined,
       max_guests: maxGuests ? parseInt(maxGuests) : undefined,
-      season_start_month: seasonStartMonth ? parseInt(seasonStartMonth) : undefined,
-      season_start_day: seasonStartDay ? parseInt(seasonStartDay) : undefined,
-      season_end_month: seasonEndMonth ? parseInt(seasonEndMonth) : undefined,
-      season_end_day: seasonEndDay ? parseInt(seasonEndDay) : undefined,
-      season_payment_deadline_offset_days: paymentDeadlineOffset ? parseInt(paymentDeadlineOffset) : undefined,
+      season_start_month: seasonStartMonth ? parseInt(seasonStartMonth) : 1,
+      season_start_day: seasonStartDay ? parseInt(seasonStartDay) : 1,
+      season_end_month: seasonEndMonth ? parseInt(seasonEndMonth) : 12,
+      season_end_day: seasonEndDay ? parseInt(seasonEndDay) : 31,
     };
 
     // Save to database
@@ -1118,25 +1115,6 @@ export default function ReservationSetup() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Payment Deadline Offset */}
-            <div className="space-y-2">
-              <Label htmlFor="paymentDeadline" className="text-base font-medium">
-                Payment Deadline (Days Before Season Start)
-              </Label>
-              <Input 
-                id="paymentDeadline"
-                type="number"
-                min="0"
-                placeholder="e.g., 30"
-                value={paymentDeadlineOffset}
-                onChange={(e) => setPaymentDeadlineOffset(e.target.value)}
-                className="text-lg placeholder:text-lg md:text-lg max-w-xs"
-              />
-              <p className="text-sm text-muted-foreground">
-                Payments will be due this many days before the season starts
-              </p>
             </div>
 
             {/* Example Display */}
