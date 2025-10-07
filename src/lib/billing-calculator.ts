@@ -1,6 +1,8 @@
 export interface BillingConfig {
   method: 'per-person-per-day' | 'per-person-per-week' | 
-          'flat-rate-per-day' | 'flat-rate-per-week';
+          'flat-rate-per-day' | 'flat-rate-per-week' |
+          'per_person_per_night' | 'per_person_per_week' |
+          'flat_rate_per_night' | 'flat_rate_per_week' | string;
   amount: number;
   taxRate?: number;
   cleaningFee?: number;
@@ -57,7 +59,10 @@ export class BillingCalculator {
   }
   
   private static calculateBaseAmount(config: BillingConfig, stay: StayDetails): number {
-    switch (config.method) {
+    // Normalize method to handle both kebab-case and snake_case, and night/day variations
+    const normalizedMethod = config.method?.toLowerCase().replace(/_/g, '-').replace('night', 'day');
+    
+    switch (normalizedMethod) {
       case 'per-person-per-day':
         return stay.guests * stay.nights * config.amount;
         
@@ -79,7 +84,10 @@ export class BillingCalculator {
   }
   
   private static generateBillingDetails(config: BillingConfig, stay: StayDetails, baseAmount: number): string {
-    switch (config.method) {
+    // Normalize method to handle both kebab-case and snake_case, and night/day variations
+    const normalizedMethod = config.method?.toLowerCase().replace(/_/g, '-').replace('night', 'day');
+    
+    switch (normalizedMethod) {
       case 'per-person-per-day':
         return `${stay.guests} guests × ${stay.nights} nights × $${config.amount}/person/day = $${baseAmount}`;
         
@@ -164,7 +172,10 @@ export class BillingCalculator {
       
       let dayCost = 0;
       
-      switch (config.method) {
+      // Normalize method to handle both kebab-case and snake_case, and night/day variations
+      const normalizedMethod = config.method?.toLowerCase().replace(/_/g, '-').replace('night', 'day');
+      
+      switch (normalizedMethod) {
         case 'per-person-per-day':
           dayCost = guests * config.amount;
           break;
