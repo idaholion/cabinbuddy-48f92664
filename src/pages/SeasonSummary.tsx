@@ -256,17 +256,11 @@ export default function SeasonSummary() {
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="flex items-center gap-2">
                         <Moon className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
                           <span className="font-medium">{Math.ceil((new Date(stay.reservation.end_date).getTime() - new Date(stay.reservation.start_date).getTime()) / (1000 * 60 * 60 * 24))}</span> nights
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          Avg <span className="font-medium">{stay.reservation.guest_count || 0}</span> guests/night
                         </span>
                       </div>
                     </div>
