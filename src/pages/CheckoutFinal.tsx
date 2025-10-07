@@ -631,7 +631,7 @@ const CheckoutFinal = () => {
                       <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-base font-medium">Pay @{checkoutData.venmoHandle}</p>
+                            <p className="text-base font-medium">Pay {checkoutData.venmoHandle}</p>
                             <p className="text-base text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
                           </div>
                           <Button
