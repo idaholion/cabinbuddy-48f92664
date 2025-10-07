@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { format, eachDayOfInterval } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DailyOccupancy {
   date: string;
@@ -34,6 +34,7 @@ export const EditOccupancyDialog = ({
   const { toast } = useToast();
   const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(currentOccupancy);
   const [saving, setSaving] = useState(false);
+  const [fillValue, setFillValue] = useState<string>("0");
 
   const days = eachDayOfInterval({ start: stay.startDate, end: stay.endDate });
 
@@ -49,6 +50,15 @@ export const EditOccupancyDialog = ({
 
   const getOccupancyForDate = (dateStr: string) => {
     return occupancy.find(o => o.date === dateStr);
+  };
+
+  const handleFillAll = () => {
+    const value = parseInt(fillValue) || 0;
+    const newOccupancy = days.map(day => ({
+      date: format(day, 'yyyy-MM-dd'),
+      guests: value,
+    }));
+    setOccupancy(newOccupancy);
   };
 
   const handleSave = async () => {
@@ -73,7 +83,7 @@ export const EditOccupancyDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Edit Daily Occupancy - {stay.family_group}</DialogTitle>
           <p className="text-sm text-muted-foreground">
@@ -81,41 +91,51 @@ export const EditOccupancyDialog = ({
           </p>
         </DialogHeader>
         
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-left p-3 font-medium">Day</th>
-                <th className="text-right p-3 font-medium">Number of Guests</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {days.map(day => {
-                const dateStr = format(day, 'yyyy-MM-dd');
-                const dayOccupancy = getOccupancyForDate(dateStr);
-                
-                return (
-                  <tr key={dateStr} className="hover:bg-muted/50">
-                    <td className="p-3">{format(day, 'MMM d')}</td>
-                    <td className="p-3 text-muted-foreground">{format(day, 'EEEE')}</td>
-                    <td className="p-3">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={dayOccupancy?.guests || 0}
-                        onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
-                        className="max-w-[100px] ml-auto text-right"
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* Fill All Helper */}
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+          <span className="text-sm font-medium">Quick Fill:</span>
+          <Input
+            type="number"
+            min="0"
+            value={fillValue}
+            onChange={(e) => setFillValue(e.target.value)}
+            className="w-20"
+            placeholder="0"
+          />
+          <Button variant="outline" size="sm" onClick={handleFillAll}>
+            Fill All Days
+          </Button>
         </div>
 
-        <DialogFooter>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1 items-center text-sm">
+            {/* Header */}
+            <div className="font-medium text-muted-foreground pb-2">Date</div>
+            <div className="font-medium text-muted-foreground pb-2">Day</div>
+            <div className="font-medium text-muted-foreground text-right pb-2">Guests</div>
+            
+            {days.map(day => {
+              const dateStr = format(day, 'yyyy-MM-dd');
+              const dayOccupancy = getOccupancyForDate(dateStr);
+              
+              return (
+                <>
+                  <div className="text-foreground">{format(day, 'M/d')}</div>
+                  <div className="text-muted-foreground text-xs">{format(day, 'EEE')}</div>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={dayOccupancy?.guests || 0}
+                    onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
+                    className="w-16 h-8 text-right text-sm"
+                  />
+                </>
+              );
+            })}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
