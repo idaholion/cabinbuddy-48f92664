@@ -970,7 +970,7 @@ const GroupMemberProfile = () => {
                   className="min-w-48 text-base"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {loading ? "Saving..." : "Update Profile"}
+                  {loading ? "Saving..." : "Save Profile"}
                 </Button>
               </div>
             </form>
