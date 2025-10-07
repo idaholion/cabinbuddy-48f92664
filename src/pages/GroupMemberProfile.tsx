@@ -1007,6 +1007,20 @@ const GroupMemberProfile = () => {
         </CardContent>
       </Card>
 
+      {/* Security Tips */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Security Tips</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-base text-muted-foreground">
+          <p>• Use a strong, unique password for your account</p>
+          <p>• Never share your password with others</p>
+          <p>• Check your email regularly for security notifications</p>
+          <p>• Log out of shared devices after use</p>
+          <p>• Contact support if you notice any suspicious activity</p>
+        </CardContent>
+      </Card>
+
       {/* Feature Overview Dialog removed */}
 
       {/* Profile Claiming Dialog */}
