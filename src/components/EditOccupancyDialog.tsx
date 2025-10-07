@@ -73,34 +73,46 @@ export const EditOccupancyDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Daily Occupancy - {stay.family_group}</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {format(stay.startDate, 'MMM d')} - {format(stay.endDate, 'MMM d, yyyy')}
+          </p>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {days.map(day => {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            const dayOccupancy = getOccupancyForDate(dateStr);
-            
-            return (
-              <div key={dateStr} className="border rounded-lg p-4 space-y-3">
-                <h4 className="font-medium">{format(day, 'EEEE, MMM d')}</h4>
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-left p-3 font-medium">Date</th>
+                <th className="text-left p-3 font-medium">Day</th>
+                <th className="text-right p-3 font-medium">Number of Guests</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {days.map(day => {
+                const dateStr = format(day, 'yyyy-MM-dd');
+                const dayOccupancy = getOccupancyForDate(dateStr);
                 
-                <div>
-                  <Label htmlFor={`guests-${dateStr}`}>Number of Guests</Label>
-                  <Input
-                    id={`guests-${dateStr}`}
-                    type="number"
-                    min="0"
-                    value={dayOccupancy?.guests || 0}
-                    onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-            );
-          })}
+                return (
+                  <tr key={dateStr} className="hover:bg-muted/50">
+                    <td className="p-3">{format(day, 'MMM d')}</td>
+                    <td className="p-3 text-muted-foreground">{format(day, 'EEEE')}</td>
+                    <td className="p-3">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={dayOccupancy?.guests || 0}
+                        onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
+                        className="max-w-[100px] ml-auto text-right"
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         <DialogFooter>
