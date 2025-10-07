@@ -228,17 +228,24 @@ export default function SeasonSummary() {
               </AlertDescription>
             </Alert>
           ) : (
-            summary.stays.map((stay) => (
-              <Card key={stay.reservation.id}>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">
-                          {format(new Date(stay.reservation.start_date), 'MMM d')} - {format(new Date(stay.reservation.end_date), 'MMM d, yyyy')}
-                        </span>
-                      </div>
+            summary.stays.map((stay) => {
+              // Check if reservation is upcoming (hasn't started yet)
+              const isUpcoming = new Date(stay.reservation.start_date) > new Date();
+              
+              return (
+                <Card key={stay.reservation.id}>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium">
+                            {format(new Date(stay.reservation.start_date), 'MMM d')} - {format(new Date(stay.reservation.end_date), 'MMM d, yyyy')}
+                          </span>
+                          {isUpcoming && (
+                            <Badge variant="outline" className="ml-2">Upcoming</Badge>
+                          )}
+                        </div>
                       <Button 
                         variant="ghost" 
                         size="sm"
@@ -265,68 +272,81 @@ export default function SeasonSummary() {
                       </div>
                     </div>
 
-                    <div className="space-y-2 border-t pt-4">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Total Charges</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold">
-                            {BillingCalculator.formatCurrency(stay.billing.total)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setAdjustingBilling({
-                              id: stay.payment?.id,
-                              family_group: stay.reservation.family_group,
-                              totalCharge: stay.billing.total,
-                              manualAdjustment: stay.payment?.manual_adjustment_amount || 0,
-                              adjustmentNotes: stay.payment?.adjustment_notes,
-                              billingLocked: stay.payment?.billing_locked,
-                            })}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                    {!isUpcoming && (
+                      <>
+                        <div className="space-y-2 border-t pt-4">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium">Total Charges</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold">
+                                {BillingCalculator.formatCurrency(stay.billing.total)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setAdjustingBilling({
+                                  id: stay.payment?.id,
+                                  family_group: stay.reservation.family_group,
+                                  totalCharge: stay.billing.total,
+                                  manualAdjustment: stay.payment?.manual_adjustment_amount || 0,
+                                  adjustmentNotes: stay.payment?.adjustment_notes,
+                                  billingLocked: stay.payment?.billing_locked,
+                                })}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Payments Made</span>
+                            <span className="font-medium text-green-600">
+                              {BillingCalculator.formatCurrency(stay.payment?.amount_paid || 0)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Payments Made</span>
-                        <span className="font-medium text-green-600">
-                          {BillingCalculator.formatCurrency(stay.payment?.amount_paid || 0)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center pt-4 border-t">
-                      <div>
-                        <span className="font-semibold text-lg">Balance Due:</span>{" "}
-                        <span className="text-xl font-bold text-primary">
-                          {BillingCalculator.formatCurrency(stay.billing.total - (stay.payment?.amount_paid || 0))}
-                        </span>
-                      </div>
-                      <div className="flex gap-2">
+                        
+                        <div className="flex justify-between items-center pt-4 border-t">
+                          <div>
+                            <span className="font-semibold text-lg">Balance Due:</span>{" "}
+                            <span className="text-xl font-bold text-primary">
+                              {BillingCalculator.formatCurrency(stay.billing.total - (stay.payment?.amount_paid || 0))}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link to={`/reservations/${stay.reservation.id}`}>
+                              <Button variant="outline" size="sm">View Details</Button>
+                            </Link>
+                            {stay.billing.total > (stay.payment?.amount_paid || 0) && (
+                              <Button 
+                                size="sm"
+                                onClick={() => setRecordingPayment({
+                                  id: stay.payment?.id,
+                                  family_group: stay.reservation.family_group,
+                                  totalCharge: stay.billing.total,
+                                  totalPaid: stay.payment?.amount_paid || 0,
+                                })}
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Record Payment
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {isUpcoming && (
+                      <div className="pt-4 border-t">
                         <Link to={`/reservations/${stay.reservation.id}`}>
                           <Button variant="outline" size="sm">View Details</Button>
                         </Link>
-                        {stay.billing.total > (stay.payment?.amount_paid || 0) && (
-                          <Button 
-                            size="sm"
-                            onClick={() => setRecordingPayment({
-                              id: stay.payment?.id,
-                              family_group: stay.reservation.family_group,
-                              totalCharge: stay.billing.total,
-                              totalPaid: stay.payment?.amount_paid || 0,
-                            })}
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Record Payment
-                          </Button>
-                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
-            ))
+              );
+            })
           )}
         </CardContent>
       </Card>
