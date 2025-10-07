@@ -210,56 +210,20 @@ export const useSeasonSummary = (seasonYear?: number) => {
           continue; // Skip totals accumulation
         }
 
-        // Priority 1: Use payment's daily_occupancy if it exists
-        if (payment?.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
-          console.log('Using payment daily_occupancy:', payment.daily_occupancy);
-          console.log('Financial settings:', financialSettings);
+        // Priority 1: Use payment's stored amount if it exists (most reliable)
+        if (payment?.amount !== null && payment?.amount !== undefined) {
+          billing = { 
+            total: payment.amount + (payment.manual_adjustment_amount || 0),
+            breakdown: { note: 'Using stored payment amount' }
+          };
           
-          // If payment has a stored amount and financial settings aren't loaded, use stored amount
-          if (!financialSettings && payment.amount) {
-            billing = { 
-              total: payment.amount + (payment.manual_adjustment_amount || 0),
-              breakdown: { note: 'Using stored payment amount' }
-            };
-            console.log('Using stored payment amount:', billing);
-          } else if (financialSettings) {
-            const dailyOccupancy: Record<string, number> = {};
+          // Calculate actual guest averages if we have daily occupancy data
+          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy)) {
             payment.daily_occupancy.forEach((day: any) => {
-              dailyOccupancy[day.date] = day.guests || 0;
+              actualGuestDays += day.guests || 0;
+              totalActualDays++;
             });
-
-            billing = BillingCalculator.calculateFromDailyOccupancy(
-              {
-                method: financialSettings.billing_method as any || 'per_person_per_night',
-                amount: financialSettings.billing_amount || 0,
-                taxRate: financialSettings.tax_rate,
-                cleaningFee: financialSettings.cleaning_fee,
-                petFee: financialSettings.pet_fee,
-                damageDeposit: financialSettings.damage_deposit,
-              },
-              dailyOccupancy,
-              {
-                startDate: new Date(reservation.start_date),
-                endDate: new Date(reservation.end_date),
-              }
-            );
-            
-            console.log('Calculated billing:', billing);
-            
-            // Apply manual adjustment if billing is locked
-            if (payment.billing_locked && payment.manual_adjustment_amount !== undefined) {
-              billing.total = (payment.amount || 0) + (payment.manual_adjustment_amount || 0);
-            }
-          } else {
-            // No financial settings and no stored amount, skip this for now
-            billing = { total: 0, breakdown: {} };
           }
-
-          // Calculate actual guest averages from payment data
-          payment.daily_occupancy.forEach((day: any) => {
-            actualGuestDays += day.guests || 0;
-            totalActualDays++;
-          });
         }
         // Priority 2: Use checkin_sessions data
         else if (checkIns && checkIns.length > 0 && financialSettings) {
