@@ -248,6 +248,7 @@ export default function SeasonSummary() {
                           startDate: new Date(stay.reservation.start_date),
                           endDate: new Date(stay.reservation.end_date),
                           family_group: stay.reservation.family_group,
+                          dailyOccupancy: stay.payment?.daily_occupancy || [],
                         })}
                       >
                         <Edit className="h-4 w-4 mr-1" />
@@ -390,6 +391,8 @@ export default function SeasonSummary() {
           currentOccupancy={editingOccupancy.dailyOccupancy || []}
           onSave={async (occupancy) => {
             await updateOccupancy(editingOccupancy.id, occupancy);
+            setEditingOccupancy(null);
+            refetch();
           }}
         />
       )}

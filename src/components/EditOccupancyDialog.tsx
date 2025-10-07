@@ -69,8 +69,10 @@ export const EditOccupancyDialog = ({
         title: "Occupancy updated",
         description: "Daily occupancy data has been saved successfully.",
       });
+      // Close dialog and clear state
       onOpenChange(false);
     } catch (error) {
+      console.error('Error saving occupancy:', error);
       toast({
         title: "Error",
         description: "Failed to save occupancy data. Please try again.",
@@ -119,7 +121,7 @@ export const EditOccupancyDialog = ({
               const dayOccupancy = getOccupancyForDate(dateStr);
               
               return (
-                <>
+                <div key={dateStr} className="contents">
                   <div className="text-foreground">{format(day, 'M/d')}</div>
                   <div className="text-muted-foreground text-xs">{format(day, 'EEE')}</div>
                   <Input
@@ -129,7 +131,7 @@ export const EditOccupancyDialog = ({
                     onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-right text-sm"
                   />
-                </>
+                </div>
               );
             })}
           </div>
