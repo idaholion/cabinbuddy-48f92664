@@ -215,32 +215,44 @@ export const useSeasonSummary = (seasonYear?: number) => {
           console.log('Using payment daily_occupancy:', payment.daily_occupancy);
           console.log('Financial settings:', financialSettings);
           
-          const dailyOccupancy: Record<string, number> = {};
-          payment.daily_occupancy.forEach((day: any) => {
-            dailyOccupancy[day.date] = day.guests || 0;
-          });
+          // If payment has a stored amount and financial settings aren't loaded, use stored amount
+          if (!financialSettings && payment.amount) {
+            billing = { 
+              total: payment.amount + (payment.manual_adjustment_amount || 0),
+              breakdown: { note: 'Using stored payment amount' }
+            };
+            console.log('Using stored payment amount:', billing);
+          } else if (financialSettings) {
+            const dailyOccupancy: Record<string, number> = {};
+            payment.daily_occupancy.forEach((day: any) => {
+              dailyOccupancy[day.date] = day.guests || 0;
+            });
 
-          billing = BillingCalculator.calculateFromDailyOccupancy(
-            {
-              method: financialSettings?.billing_method as any || 'per_person_per_night',
-              amount: financialSettings?.billing_amount || 0,
-              taxRate: financialSettings?.tax_rate,
-              cleaningFee: financialSettings?.cleaning_fee,
-              petFee: financialSettings?.pet_fee,
-              damageDeposit: financialSettings?.damage_deposit,
-            },
-            dailyOccupancy,
-            {
-              startDate: new Date(reservation.start_date),
-              endDate: new Date(reservation.end_date),
+            billing = BillingCalculator.calculateFromDailyOccupancy(
+              {
+                method: financialSettings.billing_method as any || 'per_person_per_night',
+                amount: financialSettings.billing_amount || 0,
+                taxRate: financialSettings.tax_rate,
+                cleaningFee: financialSettings.cleaning_fee,
+                petFee: financialSettings.pet_fee,
+                damageDeposit: financialSettings.damage_deposit,
+              },
+              dailyOccupancy,
+              {
+                startDate: new Date(reservation.start_date),
+                endDate: new Date(reservation.end_date),
+              }
+            );
+            
+            console.log('Calculated billing:', billing);
+            
+            // Apply manual adjustment if billing is locked
+            if (payment.billing_locked && payment.manual_adjustment_amount !== undefined) {
+              billing.total = (payment.amount || 0) + (payment.manual_adjustment_amount || 0);
             }
-          );
-          
-          console.log('Calculated billing:', billing);
-          
-          // Apply manual adjustment if billing is locked
-          if (payment.billing_locked && payment.manual_adjustment_amount !== undefined) {
-            billing.total = (payment.amount || 0) + (payment.manual_adjustment_amount || 0);
+          } else {
+            // No financial settings and no stored amount, skip this for now
+            billing = { total: 0, breakdown: {} };
           }
 
           // Calculate actual guest averages from payment data
