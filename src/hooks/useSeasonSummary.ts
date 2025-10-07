@@ -11,6 +11,11 @@ interface SeasonConfig {
   endDate: Date;
   paymentDeadline: Date;
   seasonName: string;
+  season_start_month: number;
+  season_start_day: number;
+  season_end_month: number;
+  season_end_day: number;
+  season_payment_deadline_offset_days: number;
 }
 
 interface DailyCheckIn {
@@ -79,6 +84,11 @@ export const useSeasonSummary = (seasonYear?: number) => {
       endDate,
       paymentDeadline,
       seasonName: `${year} Season`,
+      season_start_month: startMonth,
+      season_start_day: startDay,
+      season_end_month: endMonth,
+      season_end_day: endDay,
+      season_payment_deadline_offset_days: offsetDays,
     };
   };
 
@@ -208,7 +218,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
           // Fallback to reserved guests if no check-in data
           billing = BillingCalculator.calculateStayBilling(
             {
-              method: financialSettings?.billing_method as any || 'per-person-per-day',
+              method: financialSettings?.billing_method as any || 'per_person_per_night',
               amount: financialSettings?.billing_amount || 0,
               taxRate: financialSettings?.tax_rate,
               cleaningFee: financialSettings?.cleaning_fee,
@@ -325,6 +335,130 @@ export const useSeasonSummary = (seasonYear?: number) => {
     }
   };
 
+  const syncReservationsToPayments = async () => {
+    if (!organization?.id || !user?.id) {
+      console.error('Missing organization or user for sync');
+      return { created: 0, existing: 0, errors: [] };
+    }
+
+    try {
+      const config = await fetchSeasonConfig();
+
+      const startDate = new Date(year, config.season_start_month - 1, config.season_start_day);
+      const endDate = new Date(year, config.season_end_month - 1, config.season_end_day);
+
+      // Fetch all reservations in season
+      const { data: reservations, error: reservationsError } = await supabase
+        .from('reservations')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .gte('start_date', startDate.toISOString())
+        .lte('end_date', endDate.toISOString());
+
+      if (reservationsError) throw reservationsError;
+
+      // Fetch existing payments
+      const { data: existingPayments } = await supabase
+        .from('payments')
+        .select('reservation_id')
+        .eq('organization_id', organization.id)
+        .not('reservation_id', 'is', null);
+
+      const existingReservationIds = new Set(
+        existingPayments?.map(p => p.reservation_id) || []
+      );
+
+      let created = 0;
+      const errors: string[] = [];
+
+      // Create payments for reservations without them
+      for (const reservation of reservations || []) {
+        if (existingReservationIds.has(reservation.id)) {
+          continue;
+        }
+
+        try {
+          // Calculate billing
+          const billing = BillingCalculator.calculateStayBilling(
+            {
+              method: 'per-person-per-day',
+              amount: 25,
+              cleaningFee: 75,
+              taxRate: 0,
+            },
+            {
+              nights: Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)),
+              guests: reservation.guest_count || 0,
+              checkInDate: new Date(reservation.start_date),
+              checkOutDate: new Date(reservation.end_date),
+            }
+          );
+
+          // Create payment record
+          const { error: paymentError } = await supabase
+            .from('payments')
+            .insert([{
+              organization_id: organization.id,
+              reservation_id: reservation.id,
+              family_group: reservation.family_group,
+              amount: billing.total,
+              amount_paid: 0,
+              status: 'pending',
+              payment_type: 'use_fee',
+              description: `Season ${year} - ${reservation.family_group}`,
+              created_by_user_id: user.id,
+            }]);
+
+          if (paymentError) {
+            errors.push(`${reservation.family_group}: ${paymentError.message}`);
+          } else {
+            created++;
+          }
+        } catch (err) {
+          errors.push(`${reservation.family_group}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      }
+
+      return {
+        created,
+        existing: existingReservationIds.size,
+        errors,
+      };
+    } catch (error) {
+      console.error('Error syncing reservations:', error);
+      throw error;
+    }
+  };
+
+  const updateOccupancy = async (paymentId: string, occupancy: any[]) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({ daily_occupancy: occupancy })
+      .eq('id', paymentId);
+
+    if (error) throw error;
+    await fetchSeasonData();
+  };
+
+  const adjustBilling = async (
+    paymentId: string,
+    adjustment: number,
+    notes: string,
+    locked: boolean
+  ) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({
+        manual_adjustment_amount: adjustment,
+        adjustment_notes: notes,
+        billing_locked: locked,
+      })
+      .eq('id', paymentId);
+
+    if (error) throw error;
+    await fetchSeasonData();
+  };
+
   useEffect(() => {
     if (organization?.id && user?.email) {
       fetchSeasonData();
@@ -336,5 +470,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
     loading,
     refetch: fetchSeasonData,
     createSeasonPayment,
+    syncReservationsToPayments,
+    updateOccupancy,
+    adjustBilling,
   };
 };

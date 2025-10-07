@@ -339,6 +339,59 @@ export const usePayments = () => {
     fetchPayments();
   }, [fetchPayments]);
 
+  const recordPartialPayment = async (
+    paymentId: string,
+    amount: number,
+    paidDate: string,
+    paymentMethod: string,
+    paymentReference?: string,
+    notes?: string
+  ) => {
+    try {
+      // Get current payment
+      const { data: payment, error: fetchError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('id', paymentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const newAmountPaid = (payment.amount_paid || 0) + amount;
+      const newStatus = newAmountPaid >= payment.amount ? 'paid' : 'partial';
+
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          amount_paid: newAmountPaid,
+          status: newStatus,
+          paid_date: paidDate,
+          payment_method: paymentMethod as any,
+          payment_reference: paymentReference,
+          notes: notes ? `${payment.notes || ''}\n${notes}`.trim() : payment.notes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', paymentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment recorded",
+        description: `$${amount.toFixed(2)} payment has been recorded.`,
+      });
+
+      await fetchPayments();
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to record payment. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   return {
     payments,
     loading,
@@ -347,9 +400,10 @@ export const usePayments = () => {
     updatePayment,
     recordPayment,
     createReservationPayment,
-    fetchPayments,
     getPaymentsSummary,
     getOverduePayments,
     getPaymentsByFamilyGroup,
+    recordPartialPayment,
+    fetchPayments,
   };
 };

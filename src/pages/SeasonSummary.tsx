@@ -1,17 +1,75 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useState } from "react";
 import { useSeasonSummary } from "@/hooks/useSeasonSummary";
+import { usePayments } from "@/hooks/usePayments";
 import { BillingCalculator } from "@/lib/billing-calculator";
-import { Calendar, AlertTriangle, DollarSign, CreditCard, Download } from "lucide-react";
-import { Link } from "react-router-dom";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
+import { Link, useSearchParams } from "react-router-dom";
+import { 
+  Calendar, 
+  DollarSign, 
+  Users, 
+  Moon, 
+  ArrowLeft,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Edit,
+  RefreshCw,
+  Plus
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
+import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
+import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { useToast } from "@/hooks/use-toast";
 
-const SeasonSummary = () => {
-  const { summary, loading, createSeasonPayment } = useSeasonSummary();
+export default function SeasonSummary() {
+  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString());
+  const { 
+    summary, 
+    loading, 
+    refetch, 
+    createSeasonPayment,
+    syncReservationsToPayments,
+    updateOccupancy,
+    adjustBilling,
+  } = useSeasonSummary(year);
+  const { recordPartialPayment } = usePayments();
+  const calculator = new BillingCalculator();
+
+  const [editingOccupancy, setEditingOccupancy] = useState<any>(null);
+  const [adjustingBilling, setAdjustingBilling] = useState<any>(null);
+  const [recordingPayment, setRecordingPayment] = useState<any>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncReservationsToPayments();
+      toast({
+        title: "Sync complete",
+        description: `Created ${result.created} payment records. ${result.existing} already existed.`,
+      });
+      if (result.errors.length > 0) {
+        console.error('Sync errors:', result.errors);
+      }
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: "Failed to sync calendar data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -25,8 +83,8 @@ const SeasonSummary = () => {
   if (!summary) {
     return (
       <div className="container mx-auto p-6">
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>No Season Data</AlertTitle>
           <AlertDescription>
             Unable to load season summary. Please contact your administrator.
@@ -36,38 +94,33 @@ const SeasonSummary = () => {
     );
   }
 
-  const daysUntilDeadline = differenceInDays(summary.config.paymentDeadline, new Date());
-  const hasOutstanding = summary.totals.outstandingBalance > 0;
-
-  const getPaymentStatusBadge = (payment: any) => {
-    if (!payment) return <Badge variant="outline">PENDING</Badge>;
-    
-    if (payment.status === 'paid') return <Badge className="bg-green-500">PAID</Badge>;
-    if (payment.status === 'deferred') return <Badge className="bg-yellow-500">DEFERRED</Badge>;
-    if (payment.status === 'overdue') return <Badge variant="destructive">OVERDUE</Badge>;
-    return <Badge variant="outline">PENDING</Badge>;
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-6xl space-y-6">
-      {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold flex items-center gap-2">
-          <Calendar className="h-8 w-8" />
-          My Season Summary - {new Date().getFullYear()}
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          {format(summary.config.startDate, 'MMMM d, yyyy')} - {format(summary.config.endDate, 'MMMM d, yyyy')}
-        </p>
-        <p className="text-lg">
-          Payment Deadline: {format(summary.config.paymentDeadline, 'MMM d, yyyy')} 
-          {daysUntilDeadline > 0 && (
-            <span className="text-muted-foreground ml-2">({daysUntilDeadline} days left)</span>
-          )}
-          {daysUntilDeadline < 0 && (
-            <span className="text-destructive ml-2">(Overdue by {Math.abs(daysUntilDeadline)} days)</span>
-          )}
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">My Season Summary - {year}</h1>
+          <p className="text-muted-foreground">
+            {summary?.config && (
+              `Season: ${format(new Date(year, summary.config.season_start_month - 1, summary.config.season_start_day), 'MMM d')} - ${format(new Date(year, summary.config.season_end_month - 1, summary.config.season_end_day), 'MMM d, yyyy')}`
+            )}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSync} disabled={syncing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync from Calendar'}
+          </Button>
+          <Button variant="outline" onClick={() => window.print()}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Report
+          </Button>
+          <Link to="/financial">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Overview Cards */}
@@ -92,7 +145,7 @@ const SeasonSummary = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Due</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Charges</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{BillingCalculator.formatCurrency(summary.totals.totalCharged)}</p>
@@ -101,10 +154,10 @@ const SeasonSummary = () => {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Paid</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Payments Made</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{BillingCalculator.formatCurrency(summary.totals.totalPaid)}</p>
+            <p className="text-3xl font-bold text-green-600">{BillingCalculator.formatCurrency(summary.totals.totalPaid)}</p>
           </CardContent>
         </Card>
       </div>
@@ -116,67 +169,120 @@ const SeasonSummary = () => {
             <Calendar className="h-5 w-5" />
             Stay-by-Stay Breakdown
           </CardTitle>
-          <CardDescription>Detailed billing for each reservation this season</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {summary.stays.length === 0 ? (
             <Alert>
-              <AlertTitle>No Reservations</AlertTitle>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No Stays Found</AlertTitle>
               <AlertDescription>
-                You don't have any reservations during this season.
+                No reservations found for this season period.
               </AlertDescription>
             </Alert>
           ) : (
-            summary.stays.map((stay, index) => (
-              <div key={stay.reservation.id} className="border rounded-lg p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-lg">
-                      {format(new Date(stay.reservation.start_date), 'MMM d')} - {format(new Date(stay.reservation.end_date), 'MMM d')} ({stay.billing.totalDays} nights)
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Reserved: {stay.reservation.guests} guests</span>
-                      {stay.hasCompleteData && stay.billing.averageGuests && (
-                        <span>Actual avg: {stay.billing.averageGuests.toFixed(1)}</span>
-                      )}
+            summary.stays.map((stay) => (
+              <Card key={stay.reservation.id}>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                        <span className="font-medium">
+                          {format(new Date(stay.reservation.start_date), 'MMM d')} - {format(new Date(stay.reservation.end_date), 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setEditingOccupancy({
+                          ...stay,
+                          id: stay.payment?.id,
+                          startDate: new Date(stay.reservation.start_date),
+                          endDate: new Date(stay.reservation.end_date),
+                          family_group: stay.reservation.family_group,
+                        })}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit Occupancy
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Moon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          <span className="font-medium">{Math.ceil((new Date(stay.reservation.end_date).getTime() - new Date(stay.reservation.start_date).getTime()) / (1000 * 60 * 60 * 24))}</span> nights
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          Avg <span className="font-medium">{stay.reservation.guest_count || 0}</span> guests/night
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 border-t pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Charges</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold">
+                            {BillingCalculator.formatCurrency(stay.billing.total)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setAdjustingBilling({
+                              id: stay.payment?.id,
+                              family_group: stay.reservation.family_group,
+                              totalCharge: stay.billing.total,
+                              manualAdjustment: stay.payment?.manual_adjustment_amount || 0,
+                              adjustmentNotes: stay.payment?.adjustment_notes,
+                              billingLocked: stay.payment?.billing_locked,
+                            })}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Payments Made</span>
+                        <span className="font-medium text-green-600">
+                          {BillingCalculator.formatCurrency(stay.payment?.amount_paid || 0)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-4 border-t">
+                      <div>
+                        <span className="font-semibold text-lg">Balance Due:</span>{" "}
+                        <span className="text-xl font-bold text-primary">
+                          {BillingCalculator.formatCurrency(stay.billing.total - (stay.payment?.amount_paid || 0))}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link to={`/reservations/${stay.reservation.id}`}>
+                          <Button variant="outline" size="sm">View Details</Button>
+                        </Link>
+                        {stay.billing.total > (stay.payment?.amount_paid || 0) && (
+                          <Button 
+                            size="sm"
+                            onClick={() => setRecordingPayment({
+                              id: stay.payment?.id,
+                              family_group: stay.reservation.family_group,
+                              totalCharge: stay.billing.total,
+                              totalPaid: stay.payment?.amount_paid || 0,
+                            })}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Record Payment
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  {getPaymentStatusBadge(stay.payment)}
-                </div>
-
-                {!stay.hasCompleteData && (
-                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Missing Check-in Data</AlertTitle>
-                    <AlertDescription>
-                      {stay.missingCheckIns.length} day(s) of check-in data missing. Billing is estimated.
-                      <Link to="/daily-check-in" className="underline ml-2">
-                        Complete check-in data →
-                      </Link>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Amount Due</p>
-                    <p className="text-2xl font-bold">{BillingCalculator.formatCurrency(stay.billing.total)}</p>
-                    {!stay.hasCompleteData && (
-                      <p className="text-xs text-muted-foreground">*Estimated based on available data</p>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" asChild>
-                      <Link to={`/reservation/${stay.reservation.id}`}>View Details</Link>
-                    </Button>
-                    {!stay.payment?.amount_paid && (
-                      <Button asChild>
-                        <Link to={`/checkout-final?reservation=${stay.reservation.id}`}>Pay Now</Link>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))
           )}
         </CardContent>
@@ -189,7 +295,6 @@ const SeasonSummary = () => {
             <DollarSign className="h-5 w-5" />
             Season Payment Summary
           </CardTitle>
-          <CardDescription>Your total season balance and payment options</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -198,43 +303,93 @@ const SeasonSummary = () => {
               <span className="font-semibold">{BillingCalculator.formatCurrency(summary.totals.totalCharged)}</span>
             </div>
             <div className="flex justify-between text-lg">
-              <span>Already Paid:</span>
-              <span className="font-semibold">{BillingCalculator.formatCurrency(summary.totals.totalPaid)}</span>
+              <span>Payments Made:</span>
+              <span className="font-semibold text-green-600">{BillingCalculator.formatCurrency(summary.totals.totalPaid)}</span>
             </div>
-            <Separator />
-            <div className="flex justify-between text-xl">
-              <span className="font-bold">Outstanding Balance:</span>
-              <span className={`font-bold ${hasOutstanding ? 'text-primary' : 'text-green-500'}`}>
-                {BillingCalculator.formatCurrency(summary.totals.outstandingBalance)}
-              </span>
+            <div className="flex justify-between text-2xl font-bold pt-2 border-t">
+              <span>Outstanding Balance:</span>
+              <span className="text-primary">{BillingCalculator.formatCurrency(summary.totals.outstandingBalance)}</span>
             </div>
           </div>
 
-          {hasOutstanding && (
+          {summary.totals.outstandingBalance > 0 ? (
             <div className="flex gap-3 pt-4">
               <Button size="lg" className="flex-1" onClick={createSeasonPayment}>
-                <CreditCard className="mr-2 h-5 w-5" />
-                Pay Full Season Balance
+                Pay Full Balance
               </Button>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" onClick={() => window.print()}>
                 <Download className="mr-2 h-5 w-5" />
-                Download Invoice
+                Invoice
               </Button>
             </div>
-          )}
-
-          {!hasOutstanding && (
+          ) : (
             <Alert className="bg-green-50 border-green-200">
-              <AlertTitle className="text-green-800">All Paid Up!</AlertTitle>
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">Fully Paid</AlertTitle>
               <AlertDescription className="text-green-700">
-                Your season balance has been paid in full. Thank you!
+                Your season balance has been paid in full!
               </AlertDescription>
             </Alert>
           )}
         </CardContent>
       </Card>
+
+      {editingOccupancy && (
+        <EditOccupancyDialog
+          open={!!editingOccupancy}
+          onOpenChange={(open) => !open && setEditingOccupancy(null)}
+          stay={editingOccupancy}
+          currentOccupancy={editingOccupancy.dailyOccupancy || []}
+          onSave={async (occupancy) => {
+            await updateOccupancy(editingOccupancy.id, occupancy);
+          }}
+        />
+      )}
+
+      {adjustingBilling && (
+        <AdjustBillingDialog
+          open={!!adjustingBilling}
+          onOpenChange={(open) => !open && setAdjustingBilling(null)}
+          stay={{
+            id: adjustingBilling.id,
+            family_group: adjustingBilling.family_group,
+            calculatedAmount: adjustingBilling.totalCharge,
+            manualAdjustment: adjustingBilling.manualAdjustment || 0,
+            adjustmentNotes: adjustingBilling.adjustmentNotes,
+            billingLocked: adjustingBilling.billingLocked,
+          }}
+          onSave={async (data) => {
+            await adjustBilling(
+              adjustingBilling.id,
+              data.manualAdjustment,
+              data.adjustmentNotes,
+              data.billingLocked
+            );
+          }}
+        />
+      )}
+
+      {recordingPayment && (
+        <RecordPaymentDialog
+          open={!!recordingPayment}
+          onOpenChange={(open) => !open && setRecordingPayment(null)}
+          stay={{
+            id: recordingPayment.id,
+            family_group: recordingPayment.family_group,
+            balanceDue: recordingPayment.totalCharge - recordingPayment.totalPaid,
+          }}
+          onSave={async (data) => {
+            await recordPartialPayment(
+              recordingPayment.id,
+              data.amount,
+              data.paidDate,
+              data.paymentMethod,
+              data.paymentReference,
+              data.notes
+            );
+          }}
+        />
+      )}
     </div>
   );
-};
-
-export default SeasonSummary;
+}

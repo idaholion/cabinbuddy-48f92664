@@ -951,15 +951,19 @@ export type Database = {
       }
       payments: {
         Row: {
+          adjustment_notes: string | null
           amount: number
           amount_paid: number | null
           balance_due: number | null
+          billing_locked: boolean | null
           created_at: string
           created_by_user_id: string | null
+          daily_occupancy: Json | null
           description: string | null
           due_date: string | null
           family_group: string
           id: string
+          manual_adjustment_amount: number | null
           notes: string | null
           organization_id: string
           paid_date: string | null
@@ -972,15 +976,19 @@ export type Database = {
           updated_by_user_id: string | null
         }
         Insert: {
+          adjustment_notes?: string | null
           amount: number
           amount_paid?: number | null
           balance_due?: number | null
+          billing_locked?: boolean | null
           created_at?: string
           created_by_user_id?: string | null
+          daily_occupancy?: Json | null
           description?: string | null
           due_date?: string | null
           family_group: string
           id?: string
+          manual_adjustment_amount?: number | null
           notes?: string | null
           organization_id: string
           paid_date?: string | null
@@ -993,15 +1001,19 @@ export type Database = {
           updated_by_user_id?: string | null
         }
         Update: {
+          adjustment_notes?: string | null
           amount?: number
           amount_paid?: number | null
           balance_due?: number | null
+          billing_locked?: boolean | null
           created_at?: string
           created_by_user_id?: string | null
+          daily_occupancy?: Json | null
           description?: string | null
           due_date?: string | null
           family_group?: string
           id?: string
+          manual_adjustment_amount?: number | null
           notes?: string | null
           organization_id?: string
           paid_date?: string | null
