@@ -172,6 +172,9 @@ export const useSeasonSummary = (seasonYear?: number) => {
       let totalActualDays = 0;
 
       for (const reservation of reservations || []) {
+        // Check if reservation is upcoming (hasn't started yet)
+        const isUpcoming = new Date(reservation.start_date) > new Date();
+        
         // First, check if there's already a payment with daily_occupancy data
         const { data: payment } = await supabase
           .from('payments')
@@ -193,6 +196,19 @@ export const useSeasonSummary = (seasonYear?: number) => {
         const nights = Math.ceil(
           (new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)
         );
+        
+        // Skip billing calculation for upcoming reservations
+        if (isUpcoming) {
+          billing = { total: 0, breakdown: {} };
+          stays.push({
+            reservation,
+            billing,
+            payment: payment || undefined,
+            missingCheckIns: [],
+            hasCompleteData: false,
+          });
+          continue; // Skip totals accumulation
+        }
 
         // Priority 1: Use payment's daily_occupancy if it exists
         if (payment?.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
