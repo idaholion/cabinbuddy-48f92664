@@ -313,7 +313,7 @@ export default function SeasonSummary() {
                             </span>
                           </div>
                           <div className="flex gap-2">
-                            <Link to={`/reservations/${stay.reservation.id}`}>
+                            <Link to={`/reservation/${stay.reservation.id}`}>
                               <Button variant="outline" size="sm">View Details</Button>
                             </Link>
                             {stay.billing.total > (stay.payment?.amount_paid || 0) && (
@@ -337,7 +337,7 @@ export default function SeasonSummary() {
 
                     {isUpcoming && (
                       <div className="pt-4 border-t">
-                        <Link to={`/reservations/${stay.reservation.id}`}>
+                        <Link to={`/reservation/${stay.reservation.id}`}>
                           <Button variant="outline" size="sm">View Details</Button>
                         </Link>
                       </div>
