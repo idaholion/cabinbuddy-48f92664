@@ -26,6 +26,9 @@ import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useOrganization } from "@/hooks/useOrganization";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SeasonSummary() {
   const { toast } = useToast();
@@ -42,11 +45,14 @@ export default function SeasonSummary() {
   } = useSeasonSummary(year);
   const { recordPartialPayment } = usePayments();
   const calculator = new BillingCalculator();
+  const { isAdmin } = useUserRole();
+  const { organization } = useOrganization();
 
   const [editingOccupancy, setEditingOccupancy] = useState<any>(null);
   const [adjustingBilling, setAdjustingBilling] = useState<any>(null);
   const [recordingPayment, setRecordingPayment] = useState<any>(null);
   const [syncing, setSyncing] = useState(false);
+  const [syncingOrg, setSyncingOrg] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -68,6 +74,42 @@ export default function SeasonSummary() {
       });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleSyncOrganization = async () => {
+    if (!organization?.id) return;
+    
+    setSyncingOrg(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-organization-payments', {
+        body: {
+          organizationId: organization.id,
+          year,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Organization sync complete",
+        description: `Created ${data.created} payment records for all families. ${data.existing} already existed.`,
+      });
+      
+      if (data.errors && data.errors.length > 0) {
+        console.error('Sync errors:', data.errors);
+      }
+      
+      refetch();
+    } catch (error) {
+      console.error('Organization sync error:', error);
+      toast({
+        title: "Organization sync failed",
+        description: error.message || "Failed to sync organization data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncingOrg(false);
     }
   };
 
@@ -106,9 +148,15 @@ export default function SeasonSummary() {
           </p>
         </div>
         <div className="flex gap-2">
+          {isAdmin && (
+            <Button variant="default" onClick={handleSyncOrganization} disabled={syncingOrg}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${syncingOrg ? 'animate-spin' : ''}`} />
+              {syncingOrg ? 'Syncing All...' : 'Sync All Families'}
+            </Button>
+          )}
           <Button variant="outline" onClick={handleSync} disabled={syncing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync from Calendar'}
+            {syncing ? 'Syncing...' : 'Sync My Family'}
           </Button>
           <Button variant="outline" onClick={() => window.print()}>
             <Download className="h-4 w-4 mr-2" />
