@@ -212,6 +212,9 @@ export const useSeasonSummary = (seasonYear?: number) => {
 
         // Priority 1: Use payment's daily_occupancy if it exists
         if (payment?.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
+          console.log('Using payment daily_occupancy:', payment.daily_occupancy);
+          console.log('Financial settings:', financialSettings);
+          
           const dailyOccupancy: Record<string, number> = {};
           payment.daily_occupancy.forEach((day: any) => {
             dailyOccupancy[day.date] = day.guests || 0;
@@ -232,6 +235,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
               endDate: new Date(reservation.end_date),
             }
           );
+          
+          console.log('Calculated billing:', billing);
           
           // Apply manual adjustment if billing is locked
           if (payment.billing_locked && payment.manual_adjustment_amount !== undefined) {
@@ -499,11 +504,24 @@ export const useSeasonSummary = (seasonYear?: number) => {
     // Get the payment and reservation details
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
-      .select('*, reservations(*)')
+      .select('*')
       .eq('id', paymentId)
       .single();
 
     if (paymentError) throw paymentError;
+    
+    if (!payment.reservation_id) {
+      throw new Error('Payment has no associated reservation');
+    }
+
+    // Get the reservation
+    const { data: reservation, error: reservationError } = await supabase
+      .from('reservations')
+      .select('*')
+      .eq('id', payment.reservation_id)
+      .single();
+
+    if (reservationError) throw reservationError;
 
     // Calculate billing from the new occupancy data
     const dailyOccupancy: Record<string, number> = {};
@@ -522,8 +540,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
       },
       dailyOccupancy,
       {
-        startDate: new Date(payment.reservations.start_date),
-        endDate: new Date(payment.reservations.end_date),
+        startDate: new Date(reservation.start_date),
+        endDate: new Date(reservation.end_date),
       }
     );
 
