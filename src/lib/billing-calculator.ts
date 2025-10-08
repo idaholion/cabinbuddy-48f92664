@@ -166,10 +166,10 @@ export class BillingCalculator {
     }
 
     // Calculate cost for each day
-    days.forEach((dayKey, index) => {
+    days.forEach((dayKey) => {
       const guests = dailyOccupancyData[dayKey] || 0;
-      const date = new Date(stayDates.startDate);
-      date.setDate(date.getDate() + index);
+      // Use the actual date key instead of calculating from index
+      const date = dayKey;
       
       let dayCost = 0;
       
@@ -187,12 +187,13 @@ export class BillingCalculator {
           break;
           
         case 'flat-rate-per-day':
-          dayCost = config.amount;
+          // Only charge flat rate if there are guests
+          dayCost = guests > 0 ? config.amount : 0;
           break;
           
         case 'flat-rate-per-week':
-          // Pro-rate weekly cost to daily
-          dayCost = config.amount / 7;
+          // Pro-rate weekly cost to daily, only if there are guests
+          dayCost = guests > 0 ? config.amount / 7 : 0;
           break;
           
         default:
@@ -201,7 +202,7 @@ export class BillingCalculator {
       
       baseAmount += dayCost;
       dayBreakdown.push({
-        date: date.toISOString().split('T')[0],
+        date,
         guests,
         cost: dayCost
       });
