@@ -439,25 +439,57 @@ const CheckoutList = () => {
         isComplete: isChecklistComplete,
         completedAt: isChecklistComplete ? new Date().toISOString() : null,
         totalTasks,
-        completedTasks
+        completedTasks,
+        surveyData
       };
-      localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
-      toast({
-        title: "Checklist Saved",
-        description: `Checkout checklist saved (${completedTasks}/${totalTasks} tasks completed)`,
-      });
       
-      // Save survey responses to database if any data was entered
-      if (Object.keys(surveyData).length > 0 && Object.values(surveyData).some(val => val)) {
+      // Save to localStorage as backup
+      localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
+      
+      // Save to database
+      if (organization?.id && profile?.family_group) {
         try {
-          await createResponse({
-            family_group: profile?.family_group || 'Unknown',
-            responses: surveyData
+          const { error } = await supabase
+            .from('checkin_sessions')
+            .insert({
+              organization_id: organization.id,
+              family_group: profile.family_group,
+              session_type: 'checkout',
+              check_date: new Date().toISOString().split('T')[0],
+              checklist_responses: {
+                checklistCompletion: {
+                  checkedTasks: Array.from(checkedTasks),
+                  sections: checklistSections,
+                  isComplete: isChecklistComplete,
+                  completedAt: isChecklistComplete ? new Date().toISOString() : null,
+                  totalTasks,
+                  completedTasks
+                },
+                surveyResponses: surveyData
+              },
+              completed_at: isChecklistComplete ? new Date().toISOString() : null
+            });
+
+          if (error) throw error;
+
+          toast({
+            title: "Checklist Saved",
+            description: `Checkout checklist saved to database (${completedTasks}/${totalTasks} tasks completed)`,
           });
-          console.log('✅ Survey responses saved to database');
+          console.log('✅ Checkout completion saved to database');
         } catch (error) {
-          console.error('❌ Failed to save survey responses:', error);
+          console.error('❌ Failed to save checkout completion to database:', error);
+          toast({
+            title: "Partial Save",
+            description: "Checklist saved locally but database sync failed",
+            variant: "destructive",
+          });
         }
+      } else {
+        toast({
+          title: "Checklist Saved",
+          description: `Checkout checklist saved locally (${completedTasks}/${totalTasks} tasks completed)`,
+        });
       }
     }
   };
