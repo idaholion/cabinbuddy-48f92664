@@ -465,9 +465,13 @@ export default function SeasonSummary() {
               <span>Payments Made:</span>
               <span className="font-semibold text-green-600">{BillingCalculator.formatCurrency(summary.totals.totalPaid)}</span>
             </div>
+            <div className="flex justify-between text-lg">
+              <span>Receipts Applied:</span>
+              <span className="font-semibold text-green-600">{BillingCalculator.formatCurrency(receiptsTotal)}</span>
+            </div>
             <div className="flex justify-between text-2xl font-bold pt-2 border-t">
               <span>Outstanding Balance:</span>
-              <span className="text-primary">{BillingCalculator.formatCurrency(summary.totals.outstandingBalance)}</span>
+              <span className="text-primary">{BillingCalculator.formatCurrency(summary.totals.outstandingBalance - receiptsTotal)}</span>
             </div>
           </div>
 
