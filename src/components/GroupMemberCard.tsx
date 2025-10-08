@@ -1,13 +1,15 @@
 import React from 'react';
 import { Control, useFieldArray, useFormContext } from 'react-hook-form';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2, GripVertical } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Trash2, GripVertical, CheckCircle, AlertCircle, UserX, Info } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FamilyGroupSetupFormData } from '@/lib/validations';
@@ -19,6 +21,9 @@ interface GroupMemberCardProps {
   canRemove: boolean;
   isDragOver?: boolean;
   onFieldChange?: () => void;
+  hasUserAccount?: boolean;
+  hasClaimed?: boolean;
+  showStatusIndicators?: boolean;
 }
 
 export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
@@ -28,6 +33,9 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   canRemove,
   isDragOver = false,
   onFieldChange,
+  hasUserAccount = false,
+  hasClaimed = false,
+  showStatusIndicators = false,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
   const groupMembers = watch('groupMembers');
@@ -68,7 +76,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
         hover:shadow-md
       `}>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div 
               {...attributes} 
               {...listeners}
@@ -79,6 +87,36 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
             <h4 className="font-medium text-lg">
               Group Member {index + 1}
             </h4>
+            
+            {/* Phase 3: Status Indicators */}
+            {showStatusIndicators && currentMember?.email && (
+              <div className="flex items-center gap-2">
+                {hasClaimed ? (
+                  <Badge variant="default" className="flex items-center gap-1 text-xs">
+                    <CheckCircle className="h-3 w-3" />
+                    Profile Claimed
+                  </Badge>
+                ) : hasUserAccount ? (
+                  <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                    <AlertCircle className="h-3 w-3" />
+                    Not Claimed
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="flex items-center gap-1 text-xs border-muted-foreground/30">
+                    <UserX className="h-3 w-3" />
+                    No Account
+                  </Badge>
+                )}
+              </div>
+            )}
+            
+            {/* Show notice for members without email (Phase 2) */}
+            {index > 0 && !currentMember?.email && currentMember?.firstName && (
+              <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                <Info className="h-3 w-3" />
+                Will claim profile later
+              </Badge>
+            )}
           </div>
           
           {canRemove && (
@@ -167,12 +205,16 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
               name={`groupMembers.${index}.email`}
               render={({ field }) => (
                 <FormItem>
-                   <FormLabel className="text-xl">Email</FormLabel>
+                   <FormLabel className="text-xl">
+                     Email
+                     {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group lead only)</span>}
+                     {index > 0 && <span className="text-muted-foreground text-sm ml-2">(Optional - can add later)</span>}
+                   </FormLabel>
                    <FormControl>
                      <Input 
                        {...field} 
                        type="email" 
-                       placeholder="Enter email" 
+                       placeholder={index === 0 ? "Enter email" : "Member will add when claiming profile"} 
                        className="text-lg placeholder:text-lg"
                        onChange={(e) => {
                          onFieldChange?.();
@@ -181,6 +223,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                      />
                   </FormControl>
                   <FormMessage />
+                  {index > 0 && !field.value && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Members can add their email when they claim their profile
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
@@ -190,7 +237,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
               name={`groupMembers.${index}.phone`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xl">Phone</FormLabel>
+                  <FormLabel className="text-xl">
+                    Phone
+                    {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group lead only)</span>}
+                    {index > 0 && <span className="text-muted-foreground text-sm ml-2">(Optional - can add later)</span>}
+                  </FormLabel>
                   <FormControl>
                      <PhoneInput 
                        value={field.value}
@@ -199,9 +250,15 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                          field.onChange(value);
                        }}
                        className="text-lg placeholder:text-lg"
+                       placeholder={index === 0 ? "Enter phone number" : "Member will add when claiming profile"}
                      />
                   </FormControl>
                   <FormMessage />
+                  {index > 0 && !field.value && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Members can add their phone when they claim their profile
+                    </p>
+                  )}
                 </FormItem>
               )}
             />

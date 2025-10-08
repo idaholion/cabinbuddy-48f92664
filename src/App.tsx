@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { GuestAccessProvider } from "@/contexts/GuestAccessContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProfileClaimingPrompt } from "@/components/ProfileClaimingPrompt";
 import { RobustOrganizationRoute } from "@/components/RobustOrganizationRoute";
 import { UnifiedAuthRoute } from "@/components/UnifiedAuthRoute";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -73,6 +74,7 @@ const TrialCodeManagement = React.lazy(() => import("./pages/TrialCodeManagement
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));
+const FamilyGroupHealthCheck = React.lazy(() => import("./pages/FamilyGroupHealthCheck"));
 
 
 
@@ -160,6 +162,7 @@ const AppContent = () => {
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/trial-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><TrialCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
+        <Route path="/family-group-health-check" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminTreasurerRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
         </Routes>
@@ -177,7 +180,7 @@ const App = () => (
             <ErrorBoundary>
               <Toaster />
               <Sonner />
-              
+              <ProfileClaimingPrompt />
               <AppContent />
             </ErrorBoundary>
           </RoleProvider>

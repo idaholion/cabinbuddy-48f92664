@@ -59,16 +59,8 @@ export const familyGroupSetupSchema = z.object({
     firstName: requiredStringSchema.min(1, "First name is required"),
     lastName: requiredStringSchema.min(1, "Last name is required"),
     name: z.string().optional(), // Computed field, will be auto-generated
-    phone: z.string().refine((val) => {
-      if (!val || val === "") return true;
-      // Remove all non-digit characters and check if it's a valid phone number
-      const cleaned = val.replace(/\D/g, '');
-      return cleaned.length >= 10 && cleaned.length <= 15;
-    }, "Please enter a valid phone number"),
-    email: z.string().refine((val) => {
-      if (!val || val === "") return true;
-      return z.string().email().safeParse(val).success;
-    }, "Please enter a valid email address"),
+    phone: z.string().optional(),
+    email: z.string().optional(),
     canHost: z.boolean().optional().default(false),
   }))
     .refine((members) => {

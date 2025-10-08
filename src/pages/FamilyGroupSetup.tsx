@@ -33,6 +33,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
 import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 const FamilyGroupSetup = () => {
   const { toast } = useToast();
@@ -51,6 +52,7 @@ const FamilyGroupSetup = () => {
   const [isSaving, setIsSaving] = useState(false);
   const hasLoadedAutoSave = useRef(false);
   const hasUserMadeChanges = useRef(false);
+  const [memberClaimStatus, setMemberClaimStatus] = useState<Map<string, { hasAccount: boolean; hasClaimed: boolean }>>(new Map());
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -60,7 +62,7 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       groupMembers: [
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }, // Group lead (index 0) can have contact info
         { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
         { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
       ],
@@ -112,20 +114,49 @@ const FamilyGroupSetup = () => {
     })
   );
 
-  // Scroll to top when page loads
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Get the selected family group data
+  const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
 
-  // Clear stale auto-save data on mount
+  // Load member claim status for visual indicators (Phase 3)
   useEffect(() => {
-    // Clear any old generic auto-save keys that could cause contamination
-    const oldKeys = ['family-group-setup'];
-    oldKeys.forEach(key => {
-      const storageKey = `auto-save-${key}-${user?.id}`;
-      localStorage.removeItem(storageKey);
-    });
-  }, [user?.id]);
+    const loadMemberStatus = async () => {
+      if (!organization?.organization_id || !selectedFamilyGroup) return;
+
+      try {
+        const { data: orgUsers, error: userError } = await supabase
+          .rpc('get_organization_user_emails', { org_id: organization.organization_id });
+        
+        if (userError) throw userError;
+
+        const { data: claims, error: claimError } = await supabase
+          .from('member_profile_links')
+          .select('member_name, claimed_by_user_id')
+          .eq('organization_id', organization.organization_id)
+          .eq('family_group_name', selectedFamilyGroup.name);
+
+        if (claimError) throw claimError;
+
+        const statusMap = new Map<string, { hasAccount: boolean; hasClaimed: boolean }>();
+        const userEmailMap = new Map(orgUsers?.map((u: any) => [u.email.toLowerCase().trim(), u.user_id]) || []);
+        const claimedSet = new Set(claims?.map(c => c.member_name) || []);
+
+        selectedFamilyGroup.host_members?.forEach((member: any) => {
+          if (member.email) {
+            const email = member.email.toLowerCase().trim();
+            const hasAccount = userEmailMap.has(email);
+            const hasClaimed = claimedSet.has(member.name);
+            statusMap.set(member.name, { hasAccount, hasClaimed });
+          }
+        });
+
+        setMemberClaimStatus(statusMap);
+      } catch (error) {
+        console.error('Error loading member status:', error);
+      }
+    };
+
+    loadMemberStatus();
+  }, [organization?.organization_id, selectedFamilyGroup]);
 
   // Load auto-saved data on mount (only once) with validation
   useEffect(() => {
@@ -245,9 +276,6 @@ const FamilyGroupSetup = () => {
       });
     }
   }, [user, setValue, getValues, hasLoadedAutoSave, isAdmin, isSupervisor, userFamilyGroup]);
-
-  // Get the selected family group data
-  const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
 
   // Load form data when a family group is selected
   useEffect(() => {
@@ -903,7 +931,10 @@ const FamilyGroupSetup = () => {
                     {/* Unique Email Address Requirement */}
                     <div className="mt-2 mb-3">
                       <p className="text-lg font-bold text-foreground">
-                        Each Group Member must have a Unique Email Address
+                        Important: Only add email/phone for yourself (Group Member 1)
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Other members will add their own contact information when they claim their profile after logging in. This prevents email mismatches.
                       </p>
                     </div>
                     
@@ -932,16 +963,24 @@ const FamilyGroupSetup = () => {
                       strategy={verticalListSortingStrategy}
                     >
                       <div className="grid gap-4">
-                        {displayedMembers.map((field, index) => (
-                          <GroupMemberCard
-                            key={field.id}
-                            index={index}
-                            control={control}
-                            onRemove={removeGroupMember}
-                            canRemove={fields.length > 1}
-                            onFieldChange={() => hasUserMadeChanges.current = true}
-                          />
-                        ))}
+                        {displayedMembers.map((field, index) => {
+                          const memberName = `${watchedData.groupMembers[index]?.firstName || ''} ${watchedData.groupMembers[index]?.lastName || ''}`.trim();
+                          const status = memberClaimStatus.get(memberName);
+                          
+                          return (
+                            <GroupMemberCard
+                              key={field.id}
+                              index={index}
+                              control={control}
+                              onRemove={removeGroupMember}
+                              canRemove={fields.length > 1}
+                              onFieldChange={() => hasUserMadeChanges.current = true}
+                              hasUserAccount={status?.hasAccount || false}
+                              hasClaimed={status?.hasClaimed || false}
+                              showStatusIndicators={isAdmin || isSupervisor}
+                            />
+                          );
+                        })}
                       </div>
                     </SortableContext>
                   </DndContext>
