@@ -3,12 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { BillingCalculator } from '@/lib/billing-calculator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Users } from 'lucide-react';
+import { AlertCircle, Users, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface DailyBreakdown {
   date: string;
@@ -35,6 +35,14 @@ interface OrgUser {
   last_name: string;
 }
 
+interface UserSplit {
+  userId: string;
+  familyGroup: string;
+  displayName: string;
+  dailyGuests: Record<string, number>;
+  totalAmount: number;
+}
+
 export const GuestCostSplitDialog = ({
   open,
   onOpenChange,
@@ -48,14 +56,13 @@ export const GuestCostSplitDialog = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<OrgUser[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [selectedUserFamilyGroup, setSelectedUserFamilyGroup] = useState<string>('');
-  const [dailySplits, setDailySplits] = useState<Record<string, { yourGuests: number; guestGuests: number }>>({});
+  const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
+  const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (open) {
       fetchUsers();
-      initializeDailySplits();
+      initializeSourceGuests();
     }
   }, [open, dailyBreakdown]);
 
@@ -78,70 +85,134 @@ export const GuestCostSplitDialog = ({
     setUsers(filteredUsers);
   };
 
-  const initializeDailySplits = () => {
-    const splits: Record<string, { yourGuests: number; guestGuests: number }> = {};
+  const initializeSourceGuests = () => {
+    const sourceGuests: Record<string, number> = {};
     dailyBreakdown.forEach(day => {
-      splits[day.date] = {
-        yourGuests: day.guests,
-        guestGuests: 0
-      };
+      sourceGuests[day.date] = day.guests;
     });
-    setDailySplits(splits);
+    setSourceDailyGuests(sourceGuests);
   };
 
-  const handleGuestCountChange = (date: string, field: 'yourGuests' | 'guestGuests', value: string) => {
-    const numValue = parseInt(value) || 0;
+  const handleUserToggle = (user: OrgUser, checked: boolean) => {
+    if (checked) {
+      const newUser: UserSplit = {
+        userId: user.user_id,
+        familyGroup: user.display_name || `${user.first_name} ${user.last_name}`,
+        displayName: user.display_name || `${user.first_name} ${user.last_name}`,
+        dailyGuests: {},
+        totalAmount: 0
+      };
+      dailyBreakdown.forEach(day => {
+        newUser.dailyGuests[day.date] = 0;
+      });
+      setSelectedUsers(prev => [...prev, newUser]);
+    } else {
+      setSelectedUsers(prev => prev.filter(u => u.userId !== user.user_id));
+      // Redistribute the removed user's guests back to source
+      setSourceDailyGuests(prev => {
+        const updated = { ...prev };
+        const removedUser = selectedUsers.find(u => u.userId === user.user_id);
+        if (removedUser) {
+          Object.keys(removedUser.dailyGuests).forEach(date => {
+            updated[date] = (updated[date] || 0) + removedUser.dailyGuests[date];
+          });
+        }
+        return updated;
+      });
+    }
+  };
+
+  const handleGuestCountChange = (date: string, userId: string, value: string) => {
+    const numValue = Math.max(0, parseInt(value) || 0);
     const originalGuests = dailyBreakdown.find(d => d.date === date)?.guests || 0;
-
-    setDailySplits(prev => {
-      const current = prev[date];
-      const newSplit = { ...current, [field]: numValue };
-
-      // Auto-adjust the other field to not exceed total
-      if (field === 'yourGuests') {
-        newSplit.guestGuests = Math.max(0, originalGuests - numValue);
-      } else {
-        newSplit.yourGuests = Math.max(0, originalGuests - numValue);
-      }
-
-      return { ...prev, [date]: newSplit };
-    });
+    
+    if (userId === 'source') {
+      // Calculate total guests assigned to other users
+      const otherUsersTotal = selectedUsers.reduce((sum, user) => 
+        sum + (user.dailyGuests[date] || 0), 0);
+      
+      // Source can't be more than original minus others
+      const maxSource = originalGuests - otherUsersTotal;
+      const adjustedValue = Math.min(numValue, maxSource);
+      
+      setSourceDailyGuests(prev => ({ ...prev, [date]: adjustedValue }));
+    } else {
+      // Update specific user's guest count
+      setSelectedUsers(prev => prev.map(user => {
+        if (user.userId === userId) {
+          // Calculate max this user can have
+          const otherUsersTotal = prev
+            .filter(u => u.userId !== userId)
+            .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
+          const maxForUser = originalGuests - sourceDailyGuests[date] - otherUsersTotal;
+          const adjustedValue = Math.min(numValue, maxForUser);
+          
+          return {
+            ...user,
+            dailyGuests: { ...user.dailyGuests, [date]: adjustedValue }
+          };
+        }
+        return user;
+      }));
+    }
   };
 
   const calculateSplitCosts = () => {
-    const perDiem = totalAmount / dailyBreakdown.reduce((sum, d) => sum + d.guests, 0);
+    const totalGuestNights = dailyBreakdown.reduce((sum, d) => sum + d.guests, 0);
+    const perDiem = totalGuestNights > 0 ? totalAmount / totalGuestNights : 0;
 
-    const yourTotal = dailyBreakdown.reduce((sum, day) => {
-      const split = dailySplits[day.date];
-      return sum + (split?.yourGuests || day.guests) * perDiem;
+    // Calculate source total
+    const sourceTotal = dailyBreakdown.reduce((sum, day) => {
+      return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
     }, 0);
 
-    const guestTotal = dailyBreakdown.reduce((sum, day) => {
-      const split = dailySplits[day.date];
-      return sum + (split?.guestGuests || 0) * perDiem;
-    }, 0);
+    // Calculate each user's total and update in state
+    const updatedUsers = selectedUsers.map(user => {
+      const userTotal = dailyBreakdown.reduce((sum, day) => {
+        return sum + (user.dailyGuests[day.date] || 0) * perDiem;
+      }, 0);
+      return { ...user, totalAmount: userTotal };
+    });
 
-    return { yourTotal, guestTotal, perDiem };
+    return { sourceTotal, users: updatedUsers, perDiem };
   };
 
   const validateSplit = (): boolean => {
-    if (!selectedUserId) {
+    if (selectedUsers.length === 0) {
       toast({
-        title: 'Select a Guest',
-        description: 'Please select who you want to split costs with',
+        title: 'Select Guests',
+        description: 'Please select at least one person to split costs with',
         variant: 'destructive',
       });
       return false;
     }
 
-    const { guestTotal } = calculateSplitCosts();
-    if (guestTotal <= 0) {
+    const { users } = calculateSplitCosts();
+    const hasInvalidUser = users.some(user => user.totalAmount <= 0);
+    
+    if (hasInvalidUser) {
       toast({
         title: 'Invalid Split',
-        description: 'Guest must have at least some guest count assigned',
+        description: 'Each selected person must have at least some guest count assigned',
         variant: 'destructive',
       });
       return false;
+    }
+
+    // Verify totals match (allow for small floating point differences)
+    for (const day of dailyBreakdown) {
+      const sourceGuests = sourceDailyGuests[day.date] || 0;
+      const otherGuests = selectedUsers.reduce((sum, u) => sum + (u.dailyGuests[day.date] || 0), 0);
+      const total = sourceGuests + otherGuests;
+      
+      if (Math.abs(total - day.guests) > 0.01) {
+        toast({
+          title: 'Guest Count Mismatch',
+          description: `On ${new Date(day.date).toLocaleDateString()}, total guests don't match (${total} vs ${day.guests})`,
+          variant: 'destructive',
+        });
+        return false;
+      }
     }
 
     return true;
@@ -155,83 +226,111 @@ export const GuestCostSplitDialog = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { yourTotal, guestTotal, perDiem } = calculateSplitCosts();
+      const { sourceTotal, users: calculatedUsers, perDiem } = calculateSplitCosts();
+      const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
 
-      // Create guest's daily occupancy array
-      const guestDailyOccupancy = dailyBreakdown
-        .map(day => ({
-          date: day.date,
-          guests: dailySplits[day.date]?.guestGuests || 0,
-          cost: (dailySplits[day.date]?.guestGuests || 0) * perDiem
-        }))
-        .filter(day => day.guests > 0);
-
-      // Create your reduced daily occupancy array
-      const yourDailyOccupancy = dailyBreakdown.map(day => ({
+      // Create source payment (Person A - reduced amount)
+      const sourceDailyOccupancy = dailyBreakdown.map(day => ({
         date: day.date,
-        guests: dailySplits[day.date]?.yourGuests || day.guests,
-        cost: (dailySplits[day.date]?.yourGuests || day.guests) * perDiem
+        guests: sourceDailyGuests[day.date] || 0,
+        cost: (sourceDailyGuests[day.date] || 0) * perDiem
       }));
 
-      // Create guest's payment
-      const { data: guestPayment, error: guestPaymentError } = await supabase
+      const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
         .insert({
           organization_id: organizationId,
-          family_group: selectedUserFamilyGroup,
+          family_group: sourceFamilyGroup,
           payment_type: 'use_fee',
-          amount: guestTotal,
+          amount: sourceTotal,
           amount_paid: 0,
           status: 'deferred',
-          description: `Guest cost split - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
-          daily_occupancy: guestDailyOccupancy,
+          due_date: seasonEnd.toISOString().split('T')[0],
+          description: `Use fee (split with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}) - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
+          notes: `Cost split with: ${calculatedUsers.map(u => u.displayName).join(', ')}`,
+          daily_occupancy: sourceDailyOccupancy,
           created_by_user_id: user.id,
-          notes: `Split from ${sourceFamilyGroup}`
         })
         .select()
         .single();
 
-      if (guestPaymentError) throw guestPaymentError;
+      if (sourcePaymentError) throw sourcePaymentError;
 
-      // Note: In a full implementation, you would also create/update the source payment here
-      // For now, we're just creating the guest payment and the split record
+      // Create payments and split records for each guest
+      const splitPromises = calculatedUsers.map(async (splitUser) => {
+        // Create guest's daily occupancy
+        const guestDailyOccupancy = dailyBreakdown
+          .map(day => ({
+            date: day.date,
+            guests: splitUser.dailyGuests[day.date] || 0,
+            cost: (splitUser.dailyGuests[day.date] || 0) * perDiem
+          }))
+          .filter(day => day.guests > 0);
 
-      // Create split tracking record
-      const { data: splitRecord, error: splitError } = await supabase
-        .from('payment_splits')
-        .insert({
-          organization_id: organizationId,
-          source_payment_id: guestPayment.id, // Temporary - should be actual source payment
-          split_payment_id: guestPayment.id,
-          source_family_group: sourceFamilyGroup,
-          source_user_id: sourceUserId,
-          split_to_family_group: selectedUserFamilyGroup,
-          split_to_user_id: selectedUserId,
-          daily_occupancy_split: guestDailyOccupancy,
-          created_by_user_id: user.id,
-          notification_status: 'pending'
-        })
-        .select()
-        .single();
+        // Create guest's payment
+        const { data: guestPayment, error: guestPaymentError } = await supabase
+          .from('payments')
+          .insert({
+            organization_id: organizationId,
+            family_group: splitUser.familyGroup,
+            payment_type: 'use_fee',
+            amount: splitUser.totalAmount,
+            amount_paid: 0,
+            status: 'deferred',
+            due_date: seasonEnd.toISOString().split('T')[0],
+            description: `Guest cost split - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
+            daily_occupancy: guestDailyOccupancy,
+            created_by_user_id: user.id,
+            notes: `Split from ${sourceFamilyGroup}`
+          })
+          .select()
+          .single();
 
-      if (splitError) throw splitError;
+        if (guestPaymentError) throw guestPaymentError;
 
-      // Call edge function to send notification
-      const { error: notificationError } = await supabase.functions.invoke('send-guest-split-notification', {
-        body: {
-          splitId: splitRecord.id,
-          organizationId: organizationId
+        // Create split tracking record
+        const { data: splitRecord, error: splitError } = await supabase
+          .from('payment_splits')
+          .insert({
+            organization_id: organizationId,
+            source_payment_id: sourcePayment.id,
+            split_payment_id: guestPayment.id,
+            source_family_group: sourceFamilyGroup,
+            source_user_id: sourceUserId,
+            split_to_family_group: splitUser.familyGroup,
+            split_to_user_id: splitUser.userId,
+            daily_occupancy_split: guestDailyOccupancy,
+            created_by_user_id: user.id,
+            notification_status: 'pending'
+          })
+          .select()
+          .single();
+
+        if (splitError) throw splitError;
+
+        // Send notification
+        const { error: notificationError } = await supabase.functions.invoke('send-guest-split-notification', {
+          body: {
+            splitId: splitRecord.id,
+            organizationId: organizationId
+          }
+        });
+
+        if (notificationError) {
+          console.error('Notification error for', splitUser.displayName, ':', notificationError);
         }
+
+        return { user: splitUser, payment: guestPayment };
       });
 
-      if (notificationError) {
-        console.error('Notification error:', notificationError);
-        // Don't fail the whole operation if notification fails
-      }
+      await Promise.all(splitPromises);
+
+      const totalSplit = calculatedUsers.reduce((sum, u) => sum + u.totalAmount, 0);
+      const userNames = calculatedUsers.map(u => u.displayName).join(', ');
 
       toast({
         title: 'Split Created',
-        description: `${users.find(u => u.user_id === selectedUserId)?.display_name} will be notified of their ${BillingCalculator.formatCurrency(guestTotal)} charge`,
+        description: `Successfully split ${BillingCalculator.formatCurrency(totalSplit)} with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}. They will be notified.`,
       });
 
       onSplitCreated?.();
@@ -249,11 +348,11 @@ export const GuestCostSplitDialog = ({
     }
   };
 
-  const { yourTotal, guestTotal } = calculateSplitCosts();
+  const { sourceTotal, users: calculatedUsers } = calculateSplitCosts();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -263,102 +362,125 @@ export const GuestCostSplitDialog = ({
 
         <div className="space-y-6">
           <div>
-            <Label>Who are you splitting costs with?</Label>
-            <Select value={selectedUserId} onValueChange={(value) => {
-              setSelectedUserId(value);
-              // Fetch user's family group
-              const user = users.find(u => u.user_id === value);
-              // In production, you'd fetch this from member_profile_links or family_groups
-              setSelectedUserFamilyGroup(user?.display_name || '');
-            }}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select a guest..." />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.user_id} value={user.user_id}>
-                    {user.display_name || `${user.first_name} ${user.last_name}`} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Select people to split costs with:</Label>
+            <div className="mt-3 space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+              {users.map(user => (
+                <div key={user.user_id} className="flex items-center gap-3 py-2">
+                  <Checkbox
+                    checked={selectedUsers.some(u => u.userId === user.user_id)}
+                    onCheckedChange={(checked) => handleUserToggle(user, !!checked)}
+                  />
+                  <Label className="flex-1 cursor-pointer">
+                    {user.display_name || `${user.first_name} ${user.last_name}`}
+                    <span className="text-sm text-muted-foreground ml-2">({user.email})</span>
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Split guest counts for each day. The costs will be calculated based on per-guest charges.
-            </AlertDescription>
-          </Alert>
+          {selectedUsers.length > 0 && (
+            <>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Assign guest counts for each person each day. Costs calculated based on per-guest charges.
+                </AlertDescription>
+              </Alert>
 
-          <div className="border rounded-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left p-3">Date</th>
-                  <th className="text-right p-3">Your Guests</th>
-                  <th className="text-right p-3">Guest's Guests</th>
-                  <th className="text-right p-3">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dailyBreakdown.map(day => {
-                  const split = dailySplits[day.date] || { yourGuests: day.guests, guestGuests: 0 };
-                  return (
-                    <tr key={day.date} className="border-t">
-                      <td className="p-3">{new Date(day.date).toLocaleDateString()}</td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          max={day.guests}
-                          value={split.yourGuests}
-                          onChange={(e) => handleGuestCountChange(day.date, 'yourGuests', e.target.value)}
-                          className="w-20 ml-auto"
-                        />
-                      </td>
-                      <td className="p-3">
-                        <Input
-                          type="number"
-                          min="0"
-                          max={day.guests}
-                          value={split.guestGuests}
-                          onChange={(e) => handleGuestCountChange(day.date, 'guestGuests', e.target.value)}
-                          className="w-20 ml-auto"
-                        />
-                      </td>
-                      <td className="text-right p-3 text-muted-foreground">
-                        {day.guests}
-                      </td>
+              <div className="border rounded-lg overflow-x-auto">
+                <table className="w-full min-w-max">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="text-left p-3 sticky left-0 bg-muted z-10">Date</th>
+                      <th className="text-right p-3">You</th>
+                      {selectedUsers.map(user => (
+                        <th key={user.userId} className="text-right p-3 min-w-[120px]">
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="truncate max-w-[100px]" title={user.displayName}>
+                              {user.displayName}
+                            </span>
+                          </div>
+                        </th>
+                      ))}
+                      <th className="text-right p-3 font-bold">Total</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {dailyBreakdown.map(day => {
+                      const sourceGuests = sourceDailyGuests[day.date] || 0;
+                      const otherGuests = selectedUsers.reduce((sum, u) => 
+                        sum + (u.dailyGuests[day.date] || 0), 0);
+                      const dayTotal = sourceGuests + otherGuests;
+                      const isValid = Math.abs(dayTotal - day.guests) < 0.01;
+                      
+                      return (
+                        <tr key={day.date} className="border-t">
+                          <td className="p-3 sticky left-0 bg-background z-10">
+                            {new Date(day.date).toLocaleDateString()}
+                          </td>
+                          <td className="p-3">
+                            <Input
+                              type="number"
+                              min="0"
+                              max={day.guests}
+                              value={sourceGuests}
+                              onChange={(e) => handleGuestCountChange(day.date, 'source', e.target.value)}
+                              className="w-20 ml-auto"
+                            />
+                          </td>
+                          {selectedUsers.map(user => (
+                            <td key={user.userId} className="p-3">
+                              <Input
+                                type="number"
+                                min="0"
+                                max={day.guests}
+                                value={user.dailyGuests[day.date] || 0}
+                                onChange={(e) => handleGuestCountChange(day.date, user.userId, e.target.value)}
+                                className="w-20 ml-auto"
+                              />
+                            </td>
+                          ))}
+                          <td className={`text-right p-3 font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
+                            {dayTotal} / {day.guests}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
 
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Your Portion</div>
-              <div className="text-2xl font-bold text-primary">
-                {BillingCalculator.formatCurrency(yourTotal)}
+              <div className={`grid gap-4 p-4 bg-muted rounded-lg`} style={{ 
+                gridTemplateColumns: `repeat(${selectedUsers.length + 1}, minmax(0, 1fr))` 
+              }}>
+                <div>
+                  <div className="text-sm text-muted-foreground mb-1">Your Portion</div>
+                  <div className="text-xl font-bold text-primary">
+                    {BillingCalculator.formatCurrency(sourceTotal)}
+                  </div>
+                </div>
+                {calculatedUsers.map(user => (
+                  <div key={user.userId}>
+                    <div className="text-sm text-muted-foreground mb-1 truncate" title={user.displayName}>
+                      {user.displayName}
+                    </div>
+                    <div className="text-xl font-bold text-green-600">
+                      {BillingCalculator.formatCurrency(user.totalAmount)}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">Guest's Portion</div>
-              <div className="text-2xl font-bold text-green-600">
-                {BillingCalculator.formatCurrency(guestTotal)}
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSplitCosts} disabled={loading}>
-            {loading ? 'Creating Split...' : 'Split and Notify'}
+          <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0}>
+            {loading ? 'Creating Split...' : `Split with ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
           </Button>
         </DialogFooter>
       </DialogContent>
