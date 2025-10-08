@@ -85,6 +85,22 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
       // Get season configuration
       const config = await fetchSeasonConfig();
 
+      // Fetch financial settings
+      const { data: financialSettingsData } = await supabase
+        .from('reservation_settings')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .maybeSingle();
+
+      const financialSettings = financialSettingsData ? {
+        billing_method: financialSettingsData.financial_method || 'per-person-per-day',
+        billing_amount: financialSettingsData.nightly_rate || 0,
+        tax_rate: financialSettingsData.tax_rate || 0,
+        cleaning_fee: financialSettingsData.cleaning_fee || 0,
+        pet_fee: financialSettingsData.pet_fee || 0,
+        damage_deposit: financialSettingsData.damage_deposit || 0,
+      } : null;
+
       // Fetch all family groups
       const { data: familyGroups, error: familyGroupsError } = await supabase
         .from('family_groups')
@@ -139,13 +155,45 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
           const payment = paymentsByReservation.get(reservation.id);
           const nights = calculateNights(reservation.start_date, reservation.end_date);
 
-          // Use payment amount if available, otherwise calculate
-          if (payment?.amount) {
-            familyCharged += payment.amount + (payment.manual_adjustment_amount || 0);
+          // Calculate billing based on daily occupancy data
+          let reservationCharge = 0;
+          
+          if (payment) {
+            // Priority 1: Calculate from daily occupancy if available
+            if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
+              const dailyOccupancy: Record<string, number> = {};
+              payment.daily_occupancy.forEach((day: any) => {
+                dailyOccupancy[day.date] = day.guests || 0;
+              });
+
+              const billing = BillingCalculator.calculateFromDailyOccupancy(
+                {
+                  method: financialSettings?.billing_method as any || 'per_person_per_night',
+                  amount: financialSettings?.billing_amount || 0,
+                  taxRate: financialSettings?.tax_rate,
+                  cleaningFee: financialSettings?.cleaning_fee,
+                  petFee: financialSettings?.pet_fee,
+                  damageDeposit: financialSettings?.damage_deposit,
+                },
+                dailyOccupancy,
+                {
+                  startDate: new Date(reservation.start_date),
+                  endDate: new Date(reservation.end_date),
+                }
+              );
+              reservationCharge = billing.total + (payment.manual_adjustment_amount || 0);
+            }
+            // Priority 2: If locked, use stored amount
+            else if (payment.billing_locked && payment.amount) {
+              reservationCharge = payment.amount + (payment.manual_adjustment_amount || 0);
+            }
+            // Priority 3: If no occupancy data, show $0 (awaiting data)
+            else {
+              reservationCharge = 0;
+            }
+            
+            familyCharged += reservationCharge;
             familyPaid += payment.amount_paid || 0;
-          } else {
-            // Fallback calculation if no payment exists
-            familyCharged += 0; // Will be calculated when payment is created
           }
 
           familyNights += nights;
