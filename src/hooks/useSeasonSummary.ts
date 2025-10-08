@@ -530,9 +530,12 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
 
     if (reservationError) throw reservationError;
 
+    // Filter out days with 0 guests (user removed those days)
+    const validOccupancy = occupancy.filter((day: any) => day.guests > 0);
+
     // Calculate billing from the new occupancy data
     const dailyOccupancy: Record<string, number> = {};
-    occupancy.forEach((day: any) => {
+    validOccupancy.forEach((day: any) => {
       dailyOccupancy[day.date] = day.guests || 0;
     });
 
@@ -552,16 +555,27 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
       }
     );
 
-    // Update both occupancy and amount
+    // Use the billing's dayBreakdown which includes the calculated cost per day
+    const enrichedOccupancy = billing.dayBreakdown;
+
+    // Update occupancy with costs, amount, and also update reservation dates if days were removed
+    const updates: any = { 
+      daily_occupancy: enrichedOccupancy,
+      amount: billing.total
+    };
+
     const { error } = await supabase
       .from('payments')
-      .update({ 
-        daily_occupancy: occupancy,
-        amount: billing.total
-      })
+      .update(updates)
       .eq('id', paymentId);
 
     if (error) throw error;
+    
+    toast({
+      title: 'Occupancy Updated',
+      description: `Charges recalculated: ${BillingCalculator.formatCurrency(billing.total)}`,
+    });
+    
     await fetchSeasonData();
   };
 
