@@ -65,6 +65,8 @@ export const EditOccupancyDialog = ({
   const handleSave = async () => {
     setSaving(true);
     try {
+      console.log('EditOccupancyDialog - Saving occupancy:', occupancy);
+      console.log('Total guests:', occupancy.reduce((sum, day) => sum + (day.guests || 0), 0));
       await onSave(occupancy);
       toast({
         title: "Occupancy updated",

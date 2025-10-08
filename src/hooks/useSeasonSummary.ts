@@ -533,10 +533,24 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
     // Filter out days with 0 guests (user removed those days)
     const validOccupancy = occupancy.filter((day: any) => day.guests > 0);
 
+    console.log('useSeasonSummary - updateOccupancy called with:', occupancy);
+    console.log('Valid occupancy (after filtering 0s):', validOccupancy);
+    console.log('Total guests:', validOccupancy.reduce((sum: number, day: any) => sum + (day.guests || 0), 0));
+
     // Calculate billing from the new occupancy data
     const dailyOccupancy: Record<string, number> = {};
     validOccupancy.forEach((day: any) => {
       dailyOccupancy[day.date] = day.guests || 0;
+    });
+
+    console.log('Daily occupancy object:', dailyOccupancy);
+    console.log('Financial settings:', {
+      method: financialSettings.billing_method,
+      amount: financialSettings.billing_amount,
+      taxRate: financialSettings.tax_rate,
+      cleaningFee: financialSettings.cleaning_fee,
+      petFee: financialSettings.pet_fee,
+      damageDeposit: financialSettings.damage_deposit,
     });
 
     const billing = BillingCalculator.calculateFromDailyOccupancy(
@@ -554,6 +568,8 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
         endDate: parseDateOnly(reservation.end_date),
       }
     );
+
+    console.log('Billing calculation result:', billing);
 
     // Use the billing's dayBreakdown which includes the calculated cost per day
     const enrichedOccupancy = billing.dayBreakdown;
