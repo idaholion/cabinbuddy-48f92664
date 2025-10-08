@@ -216,22 +216,50 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
           continue; // Skip totals accumulation
         }
 
-        // Priority 1: Use payment's stored amount if it exists (most reliable)
-        if (payment?.amount !== null && payment?.amount !== undefined) {
-          billing = { 
-            total: payment.amount + (payment.manual_adjustment_amount || 0),
-            breakdown: { note: 'Using stored payment amount' }
-          };
-          
-          // Calculate actual guest averages if we have daily occupancy data
-          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy)) {
-            payment.daily_occupancy.forEach((day: any) => {
-              actualGuestDays += day.guests || 0;
-              totalActualDays++;
-            });
-          }
+        // Priority 1: Calculate from daily occupancy if available (most accurate)
+        if (payment?.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0 && financialSettings) {
+          const dailyOccupancy: Record<string, number> = {};
+          payment.daily_occupancy.forEach((day: any) => {
+            dailyOccupancy[day.date] = day.guests || 0;
+            actualGuestDays += day.guests || 0;
+            totalActualDays++;
+          });
+
+          billing = BillingCalculator.calculateFromDailyOccupancy(
+            {
+              method: financialSettings.billing_method as any,
+              amount: financialSettings.billing_amount || 0,
+              taxRate: financialSettings.tax_rate,
+              cleaningFee: financialSettings.cleaning_fee,
+              petFee: financialSettings.pet_fee,
+              damageDeposit: financialSettings.damage_deposit,
+            },
+            dailyOccupancy,
+            {
+              startDate: parseDateOnly(reservation.start_date),
+              endDate: parseDateOnly(reservation.end_date),
+            }
+          );
         }
-        // Priority 2: Use checkin_sessions data
+        // Priority 2: If no occupancy data but payment amount exists and is locked, use it
+        else if (payment?.amount && payment.billing_locked) {
+          billing = {
+            total: (payment.amount || 0) + (payment.manual_adjustment_amount || 0),
+            breakdown: {
+              note: 'Using locked payment amount'
+            }
+          };
+        }
+        // Priority 3: If no occupancy data and not locked, show $0 (awaiting data entry)
+        else if (!payment?.daily_occupancy || !Array.isArray(payment.daily_occupancy) || payment.daily_occupancy.length === 0) {
+          billing = {
+            total: 0,
+            breakdown: {
+              note: 'Awaiting daily occupancy data'
+            }
+          };
+        }
+        // Priority 4: Use checkin_sessions data if available
         else if (checkIns && checkIns.length > 0 && financialSettings) {
           const dailyOccupancy: Record<string, number> = {};
           checkIns.forEach(ci => {
@@ -260,16 +288,7 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
             totalActualDays++;
           });
         } 
-        // Priority 3: Use payment amount directly if it exists and billing is locked
-        else if (payment?.amount && payment.billing_locked) {
-          billing = {
-            total: (payment.amount || 0) + (payment.manual_adjustment_amount || 0),
-            breakdown: {
-              note: 'Using locked payment amount'
-            }
-          };
-        }
-        // Priority 4: Fallback to reserved guests if no occupancy data
+        // Priority 5: Fallback to reserved guests if no occupancy data
         else {
           billing = BillingCalculator.calculateStayBilling(
             {
