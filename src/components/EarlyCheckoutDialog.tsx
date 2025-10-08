@@ -17,6 +17,7 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { parseDateOnly, calculateNights } from '@/lib/date-utils';
 
 interface EarlyCheckoutDialogProps {
   open: boolean;
@@ -83,14 +84,14 @@ export function EarlyCheckoutDialog({
 
   const calculateRemainingNights = () => {
     if (!reservation || !watchedNewEndDate) return 0;
-    const originalEndDate = new Date(reservation.end_date);
+    const originalEndDate = parseDateOnly(reservation.end_date);
     const timeDiff = originalEndDate.getTime() - watchedNewEndDate.getTime();
     return Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
   };
 
   const calculateStayedNights = () => {
     if (!reservation || !watchedNewEndDate) return 0;
-    const startDate = new Date(reservation.start_date);
+    const startDate = parseDateOnly(reservation.start_date);
     const timeDiff = watchedNewEndDate.getTime() - startDate.getTime();
     return Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24)));
   };
@@ -235,7 +236,7 @@ export function EarlyCheckoutDialog({
   if (!reservation) return null;
 
   const today = new Date();
-  const originalEndDate = new Date(reservation.end_date);
+  const originalEndDate = parseDateOnly(reservation.end_date);
   const canCheckoutEarly = isAfter(originalEndDate, today);
 
   return (

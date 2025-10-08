@@ -5,6 +5,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
 import { BillingCalculator } from '@/lib/billing-calculator';
 import { useFinancialSettings } from '@/hooks/useFinancialSettings';
+import { parseDateOnly, calculateNights } from '@/lib/date-utils';
 
 interface SeasonConfig {
   startDate: Date;
@@ -95,8 +96,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
   // Generate array of dates between start and end
   const generateDateRange = (startDate: string, endDate: string): string[] => {
     const dates: string[] = [];
-    const start = new Date(startDate + 'T00:00:00');
-    const end = new Date(endDate + 'T00:00:00');
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
     const current = new Date(start);
 
     while (current < end) {
@@ -173,7 +174,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
 
       for (const reservation of reservations || []) {
         // Check if reservation is upcoming (hasn't started yet)
-        const isUpcoming = new Date(reservation.start_date + 'T00:00:00') > new Date();
+        const isUpcoming = parseDateOnly(reservation.start_date) > new Date();
         
         // First, check if there's already a payment with daily_occupancy data
         const { data: payment } = await supabase
@@ -193,9 +194,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
 
         // Calculate billing using daily occupancy
         let billing: any;
-        const nights = Math.ceil(
-          (new Date(reservation.end_date + 'T00:00:00').getTime() - new Date(reservation.start_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)
-        );
+        const nights = calculateNights(reservation.start_date, reservation.end_date);
         
         // Skip billing calculation for upcoming reservations
         if (isUpcoming) {
@@ -243,8 +242,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
             },
             dailyOccupancy,
             {
-              startDate: new Date(reservation.start_date + 'T00:00:00'),
-              endDate: new Date(reservation.end_date + 'T00:00:00'),
+              startDate: parseDateOnly(reservation.start_date),
+              endDate: parseDateOnly(reservation.end_date),
             }
           );
 
@@ -277,8 +276,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
             {
               guests: reservation.guest_count || 1,
               nights,
-              checkInDate: new Date(reservation.start_date),
-              checkOutDate: new Date(reservation.end_date),
+              checkInDate: parseDateOnly(reservation.start_date),
+              checkOutDate: parseDateOnly(reservation.end_date),
             }
           );
         }
@@ -429,10 +428,10 @@ export const useSeasonSummary = (seasonYear?: number) => {
               taxRate: 0,
             },
             {
-              nights: Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)),
+              nights: calculateNights(reservation.start_date, reservation.end_date),
               guests: reservation.guest_count || 0,
-              checkInDate: new Date(reservation.start_date),
-              checkOutDate: new Date(reservation.end_date),
+              checkInDate: parseDateOnly(reservation.start_date),
+              checkOutDate: parseDateOnly(reservation.end_date),
             }
           );
 
@@ -516,8 +515,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
       },
       dailyOccupancy,
       {
-        startDate: new Date(reservation.start_date),
-        endDate: new Date(reservation.end_date),
+        startDate: parseDateOnly(reservation.start_date),
+        endDate: parseDateOnly(reservation.end_date),
       }
     );
 

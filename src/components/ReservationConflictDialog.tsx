@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useReservationConflicts, ConflictingReservation } from '@/hooks/useReservationConflicts';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface ReservationConflictDialogProps {
   open: boolean;
@@ -129,7 +130,7 @@ export function ReservationConflictDialog({
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(conflict.start_date), "MMM d, yyyy")} - {format(new Date(conflict.end_date), "MMM d, yyyy")}
+                        {format(parseDateOnly(conflict.start_date), "MMM d, yyyy")} - {format(parseDateOnly(conflict.end_date), "MMM d, yyyy")}
                         {conflict.property_name && (
                           <span className="ml-2">• {conflict.property_name}</span>
                         )}

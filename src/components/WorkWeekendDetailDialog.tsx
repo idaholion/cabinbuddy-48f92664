@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { WorkWeekendCommentsSection } from './WorkWeekendCommentsSection';
 import { Hammer, CheckCircle, Clock, AlertTriangle, User, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface WorkWeekendDetailDialogProps {
   workWeekend: any;
@@ -78,7 +79,7 @@ export const WorkWeekendDetailDialog = ({ workWeekend, open, onOpenChange }: Wor
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">
-                  {format(new Date(workWeekend.start_date), 'EEEE, MMMM d, yyyy')} - {format(new Date(workWeekend.end_date), 'EEEE, MMMM d, yyyy')}
+                  {format(parseDateOnly(workWeekend.start_date), 'EEEE, MMMM d, yyyy')} - {format(parseDateOnly(workWeekend.end_date), 'EEEE, MMMM d, yyyy')}
                 </span>
               </div>
 
@@ -122,7 +123,7 @@ export const WorkWeekendDetailDialog = ({ workWeekend, open, onOpenChange }: Wor
                   {workWeekend.conflict_reservations.map((conflict: any, index: number) => (
                     <div key={index} className="flex items-center gap-2 text-sm">
                       <MapPin className="h-3 w-3" />
-                      <span>{conflict.family_group} - {format(new Date(conflict.start_date), 'MMM d')} to {format(new Date(conflict.end_date), 'MMM d')}</span>
+                      <span>{conflict.family_group} - {format(parseDateOnly(conflict.start_date), 'MMM d')} to {format(parseDateOnly(conflict.end_date), 'MMM d')}</span>
                     </div>
                   ))}
                 </div>

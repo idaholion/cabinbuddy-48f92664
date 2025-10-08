@@ -12,6 +12,7 @@ import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useToast } from "@/hooks/use-toast";
+import { parseDateOnly } from "@/lib/date-utils";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -58,14 +59,14 @@ const CheckoutFinal = () => {
     });
     
     // Sort by start date descending to get most recent
-    return userReservations.sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())[0];
+    return userReservations.sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime())[0];
   };
 
   const currentReservation = getCurrentUserReservation();
 
   // Calculate stay dates from the current reservation
-  const checkInDate = currentReservation ? new Date(currentReservation.start_date) : null;
-  const checkOutDate = currentReservation ? new Date(currentReservation.end_date) : null;
+  const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : null;
+  const checkOutDate = currentReservation ? parseDateOnly(currentReservation.end_date) : null;
   
   // Filter sessions for the current stay period
   const arrivalSessions = sessions.filter(s => s.session_type === 'arrival');
@@ -73,10 +74,10 @@ const CheckoutFinal = () => {
     .filter(s => s.session_type === 'daily')
     .filter(s => {
       if (!checkInDate || !checkOutDate) return false;
-      const sessionDate = new Date(s.check_date);
+      const sessionDate = parseDateOnly(s.check_date);
       return sessionDate >= checkInDate && sessionDate <= checkOutDate;
     })
-    .sort((a, b) => new Date(a.check_date).getTime() - new Date(b.check_date).getTime());
+    .sort((a, b) => parseDateOnly(a.check_date).getTime() - parseDateOnly(b.check_date).getTime());
 
   // Calculate receipts total for the stay period
   const calculateReceiptsTotal = () => {

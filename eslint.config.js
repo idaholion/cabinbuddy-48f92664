@@ -24,6 +24,13 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "NewExpression[callee.name='Date'][arguments.0.property.name=/(start_date|end_date|check_date|due_date|paid_date)/]",
+          message: "Use parseDateOnly() from @/lib/date-utils instead of new Date() for date-only strings to avoid timezone issues"
+        }
+      ]
     },
   }
 );

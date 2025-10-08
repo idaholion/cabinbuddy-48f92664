@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
+import { parseDateOnly } from '@/lib/date-utils';
 
 export interface ConflictingReservation {
   id: string;
@@ -91,10 +92,10 @@ export const useReservationConflicts = () => {
 
       // Add informational messages for same-day transitions (noon policy)
       const sameDay = data?.filter(reservation => {
-        const resEndDate = new Date(reservation.end_date);
-        const newStartDate = new Date(startDateStr);
-        const resStartDate = new Date(reservation.start_date);
-        const newEndDate = new Date(endDateStr);
+        const resEndDate = parseDateOnly(reservation.end_date);
+        const newStartDate = parseDateOnly(startDateStr);
+        const resStartDate = parseDateOnly(reservation.start_date);
+        const newEndDate = parseDateOnly(endDateStr);
 
         // Check for same-day transitions
         return (

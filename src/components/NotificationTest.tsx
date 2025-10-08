@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { Mail, MessageSquare, Send, Users } from 'lucide-react';
+import { parseDateOnly } from '@/lib/date-utils';
 
 const NOTIFICATION_TYPES = [
   { value: 'reminder_7', label: '7-Day Reminder', days: 7 },
@@ -251,7 +252,7 @@ export const NotificationTest = () => {
               ) : (
                 upcomingReservations.map((reservation) => (
                   <SelectItem key={reservation.id} value={reservation.id}>
-                    {reservation.family_group} - {new Date(reservation.start_date).toLocaleDateString()}
+                    {reservation.family_group} - {parseDateOnly(reservation.start_date).toLocaleDateString()}
                   </SelectItem>
                 ))
               )}

@@ -11,6 +11,7 @@ import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { supabase } from '@/integrations/supabase/client';
 import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface ReminderPreview {
   id: string;
@@ -94,8 +95,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     // Generate reservation reminders
     if (automatedSettings.automated_reminders_enabled) {
       reservations.forEach(reservation => {
-        const checkInDate = new Date(reservation.start_date);
-        const checkOutDate = new Date(reservation.end_date);
+        const checkInDate = parseDateOnly(reservation.start_date);
+        const checkOutDate = parseDateOnly(reservation.end_date);
         if (isAfter(checkInDate, now) && isBefore(checkInDate, thirtyDaysFromNow)) {
           const hostName = getHostFirstName(reservation);
           
@@ -173,8 +174,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       const workWeekendTemplate = templates.find(t => t.reminder_type === 'work_weekend_reminder');
       
       workWeekends.forEach(workWeekend => {
-        const workDate = new Date(workWeekend.start_date);
-        const endDate = new Date(workWeekend.end_date);
+        const workDate = parseDateOnly(workWeekend.start_date);
+        const endDate = parseDateOnly(workWeekend.end_date);
         if (isAfter(workDate, now) && isBefore(workDate, thirtyDaysFromNow) && workWeekend.status === 'fully_approved') {
           
           // Common variables for all work weekend reminders

@@ -28,6 +28,7 @@ import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOrganization } from "@/hooks/useOrganization";
+import { parseDateOnly, calculateNights } from "@/lib/date-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function SeasonSummary() {
@@ -240,7 +241,7 @@ export default function SeasonSummary() {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-5 w-5 text-muted-foreground" />
                           <span className="font-medium">
-                            {format(new Date(stay.reservation.start_date + 'T00:00:00'), 'MMM d')} - {format(new Date(stay.reservation.end_date + 'T00:00:00'), 'MMM d, yyyy')}
+                            {format(parseDateOnly(stay.reservation.start_date), 'MMM d')} - {format(parseDateOnly(stay.reservation.end_date), 'MMM d, yyyy')}
                           </span>
                           {isUpcoming && (
                             <Badge variant="outline" className="ml-2">Upcoming</Badge>
@@ -252,8 +253,8 @@ export default function SeasonSummary() {
                         onClick={() => setEditingOccupancy({
                           ...stay,
                           id: stay.payment?.id,
-                          startDate: new Date(stay.reservation.start_date + 'T00:00:00'),
-                          endDate: new Date(stay.reservation.end_date + 'T00:00:00'),
+                          startDate: parseDateOnly(stay.reservation.start_date),
+                          endDate: parseDateOnly(stay.reservation.end_date),
                           family_group: stay.reservation.family_group,
                           dailyOccupancy: stay.payment?.daily_occupancy || [],
                         })}
@@ -267,7 +268,7 @@ export default function SeasonSummary() {
                       <div className="flex items-center gap-2">
                         <Moon className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          <span className="font-medium">{Math.ceil((new Date(stay.reservation.end_date + 'T00:00:00').getTime() - new Date(stay.reservation.start_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24))}</span> nights
+                          <span className="font-medium">{calculateNights(stay.reservation.start_date, stay.reservation.end_date)}</span> nights
                         </span>
                       </div>
                     </div>

@@ -11,6 +11,7 @@ import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useMultiPeriodReservations } from '@/hooks/useMultiPeriodReservations';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { parseDateOnly, calculateNights } from '@/lib/date-utils';
 
 interface ReservationSplitDialogProps {
   open: boolean;
@@ -75,8 +76,8 @@ export function ReservationSplitDialog({
       form.reset({
         periods: [
           {
-            startDate: new Date(reservation.start_date),
-            endDate: new Date(reservation.end_date),
+            startDate: parseDateOnly(reservation.start_date),
+            endDate: parseDateOnly(reservation.end_date),
             periodNumber: 1
           }
         ]
@@ -122,7 +123,7 @@ export function ReservationSplitDialog({
   };
 
   const originalNights = reservation ? 
-    Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)) : 
+    calculateNights(reservation.start_date, reservation.end_date) : 
     0;
 
   if (!reservation) return null;
@@ -151,10 +152,10 @@ export function ReservationSplitDialog({
                 <span className="font-medium">Guests:</span> {reservation.guest_count}
               </div>
               <div>
-                <span className="font-medium">Check-in:</span> {format(new Date(reservation.start_date), "PPP")}
+                <span className="font-medium">Check-in:</span> {format(parseDateOnly(reservation.start_date), "PPP")}
               </div>
               <div>
-                <span className="font-medium">Check-out:</span> {format(new Date(reservation.end_date), "PPP")}
+                <span className="font-medium">Check-out:</span> {format(parseDateOnly(reservation.end_date), "PPP")}
               </div>
               <div>
                 <span className="font-medium">Total Nights:</span> {originalNights}

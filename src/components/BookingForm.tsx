@@ -18,12 +18,10 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
+import { parseDateOnly, calculateNights, toDateOnlyString } from '@/lib/date-utils';
 
-// Utility function to parse date strings as local dates (avoiding timezone shifts)
-const parseLocalDate = (dateStr: string): Date => {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
-};
+// Use the imported parseDateOnly function from date-utils instead
+const parseLocalDate = parseDateOnly;
 
 interface BookingFormProps {
   open: boolean;
@@ -116,8 +114,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         existingAssignments.map((assignment: any) => ({
           host_name: assignment.host_name || '',
           host_email: assignment.host_email || '',
-          start_date: new Date(assignment.start_date),
-          end_date: new Date(assignment.end_date)
+          start_date: parseDateOnly(assignment.start_date),
+          end_date: parseDateOnly(assignment.end_date)
         })) : [];
 
       form.reset({
@@ -256,7 +254,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     }
     
     // Can't extend duration
-    const originalDuration = Math.ceil((new Date(editingReservation.end_date).getTime() - new Date(editingReservation.start_date).getTime()) / (1000 * 60 * 60 * 24));
+    const originalDuration = calculateNights(editingReservation.start_date, editingReservation.end_date);
     const newDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     
     if (newDuration > originalDuration) {

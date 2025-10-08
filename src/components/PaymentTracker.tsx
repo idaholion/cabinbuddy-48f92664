@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { usePayments, Payment, PaymentType, PaymentMethod } from '@/hooks/usePayments';
 import { format } from 'date-fns';
+import { parseDateOnly } from '@/lib/date-utils';
 
 const PaymentTracker = () => {
   const { 
@@ -315,7 +316,7 @@ const PaymentTracker = () => {
                     {payment.due_date ? (
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {format(new Date(payment.due_date), 'MMM dd, yyyy')}
+                        {format(parseDateOnly(payment.due_date), 'MMM dd, yyyy')}
                       </div>
                     ) : (
                       '-'

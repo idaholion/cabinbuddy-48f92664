@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Hammer, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface WorkWeekendCalendarEventProps {
   workWeekend: any;
@@ -66,7 +67,7 @@ export const WorkWeekendCalendarEvent = ({ workWeekend, isCompact = false, onCli
                 <span className="font-medium">{workWeekend.title}</span>
               </div>
               <p className="text-xs">
-                {format(new Date(workWeekend.start_date), 'MMM d')} - {format(new Date(workWeekend.end_date), 'MMM d, yyyy')}
+                {format(parseDateOnly(workWeekend.start_date), 'MMM d')} - {format(parseDateOnly(workWeekend.end_date), 'MMM d, yyyy')}
               </p>
               {workWeekend.description && (
                 <p className="text-xs opacity-90">{workWeekend.description}</p>

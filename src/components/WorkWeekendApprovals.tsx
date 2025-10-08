@@ -5,6 +5,7 @@ import { WorkWeekendCommentsSection } from './WorkWeekendCommentsSection';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { CheckCircle, Clock, AlertTriangle, Calendar, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseDateOnly } from '@/lib/date-utils';
 
 export const WorkWeekendApprovals = () => {
   const { workWeekends, pendingApprovals, loading, approveAsGroupLead } = useWorkWeekends();
@@ -57,7 +58,7 @@ export const WorkWeekendApprovals = () => {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(workWeekend.start_date), 'MMM d')} - {format(new Date(workWeekend.end_date), 'MMM d, yyyy')}
+                      {format(parseDateOnly(workWeekend.start_date), 'MMM d')} - {format(parseDateOnly(workWeekend.end_date), 'MMM d, yyyy')}
                     </div>
                   </div>
 
@@ -115,7 +116,7 @@ export const WorkWeekendApprovals = () => {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {format(new Date(workWeekend.start_date), 'MMM d')} - {format(new Date(workWeekend.end_date), 'MMM d, yyyy')}
+                    {format(parseDateOnly(workWeekend.start_date), 'MMM d')} - {format(parseDateOnly(workWeekend.end_date), 'MMM d, yyyy')}
                   </div>
                   {workWeekend.conflict_reservations?.length > 0 && (
                     <div className="flex items-center gap-1">
