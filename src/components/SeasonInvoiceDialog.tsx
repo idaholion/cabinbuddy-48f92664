@@ -40,7 +40,26 @@ export const SeasonInvoiceDialog = ({
   const actualYear = year || seasonYear || new Date().getFullYear();
   const actualFamilyGroup = familyGroupOverride || familyGroup;
 
-  if (!seasonData || !organization) return null;
+  // Don't render if no data or dialog is closed
+  if (!open || !seasonData || !organization) return null;
+  
+  // Safely parse dates from config
+  const safeStartDate = seasonData.config?.startDate instanceof Date 
+    ? seasonData.config.startDate 
+    : parseDateOnly(seasonData.config?.startDate);
+    
+  const safeEndDate = seasonData.config?.endDate instanceof Date 
+    ? seasonData.config.endDate 
+    : parseDateOnly(seasonData.config?.endDate);
+    
+  const safePaymentDeadline = seasonData.config?.paymentDeadline instanceof Date 
+    ? seasonData.config.paymentDeadline 
+    : parseDateOnly(seasonData.config?.paymentDeadline);
+
+  // Validate dates
+  if (!safeStartDate || !safeEndDate || isNaN(safeStartDate.getTime()) || isNaN(safeEndDate.getTime())) {
+    return null;
+  }
 
   // Filter stays by family group if specified
   const filteredStays = familyGroup 
@@ -115,9 +134,9 @@ export const SeasonInvoiceDialog = ({
           {/* Invoice Header */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">{organization.name}</h1>
-            <p className="text-lg">Season {seasonYear} Invoice</p>
+            <p className="text-lg">Season {actualYear} Invoice</p>
             <p className="text-sm text-muted-foreground">
-              {format(parseDateOnly(seasonData.config.startDate), 'MMMM d, yyyy')} - {format(parseDateOnly(seasonData.config.endDate), 'MMMM d, yyyy')}
+              {format(safeStartDate, 'MMMM d, yyyy')} - {format(safeEndDate, 'MMMM d, yyyy')}
             </p>
           </div>
 
@@ -186,10 +205,10 @@ export const SeasonInvoiceDialog = ({
           </div>
 
           {/* Payment Instructions */}
-          {invoiceTotals.balanceDue > 0 && (
+          {invoiceTotals.balanceDue > 0 && safePaymentDeadline && !isNaN(safePaymentDeadline.getTime()) && (
             <Alert>
               <AlertDescription>
-                Please remit payment to the organization treasurer. Payment is due by {format(new Date(seasonData.config.paymentDeadline), 'MMMM d, yyyy')}.
+                Please remit payment to the organization treasurer. Payment is due by {format(safePaymentDeadline, 'MMMM d, yyyy')}.
               </AlertDescription>
             </Alert>
           )}
