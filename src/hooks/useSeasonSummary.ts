@@ -438,35 +438,20 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
         }
 
         try {
-          // Calculate billing
-          const billing = BillingCalculator.calculateStayBilling(
-            {
-              method: 'per-person-per-day',
-              amount: 25,
-              cleaningFee: 75,
-              taxRate: 0,
-            },
-            {
-              nights: calculateNights(reservation.start_date, reservation.end_date),
-              guests: reservation.guest_count || 0,
-              checkInDate: parseDateOnly(reservation.start_date),
-              checkOutDate: parseDateOnly(reservation.end_date),
-            }
-          );
-
-          // Create payment record
+          // Create payment record with $0 amount - will be calculated when occupancy is entered
           const { error: paymentError } = await supabase
             .from('payments')
             .insert([{
               organization_id: organization.id,
               reservation_id: reservation.id,
               family_group: reservation.family_group,
-              amount: billing.total,
+              amount: 0,
               amount_paid: 0,
               status: 'pending',
               payment_type: 'use_fee',
               description: `Season ${year} - ${reservation.family_group}`,
               created_by_user_id: user.id,
+              daily_occupancy: [],
             }]);
 
           if (paymentError) {
