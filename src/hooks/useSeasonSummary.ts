@@ -95,8 +95,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
   // Generate array of dates between start and end
   const generateDateRange = (startDate: string, endDate: string): string[] => {
     const dates: string[] = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
     const current = new Date(start);
 
     while (current < end) {
@@ -173,7 +173,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
 
       for (const reservation of reservations || []) {
         // Check if reservation is upcoming (hasn't started yet)
-        const isUpcoming = new Date(reservation.start_date) > new Date();
+        const isUpcoming = new Date(reservation.start_date + 'T00:00:00') > new Date();
         
         // First, check if there's already a payment with daily_occupancy data
         const { data: payment } = await supabase
@@ -194,7 +194,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
         // Calculate billing using daily occupancy
         let billing: any;
         const nights = Math.ceil(
-          (new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)
+          (new Date(reservation.end_date + 'T00:00:00').getTime() - new Date(reservation.start_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)
         );
         
         // Skip billing calculation for upcoming reservations
@@ -243,8 +243,8 @@ export const useSeasonSummary = (seasonYear?: number) => {
             },
             dailyOccupancy,
             {
-              startDate: new Date(reservation.start_date),
-              endDate: new Date(reservation.end_date),
+              startDate: new Date(reservation.start_date + 'T00:00:00'),
+              endDate: new Date(reservation.end_date + 'T00:00:00'),
             }
           );
 
