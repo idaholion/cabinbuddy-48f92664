@@ -31,6 +31,9 @@ const Signup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  // Get mode from URL parameter
+  const mode = searchParams.get('mode'); // 'start' or 'join'
+
   // Function to determine user role and navigate accordingly
   const determineUserRoleAndNavigate = async (userEmail: string) => {
     try {
@@ -105,12 +108,19 @@ const Signup = () => {
     }
   };
 
-  // Check if user came from login failure
+  // Check if user came from login failure and set organization type based on mode
   useEffect(() => {
     if (searchParams.get('from') === 'login') {
       // Optional: show a message about coming from login
     }
-  }, [searchParams]);
+    
+    // Set organizationType based on mode parameter
+    if (mode === 'start') {
+      setOrganizationType('start');
+    } else if (mode === 'join') {
+      setOrganizationType('join');
+    }
+  }, [searchParams, mode]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,8 +331,12 @@ const Signup = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <Card className="w-full max-w-md bg-white/60 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-kaushan text-red-500">Join Cabin Buddy</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+          <CardTitle className="text-3xl font-kaushan text-red-500">
+            {mode === 'start' ? 'Start New Organization' : mode === 'join' ? 'Join Organization' : 'Join Cabin Buddy'}
+          </CardTitle>
+          <CardDescription>
+            {mode === 'start' ? 'Enter your trial code and create your account' : mode === 'join' ? 'Enter organization code and create your account' : 'Create your account to get started'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {searchParams.get('from') === 'login' && (
@@ -335,22 +349,60 @@ const Signup = () => {
               {error}
             </div>
           )}
+          {/* Only show the mode-specific field, no radio buttons */}
           <div className="space-y-4 mb-6">
-            <div className="space-y-3">
-              <Label className="text-base font-medium">What would you like to do?</Label>
-              <RadioGroup value={organizationType} onValueChange={setOrganizationType}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="start" id="start-org" />
-                  <Label htmlFor="start-org">Start a new organization</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="join" id="join-org" />
-                  <Label htmlFor="join-org">Join an existing organization</Label>
-                </div>
-              </RadioGroup>
-            </div>
+            {mode === 'join' && (
+              <div className="space-y-2">
+                <Label htmlFor="orgCode">Organization Code</Label>
+                <Input
+                  id="orgCode"
+                  type="text"
+                  placeholder="Enter 6-letter code"
+                  value={organizationCode}
+                  onChange={(e) => setOrganizationCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  className="uppercase"
+                  required
+                />
+              </div>
+            )}
+
+            {mode === 'start' && (
+              <div className="space-y-2">
+                <Label htmlFor="trialCode">Trial Access Code</Label>
+                <Input
+                  id="trialCode"
+                  type="text"
+                  placeholder="Enter your trial code"
+                  value={trialCode}
+                  onChange={(e) => setTrialCode(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  className="uppercase"
+                  required
+                />
+                <p className="text-sm text-muted-foreground">
+                  You need a trial access code to start a new organization
+                </p>
+              </div>
+            )}
+
+            {!mode && (
+              <div className="space-y-3">
+                <Label className="text-base font-medium">What would you like to do?</Label>
+                <RadioGroup value={organizationType} onValueChange={setOrganizationType}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="start" id="start-org" />
+                    <Label htmlFor="start-org">Start a new organization</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="join" id="join-org" />
+                    <Label htmlFor="join-org">Join an existing organization</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
             
-            {organizationType === "join" && (
+            {!mode && organizationType === "join" && (
               <div className="space-y-2">
                 <Label htmlFor="orgCode">Organization Code</Label>
                 <Input
@@ -365,7 +417,7 @@ const Signup = () => {
               </div>
             )}
 
-            {organizationType === "start" && (
+            {!mode && organizationType === "start" && (
               <div className="space-y-2">
                 <Label htmlFor="trialCode">Trial Access Code</Label>
                 <Input

@@ -66,12 +66,20 @@ const Intro = () => {
         <div className="absolute z-20 bottom-8 left-0 right-0 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
             <Button 
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/signup?mode=start")}
               size="lg" 
               variant="outline"
               className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
             >
               Start a New Organization
+            </Button>
+            <Button 
+              onClick={() => navigate("/signup?mode=join")}
+              size="lg" 
+              variant="outline"
+              className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
+            >
+              Join an Existing Organization
             </Button>
             <Button 
               onClick={() => navigate("/login")}
