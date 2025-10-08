@@ -12,9 +12,12 @@ import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useReservations } from "@/hooks/useReservations";
+import { parseDateOnly } from "@/lib/date-utils";
 const CheckIn = () => {
   const { toast } = useToast();
   const { organization } = useOrganization();
+  const { reservations } = useReservations();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
   const [checklistItems, setChecklistItems] = useState([
@@ -31,6 +34,26 @@ const CheckIn = () => {
   const { isAdmin } = useOrgAdmin();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+
+  // Get current user's family group from localStorage
+  const getCurrentUserReservation = () => {
+    const familyData = localStorage.getItem('familySetupData');
+    if (!familyData) return null;
+    const { familyName } = JSON.parse(familyData);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return reservations.find(res => {
+      const startDate = parseDateOnly(res.start_date);
+      const endDate = parseDateOnly(res.end_date);
+      return res.family_group === familyName && 
+             startDate <= today && 
+             endDate >= today;
+    });
+  };
+
+  const currentReservation = getCurrentUserReservation();
 
   // Load checklist from database on mount
   useEffect(() => {
@@ -74,6 +97,57 @@ const CheckIn = () => {
 
     loadChecklist();
   }, [organization?.id]);
+
+  // Load checked items from database based on current reservation
+  useEffect(() => {
+    const loadCheckedItems = async () => {
+      if (!organization?.id || !currentReservation) return;
+
+      try {
+        // Check if checklist should be reset (one day after stay end date OR after checkout)
+        const endDate = parseDateOnly(currentReservation.end_date);
+        const resetDate = new Date(endDate);
+        resetDate.setDate(resetDate.getDate() + 2); // One day after end date
+        resetDate.setHours(0, 0, 0, 0);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (today >= resetDate) {
+          console.log('✅ [ARRIVAL-CHECKLIST] Resetting checklist (past reset date)');
+          setCheckedItems({});
+          return;
+        }
+
+        // Load the most recent arrival checkin session for this reservation
+        const { data: session, error } = await supabase
+          .from('checkin_sessions')
+          .select('*')
+          .eq('session_type', 'arrival')
+          .eq('family_group', currentReservation.family_group)
+          .gte('check_date', currentReservation.start_date)
+          .lte('check_date', currentReservation.end_date)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && session?.checklist_responses) {
+          const responses = session.checklist_responses as any;
+          if (responses.checkedItems) {
+            console.log('✅ [ARRIVAL-CHECKLIST] Loaded from database:', responses.checkedItems);
+            setCheckedItems(responses.checkedItems);
+          }
+          if (responses.notes) {
+            setNotes(responses.notes);
+          }
+        }
+      } catch (error) {
+        console.error('❌ [ARRIVAL-CHECKLIST] Failed to load:', error);
+      }
+    };
+
+    loadCheckedItems();
+  }, [organization?.id, currentReservation?.id]);
   const handleCheckChange = (itemId: string, checked: boolean) => {
     setCheckedItems(prev => ({ ...prev, [itemId]: checked }));
   };
@@ -200,26 +274,46 @@ const CheckIn = () => {
     setEditingLabel("");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const completedItems = Object.values(checkedItems).filter(Boolean).length;
     
-    // Save notes to localStorage for organization
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      const checkInData = {
-        notes,
-        checkedItems,
-        timestamp: new Date().toISOString(),
-        completedItems
-      };
-      localStorage.setItem(`arrival_checkin_${organizationCode}`, JSON.stringify(checkInData));
+    if (!organization?.id || !currentReservation) {
+      toast({
+        title: "Error",
+        description: "Unable to save check-in. Please ensure you have an active reservation.",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    toast({
-      title: "Check-in Completed",
-      description: `${completedItems} of ${checklistItems.length} items completed.`,
-    });
+
+    try {
+      // Save to database
+      await supabase.from('checkin_sessions').insert({
+        organization_id: organization.id,
+        session_type: 'arrival',
+        family_group: currentReservation.family_group,
+        check_date: new Date().toISOString().split('T')[0],
+        checklist_responses: {
+          checkedItems,
+          notes,
+          completedItems,
+          totalItems: checklistItems.length,
+        },
+        notes,
+      });
+
+      toast({
+        title: "Check-in Completed",
+        description: `${completedItems} of ${checklistItems.length} items completed.`,
+      });
+    } catch (error) {
+      console.error('Failed to save check-in:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save check-in. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
