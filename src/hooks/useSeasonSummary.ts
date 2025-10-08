@@ -250,7 +250,16 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
             }
           };
         }
-        // Priority 3: If no occupancy data and not locked, show $0 (awaiting data entry)
+        // Priority 3: If no occupancy data but payment amount exists, use it as fallback
+        else if (payment?.amount) {
+          billing = {
+            total: (payment.amount || 0) + (payment.manual_adjustment_amount || 0),
+            breakdown: {
+              note: 'Using payment amount (no occupancy data)'
+            }
+          };
+        }
+        // Priority 4: If no data at all, show $0 (awaiting data entry)
         else if (!payment?.daily_occupancy || !Array.isArray(payment.daily_occupancy) || payment.daily_occupancy.length === 0) {
           billing = {
             total: 0,
@@ -259,7 +268,7 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
             }
           };
         }
-        // Priority 4: Use checkin_sessions data if available
+        // Priority 5: Use checkin_sessions data if available
         else if (checkIns && checkIns.length > 0 && financialSettings) {
           const dailyOccupancy: Record<string, number> = {};
           checkIns.forEach(ci => {
@@ -288,7 +297,7 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
             totalActualDays++;
           });
         } 
-        // Priority 5: Fallback to reserved guests if no occupancy data
+        // Priority 6: Fallback to reserved guests if no occupancy data
         else {
           billing = BillingCalculator.calculateStayBilling(
             {
