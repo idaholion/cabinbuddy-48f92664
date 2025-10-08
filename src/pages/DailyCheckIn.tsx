@@ -113,31 +113,44 @@ const DailyCheckIn = () => {
     setCurrentReservation(activeReservation);
   }, [userFamilyGroup, reservations]);
 
-  // Load existing session data when we have current reservation and sessions
+  // Load existing session data for TODAY only
   useEffect(() => {
-    if (!currentReservation || !userFamilyGroup || !sessions.length) return;
+    if (!currentReservation || !userFamilyGroup || !sessions.length) {
+      setExistingSession(null);
+      setCheckedItems({});
+      setReadings({ temperature: "", waterLevel: "", powerUsage: "" });
+      return;
+    }
 
-    // Find existing session for this reservation period
-    const existingDailySession = sessions.find(session => 
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find existing session for TODAY specifically
+    const todaySession = sessions.find(session => 
       session.session_type === 'daily' &&
       session.family_group === userFamilyGroup &&
-      session.check_date >= currentReservation.start_date &&
-      session.check_date <= currentReservation.end_date
+      session.check_date === today
     );
 
-    if (existingDailySession) {
-      setExistingSession(existingDailySession);
+    if (todaySession) {
+      console.log('✅ [DAILY-CHECKLIST] Loaded today\'s session:', todaySession);
+      setExistingSession(todaySession);
       
       // Load the existing data into the form
-      const responses = existingDailySession.checklist_responses;
+      const responses = todaySession.checklist_responses;
       if (responses) {
         if (responses.tasks) setCheckedItems(responses.tasks);
         if (responses.readings) setReadings(responses.readings);
         if (responses.dailyOccupancy) setDailyOccupancy(responses.dailyOccupancy);
       }
-      if (existingDailySession.notes) setNotes(existingDailySession.notes);
+      if (todaySession.notes) setNotes(todaySession.notes);
     } else {
+      // No session for today - reset to empty
+      console.log('🔄 [DAILY-CHECKLIST] No session for today, resetting');
       setExistingSession(null);
+      setCheckedItems({});
+      setReadings({ temperature: "", waterLevel: "", powerUsage: "" });
+      setNotes("");
     }
   }, [currentReservation, userFamilyGroup, sessions]);
 
