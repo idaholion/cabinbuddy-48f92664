@@ -2831,6 +2831,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      supervisor_fix_user_email: {
+        Args: {
+          p_confirmation_code: string
+          p_new_email: string
+          p_old_email: string
+        }
+        Returns: Json
+      }
       supervisor_normalize_emails_and_fix_membership: {
         Args: Record<PropertyKey, never>
         Returns: string
