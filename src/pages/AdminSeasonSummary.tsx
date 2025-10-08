@@ -363,7 +363,7 @@ export default function AdminSeasonSummary() {
                       size="sm"
                       asChild
                     >
-                      <Link to={`/season-summary?year=${year}&family=${encodeURIComponent(family.familyGroup)}`}>
+                      <Link to={`/season-summary?year=${year}&family=${encodeURIComponent(family.familyGroup)}&admin=true`}>
                         <FileText className="h-4 w-4" />
                       </Link>
                     </Button>
