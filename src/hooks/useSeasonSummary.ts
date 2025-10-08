@@ -558,19 +558,10 @@ export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: stri
     // Use the billing's dayBreakdown which includes the calculated cost per day
     const enrichedOccupancy = billing.dayBreakdown;
 
-    // If amount decreases below amount_paid, adjust amount_paid proportionally
-    let newAmountPaid = payment.amount_paid || 0;
-    if (billing.total < payment.amount && payment.amount > 0) {
-      // Proportionally reduce the amount paid
-      const ratio = billing.total / payment.amount;
-      newAmountPaid = payment.amount_paid * ratio;
-    }
-
-    // Update occupancy with costs, amount, and adjusted amount_paid
+    // Update occupancy with costs and amount (allow negative balance for overpayments)
     const updates: any = { 
       daily_occupancy: enrichedOccupancy,
-      amount: billing.total,
-      amount_paid: newAmountPaid
+      amount: billing.total
     };
 
     const { error } = await supabase
