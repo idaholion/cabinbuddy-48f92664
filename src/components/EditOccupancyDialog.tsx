@@ -32,10 +32,7 @@ export const EditOccupancyDialog = ({
   onSave,
 }: EditOccupancyDialogProps) => {
   const { toast } = useToast();
-  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(currentOccupancy);
-  const [saving, setSaving] = useState(false);
-  const [fillValue, setFillValue] = useState<string>("0");
-
+  
   // Only include nights spent (exclude checkout day)
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
 
@@ -47,6 +44,16 @@ export const EditOccupancyDialog = ({
     days: days.map(d => format(d, 'yyyy-MM-dd'))
   });
   console.log('EditOccupancyDialog - Current occupancy:', currentOccupancy);
+  
+  // Filter currentOccupancy to only include dates in the displayed range
+  const validDateStrings = days.map(d => format(d, 'yyyy-MM-dd'));
+  const filteredOccupancy = currentOccupancy.filter(occ => validDateStrings.includes(occ.date));
+  
+  console.log('EditOccupancyDialog - Filtered occupancy (excluding checkout day):', filteredOccupancy);
+  
+  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(filteredOccupancy);
+  const [saving, setSaving] = useState(false);
+  const [fillValue, setFillValue] = useState<string>("0");
 
   const handleGuestCountChange = (dateStr: string, count: number) => {
     setOccupancy(prev => {
