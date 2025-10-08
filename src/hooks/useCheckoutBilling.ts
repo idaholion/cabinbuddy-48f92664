@@ -172,6 +172,13 @@ export const useCheckoutBilling = (
       // Determine season end date (configurable - using Oct 31 for now)
       const seasonEnd = new Date(checkOutDate.getFullYear(), 9, 31); // Oct 31
 
+      // Convert dailyBreakdown to the format expected by the database
+      const dailyOccupancyArray = result.dayBreakdown.map(day => ({
+        date: day.date,
+        guests: day.guests,
+        cost: day.cost
+      }));
+
       const { error } = await supabase.from('payments').insert({
         organization_id: organization.id,
         reservation_id: reservationId,
@@ -183,6 +190,7 @@ export const useCheckoutBilling = (
         due_date: seasonEnd.toISOString().split('T')[0],
         description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days)`,
         notes: `Deferred payment. Average ${averageGuests.toFixed(1)} guests per day.`,
+        daily_occupancy: dailyOccupancyArray,
         created_by_user_id: user.id,
       });
 
