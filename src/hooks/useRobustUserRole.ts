@@ -92,9 +92,12 @@ export const useRobustUserRole = () => {
     const isTreasurer = false; // TODO: Implement when organization schema is clarified
     const isAdmin = false; // TODO: Implement when organization schema is clarified
 
-    // Check family group roles
+    // Check family group roles - normalize emails for comparison
+    const normalizeEmail = (email: string | undefined | null) => 
+      email?.toLowerCase().trim() || '';
+    
     const leadGroup = familyGroups.find(group => 
-      group.lead_email?.toLowerCase() === userEmail
+      normalizeEmail(group.lead_email) === normalizeEmail(userEmail)
     );
     
     if (leadGroup) {
@@ -110,14 +113,14 @@ export const useRobustUserRole = () => {
       };
     }
 
-    // Check host member status
+    // Check host member status - normalize emails for comparison
     let userFamilyGroup = null;
     let userHostInfo = null;
     
     for (const group of familyGroups) {
       if (Array.isArray(group.host_members)) {
         const hostMember = group.host_members.find((member: any) => 
-          member?.email?.toLowerCase() === userEmail
+          normalizeEmail(member?.email) === normalizeEmail(userEmail)
         );
         if (hostMember) {
           userFamilyGroup = group;
