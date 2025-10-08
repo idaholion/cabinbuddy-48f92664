@@ -166,7 +166,8 @@ export class BillingCalculator {
     }
 
     // Calculate cost for each day
-    days.forEach((dayKey) => {
+    console.log('Starting day-by-day calculation...');
+    days.forEach((dayKey, index) => {
       const guests = dailyOccupancyData[dayKey] || 0;
       // Use the actual date key instead of calculating from index
       const date = dayKey;
@@ -200,7 +201,10 @@ export class BillingCalculator {
           dayCost = 0;
       }
       
+      console.log(`Day ${index + 1} (${date}): ${guests} guests × $${config.amount} = $${dayCost}`);
       baseAmount += dayCost;
+      console.log(`  Running baseAmount: $${baseAmount}`);
+      
       dayBreakdown.push({
         date,
         guests,
@@ -213,9 +217,14 @@ export class BillingCalculator {
     const petFee = config.petFee || 0;
     const damageDeposit = config.damageDeposit || 0;
     
+    console.log('Final baseAmount before fees:', baseAmount);
+    console.log('Fees - cleaning:', cleaningFee, 'pet:', petFee, 'deposit:', damageDeposit);
+    
     const subtotal = baseAmount + cleaningFee + petFee;
     const tax = config.taxRate ? (subtotal * config.taxRate) / 100 : 0;
     const total = subtotal + tax + damageDeposit;
+
+    console.log('Subtotal:', subtotal, 'Tax:', tax, 'Total:', total);
 
     return {
       baseAmount,
