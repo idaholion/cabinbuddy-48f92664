@@ -26,10 +26,14 @@ export function parseDateOnly(dateString: string | null | undefined): Date {
  * @param endDate - End date string in YYYY-MM-DD format
  * @returns Number of nights between the dates
  */
+/**
+ * Calculate the number of nights between two date strings
+ * Only counts nights spent (excludes checkout day)
+ */
 export function calculateNights(startDate: string, endDate: string): number {
   const start = parseDateOnly(startDate);
   const end = parseDateOnly(endDate);
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 /**

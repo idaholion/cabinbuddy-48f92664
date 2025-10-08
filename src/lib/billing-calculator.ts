@@ -152,7 +152,8 @@ export class BillingCalculator {
     
     if (days.length === 0) {
       // Fallback to standard calculation if no daily data
-      const nights = Math.ceil((stayDates.endDate.getTime() - stayDates.startDate.getTime()) / (1000 * 3600 * 24));
+      // Only count nights spent (exclude checkout day)
+      const nights = Math.floor((stayDates.endDate.getTime() - stayDates.startDate.getTime()) / (1000 * 3600 * 24));
       return {
         ...this.calculateStayBilling(config, {
           guests: 0,

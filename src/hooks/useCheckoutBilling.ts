@@ -59,11 +59,12 @@ export const useCheckoutBilling = (
         if (error) throw error;
 
         // Extract daily occupancy from sessions
+        // NOTE: Only count nights spent, not the checkout day
         const occupancyData: Record<string, number> = {};
         let dayIndex = 0;
         const currentDate = new Date(checkInDate);
         
-        while (currentDate <= checkOutDate) {
+        while (currentDate < checkOutDate) {
           const dateStr = currentDate.toISOString().split('T')[0];
           const session = sessions?.find(s => s.check_date === dateStr);
           
@@ -101,8 +102,9 @@ export const useCheckoutBilling = (
         });
         
         // Fallback: create occupancy data with reserved guests
+        // Only count nights spent (exclude checkout day)
         const fallbackData: Record<string, number> = {};
-        const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24));
+        const nights = Math.floor((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24));
         for (let i = 0; i < nights; i++) {
           fallbackData[`day-${i + 1}`] = reservedGuests;
         }

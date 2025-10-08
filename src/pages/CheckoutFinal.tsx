@@ -116,14 +116,14 @@ const CheckoutFinal = () => {
   const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : null;
   const checkOutDate = currentReservation ? parseDateOnly(currentReservation.end_date) : null;
   
-  // Filter sessions for the current stay period
+  // Filter sessions for the current stay period (exclude checkout day)
   const arrivalSessions = sessions.filter(s => s.session_type === 'arrival');
   const dailySessions = sessions
     .filter(s => s.session_type === 'daily')
     .filter(s => {
       if (!checkInDate || !checkOutDate) return false;
       const sessionDate = parseDateOnly(s.check_date);
-      return sessionDate >= checkInDate && sessionDate <= checkOutDate;
+      return sessionDate >= checkInDate && sessionDate < checkOutDate;
     })
     .sort((a, b) => parseDateOnly(a.check_date).getTime() - parseDateOnly(b.check_date).getTime());
 
@@ -141,11 +141,11 @@ const CheckoutFinal = () => {
 
   const receiptsTotal = calculateReceiptsTotal();
 
-  // Calculate number of nights
+  // Calculate number of nights (only nights spent, not checkout day)
   const calculateNights = () => {
     if (!checkInDate || !checkOutDate) return 0;
     const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
-    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return Math.floor(timeDiff / (1000 * 3600 * 24));
   };
 
   // Build checkout data from actual reservation data
