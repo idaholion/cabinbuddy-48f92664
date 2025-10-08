@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { format, eachDayOfInterval } from "date-fns";
+import { format, eachDayOfInterval, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -36,7 +36,8 @@ export const EditOccupancyDialog = ({
   const [saving, setSaving] = useState(false);
   const [fillValue, setFillValue] = useState<string>("0");
 
-  const days = eachDayOfInterval({ start: stay.startDate, end: stay.endDate });
+  // Only include nights spent (exclude checkout day)
+  const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
 
   const handleGuestCountChange = (dateStr: string, count: number) => {
     setOccupancy(prev => {
