@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSeasonSummary } from "@/hooks/useSeasonSummary";
 import { usePayments } from "@/hooks/usePayments";
+import { useReceipts } from "@/hooks/useReceipts";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { format } from "date-fns";
 import { Link, useSearchParams } from "react-router-dom";
@@ -53,9 +54,18 @@ export default function SeasonSummary() {
     adjustBilling,
   } = useSeasonSummary(year, isAdminView ? familyParam : undefined);
   const { recordPartialPayment } = usePayments();
+  const { receipts } = useReceipts();
   const calculator = new BillingCalculator();
   const { isAdmin } = useUserRole();
   const { organization } = useOrganization();
+
+  // Filter receipts for this season year
+  const seasonReceipts = receipts.filter(receipt => {
+    const receiptYear = new Date(receipt.date).getFullYear();
+    return receiptYear === year;
+  });
+
+  const receiptsTotal = seasonReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
 
   const [editingOccupancy, setEditingOccupancy] = useState<any>(null);
   const [adjustingBilling, setAdjustingBilling] = useState<any>(null);
@@ -390,6 +400,52 @@ export default function SeasonSummary() {
           )}
         </CardContent>
       </Card>
+
+      {/* Receipts for Season */}
+      {seasonReceipts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Receipts for {year}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {seasonReceipts.map((receipt) => (
+                <div key={receipt.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">{receipt.description}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(receipt.date), 'MMM d, yyyy')}
+                      {receipt.family_group && ` • ${receipt.family_group}`}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-green-600">
+                      {BillingCalculator.formatCurrency(receipt.amount)}
+                    </span>
+                    {receipt.image_url && (
+                      <a 
+                        href={receipt.image_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline text-sm"
+                      >
+                        View Image
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between pt-3 border-t font-semibold text-lg">
+                <span>Total Receipts:</span>
+                <span className="text-green-600">{BillingCalculator.formatCurrency(receiptsTotal)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Season Payment Summary */}
       <Card>
