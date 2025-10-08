@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Plus,
   FileText,
-  Receipt
+  Receipt,
+  UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { SeasonInvoiceDialog } from "@/components/SeasonInvoiceDialog";
 import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
+import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -76,6 +78,7 @@ export default function SeasonSummary() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingOrg, setSyncingOrg] = useState(false);
+  const [splittingCosts, setSplittingCosts] = useState<any>(null);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -357,18 +360,35 @@ export default function SeasonSummary() {
                               <Button variant="outline" size="sm">View Details</Button>
                             </Link>
                             {stay.billing.total > (stay.payment?.amount_paid || 0) && (
-                              <Button 
-                                size="sm"
-                                onClick={() => setRecordingPayment({
-                                  id: stay.payment?.id,
-                                  family_group: stay.reservation.family_group,
-                                  totalCharge: stay.billing.total,
-                                  totalPaid: stay.payment?.amount_paid || 0,
-                                })}
-                              >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Record Payment
-                              </Button>
+                              <>
+                                <Button 
+                                  size="sm"
+                                  onClick={() => setRecordingPayment({
+                                    id: stay.payment?.id,
+                                    family_group: stay.reservation.family_group,
+                                    totalCharge: stay.billing.total,
+                                    totalPaid: stay.payment?.amount_paid || 0,
+                                  })}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Record Payment
+                                </Button>
+                                {stay.payment?.daily_occupancy && Array.isArray(stay.payment.daily_occupancy) && stay.payment.daily_occupancy.length > 0 && (
+                                  <Button 
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setSplittingCosts({
+                                      payment: stay.payment,
+                                      reservation: stay.reservation,
+                                      dailyBreakdown: stay.payment.daily_occupancy,
+                                      totalAmount: stay.billing.total,
+                                    })}
+                                  >
+                                    <UserPlus className="h-4 w-4 mr-1" />
+                                    Split This Charge
+                                  </Button>
+                                )}
+                              </>
                             )}
                             {stay.payment && stay.payment.amount_paid > 0 && (
                               <Button
@@ -577,6 +597,26 @@ export default function SeasonSummary() {
         seasonYear={year}
         seasonData={summary}
       />
+
+      {splittingCosts && organization && (
+        <GuestCostSplitDialog
+          open={!!splittingCosts}
+          onOpenChange={(open) => !open && setSplittingCosts(null)}
+          organizationId={organization.id}
+          dailyBreakdown={splittingCosts.dailyBreakdown || []}
+          totalAmount={splittingCosts.totalAmount}
+          sourceUserId={splittingCosts.reservation?.user_id || ''}
+          sourceFamilyGroup={splittingCosts.reservation?.family_group || ''}
+          onSplitCreated={() => {
+            toast({
+              title: "Costs Split Successfully",
+              description: "Guest will be notified via email.",
+            });
+            setSplittingCosts(null);
+            refetch();
+          }}
+        />
+      )}
     </div>
   );
 }

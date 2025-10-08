@@ -14,6 +14,8 @@ import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useToast } from "@/hooks/use-toast";
 import { parseDateOnly } from "@/lib/date-utils";
 import { supabase } from "@/integrations/supabase/client";
+import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -34,6 +36,10 @@ const CheckoutFinal = () => {
 
   // Early checkout dialog state
   const [earlyCheckoutOpen, setEarlyCheckoutOpen] = useState(false);
+  
+  // Guest cost split dialog state
+  const [splitCostsOpen, setSplitCostsOpen] = useState(false);
+  const { organization } = useOrganization();
 
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
@@ -214,7 +220,8 @@ const CheckoutFinal = () => {
     totalDays,
     averageGuests,
     loading: billingLoading,
-    createDeferredPayment 
+    createDeferredPayment,
+    createSplitPayment 
   } = useCheckoutBilling(
     currentReservation?.id,
     checkInDate,
@@ -662,14 +669,26 @@ const CheckoutFinal = () => {
                             Defer this payment until the end of the season (Oct 31). 
                             You can pay your full season balance at once.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={handlePayLater}
-                            disabled={isCreatingPayment}
-                            className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
-                          >
-                            {isCreatingPayment ? "Processing..." : "Defer Payment"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={handlePayLater}
+                              disabled={isCreatingPayment}
+                              className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
+                            >
+                              {isCreatingPayment ? "Processing..." : "Defer Payment"}
+                            </Button>
+                            {totalDays > 0 && dailyBreakdown.length > 0 && (
+                              <Button
+                                variant="outline"
+                                onClick={() => setSplitCostsOpen(true)}
+                                className="border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/20"
+                              >
+                                <Users className="h-4 w-4 mr-2" />
+                                Split Guest Costs
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -764,12 +783,34 @@ const CheckoutFinal = () => {
         )}
 
         {/* Early Checkout Dialog */}
-        <EarlyCheckoutDialog
-          open={earlyCheckoutOpen}
-          onOpenChange={setEarlyCheckoutOpen}
-          reservation={currentReservation}
-          onComplete={handleEarlyCheckoutComplete}
-        />
+        {currentReservation && (
+          <EarlyCheckoutDialog
+            open={earlyCheckoutOpen}
+            onOpenChange={setEarlyCheckoutOpen}
+            reservation={currentReservation}
+            onComplete={handleEarlyCheckoutComplete}
+          />
+        )}
+
+        {/* Guest Cost Split Dialog */}
+        {currentReservation && organization && (
+          <GuestCostSplitDialog
+            open={splitCostsOpen}
+            onOpenChange={setSplitCostsOpen}
+            organizationId={organization.id}
+            dailyBreakdown={dailyBreakdown}
+            totalAmount={enhancedBilling.total}
+            sourceUserId={currentReservation.user_id || ''}
+            sourceFamilyGroup={currentReservation.family_group}
+            onSplitCreated={() => {
+              toast({
+                title: "Costs Split Successfully",
+                description: "Guest will be notified via email and charges have been updated.",
+              });
+              setSplitCostsOpen(false);
+            }}
+          />
+        )}
       </div>
     </div>
   );

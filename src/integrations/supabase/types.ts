@@ -949,6 +949,82 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_splits: {
+        Row: {
+          created_at: string
+          created_by_user_id: string
+          daily_occupancy_split: Json
+          id: string
+          notification_sent_at: string | null
+          notification_status: string
+          organization_id: string
+          source_family_group: string
+          source_payment_id: string
+          source_user_id: string
+          split_payment_id: string
+          split_to_family_group: string
+          split_to_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_user_id: string
+          daily_occupancy_split?: Json
+          id?: string
+          notification_sent_at?: string | null
+          notification_status?: string
+          organization_id: string
+          source_family_group: string
+          source_payment_id: string
+          source_user_id: string
+          split_payment_id: string
+          split_to_family_group: string
+          split_to_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by_user_id?: string
+          daily_occupancy_split?: Json
+          id?: string
+          notification_sent_at?: string | null
+          notification_status?: string
+          organization_id?: string
+          source_family_group?: string
+          source_payment_id?: string
+          source_user_id?: string
+          split_payment_id?: string
+          split_to_family_group?: string
+          split_to_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_splits_source_payment_id_fkey"
+            columns: ["source_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_splits_split_payment_id_fkey"
+            columns: ["split_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           adjustment_notes: string | null

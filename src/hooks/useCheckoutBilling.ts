@@ -25,6 +25,12 @@ interface CheckoutBillingResult {
   averageGuests: number;
   loading: boolean;
   createDeferredPayment: () => Promise<boolean>;
+  createSplitPayment: (
+    splitToUserId: string,
+    splitToFamilyGroup: string,
+    dailyOccupancySplit: Array<{ date: string; guests: number; cost: number }>,
+    splitAmount: number
+  ) => Promise<{ sourcePaymentId: string; splitPaymentId: string } | null>;
 }
 
 export const useCheckoutBilling = (
@@ -215,6 +221,131 @@ export const useCheckoutBilling = (
     }
   };
 
+  // Create split payment (for guest cost splitting)
+  const createSplitPayment = async (
+    splitToUserId: string,
+    splitToFamilyGroup: string,
+    dailyOccupancySplit: Array<{ date: string; guests: number; cost: number }>,
+    splitAmount: number
+  ): Promise<{ sourcePaymentId: string; splitPaymentId: string } | null> => {
+    if (!organization?.id || !reservationId || !checkInDate || !checkOutDate) {
+      toast({
+        title: 'Error',
+        description: 'Missing required information to create split payment',
+        variant: 'destructive',
+      });
+      return null;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: reservation } = await supabase
+        .from('reservations')
+        .select('family_group')
+        .eq('id', reservationId)
+        .single();
+
+      if (!reservation) throw new Error('Reservation not found');
+
+      const seasonEnd = new Date(checkOutDate.getFullYear(), 9, 31);
+
+      // Create guest's payment (Person B)
+      const { data: splitPayment, error: splitPaymentError } = await supabase
+        .from('payments')
+        .insert({
+          organization_id: organization.id,
+          reservation_id: reservationId,
+          family_group: splitToFamilyGroup,
+          payment_type: 'use_fee',
+          amount: splitAmount,
+          amount_paid: 0,
+          status: 'deferred',
+          due_date: seasonEnd.toISOString().split('T')[0],
+          description: `Guest cost split - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()}`,
+          notes: `Split from ${reservation.family_group}`,
+          daily_occupancy: dailyOccupancySplit,
+          created_by_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (splitPaymentError) throw splitPaymentError;
+
+      // Create source payment (Person A - reduced amount)
+      const reducedAmount = result.total - splitAmount;
+      const reducedDailyOccupancy = result.dayBreakdown.map(day => ({
+        date: day.date,
+        guests: day.guests - (dailyOccupancySplit.find(s => s.date === day.date)?.guests || 0),
+        cost: day.cost - (dailyOccupancySplit.find(s => s.date === day.date)?.cost || 0)
+      }));
+
+      const { data: sourcePayment, error: sourcePaymentError } = await supabase
+        .from('payments')
+        .insert({
+          organization_id: organization.id,
+          reservation_id: reservationId,
+          family_group: reservation.family_group,
+          payment_type: 'use_fee',
+          amount: reducedAmount,
+          amount_paid: 0,
+          status: 'deferred',
+          due_date: seasonEnd.toISOString().split('T')[0],
+          description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days, split)`,
+          notes: `Cost split with ${splitToFamilyGroup}`,
+          daily_occupancy: reducedDailyOccupancy,
+          created_by_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (sourcePaymentError) throw sourcePaymentError;
+
+      // Create split tracking record
+      const { data: splitRecord, error: splitRecordError } = await supabase
+        .from('payment_splits')
+        .insert({
+          organization_id: organization.id,
+          source_payment_id: sourcePayment.id,
+          split_payment_id: splitPayment.id,
+          source_family_group: reservation.family_group,
+          source_user_id: user.id,
+          split_to_family_group: splitToFamilyGroup,
+          split_to_user_id: splitToUserId,
+          daily_occupancy_split: dailyOccupancySplit,
+          created_by_user_id: user.id,
+          notification_status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (splitRecordError) throw splitRecordError;
+
+      // Send notification
+      await supabase.functions.invoke('send-guest-split-notification', {
+        body: {
+          splitId: splitRecord.id,
+          organizationId: organization.id
+        }
+      });
+
+      return {
+        sourcePaymentId: sourcePayment.id,
+        splitPaymentId: splitPayment.id
+      };
+
+    } catch (error: any) {
+      console.error('Error creating split payment:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create split payment',
+        variant: 'destructive',
+      });
+      return null;
+    }
+  };
+
   return {
     dailyBreakdown: result.dayBreakdown,
     billing: {
@@ -231,5 +362,6 @@ export const useCheckoutBilling = (
     averageGuests,
     loading,
     createDeferredPayment,
+    createSplitPayment,
   };
 };
