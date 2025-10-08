@@ -12,24 +12,33 @@ import { useOrganization } from '@/hooks/useOrganization';
 interface SeasonInvoiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  seasonYear: number;
-  seasonData: {
+  seasonYear?: number; // Optional for backward compatibility
+  year?: number; // Alternative prop name
+  seasonData?: {
     config: any;
     stays: any[];
     totals: any;
   } | null;
   familyGroup?: string;
+  familyGroupOverride?: string; // For admin view
+  isAdminView?: boolean;
 }
 
 export const SeasonInvoiceDialog = ({
   open,
   onOpenChange,
   seasonYear,
+  year,
   seasonData,
-  familyGroup
+  familyGroup,
+  familyGroupOverride,
+  isAdminView = false
 }: SeasonInvoiceDialogProps) => {
   const { organization } = useOrganization();
   const [generating, setGenerating] = useState(false);
+
+  const actualYear = year || seasonYear || new Date().getFullYear();
+  const actualFamilyGroup = familyGroupOverride || familyGroup;
 
   if (!seasonData || !organization) return null;
 

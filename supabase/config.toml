@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.complete-phone-reset]
 verify_jwt = false
+
+[functions.send-bulk-payment-reminders]
+verify_jwt = true

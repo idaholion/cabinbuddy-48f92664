@@ -13,19 +13,23 @@ import { useToast } from '@/hooks/use-toast';
 interface ExportSeasonDataDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  seasonYear: number;
-  seasonData: {
+  seasonYear?: number; // Optional for backward compatibility
+  year?: number; // Alternative prop name
+  seasonData?: {
     config: any;
     stays: any[];
     totals: any;
   } | null;
+  isAdminView?: boolean;
 }
 
 export const ExportSeasonDataDialog = ({
   open,
   onOpenChange,
   seasonYear,
-  seasonData
+  year,
+  seasonData,
+  isAdminView = false
 }: ExportSeasonDataDialogProps) => {
   const { toast } = useToast();
   const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
@@ -33,6 +37,8 @@ export const ExportSeasonDataDialog = ({
   const [includeOccupancy, setIncludeOccupancy] = useState(true);
   const [includeBilling, setIncludeBilling] = useState(true);
   const [exporting, setExporting] = useState(false);
+
+  const actualYear = year || seasonYear || new Date().getFullYear();
 
   if (!seasonData) return null;
 

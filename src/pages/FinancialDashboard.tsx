@@ -352,8 +352,14 @@ const FinancialDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Navigation to Next Setup Step */}
-        <div className="mt-8 text-center">
+        {/* Admin Quick Links */}
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <Button asChild size="lg" variant="outline">
+            <Link to="/admin-season-summary">
+              <Users className="h-4 w-4 mr-2" />
+              View All Families Season Summary (Admin)
+            </Link>
+          </Button>
           <Button asChild size="lg" className="text-lg px-8 py-6 text-base">
             <Link to="/reservation-setup">Continue to Reservation Setup</Link>
           </Button>
