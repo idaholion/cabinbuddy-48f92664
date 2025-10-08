@@ -317,13 +317,7 @@ const CheckIn = () => {
               )}
               
               <div className="flex flex-col space-y-3 pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-base text-muted-foreground">
-                      Check-in time: {new Date().toLocaleString()}
-                    </span>
-                  </div>
+                <div className="flex justify-end">
                   <Button onClick={handleSubmit} className="bg-primary text-base">
                     Complete Check-In
                   </Button>
