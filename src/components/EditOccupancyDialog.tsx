@@ -39,6 +39,15 @@ export const EditOccupancyDialog = ({
   // Only include nights spent (exclude checkout day)
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
 
+  console.log('EditOccupancyDialog - Stay dates:', {
+    startDate: stay.startDate,
+    endDate: stay.endDate,
+    calculatedEndDate: addDays(stay.endDate, -1),
+    totalDays: days.length,
+    days: days.map(d => format(d, 'yyyy-MM-dd'))
+  });
+  console.log('EditOccupancyDialog - Current occupancy:', currentOccupancy);
+
   const handleGuestCountChange = (dateStr: string, count: number) => {
     setOccupancy(prev => {
       const existing = prev.find(o => o.date === dateStr);
