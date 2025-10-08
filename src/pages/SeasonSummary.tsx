@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Edit,
   RefreshCw,
-  Plus
+  Plus,
+  FileText,
+  Receipt
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,9 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { SeasonInvoiceDialog } from "@/components/SeasonInvoiceDialog";
+import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
+import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOrganization } from "@/hooks/useOrganization";
@@ -52,6 +57,10 @@ export default function SeasonSummary() {
   const [editingOccupancy, setEditingOccupancy] = useState<any>(null);
   const [adjustingBilling, setAdjustingBilling] = useState<any>(null);
   const [recordingPayment, setRecordingPayment] = useState<any>(null);
+  const [viewingInvoice, setViewingInvoice] = useState(false);
+  const [selectedFamilyGroupForInvoice, setSelectedFamilyGroupForInvoice] = useState<string | undefined>(undefined);
+  const [viewingReceipt, setViewingReceipt] = useState<any>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingOrg, setSyncingOrg] = useState(false);
 
@@ -159,9 +168,13 @@ export default function SeasonSummary() {
             <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing...' : 'Sync My Family'}
           </Button>
-          <Button variant="outline" onClick={() => window.print()}>
+          <Button variant="outline" onClick={() => setViewingInvoice(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            View Invoice
+          </Button>
+          <Button variant="outline" onClick={() => setExportDialogOpen(true)}>
             <Download className="h-4 w-4 mr-2" />
-            Export Report
+            Export Data
           </Button>
           <Link to="/financial">
             <Button variant="outline">
@@ -331,6 +344,16 @@ export default function SeasonSummary() {
                                 Record Payment
                               </Button>
                             )}
+                            {stay.payment && stay.payment.amount_paid > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewingReceipt(stay.payment)}
+                              >
+                                <Receipt className="h-3 w-3 mr-1" />
+                                Receipt
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </>
@@ -456,6 +479,28 @@ export default function SeasonSummary() {
           }}
         />
       )}
+
+      <SeasonInvoiceDialog
+        open={viewingInvoice}
+        onOpenChange={setViewingInvoice}
+        seasonYear={year}
+        seasonData={summary}
+        familyGroup={selectedFamilyGroupForInvoice}
+      />
+
+      <PaymentReceiptDialog
+        open={!!viewingReceipt}
+        onOpenChange={(open) => !open && setViewingReceipt(null)}
+        payment={viewingReceipt}
+        isTestMode={true}
+      />
+
+      <ExportSeasonDataDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        seasonYear={year}
+        seasonData={summary}
+      />
     </div>
   );
 }
