@@ -104,6 +104,12 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
       if (reservationsError) throw reservationsError;
 
+      console.log('🔍 [ADMIN_SEASON_SUMMARY] Reservations fetched:', {
+        count: reservations?.length,
+        dateRange: `${config.startDate.toISOString().split('T')[0]} to ${config.endDate.toISOString().split('T')[0]}`,
+        sample: reservations?.slice(0, 2)
+      });
+
       // Fetch all payments for the season
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
@@ -112,6 +118,11 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
         .not('reservation_id', 'is', null);
 
       if (paymentsError) throw paymentsError;
+
+      console.log('🔍 [ADMIN_SEASON_SUMMARY] Payments fetched:', {
+        count: payments?.length,
+        sample: payments?.slice(0, 2)
+      });
 
       // Create payment lookup map
       const paymentsByReservation = new Map<string, any>();
@@ -138,6 +149,14 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
         for (const reservation of familyReservations) {
           const payment = paymentsByReservation.get(reservation.id);
           const nights = calculateNights(reservation.start_date, reservation.end_date);
+
+          console.log(`🔍 [ADMIN_SEASON_SUMMARY] Processing ${familyGroup.name}:`, {
+            reservationId: reservation.id,
+            dates: `${reservation.start_date} to ${reservation.end_date}`,
+            hasPayment: !!payment,
+            paymentAmount: payment?.amount,
+            paymentPaid: payment?.amount_paid
+          });
 
           // Use payment amount if available, otherwise calculate
           if (payment?.amount) {
