@@ -13,6 +13,7 @@ import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useToast } from "@/hooks/use-toast";
 import { parseDateOnly } from "@/lib/date-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -34,17 +35,6 @@ const CheckoutFinal = () => {
   // Early checkout dialog state
   const [earlyCheckoutOpen, setEarlyCheckoutOpen] = useState(false);
 
-  useEffect(() => {
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
-      if (savedCompletion) {
-        setChecklistStatus(JSON.parse(savedCompletion));
-      }
-    }
-  }, []);
-
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
   const getCurrentUserReservation = () => {
@@ -63,6 +53,64 @@ const CheckoutFinal = () => {
   };
 
   const currentReservation = getCurrentUserReservation();
+
+  // Load checkout completion status from database and localStorage
+  useEffect(() => {
+    const loadCheckoutStatus = async () => {
+      // First check localStorage for quick access
+      const familyData = localStorage.getItem('familySetupData');
+      if (familyData) {
+        const { organizationCode } = JSON.parse(familyData);
+        const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
+        if (savedCompletion) {
+          const localStatus = JSON.parse(savedCompletion);
+          setChecklistStatus(localStatus);
+          console.log('✅ [CHECKOUT-STATUS] Loaded from localStorage:', localStatus);
+        }
+      }
+
+      // Then check database for the most recent checkout session
+      if (currentReservation) {
+        try {
+          const { data: checkoutSession, error } = await supabase
+            .from('checkin_sessions')
+            .select('*')
+            .eq('session_type', 'checkout')
+            .eq('family_group', currentReservation.family_group)
+            .gte('check_date', currentReservation.start_date)
+            .lte('check_date', currentReservation.end_date)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (!error && checkoutSession?.checklist_responses) {
+            const responses = checkoutSession.checklist_responses as any;
+            const checklistCompletion = responses?.checklistCompletion;
+            if (checklistCompletion) {
+              const dbStatus = {
+                isComplete: checklistCompletion.isComplete || false,
+                completedAt: checklistCompletion.completedAt || null,
+                totalTasks: checklistCompletion.totalTasks || 0,
+                completedTasks: checklistCompletion.completedTasks || 0,
+              };
+              setChecklistStatus(dbStatus);
+              console.log('✅ [CHECKOUT-STATUS] Loaded from database:', dbStatus);
+              
+              // Also sync to localStorage for next time
+              if (familyData) {
+                const { organizationCode } = JSON.parse(familyData);
+                localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(dbStatus));
+              }
+            }
+          }
+        } catch (error) {
+          console.error('❌ [CHECKOUT-STATUS] Failed to load from database:', error);
+        }
+      }
+    };
+
+    loadCheckoutStatus();
+  }, [currentReservation?.id, currentReservation?.family_group, currentReservation?.start_date, currentReservation?.end_date]);
 
   // Calculate stay dates from the current reservation
   const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : null;
