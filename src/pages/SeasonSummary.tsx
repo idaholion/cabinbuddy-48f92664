@@ -40,6 +40,9 @@ export default function SeasonSummary() {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const year = parseInt(searchParams.get('year') || new Date().getFullYear().toString());
+  const familyParam = searchParams.get('family') || undefined;
+  const isAdminView = searchParams.get('admin') === 'true';
+  
   const { 
     summary, 
     loading, 
@@ -48,7 +51,7 @@ export default function SeasonSummary() {
     syncReservationsToPayments,
     updateOccupancy,
     adjustBilling,
-  } = useSeasonSummary(year);
+  } = useSeasonSummary(year, isAdminView ? familyParam : undefined);
   const { recordPartialPayment } = usePayments();
   const calculator = new BillingCalculator();
   const { isAdmin } = useUserRole();
@@ -150,7 +153,9 @@ export default function SeasonSummary() {
     <div className="container mx-auto p-6 max-w-6xl space-y-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">My Season Summary - {year}</h1>
+          <h1 className="text-3xl font-bold">
+            {isAdminView && familyParam ? `${familyParam} - ` : 'My '}Season Summary - {year}
+          </h1>
           <p className="text-muted-foreground">
             {summary?.config && (
               `Season: ${format(new Date(year, summary.config.season_start_month - 1, summary.config.season_start_day), 'MMM d')} - ${format(new Date(year, summary.config.season_end_month - 1, summary.config.season_end_day), 'MMM d, yyyy')}`
@@ -158,30 +163,41 @@ export default function SeasonSummary() {
           </p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && (
-            <Button variant="default" onClick={handleSyncOrganization} disabled={syncingOrg}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${syncingOrg ? 'animate-spin' : ''}`} />
-              {syncingOrg ? 'Syncing All...' : 'Sync All Families'}
-            </Button>
+          {isAdminView ? (
+            <Link to={`/admin-season-summary?year=${year}`}>
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Admin Summary
+              </Button>
+            </Link>
+          ) : (
+            <>
+              {isAdmin && (
+                <Button variant="default" onClick={handleSyncOrganization} disabled={syncingOrg}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${syncingOrg ? 'animate-spin' : ''}`} />
+                  {syncingOrg ? 'Syncing All...' : 'Sync All Families'}
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleSync} disabled={syncing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync My Family'}
+              </Button>
+              <Button variant="outline" onClick={() => setViewingInvoice(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                View Invoice
+              </Button>
+              <Button variant="outline" onClick={() => setExportDialogOpen(true)}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+              <Link to="/financial">
+                <Button variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+            </>
           )}
-          <Button variant="outline" onClick={handleSync} disabled={syncing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync My Family'}
-          </Button>
-          <Button variant="outline" onClick={() => setViewingInvoice(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            View Invoice
-          </Button>
-          <Button variant="outline" onClick={() => setExportDialogOpen(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Data
-          </Button>
-          <Link to="/financial">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </Link>
         </div>
       </div>
 

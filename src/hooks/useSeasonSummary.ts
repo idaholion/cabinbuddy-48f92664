@@ -46,7 +46,7 @@ interface SeasonSummary {
   };
 }
 
-export const useSeasonSummary = (seasonYear?: number) => {
+export const useSeasonSummary = (seasonYear?: number, familyGroupOverride?: string) => {
   const [summary, setSummary] = useState<SeasonSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -125,15 +125,22 @@ export const useSeasonSummary = (seasonYear?: number) => {
       // Get season configuration
       const config = await fetchSeasonConfig();
 
-      // Get user's family group
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('family_group')
-        .eq('user_id', user.id)
-        .eq('organization_id', organization.id)
-        .maybeSingle();
+      // Determine which family group to fetch data for
+      let targetFamilyGroup = familyGroupOverride;
+      
+      if (!targetFamilyGroup) {
+        // Get user's family group if no override provided
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('family_group')
+          .eq('user_id', user.id)
+          .eq('organization_id', organization.id)
+          .maybeSingle();
 
-      if (!profileData?.family_group) {
+        targetFamilyGroup = profileData?.family_group;
+      }
+
+      if (!targetFamilyGroup) {
         setSummary({
           config,
           stays: [],
@@ -151,12 +158,12 @@ export const useSeasonSummary = (seasonYear?: number) => {
         return;
       }
 
-      // Fetch reservations within season dates for user's family group
+      // Fetch reservations within season dates for target family group
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
         .select('*')
         .eq('organization_id', organization.id)
-        .eq('family_group', profileData.family_group)
+        .eq('family_group', targetFamilyGroup)
         .gte('start_date', config.startDate.toISOString().split('T')[0])
         .lte('end_date', config.endDate.toISOString().split('T')[0])
         .order('start_date', { ascending: false });
@@ -188,7 +195,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
           .from('checkin_sessions')
           .select('check_date, guest_names')
           .eq('organization_id', organization.id)
-          .eq('family_group', profileData.family_group)
+          .eq('family_group', targetFamilyGroup)
           .gte('check_date', reservation.start_date)
           .lt('check_date', reservation.end_date);
 
@@ -388,11 +395,23 @@ export const useSeasonSummary = (seasonYear?: number) => {
       const startDate = new Date(year, config.season_start_month - 1, config.season_start_day);
       const endDate = new Date(year, config.season_end_month - 1, config.season_end_day);
 
-      // Fetch all reservations in season
+      // Get user's profile to determine family group
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('family_group')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profileData?.family_group) {
+        throw new Error('User profile or family group not found');
+      }
+
+      // Fetch ONLY this family's reservations in season
       const { data: reservations, error: reservationsError } = await supabase
         .from('reservations')
         .select('*')
         .eq('organization_id', organization.id)
+        .eq('family_group', profileData.family_group)
         .gte('start_date', startDate.toISOString())
         .lte('end_date', endDate.toISOString());
 
@@ -556,7 +575,7 @@ export const useSeasonSummary = (seasonYear?: number) => {
     if (organization?.id && user?.email) {
       fetchSeasonData();
     }
-  }, [organization?.id, user?.email, year]);
+  }, [organization?.id, user?.email, year, familyGroupOverride]);
 
   return {
     summary,
