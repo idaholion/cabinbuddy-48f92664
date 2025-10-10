@@ -60,6 +60,22 @@ const CheckoutFinal = () => {
 
   const currentReservation = getCurrentUserReservation();
 
+  // Generate sample data when no reservation exists (for preview/demo)
+  const generateSampleData = () => {
+    const today = new Date();
+    const sampleStart = new Date(today.getFullYear(), 10, 2); // Nov 2
+    const sampleEnd = new Date(today.getFullYear(), 10, 6); // Nov 6 (4 nights)
+    
+    return {
+      checkInDate: sampleStart,
+      checkOutDate: sampleEnd,
+      guests: 4,
+      nights: 4,
+      receiptsTotal: 0,
+      isSample: true
+    };
+  };
+
   // Load checkout completion status from database and localStorage
   useEffect(() => {
     const loadCheckoutStatus = async () => {
@@ -118,9 +134,10 @@ const CheckoutFinal = () => {
     loadCheckoutStatus();
   }, [currentReservation?.id, currentReservation?.family_group, currentReservation?.start_date, currentReservation?.end_date]);
 
-  // Calculate stay dates from the current reservation
-  const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : null;
-  const checkOutDate = currentReservation ? parseDateOnly(currentReservation.end_date) : null;
+  // Calculate stay dates from the current reservation, or use sample data
+  const sampleData = !currentReservation ? generateSampleData() : null;
+  const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : (sampleData?.checkInDate || null);
+  const checkOutDate = currentReservation ? parseDateOnly(currentReservation.end_date) : (sampleData?.checkOutDate || null);
   
   // Filter sessions for the current stay period (exclude checkout day)
   const arrivalSessions = sessions.filter(s => s.session_type === 'arrival');
@@ -154,11 +171,11 @@ const CheckoutFinal = () => {
     return Math.floor(timeDiff / (1000 * 3600 * 24));
   };
 
-  // Build checkout data from actual reservation data
+  // Build checkout data from actual reservation data or sample data
   const checkoutData = {
-    guests: currentReservation?.guest_count || 0,
+    guests: currentReservation?.guest_count || sampleData?.guests || 0,
     nights: calculateNights(),
-    receiptsTotal,
+    receiptsTotal: sampleData ? 0 : receiptsTotal,
     checkInDate: checkInDate?.toISOString().split('T')[0] || '',
     checkOutDate: checkOutDate?.toISOString().split('T')[0] || '',
     venmoHandle: financialSettings?.venmo_handle || '',
@@ -166,7 +183,8 @@ const CheckoutFinal = () => {
     checkAddress: {
       name: financialSettings?.check_payable_to || '',
       address: financialSettings?.check_mailing_address || ''
-    }
+    },
+    isSample: sampleData?.isSample || false
   };
 
   const calculateBilling = () => {
@@ -254,8 +272,8 @@ const CheckoutFinal = () => {
   // Show loading state if any data is still loading
   const isLoading = sessionsLoading || surveyLoading || financialLoading || receiptsLoading || reservationsLoading || billingLoading;
 
-  // Check if we have the necessary data to show checkout
-  const hasStayData = currentReservation && checkoutData.checkInDate && checkoutData.checkOutDate;
+  // Check if we have the necessary data to show checkout (including sample data)
+  const hasStayData = (currentReservation || sampleData) && checkoutData.checkInDate && checkoutData.checkOutDate;
 
   // Check if early checkout is possible (reservation extends beyond today)
   const canEarlyCheckout = currentReservation && 
@@ -320,8 +338,25 @@ const CheckoutFinal = () => {
           </Card>
         ) : (
           <>
+            {/* Sample Data Banner - shown when using demo data */}
+            {checkoutData.isSample && (
+              <div className="mb-6">
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                      Sample Checkout Preview
+                    </h3>
+                  </div>
+                  <p className="text-blue-700 dark:text-blue-300">
+                    This is a preview showing what a typical checkout would look like. The dates and guest counts shown are examples.
+                  </p>
+                </div>
+              </div>
+            )}
+            
             {/* Preview Mode Banner - shown when checklist is incomplete */}
-            {!checklistStatus?.isComplete && (
+            {!checklistStatus?.isComplete && !checkoutData.isSample && (
               <div className="mb-6">
                 <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
                   <div className="flex items-center gap-3 mb-2">

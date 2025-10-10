@@ -48,7 +48,26 @@ export const useCheckoutBilling = (
   // Fetch daily check-in data
   useEffect(() => {
     const fetchDailyOccupancy = async () => {
-      if (!reservationId || !checkInDate || !checkOutDate) {
+      if (!checkInDate || !checkOutDate) {
+        setLoading(false);
+        return;
+      }
+
+      // Generate sample data if no reservation (for demo/preview)
+      if (!reservationId) {
+        const sampleOccupancy: Record<string, number> = {};
+        const currentDate = new Date(checkInDate);
+        const guestCounts = [4, 5, 4, 3]; // Varying guest counts for realism
+        let dayIndex = 0;
+        
+        while (currentDate < checkOutDate) {
+          const dateStr = currentDate.toISOString().split('T')[0];
+          sampleOccupancy[dateStr] = guestCounts[dayIndex % guestCounts.length];
+          currentDate.setDate(currentDate.getDate() + 1);
+          dayIndex++;
+        }
+        
+        setDailyOccupancy(sampleOccupancy);
         setLoading(false);
         return;
       }
