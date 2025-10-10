@@ -2,21 +2,21 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { GroupMember, FamilyGroupData } from '@/types/group-member';
 import { parseFullName } from '@/lib/name-utils';
 
 export const useFamilyGroups = () => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization: organization } = useMultiOrganization();
   const { toast } = useToast();
   const { isSupervisor } = useSupervisor();
   const [loading, setLoading] = useState(false);
   const [familyGroups, setFamilyGroups] = useState<any[]>([]);
 
   const fetchFamilyGroups = async () => {
-    if (!user || !organization?.id) {
+    if (!user || !organization?.organization_id) {
       console.warn('fetchFamilyGroups called without user or organization:', { user: !!user, organization: !!organization });
       return;
     }
@@ -26,7 +26,7 @@ export const useFamilyGroups = () => {
       const { data, error } = await supabase
         .from('family_groups')
         .select('*')
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization.organization_id)
         .order('name');
 
       if (error) {
@@ -62,7 +62,7 @@ export const useFamilyGroups = () => {
   };
 
   const createFamilyGroup = async (groupData: FamilyGroupData) => {
-    if (!user || !organization?.id) {
+    if (!user || !organization?.organization_id) {
       console.warn('createFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
       toast({
         title: "Error",
@@ -113,7 +113,7 @@ export const useFamilyGroups = () => {
         .from('family_groups')
         .insert({
           ...groupData,
-          organization_id: organization.id,
+          organization_id: organization.organization_id,
           host_members: groupMembers as any // Cast to any for JSONB
         })
         .select()
@@ -166,7 +166,7 @@ export const useFamilyGroups = () => {
   };
 
   const updateFamilyGroup = async (groupId: string, updates: Partial<FamilyGroupData>) => {
-    if (!user || !organization?.id) {
+    if (!user || !organization?.organization_id) {
       console.warn('updateFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
       toast({
         title: "Error",
@@ -212,7 +212,7 @@ export const useFamilyGroups = () => {
         .from('family_groups')
         .update(updatesWithJsonb)
         .eq('id', groupId)
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization.organization_id)
         .select()
         .single();
 
@@ -253,13 +253,13 @@ export const useFamilyGroups = () => {
   };
 
   useEffect(() => {
-    if (organization?.id) {
+    if (organization?.organization_id) {
       fetchFamilyGroups();
     }
-  }, [organization?.id]);
+  }, [organization?.organization_id]);
 
   const renameFamilyGroup = async (oldName: string, newName: string) => {
-    if (!user || !organization?.id) {
+    if (!user || !organization?.organization_id) {
       toast({
         title: "Error",
         description: "No organization found.",
@@ -275,7 +275,7 @@ export const useFamilyGroups = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc('rename_family_group', {
-        p_organization_id: organization.id,
+        p_organization_id: organization.organization_id,
         p_old_name: oldName,
         p_new_name: newName
       });
@@ -311,11 +311,11 @@ export const useFamilyGroups = () => {
   };
 
   const getAvailableColors = async (currentGroupId?: string) => {
-    if (!organization?.id) return [];
+    if (!organization?.organization_id) return [];
     
     try {
       const { data, error } = await supabase.rpc('get_available_colors', {
-        p_organization_id: organization.id,
+        p_organization_id: organization.organization_id,
         p_current_group_id: currentGroupId || null
       });
       
@@ -332,7 +332,7 @@ export const useFamilyGroups = () => {
   };
 
   const updateFamilyGroupColor = async (groupId: string, color: string) => {
-    if (!user || !organization?.id) {
+    if (!user || !organization?.organization_id) {
       toast({
         title: "Error",
         description: "No organization found.",
@@ -347,7 +347,7 @@ export const useFamilyGroups = () => {
         .from('family_groups')
         .update({ color })
         .eq('id', groupId)
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization.organization_id)
         .select()
         .single();
 
@@ -400,7 +400,7 @@ export const useFamilyGroups = () => {
       return false;
     }
 
-    if (!organization?.id) {
+    if (!organization?.organization_id) {
       toast({
         title: "Error",
         description: "No organization found.",
