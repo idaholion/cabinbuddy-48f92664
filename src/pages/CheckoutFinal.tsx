@@ -404,8 +404,8 @@ const CheckoutFinal = () => {
               </Card>
             )}
 
-            {/* Wrapper div with conditional opacity for preview mode */}
-            <div className={`space-y-6 ${!checklistStatus?.isComplete ? 'opacity-60 pointer-events-none select-none' : ''}`}>
+            {/* Wrapper div with conditional styling for preview mode */}
+            <div className={`space-y-6 ${!checklistStatus?.isComplete ? 'pointer-events-none select-none' : ''}`}>
               {/* Stay Summary */}
               <Card className="mb-6">
                 <CardHeader>
