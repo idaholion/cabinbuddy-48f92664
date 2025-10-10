@@ -80,12 +80,12 @@ export const useUserRole = () => {
 
   useEffect(() => {
     const checkUserRole = () => {
-      if (!user?.email || familyGroupsLoading || organizationLoading || !organizationDetails) {
+      if (!user?.email || familyGroupsLoading || organizationLoading) {
       // Temporarily disable detailed logging to prevent infinite loop
       // console.log('🎭 [USER ROLE] Still loading:', { 
       //   hasUserEmail: !!user?.email,
-      //   familyGroupsLoading, 
-      //   organizationLoading 
+      //   familyGroupsLoading,
+      //   organizationLoading
       // });
         setLoading(true);
         return;
