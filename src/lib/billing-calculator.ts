@@ -167,10 +167,10 @@ export class BillingCalculator {
 
     // Calculate cost for each day
     console.log('Starting day-by-day calculation...');
-    days.forEach((dayKey, index) => {
-      const guests = dailyOccupancyData[dayKey] || 0;
-      // Use the actual date key instead of calculating from index
-      const date = dayKey;
+    days.forEach((dateKey, index) => {
+      const guests = dailyOccupancyData[dateKey] || 0;
+      // dateKey is already in YYYY-MM-DD format
+      const date = dateKey;
       
       let dayCost = 0;
       
