@@ -47,6 +47,59 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_cycles: {
+        Row: {
+          auto_send_invoices: boolean
+          created_at: string
+          created_by_user_id: string | null
+          cycle_name: string
+          cycle_type: Database["public"]["Enums"]["billing_cycle_type"]
+          end_date: string
+          id: string
+          organization_id: string
+          payment_deadline: string
+          start_date: string
+          status: Database["public"]["Enums"]["billing_cycle_status"]
+          updated_at: string
+        }
+        Insert: {
+          auto_send_invoices?: boolean
+          created_at?: string
+          created_by_user_id?: string | null
+          cycle_name: string
+          cycle_type: Database["public"]["Enums"]["billing_cycle_type"]
+          end_date: string
+          id?: string
+          organization_id: string
+          payment_deadline: string
+          start_date: string
+          status?: Database["public"]["Enums"]["billing_cycle_status"]
+          updated_at?: string
+        }
+        Update: {
+          auto_send_invoices?: boolean
+          created_at?: string
+          created_by_user_id?: string | null
+          cycle_name?: string
+          cycle_type?: Database["public"]["Enums"]["billing_cycle_type"]
+          end_date?: string
+          id?: string
+          organization_id?: string
+          payment_deadline?: string
+          start_date?: string
+          status?: Database["public"]["Enums"]["billing_cycle_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_cycles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bulk_operation_audit: {
         Row: {
           details: Json | null
@@ -625,6 +678,141 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      invoice_reminders_log: {
+        Row: {
+          email_status: Database["public"]["Enums"]["email_status"]
+          error_message: string | null
+          id: string
+          invoice_id: string
+          organization_id: string
+          recipient_emails: string[]
+          reminder_type: Database["public"]["Enums"]["reminder_type"]
+          sent_at: string
+        }
+        Insert: {
+          email_status?: Database["public"]["Enums"]["email_status"]
+          error_message?: string | null
+          id?: string
+          invoice_id: string
+          organization_id: string
+          recipient_emails: string[]
+          reminder_type: Database["public"]["Enums"]["reminder_type"]
+          sent_at?: string
+        }
+        Update: {
+          email_status?: Database["public"]["Enums"]["email_status"]
+          error_message?: string | null
+          id?: string
+          invoice_id?: string
+          organization_id?: string
+          recipient_emails?: string[]
+          reminder_type?: Database["public"]["Enums"]["reminder_type"]
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_reminders_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_reminders_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount_paid: number
+          balance_due: number
+          billing_cycle_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          due_date: string
+          family_group: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          line_items: Json
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          pdf_url: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          balance_due?: number
+          billing_cycle_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          due_date: string
+          family_group: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          balance_due?: number
+          billing_cycle_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          due_date?: string
+          family_group?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          line_items?: Json
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          pdf_url?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_billing_cycle_id_fkey"
+            columns: ["billing_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "billing_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       manual_template_sends: {
         Row: {
@@ -1526,6 +1714,7 @@ export type Database = {
       reservation_settings: {
         Row: {
           address: string | null
+          auto_billing_enabled: boolean | null
           auto_invoicing: boolean | null
           bathrooms: number | null
           bedrooms: number | null
@@ -1538,10 +1727,12 @@ export type Database = {
           damage_deposit: number | null
           financial_method: string | null
           id: string
+          invoice_prefix: string | null
           late_fee_amount: number | null
           late_fee_grace_days: number | null
           late_fees_enabled: boolean | null
           max_guests: number | null
+          next_invoice_number: number | null
           nightly_rate: number | null
           organization_id: string
           payment_terms: string | null
@@ -1562,6 +1753,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          auto_billing_enabled?: boolean | null
           auto_invoicing?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -1574,10 +1766,12 @@ export type Database = {
           damage_deposit?: number | null
           financial_method?: string | null
           id?: string
+          invoice_prefix?: string | null
           late_fee_amount?: number | null
           late_fee_grace_days?: number | null
           late_fees_enabled?: boolean | null
           max_guests?: number | null
+          next_invoice_number?: number | null
           nightly_rate?: number | null
           organization_id: string
           payment_terms?: string | null
@@ -1598,6 +1792,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          auto_billing_enabled?: boolean | null
           auto_invoicing?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
@@ -1610,10 +1805,12 @@ export type Database = {
           damage_deposit?: number | null
           financial_method?: string | null
           id?: string
+          invoice_prefix?: string | null
           late_fee_amount?: number | null
           late_fee_grace_days?: number | null
           late_fees_enabled?: boolean | null
           max_guests?: number | null
+          next_invoice_number?: number | null
           nightly_rate?: number | null
           organization_id?: string
           payment_terms?: string | null
@@ -2758,6 +2955,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_next_invoice_number: {
+        Args: { org_id: string }
+        Returns: string
+      }
       get_organization_user_emails: {
         Args: { org_id: string }
         Returns: {
@@ -2957,6 +3158,17 @@ export type Database = {
       }
     }
     Enums: {
+      billing_cycle_status: "draft" | "active" | "completed" | "cancelled"
+      billing_cycle_type: "end_of_year" | "end_of_season" | "monthly" | "custom"
+      billing_frequency: "annual" | "seasonal" | "monthly" | "manual"
+      email_status: "sent" | "failed"
+      invoice_status:
+        | "draft"
+        | "sent"
+        | "partial"
+        | "paid"
+        | "overdue"
+        | "cancelled"
       payment_method:
         | "cash"
         | "check"
@@ -2984,6 +3196,12 @@ export type Database = {
         | "refund"
         | "other"
         | "use_fee"
+      reminder_type:
+        | "30_day"
+        | "14_day"
+        | "7_day"
+        | "due_date"
+        | "overdue_weekly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3111,6 +3329,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      billing_cycle_status: ["draft", "active", "completed", "cancelled"],
+      billing_cycle_type: ["end_of_year", "end_of_season", "monthly", "custom"],
+      billing_frequency: ["annual", "seasonal", "monthly", "manual"],
+      email_status: ["sent", "failed"],
+      invoice_status: [
+        "draft",
+        "sent",
+        "partial",
+        "paid",
+        "overdue",
+        "cancelled",
+      ],
       payment_method: [
         "cash",
         "check",
@@ -3140,6 +3370,13 @@ export const Constants = {
         "refund",
         "other",
         "use_fee",
+      ],
+      reminder_type: [
+        "30_day",
+        "14_day",
+        "7_day",
+        "due_date",
+        "overdue_weekly",
       ],
     },
   },
