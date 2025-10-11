@@ -181,7 +181,7 @@ const CheckoutFinal = () => {
     
     return receipts
       .filter(receipt => {
-        const receiptDate = new Date(receipt.date);
+        const receiptDate = parseDateOnly(receipt.date);
         return receiptDate >= checkInDate && receiptDate <= checkOutDate;
       })
       .reduce((total, receipt) => total + receipt.amount, 0);
@@ -301,8 +301,8 @@ const CheckoutFinal = () => {
   const hasStayData = (currentReservation || sampleData) && checkoutData.checkInDate && checkoutData.checkOutDate;
 
   // Check if early checkout is possible (reservation extends beyond today)
-  const canEarlyCheckout = currentReservation && 
-    new Date(currentReservation.end_date) > new Date();
+  const canEarlyCheckout = currentReservation && checkOutDate &&
+    checkOutDate > new Date();
 
   const handleEarlyCheckoutComplete = () => {
     // Refresh reservations data after early checkout
@@ -423,7 +423,7 @@ const CheckoutFinal = () => {
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
                     Your stay summary includes only the time period you are responsible for 
-                    ({new Date(currentReservation.start_date).toLocaleDateString()} - {new Date(currentReservation.end_date).toLocaleDateString()}).
+                    ({checkInDate?.toLocaleDateString()} - {checkOutDate?.toLocaleDateString()}).
                   </p>
                 </CardContent>
               </Card>
@@ -445,7 +445,7 @@ const CheckoutFinal = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">
-                        Your reservation continues until {new Date(currentReservation.end_date).toLocaleDateString()}
+                        Your reservation continues until {checkOutDate?.toLocaleDateString()}
                       </p>
                       <p className="text-sm font-medium">
                         Cancel remaining days, transfer to family, or offer to others
@@ -523,7 +523,7 @@ const CheckoutFinal = () => {
                       </div>
                       {dailyBreakdown.map((day, index) => (
                         <div key={index} className="grid grid-cols-3 gap-2 text-sm py-1">
-                          <span>{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                           <span className="text-center font-medium">{day.guests}</span>
                           <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
                         </div>
@@ -563,7 +563,7 @@ const CheckoutFinal = () => {
                         {arrivalSessions.map((session, index) => (
                           <div key={session.id} className="bg-muted rounded p-3 mb-2">
                             <div className="text-base text-muted-foreground mb-2">
-                              {new Date(session.check_date).toLocaleDateString()}
+                              {parseDateOnly(session.check_date).toLocaleDateString()}
                             </div>
                             {session.notes && (
                               <p className="text-base whitespace-pre-wrap">{session.notes}</p>
@@ -591,7 +591,7 @@ const CheckoutFinal = () => {
                               <div key={session.id} className="bg-muted rounded p-3">
                                 <div className="flex justify-between items-center mb-2">
                                   <div className="text-base font-medium">
-                                    {new Date(session.check_date).toLocaleDateString()}
+                                    {parseDateOnly(session.check_date).toLocaleDateString()}
                                   </div>
                                   <div className="text-base text-muted-foreground">
                                     {completedTasks} tasks completed

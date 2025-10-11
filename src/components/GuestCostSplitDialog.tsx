@@ -9,6 +9,7 @@ import { BillingCalculator } from '@/lib/billing-calculator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Users, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface DailyBreakdown {
   date: string;
@@ -208,7 +209,7 @@ export const GuestCostSplitDialog = ({
       if (Math.abs(total - day.guests) > 0.01) {
         toast({
           title: 'Guest Count Mismatch',
-          description: `On ${new Date(day.date).toLocaleDateString()}, total guests don't match (${total} vs ${day.guests})`,
+          description: `On ${parseDateOnly(day.date).toLocaleDateString()}, total guests don't match (${total} vs ${day.guests})`,
           variant: 'destructive',
         });
         return false;
@@ -417,7 +418,7 @@ export const GuestCostSplitDialog = ({
                       return (
                         <tr key={day.date} className="border-t">
                           <td className="p-3 sticky left-0 bg-background z-10">
-                            {new Date(day.date).toLocaleDateString()}
+                            {parseDateOnly(day.date).toLocaleDateString()}
                           </td>
                           <td className="p-3">
                             <Input

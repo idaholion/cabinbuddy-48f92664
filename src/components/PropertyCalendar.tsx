@@ -28,6 +28,7 @@ import { WorkWeekendCalendarEvent } from "@/components/WorkWeekendCalendarEvent"
 import { WorkWeekendDetailDialog } from "@/components/WorkWeekendDetailDialog";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { EnhancedMonthPicker } from "@/components/EnhancedMonthPicker";
+import { parseDateOnly } from "@/lib/date-utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
@@ -173,8 +174,8 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const getTradeRequestsForDate = (date: Date) => {
     return tradeRequests.filter(tr => {
       if (tr.status !== 'pending') return false;
-      const requestStart = new Date(tr.requested_start_date);
-      const requestEnd = new Date(tr.requested_end_date);
+      const requestStart = parseDateOnly(tr.requested_start_date);
+      const requestEnd = parseDateOnly(tr.requested_end_date);
       return date >= requestStart && date <= requestEnd;
     });
   };

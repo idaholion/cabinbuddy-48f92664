@@ -4,6 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseDateOnly } from "@/lib/date-utils";
 
 interface EnhancedMonthPickerProps {
   currentDate: Date;
@@ -72,14 +73,14 @@ export const EnhancedMonthPicker = ({
   // Check if a date has reservations
   const getReservationStatus = (date: Date) => {
     const hasReservations = reservations.some(reservation => {
-      const startDate = new Date(reservation.start_date);
-      const endDate = new Date(reservation.end_date);
+      const startDate = parseDateOnly(reservation.start_date);
+      const endDate = parseDateOnly(reservation.end_date);
       return date >= startDate && date <= endDate;
     });
     
     const reservationCount = reservations.filter(reservation => {
-      const startDate = new Date(reservation.start_date);
-      const endDate = new Date(reservation.end_date);
+      const startDate = parseDateOnly(reservation.start_date);
+      const endDate = parseDateOnly(reservation.end_date);
       return date >= startDate && date <= endDate;
     }).length;
 

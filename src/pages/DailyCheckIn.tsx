@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
+import { parseDateOnly } from "@/lib/date-utils";
 
 const DailyCheckIn = () => {
   const { toast } = useToast();
@@ -101,8 +102,8 @@ const DailyCheckIn = () => {
     today.setHours(0, 0, 0, 0);
 
     const activeReservation = reservations.find(reservation => {
-      const startDate = new Date(reservation.start_date);
-      const endDate = new Date(reservation.end_date);
+      const startDate = parseDateOnly(reservation.start_date);
+      const endDate = parseDateOnly(reservation.end_date);
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
       
@@ -156,8 +157,8 @@ const DailyCheckIn = () => {
 
   // Generate days for the current reservation (or empty if no reservation)
   const stayDays = currentReservation ? (() => {
-    const startDate = new Date(currentReservation.start_date);
-    const endDate = new Date(currentReservation.end_date);
+    const startDate = parseDateOnly(currentReservation.start_date);
+    const endDate = parseDateOnly(currentReservation.end_date);
     const days = [];
     
     const currentDate = new Date(startDate);
@@ -394,7 +395,7 @@ const DailyCheckIn = () => {
                       Active Reservation: {userFamilyGroup}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(currentReservation.start_date).toLocaleDateString()} - {new Date(currentReservation.end_date).toLocaleDateString()}
+                      {parseDateOnly(currentReservation.start_date).toLocaleDateString()} - {parseDateOnly(currentReservation.end_date).toLocaleDateString()}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {stayDays.length} day{stayDays.length !== 1 ? 's' : ''} total
