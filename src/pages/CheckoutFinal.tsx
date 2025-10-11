@@ -711,6 +711,39 @@ const CheckoutFinal = () => {
                       <span>Total Amount Due:</span>
                       <span className="text-primary">{BillingCalculator.formatCurrency(totalAmount)}</span>
                     </div>
+                    
+                    {/* Venmo Payment Info */}
+                    {checkoutData.venmoHandle && (
+                      <>
+                        <Separator className="my-4" />
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-blue-600" />
+                            <h4 className="text-base font-medium">Pay via Venmo</h4>
+                          </div>
+                          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
+                                <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const venmoUrl = `https://venmo.com/${checkoutData.venmoHandle}?txn=pay&amount=${totalAmount}&note=Cabin stay payment`;
+                                  window.open(venmoUrl, '_blank');
+                                }}
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              >
+                                <Send className="h-4 w-4 mr-2" />
+                                Pay Now
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -764,38 +797,6 @@ const CheckoutFinal = () => {
                       </div>
                     </div>
                   </div>
-
-                  <Separator />
-
-                  {/* Venmo Option */}
-                  {checkoutData.venmoHandle && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-blue-600" />
-                        <h4 className="text-lg font-medium">Venmo</h4>
-                      </div>
-                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-base font-medium">Pay {checkoutData.venmoHandle}</p>
-                            <p className="text-base text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const venmoUrl = `https://venmo.com/${checkoutData.venmoHandle}?txn=pay&amount=${totalAmount}&note=Cabin stay payment`;
-                              window.open(venmoUrl, '_blank');
-                            }}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Pay Now
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Check Option */}
                   {checkoutData.checkAddress.name && (
