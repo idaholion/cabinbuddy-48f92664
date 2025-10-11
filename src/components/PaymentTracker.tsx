@@ -440,7 +440,6 @@ const PaymentTracker = () => {
                         setSelectedPayment(payment);
                         setShowRecordDialog(true);
                       }}
-                      disabled={payment.status === 'paid'}
                       className="text-sm"
                     >
                       <CreditCard className="h-3 w-3 mr-1" />
