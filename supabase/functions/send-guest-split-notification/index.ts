@@ -1,8 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from "npm:resend@2.0.0";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -79,45 +81,54 @@ serve(async (req) => {
     const totalAmount = split.split_payment.amount;
     const currentYear = new Date().getFullYear();
 
-    // For now, log the email content (will be replaced with actual email sending when RESEND_API_KEY is configured)
-    const emailContent = {
-      to: splitToUser.email,
-      from: `${org?.name || 'Cabin Buddy'} <noreply@cabinbuddy.org>`,
-      subject: `Guest Cost Split - ${org?.name || 'Cabin'}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #2563eb;">Guest Cost Split Notification</h2>
-          
-          <p>Hi ${splitToUser.display_name || splitToUser.first_name},</p>
-          
-          <p><strong>${sourceUser?.display_name || sourceUser?.first_name}</strong> from <strong>${split.source_family_group}</strong> has split cabin costs with you for their recent stay.</p>
-          
-          <h3 style="color: #374151;">Your Portion of the Stay:</h3>
-          <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; border: 1px solid #e5e7eb;">
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Guest Cost Split Notification</h2>
+        
+        <p>Hi ${splitToUser.display_name || splitToUser.first_name},</p>
+        
+        <p><strong>${sourceUser?.display_name || sourceUser?.first_name}</strong> from <strong>${split.source_family_group}</strong> has split cabin costs with you for their recent stay.</p>
+        
+        <h3 style="color: #374151;">Your Portion of the Stay:</h3>
+        <pre style="background: #f5f5f5; padding: 12px; border-radius: 4px; border: 1px solid #e5e7eb;">
 ${dailyBreakdown}
-          </pre>
-          
-          <p style="font-size: 18px; font-weight: bold; color: #2563eb;">Total Amount: $${totalAmount.toFixed(2)}</p>
-          
-          <p>This charge has been added to your Season Summary. You can view details and make payment by visiting your Season Summary page.</p>
-          
-          <div style="margin: 20px 0;">
-            <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/season-summary?year=${currentYear}" 
-               style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-              View Season Summary
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px;">If you have questions about this charge, please contact ${sourceUser?.display_name || sourceUser?.first_name} at ${sourceUser?.email}.</p>
-          
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
-          
-          <p style="color: #999; font-size: 12px;">This is an automated message from ${org?.name || 'Cabin Buddy'}.</p>
+        </pre>
+        
+        <p style="font-size: 18px; font-weight: bold; color: #2563eb;">Total Amount: $${totalAmount.toFixed(2)}</p>
+        
+        <p>This charge has been added to your Season Summary. You can view details and make payment by visiting your Season Summary page.</p>
+        
+        <div style="margin: 20px 0;">
+          <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/season-summary?year=${currentYear}" 
+             style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            View Season Summary
+          </a>
         </div>
-      `
-    };
+        
+        <p style="color: #666; font-size: 14px;">If you have questions about this charge, please contact ${sourceUser?.display_name || sourceUser?.first_name} at ${sourceUser?.email}.</p>
+        
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
+        
+        <p style="color: #999; font-size: 12px;">This is an automated message from ${org?.name || 'Cabin Buddy'}.</p>
+      </div>
+    `;
 
-    console.log('Email content prepared:', emailContent.subject);
+    console.log('Sending email to:', splitToUser.email);
+
+    // Send email via Resend
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: `${org?.name || 'Cabin Buddy'} <onboarding@resend.dev>`,
+      to: [splitToUser.email],
+      subject: `Guest Cost Split - ${org?.name || 'Cabin'}`,
+      html: emailHtml,
+    });
+
+    if (emailError) {
+      console.error('Error sending email:', emailError);
+      throw emailError;
+    }
+
+    console.log('Email sent successfully:', emailData);
 
     // Update notification status
     const { error: updateError } = await supabase
@@ -139,8 +150,8 @@ ${dailyBreakdown}
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Notification logged successfully',
-        emailPreview: emailContent 
+        message: 'Email notification sent successfully',
+        emailId: emailData?.id
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
