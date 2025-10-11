@@ -323,7 +323,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           total_cost: data.totalCost,
           nights_used: nights,
           host_assignments: hostAssignmentsData
-        }, testOverrideMode); // Pass testOverrideMode parameter
+        }, testOverrideMode || data.adminOverride); // Pass override parameter
 
         if (updatedReservation) {
           console.log('Reservation updated successfully:', updatedReservation);
@@ -539,7 +539,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) => !watchedAdminOverride && !testOverrideMode && date < new Date()}
                           initialFocus
                         />
                       </PopoverContent>
@@ -591,7 +591,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             </div>
 
             {/* Admin Override Checkbox - Only show for calendar keepers */}
-            {(isCalendarKeeper || testOverrideMode) && !editingReservation && (
+            {(isCalendarKeeper || testOverrideMode) && (
               <FormField
                 control={form.control}
                 name="adminOverride"
@@ -610,7 +610,10 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                         Override Time Period Limits
                       </FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Allow booking even if the family group has already used all allocated time periods for this year
+                        {editingReservation 
+                          ? "Allow updating past reservations and bypassing date restrictions"
+                          : "Allow booking even if the family group has already used all allocated time periods for this year"
+                        }
                       </p>
                     </div>
                   </FormItem>
