@@ -24,6 +24,9 @@ import {
 import { usePayments, Payment, PaymentType, PaymentMethod } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { parseDateOnly } from '@/lib/date-utils';
+import { useUserRole } from '@/hooks/useUserRole';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 const PaymentTracker = () => {
   const { 
@@ -36,6 +39,8 @@ const PaymentTracker = () => {
     getPaymentsSummary, 
     getOverduePayments 
   } = usePayments();
+  
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup } = useUserRole();
   
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -271,12 +276,34 @@ const PaymentTracker = () => {
     );
   };
 
+  // Determine viewing context
+  const getViewingContext = () => {
+    if (isAdmin || isTreasurer) {
+      return { role: 'Admin/Treasurer', description: 'Viewing all organization payments' };
+    } else if (isGroupLead && userFamilyGroup) {
+      return { role: 'Family Group Lead', description: `Viewing payments for ${userFamilyGroup.name}` };
+    } else {
+      return { role: 'Member', description: 'Viewing your personal payment records' };
+    }
+  };
+
+  const viewingContext = getViewingContext();
+  const canCreatePayments = isAdmin || isTreasurer;
+
   if (loading) {
     return <div className="p-6 text-base">Loading payments...</div>;
   }
 
   return (
     <div className="space-y-6">
+      {/* Role Context Alert */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>{viewingContext.role}:</strong> {viewingContext.description}
+        </AlertDescription>
+      </Alert>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -336,20 +363,23 @@ const PaymentTracker = () => {
 
       {/* Actions and Filters */}
       <div className="flex gap-2 items-center justify-between">
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="text-base">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Payment
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Payment</DialogTitle>
-            </DialogHeader>
-            <CreatePaymentForm />
-          </DialogContent>
-        </Dialog>
+        {canCreatePayments && (
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="text-base">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Payment
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Payment</DialogTitle>
+              </DialogHeader>
+              <CreatePaymentForm />
+            </DialogContent>
+          </Dialog>
+        )}
+        {!canCreatePayments && <div />}
 
         {availableYears.length > 0 && (
           <div className="flex items-center gap-2">
@@ -453,7 +483,13 @@ const PaymentTracker = () => {
 
           {payments.length === 0 && (
             <div className="text-center py-8 text-muted-foreground text-base">
-              No payment records found. Create your first payment record to get started.
+              {canCreatePayments ? (
+                <>No payment records found. Create your first payment record to get started.</>
+              ) : isGroupLead ? (
+                <>No payment records found for your family group.</>
+              ) : (
+                <>No payment records found linked to your reservations.</>
+              )}
             </div>
           )}
         </CardContent>

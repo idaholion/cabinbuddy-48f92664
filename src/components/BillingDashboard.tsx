@@ -7,9 +7,11 @@ import { InvoicesList } from "./InvoicesList";
 import PaymentTracker from "./PaymentTracker";
 import { useInvoices } from "@/hooks/useInvoices";
 import { Link } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export const BillingDashboard = () => {
   const { invoices } = useInvoices();
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup } = useUserRole();
   
   const totalOutstanding = invoices
     .filter(inv => inv.status !== 'paid' && inv.status !== 'cancelled')
@@ -21,11 +23,21 @@ export const BillingDashboard = () => {
   
   const paidInvoices = invoices.filter(inv => inv.status === 'paid').length;
 
+  // Determine viewing context
+  const getViewingRole = () => {
+    if (isAdmin || isTreasurer) return 'Admin/Treasurer';
+    if (isGroupLead && userFamilyGroup) return `Group Lead (${userFamilyGroup.name})`;
+    return 'Member';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Settings Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Billing Overview</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Billing Overview</h2>
+          <p className="text-sm text-muted-foreground">Viewing as: {getViewingRole()}</p>
+        </div>
         <Button variant="outline" asChild>
           <Link to="/invoice-settings">
             <Settings className="h-4 w-4 mr-2" />
