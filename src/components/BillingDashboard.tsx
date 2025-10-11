@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Calendar, CreditCard, Settings } from "lucide-react";
 import { BillingCyclesManager } from "./BillingCyclesManager";
 import { InvoicesList } from "./InvoicesList";
+import PaymentTracker from "./PaymentTracker";
 import { useInvoices } from "@/hooks/useInvoices";
 import { Link } from "react-router-dom";
 
@@ -73,11 +74,22 @@ export const BillingDashboard = () => {
       <Tabs defaultValue="invoices" className="space-y-4">
         <TabsList>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="payments">Payment Tracking</TabsTrigger>
           <TabsTrigger value="cycles">Billing Cycles</TabsTrigger>
         </TabsList>
         
         <TabsContent value="invoices">
           <InvoicesList />
+        </TabsContent>
+        
+        <TabsContent value="payments">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Payment Tracking</h2>
+              <p className="text-muted-foreground text-base">Monitor and manage all cabin-related payments</p>
+            </div>
+            <PaymentTracker />
+          </div>
         </TabsContent>
         
         <TabsContent value="cycles">

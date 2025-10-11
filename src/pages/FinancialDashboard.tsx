@@ -9,10 +9,9 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
-import PaymentTracker from "@/components/PaymentTracker";
 import { RecurringBills } from "@/components/RecurringBills";
 import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, CreditCard, RotateCcw, History, FileBarChart } from "lucide-react";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History, FileBarChart } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { useConversationReminders } from "@/hooks/useConversationReminders";
@@ -137,7 +136,7 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-6 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-5 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-2 text-base">
                   <Settings className="h-4 w-4" />
                   Manage Expenses
@@ -149,10 +148,6 @@ const FinancialDashboard = () => {
                 <TabsTrigger value="historical" className="flex items-center gap-2 text-base">
                   <History className="h-4 w-4" />
                   Historical Reports
-                </TabsTrigger>
-                <TabsTrigger value="payments" className="flex items-center gap-2 text-base">
-                  <CreditCard className="h-4 w-4" />
-                  Payment Tracking
                 </TabsTrigger>
                 <TabsTrigger value="reports" className="flex items-center gap-2 text-base">
                   <TrendingUp className="h-4 w-4" />
@@ -183,17 +178,6 @@ const FinancialDashboard = () => {
               {/* Historical Reports Tab */}
               <TabsContent value="historical" className="p-6 pt-4">
                 <RecurringBillsHistoricalReports />
-              </TabsContent>
-
-              {/* Payment Tracking Tab */}
-              <TabsContent value="payments" className="p-6 pt-4">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold mb-2">Payment Tracking</h2>
-                    <p className="text-muted-foreground text-base">Monitor and manage all cabin-related payments</p>
-                  </div>
-                  <PaymentTracker />
-                </div>
               </TabsContent>
 
               {/* Reports Tab */}
