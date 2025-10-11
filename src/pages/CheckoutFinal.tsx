@@ -75,7 +75,15 @@ const CheckoutFinal = () => {
         return claimedProfile.member_type === 'group_lead';
       }
       
-      // Option 2: If no claimed profile, match by user_id (fallback for legacy data)
+      // Option 2: Check if user's email matches any host in host_assignments (works without claiming profile)
+      if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
+        const userIsHost = r.host_assignments.some(host => 
+          host.host_email?.toLowerCase() === user.email?.toLowerCase()
+        );
+        if (userIsHost) return true;
+      }
+      
+      // Option 3: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
       return r.user_id === user.id;
     });
     
