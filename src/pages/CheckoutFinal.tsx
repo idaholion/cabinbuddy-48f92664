@@ -240,8 +240,8 @@ const CheckoutFinal = () => {
       guests: checkoutData.guests,
       nights: checkoutData.nights,
       weeks: Math.ceil(checkoutData.nights / 7),
-      checkInDate: new Date(checkoutData.checkInDate),
-      checkOutDate: new Date(checkoutData.checkOutDate),
+      checkInDate: parseDateOnly(checkoutData.checkInDate),
+      checkOutDate: parseDateOnly(checkoutData.checkOutDate),
     };
 
     return BillingCalculator.calculateStayBilling(billingConfig, stayDetails);
