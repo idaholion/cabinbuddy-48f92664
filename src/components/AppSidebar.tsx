@@ -72,6 +72,11 @@ const setupItems = [
     icon: DollarSign,
   },
   {
+    title: "Billing & Invoices",
+    url: "/billing",
+    icon: Receipt,
+  },
+  {
     title: "Reservation Setup",
     url: "/reservation-setup", 
     icon: Calendar,

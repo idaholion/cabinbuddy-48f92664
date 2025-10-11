@@ -1,9 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Calendar, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, Calendar, CreditCard, Settings } from "lucide-react";
 import { BillingCyclesManager } from "./BillingCyclesManager";
 import { InvoicesList } from "./InvoicesList";
 import { useInvoices } from "@/hooks/useInvoices";
+import { Link } from "react-router-dom";
 
 export const BillingDashboard = () => {
   const { invoices } = useInvoices();
@@ -20,6 +22,17 @@ export const BillingDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with Settings Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Billing Overview</h2>
+        <Button variant="outline" asChild>
+          <Link to="/invoice-settings">
+            <Settings className="h-4 w-4 mr-2" />
+            Invoice Settings
+          </Link>
+        </Button>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>

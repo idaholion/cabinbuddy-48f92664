@@ -29,6 +29,21 @@ export interface FinancialSettings {
   invoice_prefix?: string;
   next_invoice_number?: number;
   
+  // Invoice automation settings
+  invoice_email_subject?: string;
+  invoice_email_body?: string;
+  reminder_email_subject?: string;
+  reminder_email_body?: string;
+  reminder_7_days_enabled?: boolean;
+  reminder_3_days_enabled?: boolean;
+  reminder_1_day_enabled?: boolean;
+  reminder_due_date_enabled?: boolean;
+  overdue_reminder_interval_days?: number;
+  email_delivery_enabled?: boolean;
+  sms_delivery_enabled?: boolean;
+  batch_send_enabled?: boolean;
+  invoice_approval_required?: boolean;
+  
   season_start_month?: number;
   season_start_day?: number;
   season_end_month?: number;
@@ -84,6 +99,21 @@ export const useFinancialSettings = () => {
           
           invoice_prefix: data.invoice_prefix || 'INV',
           next_invoice_number: data.next_invoice_number || 1,
+          
+          // Invoice automation settings
+          invoice_email_subject: data.invoice_email_subject || '',
+          invoice_email_body: data.invoice_email_body || '',
+          reminder_email_subject: data.reminder_email_subject || '',
+          reminder_email_body: data.reminder_email_body || '',
+          reminder_7_days_enabled: data.reminder_7_days_enabled ?? true,
+          reminder_3_days_enabled: data.reminder_3_days_enabled ?? true,
+          reminder_1_day_enabled: data.reminder_1_day_enabled ?? true,
+          reminder_due_date_enabled: data.reminder_due_date_enabled ?? true,
+          overdue_reminder_interval_days: data.overdue_reminder_interval_days || 7,
+          email_delivery_enabled: data.email_delivery_enabled ?? true,
+          sms_delivery_enabled: data.sms_delivery_enabled ?? false,
+          batch_send_enabled: data.batch_send_enabled ?? true,
+          invoice_approval_required: data.invoice_approval_required ?? false,
         });
       }
     } catch (error) {
@@ -131,6 +161,21 @@ export const useFinancialSettings = () => {
         
         invoice_prefix: settingsData.invoice_prefix,
         next_invoice_number: settingsData.next_invoice_number,
+        
+        // Invoice automation settings
+        invoice_email_subject: settingsData.invoice_email_subject,
+        invoice_email_body: settingsData.invoice_email_body,
+        reminder_email_subject: settingsData.reminder_email_subject,
+        reminder_email_body: settingsData.reminder_email_body,
+        reminder_7_days_enabled: settingsData.reminder_7_days_enabled,
+        reminder_3_days_enabled: settingsData.reminder_3_days_enabled,
+        reminder_1_day_enabled: settingsData.reminder_1_day_enabled,
+        reminder_due_date_enabled: settingsData.reminder_due_date_enabled,
+        overdue_reminder_interval_days: settingsData.overdue_reminder_interval_days,
+        email_delivery_enabled: settingsData.email_delivery_enabled,
+        sms_delivery_enabled: settingsData.sms_delivery_enabled,
+        batch_send_enabled: settingsData.batch_send_enabled,
+        invoice_approval_required: settingsData.invoice_approval_required,
       };
 
       const { data: existingSettings } = await supabase

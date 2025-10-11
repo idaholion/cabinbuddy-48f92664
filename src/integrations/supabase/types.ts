@@ -1716,6 +1716,7 @@ export type Database = {
           address: string | null
           auto_billing_enabled: boolean | null
           auto_invoicing: boolean | null
+          batch_send_enabled: boolean | null
           bathrooms: number | null
           bedrooms: number | null
           billing_frequency: string | null
@@ -1725,8 +1726,12 @@ export type Database = {
           cleaning_fee: number | null
           created_at: string
           damage_deposit: number | null
+          email_delivery_enabled: boolean | null
           financial_method: string | null
           id: string
+          invoice_approval_required: boolean | null
+          invoice_email_body: string | null
+          invoice_email_subject: string | null
           invoice_prefix: string | null
           late_fee_amount: number | null
           late_fee_grace_days: number | null
@@ -1735,16 +1740,24 @@ export type Database = {
           next_invoice_number: number | null
           nightly_rate: number | null
           organization_id: string
+          overdue_reminder_interval_days: number | null
           payment_terms: string | null
           paypal_email: string | null
           pet_fee: number | null
           preferred_payment_method: string | null
           property_name: string | null
+          reminder_1_day_enabled: boolean | null
+          reminder_3_days_enabled: boolean | null
+          reminder_7_days_enabled: boolean | null
+          reminder_due_date_enabled: boolean | null
+          reminder_email_body: string | null
+          reminder_email_subject: string | null
           season_end_day: number | null
           season_end_month: number | null
           season_payment_deadline_offset_days: number | null
           season_start_day: number | null
           season_start_month: number | null
+          sms_delivery_enabled: boolean | null
           tax_id: string | null
           tax_jurisdiction: string | null
           tax_rate: number | null
@@ -1755,6 +1768,7 @@ export type Database = {
           address?: string | null
           auto_billing_enabled?: boolean | null
           auto_invoicing?: boolean | null
+          batch_send_enabled?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
           billing_frequency?: string | null
@@ -1764,8 +1778,12 @@ export type Database = {
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
+          email_delivery_enabled?: boolean | null
           financial_method?: string | null
           id?: string
+          invoice_approval_required?: boolean | null
+          invoice_email_body?: string | null
+          invoice_email_subject?: string | null
           invoice_prefix?: string | null
           late_fee_amount?: number | null
           late_fee_grace_days?: number | null
@@ -1774,16 +1792,24 @@ export type Database = {
           next_invoice_number?: number | null
           nightly_rate?: number | null
           organization_id: string
+          overdue_reminder_interval_days?: number | null
           payment_terms?: string | null
           paypal_email?: string | null
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
+          reminder_1_day_enabled?: boolean | null
+          reminder_3_days_enabled?: boolean | null
+          reminder_7_days_enabled?: boolean | null
+          reminder_due_date_enabled?: boolean | null
+          reminder_email_body?: string | null
+          reminder_email_subject?: string | null
           season_end_day?: number | null
           season_end_month?: number | null
           season_payment_deadline_offset_days?: number | null
           season_start_day?: number | null
           season_start_month?: number | null
+          sms_delivery_enabled?: boolean | null
           tax_id?: string | null
           tax_jurisdiction?: string | null
           tax_rate?: number | null
@@ -1794,6 +1820,7 @@ export type Database = {
           address?: string | null
           auto_billing_enabled?: boolean | null
           auto_invoicing?: boolean | null
+          batch_send_enabled?: boolean | null
           bathrooms?: number | null
           bedrooms?: number | null
           billing_frequency?: string | null
@@ -1803,8 +1830,12 @@ export type Database = {
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
+          email_delivery_enabled?: boolean | null
           financial_method?: string | null
           id?: string
+          invoice_approval_required?: boolean | null
+          invoice_email_body?: string | null
+          invoice_email_subject?: string | null
           invoice_prefix?: string | null
           late_fee_amount?: number | null
           late_fee_grace_days?: number | null
@@ -1813,16 +1844,24 @@ export type Database = {
           next_invoice_number?: number | null
           nightly_rate?: number | null
           organization_id?: string
+          overdue_reminder_interval_days?: number | null
           payment_terms?: string | null
           paypal_email?: string | null
           pet_fee?: number | null
           preferred_payment_method?: string | null
           property_name?: string | null
+          reminder_1_day_enabled?: boolean | null
+          reminder_3_days_enabled?: boolean | null
+          reminder_7_days_enabled?: boolean | null
+          reminder_due_date_enabled?: boolean | null
+          reminder_email_body?: string | null
+          reminder_email_subject?: string | null
           season_end_day?: number | null
           season_end_month?: number | null
           season_payment_deadline_offset_days?: number | null
           season_start_day?: number | null
           season_start_month?: number | null
+          sms_delivery_enabled?: boolean | null
           tax_id?: string | null
           tax_jurisdiction?: string | null
           tax_rate?: number | null
