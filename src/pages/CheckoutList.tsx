@@ -566,41 +566,76 @@ const CheckoutList = () => {
       localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
       console.log('✅ [CHECKOUT-SAVE] Saved to localStorage');
       
-      // Save to database using current reservation info
+      // Save to database using current reservation info (UPSERT to avoid duplicates)
       if (organization?.id && currentReservation) {
         try {
-          console.log('💾 [CHECKOUT-SAVE] Inserting to database...');
-          const { error } = await supabase
+          console.log('💾 [CHECKOUT-SAVE] Checking for existing checkout session...');
+          
+          // First check if a checkout session already exists for this reservation
+          const { data: existingSession, error: checkError } = await supabase
             .from('checkin_sessions')
-            .insert({
-              organization_id: organization.id,
-              user_id: user?.id || null,
-              family_group: currentReservation.family_group,
-              session_type: 'checkout',
-              check_date: currentReservation.end_date, // Use reservation checkout date
-              checklist_responses: {
-                checklistCompletion: {
-                  checkedTasks: Array.from(checkedTasks),
-                  sections: checklistSections,
-                  isComplete: isChecklistComplete,
-                  completedAt: isChecklistComplete ? new Date().toISOString() : null,
-                  totalTasks,
-                  completedTasks,
-                  reservationId: currentReservation.id,
-                  startDate: currentReservation.start_date,
-                  endDate: currentReservation.end_date
-                },
-                surveyResponses: surveyData
-              },
-              completed_at: isChecklistComplete ? new Date().toISOString() : null
-            });
+            .select('id')
+            .eq('organization_id', organization.id)
+            .eq('session_type', 'checkout')
+            .eq('family_group', currentReservation.family_group)
+            .gte('check_date', currentReservation.start_date)
+            .lte('check_date', currentReservation.end_date)
+            .maybeSingle();
 
-          if (error) {
-            console.error('❌ [CHECKOUT-SAVE] Database error:', error);
-            throw error;
+          if (checkError) {
+            console.error('❌ [CHECKOUT-SAVE] Error checking existing session:', checkError);
+            throw checkError;
           }
 
-          console.log('✅ [CHECKOUT-SAVE] Successfully saved to database');
+          const sessionData = {
+            organization_id: organization.id,
+            user_id: user?.id || null,
+            family_group: currentReservation.family_group,
+            session_type: 'checkout',
+            check_date: currentReservation.end_date,
+            checklist_responses: {
+              checklistCompletion: {
+                checkedTasks: Array.from(checkedTasks),
+                sections: checklistSections,
+                isComplete: isChecklistComplete,
+                completedAt: isChecklistComplete ? new Date().toISOString() : null,
+                totalTasks,
+                completedTasks,
+                reservationId: currentReservation.id,
+                startDate: currentReservation.start_date,
+                endDate: currentReservation.end_date
+              },
+              surveyResponses: surveyData
+            },
+            completed_at: isChecklistComplete ? new Date().toISOString() : null
+          };
+
+          if (existingSession) {
+            // Update existing session
+            console.log('💾 [CHECKOUT-SAVE] Updating existing session:', existingSession.id);
+            const { error } = await supabase
+              .from('checkin_sessions')
+              .update(sessionData)
+              .eq('id', existingSession.id);
+
+            if (error) {
+              console.error('❌ [CHECKOUT-SAVE] Database update error:', error);
+              throw error;
+            }
+            console.log('✅ [CHECKOUT-SAVE] Successfully updated existing session');
+          } else {
+            // Insert new session
+            console.log('💾 [CHECKOUT-SAVE] Creating new checkout session...');
+            const { error } = await supabase
+              .from('checkin_sessions')
+              .insert(sessionData);
+
+            if (error) {
+              console.error('❌ [CHECKOUT-SAVE] Database insert error:', error);
+              throw error;
+            }
+            console.log('✅ [CHECKOUT-SAVE] Successfully created new session');
+          }
           toast({
             title: "Checklist Saved",
             description: `Checkout checklist saved to database (${completedTasks}/${totalTasks} tasks completed)`,
