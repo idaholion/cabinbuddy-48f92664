@@ -26,6 +26,9 @@ export interface FinancialSettings {
   check_payable_to?: string;
   check_mailing_address?: string;
   
+  invoice_prefix?: string;
+  next_invoice_number?: number;
+  
   season_start_month?: number;
   season_start_day?: number;
   season_end_month?: number;
@@ -78,6 +81,9 @@ export const useFinancialSettings = () => {
           paypal_email: data.paypal_email || '',
           check_payable_to: data.check_payable_to || '',
           check_mailing_address: data.check_mailing_address || '',
+          
+          invoice_prefix: data.invoice_prefix || 'INV',
+          next_invoice_number: data.next_invoice_number || 1,
         });
       }
     } catch (error) {
@@ -122,6 +128,9 @@ export const useFinancialSettings = () => {
         paypal_email: settingsData.paypal_email,
         check_payable_to: settingsData.check_payable_to,
         check_mailing_address: settingsData.check_mailing_address,
+        
+        invoice_prefix: settingsData.invoice_prefix,
+        next_invoice_number: settingsData.next_invoice_number,
       };
 
       const { data: existingSettings } = await supabase

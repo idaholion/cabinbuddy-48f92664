@@ -44,6 +44,7 @@ const SurveyResponses = React.lazy(() => import("./pages/SurveyResponses"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
 const UseFeeSetupPage = React.lazy(() => import("./pages/UseFeeSetupPage"));
 const GoogleCalendarSetup = React.lazy(() => import("./pages/GoogleCalendarSetup"));
+const BillingDashboard = React.lazy(() => import("./pages/BillingDashboard"));
 
 // Lazy load other complex pages
 const CheckIn = React.lazy(() => import("./pages/CheckIn"));
@@ -143,6 +144,7 @@ const AppContent = () => {
         <Route path="/family-group-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/group-member-profile" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GroupMemberProfile /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/billing" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><BillingDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-season-summary" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminSeasonSummary /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/survey-responses" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SurveyResponses /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
