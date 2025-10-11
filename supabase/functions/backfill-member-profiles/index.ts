@@ -58,27 +58,8 @@ Deno.serve(async (req) => {
           if (!alreadyClaimed && group.lead_name) {
             try {
               console.log(`📝 Processing group lead: ${group.lead_name} (${group.lead_email})`);
-              
-              const nameParts = group.lead_name.split(' ');
-              const firstName = nameParts[0] || '';
-              const lastName = nameParts.slice(1).join(' ') || '';
 
-              // Create/update profile
-              const { error: profileError } = await supabase
-                .from('profiles')
-                .upsert({
-                  user_id: user.id,
-                  organization_id: group.organization_id,
-                  first_name: firstName,
-                  last_name: lastName,
-                  display_name: group.lead_name,
-                  family_group: group.name,
-                  updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id,organization_id' });
-
-              if (profileError) throw profileError;
-
-              // Create profile claim
+              // Create profile claim directly (skip profiles table to avoid RLS issues)
               const { error: claimError } = await supabase
                 .from('member_profile_links')
                 .insert({
@@ -143,26 +124,8 @@ Deno.serve(async (req) => {
               if (!alreadyClaimed && member.name) {
                 try {
                   console.log(`📝 Processing member: ${member.name} (${member.email})`);
-                  
-                  const firstName = member.firstName || member.name.split(' ')[0] || '';
-                  const lastName = member.lastName || member.name.split(' ').slice(1).join(' ') || '';
 
-                  // Create/update profile
-                  const { error: profileError } = await supabase
-                    .from('profiles')
-                    .upsert({
-                      user_id: user.id,
-                      organization_id: group.organization_id,
-                      first_name: firstName,
-                      last_name: lastName,
-                      display_name: member.name,
-                      family_group: group.name,
-                      updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id,organization_id' });
-
-                  if (profileError) throw profileError;
-
-                  // Create profile claim
+                  // Create profile claim directly (skip profiles table to avoid RLS issues)
                   const { error: claimError } = await supabase
                     .from('member_profile_links')
                     .insert({
