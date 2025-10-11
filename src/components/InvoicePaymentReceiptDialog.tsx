@@ -1,17 +1,25 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Printer, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Download, Printer, Mail, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useOrganization } from '@/hooks/useOrganization';
+import type { Invoice } from '@/hooks/useInvoices';
 
 interface PaymentReceiptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  payment: any;
-  isTestMode: boolean;
+  invoice: Invoice | null;
+  paymentAmount: number;
 }
 
-export const PaymentReceiptDialog = ({ open, onOpenChange, payment, isTestMode }: PaymentReceiptDialogProps) => {
-  if (!payment) return null;
+export const PaymentReceiptDialog = ({ open, onOpenChange, invoice, paymentAmount }: PaymentReceiptDialogProps) => {
+  const { organization } = useOrganization();
+
+  if (!invoice || !organization) return null;
+
+  const newBalance = invoice.balance_due - paymentAmount;
+  const receiptDate = new Date().toISOString();
 
   const handlePrint = () => {
     window.print();
@@ -29,48 +37,62 @@ export const PaymentReceiptDialog = ({ open, onOpenChange, payment, isTestMode }
 
         <div id="receipt-content" className="space-y-6 p-6 bg-white text-black">
           <div className="text-center border-b-2 border-black pb-4">
-            <h1 className="text-2xl font-bold">Payment Receipt</h1>
-            {isTestMode && <p className="text-sm text-muted-foreground">(Test Mode)</p>}
+            <h1 className="text-2xl font-bold">{organization.name}</h1>
+            <p className="text-lg font-semibold mt-2">PAYMENT RECEIPT</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-semibold">Receipt Date:</p>
-              <p>{format(new Date(), 'MMM d, yyyy')}</p>
+              <p>{format(new Date(receiptDate), 'MMM d, yyyy')}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold">Payment ID:</p>
-              <p>{payment.id?.substring(0, 8)}</p>
+              <p className="text-sm font-semibold">Invoice #:</p>
+              <p>{invoice.invoice_number}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold">Family Group:</p>
-              <p>{payment.family_group}</p>
+              <p className="text-sm font-semibold">Paid By:</p>
+              <p>{invoice.family_group}</p>
             </div>
             <div>
               <p className="text-sm font-semibold">Payment Date:</p>
-              <p>{payment.paid_date ? format(new Date(payment.paid_date), 'MMM d, yyyy') : 'N/A'}</p>
+              <p>{format(new Date(), 'MMM d, yyyy')}</p>
             </div>
           </div>
 
           <div className="border-t border-b py-4">
             <div className="flex justify-between mb-2">
-              <span className="font-semibold">Amount:</span>
-              <span className="text-lg font-bold text-success">${payment.amount?.toFixed(2) || '0.00'}</span>
+              <span className="font-semibold">Payment Amount:</span>
+              <span className="text-lg font-bold text-success">${paymentAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Payment Method:</span>
-              <span>{payment.payment_method || 'N/A'}</span>
+            <div className="flex justify-between mb-2">
+              <span>Previous Balance:</span>
+              <span>${invoice.balance_due.toFixed(2)}</span>
             </div>
-            {payment.payment_reference && (
-              <div className="flex justify-between text-sm mt-2">
-                <span>Reference:</span>
-                <span>{payment.payment_reference}</span>
-              </div>
-            )}
+            <div className="flex justify-between font-bold text-lg border-t pt-2">
+              <span>New Balance:</span>
+              <span className={newBalance > 0 ? 'text-destructive' : 'text-success'}>
+                ${newBalance.toFixed(2)}
+              </span>
+            </div>
           </div>
 
+          {newBalance <= 0 && (
+            <div className="bg-success/10 border border-success p-4 rounded text-center">
+              <p className="font-semibold text-success">Invoice Paid in Full!</p>
+              <p className="text-sm">Thank you for your payment.</p>
+            </div>
+          )}
+
+          {newBalance > 0 && (
+            <div className="bg-warning/10 border border-warning p-4 rounded text-center">
+              <p className="font-semibold">Partial Payment Applied</p>
+              <p className="text-sm">Remaining balance: ${newBalance.toFixed(2)}</p>
+            </div>
+          )}
+
           <div className="text-center text-sm text-muted-foreground border-t pt-4">
-            <p>This receipt confirms payment has been received.</p>
+            <p>This receipt confirms payment has been received and applied to your account.</p>
             <p>For questions, please contact the organization treasurer.</p>
           </div>
         </div>
