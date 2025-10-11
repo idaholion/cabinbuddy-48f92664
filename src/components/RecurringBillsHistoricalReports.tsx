@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, Calendar, DollarSign } from "lucide-react";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-utils";
 
 interface HistoricalValue {
   date: string;
@@ -120,7 +121,7 @@ export const RecurringBillsHistoricalReports = () => {
 
       // Sort historical values by date
       const sortedHistory = [...bill.historical_values].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+        parseDateOnly(b.date).getTime() - parseDateOnly(a.date).getTime()
       );
 
       const currentAmount = sortedHistory[0].amount;
@@ -354,14 +355,14 @@ export const RecurringBillsHistoricalReports = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+                <div className="space-y-2">
                 {bill.historical_values
-                  ?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  ?.sort((a, b) => parseDateOnly(b.date).getTime() - parseDateOnly(a.date).getTime())
                   .map((entry, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium">
-                          {format(new Date(entry.date), 'MMM dd, yyyy')}
+                          {format(parseDateOnly(entry.date), 'MMM dd, yyyy')}
                         </span>
                         {entry.notes && (
                           <span className="text-sm text-muted-foreground">

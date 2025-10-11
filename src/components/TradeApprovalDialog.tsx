@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, MessageSquare, Users, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
+import { parseDateOnly } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import { useTradeRequests } from '@/hooks/useTradeRequests';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,10 +99,10 @@ export function TradeApprovalDialog({ open, onOpenChange, tradeRequest, onApprov
                 <span className="font-medium">They want this time:</span>
               </div>
               <p className="text-sm">
-                {format(new Date(tradeRequest.requested_start_date), "PPP")} to {format(new Date(tradeRequest.requested_end_date), "PPP")}
+                {format(parseDateOnly(tradeRequest.requested_start_date), "PPP")} to {format(parseDateOnly(tradeRequest.requested_end_date), "PPP")}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Duration: {Math.ceil((new Date(tradeRequest.requested_end_date).getTime() - new Date(tradeRequest.requested_start_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                Duration: {Math.ceil((parseDateOnly(tradeRequest.requested_end_date).getTime() - parseDateOnly(tradeRequest.requested_start_date).getTime()) / (1000 * 60 * 60 * 24))} days
               </p>
             </div>
 
@@ -113,10 +114,10 @@ export function TradeApprovalDialog({ open, onOpenChange, tradeRequest, onApprov
                   <span className="font-medium">They're offering in return:</span>
                 </div>
                 <p className="text-sm">
-                  {format(new Date(tradeRequest.offered_start_date), "PPP")} to {format(new Date(tradeRequest.offered_end_date), "PPP")}
+                  {format(parseDateOnly(tradeRequest.offered_start_date), "PPP")} to {format(parseDateOnly(tradeRequest.offered_end_date), "PPP")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Duration: {Math.ceil((new Date(tradeRequest.offered_end_date).getTime() - new Date(tradeRequest.offered_start_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                  Duration: {Math.ceil((parseDateOnly(tradeRequest.offered_end_date).getTime() - parseDateOnly(tradeRequest.offered_start_date).getTime()) / (1000 * 60 * 60 * 24))} days
                 </p>
               </div>
             )}

@@ -14,6 +14,7 @@ import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHist
 import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History, FileBarChart } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { parseDateOnly } from "@/lib/date-utils";
 import { useConversationReminders } from "@/hooks/useConversationReminders";
 import { useEffect } from "react";
 
@@ -66,7 +67,7 @@ const FinancialDashboard = () => {
       title: 'Date',
       render: (record: any) => {
         if (!record.date) return 'N/A';
-        const date = new Date(record.date);
+        const date = parseDateOnly(record.date);
         return isNaN(date.getTime()) ? 'Invalid Date' : format(date, 'MMM d, yyyy');
       },
     },

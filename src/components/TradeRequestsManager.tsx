@@ -7,6 +7,7 @@ import { Users, Calendar, MessageSquare, Clock, ArrowRightLeft, Bell } from 'luc
 import { SearchInput } from '@/components/ui/search-input';
 import { format } from 'date-fns';
 import { useTradeRequests } from '@/hooks/useTradeRequests';
+import { parseDateOnly } from '@/lib/date-utils';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { TradeApprovalDialog } from './TradeApprovalDialog';
@@ -86,7 +87,7 @@ export function TradeRequestsManager() {
             <Calendar className="h-3 w-3 text-primary" />
             <span className="text-muted-foreground">Wants:</span>
             <span>
-              {format(new Date(request.requested_start_date), "MMM d")} - {format(new Date(request.requested_end_date), "MMM d, yyyy")}
+              {format(parseDateOnly(request.requested_start_date), "MMM d")} - {format(parseDateOnly(request.requested_end_date), "MMM d, yyyy")}
             </span>
           </div>
 
@@ -96,7 +97,7 @@ export function TradeRequestsManager() {
               <Clock className="h-3 w-3 text-primary" />
               <span className="text-muted-foreground">Offers:</span>
               <span>
-                {format(new Date(request.offered_start_date), "MMM d")} - {format(new Date(request.offered_end_date), "MMM d, yyyy")}
+                {format(parseDateOnly(request.offered_start_date), "MMM d")} - {format(parseDateOnly(request.offered_end_date), "MMM d, yyyy")}
               </span>
             </div>
           )}

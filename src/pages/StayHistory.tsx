@@ -12,6 +12,7 @@ import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { formatDistanceToNow } from "date-fns";
+import { parseDateOnly } from "@/lib/date-utils";
 
 const StayHistory = () => {
   const navigate = useNavigate();
@@ -32,19 +33,19 @@ const StayHistory = () => {
   // Get past reservations (completed stays)
   const pastReservations = reservations
     .filter(r => {
-      const endDate = new Date(r.end_date);
+      const endDate = parseDateOnly(r.end_date);
       return endDate < new Date() && r.status === 'confirmed';
     })
-    .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime());
+    .sort((a, b) => parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime());
 
   const calculateStayData = (reservation: any) => {
-    const checkInDate = new Date(reservation.start_date);
-    const checkOutDate = new Date(reservation.end_date);
+    const checkInDate = parseDateOnly(reservation.start_date);
+    const checkOutDate = parseDateOnly(reservation.end_date);
     const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24));
     
     // Calculate receipts for this stay
     const stayReceipts = receipts.filter(receipt => {
-      const receiptDate = new Date(receipt.date);
+      const receiptDate = parseDateOnly(receipt.date);
       return receiptDate >= checkInDate && receiptDate <= checkOutDate;
     });
     
@@ -179,7 +180,7 @@ const StayHistory = () => {
                     <div>
                       <p className="text-2xl font-bold">
                         {pastReservations.reduce((total, r) => {
-                          const nights = Math.ceil((new Date(r.end_date).getTime() - new Date(r.start_date).getTime()) / (1000 * 3600 * 24));
+                          const nights = Math.ceil((parseDateOnly(r.end_date).getTime() - parseDateOnly(r.start_date).getTime()) / (1000 * 3600 * 24));
                           return total + nights;
                         }, 0)}
                       </p>

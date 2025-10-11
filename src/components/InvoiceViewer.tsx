@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download, Printer, Mail, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { useOrganization } from '@/hooks/useOrganization';
+import { parseDateOnly } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Invoice } from '@/hooks/useInvoices';
 
@@ -80,8 +81,8 @@ export const InvoiceViewer = ({ open, onOpenChange, invoice }: InvoiceViewerProp
             </div>
             <div className="text-right">
               <p><span className="font-semibold">Invoice #:</span> {invoice.invoice_number}</p>
-              <p><span className="font-semibold">Issue Date:</span> {format(new Date(invoice.issue_date), 'MMM d, yyyy')}</p>
-              <p><span className="font-semibold">Due Date:</span> {format(new Date(invoice.due_date), 'MMM d, yyyy')}</p>
+              <p><span className="font-semibold">Issue Date:</span> {format(parseDateOnly(invoice.issue_date), 'MMM d, yyyy')}</p>
+              <p><span className="font-semibold">Due Date:</span> {format(parseDateOnly(invoice.due_date), 'MMM d, yyyy')}</p>
             </div>
           </div>
 

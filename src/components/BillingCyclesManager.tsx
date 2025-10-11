@@ -10,6 +10,7 @@ import { Calendar, Plus, Trash2, Edit2 } from 'lucide-react';
 import { useBillingCycles, type BillingCycleType, type BillingCycleStatus } from '@/hooks/useBillingCycles';
 import { format } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { parseDateOnly } from '@/lib/date-utils';
 
 export const BillingCyclesManager = () => {
   const { cycles, loading, createCycle, updateCycle, deleteCycle } = useBillingCycles();
@@ -148,10 +149,10 @@ export const BillingCyclesManager = () => {
               <div>
                 <div className="font-medium">{cycle.cycle_name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {format(new Date(cycle.start_date), 'MMM d, yyyy')} - {format(new Date(cycle.end_date), 'MMM d, yyyy')}
+                  {format(parseDateOnly(cycle.start_date), 'MMM d, yyyy')} - {format(parseDateOnly(cycle.end_date), 'MMM d, yyyy')}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Payment due: {format(new Date(cycle.payment_deadline), 'MMM d, yyyy')}
+                  Payment due: {format(parseDateOnly(cycle.payment_deadline), 'MMM d, yyyy')}
                 </div>
               </div>
               <div className="flex items-center gap-2">

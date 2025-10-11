@@ -63,7 +63,7 @@ export default function SeasonSummary() {
 
   // Filter receipts for this season year
   const seasonReceipts = receipts.filter(receipt => {
-    const receiptYear = new Date(receipt.date).getFullYear();
+    const receiptYear = parseDateOnly(receipt.date).getFullYear();
     return receiptYear === year;
   });
 
@@ -273,7 +273,7 @@ export default function SeasonSummary() {
           ) : (
             summary.stays.map((stay) => {
               // Check if reservation is upcoming (hasn't started yet)
-              const isUpcoming = new Date(stay.reservation.start_date) > new Date();
+              const isUpcoming = parseDateOnly(stay.reservation.start_date) > new Date();
               
               return (
                 <Card key={stay.reservation.id}>
@@ -437,7 +437,7 @@ export default function SeasonSummary() {
                   <div className="flex-1">
                     <div className="font-medium">{receipt.description}</div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(receipt.date), 'MMM d, yyyy')}
+                      {format(parseDateOnly(receipt.date), 'MMM d, yyyy')}
                       {receipt.family_group && ` • ${receipt.family_group}`}
                     </div>
                   </div>

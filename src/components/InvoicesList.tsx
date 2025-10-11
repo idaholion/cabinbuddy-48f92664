@@ -7,6 +7,7 @@ import { FileText, Eye, Download, DollarSign, Send, Mail } from 'lucide-react';
 import { useInvoices, type InvoiceStatus } from '@/hooks/useInvoices';
 import { format } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { parseDateOnly } from '@/lib/date-utils';
 import { InvoiceGenerator } from './InvoiceGenerator';
 import { InvoiceViewer } from './InvoiceViewer';
 import { RecordInvoicePaymentDialog } from './RecordInvoicePaymentDialog';
@@ -142,7 +143,7 @@ export const InvoicesList = () => {
                       <Badge variant={getStatusColor(invoice.status)}>{invoice.status}</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {invoice.family_group} • Due: {format(new Date(invoice.due_date), 'MMM d, yyyy')}
+                      {invoice.family_group} • Due: {format(parseDateOnly(invoice.due_date), 'MMM d, yyyy')}
                     </div>
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                       <span>Total: ${invoice.total_amount.toFixed(2)}</span>

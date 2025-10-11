@@ -15,6 +15,7 @@ import { Plus, Edit, Trash2, Calendar, DollarSign, Phone, Globe, FileText, Build
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-utils";
 
 interface HistoricalValue {
   date: string;
@@ -262,7 +263,7 @@ export const RecurringBills = () => {
     };
 
     const updatedHistorical = [...(editingBill.historical_values || []), entry]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .sort((a, b) => parseDateOnly(b.date).getTime() - parseDateOnly(a.date).getTime());
 
     try {
       const { error } = await supabase
@@ -671,7 +672,7 @@ export const RecurringBills = () => {
                             {editingBill.historical_values.map((entry, index) => (
                               <div key={index} className="flex items-center justify-between p-2 bg-muted rounded text-sm">
                                 <div className="flex gap-4">
-                                  <span>{format(new Date(entry.date), 'MMM dd, yyyy')}</span>
+                                  <span>{format(parseDateOnly(entry.date), 'MMM dd, yyyy')}</span>
                                   <span className="font-medium">{formatCurrency(entry.amount)}</span>
                                   {entry.notes && <span className="text-muted-foreground">{entry.notes}</span>}
                                 </div>
@@ -913,14 +914,14 @@ export const RecurringBills = () => {
                   <h4 className="text-base font-medium">Historical Entries ({viewingHistoryBill.historical_values.length} total)</h4>
                   <div className="space-y-2 max-h-80 overflow-y-auto">
                     {viewingHistoryBill.historical_values
-                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .sort((a, b) => parseDateOnly(b.date).getTime() - parseDateOnly(a.date).getTime())
                       .map((entry, index) => (
                         <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                           <div className="flex items-center gap-4">
                             <div>
-                              <p className="font-medium">{format(new Date(entry.date), 'MMM dd, yyyy')}</p>
+                              <p className="font-medium">{format(parseDateOnly(entry.date), 'MMM dd, yyyy')}</p>
                               <p className="text-sm text-muted-foreground">
-                                {format(new Date(entry.date), 'EEEE')}
+                                {format(parseDateOnly(entry.date), 'EEEE')}
                               </p>
                             </div>
                             {entry.notes && (

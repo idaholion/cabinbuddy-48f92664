@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Download, Printer, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface PaymentReceiptDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export const PaymentReceiptDialog = ({ open, onOpenChange, payment, isTestMode }
             </div>
             <div>
               <p className="text-sm font-semibold">Payment Date:</p>
-              <p>{payment.paid_date ? format(new Date(payment.paid_date), 'MMM d, yyyy') : 'N/A'}</p>
+              <p>{payment.paid_date ? format(parseDateOnly(payment.paid_date), 'MMM d, yyyy') : 'N/A'}</p>
             </div>
           </div>
 

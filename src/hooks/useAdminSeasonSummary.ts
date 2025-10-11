@@ -177,8 +177,8 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
                 },
                 dailyOccupancy,
                 {
-                  startDate: new Date(reservation.start_date),
-                  endDate: new Date(reservation.end_date),
+                  startDate: parseDateOnly(reservation.start_date),
+                  endDate: parseDateOnly(reservation.end_date),
                 }
               );
               reservationCharge = billing.total + (payment.manual_adjustment_amount || 0);

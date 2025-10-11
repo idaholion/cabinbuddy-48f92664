@@ -239,8 +239,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     
     // Only validate allocated period if the fields exist and are valid
     if (editingReservation.allocated_start_date && editingReservation.allocated_end_date) {
-      const originalStart = new Date(editingReservation.allocated_start_date);
-      const originalEnd = new Date(editingReservation.allocated_end_date);
+      const originalStart = parseDateOnly(editingReservation.allocated_start_date);
+      const originalEnd = parseDateOnly(editingReservation.allocated_end_date);
       
       // Check if dates are valid (not epoch date)
       if (originalStart.getFullYear() > 1970 && originalEnd.getFullYear() > 1970) {
