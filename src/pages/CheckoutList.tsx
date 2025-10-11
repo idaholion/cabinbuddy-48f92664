@@ -210,6 +210,72 @@ const CheckoutList = () => {
     loadCheckoutChecklist();
   }, [organization?.id, toast]);
 
+  // Load previously checked tasks and survey data
+  useEffect(() => {
+    const loadCheckoutProgress = async () => {
+      console.log('🟢 [PROGRESS-LOAD] Loading checkout progress', {
+        hasOrg: !!organization?.id,
+        hasReservation: !!currentReservation
+      });
+      
+      // First try localStorage
+      const familyData = localStorage.getItem('familySetupData');
+      if (familyData) {
+        const { organizationCode } = JSON.parse(familyData);
+        const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
+        if (savedCompletion) {
+          const localData = JSON.parse(savedCompletion);
+          console.log('✅ [PROGRESS-LOAD] Loaded from localStorage:', localData);
+          
+          if (localData.checkedTasks && Array.isArray(localData.checkedTasks)) {
+            setCheckedTasks(new Set(localData.checkedTasks));
+          }
+          if (localData.surveyData) {
+            setSurveyData(localData.surveyData);
+          }
+        }
+      }
+      
+      // Then try to load from database for the current reservation
+      if (organization?.id && currentReservation) {
+        try {
+          console.log('💾 [PROGRESS-LOAD] Querying database...');
+          const { data: checkoutSession, error } = await supabase
+            .from('checkin_sessions')
+            .select('*')
+            .eq('session_type', 'checkout')
+            .eq('organization_id', organization.id)
+            .eq('family_group', currentReservation.family_group)
+            .gte('check_date', currentReservation.start_date)
+            .lte('check_date', currentReservation.end_date)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+            
+          if (!error && checkoutSession?.checklist_responses) {
+            const responses = checkoutSession.checklist_responses as any;
+            const checklistCompletion = responses?.checklistCompletion;
+            
+            console.log('✅ [PROGRESS-LOAD] Loaded from database:', checklistCompletion);
+            
+            if (checklistCompletion?.checkedTasks && Array.isArray(checklistCompletion.checkedTasks)) {
+              setCheckedTasks(new Set(checklistCompletion.checkedTasks));
+            }
+            if (responses?.surveyResponses) {
+              setSurveyData(responses.surveyResponses);
+            }
+          }
+        } catch (error) {
+          console.error('❌ [PROGRESS-LOAD] Database error:', error);
+        }
+      }
+    };
+    
+    if (!loading) {
+      loadCheckoutProgress();
+    }
+  }, [organization?.id, currentReservation?.id, currentReservation?.family_group, currentReservation?.start_date, currentReservation?.end_date, loading]);
+
   const handleSurveyChange = (field: string, value: string) => {
     const numericValue = value.replace(/\D/g, "").slice(0, 6);
     setSurveyData(prev => ({
@@ -984,9 +1050,9 @@ const CheckoutList = () => {
               )}
               
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (isChecklistComplete) {
-                    saveChecklistCompletion();
+                    await saveChecklistCompletion();
                     toast({
                       title: "Checkout Complete!",
                       description: "All tasks completed. Proceeding to final checkout.",
