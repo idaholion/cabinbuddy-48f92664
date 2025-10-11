@@ -815,6 +815,17 @@ const GroupMemberProfile = () => {
         <CardContent className="space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Profile Information Section Header */}
+              <div className="border-b pb-2 mb-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <UserCircle className="h-5 w-5" />
+                  Profile Information
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Select your family group and member profile
+                </p>
+              </div>
+
               {/* Family Group Selection */}
               <FormField
                 control={form.control}
@@ -948,6 +959,16 @@ const GroupMemberProfile = () => {
                 />
               )}
 
+              {/* Contact Information Section Header */}
+              {selectedGroupMember && (
+                <div className="border-b pb-2 mb-4">
+                  <h3 className="text-lg font-semibold">Contact Information</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Keep your email and phone number up to date
+                  </p>
+                </div>
+              )}
+
               {/* Email Field */}
               {selectedGroupMember && (
                 <>
@@ -996,18 +1017,25 @@ const GroupMemberProfile = () => {
                 </>
               )}
 
-              {/* Submit Button */}
-              <div className="flex justify-center pt-6">
-                <Button
-                  type="submit"
-                  disabled={loading || !isValid || !selectedGroupMember}
-                  size="lg"
-                  className="min-w-48 text-base"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {loading ? "Saving Changes..." : "Save Profile Changes"}
-                </Button>
-              </div>
+              {/* Save Changes Section */}
+              {selectedGroupMember && (
+                <div className="border-t pt-6 mt-6">
+                  <div className="flex justify-center">
+                    <Button
+                      type="submit"
+                      disabled={loading || !isValid || !selectedGroupMember}
+                      size="lg"
+                      className="min-w-48 text-base"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? "Saving Changes..." : "Save Profile Changes"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Changes will update your contact information in the system
+                  </p>
+                </div>
+              )}
             </form>
           </Form>
 
