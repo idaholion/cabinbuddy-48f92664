@@ -491,6 +491,8 @@ const GroupMemberProfile = () => {
           first_name: user.user_metadata?.first_name,
           last_name: user.user_metadata?.last_name,
           display_name: user.user_metadata?.first_name,
+        }, {
+          onConflict: 'user_id'
         });
 
       if (updateError) throw updateError;
