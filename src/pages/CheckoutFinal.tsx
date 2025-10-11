@@ -731,7 +731,10 @@ const CheckoutFinal = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const venmoUrl = `https://venmo.com/${checkoutData.venmoHandle}?txn=pay&amount=${totalAmount}&note=Cabin stay payment`;
+                                  // Remove @ symbol if present
+                                  const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                                  const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=Cabin stay payment`;
+                                  console.log('Opening Venmo URL:', venmoUrl);
                                   window.open(venmoUrl, '_blank');
                                 }}
                                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
