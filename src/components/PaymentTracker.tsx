@@ -432,20 +432,20 @@ const PaymentTracker = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          console.log('Recording payment for:', payment.family_group);
-                          setSelectedPayment(payment);
-                          setShowRecordDialog(true);
-                        }}
-                        disabled={payment.status === 'paid'}
-                      >
-                        <CreditCard className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log('Recording payment for:', payment.family_group);
+                        setSelectedPayment(payment);
+                        setShowRecordDialog(true);
+                      }}
+                      disabled={payment.status === 'paid'}
+                      className="text-sm"
+                    >
+                      <CreditCard className="h-3 w-3 mr-1" />
+                      Record
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
