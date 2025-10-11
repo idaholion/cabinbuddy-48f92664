@@ -113,7 +113,17 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
   };
 
   const claimProfile = async (profile: AvailableProfile) => {
-    if (!activeOrganization?.organization_id) return;
+    if (!activeOrganization?.organization_id) {
+      console.error('❌ [PROFILE-CLAIM] No active organization');
+      return;
+    }
+
+    console.log('🔍 [PROFILE-CLAIM] Claiming profile:', {
+      organizationId: activeOrganization.organization_id,
+      familyGroup: profile.family_group_name,
+      memberName: profile.member_name,
+      memberType: profile.member_type
+    });
 
     setLoading(true);
     try {
@@ -124,9 +134,16 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
         p_member_type: profile.member_type
       });
 
-      if (error) throw error;
+      console.log('📊 [PROFILE-CLAIM] RPC Response:', { data, error });
+
+      if (error) {
+        console.error('❌ [PROFILE-CLAIM] RPC Error:', error);
+        throw error;
+      }
 
       const result = data as any;
+      console.log('✅ [PROFILE-CLAIM] Result:', result);
+      
       if (result?.success) {
         toast({
           title: "Profile claimed successfully!",
@@ -135,6 +152,7 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
         onOpenChange(false);
         onProfileClaimed?.();
       } else {
+        console.error('❌ [PROFILE-CLAIM] Claim failed:', result?.error);
         toast({
           title: "Claim failed",
           description: result?.error || "Failed to claim profile",
@@ -142,10 +160,10 @@ export const ProfileClaimingDialog = ({ open, onOpenChange, onProfileClaimed }: 
         });
       }
     } catch (error) {
-      console.error('Profile claim error:', error);
+      console.error('❌ [PROFILE-CLAIM] Exception:', error);
       toast({
         title: "Claim failed",
-        description: "Failed to claim profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to claim profile. Please try again.",
         variant: "destructive"
       });
     } finally {
