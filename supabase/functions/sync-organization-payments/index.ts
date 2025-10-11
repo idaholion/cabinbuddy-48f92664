@@ -163,18 +163,23 @@ Deno.serve(async (req) => {
       }
 
       try {
-        // Calculate billing using default values
-        // In production, these should come from organization settings
+        // Calculate billing using organization settings
+        const nights = Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24));
+        const guests = reservation.guest_count || 4;
+        
+        // Use organization's actual settings
+        const billingConfig: BillingConfig = {
+          method: configData.financial_method || 'per-person-per-day',
+          amount: configData.nightly_rate || 0,
+          cleaningFee: configData.cleaning_fee || 0,
+          taxRate: configData.tax_rate || 0,
+        };
+        
         const billing = BillingCalculator.calculateStayBilling(
+          billingConfig,
           {
-            method: 'per-person-per-day',
-            amount: 25,
-            cleaningFee: 75,
-            taxRate: 0,
-          },
-          {
-            nights: Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24)),
-            guests: reservation.guest_count || 4, // Default to 4 guests if not specified
+            nights,
+            guests,
             checkInDate: new Date(reservation.start_date),
             checkOutDate: new Date(reservation.end_date),
           }
