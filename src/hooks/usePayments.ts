@@ -48,26 +48,39 @@ export const usePayments = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
 
-  const fetchPayments = useCallback(async (page = 1, limit = 50) => {
+  const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!organization?.id) return;
 
     try {
       setLoading(true);
       
-      // Get total count
-      const { count } = await supabase
+      // Build query with optional year filter
+      let countQuery = supabase
         .from('payments')
         .select('*', { count: 'exact', head: true })
         .eq('organization_id', organization.id);
-
-      // Get paginated data
-      const { data, error } = await supabase
+      
+      let dataQuery = supabase
         .from('payments')
         .select(`
           *,
           reservation:reservations(start_date, end_date)
         `)
-        .eq('organization_id', organization.id)
+        .eq('organization_id', organization.id);
+
+      // Apply year filter if provided
+      if (year) {
+        const startDate = `${year}-01-01`;
+        const endDate = `${year}-12-31`;
+        countQuery = countQuery.gte('created_at', startDate).lte('created_at', endDate);
+        dataQuery = dataQuery.gte('created_at', startDate).lte('created_at', endDate);
+      }
+
+      // Get total count
+      const { count } = await countQuery;
+
+      // Get paginated data
+      const { data, error } = await dataQuery
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 

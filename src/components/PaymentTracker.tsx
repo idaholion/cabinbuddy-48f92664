@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,10 @@ import {
   Plus, 
   Eye,
   Calendar,
-  CreditCard
+  CreditCard,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { usePayments, Payment, PaymentType, PaymentMethod } from '@/hooks/usePayments';
 import { format } from 'date-fns';
@@ -40,9 +43,79 @@ const PaymentTracker = () => {
   const [recordAmount, setRecordAmount] = useState('');
   const [recordMethod, setRecordMethod] = useState<PaymentMethod | ''>('');
   const [recordReference, setRecordReference] = useState('');
+  const [sortColumn, setSortColumn] = useState<keyof Payment | 'reservation'>('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
 
   const summary = getPaymentsSummary();
   const overduePayments = getOverduePayments();
+
+  // Get available years from payments
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    payments.forEach(payment => {
+      const year = new Date(payment.created_at).getFullYear();
+      years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [payments]);
+
+  // Sort payments
+  const sortedPayments = useMemo(() => {
+    const sorted = [...payments].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (sortColumn === 'reservation') {
+        aValue = a.reservation?.start_date || '';
+        bValue = b.reservation?.start_date || '';
+      } else {
+        aValue = a[sortColumn];
+        bValue = b[sortColumn];
+      }
+
+      // Handle null/undefined values
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+
+      // Compare values
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [payments, sortColumn, sortDirection]);
+
+  const handleSort = (column: keyof Payment | 'reservation') => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    const yearNum = year === 'all' ? undefined : parseInt(year);
+    fetchPayments(1, pagination.limit, yearNum);
+  };
+
+  const SortableHeader = ({ column, label }: { column: keyof Payment | 'reservation'; label: string }) => (
+    <TableHead 
+      className="cursor-pointer select-none hover:bg-muted/50" 
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortColumn === column ? (
+          sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-50" />
+        )}
+      </div>
+    </TableHead>
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -255,8 +328,8 @@ const PaymentTracker = () => {
         </Card>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2">
+      {/* Actions and Filters */}
+      <div className="flex gap-2 items-center justify-between">
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="text-base">
@@ -271,6 +344,25 @@ const PaymentTracker = () => {
             <CreatePaymentForm />
           </DialogContent>
         </Dialog>
+
+        {availableYears.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Label htmlFor="year-filter" className="text-base whitespace-nowrap">Filter by Year:</Label>
+            <Select value={selectedYear} onValueChange={handleYearChange}>
+              <SelectTrigger id="year-filter" className="w-[150px] text-base">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-base">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()} className="text-base">
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Payments Table */}
@@ -285,19 +377,19 @@ const PaymentTracker = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Family Group</TableHead>
-                <TableHead>Reservation Period</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Paid</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due Date</TableHead>
+                <SortableHeader column="family_group" label="Family Group" />
+                <SortableHeader column="reservation" label="Reservation Period" />
+                <SortableHeader column="payment_type" label="Type" />
+                <SortableHeader column="amount" label="Amount" />
+                <SortableHeader column="amount_paid" label="Paid" />
+                <SortableHeader column="balance_due" label="Balance" />
+                <SortableHeader column="status" label="Status" />
+                <SortableHeader column="due_date" label="Due Date" />
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments.map((payment) => (
+              {sortedPayments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="font-medium">
                     {payment.family_group}
