@@ -215,6 +215,70 @@ export const useInvoices = () => {
     }
   };
 
+  const sendInvoice = async (invoiceId: string) => {
+    if (!organization?.id) return false;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invoice', {
+        body: {
+          invoice_id: invoiceId,
+          organization_id: organization.id,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Invoice Sent',
+        description: 'Invoice has been sent successfully via email',
+      });
+
+      await fetchInvoices();
+      return true;
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send invoice',
+      });
+      return false;
+    }
+  };
+
+  const sendBatchInvoices = async (invoiceIds: string[]) => {
+    if (!organization?.id || invoiceIds.length === 0) return { success: 0, failed: 0 };
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const invoiceId of invoiceIds) {
+      try {
+        const { error } = await supabase.functions.invoke('send-invoice', {
+          body: {
+            invoice_id: invoiceId,
+            organization_id: organization.id,
+          },
+        });
+
+        if (error) throw error;
+        successCount++;
+      } catch (error) {
+        console.error('Error sending invoice:', invoiceId, error);
+        failedCount++;
+      }
+    }
+
+    toast({
+      title: 'Batch Send Complete',
+      description: `Successfully sent ${successCount} invoice(s). ${failedCount > 0 ? `${failedCount} failed.` : ''}`,
+      variant: failedCount > 0 ? 'destructive' : 'default',
+    });
+
+    await fetchInvoices();
+    return { success: successCount, failed: failedCount };
+  };
+
   useEffect(() => {
     fetchInvoices();
   }, [organization?.id]);
@@ -226,6 +290,8 @@ export const useInvoices = () => {
     recordPayment,
     updateInvoice,
     deleteInvoice,
+    sendInvoice,
+    sendBatchInvoices,
     refetch: fetchInvoices,
   };
 };
