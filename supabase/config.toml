@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.send-guest-split-notification]
 verify_jwt = false
+
+[functions.backfill-member-profiles]
+verify_jwt = true

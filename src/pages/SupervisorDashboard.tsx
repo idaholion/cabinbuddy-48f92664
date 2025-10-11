@@ -18,6 +18,7 @@ import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTa
 import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
 import { ProtectedSupervisorRoute } from '@/components/ProtectedSupervisorRoute';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BackfillProfileClaims } from '@/components/BackfillProfileClaims';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -363,7 +364,9 @@ export const SupervisorDashboard = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="data-management">
+          <TabsContent value="data-management" className="space-y-6">
+            <BackfillProfileClaims />
+            
             <DataManagementControls 
               organizations={organizations} 
               onDataChanged={refetchOrganizations}
