@@ -43,16 +43,33 @@ Deno.serve(async (req) => {
       details: [] as any[]
     };
 
+    // Track which users we've already processed to avoid duplicates
+    const processedUsers = new Set<string>();
+
     for (const group of familyGroups || []) {
-      // Process group lead
+      // Process group lead FIRST (takes priority over host_member)
       if (group.lead_email) {
         const user = users.find(u => u.email?.toLowerCase() === group.lead_email?.toLowerCase());
         
         if (user) {
+          const userOrgKey = `${user.id}-${group.organization_id}`;
+          
+          // Skip if we've already processed this user for this organization
+          if (processedUsers.has(userOrgKey)) {
+            results.skipped++;
+            results.details.push({
+              type: 'group_lead',
+              name: group.lead_name,
+              email: group.lead_email,
+              familyGroup: group.name,
+              status: 'skipped_duplicate_user'
+            });
+            continue;
+          }
+
           const alreadyClaimed = existingClaims?.some(
             c => c.claimed_by_user_id === user.id && 
-                 c.organization_id === group.organization_id &&
-                 c.family_group_name === group.name
+                 c.organization_id === group.organization_id
           );
 
           if (!alreadyClaimed && group.lead_name) {
@@ -74,6 +91,7 @@ Deno.serve(async (req) => {
               if (claimError) throw claimError;
 
               results.claimed++;
+              processedUsers.add(userOrgKey);
               results.details.push({
                 type: 'group_lead',
                 name: group.lead_name,
@@ -96,6 +114,7 @@ Deno.serve(async (req) => {
             }
           } else if (alreadyClaimed) {
             results.skipped++;
+            processedUsers.add(userOrgKey);
             results.details.push({
               type: 'group_lead',
               name: group.lead_name,
@@ -115,10 +134,24 @@ Deno.serve(async (req) => {
             const user = users.find(u => u.email?.toLowerCase() === member.email?.toLowerCase());
             
             if (user) {
+              const userOrgKey = `${user.id}-${group.organization_id}`;
+              
+              // Skip if we've already processed this user for this organization
+              if (processedUsers.has(userOrgKey)) {
+                results.skipped++;
+                results.details.push({
+                  type: 'host_member',
+                  name: member.name,
+                  email: member.email,
+                  familyGroup: group.name,
+                  status: 'skipped_duplicate_user'
+                });
+                continue;
+              }
+
               const alreadyClaimed = existingClaims?.some(
                 c => c.claimed_by_user_id === user.id && 
-                     c.organization_id === group.organization_id &&
-                     c.family_group_name === group.name
+                     c.organization_id === group.organization_id
               );
 
               if (!alreadyClaimed && member.name) {
@@ -140,6 +173,7 @@ Deno.serve(async (req) => {
                   if (claimError) throw claimError;
 
                   results.claimed++;
+                  processedUsers.add(userOrgKey);
                   results.details.push({
                     type: 'host_member',
                     name: member.name,
@@ -162,6 +196,7 @@ Deno.serve(async (req) => {
                 }
               } else if (alreadyClaimed) {
                 results.skipped++;
+                processedUsers.add(userOrgKey);
                 results.details.push({
                   type: 'host_member',
                   name: member.name,
