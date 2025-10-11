@@ -87,17 +87,23 @@ const PaymentTracker = () => {
   }, [payments, sortColumn, sortDirection]);
 
   const handleSort = (column: keyof Payment | 'reservation') => {
+    console.log('Sorting by column:', column);
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      console.log('Toggling direction to:', newDirection);
+      setSortDirection(newDirection);
     } else {
+      console.log('Setting new sort column:', column);
       setSortColumn(column);
       setSortDirection('asc');
     }
   };
 
   const handleYearChange = (year: string) => {
+    console.log('Changing year filter to:', year);
     setSelectedYear(year);
     const yearNum = year === 'all' ? undefined : parseInt(year);
+    console.log('Fetching payments for year:', yearNum);
     fetchPayments(1, pagination.limit, yearNum);
   };
 
@@ -431,6 +437,7 @@ const PaymentTracker = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                          console.log('Recording payment for:', payment.family_group);
                           setSelectedPayment(payment);
                           setShowRecordDialog(true);
                         }}
@@ -463,7 +470,10 @@ const PaymentTracker = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fetchPayments(pagination.page - 1)}
+              onClick={() => {
+                const yearNum = selectedYear === 'all' ? undefined : parseInt(selectedYear);
+                fetchPayments(pagination.page - 1, pagination.limit, yearNum);
+              }}
               disabled={pagination.page <= 1}
               className="text-base"
             >
@@ -472,7 +482,10 @@ const PaymentTracker = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fetchPayments(pagination.page + 1)}
+              onClick={() => {
+                const yearNum = selectedYear === 'all' ? undefined : parseInt(selectedYear);
+                fetchPayments(pagination.page + 1, pagination.limit, yearNum);
+              }}
               disabled={pagination.page * pagination.limit >= pagination.total}
               className="text-base"
             >
