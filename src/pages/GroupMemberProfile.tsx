@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home, UserCircle } from "lucide-react";
+import { User, Save, LogOut, Camera, Download, Upload, UserPlus, ArrowRight, Shield, Home, UserCircle, CheckCircle2, Search } from "lucide-react";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/contexts/AuthContext";
@@ -675,67 +675,75 @@ const GroupMemberProfile = () => {
         </div>
       </PageHeader>
 
-      {/* Profile Claim Dialog - Show if user hasn't claimed a profile yet AND auto-population failed */}
-      {!hasClaimedProfile && !autoPopulated && familyGroups.length > 0 && (
+      {/* Profile Claiming Section - One-time account linking */}
+      {!hasClaimedProfile && familyGroups.length > 0 && (
         <Card className="mb-6 border-primary/50 bg-primary/5">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Claim Your Group Member Profile
+              {autoPopulated ? 'Confirm Your Profile' : 'Claim Your Profile'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-base text-muted-foreground mb-4">
-              We couldn't automatically detect your profile. Please manually link your account to your family group member profile.
-            </p>
-            <Button
-              onClick={() => setShowClaimingDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <UserPlus className="h-4 w-4" />
-              Claim Profile
-            </Button>
+            {autoPopulated ? (
+              <div className="space-y-4">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-base text-muted-foreground mb-1">
+                      We detected your profile based on your email! Your information has been auto-populated below.
+                    </p>
+                    <p className="text-base text-muted-foreground">
+                      Click <strong>Claim Profile</strong> to permanently link your account to this family group member.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowClaimingDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Claim Profile
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-start gap-2">
+                  <Search className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-base text-muted-foreground mb-1">
+                      We couldn't automatically detect your profile.
+                    </p>
+                    <p className="text-base text-muted-foreground">
+                      Click <strong>Search & Claim</strong> to find and link your account to your family group member profile.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowClaimingDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  Search & Claim Profile
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* Show claim profile button if not yet claimed */}
-      {!hasClaimedProfile && (
-        <Card className="mb-6 border-primary bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Claim Your Profile
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-base mb-4 text-muted-foreground">
-              Link your account to your family group member profile to access all features.
-            </p>
-            <Button
-              onClick={() => setShowClaimingDialog(true)}
-              className="flex items-center gap-2"
-              size="lg"
-            >
-              <UserPlus className="h-4 w-4" />
-              Claim Your Profile
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Show claimed profile info */}
+      {/* Profile Successfully Claimed */}
       {hasClaimedProfile && claimedProfile && (
         <Card className="mb-6 border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2 text-green-800">
-              <User className="h-5 w-5" />
-              Profile Claimed Successfully
+              <CheckCircle2 className="h-5 w-5" />
+              Profile Linked Successfully
             </CardTitle>
           </CardHeader>
           <CardContent className="text-green-700">
             <p className="text-base mb-4">
-              You are linked to the <strong>{claimedProfile.family_group_name}</strong> family group
+              Your account is linked to <strong>{claimedProfile.family_group_name}</strong>
               {isGroupLead && ' as the Group Lead'}.
             </p>
             {isGroupLead && (
@@ -799,9 +807,9 @@ const GroupMemberProfile = () => {
             />
           </div>
           
-          <CardTitle className="text-3xl font-bold mt-4">Group Member Profile</CardTitle>
+          <CardTitle className="text-3xl font-bold mt-4">Profile Settings</CardTitle>
           <p className="text-muted-foreground text-base">
-            Update your personal information for your family group
+            Manage your avatar and contact information
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -997,7 +1005,7 @@ const GroupMemberProfile = () => {
                   className="min-w-48 text-base"
                 >
                   <Save className="h-4 w-4 mr-2" />
-                  {loading ? "Saving..." : "Save Profile"}
+                  {loading ? "Saving Changes..." : "Save Profile Changes"}
                 </Button>
               </div>
             </form>
