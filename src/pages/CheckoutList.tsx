@@ -574,6 +574,7 @@ const CheckoutList = () => {
             .from('checkin_sessions')
             .insert({
               organization_id: organization.id,
+              user_id: user?.id || null,
               family_group: currentReservation.family_group,
               session_type: 'checkout',
               check_date: currentReservation.end_date, // Use reservation checkout date
