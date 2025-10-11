@@ -38,6 +38,10 @@ const InvoiceSettings = () => {
   const [batchSendEnabled, setBatchSendEnabled] = useState(true);
   const [requireApproval, setRequireApproval] = useState(false);
 
+  // Invoice Numbering Settings
+  const [invoicePrefix, setInvoicePrefix] = useState("INV");
+  const [nextInvoiceNumber, setNextInvoiceNumber] = useState("1");
+
   useEffect(() => {
     if (settings) {
       // Load settings from the database
@@ -47,6 +51,17 @@ const InvoiceSettings = () => {
       setEmailBody(settings.invoice_email_body || "Dear {family_group},\n\nPlease find attached your invoice {invoice_number} for the amount of ${total_amount}.\n\nDue date: {due_date}\n\nThank you!");
       setReminderSubject(settings.reminder_email_subject || "Reminder: Invoice {invoice_number} due on {due_date}");
       setReminderBody(settings.reminder_email_body || "Dear {family_group},\n\nThis is a friendly reminder that invoice {invoice_number} for ${balance_due} is due on {due_date}.\n\nThank you!");
+      setReminder7Days(settings.reminder_7_days_enabled ?? true);
+      setReminder3Days(settings.reminder_3_days_enabled ?? true);
+      setReminder1Day(settings.reminder_1_day_enabled ?? true);
+      setReminderOnDueDate(settings.reminder_due_date_enabled ?? true);
+      setOverdueReminderInterval(settings.overdue_reminder_interval_days?.toString() || "7");
+      setEmailDeliveryEnabled(settings.email_delivery_enabled ?? true);
+      setSmsDeliveryEnabled(settings.sms_delivery_enabled ?? false);
+      setBatchSendEnabled(settings.batch_send_enabled ?? true);
+      setRequireApproval(settings.invoice_approval_required ?? false);
+      setInvoicePrefix(settings.invoice_prefix || "INV");
+      setNextInvoiceNumber(settings.next_invoice_number?.toString() || "1");
     }
   }, [settings]);
 
@@ -66,6 +81,8 @@ const InvoiceSettings = () => {
       sms_delivery_enabled: smsDeliveryEnabled,
       batch_send_enabled: batchSendEnabled,
       invoice_approval_required: requireApproval,
+      invoice_prefix: invoicePrefix,
+      next_invoice_number: parseInt(nextInvoiceNumber) || 1,
     } as any);
 
     toast({
@@ -243,6 +260,46 @@ const InvoiceSettings = () => {
                     placeholder="Enter reminder body..."
                     rows={6}
                   />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Invoice Numbering Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Invoice Numbering
+              </CardTitle>
+              <CardDescription>Configure invoice numbering and formatting</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="invoice-prefix">Invoice Prefix</Label>
+                  <Input 
+                    id="invoice-prefix" 
+                    placeholder="INV" 
+                    value={invoicePrefix}
+                    onChange={(e) => setInvoicePrefix(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Prefix for invoice numbers (e.g., "INV" creates INV-001)
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="next-invoice-number">Starting Invoice Number</Label>
+                  <Input 
+                    id="next-invoice-number" 
+                    placeholder="1" 
+                    type="number"
+                    value={nextInvoiceNumber}
+                    onChange={(e) => setNextInvoiceNumber(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Next invoice will use this number
+                  </p>
                 </div>
               </div>
             </CardContent>

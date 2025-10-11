@@ -37,8 +37,6 @@ const UseFeeSetupPage = () => {
   const [paypalEmail, setPaypalEmail] = useState("");
   const [checkPayableTo, setCheckPayableTo] = useState("");
   const [checkMailingAddress, setCheckMailingAddress] = useState("");
-  const [invoicePrefix, setInvoicePrefix] = useState("");
-  const [nextInvoiceNumber, setNextInvoiceNumber] = useState("");
 
   useEffect(() => {
     if (settings) {
@@ -61,8 +59,6 @@ const UseFeeSetupPage = () => {
       setPaypalEmail(settings.paypal_email || "");
       setCheckPayableTo(settings.check_payable_to || "");
       setCheckMailingAddress(settings.check_mailing_address || "");
-      setInvoicePrefix(settings.invoice_prefix || "INV");
-      setNextInvoiceNumber(settings.next_invoice_number?.toString() || "1");
     }
   }, [settings]);
 
@@ -103,8 +99,6 @@ const UseFeeSetupPage = () => {
       paypal_email: paypalEmail,
       check_payable_to: checkPayableTo,
       check_mailing_address: checkMailingAddress,
-      invoice_prefix: invoicePrefix,
-      next_invoice_number: parseInt(nextInvoiceNumber) || 1,
     });
     
     // Navigate to reservation setup after saving
@@ -521,48 +515,6 @@ const UseFeeSetupPage = () => {
                   onChange={(e) => setTaxJurisdiction(e.target.value)}
                   className="text-lg placeholder:text-lg"
                 />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Invoice Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Invoice Settings
-              </CardTitle>
-              <CardDescription className="text-base">Configure invoice numbering and formatting</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="invoice-prefix" className="text-base">Invoice Prefix</Label>
-                  <Input 
-                    id="invoice-prefix" 
-                    placeholder="INV" 
-                    value={invoicePrefix}
-                    onChange={(e) => setInvoicePrefix(e.target.value)}
-                    className="text-lg placeholder:text-lg"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Prefix for invoice numbers (e.g., "INV" creates INV-001)
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="next-invoice-number" className="text-base">Starting Invoice Number</Label>
-                  <Input 
-                    id="next-invoice-number" 
-                    placeholder="1" 
-                    type="number"
-                    value={nextInvoiceNumber}
-                    onChange={(e) => setNextInvoiceNumber(e.target.value)}
-                    className="text-lg placeholder:text-lg"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Next invoice will use this number
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>
