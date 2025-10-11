@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "NewExpression[callee.name='Date'][arguments.0.type='MemberExpression']",
+        "message": "❌ Do not use 'new Date()' on database date fields. Use 'parseDateOnly()' from '@/lib/date-utils' instead. Database dates are stored as YYYY-MM-DD strings which JavaScript interprets as UTC, causing timezone shifts. Example: parseDateOnly(reservation.start_date)"
+      }
+    ]
+  }
+}

@@ -1,18 +1,36 @@
 /**
  * Date utility functions for handling date-only strings (YYYY-MM-DD)
  * These utilities prevent timezone shifting issues when parsing dates from the database
+ * 
+ * CRITICAL: Always use parseDateOnly() when converting database date strings to Date objects.
+ * Never use new Date(dateString) directly on YYYY-MM-DD strings!
+ * 
+ * Why? Database date fields are stored as "YYYY-MM-DD" strings.
+ * new Date("2025-10-06") interprets this as UTC midnight, which shifts to the previous day
+ * in timezones west of UTC (e.g., America/New_York shows Oct 5 instead of Oct 6).
+ * 
+ * Pattern to follow:
+ * ❌ BAD:  new Date(reservation.start_date)
+ * ✅ GOOD: parseDateOnly(reservation.start_date)
  */
+
+import { DateOnlyString } from '@/types/date-types';
 
 /**
  * Safely parse a date-only string (YYYY-MM-DD) as local midnight
- * Prevents timezone shifting issues that occur when new Date() interprets
- * date-only strings as UTC midnight, causing dates to appear one day earlier
- * in timezones west of UTC.
  * 
  * @param dateString - Date string in YYYY-MM-DD format
  * @returns Date object representing midnight in the local timezone
+ * 
+ * @example
+ * // Correct usage
+ * const checkIn = parseDateOnly(reservation.start_date);
+ * const checkOut = parseDateOnly(reservation.end_date);
+ * 
+ * // Display
+ * checkIn.toLocaleDateString(); // Shows correct date
  */
-export function parseDateOnly(dateString: string | null | undefined): Date {
+export function parseDateOnly(dateString: string | DateOnlyString | null | undefined): Date {
   if (!dateString) return new Date();
   // Add T00:00:00 to force local timezone interpretation instead of UTC
   return new Date(dateString + 'T00:00:00');
