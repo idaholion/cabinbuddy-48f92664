@@ -716,7 +716,7 @@ const CheckoutFinal = () => {
                     {checkoutData.venmoHandle && (
                       <>
                         <Separator className="my-4" />
-                        <div className="space-y-3">
+                        <div className="space-y-3 pointer-events-auto">
                           <div className="flex items-center gap-2">
                             <CreditCard className="h-5 w-5 text-blue-600" />
                             <h4 className="text-base font-medium">Pay via Venmo</h4>
