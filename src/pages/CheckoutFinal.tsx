@@ -543,6 +543,20 @@ const CheckoutFinal = () => {
                           <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
                         </div>
                       </div>
+                      
+                      {/* Split Guest Costs Button */}
+                      {totalDays > 0 && dailyBreakdown.length > 0 && (
+                        <div className="pt-4 mt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => setSplitCostsOpen(true)}
+                            className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/20"
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Split Guest Costs
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -785,16 +799,6 @@ const CheckoutFinal = () => {
                             >
                               {isCreatingPayment ? "Processing..." : "Defer Payment"}
                             </Button>
-                            {totalDays > 0 && dailyBreakdown.length > 0 && (
-                              <Button
-                                variant="outline"
-                                onClick={() => setSplitCostsOpen(true)}
-                                className="border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/20"
-                              >
-                                <Users className="h-4 w-4 mr-2" />
-                                Split Guest Costs
-                              </Button>
-                            )}
                           </div>
                         </div>
                       </div>
