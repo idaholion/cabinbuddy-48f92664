@@ -96,16 +96,31 @@ ${dailyBreakdown}
         
         <p style="font-size: 18px; font-weight: bold; color: #2563eb;">Total Amount: $${totalAmount.toFixed(2)}</p>
         
-        <p>This charge has been added to your Season Summary. You can view details and make payment by visiting your Season Summary page.</p>
+        <h3 style="color: #374151; margin-top: 24px;">How to Make Payment:</h3>
+        <ol style="line-height: 1.8; color: #374151;">
+          <li>Log in to your Cabin Buddy account</li>
+          <li>Go to <strong>Billing Dashboard</strong> from the main menu</li>
+          <li>Click on the <strong>Payment Tracking</strong> tab</li>
+          <li>Find your split payment for <strong>${split.split_to_family_group}</strong></li>
+          <li>Click <strong>Record Payment</strong> to mark it as paid</li>
+        </ol>
+        
+        <div style="margin: 24px 0; padding: 12px; background: #f0f9ff; border-left: 4px solid #2563eb; border-radius: 4px;">
+          <p style="margin: 0; color: #1e40af; font-size: 14px;"><strong>Quick Link:</strong> You can also view all your payments in your Season Summary.</p>
+        </div>
         
         <div style="margin: 20px 0;">
+          <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/billing" 
+             style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 8px;">
+            Go to Billing Dashboard
+          </a>
           <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/season-summary?year=${currentYear}" 
-             style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+             style="background: white; color: #2563eb; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; border: 1px solid #2563eb;">
             View Season Summary
           </a>
         </div>
         
-        <p style="color: #666; font-size: 14px;">If you have questions about this charge, please contact ${sourceUser?.display_name || sourceUser?.first_name} at ${sourceUser?.email}.</p>
+        <p style="color: #666; font-size: 14px; margin-top: 24px;">If you have questions about this charge, please contact ${sourceUser?.display_name || sourceUser?.first_name} at ${sourceUser?.email}.</p>
         
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
         
