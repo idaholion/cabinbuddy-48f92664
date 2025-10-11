@@ -699,6 +699,31 @@ const GroupMemberProfile = () => {
         </Card>
       )}
 
+      {/* Show claim profile button if not yet claimed */}
+      {!hasClaimedProfile && (
+        <Card className="mb-6 border-primary bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Claim Your Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base mb-4 text-muted-foreground">
+              Link your account to your family group member profile to access all features.
+            </p>
+            <Button
+              onClick={() => setShowClaimingDialog(true)}
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <UserPlus className="h-4 w-4" />
+              Claim Your Profile
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Show claimed profile info */}
       {hasClaimedProfile && claimedProfile && (
         <Card className="mb-6 border-green-200 bg-green-50">
