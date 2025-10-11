@@ -112,21 +112,40 @@ const CheckoutFinal = () => {
   // Load checkout completion status from database and localStorage
   useEffect(() => {
     const loadCheckoutStatus = async () => {
+      console.log('🔍 [CHECKOUT-STATUS] Loading checkout status...');
+      console.log('🔍 [CHECKOUT-STATUS] Current reservation:', {
+        id: currentReservation?.id,
+        family_group: currentReservation?.family_group,
+        start_date: currentReservation?.start_date,
+        end_date: currentReservation?.end_date
+      });
+
       // First check localStorage for quick access
       const familyData = localStorage.getItem('familySetupData');
+      console.log('🔍 [CHECKOUT-STATUS] Family data from localStorage:', familyData);
+      
       if (familyData) {
         const { organizationCode } = JSON.parse(familyData);
+        console.log('🔍 [CHECKOUT-STATUS] Organization code:', organizationCode);
+        
         const savedCompletion = localStorage.getItem(`checkout_completion_${organizationCode}`);
+        console.log('🔍 [CHECKOUT-STATUS] Saved completion from localStorage:', savedCompletion);
+        
         if (savedCompletion) {
           const localStatus = JSON.parse(savedCompletion);
           setChecklistStatus(localStatus);
           console.log('✅ [CHECKOUT-STATUS] Loaded from localStorage:', localStatus);
+        } else {
+          console.log('⚠️ [CHECKOUT-STATUS] No saved completion in localStorage');
         }
+      } else {
+        console.log('⚠️ [CHECKOUT-STATUS] No family data in localStorage');
       }
 
       // Then check database for the most recent checkout session
       if (currentReservation) {
         try {
+          console.log('🔍 [CHECKOUT-STATUS] Querying database for checkout session...');
           const { data: checkoutSession, error } = await supabase
             .from('checkin_sessions')
             .select('*')
@@ -138,9 +157,19 @@ const CheckoutFinal = () => {
             .limit(1)
             .maybeSingle();
 
-          if (!error && checkoutSession?.checklist_responses) {
+          console.log('🔍 [CHECKOUT-STATUS] Database query result:', { checkoutSession, error });
+
+          if (error) {
+            console.error('❌ [CHECKOUT-STATUS] Database query error:', error);
+          } else if (!checkoutSession) {
+            console.log('⚠️ [CHECKOUT-STATUS] No checkout session found in database');
+          } else if (!checkoutSession.checklist_responses) {
+            console.log('⚠️ [CHECKOUT-STATUS] Checkout session found but no checklist_responses');
+          } else {
             const responses = checkoutSession.checklist_responses as any;
             const checklistCompletion = responses?.checklistCompletion;
+            console.log('🔍 [CHECKOUT-STATUS] Checklist completion from DB:', checklistCompletion);
+            
             if (checklistCompletion) {
               const dbStatus = {
                 isComplete: checklistCompletion.isComplete || false,
@@ -155,12 +184,17 @@ const CheckoutFinal = () => {
               if (familyData) {
                 const { organizationCode } = JSON.parse(familyData);
                 localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(dbStatus));
+                console.log('✅ [CHECKOUT-STATUS] Synced to localStorage');
               }
+            } else {
+              console.log('⚠️ [CHECKOUT-STATUS] No checklistCompletion in responses');
             }
           }
         } catch (error) {
           console.error('❌ [CHECKOUT-STATUS] Failed to load from database:', error);
         }
+      } else {
+        console.log('⚠️ [CHECKOUT-STATUS] No current reservation, skipping database check');
       }
     };
 
