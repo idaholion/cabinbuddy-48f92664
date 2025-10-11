@@ -286,6 +286,7 @@ const PaymentTracker = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Family Group</TableHead>
+                <TableHead>Reservation Period</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Paid</TableHead>
@@ -300,6 +301,16 @@ const PaymentTracker = () => {
                 <TableRow key={payment.id}>
                   <TableCell className="font-medium">
                     {payment.family_group}
+                  </TableCell>
+                  <TableCell>
+                    {payment.reservation?.start_date && payment.reservation?.end_date ? (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(parseDateOnly(payment.reservation.start_date), 'MMM dd')} - {format(parseDateOnly(payment.reservation.end_date), 'MMM dd, yyyy')}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {payment.payment_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}

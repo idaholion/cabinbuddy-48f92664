@@ -25,6 +25,10 @@ export interface Payment {
   balance_due: number;
   created_at: string;
   updated_at: string;
+  reservation?: {
+    start_date: string;
+    end_date: string;
+  };
 }
 
 export interface CreatePaymentData {
@@ -59,7 +63,10 @@ export const usePayments = () => {
       // Get paginated data
       const { data, error } = await supabase
         .from('payments')
-        .select('*')
+        .select(`
+          *,
+          reservation:reservations(start_date, end_date)
+        `)
         .eq('organization_id', organization.id)
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
