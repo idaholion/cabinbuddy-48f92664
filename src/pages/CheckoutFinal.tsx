@@ -16,10 +16,15 @@ import { parseDateOnly } from "@/lib/date-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { useAuth } from "@/contexts/AuthContext";
+import { getHostFirstName } from "@/lib/reservation-utils";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { claimedProfile } = useProfileClaiming();
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
   const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
@@ -44,6 +49,8 @@ const CheckoutFinal = () => {
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
   const getCurrentUserReservation = () => {
+    if (!user) return undefined;
+    
     const userReservations = reservations.filter(r => {
       // Only show confirmed reservations
       if (r.status !== 'confirmed') return false;
@@ -51,7 +58,25 @@ const CheckoutFinal = () => {
       // If it's a transferred-out reservation, don't show it for checkout (original person already checked out)
       if (r.transfer_type === 'transferred_out') return false;
       
-      return true;
+      // Filter by user - check if this reservation belongs to the logged-in user
+      // Option 1: If user has claimed a profile, match by family group and host name
+      if (claimedProfile) {
+        // Check if reservation belongs to user's claimed family group
+        if (r.family_group !== claimedProfile.family_group_name) return false;
+        
+        // Check if user is the host of this reservation
+        // For host assignments, check if user's claimed name matches the primary host
+        if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
+          const primaryHost = r.host_assignments[0];
+          return primaryHost.host_name === claimedProfile.member_name;
+        }
+        
+        // Fallback: if no host assignments, user must be group lead and reservation must be for their group
+        return claimedProfile.member_type === 'group_lead';
+      }
+      
+      // Option 2: If no claimed profile, match by user_id (fallback for legacy data)
+      return r.user_id === user.id;
     });
     
     // Sort by start date descending to get most recent
