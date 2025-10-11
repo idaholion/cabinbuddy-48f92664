@@ -11,6 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useSurveyResponses } from "@/hooks/useChecklistData";
 import { useProfile } from "@/hooks/useProfile";
+import { useReservations } from "@/hooks/useReservations";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { parseDateOnly } from "@/lib/date-utils";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
 
@@ -25,6 +29,9 @@ const CheckoutList = () => {
   const { isAdmin } = useOrgAdmin();
   const { createResponse } = useSurveyResponses();
   const { profile } = useProfile();
+  const { user } = useAuth();
+  const { claimedProfile } = useProfileClaiming();
+  const { reservations } = useReservations();
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
@@ -97,6 +104,42 @@ const CheckoutList = () => {
     { id: "other", label: "Other" }
   ]);
   const [surveyData, setSurveyData] = useState<Record<string, string>>({});
+
+  // Get the most recent reservation for the current user's stay
+  const getCurrentUserReservation = () => {
+    if (!user) return undefined;
+    
+    const userReservations = reservations.filter(r => {
+      // Only show confirmed reservations
+      if (r.status !== 'confirmed') return false;
+      
+      // If it's a transferred-out reservation, don't show it for checkout
+      if (r.transfer_type === 'transferred_out') return false;
+      
+      // Filter by user - check if this reservation belongs to the logged-in user
+      if (claimedProfile) {
+        // Check if reservation belongs to user's claimed family group
+        if (r.family_group !== claimedProfile.family_group_name) return false;
+        
+        // Check if user is the host of this reservation
+        if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
+          const primaryHost = r.host_assignments[0];
+          return primaryHost.host_name === claimedProfile.member_name;
+        }
+        
+        // Fallback: if no host assignments, user must be group lead
+        return claimedProfile.member_type === 'group_lead';
+      }
+      
+      // Fallback: match by user_id
+      return r.user_id === user.id;
+    });
+    
+    // Sort by start date descending to get most recent
+    return userReservations.sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime())[0];
+  };
+
+  const currentReservation = getCurrentUserReservation();
 
   // Load checkout checklist from database
   useEffect(() => {
@@ -431,6 +474,16 @@ const CheckoutList = () => {
 
   // Save checklist completion status and survey responses
   const saveChecklistCompletion = async () => {
+    console.log('💾 [CHECKOUT-SAVE] Starting save process', {
+      hasOrg: !!organization?.id,
+      hasReservation: !!currentReservation,
+      familyGroup: currentReservation?.family_group,
+      startDate: currentReservation?.start_date,
+      endDate: currentReservation?.end_date,
+      completedTasks,
+      totalTasks
+    });
+
     const familyData = localStorage.getItem('familySetupData');
     if (familyData) {
       const { organizationCode } = JSON.parse(familyData);
@@ -445,17 +498,19 @@ const CheckoutList = () => {
       
       // Save to localStorage as backup
       localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
+      console.log('✅ [CHECKOUT-SAVE] Saved to localStorage');
       
-      // Save to database
-      if (organization?.id && profile?.family_group) {
+      // Save to database using current reservation info
+      if (organization?.id && currentReservation) {
         try {
+          console.log('💾 [CHECKOUT-SAVE] Inserting to database...');
           const { error } = await supabase
             .from('checkin_sessions')
             .insert({
               organization_id: organization.id,
-              family_group: profile.family_group,
+              family_group: currentReservation.family_group,
               session_type: 'checkout',
-              check_date: new Date().toISOString().split('T')[0],
+              check_date: currentReservation.end_date, // Use reservation checkout date
               checklist_responses: {
                 checklistCompletion: {
                   checkedTasks: Array.from(checkedTasks),
@@ -463,22 +518,28 @@ const CheckoutList = () => {
                   isComplete: isChecklistComplete,
                   completedAt: isChecklistComplete ? new Date().toISOString() : null,
                   totalTasks,
-                  completedTasks
+                  completedTasks,
+                  reservationId: currentReservation.id,
+                  startDate: currentReservation.start_date,
+                  endDate: currentReservation.end_date
                 },
                 surveyResponses: surveyData
               },
               completed_at: isChecklistComplete ? new Date().toISOString() : null
             });
 
-          if (error) throw error;
+          if (error) {
+            console.error('❌ [CHECKOUT-SAVE] Database error:', error);
+            throw error;
+          }
 
+          console.log('✅ [CHECKOUT-SAVE] Successfully saved to database');
           toast({
             title: "Checklist Saved",
             description: `Checkout checklist saved to database (${completedTasks}/${totalTasks} tasks completed)`,
           });
-          console.log('✅ Checkout completion saved to database');
         } catch (error) {
-          console.error('❌ Failed to save checkout completion to database:', error);
+          console.error('❌ [CHECKOUT-SAVE] Failed to save to database:', error);
           toast({
             title: "Partial Save",
             description: "Checklist saved locally but database sync failed",
@@ -486,6 +547,7 @@ const CheckoutList = () => {
           });
         }
       } else {
+        console.log('⚠️ [CHECKOUT-SAVE] Missing organization or reservation, saved locally only');
         toast({
           title: "Checklist Saved",
           description: `Checkout checklist saved locally (${completedTasks}/${totalTasks} tasks completed)`,
