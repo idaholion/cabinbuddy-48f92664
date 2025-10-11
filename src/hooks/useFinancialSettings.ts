@@ -114,6 +114,13 @@ export const useFinancialSettings = () => {
           sms_delivery_enabled: data.sms_delivery_enabled ?? false,
           batch_send_enabled: data.batch_send_enabled ?? true,
           invoice_approval_required: data.invoice_approval_required ?? false,
+          
+          // Season configuration
+          season_start_month: data.season_start_month,
+          season_start_day: data.season_start_day,
+          season_end_month: data.season_end_month,
+          season_end_day: data.season_end_day,
+          season_payment_deadline_offset_days: data.season_payment_deadline_offset_days,
         });
       }
     } catch (error) {
