@@ -734,7 +734,10 @@ const CheckoutFinal = () => {
                             Pay at End of Season
                           </h4>
                           <p className="text-sm text-muted-foreground mb-3">
-                            Defer this payment until the end of the season (Oct 31). 
+                            Defer this payment until the end of the season
+                            {financialSettings?.season_end_month && financialSettings?.season_end_day && 
+                              ` (${new Date(2000, financialSettings.season_end_month - 1, financialSettings.season_end_day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+                            }. 
                             You can pay your full season balance at once.
                           </p>
                           <div className="flex gap-2">
