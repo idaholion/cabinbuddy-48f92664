@@ -110,7 +110,6 @@ const AppContent = () => {
       <GuestAccessProvider>
         <Routes>
         <Route path="/" element={<Intro />} />
-        <Route path="/intro" element={<Intro />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
