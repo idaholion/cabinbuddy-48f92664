@@ -463,14 +463,11 @@ const CheckoutFinal = () => {
                   ) : (
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">
+                        <p className="text-sm text-muted-foreground">
                           {checklistStatus 
                             ? `${checklistStatus.completedTasks} of ${checklistStatus.totalTasks} tasks completed`
-                            : 'Review cleaning and maintenance tasks for your stay'
+                            : 'Not yet started'
                           }
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Complete the checklist separately from payment
                         </p>
                       </div>
                       <Button 
