@@ -553,11 +553,11 @@ const CheckoutFinal = () => {
                   <div className="grid gap-3">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Check-in:</span>
-                      <span className="font-medium">{new Date(checkoutData.checkInDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{parseDateOnly(checkoutData.checkInDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Check-out:</span>
-                      <span className="font-medium">{new Date(checkoutData.checkOutDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{parseDateOnly(checkoutData.checkOutDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Number of nights:</span>
