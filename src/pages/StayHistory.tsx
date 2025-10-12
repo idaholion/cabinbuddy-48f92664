@@ -11,7 +11,8 @@ import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useUserRole } from "@/hooks/useUserRole";
 import { usePayments } from "@/hooks/usePayments";
-import { useSeasonSummary } from "@/hooks/useSeasonSummary";
+import { useOrganization } from "@/hooks/useOrganization";
+import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays } from "date-fns";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
@@ -37,16 +38,10 @@ export default function StayHistory() {
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
   const { isAdmin } = useUserRole();
+  const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
-  const { 
-    summary, 
-    loading: summaryLoading,
-    updateOccupancy,
-    adjustBilling,
-    syncReservationsToPayments 
-  } = useSeasonSummary(selectedYear, selectedFamilyGroup === "all" ? undefined : selectedFamilyGroup);
 
-  const loading = reservationsLoading || receiptsLoading || settingsLoading || summaryLoading;
+  const loading = reservationsLoading || receiptsLoading || settingsLoading;
 
   // Generate list of years from reservations
   const availableYears = Array.from(
@@ -63,20 +58,26 @@ export default function StayHistory() {
 
   const handleSync = async () => {
     try {
-      await syncReservationsToPayments();
       await refetchReservations();
       await fetchPayments();
-      toast.success("Calendar data synchronized successfully");
+      toast.success("Data refreshed successfully");
     } catch (error) {
-      toast.error("Failed to sync calendar data");
+      toast.error("Failed to refresh data");
     }
   };
 
   const handleSaveOccupancy = async (updatedOccupancy: any[]) => {
-    if (!editOccupancyStay?.paymentId) return;
+    if (!editOccupancyStay?.paymentId || !organization?.id) return;
     
     try {
-      await updateOccupancy(editOccupancyStay.paymentId, updatedOccupancy);
+      const { error } = await supabase
+        .from('payments')
+        .update({ daily_occupancy: updatedOccupancy })
+        .eq('id', editOccupancyStay.paymentId)
+        .eq('organization_id', organization.id);
+
+      if (error) throw error;
+      
       await fetchPayments();
       toast.success("Occupancy updated successfully");
       setEditOccupancyStay(null);
@@ -87,10 +88,21 @@ export default function StayHistory() {
   };
 
   const handleSaveBillingAdjustment = async (data: { manualAdjustment: number; adjustmentNotes: string; billingLocked: boolean }) => {
-    if (!adjustBillingStay?.paymentId) return;
+    if (!adjustBillingStay?.paymentId || !organization?.id) return;
     
     try {
-      await adjustBilling(adjustBillingStay.paymentId, data.manualAdjustment, data.adjustmentNotes, data.billingLocked);
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          manual_adjustment_amount: data.manualAdjustment,
+          adjustment_notes: data.adjustmentNotes,
+          billing_locked: data.billingLocked
+        })
+        .eq('id', adjustBillingStay.paymentId)
+        .eq('organization_id', organization.id);
+
+      if (error) throw error;
+      
       await fetchPayments();
       toast.success("Billing adjustment saved successfully");
       setAdjustBillingStay(null);
@@ -209,8 +221,6 @@ export default function StayHistory() {
     );
   }
 
-  const seasonConfig = summary?.config;
-
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Header */}
@@ -219,11 +229,6 @@ export default function StayHistory() {
           <h1 className="text-3xl font-bold mb-2">Stay History</h1>
           <p className="text-muted-foreground">
             View and manage your past cabin stays
-            {seasonConfig && (
-              <span className="ml-2">
-                (Season: {format(new Date(seasonConfig.startDate), 'MMM d')} - {format(new Date(seasonConfig.endDate), 'MMM d, yyyy')})
-              </span>
-            )}
           </p>
         </div>
 
@@ -550,12 +555,14 @@ export default function StayHistory() {
         />
       )}
 
-      <ExportSeasonDataDialog
-        open={showExportDialog}
-        onOpenChange={setShowExportDialog}
-        seasonData={summary}
-        year={selectedYear}
-      />
+      {showExportDialog && (
+        <ExportSeasonDataDialog
+          open={showExportDialog}
+          onOpenChange={setShowExportDialog}
+          seasonData={null}
+          year={selectedYear || new Date().getFullYear()}
+        />
+      )}
     </div>
   );
 }
