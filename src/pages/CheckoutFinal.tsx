@@ -541,42 +541,6 @@ const CheckoutFinal = () => {
 
             {/* Main checkout content - always accessible */}
             <div className="space-y-6">
-              {/* Stay Summary */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Stay Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Check-in:</span>
-                      <span className="font-medium">{parseDateOnly(checkoutData.checkInDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Check-out:</span>
-                      <span className="font-medium">{parseDateOnly(checkoutData.checkOutDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Number of nights:</span>
-                      <span className="font-medium">{checkoutData.nights}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Reserved guests:</span>
-                      <span className="font-medium">{checkoutData.guests}</span>
-                    </div>
-                    {totalDays > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Actual average guests:</span>
-                        <span className="font-medium">{averageGuests.toFixed(1)} per day</span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Daily Occupancy Breakdown */}
               {dailyBreakdown.length > 0 && (
                 <Card className="mb-6">
