@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, TrendingUp, History, Clock, CalendarDays } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -422,32 +422,68 @@ const CheckoutFinal = () => {
               </div>
             )}
             
-            {/* Preview Mode Banner - shown when checklist is incomplete */}
-            {!checklistStatus?.isComplete && !checkoutData.isSample && (
-              <div className="mb-6">
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                    <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200">
-                      Preview Mode - Checkout List Required
-                    </h3>
-                  </div>
-                  <p className="text-amber-700 dark:text-amber-300 mb-3">
-                    This is a preview of your final checkout. Complete the checkout checklist to unlock payment options.
-                  </p>
-                  {checklistStatus && (
-                    <p className="text-amber-600 dark:text-amber-400 mb-3 text-sm">
-                      Progress: {checklistStatus.completedTasks} of {checklistStatus.totalTasks} tasks completed
-                    </p>
+            {/* Checkout Checklist Status - informational only, not a blocker */}
+            {!checkoutData.isSample && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {checklistStatus?.isComplete ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        Checkout Checklist Complete
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                        Checkout Checklist
+                      </>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {checklistStatus?.isComplete 
+                      ? `Completed ${checklistStatus.completedAt ? new Date(checklistStatus.completedAt).toLocaleString() : 'recently'}`
+                      : 'Optional cleaning and maintenance tasks'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {checklistStatus?.isComplete ? (
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        All {checklistStatus.totalTasks} checklist tasks have been completed. Thank you!
+                      </p>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate("/checkout-list")}
+                      >
+                        View Checklist
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {checklistStatus 
+                            ? `${checklistStatus.completedTasks} of ${checklistStatus.totalTasks} tasks completed`
+                            : 'Review cleaning and maintenance tasks for your stay'
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Complete the checklist separately from payment
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate("/checkout-list")}
+                      >
+                        Go to Checklist
+                      </Button>
+                    </div>
                   )}
-                  <Button 
-                    onClick={() => navigate("/checkout-list")} 
-                    className="bg-amber-600 hover:bg-amber-700 text-white border-0"
-                  >
-                    Complete Checkout List
-                  </Button>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Transferred Reservation Notice */}
@@ -506,8 +542,8 @@ const CheckoutFinal = () => {
               </Card>
             )}
 
-            {/* Wrapper div with conditional styling for preview mode */}
-            <div className={`space-y-6 ${!checklistStatus?.isComplete ? 'pointer-events-none select-none' : ''}`}>
+            {/* Main checkout content - always accessible */}
+            <div className="space-y-6">
               {/* Stay Summary */}
               <Card className="mb-6">
                 <CardHeader>
