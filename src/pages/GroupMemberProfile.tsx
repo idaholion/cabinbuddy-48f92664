@@ -1049,9 +1049,6 @@ const GroupMemberProfile = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <p className="text-muted-foreground text-base">
-              Manage your account security settings and password.
-            </p>
             <ConfirmationDialog
               title="Reset Password"
               description={`A password reset email will be sent to ${user?.email}. You will need to check your email and follow the instructions to create a new password.`}
