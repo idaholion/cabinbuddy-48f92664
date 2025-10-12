@@ -59,7 +59,6 @@ const SeasonalChecklistView = React.lazy(() => import("./pages/SeasonalChecklist
 const CheckoutList = React.lazy(() => import("./pages/CheckoutList"));
 const CheckoutFinal = React.lazy(() => import("./pages/CheckoutFinal"));
 const StayHistory = React.lazy(() => import("./pages/StayHistory"));
-const SeasonSummary = React.lazy(() => import("./pages/SeasonSummary"));
 const PhotoSharing = React.lazy(() => import("./pages/PhotoSharing"));
 const DataBackup = React.lazy(() => import("./pages/DataBackup"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
@@ -130,7 +129,7 @@ const AppContent = () => {
         <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ShoppingList /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/add-receipt" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AddReceipt /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/stay-history" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistory /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/season-summary" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonSummary /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/season-summary" element={<Navigate to="/stay-history" replace />} />
         <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />

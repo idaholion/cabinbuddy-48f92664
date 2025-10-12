@@ -342,7 +342,7 @@ const FinancialDashboard = () => {
           <Button asChild size="lg" variant="outline">
             <Link to="/admin-season-summary">
               <Users className="h-4 w-4 mr-2" />
-              View All Families Season Summary (Admin)
+              View Admin Season Summary (All Families)
             </Link>
           </Button>
           <Button asChild size="lg" className="text-lg px-8 py-6 text-base">

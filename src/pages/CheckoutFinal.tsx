@@ -331,8 +331,8 @@ const CheckoutFinal = () => {
         description: "This payment has been added to your season balance. View Season Summary to see your total.",
       });
       
-      // Navigate to season summary after successful deferral
-      setTimeout(() => navigate("/season-summary"), 1500);
+      // Navigate to stay history after successful deferral
+      setTimeout(() => navigate("/stay-history"), 1500);
     }
   };
 

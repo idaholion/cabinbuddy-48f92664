@@ -120,8 +120,8 @@ const cabinItems = [
     icon: CreditCard,
   },
   {
-    title: "Season Summary",
-    url: "/season-summary",
+    title: "Stay History",
+    url: "/stay-history",
     icon: Calendar,
   },
 ];
