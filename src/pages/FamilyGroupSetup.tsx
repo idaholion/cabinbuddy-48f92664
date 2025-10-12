@@ -27,6 +27,7 @@ import { GroupMemberCard } from "@/components/GroupMemberCard";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "@/components/ui/loading-spinner";
+import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -53,6 +54,7 @@ const FamilyGroupSetup = () => {
   const hasLoadedAutoSave = useRef(false);
   const hasUserMadeChanges = useRef(false);
   const [memberClaimStatus, setMemberClaimStatus] = useState<Map<string, { hasAccount: boolean; hasClaimed: boolean }>>(new Map());
+  const [showProfileClaimDialog, setShowProfileClaimDialog] = useState(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -487,45 +489,25 @@ const FamilyGroupSetup = () => {
         await refetchFamilyGroups();
       }
       
-      // Smart Auto-Claim: If group lead is saving their own group, auto-claim profile
-      const isGroupLeadSavingOwnGroup = 
-        user?.email && 
-        data.leadEmail && 
-        user.email.toLowerCase() === data.leadEmail.toLowerCase() &&
-        !isAdmin && 
-        !isSupervisor;
-      
-      if (isGroupLeadSavingOwnGroup) {
-        try {
-          console.log('🔐 Auto-claiming profile for group lead:', {
-            familyGroup: data.selectedGroup,
-            memberName: data.leadName,
-            userEmail: user.email
-          });
-          
-          // Create/update profile in profiles table
-          await updateUserProfile({
-            first_name: data.leadName?.split(' ')[0] || '',
-            last_name: data.leadName?.split(' ').slice(1).join(' ') || '',
-            display_name: data.leadName || '',
-            family_group: data.selectedGroup,
-            organization_id: organization?.organization_id
-          });
-          
-          // Auto-claim the profile link
-          await claimProfile(
-            data.selectedGroup, 
-            data.leadName || '', 
-            'group_lead'
-          );
-          
-          console.log('✅ Profile auto-claimed successfully');
-        } catch (error) {
-          console.error('❌ Auto-claim error:', error);
-          // Don't show error toast - this is a background operation
-        }
+      // Check if user has claimed their profile
+      const { data: claimedProfile } = await supabase.rpc('get_user_claimed_profile', {
+        p_organization_id: organization?.organization_id
+      });
+
+      if (!claimedProfile) {
+        // User hasn't claimed profile yet - prompt them
+        toast({
+          title: "One more step!",
+          description: "Link your account to your family group profile.",
+        });
+        clearSavedData();
+        hasUserMadeChanges.current = false;
+        setIsSaving(false);
+        setShowProfileClaimDialog(true);
+        return true;
       }
       
+      // Profile already claimed - show success and clear
       clearSavedData();
       hasUserMadeChanges.current = false;
       setIsSaving(false);
@@ -1101,6 +1083,19 @@ const FamilyGroupSetup = () => {
           title="You have unsaved changes"
           description="You have unsaved changes to your family group setup. What would you like to do?"
           showSaveOption={true}
+        />
+
+        {/* Profile Claiming Dialog */}
+        <ProfileClaimingDialog
+          open={showProfileClaimDialog}
+          onOpenChange={setShowProfileClaimDialog}
+          onProfileClaimed={() => {
+            toast({
+              title: "Profile Claimed!",
+              description: "Your account is now linked to your family group.",
+            });
+            navigate("/home");
+          }}
         />
       </div>
     </div>

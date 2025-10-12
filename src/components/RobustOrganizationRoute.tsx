@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
 import { useSetupState } from '@/hooks/useSetupState';
@@ -7,10 +7,12 @@ import { LoadingState } from '@/components/ui/loading-spinner';
 import { ErrorWithRecovery } from '@/components/ui/error-recovery';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { AlertTriangle, Wifi, WifiOff, UserCheck } from 'lucide-react';
 import { SecurityAlert } from '@/components/SecurityAlert';
 import { SecurityMonitoringDashboard } from '@/components/SecurityMonitoringDashboard';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
+import { useEnhancedProfileClaim } from '@/hooks/useEnhancedProfileClaim';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RobustOrganizationRouteProps {
   children: ReactNode;
@@ -29,6 +31,22 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   const { securityData } = useSecurityMonitoring();
   const location = useLocation();
   const [retryAttempts, setRetryAttempts] = useState(0);
+
+  // Get active organization
+  const activeOrganization = organizations.find(org => org.is_primary);
+
+  // Profile claiming state
+  const { claimedProfile, loading: profileLoading } = useEnhancedProfileClaim(
+    activeOrganization?.organization_id
+  );
+  
+  const [profileBannerDismissed, setProfileBannerDismissed] = useState(() => {
+    const dismissed = localStorage.getItem('profileBannerDismissed');
+    return dismissed ? new Date(dismissed) : null;
+  });
+
+  const [canClaimProfile, setCanClaimProfile] = useState(false);
+  const [matchedGroupName, setMatchedGroupName] = useState<string | null>(null);
 
   // Routes that don't require organization checks
   const exemptRoutes = [
@@ -62,6 +80,47 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
     }
   }, [error, offline, retryAttempts]);
 
+  // Check if user's email exists in any family group
+  useEffect(() => {
+    if (!user?.email || !activeOrganization || profileLoading || claimedProfile) {
+      return;
+    }
+
+    const checkProfileAvailability = async () => {
+      const { data: familyGroups } = await supabase
+        .from('family_groups')
+        .select('name, lead_email, host_members')
+        .eq('organization_id', activeOrganization.organization_id);
+
+      if (!familyGroups) return;
+
+      const userEmail = user.email.toLowerCase();
+      
+      for (const group of familyGroups) {
+        // Check if user is lead
+        if (group.lead_email?.toLowerCase() === userEmail) {
+          setCanClaimProfile(true);
+          setMatchedGroupName(group.name);
+          return;
+        }
+        
+        // Check if user is in host_members
+        if (group.host_members && Array.isArray(group.host_members)) {
+          const members = group.host_members as Array<{ name?: string; email?: string }>;
+          for (const member of members) {
+            if (member.email?.toLowerCase() === userEmail) {
+              setCanClaimProfile(true);
+              setMatchedGroupName(group.name);
+              return;
+            }
+          }
+        }
+      }
+    };
+
+    checkProfileAvailability();
+  }, [user?.email, activeOrganization, profileLoading, claimedProfile]);
+
   // Show loading state during initial auth and org checks
   if (authLoading || (orgLoading && !error) || setupLoading) {
     return (
@@ -89,6 +148,25 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
       return <Navigate to={setupPath} replace />;
     }
   }
+
+  // Dismiss profile banner helper
+  const dismissProfileBanner = () => {
+    const now = new Date();
+    localStorage.setItem('profileBannerDismissed', now.toISOString());
+    setProfileBannerDismissed(now);
+  };
+
+  // Show banner if:
+  // 1. No claimed profile
+  // 2. Can claim (email matches)
+  // 3. Not dismissed in last 24 hours
+  // 4. Not on exempt route
+  const showProfileBanner = 
+    !profileLoading &&
+    !claimedProfile &&
+    canClaimProfile &&
+    (!profileBannerDismissed || new Date() > new Date(profileBannerDismissed.getTime() + 24 * 60 * 60 * 1000)) &&
+    !isExemptRoute;
 
   // Handle offline state
   if (offline) {
@@ -149,6 +227,43 @@ export const RobustOrganizationRoute = ({ children }: RobustOrganizationRoutePro
   // All good - render children with optional stale data warning and security monitoring
   return (
     <>
+      {showProfileBanner && (
+        <div className="bg-blue-50 dark:bg-blue-950 border-b border-blue-200 dark:border-blue-800 p-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <UserCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Your profile is ready!
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  Link your account to {matchedGroupName} for full access to reservations and settings.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                asChild
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              >
+                <Link to="/group-member-profile">
+                  Claim Profile
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={dismissProfileBanner}
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                Later
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {showStaleDataWarning && (
         <div className="bg-warning/10 border-b border-warning/20 p-2">
           <div className="max-w-7xl mx-auto flex items-center justify-between text-sm">

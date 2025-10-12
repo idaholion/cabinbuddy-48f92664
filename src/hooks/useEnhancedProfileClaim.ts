@@ -192,6 +192,44 @@ export const useEnhancedProfileClaim = (organizationId?: string) => {
     return claimedProfile?.member_name;
   };
 
+const getSuggestedProfile = async (userEmail: string) => {
+    if (!organizationId || !userEmail) return null;
+    
+    const { data: familyGroups } = await supabase
+      .from('family_groups')
+      .select('name, lead_name, lead_email, host_members')
+      .eq('organization_id', organizationId);
+
+    if (!familyGroups) return null;
+
+    const email = userEmail.toLowerCase();
+    
+    for (const group of familyGroups) {
+      if (group.lead_email?.toLowerCase() === email) {
+        return {
+          familyGroupName: group.name,
+          memberName: group.lead_name,
+          memberType: 'group_lead' as const
+        };
+      }
+      
+      if (group.host_members && Array.isArray(group.host_members)) {
+        const members = group.host_members as Array<{ name?: string; email?: string }>;
+        for (const member of members) {
+          if (member.email?.toLowerCase() === email) {
+            return {
+              familyGroupName: group.name,
+              memberName: member.name,
+              memberType: 'host_member' as const
+            };
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
   useEffect(() => {
     fetchClaimedProfile();
   }, [user, organizationId]);
@@ -207,6 +245,7 @@ export const useEnhancedProfileClaim = (organizationId?: string) => {
     hasClaimedProfile,
     isGroupLead,
     getClaimedGroupName,
-    getClaimedMemberName
+    getClaimedMemberName,
+    getSuggestedProfile
   };
 };
