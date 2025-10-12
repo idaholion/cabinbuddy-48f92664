@@ -73,15 +73,25 @@ export const useCheckoutBilling = (
       }
 
       try {
-        const { data: sessions, error } = await supabase
+        // Build query with organization filter
+        let query = supabase
           .from('checkin_sessions')
-          .select('check_date, checklist_responses')
+          .select('check_date, checklist_responses, family_group')
           .eq('session_type', 'daily')
           .gte('check_date', checkInDate.toISOString().split('T')[0])
-          .lte('check_date', checkOutDate.toISOString().split('T')[0])
+          .lt('check_date', checkOutDate.toISOString().split('T')[0])
           .order('check_date', { ascending: true });
 
+        // Add organization filter if available
+        if (organization?.id) {
+          query = query.eq('organization_id', organization.id);
+        }
+
+        const { data: sessions, error } = await query;
+
         if (error) throw error;
+
+        console.log('📊 [CHECKOUT-BILLING] Fetched daily sessions:', sessions);
 
         // Extract daily occupancy from sessions
         // NOTE: Only count nights spent, not the checkout day
@@ -92,9 +102,17 @@ export const useCheckoutBilling = (
           const dateStr = currentDate.toISOString().split('T')[0];
           const session = sessions?.find(s => s.check_date === dateStr);
           
+          console.log(`📅 [CHECKOUT-BILLING] Processing ${dateStr}:`, {
+            hasSession: !!session,
+            familyGroup: session?.family_group,
+            hasResponses: !!session?.checklist_responses
+          });
+          
           if (session && session.checklist_responses) {
             const responses = session.checklist_responses as any;
             const dailyOcc = responses.dailyOccupancy;
+            
+            console.log(`  Daily occupancy data for ${dateStr}:`, dailyOcc);
             
             if (dailyOcc) {
               // Sum up all guests for this day from dailyOccupancy object
@@ -102,19 +120,23 @@ export const useCheckoutBilling = (
                 (sum, val) => sum + (parseInt(String(val)) || 0),
                 0
               );
+              console.log(`  Total guests calculated: ${totalGuests}`);
               occupancyData[dateStr] = totalGuests;
             } else {
               // Fallback to reserved guest count
+              console.log(`  No dailyOccupancy data, using reserved guests: ${reservedGuests}`);
               occupancyData[dateStr] = reservedGuests;
             }
           } else {
             // No check-in data for this day - use reserved guest count as fallback
+            console.log(`  No session found, using reserved guests: ${reservedGuests}`);
             occupancyData[dateStr] = reservedGuests;
           }
           
           currentDate.setDate(currentDate.getDate() + 1);
         }
 
+        console.log('📊 [CHECKOUT-BILLING] Final occupancy data:', occupancyData);
         setDailyOccupancy(occupancyData);
       } catch (error) {
         console.error('Error fetching daily occupancy:', error);
