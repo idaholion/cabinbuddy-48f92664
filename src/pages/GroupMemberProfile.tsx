@@ -1126,20 +1126,6 @@ const GroupMemberProfile = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Information Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-base text-muted-foreground">
-          <p>• Your family group and name are automatically detected from your account</p>
-          <p>• If auto-detection fails, you can manually claim your profile</p>
-          <p>• Update your email and phone number as needed</p>
-          <p>• Your changes will be saved automatically</p>
-          <p>• Use the home buttons to navigate back to the main page</p>
-        </CardContent>
-      </Card>
-
       {/* Bottom Home Button */}
       <div className="flex justify-center pb-6">
         <Button onClick={() => navigate('/home')} size="lg" className="flex items-center space-x-2 text-base">
