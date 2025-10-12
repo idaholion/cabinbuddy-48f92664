@@ -430,7 +430,7 @@ const CheckoutFinal = () => {
                     {checklistStatus?.isComplete ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-600" />
-                        Checkout Checklist Complete
+                        Checkout Checklist Completed
                       </>
                     ) : (
                       <>
@@ -442,7 +442,7 @@ const CheckoutFinal = () => {
                   <CardDescription>
                     {checklistStatus?.isComplete 
                       ? `Completed ${checklistStatus.completedAt ? new Date(checklistStatus.completedAt).toLocaleString() : 'recently'}`
-                      : 'Optional cleaning and maintenance tasks'
+                      : "Don't forget to finish the checkout checklist before you go"
                     }
                   </CardDescription>
                 </CardHeader>
