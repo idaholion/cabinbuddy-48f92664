@@ -401,7 +401,9 @@ export default function StayHistory() {
                       variant="outline"
                       size="sm"
                       onClick={() => setEditOccupancyStay({
-                        ...reservation,
+                        startDate: new Date(reservation.start_date),
+                        endDate: new Date(reservation.end_date),
+                        family_group: reservation.family_group,
                         paymentId: stayData.paymentId,
                         dailyOccupancy: stayData.dailyOccupancy
                       })}
