@@ -490,35 +490,41 @@ export default function StayHistory() {
       </div>
 
       {/* Dialogs */}
-      <EditOccupancyDialog
-        open={!!editOccupancyStay}
-        onOpenChange={(open) => !open && setEditOccupancyStay(null)}
-        stay={editOccupancyStay}
-        currentOccupancy={editOccupancyStay?.dailyOccupancy || []}
-        onSave={handleSaveOccupancy}
-      />
+      {editOccupancyStay && (
+        <EditOccupancyDialog
+          open={true}
+          onOpenChange={(open) => !open && setEditOccupancyStay(null)}
+          stay={editOccupancyStay}
+          currentOccupancy={editOccupancyStay.dailyOccupancy || []}
+          onSave={handleSaveOccupancy}
+        />
+      )}
 
-      <AdjustBillingDialog
-        open={!!adjustBillingStay}
-        onOpenChange={(open) => !open && setAdjustBillingStay(null)}
-        stay={adjustBillingStay}
-        onSave={handleSaveBillingAdjustment}
-      />
+      {adjustBillingStay && (
+        <AdjustBillingDialog
+          open={true}
+          onOpenChange={(open) => !open && setAdjustBillingStay(null)}
+          stay={adjustBillingStay}
+          onSave={handleSaveBillingAdjustment}
+        />
+      )}
 
-      <RecordPaymentDialog
-        open={!!recordPaymentStay}
-        onOpenChange={(open) => !open && setRecordPaymentStay(null)}
-        stay={recordPaymentStay ? {
-          id: recordPaymentStay.paymentId,
-          balanceDue: recordPaymentStay.amountDue,
-          family_group: recordPaymentStay.family_group
-        } : { id: '', balanceDue: 0, family_group: '' }}
-        onSave={async (paymentData) => {
-          // Handle recording the payment via usePayments
-          await fetchPayments();
-          setRecordPaymentStay(null);
-        }}
-      />
+      {recordPaymentStay && (
+        <RecordPaymentDialog
+          open={true}
+          onOpenChange={(open) => !open && setRecordPaymentStay(null)}
+          stay={{
+            id: recordPaymentStay.paymentId,
+            balanceDue: recordPaymentStay.amountDue,
+            family_group: recordPaymentStay.family_group
+          }}
+          onSave={async (paymentData) => {
+            // Handle recording the payment via usePayments
+            await fetchPayments();
+            setRecordPaymentStay(null);
+          }}
+        />
+      )}
 
       {splitCostStay && splitCostStay.dailyOccupancy && splitCostStay.dailyOccupancy.length > 0 && (
         <GuestCostSplitDialog
