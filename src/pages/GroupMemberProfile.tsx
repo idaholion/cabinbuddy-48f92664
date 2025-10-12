@@ -1031,9 +1031,6 @@ const GroupMemberProfile = () => {
                       {loading ? "Saving Changes..." : "Save Profile Changes"}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Changes will update your contact information in the system
-                  </p>
                 </div>
               )}
             </form>
