@@ -165,8 +165,9 @@ const DailyCheckIn = () => {
     let dayNumber = 1;
     
     while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
       days.push({
-        key: `day-${dayNumber}`,
+        key: dateStr, // Use actual date as key for billing integration
         label: `Day ${dayNumber} (${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
       });
       currentDate.setDate(currentDate.getDate() + 1);
@@ -464,10 +465,10 @@ const DailyCheckIn = () => {
               
               <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 max-w-2xl">
                 {(currentReservation ? stayDays : [
-                  { key: 'day-1', label: 'Day 1 (Dec 15)' },
-                  { key: 'day-2', label: 'Day 2 (Dec 16)' },
-                  { key: 'day-3', label: 'Day 3 (Dec 17)' },
-                  { key: 'day-4', label: 'Day 4 (Dec 18)' }
+                  { key: '2024-12-15', label: 'Day 1 (Dec 15)' },
+                  { key: '2024-12-16', label: 'Day 2 (Dec 16)' },
+                  { key: '2024-12-17', label: 'Day 3 (Dec 17)' },
+                  { key: '2024-12-18', label: 'Day 4 (Dec 18)' }
                 ]).map((day) => (
                   <div key={day.key} className="space-y-2">
                     <Label htmlFor={day.key}>
