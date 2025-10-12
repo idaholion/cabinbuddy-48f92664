@@ -47,7 +47,7 @@ export default function StayHistory() {
   const availableYears = Array.from(
     new Set(
       reservations
-        .map(r => new Date(r.check_in_date).getFullYear())
+        .map(r => new Date(r.start_date).getFullYear())
         .sort((a, b) => b - a)
     )
   );
@@ -114,8 +114,8 @@ export default function StayHistory() {
 
   const filteredReservations = reservations
     .filter((reservation) => {
-      const checkInDate = new Date(reservation.check_in_date);
-      const checkOutDate = new Date(reservation.check_out_date);
+      const checkInDate = new Date(reservation.start_date);
+      const checkOutDate = new Date(reservation.end_date);
       const isPast = checkOutDate < new Date();
       const isConfirmed = reservation.status === "confirmed";
       const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
@@ -123,11 +123,11 @@ export default function StayHistory() {
       
       return isPast && isConfirmed && matchesYear && matchesFamily;
     })
-    .sort((a, b) => new Date(b.check_in_date).getTime() - new Date(a.check_in_date).getTime());
+    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
 
   const calculateStayData = (reservation: any) => {
-    const checkInDate = new Date(reservation.check_in_date);
-    const checkOutDate = new Date(reservation.check_out_date);
+    const checkInDate = new Date(reservation.start_date);
+    const checkOutDate = new Date(reservation.end_date);
     const nights = differenceInDays(checkOutDate, checkInDate);
     
     // Find payment record for this reservation
@@ -177,7 +177,7 @@ export default function StayHistory() {
   // Calculate summary stats
   const totalStays = filteredReservations.length;
   const totalNights = filteredReservations.reduce((sum, res) => {
-    const nights = differenceInDays(new Date(res.check_out_date), new Date(res.check_in_date));
+    const nights = differenceInDays(new Date(res.end_date), new Date(res.start_date));
     return sum + nights;
   }, 0);
   const totalPaid = filteredReservations.reduce((sum, res) => {
@@ -312,8 +312,8 @@ export default function StayHistory() {
         <h2 className="text-xl font-semibold">Past Stays</h2>
         {filteredReservations.map((reservation) => {
           const stayData = calculateStayData(reservation);
-          const checkInDate = new Date(reservation.check_in_date);
-          const checkOutDate = new Date(reservation.check_out_date);
+          const checkInDate = new Date(reservation.start_date);
+          const checkOutDate = new Date(reservation.end_date);
 
           return (
             <Card key={reservation.id}>
@@ -336,7 +336,7 @@ export default function StayHistory() {
                       {stayData.nights} {stayData.nights === 1 ? "night" : "nights"} • {reservation.family_group}
                     </CardDescription>
                   </div>
-                  <Link to={`/calendar?date=${reservation.check_in_date}`}>
+                  <Link to={`/calendar?date=${reservation.start_date}`}>
                     <Button variant="ghost" size="sm">
                       <Calendar className="h-4 w-4" />
                     </Button>
