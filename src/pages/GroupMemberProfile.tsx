@@ -1058,8 +1058,8 @@ const GroupMemberProfile = () => {
               confirmText="Send Reset Email"
               onConfirm={handlePasswordReset}
             >
-              <Button variant="outline" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
+              <Button size="lg" className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
                 Change Password
               </Button>
             </ConfirmationDialog>
