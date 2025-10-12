@@ -24,7 +24,7 @@ import { toast } from "sonner";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = All Years
   const [editOccupancyStay, setEditOccupancyStay] = useState<any>(null);
   const [adjustBillingStay, setAdjustBillingStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
@@ -106,7 +106,7 @@ export default function StayHistory() {
       const checkOutDate = new Date(reservation.check_out_date);
       const isPast = checkOutDate < new Date();
       const isConfirmed = reservation.status === "confirmed";
-      const matchesYear = selectedYear ? checkInDate.getFullYear() === selectedYear : true;
+      const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
       const matchesFamily = selectedFamilyGroup === "all" || reservation.family_group === selectedFamilyGroup;
       
       return isPast && isConfirmed && matchesYear && matchesFamily;
