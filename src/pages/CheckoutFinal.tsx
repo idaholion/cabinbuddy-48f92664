@@ -792,76 +792,19 @@ const CheckoutFinal = () => {
                         </div>
                       </>
                     )}
+                    
+                    {/* Defer Payment Button */}
+                    <Separator className="my-4" />
+                    <Button
+                      variant="outline"
+                      onClick={handlePayLater}
+                      disabled={isCreatingPayment}
+                      className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
+                    >
+                      <Clock className="h-4 w-4 mr-2" />
+                      {isCreatingPayment ? "Processing..." : "Will pay by end of season"}
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Payment Options */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Payment Options</CardTitle>
-                  <CardDescription>
-                    Choose to pay now or defer payment to end of season
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Pay Later Option */}
-                  <div className="space-y-4">
-                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="text-lg font-medium flex items-center gap-2 mb-2">
-                            <Clock className="h-5 w-5 text-amber-600" />
-                            Pay at End of Season
-                          </h4>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            Defer this payment until the end of the season
-                            {financialSettings?.season_end_month && financialSettings?.season_end_day 
-                              ? ` (${new Date(2000, financialSettings.season_end_month - 1, financialSettings.season_end_day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})` 
-                              : ''
-                            }. You can pay your full season balance at once.
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              onClick={handlePayLater}
-                              disabled={isCreatingPayment}
-                              className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
-                            >
-                              {isCreatingPayment ? "Processing..." : "Defer Payment"}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Check Option */}
-                  {checkoutData.checkAddress.name && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-green-600" />
-                        <h4 className="text-lg font-medium">Check Payment</h4>
-                      </div>
-                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-4">
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-base font-medium">Make check payable to:</p>
-                            <p className="text-base">{checkoutData.checkAddress.name}</p>
-                          </div>
-                          {checkoutData.checkAddress.address && (
-                            <div>
-                              <p className="text-base font-medium">Mail to:</p>
-                              <p className="text-base whitespace-pre-line">{checkoutData.checkAddress.address}</p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-base font-medium">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
