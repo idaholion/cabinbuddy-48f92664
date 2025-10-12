@@ -52,6 +52,11 @@ import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
 
 const setupItems = [
   {
+    title: "Account Setup",
+    url: "/setup",
+    icon: Wrench,
+  },
+  {
     title: "Family Setup",
     url: "/family-setup",
     icon: Users,
@@ -245,18 +250,6 @@ export function AppSidebar() {
                   >
                     <Home className="h-4 w-4" />
                     <span>Home</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Account Setup">
-                  <NavLink 
-                    to="/setup" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Wrench className="h-4 w-4" />
-                    <span>Account Setup</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
