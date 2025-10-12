@@ -813,9 +813,6 @@ const CheckoutFinal = () => {
                 <CardContent className="pt-6">
                   <div className="text-center space-y-3">
                     <h3 className="text-lg font-semibold">Thank You for Your Stay!</h3>
-                    <p className="text-base text-muted-foreground">
-                      Please complete payment within 7 days. You will receive a confirmation email once payment is processed.
-                    </p>
                     <div className="flex gap-3 justify-center flex-wrap">
                       <Button variant="outline" onClick={() => navigate("/home")} className="text-base">
                         Return to Home
