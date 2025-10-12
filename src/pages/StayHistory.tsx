@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -21,6 +21,7 @@ import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "sonner";
 
 export default function StayHistory() {
@@ -33,11 +34,12 @@ export default function StayHistory() {
   const [viewReceiptPayment, setViewReceiptPayment] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
-  const { reservations, loading: reservationsLoading, refetchReservations } = useReservations();
+  const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isCalendarKeeper } = useUserRole();
+  const canDeleteStays = isAdmin || isCalendarKeeper;
   const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
 
@@ -109,6 +111,18 @@ export default function StayHistory() {
     } catch (error) {
       toast.error("Failed to save billing adjustment");
       throw error;
+    }
+  };
+
+  const handleDeleteStay = async (reservationId: string) => {
+    try {
+      const success = await deleteReservation(reservationId);
+      if (success) {
+        await fetchPayments();
+        toast.success("Stay deleted successfully");
+      }
+    } catch (error) {
+      toast.error("Failed to delete stay");
     }
   };
 
@@ -466,6 +480,21 @@ export default function StayHistory() {
                         <Receipt className="h-4 w-4 mr-2" />
                         View Receipt
                       </Button>
+                    )}
+                    {canDeleteStays && (
+                      <ConfirmationDialog
+                        title="Delete Stay"
+                        description="Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        variant="destructive"
+                        onConfirm={() => handleDeleteStay(reservation.id)}
+                      >
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Stay
+                        </Button>
+                      </ConfirmationDialog>
                     )}
                   </div>
                 )}
