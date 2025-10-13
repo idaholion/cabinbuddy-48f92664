@@ -42,6 +42,7 @@ export const useCheckoutBilling = (
 ): CheckoutBillingResult => {
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [billingLocked, setBillingLocked] = useState(false);
   const { organization } = useOrganization();
   const { toast } = useToast();
 
@@ -73,6 +74,28 @@ export const useCheckoutBilling = (
       }
 
       try {
+        // First, check if payment record exists (source of truth)
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('daily_occupancy, billing_locked')
+          .eq('reservation_id', reservationId)
+          .maybeSingle();
+
+        if (payment) {
+          console.log('useCheckoutBilling - Found payment with daily_occupancy:', payment);
+          setBillingLocked(payment.billing_locked ?? false);
+          
+          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy)) {
+            const occupancyRecord: Record<string, number> = {};
+            (payment.daily_occupancy as any[]).forEach((day: any) => {
+              occupancyRecord[day.date] = day.guests;
+            });
+            setDailyOccupancy(occupancyRecord);
+            setLoading(false);
+            return;
+          }
+        }
+
         // Build query with organization filter
         let query = supabase
           .from('checkin_sessions')
@@ -402,6 +425,7 @@ export const useCheckoutBilling = (
     totalDays,
     averageGuests,
     loading,
+    billingLocked,
     createDeferredPayment,
     createSplitPayment,
   };

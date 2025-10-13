@@ -521,13 +521,14 @@ export default function StayHistory() {
       </div>
 
       {/* Dialogs */}
-      {editOccupancyStay && (
+      {editOccupancyStay && organization && (
         <EditOccupancyDialog
           open={true}
           onOpenChange={(open) => !open && setEditOccupancyStay(null)}
           stay={editOccupancyStay}
           currentOccupancy={editOccupancyStay.dailyOccupancy || []}
           onSave={handleSaveOccupancy}
+          organizationId={organization.id}
         />
       )}
 

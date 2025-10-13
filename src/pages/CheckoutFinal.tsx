@@ -11,6 +11,7 @@ import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
+import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
 import { useToast } from "@/hooks/use-toast";
 import { parseDateOnly } from "@/lib/date-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,9 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useAuth } from "@/contexts/AuthContext";
 import { getHostFirstName } from "@/lib/reservation-utils";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Lock } from "lucide-react";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -44,7 +48,11 @@ const CheckoutFinal = () => {
   
   // Guest cost split dialog state
   const [splitCostsOpen, setSplitCostsOpen] = useState(false);
+  const [editedOccupancy, setEditedOccupancy] = useState<Record<string, number>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
   const { organization } = useOrganization();
+  const { updateOccupancy, syncing: syncingOccupancy } = useDailyOccupancySync(organization?.id || '');
 
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
@@ -305,6 +313,7 @@ const CheckoutFinal = () => {
     totalDays,
     averageGuests,
     loading: billingLoading,
+    billingLocked,
     createDeferredPayment,
     createSplitPayment 
   } = useCheckoutBilling(
@@ -319,6 +328,32 @@ const CheckoutFinal = () => {
   const totalAmount = Math.max(0, enhancedBilling.total - checkoutData.receiptsTotal);
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+
+  const handleGuestCountChange = (dateStr: string, count: number) => {
+    setEditedOccupancy(prev => ({
+      ...prev,
+      [dateStr]: count
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleSaveOccupancyChanges = async () => {
+    if (!currentReservation) return;
+
+    const updatedOccupancy = dailyBreakdown.map(day => ({
+      date: day.date,
+      guests: editedOccupancy[day.date] ?? day.guests,
+    }));
+
+    const result = await updateOccupancy(currentReservation.id, updatedOccupancy);
+    
+    if (result.success) {
+      setEditedOccupancy({});
+      setHasUnsavedChanges(false);
+      // Refresh billing data
+      window.location.reload();
+    }
+  };
 
   const handlePayLater = async () => {
     setIsCreatingPayment(true);

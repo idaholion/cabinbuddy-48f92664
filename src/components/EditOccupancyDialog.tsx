@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format, eachDayOfInterval, addDays } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Lock } from "lucide-react";
+import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
 
 interface DailyOccupancy {
   date: string;
@@ -19,9 +22,11 @@ interface EditOccupancyDialogProps {
     startDate: Date;
     endDate: Date;
     family_group: string;
+    reservationId: string;
   };
   currentOccupancy: DailyOccupancy[];
   onSave: (occupancy: DailyOccupancy[]) => Promise<void>;
+  organizationId: string;
 }
 
 export const EditOccupancyDialog = ({
@@ -30,8 +35,11 @@ export const EditOccupancyDialog = ({
   stay,
   currentOccupancy,
   onSave,
+  organizationId,
 }: EditOccupancyDialogProps) => {
   const { toast } = useToast();
+  const { updateOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
+  const [billingLocked, setBillingLocked] = useState(false);
   
   // Only include nights spent (exclude checkout day)
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
@@ -52,8 +60,13 @@ export const EditOccupancyDialog = ({
   console.log('EditOccupancyDialog - Filtered occupancy (excluding checkout day):', filteredOccupancy);
   
   const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(filteredOccupancy);
-  const [saving, setSaving] = useState(false);
   const [fillValue, setFillValue] = useState<string>("0");
+
+  useEffect(() => {
+    if (open && stay.reservationId) {
+      getBillingLockStatus(stay.reservationId).then(setBillingLocked);
+    }
+  }, [open, stay.reservationId, getBillingLockStatus]);
 
   const handleGuestCountChange = (dateStr: string, count: number) => {
     setOccupancy(prev => {
@@ -79,17 +92,16 @@ export const EditOccupancyDialog = ({
   };
 
   const handleSave = async () => {
-    setSaving(true);
     try {
       console.log('EditOccupancyDialog - Saving occupancy:', occupancy);
       console.log('Total guests:', occupancy.reduce((sum, day) => sum + (day.guests || 0), 0));
-      await onSave(occupancy);
-      toast({
-        title: "Occupancy updated",
-        description: "Daily occupancy data has been saved successfully.",
-      });
-      // Close dialog and clear state
-      onOpenChange(false);
+      
+      const result = await updateOccupancy(stay.reservationId, occupancy);
+      
+      if (result.success) {
+        await onSave(occupancy); // Still call parent callback for any additional logic
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error('Error saving occupancy:', error);
       toast({
@@ -97,8 +109,6 @@ export const EditOccupancyDialog = ({
         description: "Failed to save occupancy data. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -106,9 +116,22 @@ export const EditOccupancyDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>Edit Daily Occupancy - {stay.family_group}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Edit Daily Occupancy - {stay.family_group}
+            {billingLocked && (
+              <Badge variant="secondary" className="ml-2">
+                <Lock className="h-3 w-3 mr-1" />
+                Billing Locked
+              </Badge>
+            )}
+          </DialogTitle>
           <p className="text-sm text-muted-foreground">
             {format(stay.startDate, 'MMM d')} - {format(stay.endDate, 'MMM d, yyyy')}
+            {billingLocked && (
+              <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                ⚠️ Guest counts will update but charges will not recalculate
+              </span>
+            )}
           </p>
         </DialogHeader>
         
@@ -160,8 +183,8 @@ export const EditOccupancyDialog = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
+          <Button onClick={handleSave} disabled={syncing}>
+            {syncing ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>
