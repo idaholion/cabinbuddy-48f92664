@@ -49,10 +49,13 @@ const CheckoutFinal = () => {
   // Guest cost split dialog state
   const [splitCostsOpen, setSplitCostsOpen] = useState(false);
   const [editedOccupancy, setEditedOccupancy] = useState<Record<string, number>>({});
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [paymentCreated, setPaymentCreated] = useState(false);
   
   const { organization } = useOrganization();
   const { updateOccupancy, syncing: syncingOccupancy } = useDailyOccupancySync(organization?.id || '');
+  
+  // Check if there are unsaved occupancy changes
+  const hasOccupancyChanges = Object.keys(editedOccupancy).length > 0;
 
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
@@ -329,15 +332,7 @@ const CheckoutFinal = () => {
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
-  const handleGuestCountChange = (dateStr: string, count: number) => {
-    setEditedOccupancy(prev => ({
-      ...prev,
-      [dateStr]: count
-    }));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleSaveOccupancyChanges = async () => {
+  const handleSaveOccupancy = async () => {
     if (!currentReservation) return;
 
     const updatedOccupancy = dailyBreakdown.map(day => ({
@@ -349,10 +344,13 @@ const CheckoutFinal = () => {
     
     if (result.success) {
       setEditedOccupancy({});
-      setHasUnsavedChanges(false);
       // Refresh billing data
       window.location.reload();
     }
+  };
+  
+  const handleCancelOccupancyEdit = () => {
+    setEditedOccupancy({});
   };
 
   const handlePayLater = async () => {
@@ -583,9 +581,18 @@ const CheckoutFinal = () => {
                     <CardTitle className="flex items-center gap-2">
                       <CalendarDays className="h-5 w-5" />
                       Daily Occupancy & Charges
+                      {billingLocked && (
+                        <Badge variant="secondary" className="ml-2">
+                          <Lock className="h-3 w-3 mr-1" />
+                          Billing Locked
+                        </Badge>
+                      )}
                     </CardTitle>
                     <CardDescription>
-                      Billing calculated from actual daily guest counts
+                      {billingLocked 
+                        ? "Billing is locked - guest counts can be updated but charges are frozen"
+                        : "Edit guest counts to recalculate charges"
+                      }
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -595,13 +602,32 @@ const CheckoutFinal = () => {
                         <span className="text-center">Guests</span>
                         <span className="text-right">Cost</span>
                       </div>
-                      {dailyBreakdown.map((day, index) => (
-                        <div key={index} className="grid grid-cols-3 gap-2 text-sm py-1">
-                          <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          <span className="text-center font-medium">{day.guests}</span>
-                          <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
-                        </div>
-                      ))}
+                      {dailyBreakdown.map((day, index) => {
+                        const editedGuests = editedOccupancy[day.date] ?? day.guests;
+                        return (
+                          <div key={index} className="grid grid-cols-3 gap-2 items-center text-sm py-1">
+                            <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                            <div className="flex justify-center">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="20"
+                                value={editedGuests}
+                                onChange={(e) => {
+                                  const newValue = parseInt(e.target.value) || 0;
+                                  setEditedOccupancy(prev => ({
+                                    ...prev,
+                                    [day.date]: newValue
+                                  }));
+                                }}
+                                className="w-20 h-8 text-center"
+                                disabled={paymentCreated}
+                              />
+                            </div>
+                            <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
+                          </div>
+                        );
+                      })}
                       <div className="pt-2 border-t mt-2">
                         <div className="grid grid-cols-3 gap-2 text-sm font-semibold">
                           <span>Total ({totalDays} days)</span>
@@ -610,8 +636,28 @@ const CheckoutFinal = () => {
                         </div>
                       </div>
                       
+                      {/* Save/Cancel buttons */}
+                      {hasOccupancyChanges && !paymentCreated && (
+                        <div className="flex gap-2 pt-4 mt-4 border-t">
+                          <Button
+                            onClick={handleSaveOccupancy}
+                            disabled={syncingOccupancy}
+                            className="flex-1"
+                          >
+                            {syncingOccupancy ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                          <Button
+                            onClick={handleCancelOccupancyEdit}
+                            variant="outline"
+                            disabled={syncingOccupancy}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                      
                       {/* Split Guest Costs Button */}
-                      {totalDays > 0 && dailyBreakdown.length > 0 && (
+                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && (
                         <div className="pt-4 mt-4 border-t">
                           <Button
                             variant="outline"
