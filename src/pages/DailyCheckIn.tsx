@@ -18,6 +18,7 @@ import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { parseDateOnly } from "@/lib/date-utils";
+import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
 
 const DailyCheckIn = () => {
   const { toast } = useToast();
@@ -36,6 +37,7 @@ const DailyCheckIn = () => {
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentReservation, setCurrentReservation] = useState<any>(null);
+  const { updateOccupancy, syncing: syncingOccupancy } = useDailyOccupancySync(organization?.id || '');
   const [existingSession, setExistingSession] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
@@ -350,6 +352,19 @@ const DailyCheckIn = () => {
         toast({
           title: "Daily Check-In Saved",
           description: `${completedTasks} tasks completed. Data saved to database.`,
+        });
+      }
+
+      // Sync occupancy data to payments table for billing integration
+      if (currentReservation && Object.keys(dailyOccupancy).length > 0) {
+        const occupancyArray = Object.entries(dailyOccupancy).map(([date, guests]) => ({
+          date,
+          guests: parseInt(guests) || 0,
+          names: []
+        }));
+
+        await updateOccupancy(currentReservation.id, occupancyArray, {
+          skipBillingRecalc: true // Don't recalculate billing automatically
         });
       }
 
