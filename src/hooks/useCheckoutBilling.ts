@@ -24,6 +24,7 @@ interface CheckoutBillingResult {
   totalDays: number;
   averageGuests: number;
   loading: boolean;
+  billingLocked: boolean;
   createDeferredPayment: () => Promise<boolean>;
   createSplitPayment: (
     splitToUserId: string,
