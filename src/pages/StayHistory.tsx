@@ -419,13 +419,13 @@ export default function StayHistory() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditOccupancyStay({
-                        startDate: parseDateOnly(reservation.start_date),
-                        endDate: parseDateOnly(reservation.end_date),
-                        family_group: reservation.family_group,
-                        paymentId: stayData.paymentId,
-                        dailyOccupancy: stayData.dailyOccupancy
-                      })}
+                  onClick={() => setEditOccupancyStay({
+                    startDate: parseDateOnly(reservation.start_date),
+                    endDate: parseDateOnly(reservation.end_date),
+                    family_group: reservation.family_group,
+                    reservationId: reservation.id,
+                    dailyOccupancy: stayData.dailyOccupancy
+                  })}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Occupancy
