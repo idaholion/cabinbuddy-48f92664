@@ -317,6 +317,7 @@ const CheckoutFinal = () => {
     averageGuests,
     loading: billingLoading,
     billingLocked,
+    refetch,
     createDeferredPayment,
     createSplitPayment 
   } = useCheckoutBilling(
@@ -933,7 +934,9 @@ const CheckoutFinal = () => {
             totalAmount={enhancedBilling.total}
             sourceUserId={currentReservation.user_id || ''}
             sourceFamilyGroup={currentReservation.family_group}
-            onSplitCreated={() => {
+            onSplitCreated={async () => {
+              // Refresh billing data to show updated amounts
+              await refetch();
               toast({
                 title: "Costs Split Successfully",
                 description: "Guest will be notified via email and charges have been updated.",

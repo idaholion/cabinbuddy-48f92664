@@ -25,6 +25,7 @@ interface CheckoutBillingResult {
   averageGuests: number;
   loading: boolean;
   billingLocked: boolean;
+  refetch: () => Promise<void>;
   createDeferredPayment: () => Promise<boolean>;
   createSplitPayment: (
     splitToUserId: string,
@@ -48,15 +49,14 @@ export const useCheckoutBilling = (
   const { toast } = useToast();
 
   // Fetch daily check-in data
-  useEffect(() => {
-    const fetchDailyOccupancy = async () => {
-      if (!checkInDate || !checkOutDate) {
-        setLoading(false);
-        return;
-      }
+  const fetchDailyOccupancy = async () => {
+    if (!checkInDate || !checkOutDate) {
+      setLoading(false);
+      return;
+    }
 
-      // Generate sample data if no reservation (for demo/preview)
-      if (!reservationId) {
+    // Generate sample data if no reservation (for demo/preview)
+    if (!reservationId) {
         const sampleOccupancy: Record<string, number> = {};
         const currentDate = new Date(checkInDate);
         const guestCounts = [4, 5, 4, 3]; // Varying guest counts for realism
@@ -182,11 +182,12 @@ export const useCheckoutBilling = (
           fallbackDate.setDate(fallbackDate.getDate() + 1);
         }
         setDailyOccupancy(fallbackData);
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchDailyOccupancy();
   }, [reservationId, checkInDate, checkOutDate, reservedGuests, toast]);
 
@@ -413,6 +414,12 @@ export const useCheckoutBilling = (
     }
   };
 
+  // Refetch function to manually reload occupancy data
+  const refetch = async () => {
+    setLoading(true);
+    await fetchDailyOccupancy();
+  };
+
   return {
     dailyBreakdown: result.dayBreakdown,
     billing: {
@@ -429,6 +436,7 @@ export const useCheckoutBilling = (
     averageGuests,
     loading,
     billingLocked,
+    refetch,
     createDeferredPayment,
     createSplitPayment,
   };
