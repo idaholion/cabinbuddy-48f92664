@@ -14,6 +14,7 @@ import { usePayments } from "@/hooks/usePayments";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays } from "date-fns";
+import { parseDateOnly } from "@/lib/date-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
@@ -130,8 +131,8 @@ export default function StayHistory() {
 
   const filteredReservations = reservations
     .filter((reservation) => {
-      const checkInDate = new Date(reservation.start_date);
-      const checkOutDate = new Date(reservation.end_date);
+      const checkInDate = parseDateOnly(reservation.start_date);
+      const checkOutDate = parseDateOnly(reservation.end_date);
       const isPast = checkOutDate < new Date();
       const isConfirmed = reservation.status === "confirmed";
       const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
@@ -142,8 +143,8 @@ export default function StayHistory() {
     .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
 
   const calculateStayData = (reservation: any) => {
-    const checkInDate = new Date(reservation.start_date);
-    const checkOutDate = new Date(reservation.end_date);
+    const checkInDate = parseDateOnly(reservation.start_date);
+    const checkOutDate = parseDateOnly(reservation.end_date);
     const nights = differenceInDays(checkOutDate, checkInDate);
     
     // Find payment record for this reservation
@@ -152,7 +153,7 @@ export default function StayHistory() {
     // Find receipts for this stay period (filter by user_id and date range)
     const stayReceipts = receipts.filter((receipt) => {
       if (!user || receipt.user_id !== user.id) return false;
-      const receiptDate = new Date(receipt.date);
+      const receiptDate = parseDateOnly(receipt.date);
       return receiptDate >= checkInDate && receiptDate <= checkOutDate;
     });
     const receiptsTotal = stayReceipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0);
@@ -195,7 +196,7 @@ export default function StayHistory() {
   // Calculate summary stats
   const totalStays = filteredReservations.length;
   const totalNights = filteredReservations.reduce((sum, res) => {
-    const nights = differenceInDays(new Date(res.end_date), new Date(res.start_date));
+    const nights = differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
     return sum + nights;
   }, 0);
   const totalPaid = filteredReservations.reduce((sum, res) => {
@@ -330,8 +331,8 @@ export default function StayHistory() {
         <h2 className="text-xl font-semibold">Past Stays</h2>
         {filteredReservations.map((reservation) => {
           const stayData = calculateStayData(reservation);
-          const checkInDate = new Date(reservation.start_date);
-          const checkOutDate = new Date(reservation.end_date);
+          const checkInDate = parseDateOnly(reservation.start_date);
+          const checkOutDate = parseDateOnly(reservation.end_date);
 
           return (
             <Card key={reservation.id}>
@@ -419,8 +420,8 @@ export default function StayHistory() {
                       variant="outline"
                       size="sm"
                       onClick={() => setEditOccupancyStay({
-                        startDate: new Date(reservation.start_date),
-                        endDate: new Date(reservation.end_date),
+                        startDate: parseDateOnly(reservation.start_date),
+                        endDate: parseDateOnly(reservation.end_date),
                         family_group: reservation.family_group,
                         paymentId: stayData.paymentId,
                         dailyOccupancy: stayData.dailyOccupancy
