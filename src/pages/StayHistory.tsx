@@ -181,19 +181,26 @@ export default function StayHistory() {
     };
   };
 
-  // Sort reservations chronologically (oldest first) and calculate running balance
+  // Sort reservations chronologically (oldest first) and calculate running balance PER USER
   const sortedReservations = [...filteredReservations].sort((a, b) => 
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Calculate running balance for each reservation
+  // Group reservations by user to calculate individual running balances
+  const userBalances = new Map<string, number>();
+  
+  // Calculate running balance for each reservation based on their user
   const reservationsWithBalance: any[] = [];
-  let runningBalance = 0;
   
   for (const reservation of sortedReservations) {
-    const stayData = calculateStayData(reservation, runningBalance);
+    const userId = reservation.user_id || 'unknown';
+    const previousBalance = userBalances.get(userId) || 0;
+    const stayData = calculateStayData(reservation, previousBalance);
+    
     reservationsWithBalance.push({ reservation, stayData });
-    runningBalance += stayData.currentBalance;
+    
+    // Update this user's running balance
+    userBalances.set(userId, previousBalance + stayData.currentBalance);
   }
 
   // Reverse to show most recent first in the UI
