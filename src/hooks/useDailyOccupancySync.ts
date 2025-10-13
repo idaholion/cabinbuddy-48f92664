@@ -111,8 +111,8 @@ export const useDailyOccupancySync = (organizationId: string) => {
 
           if (settings) {
             const billingConfig = {
-              method: (settings as any).billing_method || 'per_person_per_night',
-              amount: (settings as any).billing_amount || 0,
+              method: (settings as any).financial_method || 'per_person_per_night',
+              amount: (settings as any).nightly_rate || 0,
               taxRate: settings.tax_rate || 0,
             };
 
