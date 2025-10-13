@@ -34,6 +34,7 @@ interface OrgUser {
   display_name: string;
   first_name: string;
   last_name: string;
+  actual_family_group?: string | null;
 }
 
 interface UserSplit {
@@ -81,8 +82,34 @@ export const GuestCostSplitDialog = ({
       return;
     }
 
-    // Filter out current user
-    const filteredUsers = data?.filter((u: OrgUser) => u.user_id !== sourceUserId) || [];
+    // Get family groups to match users to their groups
+    const { data: familyGroups, error: fgError } = await supabase
+      .from('family_groups')
+      .select('name, lead_email, host_members')
+      .eq('organization_id', organizationId);
+
+    if (fgError) {
+      console.error('Error fetching family groups:', fgError);
+    }
+
+    // Filter out current user and enrich with family group info
+    const filteredUsers = (data?.filter((u: OrgUser) => u.user_id !== sourceUserId) || []).map((u: OrgUser) => {
+      // Find the family group this user belongs to
+      const userFamilyGroup = familyGroups?.find(fg => {
+        if (fg.lead_email?.toLowerCase() === u.email.toLowerCase()) return true;
+        if (fg.host_members) {
+          const members = Array.isArray(fg.host_members) ? fg.host_members : [];
+          return members.some((m: any) => m.email?.toLowerCase() === u.email.toLowerCase());
+        }
+        return false;
+      });
+      
+      return {
+        ...u,
+        actual_family_group: userFamilyGroup?.name || null
+      };
+    });
+
     setUsers(filteredUsers);
   };
 
@@ -96,9 +123,18 @@ export const GuestCostSplitDialog = ({
 
   const handleUserToggle = (user: OrgUser, checked: boolean) => {
     if (checked) {
+      if (!user.actual_family_group) {
+        toast({
+          title: 'User Not in Family Group',
+          description: `${user.display_name} is not associated with any family group. They cannot receive split payments.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const newUser: UserSplit = {
         userId: user.user_id,
-        familyGroup: user.display_name || `${user.first_name} ${user.last_name}`,
+        familyGroup: user.actual_family_group,
         displayName: user.display_name || `${user.first_name} ${user.last_name}`,
         dailyGuests: {},
         totalAmount: 0
@@ -370,10 +406,15 @@ export const GuestCostSplitDialog = ({
                   <Checkbox
                     checked={selectedUsers.some(u => u.userId === user.user_id)}
                     onCheckedChange={(checked) => handleUserToggle(user, !!checked)}
+                    disabled={!user.actual_family_group}
                   />
-                  <Label className="flex-1 cursor-pointer">
+                  <Label className={`flex-1 ${user.actual_family_group ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
                     {user.display_name || `${user.first_name} ${user.last_name}`}
-                    <span className="text-sm text-muted-foreground ml-2">({user.email})</span>
+                    <span className="text-sm text-muted-foreground ml-2">
+                      ({user.email})
+                      {!user.actual_family_group && <span className="text-destructive ml-1">- No family group</span>}
+                      {user.actual_family_group && <span className="ml-1">- {user.actual_family_group}</span>}
+                    </span>
                   </Label>
                 </div>
               ))}
@@ -481,7 +522,7 @@ export const GuestCostSplitDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0}>
-            {loading ? 'Creating Split...' : `Split with ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
+            {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
           </Button>
         </DialogFooter>
       </DialogContent>
