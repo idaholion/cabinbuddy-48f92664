@@ -86,7 +86,8 @@ export const useCheckoutBilling = (
           console.log('useCheckoutBilling - Found payment with daily_occupancy:', payment);
           setBillingLocked(payment.billing_locked ?? false);
           
-          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy)) {
+          // Only use payment.daily_occupancy if it has actual data
+          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
             const occupancyRecord: Record<string, number> = {};
             (payment.daily_occupancy as any[]).forEach((day: any) => {
               occupancyRecord[day.date] = day.guests;
@@ -95,6 +96,7 @@ export const useCheckoutBilling = (
             setLoading(false);
             return;
           }
+          // If daily_occupancy is empty, fall through to fetch from checkin_sessions
         }
 
         // Build query with organization filter
