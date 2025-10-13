@@ -159,7 +159,7 @@ export default function StayHistory() {
         : "Session-based";
     }
 
-    const amountDue = billingAmount - amountPaid;
+    const amountDue = billingAmount - amountPaid - receiptsTotal;
 
     return {
       nights,
@@ -383,6 +383,12 @@ export default function StayHistory() {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Manual Adjustment:</span>
                         <span className="font-medium">${stayData.manualAdjustment.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {stayData.receiptsTotal > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Receipts/Credits:</span>
+                        <span className="font-medium text-green-600">-${stayData.receiptsTotal.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
