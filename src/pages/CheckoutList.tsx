@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,8 @@ const CheckoutList = () => {
   const [editingSectionId, setEditingSectionId] = useState<number | null>(null);
   const [editingSectionTitle, setEditingSectionTitle] = useState("");
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [checklistSections, setChecklistSections] = useState([
     {
       title: "Lower Level Inside",
@@ -292,6 +294,20 @@ const CheckoutList = () => {
       newCheckedTasks.add(taskId);
     }
     setCheckedTasks(newCheckedTasks);
+    
+    // Auto-save with debouncing
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    setSaveStatus('saving');
+    saveTimeoutRef.current = setTimeout(() => {
+      saveChecklistCompletion().then(() => {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }).catch(() => {
+        setSaveStatus('error');
+      });
+    }, 2000);
   };
 
   // Save checkout checklist to database
@@ -709,8 +725,17 @@ const CheckoutList = () => {
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
-          <p className="text-base text-muted-foreground mt-1">
+          <p className="text-base text-muted-foreground mt-1 flex items-center gap-2">
             {progressPercentage.toFixed(0)}% Complete
+            {saveStatus === 'saving' && (
+              <span className="text-sm animate-pulse">• Saving...</span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="text-sm text-green-600">• Saved ✓</span>
+            )}
+            {saveStatus === 'error' && (
+              <span className="text-sm text-destructive">• Save failed</span>
+            )}
           </p>
         </div>
       </div>
