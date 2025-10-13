@@ -72,24 +72,11 @@ export default function StayHistory() {
   };
 
   const handleSaveOccupancy = async (updatedOccupancy: any[]) => {
-    if (!editOccupancyStay?.paymentId || !organization?.id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('payments')
-        .update({ daily_occupancy: updatedOccupancy })
-        .eq('id', editOccupancyStay.paymentId)
-        .eq('organization_id', organization.id);
-
-      if (error) throw error;
-      
-      await fetchPayments();
-      toast.success("Occupancy updated successfully");
-      setEditOccupancyStay(null);
-    } catch (error) {
-      toast.error("Failed to update occupancy");
-      throw error;
-    }
+    // The EditOccupancyDialog already handles the save via useDailyOccupancySync
+    // We just need to refresh the payments to show the updated amount
+    await fetchPayments();
+    toast.success("Occupancy updated successfully");
+    setEditOccupancyStay(null);
   };
 
   const handleSaveBillingAdjustment = async (data: { manualAdjustment: number; adjustmentNotes: string; billingLocked: boolean }) => {
