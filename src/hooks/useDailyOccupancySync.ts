@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { BillingCalculator } from '@/lib/billing-calculator';
+import { parseDateOnly } from '@/lib/date-utils';
 
 interface DailyOccupancyData {
   date: string;
@@ -131,7 +132,7 @@ export const useDailyOccupancySync = (organizationId: string) => {
               const billing = BillingCalculator.calculateFromDailyOccupancy(
                 billingConfig as any,
                 dailyOccupancyRecord,
-                { startDate: new Date(reservation.start_date), endDate: new Date(reservation.end_date) }
+                { startDate: parseDateOnly(reservation.start_date), endDate: parseDateOnly(reservation.end_date) }
               );
               updates.amount = billing.total;
             }

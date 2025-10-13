@@ -375,8 +375,8 @@ export const RecurringBills = () => {
   const isInHibernation = (bill: RecurringBill) => {
     if (!bill.hibernation_start_date || !bill.hibernation_end_date) return false;
     const now = new Date();
-    const start = new Date(bill.hibernation_start_date);
-    const end = new Date(bill.hibernation_end_date);
+    const start = parseDateOnly(bill.hibernation_start_date);
+    const end = parseDateOnly(bill.hibernation_end_date);
     return now >= start && now <= end;
   };
 
@@ -792,7 +792,7 @@ export const RecurringBills = () => {
                           <span className="font-medium">Hibernation Period:</span>
                         </div>
                         <div className="text-orange-600 mt-1">
-                          {bill.hibernation_start_date && format(new Date(bill.hibernation_start_date), 'MMM dd')} - {bill.hibernation_end_date && format(new Date(bill.hibernation_end_date), 'MMM dd, yyyy')}
+                          {bill.hibernation_start_date && format(parseDateOnly(bill.hibernation_start_date), 'MMM dd')} - {bill.hibernation_end_date && format(parseDateOnly(bill.hibernation_end_date), 'MMM dd, yyyy')}
                         </div>
                       </div>
                     )}

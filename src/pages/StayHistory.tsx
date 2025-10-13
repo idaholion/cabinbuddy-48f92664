@@ -52,7 +52,7 @@ export default function StayHistory() {
   const availableYears = Array.from(
     new Set(
       reservations
-        .map(r => new Date(r.start_date).getFullYear())
+        .map(r => parseDateOnly(r.start_date).getFullYear())
         .sort((a, b) => b - a)
     )
   );
@@ -140,7 +140,7 @@ export default function StayHistory() {
       
       return isPast && isConfirmed && matchesYear && matchesFamily;
     })
-    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime());
+    .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
   const calculateStayData = (reservation: any) => {
     const checkInDate = parseDateOnly(reservation.start_date);
