@@ -129,7 +129,7 @@ export default function StayHistory() {
     })
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
-  const calculateStayData = (reservation: any) => {
+  const calculateStayData = (reservation: any, previousBalance: number = 0) => {
     const checkInDate = parseDateOnly(reservation.start_date);
     const checkOutDate = parseDateOnly(reservation.end_date);
     const nights = differenceInDays(checkOutDate, checkInDate);
@@ -159,7 +159,8 @@ export default function StayHistory() {
         : "Session-based";
     }
 
-    const amountDue = billingAmount - amountPaid - receiptsTotal;
+    const currentBalance = billingAmount - amountPaid - receiptsTotal;
+    const amountDue = currentBalance + previousBalance;
 
     return {
       nights,
@@ -167,6 +168,8 @@ export default function StayHistory() {
       receiptsCount: stayReceipts.length,
       billingAmount,
       amountPaid,
+      currentBalance,
+      previousBalance,
       amountDue,
       billingMethod,
       paymentId: payment?.id,
@@ -177,6 +180,22 @@ export default function StayHistory() {
       billingLocked: (payment as any)?.billing_locked
     };
   };
+
+  // Sort reservations chronologically (oldest first) and calculate running balance
+  const sortedReservations = [...filteredReservations].sort((a, b) => 
+    parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+  );
+  
+  // Calculate running balance for each reservation
+  const reservationsWithBalance = sortedReservations.map((reservation, index) => {
+    const previousBalance = index === 0 ? 0 : 
+      reservationsWithBalance.slice(0, index).reduce((sum, r) => sum + r.stayData.currentBalance, 0);
+    const stayData = calculateStayData(reservation, previousBalance);
+    return { reservation, stayData };
+  });
+
+  // Reverse to show most recent first in the UI
+  const displayReservations = [...reservationsWithBalance].reverse();
 
   // Calculate summary stats
   const totalStays = filteredReservations.length;
@@ -314,8 +333,7 @@ export default function StayHistory() {
       {/* Past Stays List */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Past Stays</h2>
-        {filteredReservations.map((reservation) => {
-          const stayData = calculateStayData(reservation);
+        {displayReservations.map(({ reservation, stayData }) => {
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -375,6 +393,14 @@ export default function StayHistory() {
 
                   {/* Right Column - Financial Summary */}
                   <div className="space-y-2">
+                    {stayData.previousBalance !== 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Previous Balance:</span>
+                        <span className={`font-medium ${stayData.previousBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                          ${stayData.previousBalance.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Calculated Amount:</span>
                       <span className="font-medium">${stayData.billingAmount.toFixed(2)}</span>

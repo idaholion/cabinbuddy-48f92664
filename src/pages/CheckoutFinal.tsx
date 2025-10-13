@@ -244,6 +244,78 @@ const CheckoutFinal = () => {
 
   const receiptsTotal = calculateReceiptsTotal();
 
+  // Calculate previous balance from prior reservations
+  const [previousBalance, setPreviousBalance] = useState<number>(0);
+
+  useEffect(() => {
+    const calculatePreviousBalance = async () => {
+      if (!user || !currentReservation || !organization?.id) return;
+
+      try {
+        // Get all prior reservations for this user (before current reservation's start date)
+        const priorReservations = reservations.filter(r => {
+          // Only confirmed reservations
+          if (r.status !== 'confirmed') return false;
+          
+          // Only past reservations (before current stay)
+          if (parseDateOnly(r.start_date) >= parseDateOnly(currentReservation.start_date)) return false;
+          
+          // Match by user - same logic as getCurrentUserReservation
+          if (claimedProfile) {
+            if (r.family_group !== claimedProfile.family_group_name) return false;
+            if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
+              const primaryHost = r.host_assignments[0];
+              return primaryHost.host_name === claimedProfile.member_name;
+            }
+            return claimedProfile.member_type === 'group_lead';
+          }
+          
+          if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
+            const userIsHost = r.host_assignments.some(host => 
+              host.host_email?.toLowerCase() === user.email?.toLowerCase()
+            );
+            if (userIsHost) return true;
+          }
+          
+          return r.user_id === user.id;
+        });
+
+        // For each prior reservation, calculate: billing - payments - receipts
+        let runningBalance = 0;
+        
+        for (const reservation of priorReservations.sort((a, b) => 
+          parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
+        )) {
+          // Find payment for this reservation
+          const { data: payment } = await supabase
+            .from('payments')
+            .select('amount, amount_paid')
+            .eq('reservation_id', reservation.id)
+            .eq('organization_id', organization.id)
+            .maybeSingle();
+
+          // Find receipts for this family group
+          const familyReceipts = receipts.filter(r => 
+            r.family_group === reservation.family_group
+          );
+          const receiptsTotal = familyReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+          if (payment) {
+            const billing = Number(payment.amount) || 0;
+            const paid = Number(payment.amount_paid) || 0;
+            runningBalance += (billing - paid - receiptsTotal);
+          }
+        }
+
+        setPreviousBalance(runningBalance);
+      } catch (error) {
+        console.error('Failed to calculate previous balance:', error);
+      }
+    };
+
+    calculatePreviousBalance();
+  }, [user, currentReservation, reservations, receipts, organization?.id, claimedProfile]);
+
   // Calculate number of nights (only nights spent, not checkout day)
   const calculateNights = () => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -331,7 +403,7 @@ const CheckoutFinal = () => {
   );
 
   const billing = calculateBilling();
-  const totalAmount = Math.max(0, enhancedBilling.total - checkoutData.receiptsTotal);
+  const totalAmount = Math.max(0, enhancedBilling.total - checkoutData.receiptsTotal + previousBalance);
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
@@ -833,6 +905,15 @@ const CheckoutFinal = () => {
                       <span className="text-muted-foreground">Less: Receipts submitted:</span>
                       <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
                     </div>
+                    
+                    {previousBalance !== 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Previous Balance:</span>
+                        <span className={`font-medium ${previousBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                          {previousBalance > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(previousBalance))}
+                        </span>
+                      </div>
+                    )}
                     
                     <Separator />
                     
