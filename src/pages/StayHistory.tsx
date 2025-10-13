@@ -187,12 +187,14 @@ export default function StayHistory() {
   );
   
   // Calculate running balance for each reservation
-  const reservationsWithBalance = sortedReservations.map((reservation, index) => {
-    const previousBalance = index === 0 ? 0 : 
-      reservationsWithBalance.slice(0, index).reduce((sum, r) => sum + r.stayData.currentBalance, 0);
-    const stayData = calculateStayData(reservation, previousBalance);
-    return { reservation, stayData };
-  });
+  const reservationsWithBalance: any[] = [];
+  let runningBalance = 0;
+  
+  for (const reservation of sortedReservations) {
+    const stayData = calculateStayData(reservation, runningBalance);
+    reservationsWithBalance.push({ reservation, stayData });
+    runningBalance += stayData.currentBalance;
+  }
 
   // Reverse to show most recent first in the UI
   const displayReservations = [...reservationsWithBalance].reverse();
