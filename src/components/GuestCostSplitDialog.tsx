@@ -65,7 +65,7 @@ export const GuestCostSplitDialog = ({
       fetchUsers();
       initializeSourceGuests();
     }
-  }, [open, dailyBreakdown]);
+  }, [open]); // Only reinitialize when dialog opens, not when dailyBreakdown changes
 
   const fetchUsers = async () => {
     const { data, error } = await supabase
