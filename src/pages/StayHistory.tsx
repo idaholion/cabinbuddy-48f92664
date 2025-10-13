@@ -137,9 +137,9 @@ export default function StayHistory() {
     // Find payment record for this reservation
     const payment = payments.find(p => p.reservation_id === reservation.id);
     
-    // Find receipts for this stay period (filter by user_id and date range)
+    // Find receipts for this stay (filter by family group and date range)
     const stayReceipts = receipts.filter((receipt) => {
-      if (!user || receipt.user_id !== user.id) return false;
+      if (receipt.family_group !== reservation.family_group) return false;
       const receiptDate = parseDateOnly(receipt.date);
       return receiptDate >= checkInDate && receiptDate <= checkOutDate;
     });
