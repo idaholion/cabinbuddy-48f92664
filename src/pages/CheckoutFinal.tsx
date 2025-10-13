@@ -403,7 +403,7 @@ const CheckoutFinal = () => {
   );
 
   const billing = calculateBilling();
-  const totalAmount = Math.max(0, enhancedBilling.total - checkoutData.receiptsTotal + previousBalance);
+  const totalAmount = enhancedBilling.total - checkoutData.receiptsTotal + previousBalance;
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
@@ -919,7 +919,9 @@ const CheckoutFinal = () => {
                     
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total Amount Due:</span>
-                      <span className="text-primary">{BillingCalculator.formatCurrency(totalAmount)}</span>
+                      <span className={totalAmount < 0 ? 'text-green-600' : 'text-primary'}>
+                        {BillingCalculator.formatCurrency(totalAmount)}
+                      </span>
                     </div>
                     
                     {/* Venmo Payment Info */}
