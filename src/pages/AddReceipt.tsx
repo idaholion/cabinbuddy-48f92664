@@ -14,9 +14,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useReceipts } from "@/hooks/useReceipts";
 import { supabase } from "@/integrations/supabase/client";
+import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
 
 const AddReceipt = () => {
   const { receipts, loading, createReceipt, deleteReceipt, refetchReceipts } = useReceipts();
+  const { claimedProfile } = useEnhancedProfileClaim();
   const [amount, setAmount] = useState("");
   const [uploadAmount, setUploadAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -140,7 +142,8 @@ const AddReceipt = () => {
           amount: parseFloat(uploadAmount),
           description: `Receipt uploaded: ${processedFile.name}`,
           date: new Date().toISOString().split('T')[0],
-          image: processedFile
+          image: processedFile,
+          family_group: claimedProfile?.family_group_name
         });
         setUploadAmount("");
         setFileInfo(null);
@@ -193,7 +196,8 @@ const AddReceipt = () => {
             amount: parseFloat(uploadAmount),
             description: `Receipt uploaded: ${processedFile.name}`,
             date: new Date().toISOString().split('T')[0],
-            image: processedFile
+            image: processedFile,
+            family_group: claimedProfile?.family_group_name
           });
           setUploadAmount("");
           setFileInfo(null);
@@ -256,7 +260,8 @@ const AddReceipt = () => {
             amount: parseFloat(uploadAmount),
             description: `Receipt uploaded: ${file.name}`,
             date: new Date().toISOString().split('T')[0],
-            image: file
+            image: file,
+            family_group: claimedProfile?.family_group_name
           });
           setUploadAmount("");
           setFileInfo(null);
@@ -300,7 +305,8 @@ const AddReceipt = () => {
             amount: parseFloat(uploadAmount),
             description: `Receipt photo ${source === CameraSource.Camera ? 'taken' : 'selected'}`,
             date: new Date().toISOString().split('T')[0],
-            image: file
+            image: file,
+            family_group: claimedProfile?.family_group_name
           });
           
           setUploadAmount("");
@@ -387,7 +393,8 @@ const AddReceipt = () => {
         await createReceipt({
           amount: parseFloat(amount),
           description,
-          date: new Date().toISOString().split('T')[0]
+          date: new Date().toISOString().split('T')[0],
+          family_group: claimedProfile?.family_group_name
         });
         setAmount("");
         setDescription("");
@@ -457,7 +464,8 @@ const AddReceipt = () => {
           amount: parseFloat(uploadAmount),
           description: `Receipt uploaded: ${currentFile.name}`,
           date: new Date().toISOString().split('T')[0],
-          image: currentFile
+          image: currentFile,
+          family_group: claimedProfile?.family_group_name
         });
         setUploadAmount("");
         setCurrentFile(null);
