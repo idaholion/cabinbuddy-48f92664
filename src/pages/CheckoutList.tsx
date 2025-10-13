@@ -636,6 +636,17 @@ const CheckoutList = () => {
             }
             console.log('✅ [CHECKOUT-SAVE] Successfully created new session');
           }
+
+          // Save survey responses to survey_responses table for Financial Dashboard
+          if (surveyData && Object.keys(surveyData).length > 0) {
+            console.log('💾 [CHECKOUT-SAVE] Saving survey responses to survey_responses table...');
+            await createResponse({
+              family_group: currentReservation.family_group,
+              responses: surveyData
+            });
+            console.log('✅ [CHECKOUT-SAVE] Survey responses saved to database');
+          }
+
           toast({
             title: "Checklist Saved",
             description: `Checkout checklist saved to database (${completedTasks}/${totalTasks} tasks completed)`,
