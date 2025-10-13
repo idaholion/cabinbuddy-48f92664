@@ -92,17 +92,47 @@ export const GuestCostSplitDialog = ({
       console.error('Error fetching family groups:', fgError);
     }
 
+    console.log('🔍 [SPLIT] Family Groups:', familyGroups);
+    console.log('🔍 [SPLIT] All Users:', data);
+
     // Filter out current user and enrich with family group info
     const filteredUsers = (data?.filter((u: OrgUser) => u.user_id !== sourceUserId) || []).map((u: OrgUser) => {
+      console.log(`🔍 [SPLIT] Matching user: ${u.email} (${u.display_name})`);
+      
       // Find the family group this user belongs to
       const userFamilyGroup = familyGroups?.find(fg => {
-        if (fg.lead_email?.toLowerCase() === u.email.toLowerCase()) return true;
+        console.log(`  Checking family group: ${fg.name}`);
+        console.log(`    Lead email: ${fg.lead_email}`);
+        console.log(`    Host members:`, fg.host_members);
+        
+        // Check if user is the lead
+        if (fg.lead_email?.toLowerCase().trim() === u.email.toLowerCase().trim()) {
+          console.log(`    ✅ User is LEAD of ${fg.name}`);
+          return true;
+        }
+        
+        // Check if user is in host_members
         if (fg.host_members) {
           const members = Array.isArray(fg.host_members) ? fg.host_members : [];
-          return members.some((m: any) => m.email?.toLowerCase() === u.email.toLowerCase());
+          console.log(`    Checking ${members.length} host members`);
+          
+          const isHostMember = members.some((m: any) => {
+            const memberEmail = m.email?.toLowerCase().trim();
+            const userEmail = u.email.toLowerCase().trim();
+            console.log(`      Comparing: "${memberEmail}" === "${userEmail}"`);
+            return memberEmail === userEmail;
+          });
+          
+          if (isHostMember) {
+            console.log(`    ✅ User is HOST MEMBER of ${fg.name}`);
+            return true;
+          }
         }
+        
         return false;
       });
+      
+      console.log(`  Result: ${userFamilyGroup ? `Found in ${userFamilyGroup.name}` : 'NOT FOUND IN ANY GROUP'}`);
       
       return {
         ...u,
@@ -110,6 +140,7 @@ export const GuestCostSplitDialog = ({
       };
     });
 
+    console.log('🔍 [SPLIT] Final matched users:', filteredUsers);
     setUsers(filteredUsers);
   };
 
