@@ -181,26 +181,42 @@ export default function StayHistory() {
     };
   };
 
-  // Sort reservations chronologically (oldest first) and calculate running balance PER USER
+  // Sort reservations chronologically (oldest first) and calculate running balance PER PRIMARY HOST
   const sortedReservations = [...filteredReservations].sort((a, b) => 
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Group reservations by user to calculate individual running balances
-  const userBalances = new Map<string, number>();
+  // Helper function to get the primary host identifier for a reservation
+  const getPrimaryHostKey = (reservation: any) => {
+    // For host_assignments, use the first host's email as the identifier
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      const hostKey = primaryHost.host_email?.toLowerCase() || primaryHost.host_name || reservation.user_id || 'unknown';
+      console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, dates=${reservation.start_date} to ${reservation.end_date}`);
+      return hostKey;
+    }
+    // Fallback to user_id
+    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: using user_id=${reservation.user_id}, dates=${reservation.start_date} to ${reservation.end_date}`);
+    return reservation.user_id || 'unknown';
+  };
   
-  // Calculate running balance for each reservation based on their user
+  // Group reservations by primary host to calculate individual running balances
+  const hostBalances = new Map<string, number>();
+  
+  // Calculate running balance for each reservation based on their primary host
   const reservationsWithBalance: any[] = [];
   
   for (const reservation of sortedReservations) {
-    const userId = reservation.user_id || 'unknown';
-    const previousBalance = userBalances.get(userId) || 0;
+    const hostKey = getPrimaryHostKey(reservation);
+    const previousBalance = hostBalances.get(hostKey) || 0;
     const stayData = calculateStayData(reservation, previousBalance);
+    
+    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, previousBalance=${previousBalance.toFixed(2)}, currentBalance=${stayData.currentBalance.toFixed(2)}, amountDue=${stayData.amountDue.toFixed(2)}`);
     
     reservationsWithBalance.push({ reservation, stayData });
     
-    // Update this user's running balance
-    userBalances.set(userId, previousBalance + stayData.currentBalance);
+    // Update this host's running balance
+    hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
   // Reverse to show most recent first in the UI
