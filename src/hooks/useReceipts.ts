@@ -81,41 +81,57 @@ export const useReceipts = () => {
         imageUrl = await uploadReceiptImage(receiptData.image);
       }
 
-      // Auto-fetch family group if not provided
+      // Auto-fetch family group - ALWAYS fetch from database to ensure accuracy
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData?.user?.email;
       let familyGroup = receiptData.family_group;
-      if (!familyGroup) {
-        const { data: userEmail } = await supabase.auth.getUser();
-        const email = userEmail?.user?.email;
+      
+      if (email) {
+        // Check if user is a lead
+        const { data: leadGroup, error: leadError } = await supabase
+          .from('family_groups')
+          .select('name')
+          .eq('organization_id', organization.id)
+          .eq('lead_email', email)
+          .maybeSingle();
         
-        if (email) {
-          // Check if user is a lead
-          const { data: leadGroup } = await supabase
+        if (leadError) {
+          console.error('Error fetching lead group:', leadError);
+        }
+        
+        if (leadGroup) {
+          familyGroup = leadGroup.name;
+        } else {
+          // Check if user is a host member
+          const { data: allGroups, error: groupsError } = await supabase
             .from('family_groups')
-            .select('name')
-            .eq('organization_id', organization.id)
-            .eq('lead_email', email)
-            .maybeSingle();
+            .select('name, host_members')
+            .eq('organization_id', organization.id);
           
-          if (leadGroup) {
-            familyGroup = leadGroup.name;
-          } else {
-            // Check if user is a host member
-            const { data: allGroups } = await supabase
-              .from('family_groups')
-              .select('name, host_members')
-              .eq('organization_id', organization.id);
-            
-            if (allGroups) {
-              for (const group of allGroups) {
-                const members = group.host_members as any[];
-                if (members?.some((m: any) => m.email?.toLowerCase() === email.toLowerCase())) {
-                  familyGroup = group.name;
-                  break;
-                }
+          if (groupsError) {
+            console.error('Error fetching all groups:', groupsError);
+          }
+          
+          if (allGroups) {
+            for (const group of allGroups) {
+              const members = group.host_members as any[];
+              if (members?.some((m: any) => m.email?.toLowerCase() === email.toLowerCase())) {
+                familyGroup = group.name;
+                break;
               }
             }
           }
         }
+      }
+      
+      // If still no family group found, show error
+      if (!familyGroup) {
+        toast({
+          title: "Error",
+          description: "Could not determine your family group. Please contact an administrator.",
+          variant: "destructive",
+        });
+        return null;
       }
 
       const { data: newReceipt, error } = await supabase
