@@ -23,6 +23,7 @@ import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
@@ -34,6 +35,7 @@ export default function StayHistory() {
   const [viewReceiptPayment, setViewReceiptPayment] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
+  const { user } = useAuth();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
@@ -147,10 +149,12 @@ export default function StayHistory() {
     // Find payment record for this reservation
     const payment = payments.find(p => p.reservation_id === reservation.id);
     
-    // Find receipts for this reservation
-    const stayReceipts = receipts.filter(
-      (receipt) => receipt.reservation_id === reservation.id
-    );
+    // Find receipts for this stay period (filter by user_id and date range)
+    const stayReceipts = receipts.filter((receipt) => {
+      if (!user || receipt.user_id !== user.id) return false;
+      const receiptDate = new Date(receipt.date);
+      return receiptDate >= checkInDate && receiptDate <= checkOutDate;
+    });
     const receiptsTotal = stayReceipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0);
     
     let billingAmount = 0;

@@ -228,14 +228,16 @@ const CheckoutFinal = () => {
     })
     .sort((a, b) => parseDateOnly(a.check_date).getTime() - parseDateOnly(b.check_date).getTime());
 
-  // Calculate receipts total for the stay period
+  // Calculate receipts total for the stay period (only user's own receipts)
   const calculateReceiptsTotal = () => {
-    if (!checkInDate || !checkOutDate) return 0;
+    if (!checkInDate || !checkOutDate || !user) return 0;
     
     return receipts
       .filter(receipt => {
         const receiptDate = parseDateOnly(receipt.date);
-        return receiptDate >= checkInDate && receiptDate <= checkOutDate;
+        return receipt.user_id === user.id && 
+               receiptDate >= checkInDate && 
+               receiptDate <= checkOutDate;
       })
       .reduce((total, receipt) => total + receipt.amount, 0);
   };
