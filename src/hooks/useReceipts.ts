@@ -81,13 +81,50 @@ export const useReceipts = () => {
         imageUrl = await uploadReceiptImage(receiptData.image);
       }
 
+      // Auto-fetch family group if not provided
+      let familyGroup = receiptData.family_group;
+      if (!familyGroup) {
+        const { data: userEmail } = await supabase.auth.getUser();
+        const email = userEmail?.user?.email;
+        
+        if (email) {
+          // Check if user is a lead
+          const { data: leadGroup } = await supabase
+            .from('family_groups')
+            .select('name')
+            .eq('organization_id', organization.id)
+            .eq('lead_email', email)
+            .maybeSingle();
+          
+          if (leadGroup) {
+            familyGroup = leadGroup.name;
+          } else {
+            // Check if user is a host member
+            const { data: allGroups } = await supabase
+              .from('family_groups')
+              .select('name, host_members')
+              .eq('organization_id', organization.id);
+            
+            if (allGroups) {
+              for (const group of allGroups) {
+                const members = group.host_members as any[];
+                if (members?.some((m: any) => m.email?.toLowerCase() === email.toLowerCase())) {
+                  familyGroup = group.name;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
       const { data: newReceipt, error } = await supabase
         .from('receipts')
         .insert({
           description: receiptData.description,
           amount: receiptData.amount,
           date: receiptData.date,
-          family_group: receiptData.family_group,
+          family_group: familyGroup,
           image_url: imageUrl,
           organization_id: organization.id,
           user_id: user.id
