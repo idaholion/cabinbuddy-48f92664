@@ -3155,6 +3155,17 @@ export type Database = {
         }
         Returns: Json
       }
+      supervisor_manual_claim_profile: {
+        Args: {
+          p_family_group_name: string
+          p_member_name: string
+          p_member_type: string
+          p_organization_id: string
+          p_user_email: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       supervisor_normalize_emails_and_fix_membership: {
         Args: Record<PropertyKey, never>
         Returns: string
