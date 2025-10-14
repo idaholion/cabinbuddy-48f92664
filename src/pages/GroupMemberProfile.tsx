@@ -606,6 +606,45 @@ const GroupMemberProfile = () => {
     try {
       const phoneFormatted = data.phone ? unformatPhoneNumber(data.phone) : "";
       
+      // Check if profile is claimed, if not claim it first
+      if (!hasClaimedProfile && organization?.organization_id) {
+        console.log('🔍 [PROFILE-SAVE] Profile not claimed, claiming now...');
+        
+        const { data: claimResult, error: claimError } = await supabase.rpc('claim_family_member_profile', {
+          p_organization_id: organization.organization_id,
+          p_family_group_name: selectedGroup.name,
+          p_member_name: selectedGroupMember.name,
+          p_member_type: selectedGroupMember.isLead ? 'group_lead' : 'host_member'
+        });
+
+        const result = claimResult as { success: boolean; error?: string; message?: string } | null;
+
+        if (claimError || !result?.success) {
+          console.error('❌ [PROFILE-SAVE] Failed to claim profile:', claimError);
+          toast({
+            title: "Error",
+            description: result?.error || "Failed to claim profile. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('✅ [PROFILE-SAVE] Profile claimed successfully');
+        
+        // Refresh claimed profile status
+        await refreshClaimedProfile();
+        
+        toast({
+          title: "Success",
+          description: "Profile linked and updated successfully!",
+        });
+        
+        // The RPC function already updated email/phone in family_groups
+        // So we can return early
+        return;
+      }
+      
+      // If already claimed, proceed with regular update
       // Sanitize and parse the member name
       const sanitizedName = sanitizeName(selectedGroupMember.name);
       const { firstName, lastName, displayName } = parseFullName(sanitizedName);
