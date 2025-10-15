@@ -5,6 +5,7 @@ import { FileText, Calendar, CreditCard, Settings } from "lucide-react";
 import { BillingCyclesManager } from "./BillingCyclesManager";
 import { InvoicesList } from "./InvoicesList";
 import PaymentTracker from "./PaymentTracker";
+import { GuestCostSplits } from "./GuestCostSplits";
 import { useInvoices } from "@/hooks/useInvoices";
 import { Link } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -87,6 +88,7 @@ export const BillingDashboard = () => {
         <TabsList>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="payments">Payment Tracking</TabsTrigger>
+          <TabsTrigger value="splits">Guest Cost Splits</TabsTrigger>
           <TabsTrigger value="cycles">Billing Cycles</TabsTrigger>
         </TabsList>
         
@@ -102,6 +104,10 @@ export const BillingDashboard = () => {
             </div>
             <PaymentTracker />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="splits">
+          <GuestCostSplits />
         </TabsContent>
         
         <TabsContent value="cycles">

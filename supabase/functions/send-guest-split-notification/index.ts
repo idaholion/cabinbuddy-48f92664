@@ -110,9 +110,9 @@ ${dailyBreakdown}
         </div>
         
         <div style="margin: 20px 0;">
-          <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/billing" 
+          <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/billing-dashboard?tab=splits" 
              style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin-right: 8px;">
-            Go to Billing Dashboard
+            View Guest Cost Splits
           </a>
           <a href="${supabaseUrl.replace('.supabase.co', '.lovable.app')}/season-summary?year=${currentYear}" 
              style="background: white; color: #2563eb; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; border: 1px solid #2563eb;">
