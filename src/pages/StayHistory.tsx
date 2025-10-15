@@ -489,7 +489,7 @@ export default function StayHistory() {
                           Guest Split
                         </Badge>
                       )}
-                      {!reservation.isVirtualSplit && stayData.paymentId && (
+                      {stayData.paymentId && (
                         <Badge variant={
                           stayData.amountDue <= 0 ? 'default' : 
                           stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
