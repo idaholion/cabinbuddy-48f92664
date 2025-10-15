@@ -327,16 +327,25 @@ export const GuestCostSplitDialog = ({
       });
 
       // Check user's organization membership first
+      console.log('🔍 [SPLIT] Checking user org membership...');
+      console.log('  User ID:', user.id);
+      console.log('  Organization ID:', organizationId);
+      
       const { data: userOrgData, error: userOrgError } = await supabase
         .from('user_organizations')
         .select('organization_id, role')
         .eq('user_id', user.id)
         .eq('organization_id', organizationId)
-        .single();
+        .maybeSingle();
       
-      console.log('👤 [SPLIT] User org membership:', userOrgData);
+      console.log('👤 [SPLIT] User org membership result:', userOrgData);
       if (userOrgError) {
         console.error('❌ [SPLIT] User org check error:', userOrgError);
+      }
+      
+      if (!userOrgData) {
+        console.error('❌ [SPLIT] User is NOT in organization!');
+        throw new Error(`User ${user.id} is not a member of organization ${organizationId}`);
       }
 
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
