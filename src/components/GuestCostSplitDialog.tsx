@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -225,26 +225,6 @@ export const GuestCostSplitDialog = ({
     }
   };
 
-  const calculateSplitCosts = () => {
-    const totalGuestNights = dailyBreakdown.reduce((sum, d) => sum + d.guests, 0);
-    const perDiem = totalGuestNights > 0 ? totalAmount / totalGuestNights : 0;
-
-    // Calculate source total
-    const sourceTotal = dailyBreakdown.reduce((sum, day) => {
-      return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
-    }, 0);
-
-    // Calculate each user's total and update in state
-    const updatedUsers = selectedUsers.map(user => {
-      const userTotal = dailyBreakdown.reduce((sum, day) => {
-        return sum + (user.dailyGuests[day.date] || 0) * perDiem;
-      }, 0);
-      return { ...user, totalAmount: userTotal };
-    });
-
-    return { sourceTotal, users: updatedUsers, perDiem };
-  };
-
   const validateSplit = (): boolean => {
     if (selectedUsers.length === 0) {
       toast({
@@ -255,8 +235,8 @@ export const GuestCostSplitDialog = ({
       return false;
     }
 
-    const { users } = calculateSplitCosts();
-    const hasInvalidUser = users.some(user => user.totalAmount <= 0);
+    // Use the memoized calculatedUsers which already has totalAmount computed
+    const hasInvalidUser = calculatedUsers.some(user => user.totalAmount <= 0);
     
     if (hasInvalidUser) {
       toast({
@@ -315,8 +295,8 @@ export const GuestCostSplitDialog = ({
       
       const user = session.user;
 
-      const { sourceTotal, users: calculatedUsers, perDiem } = calculateSplitCosts();
-      console.log('💰 [SPLIT] Calculated costs:', { sourceTotal, perDiem, calculatedUsers });
+      // Use the memoized values already calculated at component level
+      console.log('💰 [SPLIT] Using calculated costs:', { sourceTotal, perDiem, calculatedUsers });
       
       const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
 
@@ -506,7 +486,26 @@ export const GuestCostSplitDialog = ({
     }
   };
 
-  const { sourceTotal, users: calculatedUsers } = calculateSplitCosts();
+  // Recalculate costs whenever guest counts change
+  const { sourceTotal, users: calculatedUsers, perDiem } = useMemo(() => {
+    const totalGuestNights = dailyBreakdown.reduce((sum, d) => sum + d.guests, 0);
+    const perDiem = totalGuestNights > 0 ? totalAmount / totalGuestNights : 0;
+
+    // Calculate source total
+    const sourceTotal = dailyBreakdown.reduce((sum, day) => {
+      return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
+    }, 0);
+
+    // Calculate each user's total
+    const updatedUsers = selectedUsers.map(user => {
+      const userTotal = dailyBreakdown.reduce((sum, day) => {
+        return sum + (user.dailyGuests[day.date] || 0) * perDiem;
+      }, 0);
+      return { ...user, totalAmount: userTotal };
+    });
+
+    return { sourceTotal, users: updatedUsers, perDiem };
+  }, [dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
