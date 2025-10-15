@@ -732,7 +732,7 @@ const CheckoutFinal = () => {
                       )}
                       
                       {/* Split Guest Costs Button */}
-                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && (
+                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation?.user_id === user?.id && (
                         <div className="pt-4 mt-4 border-t">
                           <Button
                             variant="outline"

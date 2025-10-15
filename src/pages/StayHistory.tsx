@@ -524,7 +524,7 @@ export default function StayHistory() {
                         Record Payment
                       </Button>
                     )}
-                    {stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && (
+                    {stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && reservation.user_id === user?.id && (
                       <Button
                         variant="outline"
                         size="sm"
