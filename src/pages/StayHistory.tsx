@@ -46,6 +46,7 @@ export default function StayHistory() {
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
+  const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
 
   const loading = reservationsLoading || receiptsLoading || settingsLoading;
 
@@ -60,12 +61,30 @@ export default function StayHistory() {
 
   useEffect(() => {
     fetchPayments();
-  }, [selectedYear, selectedFamilyGroup]);
+    fetchPaymentSplits();
+  }, [selectedYear, selectedFamilyGroup, organization?.id]);
+
+  const fetchPaymentSplits = async () => {
+    if (!organization?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('payment_splits')
+        .select('*')
+        .eq('organization_id', organization.id);
+      
+      if (error) throw error;
+      setPaymentSplits(data || []);
+    } catch (error) {
+      console.error('Error fetching payment splits:', error);
+    }
+  };
 
   const handleSync = async () => {
     try {
       await refetchReservations();
       await fetchPayments();
+      await fetchPaymentSplits();
       toast.success("Data refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh data");
@@ -387,7 +406,7 @@ export default function StayHistory() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 flex-wrap">
                       {format(checkInDate, "MMM d, yyyy")} - {format(checkOutDate, "MMM d, yyyy")}
                       {stayData.paymentStatus && (
                         <Badge variant={
@@ -396,6 +415,12 @@ export default function StayHistory() {
                           stayData.paymentStatus === 'overdue' ? 'destructive' : 'outline'
                         }>
                           {stayData.paymentStatus}
+                        </Badge>
+                      )}
+                      {paymentSplits.some(split => split.source_payment_id === stayData.paymentId) && (
+                        <Badge variant="outline" className="gap-1 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                          <Users className="h-3 w-3" />
+                          Cost Split
                         </Badge>
                       )}
                     </CardTitle>
