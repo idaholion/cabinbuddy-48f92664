@@ -287,14 +287,29 @@ export const GuestCostSplitDialog = ({
   };
 
   const handleSplitCosts = async () => {
-    if (!validateSplit()) return;
+    console.log('🔄 [SPLIT] Starting split costs process...');
+    console.log('🔄 [SPLIT] Source user ID:', sourceUserId);
+    console.log('🔄 [SPLIT] Source family group:', sourceFamilyGroup);
+    console.log('🔄 [SPLIT] Daily breakdown:', dailyBreakdown);
+    console.log('🔄 [SPLIT] Selected users:', selectedUsers);
+    
+    if (!validateSplit()) {
+      console.log('❌ [SPLIT] Validation failed');
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) {
+        console.log('❌ [SPLIT] User not authenticated');
+        throw new Error('Not authenticated');
+      }
+      console.log('✅ [SPLIT] User authenticated:', user.id);
 
       const { sourceTotal, users: calculatedUsers, perDiem } = calculateSplitCosts();
+      console.log('💰 [SPLIT] Calculated costs:', { sourceTotal, perDiem, calculatedUsers });
+      
       const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
 
       // Create source payment (Person A - reduced amount)
@@ -303,6 +318,13 @@ export const GuestCostSplitDialog = ({
         guests: sourceDailyGuests[day.date] || 0,
         cost: (sourceDailyGuests[day.date] || 0) * perDiem
       }));
+      
+      console.log('📝 [SPLIT] Creating source payment with data:', {
+        organization_id: organizationId,
+        family_group: sourceFamilyGroup,
+        amount: sourceTotal,
+        daily_occupancy: sourceDailyOccupancy
+      });
 
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
@@ -322,10 +344,17 @@ export const GuestCostSplitDialog = ({
         .select()
         .single();
 
-      if (sourcePaymentError) throw sourcePaymentError;
+      if (sourcePaymentError) {
+        console.error('❌ [SPLIT] Source payment error:', sourcePaymentError);
+        throw sourcePaymentError;
+      }
+      console.log('✅ [SPLIT] Source payment created:', sourcePayment);
 
       // Create payments and split records for each guest
-      const splitPromises = calculatedUsers.map(async (splitUser) => {
+      console.log('📝 [SPLIT] Creating split payments for', calculatedUsers.length, 'users...');
+      const splitPromises = calculatedUsers.map(async (splitUser, index) => {
+        console.log(`📝 [SPLIT] Processing user ${index + 1}/${calculatedUsers.length}:`, splitUser.displayName);
+        
         // Create guest's daily occupancy
         const guestDailyOccupancy = dailyBreakdown
           .map(day => ({
@@ -334,8 +363,11 @@ export const GuestCostSplitDialog = ({
             cost: (splitUser.dailyGuests[day.date] || 0) * perDiem
           }))
           .filter(day => day.guests > 0);
+        
+        console.log(`  Daily occupancy for ${splitUser.displayName}:`, guestDailyOccupancy);
 
         // Create guest's payment
+        console.log(`  Creating payment for ${splitUser.displayName}...`);
         const { data: guestPayment, error: guestPaymentError } = await supabase
           .from('payments')
           .insert({
@@ -354,9 +386,14 @@ export const GuestCostSplitDialog = ({
           .select()
           .single();
 
-        if (guestPaymentError) throw guestPaymentError;
+        if (guestPaymentError) {
+          console.error(`❌ [SPLIT] Guest payment error for ${splitUser.displayName}:`, guestPaymentError);
+          throw guestPaymentError;
+        }
+        console.log(`✅ [SPLIT] Guest payment created for ${splitUser.displayName}:`, guestPayment.id);
 
         // Create split tracking record
+        console.log(`  Creating split tracking record for ${splitUser.displayName}...`);
         const { data: splitRecord, error: splitError } = await supabase
           .from('payment_splits')
           .insert({
@@ -374,9 +411,14 @@ export const GuestCostSplitDialog = ({
           .select()
           .single();
 
-        if (splitError) throw splitError;
+        if (splitError) {
+          console.error(`❌ [SPLIT] Split tracking error for ${splitUser.displayName}:`, splitError);
+          throw splitError;
+        }
+        console.log(`✅ [SPLIT] Split tracking created for ${splitUser.displayName}:`, splitRecord.id);
 
         // Send notification
+        console.log(`  Sending notification for ${splitUser.displayName}...`);
         const { error: notificationError } = await supabase.functions.invoke('send-guest-split-notification', {
           body: {
             splitId: splitRecord.id,
@@ -385,17 +427,21 @@ export const GuestCostSplitDialog = ({
         });
 
         if (notificationError) {
-          console.error('Notification error for', splitUser.displayName, ':', notificationError);
+          console.error(`⚠️ [SPLIT] Notification error for ${splitUser.displayName}:`, notificationError);
+        } else {
+          console.log(`✅ [SPLIT] Notification sent for ${splitUser.displayName}`);
         }
 
         return { user: splitUser, payment: guestPayment };
       });
 
+      console.log('⏳ [SPLIT] Waiting for all split operations to complete...');
       await Promise.all(splitPromises);
 
       const totalSplit = calculatedUsers.reduce((sum, u) => sum + u.totalAmount, 0);
       const userNames = calculatedUsers.map(u => u.displayName).join(', ');
 
+      console.log('✅ [SPLIT] All splits completed successfully!');
       toast({
         title: 'Split Created',
         description: `Successfully split ${BillingCalculator.formatCurrency(totalSplit)} with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}. They will be notified.`,
@@ -405,7 +451,13 @@ export const GuestCostSplitDialog = ({
       onOpenChange(false);
 
     } catch (error: any) {
-      console.error('Error creating split:', error);
+      console.error('❌ [SPLIT] Error creating split:', error);
+      console.error('❌ [SPLIT] Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       toast({
         title: 'Error',
         description: error.message || 'Failed to create cost split',
@@ -413,6 +465,7 @@ export const GuestCostSplitDialog = ({
       });
     } finally {
       setLoading(false);
+      console.log('🏁 [SPLIT] Split process finished');
     }
   };
 
