@@ -84,14 +84,16 @@ export const useDailyOccupancySync = (organizationId: string) => {
     setSyncing(true);
 
     try {
-      // 1. Find the payment record
-      const { data: payment, error: paymentFetchError } = await supabase
+      // 1. Find the payment record - handle multiple rows by taking the first
+      const { data: paymentsArray, error: paymentFetchError } = await supabase
         .from('payments')
         .select('*')
         .eq('reservation_id', reservationId)
-        .maybeSingle();
+        .limit(1);
 
       if (paymentFetchError) throw paymentFetchError;
+
+      const payment = paymentsArray?.[0];
 
       if (payment) {
         // 2. Update payments.daily_occupancy
