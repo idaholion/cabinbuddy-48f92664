@@ -169,7 +169,7 @@ export default function StayHistory() {
       // Refresh data
       await fetchPayments();
       await fetchPaymentSplits();
-      toast.success("Guest split deleted successfully");
+      toast.success("Guest split deleted successfully. Note: The original reservation's occupancy numbers have not been updated and must be edited manually if needed.");
     } catch (error: any) {
       console.error('Error deleting split:', error);
       toast.error("Failed to delete guest split");

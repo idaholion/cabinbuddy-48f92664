@@ -199,7 +199,7 @@ export const usePaymentSplits = () => {
 
       toast({
         title: "Split Deleted",
-        description: "Guest cost split has been deleted successfully.",
+        description: "Guest cost split has been deleted successfully. Note: The original reservation's occupancy numbers have not been updated and must be edited manually if needed.",
       });
 
       await fetchSplits();
