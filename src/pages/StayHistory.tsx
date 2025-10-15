@@ -194,6 +194,20 @@ export default function StayHistory() {
     return reservation.user_id === user?.id;
   };
 
+  // Helper function to check if user owns a reservation (for split costs button)
+  const isUserReservationOwner = (reservation: any): boolean => {
+    if (!user) return false;
+    
+    // Check if user is the primary host via host_assignments (most reliable method)
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      return primaryHost.host_email?.toLowerCase() === user.email?.toLowerCase();
+    }
+    
+    // Fallback: if no host_assignments, check user_id (legacy reservations)
+    return reservation.user_id === user.id;
+  };
+
   const filteredReservations = reservations
     .filter((reservation) => {
       const checkInDate = parseDateOnly(reservation.start_date);
@@ -676,7 +690,7 @@ export default function StayHistory() {
                         Record Payment
                       </Button>
                     )}
-                    {stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && reservation.user_id === user?.id && (
+                    {stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && isUserReservationOwner(reservation) && (
                       <Button
                         variant="outline"
                         size="sm"

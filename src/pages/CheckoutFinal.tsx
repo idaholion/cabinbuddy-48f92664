@@ -104,6 +104,33 @@ const CheckoutFinal = () => {
 
   const currentReservation = getCurrentUserReservation();
 
+  // Helper function to check if user owns a reservation (for split costs button)
+  const isUserReservationOwner = (reservation: any): boolean => {
+    if (!user) return false;
+    
+    // Option 1: If user has claimed a profile, match by family group and host name
+    if (claimedProfile) {
+      if (reservation.family_group !== claimedProfile.family_group_name) return false;
+      
+      if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+        const primaryHost = reservation.host_assignments[0];
+        return primaryHost.host_name === claimedProfile.member_name;
+      }
+      
+      return claimedProfile.member_type === 'group_lead';
+    }
+    
+    // Option 2: Check if user's email matches any host in host_assignments
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      return reservation.host_assignments.some(host => 
+        host.host_email?.toLowerCase() === user.email?.toLowerCase()
+      );
+    }
+    
+    // Option 3: Fallback to user_id match (legacy)
+    return reservation.user_id === user.id;
+  };
+
   // Generate sample data when no reservation exists (for preview/demo)
   const generateSampleData = () => {
     const today = new Date();
@@ -732,7 +759,7 @@ const CheckoutFinal = () => {
                       )}
                       
                       {/* Split Guest Costs Button */}
-                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation?.user_id === user?.id && (
+                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation && isUserReservationOwner(currentReservation) && (
                         <div className="pt-4 mt-4 border-t">
                           <Button
                             variant="outline"
