@@ -708,7 +708,7 @@ export default function StayHistory() {
                         title={reservation.isVirtualSplit ? "Delete Guest Split" : "Delete Stay"}
                         description={
                           reservation.isVirtualSplit 
-                            ? "Are you sure you want to delete this guest split? This will remove the split payment record and the source payment. This action cannot be undone."
+                            ? "Are you sure you want to delete this guest split? This will remove the split payment record and the source payment. Note: The original reservation's occupancy numbers will not be updated and must be edited manually if needed. This action cannot be undone."
                             : "Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
                         }
                         confirmText="Delete"
