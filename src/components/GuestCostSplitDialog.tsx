@@ -369,6 +369,25 @@ export const GuestCostSplitDialog = ({
 
       console.log('✅ [SPLIT] Organization membership confirmed:', userOrgData);
 
+      // CRITICAL: Verify session is valid before attempting insert
+      const { data: { session: currentSession }, error: sessionCheckError } = await supabase.auth.getSession();
+      console.log('🔐 [SPLIT] Current session check:', {
+        has_session: !!currentSession,
+        session_user_id: currentSession?.user?.id,
+        session_error: sessionCheckError,
+        matches_user: currentSession?.user?.id === user.id
+      });
+
+      if (!currentSession || sessionCheckError) {
+        console.error('❌ [SPLIT] No valid session!', sessionCheckError);
+        toast({
+          title: "Session Error",
+          description: "Your session has expired. Please refresh the page and try again.",
+          variant: "destructive",
+        });
+        throw new Error('No valid session');
+      }
+
       // Insert source payment with extremely detailed logging
       const sourcePaymentData = {
         organization_id: organizationId,
