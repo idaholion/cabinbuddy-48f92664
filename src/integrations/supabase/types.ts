@@ -2978,6 +2978,10 @@ export type Database = {
         }
         Returns: Json
       }
+      family_group_exists_in_org: {
+        Args: { p_family_group: string; p_organization_id: string }
+        Returns: boolean
+      }
       generate_guest_access_token: {
         Args: { expires_hours?: number; org_id: string }
         Returns: string
