@@ -120,43 +120,45 @@ export const useCheckoutBilling = (
         console.log('📊 [CHECKOUT-BILLING] Fetched daily sessions:', sessions);
 
         // Extract daily occupancy from sessions
-        // NOTE: Only count nights spent, not the checkout day
+        // First, collect all dailyOccupancy data from all sessions
+        const combinedDailyOccupancy: Record<string, number> = {};
+        
+        if (sessions) {
+          for (const session of sessions) {
+            if (session.checklist_responses) {
+              const responses = session.checklist_responses as any;
+              const dailyOcc = responses.dailyOccupancy;
+              
+              if (dailyOcc && typeof dailyOcc === 'object') {
+                // The dailyOccupancy object has date keys like "2025-10-14": "1"
+                // Extract each date-guest pair
+                for (const [date, guestCount] of Object.entries(dailyOcc)) {
+                  const guests = parseInt(String(guestCount)) || 0;
+                  // Use the value from the most recent session if there are duplicates
+                  combinedDailyOccupancy[date] = guests;
+                }
+              }
+            }
+          }
+        }
+        
+        console.log('📊 [CHECKOUT-BILLING] Combined daily occupancy from all sessions:', combinedDailyOccupancy);
+
+        // Now build occupancyData for each day in the reservation
         const occupancyData: Record<string, number> = {};
         const currentDate = new Date(checkInDate);
         
         while (currentDate < checkOutDate) {
           const dateStr = currentDate.toISOString().split('T')[0];
-          const session = sessions?.find(s => s.check_date === dateStr);
           
-          console.log(`📅 [CHECKOUT-BILLING] Processing ${dateStr}:`, {
-            hasSession: !!session,
-            familyGroup: session?.family_group,
-            hasResponses: !!session?.checklist_responses
-          });
-          
-          if (session && session.checklist_responses) {
-            const responses = session.checklist_responses as any;
-            const dailyOcc = responses.dailyOccupancy;
-            
-            console.log(`  Daily occupancy data for ${dateStr}:`, dailyOcc);
-            
-            if (dailyOcc) {
-              // Sum up all guests for this day from dailyOccupancy object
-              const totalGuests = Object.values(dailyOcc).reduce<number>(
-                (sum, val) => sum + (parseInt(String(val)) || 0),
-                0
-              );
-              console.log(`  Total guests calculated: ${totalGuests}`);
-              occupancyData[dateStr] = totalGuests;
-            } else {
-              // Fallback to reserved guest count
-              console.log(`  No dailyOccupancy data, using reserved guests: ${reservedGuests}`);
-              occupancyData[dateStr] = reservedGuests;
-            }
+          // Look up this specific date in the combined data
+          if (dateStr in combinedDailyOccupancy) {
+            occupancyData[dateStr] = combinedDailyOccupancy[dateStr];
+            console.log(`📅 [CHECKOUT-BILLING] ${dateStr}: ${combinedDailyOccupancy[dateStr]} guests from check-in data`);
           } else {
             // No check-in data for this day - use reserved guest count as fallback
-            console.log(`  No session found, using reserved guests: ${reservedGuests}`);
             occupancyData[dateStr] = reservedGuests;
+            console.log(`📅 [CHECKOUT-BILLING] ${dateStr}: ${reservedGuests} guests (fallback - no check-in data)`);
           }
           
           currentDate.setDate(currentDate.getDate() + 1);
