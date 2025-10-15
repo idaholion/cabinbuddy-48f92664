@@ -3198,6 +3198,10 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: undefined
       }
+      user_belongs_to_organization: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: boolean
+      }
       validate_guest_access: {
         Args: { org_id: string; token: string }
         Returns: boolean
