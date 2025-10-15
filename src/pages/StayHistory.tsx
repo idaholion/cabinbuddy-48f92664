@@ -139,6 +139,43 @@ export default function StayHistory() {
     }
   };
 
+  const handleDeleteSplit = async (paymentId: string) => {
+    if (!organization?.id) return;
+    
+    try {
+      // Find the split record associated with this payment
+      const split = paymentSplits.find(s => s.split_payment?.id === paymentId);
+      if (!split) {
+        toast.error("Split record not found");
+        return;
+      }
+
+      // Delete the split payment (this will cascade to delete the split record due to foreign key)
+      const { error: splitPaymentError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', split.split_payment_id);
+
+      if (splitPaymentError) throw splitPaymentError;
+
+      // Delete the source payment
+      const { error: sourcePaymentError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', split.source_payment_id);
+
+      if (sourcePaymentError) throw sourcePaymentError;
+
+      // Refresh data
+      await fetchPayments();
+      await fetchPaymentSplits();
+      toast.success("Guest split deleted successfully");
+    } catch (error: any) {
+      console.error('Error deleting split:', error);
+      toast.error("Failed to delete guest split");
+    }
+  };
+
   // Permission check helper - determines if user can view a specific reservation
   const canViewReservation = (reservation: any): boolean => {
     // Admins and calendar keepers can see everything
@@ -668,16 +705,20 @@ export default function StayHistory() {
                     )}
                     {canDeleteStays && (
                       <ConfirmationDialog
-                        title="Delete Stay"
-                        description="Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
+                        title={reservation.isVirtualSplit ? "Delete Guest Split" : "Delete Stay"}
+                        description={
+                          reservation.isVirtualSplit 
+                            ? "Are you sure you want to delete this guest split? This will remove the split payment record and the source payment. This action cannot be undone."
+                            : "Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
+                        }
                         confirmText="Delete"
                         cancelText="Cancel"
                         variant="destructive"
-                        onConfirm={() => handleDeleteStay(reservation.id)}
+                        onConfirm={() => reservation.isVirtualSplit ? handleDeleteSplit(stayData.paymentId!) : handleDeleteStay(reservation.id)}
                       >
                         <Button variant="destructive" size="sm">
                           <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Stay
+                          {reservation.isVirtualSplit ? "Delete Split" : "Delete Stay"}
                         </Button>
                       </ConfirmationDialog>
                     )}

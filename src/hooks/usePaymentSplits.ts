@@ -172,6 +172,49 @@ export const usePaymentSplits = () => {
     }
   };
 
+  const deleteSplit = async (splitId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Find the split
+      const split = splits.find(s => s.id === splitId);
+      if (!split) throw new Error("Split not found");
+
+      // Delete the split payment (this will cascade to delete the split record)
+      const { error: splitPaymentError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', split.split_payment_id);
+
+      if (splitPaymentError) throw splitPaymentError;
+
+      // Delete the source payment
+      const { error: sourcePaymentError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('id', split.source_payment_id);
+
+      if (sourcePaymentError) throw sourcePaymentError;
+
+      toast({
+        title: "Split Deleted",
+        description: "Guest cost split has been deleted successfully.",
+      });
+
+      await fetchSplits();
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting split:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete split. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchSplits();
   }, [organization?.id]);
@@ -181,5 +224,6 @@ export const usePaymentSplits = () => {
     loading,
     refetch: fetchSplits,
     recordSplitPayment,
+    deleteSplit,
   };
 };
