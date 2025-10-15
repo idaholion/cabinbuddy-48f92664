@@ -17,7 +17,7 @@ import { parseDateOnly } from "@/lib/date-utils";
 const CheckIn = () => {
   const { toast } = useToast();
   const { organization } = useOrganization();
-  const { reservations } = useReservations();
+  const { reservations, loading: reservationsLoading } = useReservations();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
   const [checklistItems, setChecklistItems] = useState([
@@ -38,19 +38,47 @@ const CheckIn = () => {
   // Get current user's family group from localStorage
   const getCurrentUserReservation = () => {
     const familyData = localStorage.getItem('familySetupData');
-    if (!familyData) return null;
+    console.log('📋 [CHECK-IN] Family data from localStorage:', familyData);
+    
+    if (!familyData) {
+      console.log('❌ [CHECK-IN] No family data in localStorage');
+      return null;
+    }
+    
     const { familyName } = JSON.parse(familyData);
+    console.log('📋 [CHECK-IN] Looking for reservations for family:', familyName);
+    console.log('📋 [CHECK-IN] Total reservations available:', reservations.length);
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    console.log('📋 [CHECK-IN] Today\'s date:', today.toISOString().split('T')[0]);
     
-    return reservations.find(res => {
+    const matchingReservation = reservations.find(res => {
       const startDate = parseDateOnly(res.start_date);
       const endDate = parseDateOnly(res.end_date);
-      return res.family_group === familyName && 
-             startDate <= today && 
-             endDate >= today;
+      
+      const familyMatch = res.family_group === familyName;
+      const dateInRange = startDate <= today && endDate >= today;
+      
+      console.log('📋 [CHECK-IN] Checking reservation:', {
+        family: res.family_group,
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        familyMatch,
+        dateInRange,
+        matches: familyMatch && dateInRange
+      });
+      
+      return familyMatch && dateInRange;
     });
+    
+    if (!matchingReservation) {
+      console.log('❌ [CHECK-IN] No matching reservation found!');
+    } else {
+      console.log('✅ [CHECK-IN] Found current reservation:', matchingReservation);
+    }
+    
+    return matchingReservation;
   };
 
   const currentReservation = getCurrentUserReservation();
@@ -277,7 +305,23 @@ const CheckIn = () => {
   const handleSubmit = async () => {
     const completedItems = Object.values(checkedItems).filter(Boolean).length;
     
+    // Check if still loading
+    if (reservationsLoading) {
+      toast({
+        title: "Please Wait",
+        description: "Loading your reservation data...",
+      });
+      return;
+    }
+    
     if (!organization?.id || !currentReservation) {
+      console.error('❌ [CHECK-IN] Missing data:', {
+        hasOrganization: !!organization?.id,
+        hasReservation: !!currentReservation,
+        reservationsCount: reservations.length,
+        isLoading: reservationsLoading
+      });
+      
       toast({
         title: "Error",
         description: "Unable to save check-in. Please ensure you have an active reservation.",
