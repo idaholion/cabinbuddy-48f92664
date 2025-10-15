@@ -334,8 +334,16 @@ export const GuestCostSplitDialog = ({
       
       if (!userOrgData) {
         console.error('❌ [SPLIT] User is NOT in organization!');
-        throw new Error(`User ${user.id} is not a member of organization ${organizationId}`);
+        const errorMsg = `Unable to create split payment. User ${user.email} (ID: ${user.id}) is not a member of this organization. Please contact your administrator.`;
+        toast({
+          title: "Permission Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        throw new Error(errorMsg);
       }
+
+      console.log('✅ [SPLIT] User membership confirmed:', userOrgData);
 
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
@@ -362,9 +370,21 @@ export const GuestCostSplitDialog = ({
           organization_id: organizationId,
           family_group: sourceFamilyGroup,
           created_by_user_id: user.id,
-          user_id_from_auth: user.id
+          user_email: user.email,
+          user_org_membership: userOrgData
         });
-        throw sourcePaymentError;
+        
+        // User-friendly error message
+        const friendlyMsg = sourcePaymentError.message?.includes('row-level security') 
+          ? `Permission denied: Unable to create payment record. Your account (${user.email}) may not have proper access to this organization. Please contact your administrator.`
+          : sourcePaymentError.message || 'Failed to create payment record';
+        
+        toast({
+          title: "Payment Creation Failed",
+          description: friendlyMsg,
+          variant: "destructive",
+        });
+        throw new Error(friendlyMsg);
       }
       console.log('✅ [SPLIT] Source payment created:', sourcePayment);
 
