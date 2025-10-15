@@ -202,7 +202,7 @@ const handler = async (req: Request): Promise<Response> => {
             const emailSubject = urgent ? `[URGENT] ${subject}` : subject;
             
             const { error } = await resend.emails.send({
-              from: 'Cabin Buddy <noreply@resend.dev>',
+              from: 'Cabin Buddy <notifications@cabinbuddy.org>',
               to: [recipient.email!],
               subject: emailSubject,
               html: `

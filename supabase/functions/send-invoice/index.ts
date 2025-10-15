@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Cabin Invoices <onboarding@resend.dev>",
+      from: "Cabin Invoices <invoices@cabinbuddy.org>",
       to: [familyGroup.lead_email],
       subject: emailSubject,
       html: emailBody,

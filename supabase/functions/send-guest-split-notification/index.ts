@@ -132,7 +132,7 @@ ${dailyBreakdown}
 
     // Send email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: `${org?.name || 'Cabin Buddy'} <onboarding@resend.dev>`,
+      from: `${org?.name || 'Cabin Buddy'} <notifications@cabinbuddy.org>`,
       to: [splitToUser.email],
       subject: `Guest Cost Split - ${org?.name || 'Cabin'}`,
       html: emailHtml,

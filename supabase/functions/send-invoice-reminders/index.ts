@@ -167,7 +167,7 @@ const handler = async (req: Request): Promise<Response> => {
         try {
           // Send reminder email
           const { data: emailData, error: emailError } = await resend.emails.send({
-            from: "Cabin Reminders <onboarding@resend.dev>",
+            from: "Cabin Reminders <notifications@cabinbuddy.org>",
             to: [familyGroup.lead_email],
             subject: emailSubject,
             html: emailBody,

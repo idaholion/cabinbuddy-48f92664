@@ -229,7 +229,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Send emails and SMS to all recipients
     const emailPromises = recipients.filter(r => r.email).map(async (recipient) => {
       const emailResponse = await resend.emails.send({
-        from: `${tradeRequest.organization.name} <noreply@lovable.app>`,
+        from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
         to: [recipient.email!],
         subject: emailSubject,
         html: emailContent,
