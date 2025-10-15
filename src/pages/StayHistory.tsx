@@ -171,14 +171,14 @@ export default function StayHistory() {
     });
 
   // Create virtual reservations from payment splits where current user is recipient
-  // Admins see all splits, regular users see only their own
+  // Admins and Calendar Keepers see all splits, regular users see only their own
   const createVirtualReservationsFromSplits = () => {
     if (!user?.id) return [];
     
     return paymentSplits
       .filter(split => {
-        // Admins see all splits in the organization
-        if (isAdmin) return true;
+        // Admins and Calendar Keepers see all splits in the organization
+        if (isAdmin || isCalendarKeeper) return true;
         // Regular users only see splits where they are the recipient
         return split.split_to_user_id === user.id;
       })
