@@ -212,8 +212,9 @@ export const GuestCostSplitDialog = ({
           const otherUsersTotal = prev
             .filter(u => u.userId !== userId)
             .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
-          const maxForUser = originalGuests - sourceDailyGuests[date] - otherUsersTotal;
-          const adjustedValue = Math.min(numValue, maxForUser);
+          const currentSourceGuests = sourceDailyGuests[date] || 0;
+          const maxForUser = Math.max(0, originalGuests - currentSourceGuests - otherUsersTotal);
+          const adjustedValue = Math.min(numValue, Math.max(0, maxForUser));
           
           return {
             ...user,
