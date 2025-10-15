@@ -198,6 +198,9 @@ export default function StayHistory() {
   const isUserReservationOwner = (reservation: any): boolean => {
     if (!user) return false;
     
+    // Admins can split costs on any reservation
+    if (isAdmin) return true;
+    
     // Check if user is the primary host via host_assignments (most reliable method)
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
