@@ -326,6 +326,19 @@ export const GuestCostSplitDialog = ({
         daily_occupancy: sourceDailyOccupancy
       });
 
+      // Check user's organization membership first
+      const { data: userOrgData, error: userOrgError } = await supabase
+        .from('user_organizations')
+        .select('organization_id, role')
+        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
+        .single();
+      
+      console.log('👤 [SPLIT] User org membership:', userOrgData);
+      if (userOrgError) {
+        console.error('❌ [SPLIT] User org check error:', userOrgError);
+      }
+
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
         .insert({
@@ -346,6 +359,13 @@ export const GuestCostSplitDialog = ({
 
       if (sourcePaymentError) {
         console.error('❌ [SPLIT] Source payment error:', sourcePaymentError);
+        console.error('❌ [SPLIT] Error details:', JSON.stringify(sourcePaymentError, null, 2));
+        console.error('❌ [SPLIT] Payment data that failed:', {
+          organization_id: organizationId,
+          family_group: sourceFamilyGroup,
+          created_by_user_id: user.id,
+          user_id_from_auth: user.id
+        });
         throw sourcePaymentError;
       }
       console.log('✅ [SPLIT] Source payment created:', sourcePayment);
