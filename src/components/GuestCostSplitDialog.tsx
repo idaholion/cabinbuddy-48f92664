@@ -388,6 +388,18 @@ export const GuestCostSplitDialog = ({
         throw new Error('No valid session');
       }
 
+      // CRITICAL DEBUG: Log exact values before insert
+      console.log('🔍 [SPLIT] PRE-INSERT VALUES:', {
+        organizationId_value: organizationId,
+        organizationId_type: typeof organizationId,
+        sourceFamilyGroup_value: sourceFamilyGroup,
+        sourceFamilyGroup_type: typeof sourceFamilyGroup,
+        sourceUserId_value: sourceUserId,
+        sourceUserId_type: typeof sourceUserId,
+        currentUserId: user.id,
+        currentUserEmail: user.email
+      });
+
       // Insert source payment with extremely detailed logging
       const sourcePaymentData = {
         organization_id: organizationId,
