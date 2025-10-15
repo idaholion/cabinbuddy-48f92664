@@ -315,10 +315,11 @@ export const GuestCostSplitDialog = ({
         daily_occupancy: sourceDailyOccupancy
       });
 
-      // Check user's organization membership first
-      console.log('🔍 [SPLIT] Checking user org membership...');
+      // CRITICAL: Verify user is in the correct organization
+      console.log('🔍 [SPLIT] Verifying organization membership...');
       console.log('  User ID:', user.id);
-      console.log('  Organization ID:', organizationId);
+      console.log('  User Email:', user.email);
+      console.log('  Target Organization ID:', organizationId);
       
       const { data: userOrgData, error: userOrgError } = await supabase
         .from('user_organizations')
@@ -327,23 +328,46 @@ export const GuestCostSplitDialog = ({
         .eq('organization_id', organizationId)
         .maybeSingle();
       
-      console.log('👤 [SPLIT] User org membership result:', userOrgData);
+      console.log('👤 [SPLIT] Membership check result:', userOrgData);
       if (userOrgError) {
-        console.error('❌ [SPLIT] User org check error:', userOrgError);
+        console.error('❌ [SPLIT] Membership check error:', userOrgError);
       }
       
       if (!userOrgData) {
-        console.error('❌ [SPLIT] User is NOT in organization!');
-        const errorMsg = `Unable to create split payment. User ${user.email} (ID: ${user.id}) is not a member of this organization. Please contact your administrator.`;
+        console.error('❌ [SPLIT] ORGANIZATION MISMATCH!');
+        console.error('  User is attempting to create payment in organization:', organizationId);
+        console.error('  But user is not a member of this organization!');
+        
+        // Get user's actual organization
+        const { data: userActualOrg } = await supabase
+          .from('user_organizations')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .eq('is_primary', true)
+          .maybeSingle();
+        
+        let actualOrgName = 'your organization';
+        if (userActualOrg?.organization_id) {
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('name')
+            .eq('id', userActualOrg.organization_id)
+            .single();
+          actualOrgName = orgData?.name || actualOrgName;
+        }
+        
+        const errorMsg = `ORGANIZATION MISMATCH: You are logged in as ${user.email}, but you're trying to create a payment in a different organization. Please make sure you're working within your own organization (${actualOrgName}). If you need to manage multiple organizations, please switch organizations first.`;
+        
         toast({
-          title: "Permission Error",
+          title: "Organization Mismatch",
           description: errorMsg,
           variant: "destructive",
+          duration: 10000,
         });
         throw new Error(errorMsg);
       }
 
-      console.log('✅ [SPLIT] User membership confirmed:', userOrgData);
+      console.log('✅ [SPLIT] Organization membership confirmed:', userOrgData);
 
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
