@@ -3021,6 +3021,22 @@ export type Database = {
         }
         Returns: Json
       }
+      get_safe_family_groups: {
+        Args: { p_organization_id: string }
+        Returns: {
+          alternate_lead_id: string
+          color: string
+          created_at: string
+          host_members: Json
+          id: string
+          lead_email: string
+          lead_name: string
+          lead_phone: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }[]
+      }
       get_safe_guest_family_groups: {
         Args: { org_id: string }
         Returns: {
