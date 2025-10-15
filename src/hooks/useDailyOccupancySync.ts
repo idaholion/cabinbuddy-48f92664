@@ -102,12 +102,18 @@ export const useDailyOccupancySync = (organizationId: string) => {
 
         // 3. Recalculate billing if not locked and not skipped
         if (!payment.billing_locked && !skipBillingRecalc) {
-          // Get billing configuration
-          const { data: settings } = await supabase
+          // Get billing configuration - handle multiple rows by taking the first
+          const { data: settingsArray, error: settingsError } = await supabase
             .from('reservation_settings')
             .select('*')
             .eq('organization_id', organizationId)
-            .maybeSingle();
+            .limit(1);
+
+          if (settingsError) {
+            console.error('Error fetching settings:', settingsError);
+          }
+
+          const settings = settingsArray?.[0];
 
           if (settings) {
             const billingConfig = {
