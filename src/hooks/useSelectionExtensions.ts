@@ -49,6 +49,86 @@ export const useSelectionExtensions = (rotationYear: number) => {
     return extensions.find(ext => ext.family_group === familyGroup) || null;
   };
 
+  const pushBackSubsequentPeriods = async (
+    familyGroup: string,
+    rotationYear: number,
+    daysToAdd: number
+  ) => {
+    if (!organization?.id || daysToAdd <= 0) return;
+
+    try {
+      // Get rotation order to find this family's position
+      const { data: rotationData } = await supabase
+        .from('rotation_orders')
+        .select('rotation_order')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .maybeSingle();
+
+      if (!rotationData?.rotation_order) {
+        console.error('No rotation order found');
+        return;
+      }
+
+      const rotationOrder = rotationData.rotation_order as string[];
+      const currentIndex = rotationOrder.indexOf(familyGroup);
+      
+      if (currentIndex === -1) {
+        console.error('Family not found in rotation order');
+        return;
+      }
+
+      // Get all subsequent families
+      const subsequentFamilies = rotationOrder.slice(currentIndex + 1);
+      
+      if (subsequentFamilies.length === 0) {
+        console.log('No subsequent periods to push back');
+        return;
+      }
+
+      // Fetch periods for subsequent families
+      const { data: periodsToUpdate, error: fetchError } = await supabase
+        .from('reservation_periods')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .in('current_family_group', subsequentFamilies);
+
+      if (fetchError) {
+        console.error('Error fetching periods to update:', fetchError);
+        return;
+      }
+
+      if (!periodsToUpdate || periodsToUpdate.length === 0) {
+        console.log('No periods found to update');
+        return;
+      }
+
+      // Update each period
+      const updates = periodsToUpdate.map(period => {
+        const newStartDate = new Date(period.selection_start_date);
+        newStartDate.setDate(newStartDate.getDate() + daysToAdd);
+        
+        const newEndDate = new Date(period.selection_end_date);
+        newEndDate.setDate(newEndDate.getDate() + daysToAdd);
+
+        return supabase
+          .from('reservation_periods')
+          .update({
+            selection_start_date: newStartDate.toISOString().split('T')[0],
+            selection_end_date: newEndDate.toISOString().split('T')[0],
+          })
+          .eq('id', period.id);
+      });
+
+      await Promise.all(updates);
+      
+      console.log(`Pushed back ${periodsToUpdate.length} subsequent periods by ${daysToAdd} days`);
+    } catch (error) {
+      console.error('Error pushing back subsequent periods:', error);
+    }
+  };
+
   const createOrUpdateExtension = async (
     familyGroup: string,
     originalEndDate: string,
@@ -59,8 +139,17 @@ export const useSelectionExtensions = (rotationYear: number) => {
 
     try {
       const existingExtension = getExtensionForFamily(familyGroup);
+      
+      // Calculate days extended
+      const originalDate = new Date(originalEndDate);
+      const extendedDate = new Date(extendedUntil);
+      const daysExtended = Math.ceil((extendedDate.getTime() - originalDate.getTime()) / (1000 * 60 * 60 * 24));
 
       if (existingExtension) {
+        // Calculate additional days if updating extension
+        const previousExtendedDate = new Date(existingExtension.extended_until);
+        const additionalDays = Math.ceil((extendedDate.getTime() - previousExtendedDate.getTime()) / (1000 * 60 * 60 * 24));
+        
         // Update existing extension
         const { error } = await supabase
           .from('selection_period_extensions')
@@ -72,9 +161,14 @@ export const useSelectionExtensions = (rotationYear: number) => {
 
         if (error) throw error;
 
+        // Push back subsequent periods if extending further
+        if (additionalDays > 0) {
+          await pushBackSubsequentPeriods(familyGroup, rotationYear, additionalDays);
+        }
+
         toast({
           title: "Extension Updated",
-          description: `Selection period for ${familyGroup} has been updated.`,
+          description: `Selection period for ${familyGroup} updated. Subsequent periods adjusted.`,
         });
       } else {
         // Create new extension
@@ -91,9 +185,12 @@ export const useSelectionExtensions = (rotationYear: number) => {
 
         if (error) throw error;
 
+        // Push back subsequent periods
+        await pushBackSubsequentPeriods(familyGroup, rotationYear, daysExtended);
+
         toast({
           title: "Extension Created",
-          description: `Selection period for ${familyGroup} has been extended.`,
+          description: `Selection period for ${familyGroup} extended. Subsequent periods adjusted by ${daysExtended} days.`,
         });
       }
 

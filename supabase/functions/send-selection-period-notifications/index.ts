@@ -51,27 +51,106 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Checking selection periods for organization: ${org.name}`);
       
       // Check for periods starting in 3 days (start notifications)
-      const { data: startingPeriods, error: startError } = await supabase
+      const { data: potentialStartingPeriods, error: startError } = await supabase
         .from('reservation_periods')
         .select('*')
-        .eq('organization_id', org.id)
-        .eq('selection_start_date', threeDaysFromNow.toISOString().split('T')[0]);
+        .eq('organization_id', org.id);
 
       if (startError) {
-        console.error('Error fetching starting periods:', startError);
+        console.error('Error fetching potential starting periods:', startError);
         continue;
       }
 
+      // Filter based on extensions of previous periods
+      const startingPeriods = [];
+      if (potentialStartingPeriods) {
+        for (const period of potentialStartingPeriods) {
+          const scheduledStart = new Date(period.selection_start_date);
+          const scheduledStartStr = scheduledStart.toISOString().split('T')[0];
+          const threeDaysStr = threeDaysFromNow.toISOString().split('T')[0];
+          
+          if (scheduledStartStr === threeDaysStr) {
+            // Get rotation order to find previous family
+            const { data: rotationData } = await supabase
+              .from('rotation_orders')
+              .select('rotation_order')
+              .eq('organization_id', org.id)
+              .eq('rotation_year', period.rotation_year)
+              .maybeSingle();
+
+            if (rotationData?.rotation_order) {
+              const rotationOrder = rotationData.rotation_order;
+              const currentIndex = rotationOrder.indexOf(period.current_family_group);
+              
+              // Handle wrap-around for first family
+              const previousIndex = currentIndex > 0 ? currentIndex - 1 : rotationOrder.length - 1;
+              const previousFamily = rotationOrder[previousIndex];
+
+              // Check if previous family has an active extension
+              const { data: extension } = await supabase
+                .from('selection_period_extensions')
+                .select('extended_until')
+                .eq('organization_id', org.id)
+                .eq('rotation_year', period.rotation_year)
+                .eq('family_group', previousFamily)
+                .maybeSingle();
+
+              // If previous family has extension past this start date, skip
+              if (extension?.extended_until) {
+                const extendedDate = new Date(extension.extended_until);
+                if (extendedDate >= scheduledStart) {
+                  console.log(`Skipping start notification - ${previousFamily} extended until ${extension.extended_until}`);
+                  continue;
+                }
+              }
+            }
+
+            startingPeriods.push(period);
+          }
+        }
+      }
+
       // Check for periods ending today (end notifications)
-      const { data: endingPeriods, error: endError } = await supabase
+      const { data: potentialEndingPeriods, error: endError } = await supabase
         .from('reservation_periods')
         .select('*')
-        .eq('organization_id', org.id)
-        .eq('selection_end_date', today.toISOString().split('T')[0]);
+        .eq('organization_id', org.id);
 
       if (endError) {
-        console.error('Error fetching ending periods:', endError);
+        console.error('Error fetching potential ending periods:', endError);
         continue;
+      }
+
+      // Filter based on effective end dates (considering extensions)
+      const endingPeriods = [];
+      if (potentialEndingPeriods) {
+        for (const period of potentialEndingPeriods) {
+          // Check for extension
+          const { data: extension } = await supabase
+            .from('selection_period_extensions')
+            .select('extended_until')
+            .eq('organization_id', org.id)
+            .eq('rotation_year', period.rotation_year)
+            .eq('family_group', period.current_family_group)
+            .maybeSingle();
+
+          // Determine effective end date
+          const effectiveEndDate = extension?.extended_until 
+            ? new Date(extension.extended_until) 
+            : new Date(period.selection_end_date);
+
+          const effectiveEndDateStr = effectiveEndDate.toISOString().split('T')[0];
+          const todayStr = today.toISOString().split('T')[0];
+          
+          // Only include if effective end date is today
+          if (effectiveEndDateStr === todayStr) {
+            endingPeriods.push({
+              ...period,
+              effectiveEndDate: effectiveEndDateStr
+            });
+            console.log(`Period ending today: ${period.current_family_group} (effective: ${effectiveEndDateStr})`);
+          }
+        }
       }
 
       // Send notifications for starting periods
