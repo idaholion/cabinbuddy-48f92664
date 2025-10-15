@@ -14,8 +14,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useReservations } from "@/hooks/useReservations";
 import { parseDateOnly } from "@/lib/date-utils";
+import { useAuth } from "@/contexts/AuthContext";
 const CheckIn = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservations, loading: reservationsLoading } = useReservations();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
@@ -35,18 +37,15 @@ const CheckIn = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
 
-  // Get current user's family group from localStorage
+  // Get current user's active reservation based on their email and host assignments
   const getCurrentUserReservation = () => {
-    const familyData = localStorage.getItem('familySetupData');
-    console.log('📋 [CHECK-IN] Family data from localStorage:', familyData);
-    
-    if (!familyData) {
-      console.log('❌ [CHECK-IN] No family data in localStorage');
+    if (!user?.email) {
+      console.log('❌ [CHECK-IN] No user email available');
       return null;
     }
-    
-    const { familyName } = JSON.parse(familyData);
-    console.log('📋 [CHECK-IN] Looking for reservations for family:', familyName);
+
+    const userEmail = user.email.toLowerCase();
+    console.log('📋 [CHECK-IN] Looking for reservations for user:', userEmail);
     console.log('📋 [CHECK-IN] Total reservations available:', reservations.length);
     
     const today = new Date();
@@ -57,23 +56,28 @@ const CheckIn = () => {
       const startDate = parseDateOnly(res.start_date);
       const endDate = parseDateOnly(res.end_date);
       
-      const familyMatch = res.family_group === familyName;
       const dateInRange = startDate <= today && endDate >= today;
+      
+      // Check if user is assigned as host for this reservation
+      const isAssignedHost = res.host_assignments?.some((assignment: any) => 
+        assignment.host_email?.toLowerCase() === userEmail
+      );
       
       console.log('📋 [CHECK-IN] Checking reservation:', {
         family: res.family_group,
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
-        familyMatch,
         dateInRange,
-        matches: familyMatch && dateInRange
+        isAssignedHost,
+        hostAssignments: res.host_assignments,
+        matches: dateInRange && isAssignedHost
       });
       
-      return familyMatch && dateInRange;
+      return dateInRange && isAssignedHost;
     });
     
     if (!matchingReservation) {
-      console.log('❌ [CHECK-IN] No matching reservation found!');
+      console.log('❌ [CHECK-IN] No matching reservation found for', userEmail);
     } else {
       console.log('✅ [CHECK-IN] Found current reservation:', matchingReservation);
     }
