@@ -26,6 +26,7 @@ import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
@@ -38,6 +39,7 @@ export default function StayHistory() {
   const [showExportDialog, setShowExportDialog] = useState(false);
 
   const { user } = useAuth();
+  const { claimedProfile } = useProfileClaiming();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
@@ -200,6 +202,12 @@ export default function StayHistory() {
     
     // Admins can split costs on any reservation
     if (isAdmin) return true;
+    
+    // Family group leads can split costs on their group's reservations
+    if (claimedProfile?.member_type === 'group_lead' && 
+        claimedProfile?.family_group_name === reservation.family_group) {
+      return true;
+    }
     
     // Check if user is the primary host via host_assignments (most reliable method)
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {

@@ -108,16 +108,20 @@ const CheckoutFinal = () => {
   const isUserReservationOwner = (reservation: any): boolean => {
     if (!user) return false;
     
-    // Option 1: If user has claimed a profile, match by family group and host name
+    // Option 1: If user has claimed a profile, check permissions
     if (claimedProfile) {
-      if (reservation.family_group !== claimedProfile.family_group_name) return false;
+      // Family group leads can split costs on any reservation in their group
+      if (claimedProfile.member_type === 'group_lead' && 
+          reservation.family_group === claimedProfile.family_group_name) {
+        return true;
+      }
       
-      if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      // Otherwise, check if they're the primary host
+      if (reservation.family_group === claimedProfile.family_group_name &&
+          reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
         const primaryHost = reservation.host_assignments[0];
         return primaryHost.host_name === claimedProfile.member_name;
       }
-      
-      return claimedProfile.member_type === 'group_lead';
     }
     
     // Option 2: Check if user's email matches any host in host_assignments
