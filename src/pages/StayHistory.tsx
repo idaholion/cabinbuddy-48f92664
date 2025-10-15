@@ -70,7 +70,10 @@ export default function StayHistory() {
     try {
       const { data, error } = await supabase
         .from('payment_splits')
-        .select('*')
+        .select(`
+          *,
+          split_payment:payments!payment_splits_split_payment_id_fkey(*)
+        `)
         .eq('organization_id', organization.id);
       
       if (error) throw error;
@@ -165,10 +168,76 @@ export default function StayHistory() {
       const hasPermission = canViewReservation(reservation);
       
       return isPast && isConfirmed && matchesYear && matchesFamily && hasPermission;
-    })
+    });
+
+  // Create virtual reservations from payment splits where current user is recipient
+  const createVirtualReservationsFromSplits = () => {
+    if (!user?.id) return [];
+    
+    return paymentSplits
+      .filter(split => 
+        split.split_to_user_id === user.id && 
+        split.daily_occupancy_split && 
+        Array.isArray(split.daily_occupancy_split) &&
+        split.daily_occupancy_split.length > 0 &&
+        split.split_payment
+      )
+      .map(split => {
+        const days = split.daily_occupancy_split;
+        const startDate = days[0]?.date;
+        const endDate = days[days.length - 1]?.date;
+        
+        return {
+          id: `split-${split.id}`,
+          start_date: startDate,
+          end_date: endDate,
+          family_group: split.split_to_family_group,
+          status: 'confirmed',
+          user_id: user.id,
+          organization_id: organization?.id,
+          isVirtualSplit: true,
+          splitData: {
+            splitId: split.id,
+            sourceFamily: split.source_family_group,
+            payment: split.split_payment,
+            dailyOccupancy: days
+          }
+        };
+      });
+  };
+
+  // Merge virtual split reservations with real reservations
+  const virtualSplitReservations = createVirtualReservationsFromSplits();
+  const allReservations = [...filteredReservations, ...virtualSplitReservations]
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
   const calculateStayData = (reservation: any, previousBalance: number = 0) => {
+    // Handle virtual split reservations
+    if (reservation.isVirtualSplit) {
+      const splitPayment = reservation.splitData.payment;
+      const days = reservation.splitData.dailyOccupancy;
+      
+      return {
+        nights: days.length,
+        receiptsTotal: 0,
+        receiptsCount: 0,
+        billingAmount: Number(splitPayment.amount) || 0,
+        amountPaid: Number(splitPayment.amount_paid) || 0,
+        currentBalance: Number(splitPayment.balance_due) || 0,
+        previousBalance: 0,
+        amountDue: Number(splitPayment.balance_due) || 0,
+        billingMethod: "Guest cost split",
+        paymentId: splitPayment.id,
+        paymentStatus: splitPayment.status,
+        dailyOccupancy: days,
+        manualAdjustment: 0,
+        adjustmentNotes: null,
+        billingLocked: false,
+        isVirtualSplit: true,
+        sourceFamily: reservation.splitData.sourceFamily
+      };
+    }
+    
     const checkInDate = parseDateOnly(reservation.start_date);
     const checkOutDate = parseDateOnly(reservation.end_date);
     const nights = differenceInDays(checkOutDate, checkInDate);
@@ -221,7 +290,7 @@ export default function StayHistory() {
   };
 
   // Sort reservations chronologically (oldest first) and calculate running balance PER PRIMARY HOST
-  const sortedReservations = [...filteredReservations].sort((a, b) => 
+  const sortedReservations = [...allReservations].sort((a, b) => 
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
@@ -408,16 +477,22 @@ export default function StayHistory() {
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2 flex-wrap">
                       {format(checkInDate, "MMM d, yyyy")} - {format(checkOutDate, "MMM d, yyyy")}
-                      {stayData.paymentStatus && (
+                      {reservation.isVirtualSplit && (
+                        <Badge variant="outline" className="gap-1 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+                          <Users className="h-3 w-3" />
+                          Guest Split
+                        </Badge>
+                      )}
+                      {!reservation.isVirtualSplit && stayData.paymentStatus && (
                         <Badge variant={
-                          stayData.paymentStatus === 'paid' ? 'default' :
-                          stayData.paymentStatus === 'partial' ? 'secondary' :
+                          stayData.paymentStatus === 'paid' ? 'default' : 
+                          stayData.paymentStatus === 'partial' ? 'secondary' : 
                           stayData.paymentStatus === 'overdue' ? 'destructive' : 'outline'
                         }>
                           {stayData.paymentStatus}
                         </Badge>
                       )}
-                      {paymentSplits.some(split => split.source_payment_id === stayData.paymentId) && (
+                      {!reservation.isVirtualSplit && paymentSplits.some(split => split.source_payment_id === stayData.paymentId) && (
                         <Badge variant="outline" className="gap-1 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                           <Users className="h-3 w-3" />
                           Cost Split
@@ -426,6 +501,9 @@ export default function StayHistory() {
                     </CardTitle>
                     <CardDescription>
                       {stayData.nights} {stayData.nights === 1 ? "night" : "nights"} • {reservation.family_group}
+                      {reservation.isVirtualSplit && (
+                        <> • Split from: {stayData.sourceFamily}</>
+                      )}
                       {reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0 && (
                         <> • Reserved by: {getHostFirstName(reservation)}</>
                       )}
@@ -506,35 +584,39 @@ export default function StayHistory() {
                 {/* Action Buttons */}
                 {stayData.paymentId && (
                   <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                  onClick={() => setEditOccupancyStay({
-                    startDate: parseDateOnly(reservation.start_date),
-                    endDate: parseDateOnly(reservation.end_date),
-                    family_group: reservation.family_group,
-                    reservationId: reservation.id,
-                    dailyOccupancy: stayData.dailyOccupancy
-                  })}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Occupancy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAdjustBillingStay({
-                        ...reservation,
-                        paymentId: stayData.paymentId,
-                        calculatedAmount: stayData.billingAmount,
-                        manualAdjustment: stayData.manualAdjustment,
-                        adjustmentNotes: stayData.adjustmentNotes,
-                        billingLocked: stayData.billingLocked
-                      })}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Adjust Billing
-                    </Button>
+                    {!reservation.isVirtualSplit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                    onClick={() => setEditOccupancyStay({
+                      startDate: parseDateOnly(reservation.start_date),
+                      endDate: parseDateOnly(reservation.end_date),
+                      family_group: reservation.family_group,
+                      reservationId: reservation.id,
+                      dailyOccupancy: stayData.dailyOccupancy
+                    })}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Occupancy
+                      </Button>
+                    )}
+                    {!reservation.isVirtualSplit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustBillingStay({
+                          ...reservation,
+                          paymentId: stayData.paymentId,
+                          calculatedAmount: stayData.billingAmount,
+                          manualAdjustment: stayData.manualAdjustment,
+                          adjustmentNotes: stayData.adjustmentNotes,
+                          billingLocked: stayData.billingLocked
+                        })}
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Adjust Billing
+                      </Button>
+                    )}
                     {stayData.amountDue > 0 && (
                       <Button
                         variant="outline"
