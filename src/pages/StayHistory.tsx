@@ -489,13 +489,15 @@ export default function StayHistory() {
                           Guest Split
                         </Badge>
                       )}
-                      {!reservation.isVirtualSplit && stayData.paymentStatus && (
+                      {!reservation.isVirtualSplit && stayData.paymentId && (
                         <Badge variant={
-                          stayData.paymentStatus === 'paid' ? 'default' : 
-                          stayData.paymentStatus === 'partial' ? 'secondary' : 
-                          stayData.paymentStatus === 'overdue' ? 'destructive' : 'outline'
+                          stayData.amountDue <= 0 ? 'default' : 
+                          stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
+                          'destructive'
                         }>
-                          {stayData.paymentStatus}
+                          {stayData.amountDue <= 0 ? 'paid' : 
+                           stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'partial' : 
+                           'pending'}
                         </Badge>
                       )}
                       {!reservation.isVirtualSplit && paymentSplits.some(split => split.source_payment_id === stayData.paymentId) && (
