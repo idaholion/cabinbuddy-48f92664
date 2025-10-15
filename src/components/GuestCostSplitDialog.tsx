@@ -300,12 +300,17 @@ export const GuestCostSplitDialog = ({
 
     setLoading(true);
     try {
+      // Get session to check auth state
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔐 [SPLIT] Session check:', session ? 'Valid session' : 'No session');
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.log('❌ [SPLIT] User not authenticated');
         throw new Error('Not authenticated');
       }
       console.log('✅ [SPLIT] User authenticated:', user.id);
+      console.log('✅ [SPLIT] User email:', user.email);
 
       const { sourceTotal, users: calculatedUsers, perDiem } = calculateSplitCosts();
       console.log('💰 [SPLIT] Calculated costs:', { sourceTotal, perDiem, calculatedUsers });
