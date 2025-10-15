@@ -15,6 +15,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
+import { getHostFirstName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
@@ -41,7 +42,7 @@ export default function StayHistory() {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isCalendarKeeper } = useUserRole();
+  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
@@ -116,6 +117,24 @@ export default function StayHistory() {
     }
   };
 
+  // Permission check helper - determines if user can view a specific reservation
+  const canViewReservation = (reservation: any): boolean => {
+    // Admins and calendar keepers can see everything
+    if (isAdmin || isCalendarKeeper) return true;
+    
+    // Group leads can see all reservations for their family group
+    if (isGroupLead && userFamilyGroup?.name === reservation.family_group) return true;
+    
+    // Regular members can only see reservations where they are the primary host
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      return primaryHost.host_email?.toLowerCase() === user?.email?.toLowerCase();
+    }
+    
+    // Fallback: if no host_assignments, only show if user_id matches (old data)
+    return reservation.user_id === user?.id;
+  };
+
   const filteredReservations = reservations
     .filter((reservation) => {
       const checkInDate = parseDateOnly(reservation.start_date);
@@ -124,8 +143,9 @@ export default function StayHistory() {
       const isConfirmed = reservation.status === "confirmed";
       const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
       const matchesFamily = selectedFamilyGroup === "all" || reservation.family_group === selectedFamilyGroup;
+      const hasPermission = canViewReservation(reservation);
       
-      return isPast && isConfirmed && matchesYear && matchesFamily;
+      return isPast && isConfirmed && matchesYear && matchesFamily && hasPermission;
     })
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
@@ -381,6 +401,9 @@ export default function StayHistory() {
                     </CardTitle>
                     <CardDescription>
                       {stayData.nights} {stayData.nights === 1 ? "night" : "nights"} • {reservation.family_group}
+                      {reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0 && (
+                        <> • Reserved by: {getHostFirstName(reservation)}</>
+                      )}
                     </CardDescription>
                   </div>
                   <Link to={`/calendar?date=${reservation.start_date}`}>
