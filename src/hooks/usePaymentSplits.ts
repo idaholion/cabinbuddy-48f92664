@@ -54,8 +54,18 @@ export const usePaymentSplits = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch splits where current user is the recipient
-      const { data: splitsData, error: splitsError } = await supabase
+      // Check if user is admin
+      const { data: userOrgs } = await supabase
+        .from('user_organizations')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', organization.id)
+        .single();
+
+      const isAdmin = userOrgs?.role === 'admin' || userOrgs?.role === 'treasurer';
+
+      // Build query based on admin status
+      let query = supabase
         .from('payment_splits')
         .select(`
           *,
@@ -78,8 +88,14 @@ export const usePaymentSplits = () => {
             paid_date
           )
         `)
-        .eq('organization_id', organization.id)
-        .eq('split_to_user_id', user.id)
+        .eq('organization_id', organization.id);
+
+      // If not admin, only show splits where user is recipient or source
+      if (!isAdmin) {
+        query = query.or(`split_to_user_id.eq.${user.id},source_user_id.eq.${user.id}`);
+      }
+
+      const { data: splitsData, error: splitsError } = await query
         .order('created_at', { ascending: false });
 
       if (splitsError) throw splitsError;
