@@ -628,7 +628,7 @@ export default function StayHistory() {
         />
       )}
 
-      {splitCostStay && splitCostStay.dailyOccupancy && splitCostStay.dailyOccupancy.length > 0 && (
+      {splitCostStay && splitCostStay.dailyOccupancy && splitCostStay.dailyOccupancy.length > 0 && user && (
         <GuestCostSplitDialog
           open={!!splitCostStay}
           onOpenChange={(open) => !open && setSplitCostStay(null)}
@@ -639,7 +639,7 @@ export default function StayHistory() {
             cost: d.cost || 0
           }))}
           totalAmount={splitCostStay.billingAmount || 0}
-          sourceUserId={splitCostStay.user_id}
+          sourceUserId={user.id}
           sourceFamilyGroup={splitCostStay.family_group}
           onSplitCreated={() => {
             fetchPayments();

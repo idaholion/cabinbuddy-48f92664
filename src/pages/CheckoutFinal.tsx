@@ -1010,14 +1010,14 @@ const CheckoutFinal = () => {
         )}
 
         {/* Guest Cost Split Dialog */}
-        {currentReservation && organization && (
+        {currentReservation && organization && user && (
           <GuestCostSplitDialog
             open={splitCostsOpen}
             onOpenChange={setSplitCostsOpen}
             organizationId={organization.id}
             dailyBreakdown={dailyBreakdown}
             totalAmount={enhancedBilling.total}
-            sourceUserId={currentReservation.user_id || ''}
+            sourceUserId={user.id}
             sourceFamilyGroup={currentReservation.family_group}
             onSplitCreated={async () => {
               // Refresh billing data to show updated amounts
