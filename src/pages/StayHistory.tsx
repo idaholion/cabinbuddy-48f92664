@@ -171,12 +171,18 @@ export default function StayHistory() {
     });
 
   // Create virtual reservations from payment splits where current user is recipient
+  // Admins see all splits, regular users see only their own
   const createVirtualReservationsFromSplits = () => {
     if (!user?.id) return [];
     
     return paymentSplits
+      .filter(split => {
+        // Admins see all splits in the organization
+        if (isAdmin) return true;
+        // Regular users only see splits where they are the recipient
+        return split.split_to_user_id === user.id;
+      })
       .filter(split => 
-        split.split_to_user_id === user.id && 
         split.daily_occupancy_split && 
         Array.isArray(split.daily_occupancy_split) &&
         split.daily_occupancy_split.length > 0 &&
@@ -193,7 +199,7 @@ export default function StayHistory() {
           end_date: endDate,
           family_group: split.split_to_family_group,
           status: 'confirmed',
-          user_id: user.id,
+          user_id: split.split_to_user_id, // Use the actual recipient's user_id
           organization_id: organization?.id,
           isVirtualSplit: true,
           splitData: {
