@@ -3073,6 +3073,10 @@ export type Database = {
         Args: { user_uuid?: string }
         Returns: string
       }
+      is_family_group_lead: {
+        Args: { p_family_group_name: string; p_organization_id: string }
+        Returns: boolean
+      }
       is_organization_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
