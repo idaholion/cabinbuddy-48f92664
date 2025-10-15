@@ -369,21 +369,33 @@ export const GuestCostSplitDialog = ({
 
       console.log('✅ [SPLIT] Organization membership confirmed:', userOrgData);
 
+      // Insert source payment with extremely detailed logging
+      const sourcePaymentData = {
+        organization_id: organizationId,
+        family_group: sourceFamilyGroup,
+        payment_type: 'use_fee' as const,
+        amount: sourceTotal,
+        amount_paid: 0,
+        status: 'deferred' as const,
+        due_date: seasonEnd.toISOString().split('T')[0],
+        description: `Use fee (split with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}) - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
+        notes: `Cost split with: ${calculatedUsers.map(u => u.displayName).join(', ')}`,
+        daily_occupancy: sourceDailyOccupancy,
+        created_by_user_id: user.id,
+      };
+      
+      console.log('📝 [SPLIT] About to insert source payment with data:', JSON.stringify(sourcePaymentData, null, 2));
+      console.log('🔑 [SPLIT] Auth context:', {
+        user_id: user.id,
+        user_email: user.email,
+        organization_id: organizationId,
+        is_in_org: userOrgData ? 'YES' : 'NO',
+        user_role: userOrgData?.role
+      });
+      
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
-        .insert({
-          organization_id: organizationId,
-          family_group: sourceFamilyGroup,
-          payment_type: 'use_fee',
-          amount: sourceTotal,
-          amount_paid: 0,
-          status: 'deferred',
-          due_date: seasonEnd.toISOString().split('T')[0],
-          description: `Use fee (split with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}) - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
-          notes: `Cost split with: ${calculatedUsers.map(u => u.displayName).join(', ')}`,
-          daily_occupancy: sourceDailyOccupancy,
-          created_by_user_id: user.id,
-        })
+        .insert([sourcePaymentData])
         .select()
         .single();
 
