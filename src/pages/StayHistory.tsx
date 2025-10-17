@@ -85,6 +85,21 @@ export default function StayHistory() {
     }
   };
 
+  // Refresh data when page becomes visible (user navigates back to this page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPayments();
+        fetchPaymentSplits();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchPayments]);
+
   const handleSync = async () => {
     try {
       await refetchReservations();
