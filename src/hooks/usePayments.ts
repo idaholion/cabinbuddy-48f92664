@@ -68,12 +68,64 @@ export const usePayments = () => {
         `)
         .eq('organization_id', organization.id);
 
-      // Apply year filter if provided
+      // Apply year filter if provided - filter by reservation dates when available
       if (year) {
         const startDate = `${year}-01-01`;
         const endDate = `${year}-12-31`;
-        countQuery = countQuery.gte('created_at', startDate).lte('created_at', endDate);
-        dataQuery = dataQuery.gte('created_at', startDate).lte('created_at', endDate);
+        
+        // For count query, we need to use a more complex filter
+        // Include payments where either:
+        // 1. The linked reservation's start_date is in the year
+        // 2. No reservation_id and created_at is in the year (orphaned payments)
+        const countWithReservations = await supabase
+          .from('payments')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .not('reservation_id', 'is', null);
+        
+        const countOrphaned = await supabase
+          .from('payments')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', organization.id)
+          .is('reservation_id', null)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate);
+        
+        // For data query, fetch all payments and filter in memory
+        // This is more efficient than complex SQL joins
+        const { data: allPayments, error: allError } = await supabase
+          .from('payments')
+          .select(`
+            *,
+            reservation:reservations(start_date, end_date)
+          `)
+          .eq('organization_id', organization.id)
+          .order('created_at', { ascending: false });
+        
+        if (allError) throw allError;
+        
+        // Filter payments by year
+        const filteredPayments = (allPayments || []).filter(payment => {
+          // If payment has a reservation, check reservation dates
+          if (payment.reservation && payment.reservation.start_date) {
+            const reservationYear = new Date(payment.reservation.start_date).getFullYear();
+            return reservationYear === year;
+          }
+          // Otherwise, use payment created_at date
+          const paymentYear = new Date(payment.created_at).getFullYear();
+          return paymentYear === year;
+        });
+        
+        console.log(`[usePayments] Year filter ${year}: Found ${filteredPayments.length} payments`);
+        console.log(`[usePayments] Breakdown:`, {
+          withReservation: filteredPayments.filter(p => p.reservation_id).length,
+          orphaned: filteredPayments.filter(p => !p.reservation_id).length
+        });
+        
+        setPayments(filteredPayments);
+        setPagination({ page: 1, limit: 50, total: filteredPayments.length });
+        setLoading(false);
+        return;
       }
 
       // Get total count

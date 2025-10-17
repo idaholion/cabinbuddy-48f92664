@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2 } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -109,6 +109,27 @@ export default function StayHistory() {
       toast.success("Data refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh data");
+    }
+  };
+
+  const handleLinkOrphanedPayments = async () => {
+    if (!organization?.id) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('link_orphaned_payments_to_reservations', {
+        p_organization_id: organization.id
+      });
+      
+      if (error) throw error;
+      
+      const result = data as { success: boolean; linked_payments: number; message: string };
+      toast.success(result.message || 'Orphaned payments have been linked');
+      
+      // Refresh all data
+      await handleSync();
+    } catch (error: any) {
+      console.error('Error linking orphaned payments:', error);
+      toast.error(error.message || "Failed to link orphaned payments");
     }
   };
 
@@ -326,27 +347,75 @@ export default function StayHistory() {
     const checkOutDate = parseDateOnly(reservation.end_date);
     const nights = differenceInDays(checkOutDate, checkInDate);
     
-    // Find payment record for this reservation
-    // First try to match by reservation_id, then fall back to matching by family_group and date overlap
+    // Find payment record for this reservation with detailed logging
+    console.log(`[StayHistory] Finding payment for reservation:`, {
+      reservationId: reservation.id,
+      familyGroup: reservation.family_group,
+      checkInDate: checkInDate.toISOString().split('T')[0],
+      checkOutDate: checkOutDate.toISOString().split('T')[0]
+    });
+    
+    // First try to match by reservation_id
     let payment = payments.find(p => p.reservation_id === reservation.id);
+    
+    if (payment) {
+      console.log(`[StayHistory] ✓ Found payment by reservation_id:`, {
+        paymentId: payment.id,
+        amount: payment.amount,
+        hasDailyOccupancy: !!(payment as any).daily_occupancy
+      });
+    }
     
     // If no payment found by reservation_id, try to find orphaned payments (null reservation_id)
     // that match this reservation's family_group and date range
     if (!payment) {
-      payment = payments.find(p => {
-        if (p.reservation_id !== null) return false; // Skip payments linked to other reservations
-        if (p.family_group !== reservation.family_group) return false;
-        
-        // Check if payment has daily_occupancy data that overlaps with reservation dates
+      const orphanedPayments = payments.filter(p => 
+        p.reservation_id === null && 
+        p.family_group === reservation.family_group
+      );
+      
+      console.log(`[StayHistory] No direct match. Checking ${orphanedPayments.length} orphaned payments for family group ${reservation.family_group}`);
+      
+      payment = orphanedPayments.find(p => {
         const paymentAny = p as any;
-        if (paymentAny.daily_occupancy && Array.isArray(paymentAny.daily_occupancy)) {
-          const paymentDates = paymentAny.daily_occupancy.map((d: any) => d.date);
-          const reservationDateStr = checkInDate.toISOString().split('T')[0];
-          return paymentDates.includes(reservationDateStr);
+        
+        // Check if payment has daily_occupancy data
+        if (!paymentAny.daily_occupancy || !Array.isArray(paymentAny.daily_occupancy)) {
+          return false;
         }
         
-        return false;
+        // Get payment dates and reservation date range
+        const paymentDates = paymentAny.daily_occupancy.map((d: any) => d.date);
+        const reservationDates: string[] = [];
+        let currentDate = new Date(checkInDate);
+        
+        while (currentDate < checkOutDate) {
+          reservationDates.push(currentDate.toISOString().split('T')[0]);
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Check for date overlap - at least 50% of dates must match
+        const overlappingDates = reservationDates.filter(date => paymentDates.includes(date));
+        const overlapPercentage = overlappingDates.length / reservationDates.length;
+        
+        console.log(`[StayHistory] Checking payment ${p.id}:`, {
+          paymentDates: paymentDates.length,
+          reservationDates: reservationDates.length,
+          overlapping: overlappingDates.length,
+          overlapPercentage: Math.round(overlapPercentage * 100) + '%'
+        });
+        
+        return overlapPercentage >= 0.5; // At least 50% overlap
       });
+      
+      if (payment) {
+        console.log(`[StayHistory] ✓ Found orphaned payment by date overlap:`, {
+          paymentId: payment.id,
+          amount: payment.amount
+        });
+      } else {
+        console.log(`[StayHistory] ✗ No matching payment found for reservation ${reservation.id}`);
+      }
     }
     
     // Find all receipts for this family group (not limited by date)
@@ -445,6 +514,23 @@ export default function StayHistory() {
     return sum + stayData.amountPaid;
   }, 0);
 
+  // Count orphaned payments (for admin debugging)
+  const orphanedPaymentsCount = payments.filter(p => 
+    p.reservation_id === null && 
+    (p as any).daily_occupancy && 
+    Array.isArray((p as any).daily_occupancy) && 
+    (p as any).daily_occupancy.length > 0
+  ).length;
+  
+  console.log(`[StayHistory] Summary:`, {
+    totalStays,
+    totalNights,
+    totalPaid,
+    orphanedPayments: orphanedPaymentsCount,
+    totalPayments: payments.length,
+    linkedPayments: payments.filter(p => p.reservation_id !== null).length
+  });
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -528,6 +614,12 @@ export default function StayHistory() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Data
             </Button>
+            {isAdmin && orphanedPaymentsCount > 0 && (
+              <Button variant="outline" onClick={handleLinkOrphanedPayments}>
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Link {orphanedPaymentsCount} Orphaned Payment{orphanedPaymentsCount !== 1 ? 's' : ''}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>
               <Download className="h-4 w-4 mr-2" />
               Export

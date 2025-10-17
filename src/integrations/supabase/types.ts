@@ -3101,6 +3101,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      link_orphaned_payments_to_reservations: {
+        Args: { p_organization_id: string }
+        Returns: Json
+      }
       migrate_existing_checklist_images: {
         Args: Record<PropertyKey, never>
         Returns: number
