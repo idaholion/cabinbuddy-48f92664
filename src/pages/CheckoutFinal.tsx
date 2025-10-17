@@ -442,7 +442,7 @@ const CheckoutFinal = () => {
     dailyBreakdown, 
     billing: enhancedBilling, 
     totalDays,
-    averageGuests,
+    totalGuests,
     loading: billingLoading,
     billingLocked,
     refetch,
@@ -989,7 +989,7 @@ const CheckoutFinal = () => {
                       <div className="pt-2 border-t mt-2">
                         <div className="grid grid-cols-3 gap-2 text-sm font-semibold">
                           <span>Total ({totalDays} days)</span>
-                          <span className="text-center">{averageGuests.toFixed(1)} avg</span>
+                          <span className="text-center">{totalGuests} guests</span>
                           <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
                         </div>
                       </div>

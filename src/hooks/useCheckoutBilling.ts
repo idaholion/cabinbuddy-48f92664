@@ -22,7 +22,7 @@ interface CheckoutBillingResult {
     details: string;
   };
   totalDays: number;
-  averageGuests: number;
+  totalGuests: number;
   loading: boolean;
   billingLocked: boolean;
   refetch: () => Promise<void>;
@@ -225,7 +225,6 @@ export const useCheckoutBilling = (
   // Calculate stats
   const totalDays = Object.keys(dailyOccupancy).length;
   const totalGuests = Object.values(dailyOccupancy).reduce((sum, count) => sum + count, 0);
-  const averageGuests = totalDays > 0 ? totalGuests / totalDays : 0;
 
   // Create deferred payment record
   const createDeferredPayment = async (): Promise<boolean> => {
@@ -271,7 +270,7 @@ export const useCheckoutBilling = (
         status: 'deferred',
         due_date: seasonEnd.toISOString().split('T')[0],
         description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days)`,
-        notes: `Deferred payment. Average ${averageGuests.toFixed(1)} guests per day.`,
+        notes: `Deferred payment. Total ${totalGuests} guests over ${totalDays} days.`,
         daily_occupancy: dailyOccupancyArray,
         created_by_user_id: user.id,
       });
@@ -439,7 +438,7 @@ export const useCheckoutBilling = (
       details: result.details,
     },
     totalDays,
-    averageGuests,
+    totalGuests,
     loading,
     billingLocked,
     refetch,
