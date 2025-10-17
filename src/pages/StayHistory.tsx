@@ -62,7 +62,9 @@ export default function StayHistory() {
   );
 
   useEffect(() => {
-    fetchPayments();
+    const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+    console.log(`[StayHistory] Fetching payments with year filter:`, yearFilter);
+    fetchPayments(1, 50, yearFilter);
     fetchPaymentSplits();
   }, [selectedYear, selectedFamilyGroup, organization?.id]);
 
@@ -89,8 +91,10 @@ export default function StayHistory() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+        console.log(`[StayHistory] Refreshing data with year filter:`, yearFilter);
         refetchReservations();
-        fetchPayments();
+        fetchPayments(1, 50, yearFilter);
         fetchPaymentSplits();
       }
     };
@@ -99,12 +103,13 @@ export default function StayHistory() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [fetchPayments, refetchReservations]);
+  }, [fetchPayments, refetchReservations, selectedYear]);
 
   const handleSync = async () => {
     try {
+      const yearFilter = selectedYear === 0 ? undefined : selectedYear;
       await refetchReservations();
-      await fetchPayments();
+      await fetchPayments(1, 50, yearFilter);
       await fetchPaymentSplits();
       toast.success("Data refreshed successfully");
     } catch (error) {
@@ -136,7 +141,8 @@ export default function StayHistory() {
   const handleSaveOccupancy = async (updatedOccupancy: any[]) => {
     // The EditOccupancyDialog already handles the save via useDailyOccupancySync
     // We just need to refresh the payments to show the updated amount
-    await fetchPayments();
+    const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+    await fetchPayments(1, 50, yearFilter);
     toast.success("Occupancy updated successfully");
     setEditOccupancyStay(null);
   };
@@ -157,7 +163,8 @@ export default function StayHistory() {
 
       if (error) throw error;
       
-      await fetchPayments();
+      const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+      await fetchPayments(1, 50, yearFilter);
       toast.success("Billing adjustment saved successfully");
       setAdjustBillingStay(null);
     } catch (error) {

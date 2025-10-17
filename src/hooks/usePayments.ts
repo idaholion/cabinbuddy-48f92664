@@ -73,26 +73,9 @@ export const usePayments = () => {
         const startDate = `${year}-01-01`;
         const endDate = `${year}-12-31`;
         
-        // For count query, we need to use a more complex filter
-        // Include payments where either:
-        // 1. The linked reservation's start_date is in the year
-        // 2. No reservation_id and created_at is in the year (orphaned payments)
-        const countWithReservations = await supabase
-          .from('payments')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organization.id)
-          .not('reservation_id', 'is', null);
+        console.log(`[usePayments] Fetching payments with year filter: ${year}`);
         
-        const countOrphaned = await supabase
-          .from('payments')
-          .select('id', { count: 'exact', head: true })
-          .eq('organization_id', organization.id)
-          .is('reservation_id', null)
-          .gte('created_at', startDate)
-          .lte('created_at', endDate);
-        
-        // For data query, fetch all payments and filter in memory
-        // This is more efficient than complex SQL joins
+        // Fetch ALL payments with reservation data
         const { data: allPayments, error: allError } = await supabase
           .from('payments')
           .select(`
@@ -104,22 +87,48 @@ export const usePayments = () => {
         
         if (allError) throw allError;
         
-        // Filter payments by year
+        console.log(`[usePayments] Fetched ${allPayments?.length || 0} total payments`);
+        
+        // Filter payments by year - prioritize reservation dates over creation dates
         const filteredPayments = (allPayments || []).filter(payment => {
-          // If payment has a reservation, check reservation dates
+          // If payment has a linked reservation, use reservation start_date
           if (payment.reservation && payment.reservation.start_date) {
             const reservationYear = new Date(payment.reservation.start_date).getFullYear();
-            return reservationYear === year;
+            const matches = reservationYear === year;
+            if (matches) {
+              console.log(`[usePayments] ✓ Including payment ${payment.id} - reservation year ${reservationYear}`);
+            }
+            return matches;
           }
-          // Otherwise, use payment created_at date
+          
+          // For orphaned payments, try to extract year from daily_occupancy dates
+          const paymentAny = payment as any;
+          if (paymentAny.daily_occupancy && Array.isArray(paymentAny.daily_occupancy) && paymentAny.daily_occupancy.length > 0) {
+            const firstOccupancyDate = paymentAny.daily_occupancy[0].date;
+            if (firstOccupancyDate) {
+              const occupancyYear = new Date(firstOccupancyDate).getFullYear();
+              const matches = occupancyYear === year;
+              if (matches) {
+                console.log(`[usePayments] ✓ Including orphaned payment ${payment.id} - occupancy year ${occupancyYear}`);
+              }
+              return matches;
+            }
+          }
+          
+          // Fallback to payment created_at date
           const paymentYear = new Date(payment.created_at).getFullYear();
-          return paymentYear === year;
+          const matches = paymentYear === year;
+          if (matches) {
+            console.log(`[usePayments] ✓ Including payment ${payment.id} - created year ${paymentYear}`);
+          }
+          return matches;
         });
         
-        console.log(`[usePayments] Year filter ${year}: Found ${filteredPayments.length} payments`);
+        console.log(`[usePayments] Year filter ${year}: ${filteredPayments.length} payments match`);
         console.log(`[usePayments] Breakdown:`, {
           withReservation: filteredPayments.filter(p => p.reservation_id).length,
-          orphaned: filteredPayments.filter(p => !p.reservation_id).length
+          orphaned: filteredPayments.filter(p => !p.reservation_id).length,
+          familyGroups: [...new Set(filteredPayments.map(p => p.family_group))]
         });
         
         setPayments(filteredPayments);
