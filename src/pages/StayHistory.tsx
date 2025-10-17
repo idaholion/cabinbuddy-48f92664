@@ -89,6 +89,7 @@ export default function StayHistory() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        refetchReservations();
         fetchPayments();
         fetchPaymentSplits();
       }
@@ -98,7 +99,7 @@ export default function StayHistory() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [fetchPayments]);
+  }, [fetchPayments, refetchReservations]);
 
   const handleSync = async () => {
     try {
