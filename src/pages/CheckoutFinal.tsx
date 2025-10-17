@@ -473,8 +473,8 @@ const CheckoutFinal = () => {
     
     if (result.success) {
       setEditedOccupancy({});
-      // Refresh billing data
-      window.location.reload();
+      // Refresh billing data without full page reload
+      await refetch();
     }
   };
   

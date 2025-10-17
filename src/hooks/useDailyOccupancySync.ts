@@ -84,40 +84,44 @@ export const useDailyOccupancySync = (organizationId: string) => {
     setSyncing(true);
 
     try {
-      // 1. Find the payment record - handle multiple rows by taking the first
+      // 1. Find ALL payment records for this reservation
       const { data: paymentsArray, error: paymentFetchError } = await supabase
         .from('payments')
         .select('*')
-        .eq('reservation_id', reservationId)
-        .limit(1);
+        .eq('reservation_id', reservationId);
 
       if (paymentFetchError) throw paymentFetchError;
 
-      const payment = paymentsArray?.[0];
+      if (paymentsArray && paymentsArray.length > 0) {
+        // Get billing configuration once for all payments
+        const { data: settingsArray, error: settingsError } = await supabase
+          .from('reservation_settings')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .limit(1);
 
-      if (payment) {
-        // 2. Update payments.daily_occupancy
-        const updates: any = {
-          daily_occupancy: occupancyData,
-          updated_at: new Date().toISOString(),
-        };
+        if (settingsError) {
+          console.error('Error fetching settings:', settingsError);
+        }
 
-        // 3. Recalculate billing if not locked and not skipped
-        if (!payment.billing_locked && !skipBillingRecalc) {
-          // Get billing configuration - handle multiple rows by taking the first
-          const { data: settingsArray, error: settingsError } = await supabase
-            .from('reservation_settings')
-            .select('*')
-            .eq('organization_id', organizationId)
-            .limit(1);
+        const settings = settingsArray?.[0];
+        
+        // Get reservation dates once
+        const { data: reservation } = await supabase
+          .from('reservations')
+          .select('start_date, end_date')
+          .eq('id', reservationId)
+          .single();
 
-          if (settingsError) {
-            console.error('Error fetching settings:', settingsError);
-          }
+        // Update ALL payment records
+        for (const payment of paymentsArray) {
+          const updates: any = {
+            daily_occupancy: occupancyData,
+            updated_at: new Date().toISOString(),
+          };
 
-          const settings = settingsArray?.[0];
-
-          if (settings) {
+          // Recalculate billing if not locked and not skipped
+          if (!payment.billing_locked && !skipBillingRecalc && settings && reservation) {
             const billingConfig = {
               method: (settings as any).financial_method || 'per_person_per_night',
               amount: (settings as any).nightly_rate || 0,
@@ -130,29 +134,21 @@ export const useDailyOccupancySync = (organizationId: string) => {
               dailyOccupancyRecord[day.date] = day.guests;
             });
 
-            const { data: reservation } = await supabase
-              .from('reservations')
-              .select('start_date, end_date')
-              .eq('id', reservationId)
-              .single();
-
-            if (reservation) {
-              const billing = BillingCalculator.calculateFromDailyOccupancy(
-                billingConfig as any,
-                dailyOccupancyRecord,
-                { startDate: parseDateOnly(reservation.start_date), endDate: parseDateOnly(reservation.end_date) }
-              );
-              updates.amount = billing.total;
-            }
+            const billing = BillingCalculator.calculateFromDailyOccupancy(
+              billingConfig as any,
+              dailyOccupancyRecord,
+              { startDate: parseDateOnly(reservation.start_date), endDate: parseDateOnly(reservation.end_date) }
+            );
+            updates.amount = billing.total;
           }
+
+          const { error: updateError } = await supabase
+            .from('payments')
+            .update(updates)
+            .eq('id', payment.id);
+
+          if (updateError) throw updateError;
         }
-
-        const { error: updateError } = await supabase
-          .from('payments')
-          .update(updates)
-          .eq('id', payment.id);
-
-        if (updateError) throw updateError;
       }
 
       // 4. Update checkin_sessions (backfill for bidirectional sync)
@@ -184,11 +180,12 @@ export const useDailyOccupancySync = (organizationId: string) => {
       }
 
       if (shouldShowToast) {
+        const hasLockedPayments = paymentsArray?.some(p => p.billing_locked);
         toast({
-          title: payment?.billing_locked 
+          title: hasLockedPayments 
             ? "Guest counts updated" 
             : "Guest counts and billing updated",
-          description: payment?.billing_locked
+          description: hasLockedPayments
             ? "Billing is locked - costs remain unchanged"
             : "Charges have been recalculated",
         });
