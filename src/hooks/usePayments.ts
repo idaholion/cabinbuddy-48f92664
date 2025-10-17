@@ -145,18 +145,24 @@ export const usePayments = () => {
         return;
       }
 
-      // Get total count
-      const { count } = await countQuery;
-
-      // Get paginated data
-      const { data, error } = await dataQuery
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1);
+      // When no year filter, fetch ALL payments (not just first 50)
+      console.log(`[usePayments] Fetching all payments without year filter`);
+      
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          reservation:reservations(start_date, end_date)
+        `)
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
+      console.log(`[usePayments] Fetched ${data?.length || 0} total payments (all years)`);
+      
       setPayments(data || []);
-      setPagination({ page, limit, total: count || 0 });
+      setPagination({ page: 1, limit: 50, total: data?.length || 0 });
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast({
