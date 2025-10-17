@@ -49,7 +49,6 @@ const InvoiceSettings = React.lazy(() => import("./pages/InvoiceSettings"));
 
 // Lazy load other complex pages
 const CheckIn = React.lazy(() => import("./pages/CheckIn"));
-const DailyCheckIn = React.lazy(() => import("./pages/DailyCheckIn"));
 const AddReceipt = React.lazy(() => import("./pages/AddReceipt"));
 const ShoppingList = React.lazy(() => import("./pages/ShoppingList"));
 const CabinRules = React.lazy(() => import("./pages/CabinRules"));
@@ -122,7 +121,7 @@ const AppContent = () => {
         <Route path="/setup" element={<ProtectedRoute><MainLayout><Setup /></MainLayout></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><MainLayout><CabinCalendar /></MainLayout></ProtectedRoute>} />
         <Route path="/check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckIn /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/daily-check-in" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DailyCheckIn /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/daily-check-in" element={<Navigate to="/checkout-final" replace />} />
         <Route path="/checkout-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutList /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/checkout-final" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CheckoutFinal /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/shopping-list" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ShoppingList /></Suspense></MainLayout></ProtectedRoute>} />

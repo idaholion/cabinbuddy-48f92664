@@ -100,11 +100,6 @@ const cabinItems = [
     icon: ClipboardCheck,
   },
   {
-    title: "Daily Check In",
-    url: "/daily-check-in",
-    icon: CalendarDays,
-  },
-  {
     title: "Shopping List",
     url: "/shopping-list",
     icon: ShoppingCart,
@@ -120,7 +115,7 @@ const cabinItems = [
     icon: CheckSquare,
   },
   {
-    title: "Final Checkout",
+    title: "Daily & Final Check",
     url: "/checkout-final",
     icon: CreditCard,
   },

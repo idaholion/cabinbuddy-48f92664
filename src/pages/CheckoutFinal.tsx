@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +23,10 @@ import { getHostFirstName } from "@/lib/reservation-utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Lock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -56,6 +60,25 @@ const CheckoutFinal = () => {
   
   // Check if there are unsaved occupancy changes
   const hasOccupancyChanges = Object.keys(editedOccupancy).length > 0;
+  
+  // Daily tasks checklist state (from DailyCheckIn)
+  const [dailyTasksChecked, setDailyTasksChecked] = useState<Record<string, boolean>>({});
+  const [dailyNotes, setDailyNotes] = useState("");
+  const [dailyTasks, setDailyTasks] = useState([
+    { id: "security", label: "Checked all doors and windows locked", category: "security" },
+    { id: "cleanliness", label: "Maintained cleanliness standards", category: "maintenance" },
+    { id: "appliances", label: "All appliances functioning properly", category: "maintenance" },
+    { id: "heating", label: "Heating/cooling system operational", category: "utilities" },
+    { id: "plumbing", label: "No plumbing issues detected", category: "utilities" },
+    { id: "wifi", label: "Internet connection stable", category: "utilities" },
+  ]);
+  const [newTaskLabel, setNewTaskLabel] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskLabel, setEditingTaskLabel] = useState("");
+  const [isDailyTasksEditing, setIsDailyTasksEditing] = useState(false);
+  const [savingDailyCheck, setSavingDailyCheck] = useState(false);
+
+  const { isAdmin } = useOrgAdmin();
 
   // Get the most recent reservation for the current user's stay
   // Prioritize original reservations, then transferred-in reservations
@@ -458,6 +481,235 @@ const CheckoutFinal = () => {
   const handleCancelOccupancyEdit = () => {
     setEditedOccupancy({});
   };
+  
+  // Daily tasks management functions (from DailyCheckIn.tsx)
+  const saveDailyTasks = async (tasksToSave = dailyTasks) => {
+    if (!organization?.id) {
+      toast({
+        title: "Error",
+        description: "No organization selected.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data: existing, error: existingError } = await supabase
+        .from('custom_checklists')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('checklist_type', 'daily')
+        .maybeSingle();
+
+      let result;
+      if (existing) {
+        result = await supabase
+          .from('custom_checklists')
+          .update({ items: tasksToSave, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+          .select();
+      } else {
+        result = await supabase
+          .from('custom_checklists')
+          .insert({
+            organization_id: organization.id,
+            checklist_type: 'daily',
+            items: tasksToSave
+          })
+          .select();
+      }
+
+      if (result.error) {
+        console.error('Database error:', result.error);
+        throw result.error;
+      }
+
+      toast({
+        title: "Daily Tasks Saved",
+        description: "Daily task list has been saved.",
+      });
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast({
+        title: "Save Failed",
+        description: error.message || "Failed to save daily tasks.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addNewDailyTask = async () => {
+    try {
+      if (newTaskLabel.trim()) {
+        const newTask = {
+          id: `custom_${Date.now()}`,
+          label: newTaskLabel.trim(),
+          category: "custom"
+        };
+        const updatedTasks = [...dailyTasks, newTask];
+        setDailyTasks(updatedTasks);
+        setNewTaskLabel("");
+        await saveDailyTasks(updatedTasks);
+      }
+    } catch (error) {
+      console.error('Add task error:', error);
+    }
+  };
+
+  const deleteDailyTask = async (taskId: string) => {
+    try {
+      const updatedTasks = dailyTasks.filter(task => task.id !== taskId);
+      setDailyTasks(updatedTasks);
+      await saveDailyTasks(updatedTasks);
+      toast({
+        title: "Task Deleted",
+        description: "Daily task has been removed.",
+      });
+    } catch (error) {
+      console.error('Delete task error:', error);
+    }
+  };
+
+  const startEditDailyTask = (task: any) => {
+    setEditingTaskId(task.id);
+    setEditingTaskLabel(task.label);
+  };
+
+  const saveEditDailyTask = async () => {
+    try {
+      if (editingTaskLabel.trim() && editingTaskId) {
+        const updatedTasks = dailyTasks.map(task => 
+          task.id === editingTaskId 
+            ? { ...task, label: editingTaskLabel.trim() }
+            : task
+        );
+        setDailyTasks(updatedTasks);
+        setEditingTaskId(null);
+        setEditingTaskLabel("");
+        await saveDailyTasks(updatedTasks);
+        toast({
+          title: "Task Updated",
+          description: "Daily task has been updated.",
+        });
+      }
+    } catch (error) {
+      console.error('Edit task error:', error);
+    }
+  };
+
+  const cancelEditDailyTask = () => {
+    setEditingTaskId(null);
+    setEditingTaskLabel("");
+  };
+
+  const handleDailyTaskCheck = (taskId: string, checked: boolean) => {
+    setDailyTasksChecked(prev => ({ ...prev, [taskId]: checked }));
+  };
+
+  const handleSubmitDailyCheck = async () => {
+    setSavingDailyCheck(true);
+    try {
+      const completedTasks = Object.values(dailyTasksChecked).filter(Boolean).length;
+      
+      // Prepare checklist responses data
+      const checklistResponses = {
+        tasks: dailyTasksChecked,
+        completedTasks,
+        timestamp: new Date().toISOString()
+      };
+
+      // Check if there's already a daily session for today
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existingSession } = await supabase
+        .from('checkin_sessions')
+        .select('*')
+        .eq('session_type', 'daily')
+        .eq('check_date', today)
+        .eq('family_group', currentReservation?.family_group || '')
+        .maybeSingle();
+
+      if (existingSession) {
+        // Update existing session
+        await supabase
+          .from('checkin_sessions')
+          .update({
+            checklist_responses: checklistResponses,
+            notes: dailyNotes || null,
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', existingSession.id);
+        
+        toast({
+          title: "Daily Check Updated",
+          description: `${completedTasks} tasks completed. Your data has been updated successfully.`,
+        });
+      } else {
+        // Create new session
+        await supabase
+          .from('checkin_sessions')
+          .insert({
+            session_type: 'daily',
+            check_date: today,
+            checklist_responses: checklistResponses,
+            notes: dailyNotes || null,
+            user_id: user?.id || null,
+            family_group: currentReservation?.family_group || null,
+            guest_names: null,
+            completed_at: new Date().toISOString(),
+            organization_id: organization?.id
+          });
+        
+        toast({
+          title: "Daily Check Saved",
+          description: `${completedTasks} tasks completed. Data saved to database.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save daily check. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingDailyCheck(false);
+    }
+  };
+  
+  // Load saved daily tasks from database
+  useEffect(() => {
+    const loadDailyTasks = async () => {
+      if (!organization?.id) {
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('custom_checklists')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('checklist_type', 'daily')
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error loading daily tasks:', error);
+          throw error;
+        }
+
+        if (data?.items && Array.isArray(data.items)) {
+          setDailyTasks(data.items as any[]);
+        }
+      } catch (error) {
+        console.error('Failed to load daily tasks:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load daily tasks",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadDailyTasks();
+  }, [organization?.id, toast]);
 
   const handlePayLater = async () => {
     setIsCreatingPayment(true);
@@ -505,7 +757,7 @@ const CheckoutFinal = () => {
           </Button>
           
           {/* Center title */}
-          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Final Checkout</h1>
+          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Daily & Final Check</h1>
           
           {/* Right side spacer for balance */}
           <div className="w-20"></div>
@@ -513,7 +765,7 @@ const CheckoutFinal = () => {
 
         {/* Subtitle */}
         <div className="text-center mb-6 -mt-2">
-          <p className="text-xl font-kaushan text-primary">Review your stay and complete payment</p>
+          <p className="text-xl font-kaushan text-primary">Complete daily tasks, review your stay, and finalize payment</p>
         </div>
       </div>
 
@@ -773,14 +1025,147 @@ const CheckoutFinal = () => {
                             <Users className="h-4 w-4 mr-2" />
                             Split Guest Costs
                           </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Daily Check Section - Combined from DailyCheckIn page */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Daily Check
+              </CardTitle>
+              <CardDescription>
+                Complete today's maintenance checklist and add any notes
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Daily Tasks Checklist */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-medium">Daily Tasks</h4>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsDailyTasksEditing(!isDailyTasksEditing)}
+                    >
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      {isDailyTasksEditing ? 'Done Editing' : 'Edit Tasks'}
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {dailyTasks.map((task) => (
+                    <div key={task.id} className="flex items-center space-x-3 group">
+                      <Checkbox
+                        id={`daily-${task.id}`}
+                        checked={dailyTasksChecked[task.id] || false}
+                        onCheckedChange={(checked) => handleDailyTaskCheck(task.id, checked as boolean)}
+                        disabled={paymentCreated}
+                      />
+                      {editingTaskId === task.id ? (
+                        <div className="flex items-center space-x-2 flex-1">
+                          <Input
+                            value={editingTaskLabel}
+                            onChange={(e) => setEditingTaskLabel(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') saveEditDailyTask();
+                              if (e.key === 'Escape') cancelEditDailyTask();
+                            }}
+                            className="flex-1"
+                            autoFocus
+                          />
+                          <Button onClick={saveEditDailyTask} size="sm" variant="outline">
+                            Save
+                          </Button>
+                          <Button onClick={cancelEditDailyTask} size="sm" variant="outline">
+                            Cancel
+                          </Button>
                         </div>
+                      ) : (
+                        <>
+                          <Label 
+                            htmlFor={`daily-${task.id}`} 
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
+                          >
+                            {task.label}
+                          </Label>
+                          {isAdmin && isDailyTasksEditing && (
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button 
+                                onClick={() => startEditDailyTask(task)} 
+                                size="sm" 
+                                variant="ghost"
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit3 className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                onClick={() => deleteDailyTask(task.id)} 
+                                size="sm" 
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  ))}
+                  
+                  {isDailyTasksEditing && (
+                    <div className="flex items-center space-x-2 mt-4">
+                      <Input
+                        placeholder="Add new daily task..."
+                        value={newTaskLabel}
+                        onChange={(e) => setNewTaskLabel(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addNewDailyTask()}
+                      />
+                      <Button onClick={addNewDailyTask} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-              {/* Stay Report */}
+              <Separator />
+
+              {/* Daily Notes */}
+              <div>
+                <Label htmlFor="daily-notes" className="text-base font-medium mb-2 block">
+                  Daily Notes
+                </Label>
+                <Textarea
+                  id="daily-notes"
+                  placeholder="Any observations, issues, or notes from today..."
+                  value={dailyNotes}
+                  onChange={(e) => setDailyNotes(e.target.value)}
+                  className="min-h-[100px]"
+                  disabled={paymentCreated}
+                />
+              </div>
+
+              {/* Save Daily Check Button */}
+              <Button
+                onClick={handleSubmitDailyCheck}
+                disabled={savingDailyCheck || paymentCreated}
+                className="w-full"
+              >
+                {savingDailyCheck ? 'Saving...' : 'Save Daily Check'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Stay Report */}
               {(!sessionsLoading && !surveyLoading && (arrivalSessions.length > 0 || dailySessions.length > 0 || surveyResponses.length > 0)) && (
                 <Card className="mb-6">
                   <CardHeader>
