@@ -52,6 +52,15 @@ export default function StayHistory() {
 
   const loading = reservationsLoading || receiptsLoading || settingsLoading;
 
+  console.log('[StayHistory] Component state:', {
+    organizationId: organization?.id,
+    organizationName: organization?.name,
+    reservationsCount: reservations.length,
+    paymentsCount: payments.length,
+    selectedYear,
+    selectedFamilyGroup
+  });
+
   // Generate list of years from reservations
   const availableYears = Array.from(
     new Set(

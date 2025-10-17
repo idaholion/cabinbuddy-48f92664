@@ -51,6 +51,14 @@ export const usePayments = () => {
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!organization?.id) return;
 
+    console.log(`[usePayments] Fetching payments for organization:`, {
+      orgId: organization.id,
+      orgName: organization.name,
+      year: year || 'all',
+      page,
+      limit
+    });
+
     try {
       setLoading(true);
       
