@@ -1331,6 +1331,7 @@ const CheckoutFinal = () => {
             open={splitCostsOpen}
             onOpenChange={setSplitCostsOpen}
             organizationId={organization.id}
+            reservationId={currentReservation.id}
             dailyBreakdown={dailyBreakdown}
             totalAmount={enhancedBilling.total}
             sourceUserId={user.id}

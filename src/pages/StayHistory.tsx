@@ -327,7 +327,27 @@ export default function StayHistory() {
     const nights = differenceInDays(checkOutDate, checkInDate);
     
     // Find payment record for this reservation
-    const payment = payments.find(p => p.reservation_id === reservation.id);
+    // First try to match by reservation_id, then fall back to matching by family_group and date overlap
+    let payment = payments.find(p => p.reservation_id === reservation.id);
+    
+    // If no payment found by reservation_id, try to find orphaned payments (null reservation_id)
+    // that match this reservation's family_group and date range
+    if (!payment) {
+      payment = payments.find(p => {
+        if (p.reservation_id !== null) return false; // Skip payments linked to other reservations
+        if (p.family_group !== reservation.family_group) return false;
+        
+        // Check if payment has daily_occupancy data that overlaps with reservation dates
+        const paymentAny = p as any;
+        if (paymentAny.daily_occupancy && Array.isArray(paymentAny.daily_occupancy)) {
+          const paymentDates = paymentAny.daily_occupancy.map((d: any) => d.date);
+          const reservationDateStr = checkInDate.toISOString().split('T')[0];
+          return paymentDates.includes(reservationDateStr);
+        }
+        
+        return false;
+      });
+    }
     
     // Find all receipts for this family group (not limited by date)
     const stayReceipts = receipts.filter((receipt) => {
@@ -830,6 +850,7 @@ export default function StayHistory() {
           open={!!splitCostStay}
           onOpenChange={(open) => !open && setSplitCostStay(null)}
           organizationId={splitCostStay.organization_id}
+          reservationId={splitCostStay.id}
           dailyBreakdown={splitCostStay.dailyOccupancy.map((d: any) => ({
             date: d.date,
             guests: d.guests || 0,

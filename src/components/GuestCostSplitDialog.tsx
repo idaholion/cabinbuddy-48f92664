@@ -21,6 +21,7 @@ interface GuestCostSplitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   organizationId: string;
+  reservationId?: string | null;
   dailyBreakdown: DailyBreakdown[];
   totalAmount: number;
   sourceUserId: string;
@@ -49,6 +50,7 @@ export const GuestCostSplitDialog = ({
   open,
   onOpenChange,
   organizationId,
+  reservationId,
   dailyBreakdown,
   totalAmount,
   sourceUserId,
@@ -403,6 +405,7 @@ export const GuestCostSplitDialog = ({
       // Insert source payment with extremely detailed logging
       const sourcePaymentData = {
         organization_id: organizationId,
+        reservation_id: reservationId || null,
         family_group: sourceFamilyGroup,
         payment_type: 'use_fee' as const,
         amount: sourceTotal,
@@ -477,6 +480,7 @@ export const GuestCostSplitDialog = ({
           .from('payments')
           .insert({
             organization_id: organizationId,
+            reservation_id: reservationId || null,
             family_group: splitUser.familyGroup,
             payment_type: 'use_fee',
             amount: splitUser.totalAmount,
