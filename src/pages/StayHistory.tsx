@@ -332,7 +332,10 @@ export default function StayHistory() {
   const allReservations = [...filteredReservations, ...virtualSplitReservations]
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
-  const calculateStayData = (reservation: any, previousBalance: number = 0) => {
+  // Track which family groups have had receipts applied (to avoid double-counting)
+  const familyGroupsWithReceipts = new Set<string>();
+
+  const calculateStayData = (reservation: any, previousBalance: number = 0, isNewestInGroup: boolean = false) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
       const splitPayment = reservation.splitData.payment;
@@ -434,11 +437,20 @@ export default function StayHistory() {
       }
     }
     
-    // Find all receipts for this family group (not limited by date)
-    const stayReceipts = receipts.filter((receipt) => {
-      return receipt.family_group === reservation.family_group;
-    });
-    const receiptsTotal = stayReceipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0);
+    // Only apply receipts to the most recent reservation per family group to avoid double-counting
+    let receiptsTotal = 0;
+    let receiptsCount = 0;
+    
+    if (isNewestInGroup && !familyGroupsWithReceipts.has(reservation.family_group)) {
+      const stayReceipts = receipts.filter((receipt) => {
+        return receipt.family_group === reservation.family_group;
+      });
+      receiptsTotal = stayReceipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0);
+      receiptsCount = stayReceipts.length;
+      familyGroupsWithReceipts.add(reservation.family_group);
+      
+      console.log(`[StayHistory] Applied ${receiptsCount} receipts totaling $${receiptsTotal.toFixed(2)} to most recent ${reservation.family_group} reservation`);
+    }
     
     let billingAmount = 0;
     let amountPaid = 0;
@@ -462,7 +474,7 @@ export default function StayHistory() {
     return {
       nights,
       receiptsTotal,
-      receiptsCount: stayReceipts.length,
+      receiptsCount,
       billingAmount,
       amountPaid,
       currentBalance,
@@ -497,6 +509,18 @@ export default function StayHistory() {
     return reservation.user_id || 'unknown';
   };
   
+  // Find the most recent reservation for each family group (by check-in date)
+  const newestReservationByFamily = new Map<string, string>();
+  const sortedByDate = [...sortedReservations].sort((a, b) => 
+    parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime()
+  );
+  
+  for (const reservation of sortedByDate) {
+    if (!newestReservationByFamily.has(reservation.family_group)) {
+      newestReservationByFamily.set(reservation.family_group, reservation.id);
+    }
+  }
+
   // Group reservations by primary host to calculate individual running balances
   const hostBalances = new Map<string, number>();
   
@@ -506,7 +530,8 @@ export default function StayHistory() {
   for (const reservation of sortedReservations) {
     const hostKey = getPrimaryHostKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
-    const stayData = calculateStayData(reservation, previousBalance);
+    const isNewestInGroup = newestReservationByFamily.get(reservation.family_group) === reservation.id;
+    const stayData = calculateStayData(reservation, previousBalance, isNewestInGroup);
     
     console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, previousBalance=${previousBalance.toFixed(2)}, currentBalance=${stayData.currentBalance.toFixed(2)}, amountDue=${stayData.amountDue.toFixed(2)}`);
     
