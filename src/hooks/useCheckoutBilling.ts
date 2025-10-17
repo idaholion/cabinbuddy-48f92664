@@ -76,27 +76,31 @@ export const useCheckoutBilling = (
 
       try {
         // First, check if payment record exists (source of truth)
-        const { data: payment } = await supabase
+        // Note: There may be multiple payment records (e.g., splits), so get all and use the first one with data
+        const { data: payments } = await supabase
           .from('payments')
           .select('daily_occupancy, billing_locked')
-          .eq('reservation_id', reservationId)
-          .maybeSingle();
+          .eq('reservation_id', reservationId);
 
-        if (payment) {
-          console.log('useCheckoutBilling - Found payment with daily_occupancy:', payment);
-          setBillingLocked(payment.billing_locked ?? false);
+        if (payments && payments.length > 0) {
+          // Use first payment record with daily_occupancy data
+          const paymentWithData = payments.find(p => 
+            p.daily_occupancy && Array.isArray(p.daily_occupancy) && p.daily_occupancy.length > 0
+          );
           
-          // Only use payment.daily_occupancy if it has actual data
-          if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
+          if (paymentWithData) {
+            console.log('useCheckoutBilling - Found payment with daily_occupancy:', paymentWithData);
+            setBillingLocked(paymentWithData.billing_locked ?? false);
+            
             const occupancyRecord: Record<string, number> = {};
-            (payment.daily_occupancy as any[]).forEach((day: any) => {
+            (paymentWithData.daily_occupancy as any[]).forEach((day: any) => {
               occupancyRecord[day.date] = day.guests;
             });
             setDailyOccupancy(occupancyRecord);
             setLoading(false);
             return;
           }
-          // If daily_occupancy is empty, fall through to fetch from checkin_sessions
+          // If no payment has daily_occupancy data, fall through to fetch from checkin_sessions
         }
 
         // Build query with organization filter
