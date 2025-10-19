@@ -4,6 +4,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
 import { getFirstNameFromFullName } from '@/lib/reservation-utils';
 
 export type SelectionPhase = 'primary' | 'secondary';
@@ -32,6 +33,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { timePeriodUsage } = useTimePeriods();
+  const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
   const { 
     secondaryStatus, 
     isSecondaryRoundActive, 
@@ -54,7 +56,15 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     const rotationOrder = getRotationForYear(rotationYear);
     const allCompletedPrimary = rotationOrder.every(familyGroup => {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-      return usage && usage.time_periods_used >= (rotationData.max_time_slots || 2);
+      const used = usage?.time_periods_used || 0;
+      const allowed = rotationData.max_time_slots || 2;
+      
+      // Check for active extension
+      const extension = getExtensionForFamily(familyGroup);
+      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
+      
+      // Only completed if at/over limit AND no active extension
+      return (used >= allowed) && !hasActiveExtension;
     });
 
     if (allCompletedPrimary && rotationData.enable_secondary_selection) {
@@ -66,7 +76,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     }
     
     setLoading(false);
-  }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id]);
+  }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id, getExtensionForFamily]);
 
   // Determine which family group's turn it is in primary phase
   const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
@@ -84,22 +94,18 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const used = usage?.time_periods_used || 0;
       const allowed = rotationData.max_time_slots || 2;
       
-      console.log('[useSequentialSelection] Checking family:', {
-        familyGroup,
-        used,
-        allowed,
-        completed: used >= allowed
-      });
+      // Check if family has an active extension
+      const extension = getExtensionForFamily(familyGroup);
+      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
       
-      if (used < allowed) {
-        console.log('[useSequentialSelection] Setting current family to:', familyGroup);
+      // Family can still select if under limit OR has active extension
+      if (used < allowed || hasActiveExtension) {
         setPrimaryCurrentFamily(familyGroup);
         return;
       }
     }
     
     // If all have completed, no current family
-    console.log('[useSequentialSelection] All families completed, no current family');
     setPrimaryCurrentFamily(null);
   };
 
@@ -168,8 +174,13 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         const usedPrimary = usage?.time_periods_used || 0;
         const allowedPrimary = rotationData.max_time_slots || 2;
         
+        // Check for active extension
+        const extension = getExtensionForFamily(familyGroup);
+        const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
+        
         let status: SelectionStatus = 'waiting';
-        if (usedPrimary >= allowedPrimary) {
+        // Only mark as completed if at/over limit AND no active extension
+        if (usedPrimary >= allowedPrimary && !hasActiveExtension) {
           status = 'completed';
         }
 
@@ -194,13 +205,6 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!userFamilyGroup) return false;
     
     const currentFamily = getCurrentFamilyGroup();
-    console.log('[useSequentialSelection] canCurrentUserSelect check:', {
-      userFamilyGroup,
-      currentFamily,
-      currentPhase,
-      primaryCurrentFamily,
-      result: currentFamily === userFamilyGroup
-    });
     return currentFamily === userFamilyGroup;
   };
 
@@ -231,7 +235,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const used = usage?.time_periods_used || 0;
       const allowed = rotationData.max_time_slots || 2;
       
-      if (used < allowed) {
+      // Check for active extension
+      const extension = getExtensionForFamily(nextFamily);
+      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
+      
+      // Can advance to this family if under limit OR has active extension
+      if (used < allowed || hasActiveExtension) {
         setPrimaryCurrentFamily(nextFamily);
         
         // Send notification to the next family
