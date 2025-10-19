@@ -153,21 +153,33 @@ const CabinCalendar = () => {
     }
   }, [familyGroups, assignDefaultColorsWithProtection]);
   
-  // Calculate the rotation year based on current calendar month being viewed
+  // Calculate the active rotation year based on current date and rotation start date
   const getRotationYear = () => {
     if (!rotationData || !rotationData.start_month) {
       return new Date().getFullYear();
     }
     
-    const calendarYear = currentCalendarMonth.getFullYear();
-    const baseRotationYear = rotationData.rotation_year;
+    const today = new Date();
+    const currentYear = today.getFullYear();
     
-    // The rotation year should match the calendar year being viewed
-    // This ensures 2025 calendar shows 2025 rotation order, regardless of what month we're in
-    const yearsSinceBase = calendarYear - baseRotationYear;
-    const rotationYear = baseRotationYear + yearsSinceBase;
+    // Parse rotation start month (e.g., "October" -> 9, zero-indexed)
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
+    const startDay = typeof rotationData.start_day === 'string' 
+      ? parseInt(rotationData.start_day, 10) 
+      : (rotationData.start_day || 1);
     
-    return rotationYear;
+    // Create rotation start date for current year
+    const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
+    
+    // If we've passed the rotation start date, we're in the next rotation year
+    if (today >= rotationStartThisYear) {
+      return currentYear + 1;
+    }
+    
+    // Otherwise, we're still in the current rotation year
+    return currentYear;
   };
   
   const rotationYear = getRotationYear();
