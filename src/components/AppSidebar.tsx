@@ -38,6 +38,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarFooter,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -49,6 +50,7 @@ import { useSetupState } from "@/hooks/useSetupState";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
+import { VersionIndicator } from "@/components/VersionIndicator";
 
 const setupItems = [
   {
@@ -573,6 +575,10 @@ export function AppSidebar() {
         )}
 
       </SidebarContent>
+      
+      <SidebarFooter className="p-2">
+        <VersionIndicator />
+      </SidebarFooter>
     </Sidebar>
   );
 }
