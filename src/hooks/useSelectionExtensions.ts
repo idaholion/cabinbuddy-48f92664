@@ -25,6 +25,11 @@ export const useSelectionExtensions = (rotationYear: number) => {
   const fetchExtensions = async () => {
     if (!organization?.id) return;
 
+    console.log('[useSelectionExtensions] Fetching extensions:', {
+      organizationId: organization.id,
+      rotationYear
+    });
+
     try {
       const { data, error } = await supabase
         .from('selection_period_extensions')
@@ -33,6 +38,13 @@ export const useSelectionExtensions = (rotationYear: number) => {
         .eq('rotation_year', rotationYear);
 
       if (error) throw error;
+      
+      console.log('[useSelectionExtensions] Extensions found:', {
+        rotationYear,
+        extensions: data,
+        count: data?.length || 0
+      });
+      
       setExtensions(data || []);
     } catch (error) {
       console.error('Error fetching selection extensions:', error);

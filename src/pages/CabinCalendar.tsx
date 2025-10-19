@@ -173,6 +173,16 @@ const CabinCalendar = () => {
     // Create rotation start date for current year
     const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
     
+    console.log('[CabinCalendar] getRotationYear calculation:', {
+      today: today.toISOString(),
+      currentYear,
+      startMonth: rotationData.start_month,
+      startDay,
+      rotationStartThisYear: rotationStartThisYear.toISOString(),
+      hasPassedStartDate: today >= rotationStartThisYear,
+      calculatedRotationYear: today >= rotationStartThisYear ? currentYear + 1 : currentYear
+    });
+    
     // If we've passed the rotation start date, we're in the next rotation year
     if (today >= rotationStartThisYear) {
       return currentYear + 1;
@@ -193,6 +203,15 @@ const CabinCalendar = () => {
     currentFamilyGroup,
     getUserUsageInfo
   } = useSequentialSelection(rotationYear);
+  
+  console.log('[CabinCalendar] Selection state:', {
+    rotationYear,
+    currentPhase,
+    currentFamilyGroup,
+    userGroup: userGroup?.name,
+    canSelect: userGroup ? canCurrentUserSelect(userGroup.name) : false,
+    selectionLoading
+  });
   
   // For next year status, manually calculate since useSequentialSelection shares time period data
   const getNextYearStatuses = (): Array<{
@@ -273,6 +292,19 @@ const CabinCalendar = () => {
           </CardHeader>
           
           <CardContent>
+            
+            {/* Debug logging for button visibility */}
+            {(() => {
+              const shouldShowButton = currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name);
+              console.log('[CabinCalendar] Button visibility check:', {
+                currentPhase,
+                hasUserGroup: !!userGroup,
+                userGroupName: userGroup?.name,
+                canSelect: userGroup ? canCurrentUserSelect(userGroup.name) : false,
+                shouldShowButton
+              });
+              return null;
+            })()}
             
             {/* Primary Selection Turn Indicator Banner */}
             {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && (

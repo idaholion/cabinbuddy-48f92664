@@ -368,7 +368,35 @@ export const useTimePeriods = () => {
 
   useEffect(() => {
     if (organization?.id && rotationData) {
-      fetchTimePeriodUsage();
+      // Calculate the active rotation year based on rotation start date
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      
+      if (rotationData.start_month) {
+        // Parse rotation start month
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"];
+        const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
+        const startDay = typeof rotationData.start_day === 'string' 
+          ? parseInt(rotationData.start_day, 10) 
+          : (rotationData.start_day || 1);
+        
+        // Create rotation start date for current year
+        const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
+        
+        // If we've passed the rotation start date, we're in the next rotation year
+        const activeRotationYear = today >= rotationStartThisYear ? currentYear + 1 : currentYear;
+        
+        console.log('[useTimePeriods] Fetching for active rotation year:', {
+          today: today.toISOString(),
+          rotationStartThisYear: rotationStartThisYear.toISOString(),
+          activeRotationYear
+        });
+        
+        fetchTimePeriodUsage(activeRotationYear);
+      } else {
+        fetchTimePeriodUsage();
+      }
     }
   }, [organization?.id, rotationData]);
 

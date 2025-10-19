@@ -98,8 +98,21 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const extension = getExtensionForFamily(familyGroup);
       const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
       
+      console.log('[useSequentialSelection] Checking family:', {
+        familyGroup,
+        used,
+        allowed,
+        extension: extension ? {
+          extended_until: extension.extended_until,
+          hasActiveExtension
+        } : null,
+        canStillSelect: used < allowed || hasActiveExtension,
+        rotationYear
+      });
+      
       // Family can still select if under limit OR has active extension
       if (used < allowed || hasActiveExtension) {
+        console.log('[useSequentialSelection] Setting current family:', familyGroup);
         setPrimaryCurrentFamily(familyGroup);
         return;
       }
@@ -205,7 +218,18 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!userFamilyGroup) return false;
     
     const currentFamily = getCurrentFamilyGroup();
-    return currentFamily === userFamilyGroup;
+    const canSelect = currentFamily === userFamilyGroup;
+    
+    console.log('[useSequentialSelection] canCurrentUserSelect check:', {
+      userFamilyGroup,
+      currentFamily,
+      primaryCurrentFamily,
+      currentPhase,
+      canSelect,
+      rotationYear
+    });
+    
+    return canSelect;
   };
 
   const advanceSelection = async (completed: boolean = false): Promise<void> => {
