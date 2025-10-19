@@ -263,6 +263,15 @@ const CabinCalendar = () => {
           <CardContent>
             
             {/* Primary Selection Turn Indicator Banner */}
+            {(() => {
+              console.log('[CabinCalendar] Banner conditions:', {
+                currentPhase,
+                userFamilyGroup: userFamilyGroup?.name,
+                canSelect: userFamilyGroup ? canCurrentUserSelect(userFamilyGroup.name) : false,
+                shouldShow: currentPhase === 'primary' && userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name)
+              });
+              return null;
+            })()}
             {currentPhase === 'primary' && userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
               <div className="mb-4 p-4 bg-primary/10 border-2 border-primary rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">

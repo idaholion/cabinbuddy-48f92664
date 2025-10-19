@@ -72,19 +72,34 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
     if (!organization?.id || !rotationData) return;
 
+    console.log('[useSequentialSelection] determinePrimaryCurrentFamily called:', {
+      rotationOrder,
+      timePeriodUsage,
+      maxTimeSlots: rotationData.max_time_slots
+    });
+
     // Find the first family group that hasn't completed their primary selections
     for (const familyGroup of rotationOrder) {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
       const used = usage?.time_periods_used || 0;
       const allowed = rotationData.max_time_slots || 2;
       
+      console.log('[useSequentialSelection] Checking family:', {
+        familyGroup,
+        used,
+        allowed,
+        completed: used >= allowed
+      });
+      
       if (used < allowed) {
+        console.log('[useSequentialSelection] Setting current family to:', familyGroup);
         setPrimaryCurrentFamily(familyGroup);
         return;
       }
     }
     
     // If all have completed, no current family
+    console.log('[useSequentialSelection] All families completed, no current family');
     setPrimaryCurrentFamily(null);
   };
 
@@ -179,6 +194,13 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!userFamilyGroup) return false;
     
     const currentFamily = getCurrentFamilyGroup();
+    console.log('[useSequentialSelection] canCurrentUserSelect check:', {
+      userFamilyGroup,
+      currentFamily,
+      currentPhase,
+      primaryCurrentFamily,
+      result: currentFamily === userFamilyGroup
+    });
     return currentFamily === userFamilyGroup;
   };
 
