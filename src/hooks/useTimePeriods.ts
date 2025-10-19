@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -228,7 +228,7 @@ export const useTimePeriods = () => {
   };
 
   // Fetch time period usage for current year
-  const fetchTimePeriodUsage = async (year?: number) => {
+  const fetchTimePeriodUsage = useCallback(async (year?: number) => {
     if (!user || !organization?.id) return;
 
     const currentYear = year || new Date().getFullYear();
@@ -268,7 +268,7 @@ export const useTimePeriods = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, organization?.id]);
 
   // Initialize time period usage for family groups
   const initializeTimePeriodUsage = async (year: number, familyGroups: string[]) => {

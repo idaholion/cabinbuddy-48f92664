@@ -45,14 +45,16 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const [loading, setLoading] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<SelectionPhase>('primary');
   const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
+  const [dataFetchedForYear, setDataFetchedForYear] = useState<number | null>(null);
   
-  // Fetch time period usage for the specific rotation year
+  // Fetch time period usage for the specific rotation year - only once per rotation year change
   useEffect(() => {
-    if (organization?.id && rotationYear) {
+    if (organization?.id && rotationYear && dataFetchedForYear !== rotationYear) {
       console.log('[useSequentialSelection] Fetching time period usage for rotation year:', rotationYear);
       fetchTimePeriodUsage(rotationYear);
+      setDataFetchedForYear(rotationYear);
     }
-  }, [organization?.id, rotationYear, fetchTimePeriodUsage]);
+  }, [organization?.id, rotationYear, dataFetchedForYear, fetchTimePeriodUsage]);
 
   useEffect(() => {
     if (!rotationData || !timePeriodUsage.length || !organization?.id) {
