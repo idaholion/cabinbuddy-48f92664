@@ -128,15 +128,28 @@ export const useTimePeriods = () => {
   ): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
+    // Check if all selection phases are active
+    const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
+
     // Find the relevant time period window
-    const relevantWindow = timePeriodWindows.find(window => 
-      window.familyGroup === familyGroup &&
-      startDate >= window.startDate &&
-      endDate <= window.endDate
-    );
+    // When all phases are active, allow booking any available window, not just the family's assigned window
+    const relevantWindow = timePeriodWindows.find(window => {
+      const datesMatch = startDate >= window.startDate && endDate <= window.endDate;
+      
+      // If all phases active, only check dates. Otherwise, also check family group assignment
+      if (allPhasesActive || adminOverride) {
+        return datesMatch;
+      }
+      
+      return window.familyGroup === familyGroup && datesMatch;
+    });
 
     if (!relevantWindow) {
-      errors.push('Booking dates must fall within your assigned time period window');
+      if (allPhasesActive || adminOverride) {
+        errors.push('Booking dates must fall within a valid time period window');
+      } else {
+        errors.push('Booking dates must fall within your assigned time period window');
+      }
       return { isValid: false, errors };
     }
 
@@ -169,7 +182,6 @@ export const useTimePeriods = () => {
 
     // Check if family group has available time periods
     // Skip this check if admin override is enabled OR if all selection phases are active
-    const allPhasesActive = rotationData.enable_secondary_selection && rotationData.enable_post_rotation_selection;
     
     if (!adminOverride && !allPhasesActive) {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
