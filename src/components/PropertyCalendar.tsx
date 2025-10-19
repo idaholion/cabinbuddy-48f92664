@@ -572,10 +572,14 @@ const getBookingsForDate = (date: Date) => {
     const monthYear = date.getFullYear();
     const timePeriodWindows = calculateTimePeriodWindows(monthYear, date);
     
+    // Normalize the clicked date to noon for comparison with noon-based windows
+    const dateAtNoon = new Date(date);
+    dateAtNoon.setHours(12, 0, 0, 0);
+    
     const containingWindow = timePeriodWindows.find(window => {
       const windowStart = new Date(window.startDate);
       const windowEnd = new Date(window.endDate);
-      return date >= windowStart && date < windowEnd;
+      return dateAtNoon >= windowStart && dateAtNoon < windowEnd;
     });
     
     if (!containingWindow) {
