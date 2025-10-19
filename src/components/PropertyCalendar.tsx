@@ -588,8 +588,12 @@ const getBookingsForDate = (date: Date) => {
     }
     
     // Check if the window is assigned to the user's family group
-    // Calendar keepers can select any window
-    if (!isCalendarKeeperRole && userFamilyGroup && containingWindow.familyGroup !== userFamilyGroup) {
+    // Allow any family to book any period when all selection phases are active
+    const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
+    
+    // Calendar keepers can always select any window
+    // When all phases are active, any family can select any available window
+    if (!isCalendarKeeperRole && !allPhasesActive && userFamilyGroup && containingWindow.familyGroup !== userFamilyGroup) {
       toast({
         title: "Period Not Available",
         description: `This ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} period is assigned to ${containingWindow.familyGroup}. You can only select periods assigned to your family group (${userFamilyGroup}).`,
