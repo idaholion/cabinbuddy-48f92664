@@ -262,6 +262,60 @@ const CabinCalendar = () => {
           
           <CardContent>
             
+            {/* Primary Selection Turn Indicator Banner */}
+            {currentPhase === 'primary' && userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
+              <div className="mb-4 p-4 bg-primary/10 border-2 border-primary rounded-lg">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-1">
+                      <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                      It's Your Turn to Select!
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {(() => {
+                        const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                        if (!usageInfo) return "You can now make your primary selections.";
+                        return `You've selected ${usageInfo.used} of ${usageInfo.allowed} periods (${usageInfo.remaining} remaining)`;
+                      })()}
+                    </p>
+                  </div>
+                  <ConfirmationDialog
+                    title="Confirm Selection Complete"
+                    description={(() => {
+                      const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                      if (!usageInfo) return "Are you sure you want to complete your selection and pass it to the next family?";
+                      if (usageInfo.remaining > 0) {
+                        return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you want to finish early and pass the selection to the next family group?`;
+                      }
+                      return "Confirm that you have completed your selection period and are ready to pass the selection to the next family group.";
+                    })()}
+                    confirmText="Yes, I'm Done"
+                    onConfirm={async () => {
+                      try {
+                        await advanceSelection(true);
+                        toast({
+                          title: "Selection Complete",
+                          description: "Your selection period has been marked complete. The next family group has been notified that it's their turn.",
+                        });
+                      } catch (error) {
+                        console.error('Error advancing selection:', error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to complete selection. Please try again.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap">
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      I'm Done Selecting
+                    </Button>
+                  </ConfirmationDialog>
+                </div>
+              </div>
+            )}
+            
             {/* Enhanced Mobile-Responsive Toolbar */}
             <div className="mb-4 p-3 bg-background/95 rounded-lg border border-border/20 backdrop-blur-sm shadow-sm">
               {/* Mobile-First Layout */}
@@ -492,45 +546,10 @@ const CabinCalendar = () => {
                                   </SelectItem>
                                ))}
                              </SelectContent>
-                           </Select>
-                         )}
+                            </Select>
+                          )}
 
-                         {/* I'm Done Button - moved inline */}
-                         {userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
-                           <ConfirmationDialog
-                             title="Confirm Selection Complete"
-                              description={(() => {
-                                const usageInfo = getUserUsageInfo(userFamilyGroup.name);
-                                if (!usageInfo) return "Are you sure you want to complete your selection and pass it to the next family?";
-                                if (usageInfo.remaining > 0) {
-                                  return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you want to finish early and pass the selection to the next family group?`;
-                                }
-                                return "Confirm that you have completed your selection period and are ready to pass the selection to the next family group.";
-                              })()}
-                             confirmText="Yes, I'm Done"
-                             onConfirm={async () => {
-                               try {
-                                 await advanceSelection(true);
-                                  toast({
-                                    title: "Selection Complete",
-                                    description: "Your selection period has been marked complete. The next family group has been notified that it's their turn.",
-                                  });
-                               } catch (error) {
-                                 console.error('Error advancing selection:', error);
-                                 toast({
-                                   title: "Error",
-                                   description: "Failed to complete selection. Please try again.",
-                                   variant: "destructive",
-                                 });
-                               }
-                             }}
-                           >
-                             <Button className="bg-primary hover:bg-primary/90">
-                               I'm Done with {currentPhase === 'primary' ? 'Primary' : 'Secondary'} Selections
-                             </Button>
-                           </ConfirmationDialog>
-                         )}
-                     </div>
+                      </div>
                    </div>
                  )}
                 </div>
