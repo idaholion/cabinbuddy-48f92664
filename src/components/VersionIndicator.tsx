@@ -8,7 +8,7 @@ export function VersionIndicator() {
   const version = getBuildVersion();
   
   return (
-    <div className="text-sm font-medium text-muted-foreground select-none">
+    <div className="text-base font-semibold text-foreground select-none">
       {version}
     </div>
   );
