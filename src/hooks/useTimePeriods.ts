@@ -50,13 +50,9 @@ export const useTimePeriods = () => {
     const currentYear = new Date().getFullYear();
     const monthYear = month.getFullYear();
     
-    // Don't generate time periods for years too far in the past or future
-    if (Math.abs(monthYear - currentYear) > 1) {
-      return [];
-    }
-    
-    // Only generate if we're looking at the rotation year or current year
-    if (monthYear !== rotationData.rotation_year && monthYear !== currentYear) {
+    // Allow booking for current year and up to 2 years in the future
+    // This supports advance planning while preventing unreasonable future dates
+    if (monthYear < currentYear || monthYear > currentYear + 2) {
       return [];
     }
 
