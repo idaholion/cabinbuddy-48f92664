@@ -34,6 +34,7 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useWorkWeekends } from "@/hooks/useWorkWeekends";  
 import { useOrganization } from "@/hooks/useOrganization";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format } from "date-fns";
@@ -55,6 +56,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
   const { reservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
+  const { isCalendarKeeper: isCalendarKeeperRole } = useUserRole();
   
   // Work weekend accordion state and ref
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
@@ -580,6 +582,17 @@ const getBookingsForDate = (date: Date) => {
       toast({
         title: "Invalid Date Selection",
         description: `This date is not within a valid ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} booking period. Please select a date within an available time period.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if the window is assigned to the user's family group
+    // Calendar keepers can select any window
+    if (!isCalendarKeeperRole && userFamilyGroup && containingWindow.familyGroup !== userFamilyGroup) {
+      toast({
+        title: "Period Not Available",
+        description: `This ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} period is assigned to ${containingWindow.familyGroup}. You can only select periods assigned to your family group (${userFamilyGroup}).`,
         variant: "destructive",
       });
       return;
