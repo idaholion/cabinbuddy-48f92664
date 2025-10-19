@@ -263,16 +263,7 @@ const CabinCalendar = () => {
           <CardContent>
             
             {/* Primary Selection Turn Indicator Banner */}
-            {(() => {
-              console.log('[CabinCalendar] Banner conditions:', {
-                currentPhase,
-                userFamilyGroup: userFamilyGroup?.name,
-                canSelect: userFamilyGroup ? canCurrentUserSelect(userFamilyGroup.name) : false,
-                shouldShow: currentPhase === 'primary' && userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name)
-              });
-              return null;
-            })()}
-            {currentPhase === 'primary' && userFamilyGroup && canCurrentUserSelect(userFamilyGroup.name) && (
+            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && (
               <div className="mb-4 p-4 bg-primary/10 border-2 border-primary rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
@@ -282,7 +273,7 @@ const CabinCalendar = () => {
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {(() => {
-                        const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                        const usageInfo = getUserUsageInfo(userGroup.name);
                         if (!usageInfo) return "You can now make your primary selections.";
                         return `You've selected ${usageInfo.used} of ${usageInfo.allowed} periods (${usageInfo.remaining} remaining)`;
                       })()}
@@ -291,7 +282,7 @@ const CabinCalendar = () => {
                   <ConfirmationDialog
                     title="Confirm Selection Complete"
                     description={(() => {
-                      const usageInfo = getUserUsageInfo(userFamilyGroup.name);
+                      const usageInfo = getUserUsageInfo(userGroup.name);
                       if (!usageInfo) return "Are you sure you want to complete your selection and pass it to the next family?";
                       if (usageInfo.remaining > 0) {
                         return `You have only selected ${usageInfo.used} periods out of ${usageInfo.allowed}. Are you sure you want to finish early and pass the selection to the next family group?`;
