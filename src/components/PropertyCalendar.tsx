@@ -470,7 +470,7 @@ const getBookingsForDate = (date: Date) => {
     if (!validWindow) {
       return { 
         selectable: false, 
-        reason: `Dates must be within ${rotationData.start_day || 'Friday'} to ${rotationData.start_day || 'Friday'} time periods` 
+        reason: `This date is not within a valid booking period. Bookings must be ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'}. Please click any date to select a full week.` 
       };
     }
     
@@ -566,44 +566,68 @@ const getBookingsForDate = (date: Date) => {
       return;
     }
     
-    // Create 8-day forward selection (clicked date + 7 days after)
-    const eightDayRange: Date[] = [];
-    for (let i = 0; i < 8; i++) {
-      const currentDate = new Date(date);
-      currentDate.setDate(currentDate.getDate() + i);
-      eightDayRange.push(currentDate);
+    // Find the time period window that contains this date
+    const monthYear = date.getFullYear();
+    const timePeriodWindows = calculateTimePeriodWindows(monthYear, date);
+    
+    const containingWindow = timePeriodWindows.find(window => {
+      const windowStart = new Date(window.startDate);
+      const windowEnd = new Date(window.endDate);
+      return date >= windowStart && date <= windowEnd;
+    });
+    
+    if (!containingWindow) {
+      toast({
+        title: "Invalid Date Selection",
+        description: `This date is not within a valid ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} booking period. Please select a date within an available time period.`,
+        variant: "destructive",
+      });
+      return;
     }
     
-    // Validate that the entire 8-day range is selectable
-    const invalidDates = eightDayRange.filter(rangeDate => !isDateSelectable(rangeDate).selectable);
+    // Auto-select the entire Friday-to-Friday window
+    const datesInRange: Date[] = [];
+    const current = new Date(containingWindow.startDate);
+    const windowEnd = new Date(containingWindow.endDate);
     
-    if (invalidDates.length > 0) {
-      // If the 8-day range isn't fully valid, just select the single date
-      setSelectedDates(prev => {
-        const isSelected = prev.some(d => d.toDateString() === date.toDateString());
-        if (isSelected) {
-          return prev.filter(d => d.toDateString() !== date.toDateString());
-        } else {
-          return [date];
-        }
+    while (current <= windowEnd) {
+      datesInRange.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    // Check if any dates in the range are already booked
+    const hasConflicts = datesInRange.some(rangeDate => {
+      const bookingsOnDate = reservations.filter(reservation => {
+        const startDate = parseLocalDate(reservation.start_date);
+        const endDate = parseLocalDate(reservation.end_date);
+        const checkDate = new Date(rangeDate.getFullYear(), rangeDate.getMonth(), rangeDate.getDate());
+        const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        return checkDate >= reservationStart && checkDate <= reservationEnd;
       });
       
-      if (invalidDates.length < 8) {
-        toast({
-          title: "Partial Selection",
-          description: `Selected single date only - ${invalidDates.length} of the 8 days would be invalid.`,
-          variant: "default",
-        });
-      }
-    } else {
-      // Select the full 8-day range
-      setSelectedDates(eightDayRange);
+      return bookingsOnDate.length > 0 && !isDateAvailableForBooking(rangeDate);
+    });
+    
+    if (hasConflicts) {
       toast({
-        title: "8-Day Selection",
-        description: `Selected ${date.toLocaleDateString()} + 7 following days`,
-        variant: "default",
+        title: "Period Unavailable",
+        description: `This ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} period has existing bookings. Please select a different period.`,
+        variant: "destructive",
       });
+      return;
     }
+    
+    // Select the full Friday-to-Friday range
+    setSelectedDates(datesInRange);
+    
+    const nights = datesInRange.length - 1;
+    toast({
+      title: "Period Selected",
+      description: `Selected ${containingWindow.startDate.toLocaleDateString()} to ${windowEnd.toLocaleDateString()} (${nights} nights)`,
+      variant: "default",
+    });
   };
 
   const handleDateMouseDown = (date: Date, event: React.MouseEvent) => {
