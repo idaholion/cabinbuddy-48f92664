@@ -607,18 +607,33 @@ const getBookingsForDate = (date: Date) => {
     }
     
     // Auto-select the entire Friday-to-Friday window (noon to noon)
-    const datesInRange: Date[] = [];
-    const current = new Date(containingWindow.startDate);
-    current.setHours(12, 0, 0, 0); // Set to noon for check-in
+    // For visual selection, include all dates from start to end
+    // But for booking, use start at noon and end at noon (check-in to check-out)
+    const windowStart = new Date(containingWindow.startDate);
+    windowStart.setHours(12, 0, 0, 0);
     const windowEnd = new Date(containingWindow.endDate);
-    windowEnd.setHours(12, 0, 0, 0); // Set to noon for check-out
+    windowEnd.setHours(12, 0, 0, 0);
     
-    while (current <= windowEnd) {
+    const datesInRange: Date[] = [];
+    const current = new Date(windowStart);
+    
+    // Include all dates from start up to (but not including) end for visual selection
+    // This shows the nights you're booking, not the checkout day
+    while (current < windowEnd) {
       const dateAtNoon = new Date(current);
       dateAtNoon.setHours(12, 0, 0, 0);
       datesInRange.push(dateAtNoon);
       current.setDate(current.getDate() + 1);
     }
+    
+    console.log('[PropertyCalendar] Date selection:', {
+      clickedDate: date.toISOString(),
+      windowStart: windowStart.toISOString(),
+      windowEnd: windowEnd.toISOString(),
+      datesInRangeCount: datesInRange.length,
+      firstDate: datesInRange[0]?.toISOString(),
+      lastDate: datesInRange[datesInRange.length - 1]?.toISOString()
+    });
     
     // Check if any dates in the range are already booked
     const hasConflicts = datesInRange.some(rangeDate => {
@@ -647,10 +662,11 @@ const getBookingsForDate = (date: Date) => {
     // Select the full Friday-to-Friday range
     setSelectedDates(datesInRange);
     
-    const nights = datesInRange.length - 1;
+    // Since datesInRange now excludes the checkout day, the number of nights equals the number of dates
+    const nights = datesInRange.length;
     toast({
       title: "Period Selected",
-      description: `Selected ${containingWindow.startDate.toLocaleDateString()} to ${windowEnd.toLocaleDateString()} (${nights} nights)`,
+      description: `Selected ${windowStart.toLocaleDateString()} to ${windowEnd.toLocaleDateString()} (${nights} nights)`,
       variant: "default",
     });
   };
@@ -695,8 +711,21 @@ const getBookingsForDate = (date: Date) => {
     if (selectedDates.length === 0) return;
     
     const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
-    const startDate = sortedDates[0];
-    const endDate = sortedDates[sortedDates.length - 1];
+    const startDate = new Date(sortedDates[0]);
+    startDate.setHours(12, 0, 0, 0);
+    
+    // End date is one week after start for a full time period
+    // Since datesInRange now excludes the checkout day, add 7 days to get checkout
+    const endDate = new Date(sortedDates[sortedDates.length - 1]);
+    endDate.setDate(endDate.getDate() + 1); // Add one day to get checkout date
+    endDate.setHours(12, 0, 0, 0);
+    
+    console.log('[PropertyCalendar] Creating reservation from selection:', {
+      selectedDatesCount: selectedDates.length,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      nights: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    });
     
     // Set the calculated dates for the booking form
     setSelectedStartDate(startDate);

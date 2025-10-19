@@ -131,10 +131,38 @@ export const useTimePeriods = () => {
     // Check if all selection phases are active
     const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
 
+    // Normalize dates to noon for comparison with noon-based windows
+    const normalizedStartDate = new Date(startDate);
+    normalizedStartDate.setHours(12, 0, 0, 0);
+    const normalizedEndDate = new Date(endDate);
+    normalizedEndDate.setHours(12, 0, 0, 0);
+
+    console.log('[useTimePeriods] validateBooking called:', {
+      familyGroup,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      normalizedStartDate: normalizedStartDate.toISOString(),
+      normalizedEndDate: normalizedEndDate.toISOString(),
+      allPhasesActive,
+      adminOverride,
+      windowCount: timePeriodWindows.length
+    });
+
     // Find the relevant time period window
     // When all phases are active, allow booking any available window, not just the family's assigned window
     const relevantWindow = timePeriodWindows.find(window => {
-      const datesMatch = startDate >= window.startDate && endDate <= window.endDate;
+      const windowStart = new Date(window.startDate);
+      const windowEnd = new Date(window.endDate);
+      
+      console.log('[useTimePeriods] Checking window:', {
+        windowFamilyGroup: window.familyGroup,
+        windowStart: windowStart.toISOString(),
+        windowEnd: windowEnd.toISOString(),
+        startMatch: normalizedStartDate >= windowStart,
+        endMatch: normalizedEndDate <= windowEnd
+      });
+      
+      const datesMatch = normalizedStartDate >= windowStart && normalizedEndDate <= windowEnd;
       
       // If all phases active, only check dates. Otherwise, also check family group assignment
       if (allPhasesActive || adminOverride) {
@@ -143,6 +171,12 @@ export const useTimePeriods = () => {
       
       return window.familyGroup === familyGroup && datesMatch;
     });
+    
+    console.log('[useTimePeriods] Relevant window found:', relevantWindow ? {
+      familyGroup: relevantWindow.familyGroup,
+      startDate: new Date(relevantWindow.startDate).toISOString(),
+      endDate: new Date(relevantWindow.endDate).toISOString()
+    } : null);
 
     if (!relevantWindow) {
       if (allPhasesActive || adminOverride) {
