@@ -411,7 +411,7 @@ const getBookingsForDate = (date: Date) => {
 
   const getTimePeriodForDate = (date: Date) => {
     return timePeriodWindows.find(window => 
-      date >= window.startDate && date <= window.endDate
+      date >= window.startDate && date < window.endDate
     );
   };
 
