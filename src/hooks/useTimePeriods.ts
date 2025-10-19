@@ -377,12 +377,27 @@ export const useTimePeriods = () => {
         const monthNames = ["January", "February", "March", "April", "May", "June",
                             "July", "August", "September", "October", "November", "December"];
         const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
+        
+        // Validate month index
+        if (startMonthIndex === -1) {
+          console.warn('[useTimePeriods] Invalid start_month, using current year:', rotationData.start_month);
+          fetchTimePeriodUsage();
+          return;
+        }
+        
         const startDay = typeof rotationData.start_day === 'string' 
           ? parseInt(rotationData.start_day, 10) 
           : (rotationData.start_day || 1);
         
         // Create rotation start date for current year
         const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
+        
+        // Validate the created date
+        if (isNaN(rotationStartThisYear.getTime())) {
+          console.warn('[useTimePeriods] Invalid rotation start date, using current year');
+          fetchTimePeriodUsage();
+          return;
+        }
         
         // If we've passed the rotation start date, we're in the next rotation year
         const activeRotationYear = today >= rotationStartThisYear ? currentYear + 1 : currentYear;
