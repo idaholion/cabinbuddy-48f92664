@@ -9,12 +9,14 @@ declare const __BUILD_TIME__: string;
 /**
  * Get the current build version
  * Format: v2025.10.19.1430 (timestamp-based)
+ * In dev mode, shows current time for easier tracking
  */
 export function getBuildVersion(): string {
   try {
-    const buildTime = typeof __BUILD_TIME__ !== 'undefined' 
-      ? __BUILD_TIME__ 
-      : new Date().toISOString();
+    // In dev mode, use current time so it's always fresh
+    const buildTime = import.meta.env.DEV
+      ? new Date().toISOString()
+      : (typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : new Date().toISOString());
     
     const date = new Date(buildTime);
     const year = date.getFullYear();
