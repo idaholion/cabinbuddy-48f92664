@@ -31,7 +31,7 @@ interface TimePeriodUsageData {
   selection_deadline?: Date;
 }
 
-export const useTimePeriods = () => {
+export const useTimePeriods = (rotationYear?: number) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder();
@@ -374,11 +374,11 @@ export const useTimePeriods = () => {
 
   useEffect(() => {
     if (organization?.id && rotationData) {
-      // Fetch time period usage for current calendar year by default
-      // Parent components can call fetchTimePeriodUsage(specificYear) if needed
-      fetchTimePeriodUsage();
+      // Use provided rotation year or default to current year
+      const yearToFetch = rotationYear || new Date().getFullYear();
+      fetchTimePeriodUsage(yearToFetch);
     }
-  }, [organization?.id, rotationData]);
+  }, [organization?.id, rotationData, rotationYear, fetchTimePeriodUsage]);
 
   return {
     timePeriodUsage,
