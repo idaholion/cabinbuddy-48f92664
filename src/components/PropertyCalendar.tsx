@@ -575,7 +575,7 @@ const getBookingsForDate = (date: Date) => {
     const containingWindow = timePeriodWindows.find(window => {
       const windowStart = new Date(window.startDate);
       const windowEnd = new Date(window.endDate);
-      return date >= windowStart && date <= windowEnd;
+      return date >= windowStart && date < windowEnd;
     });
     
     if (!containingWindow) {
