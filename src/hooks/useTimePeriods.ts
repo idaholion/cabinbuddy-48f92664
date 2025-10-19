@@ -378,7 +378,8 @@ export const useTimePeriods = (rotationYear?: number) => {
       const yearToFetch = rotationYear || new Date().getFullYear();
       fetchTimePeriodUsage(yearToFetch);
     }
-  }, [organization?.id, rotationData, rotationYear, fetchTimePeriodUsage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organization?.id, rotationData, rotationYear]);
 
   return {
     timePeriodUsage,
