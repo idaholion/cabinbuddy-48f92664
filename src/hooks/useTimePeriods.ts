@@ -253,8 +253,14 @@ export const useTimePeriods = () => {
         secondary_periods_used: item.secondary_periods_used || 0,
         secondary_periods_allowed: item.secondary_periods_allowed || 1,
         selection_round: item.selection_round || 'primary',
-        last_selection_date: item.last_selection_date ? new Date(item.last_selection_date) : undefined,
-        selection_deadline: item.selection_deadline ? new Date(item.selection_deadline) : undefined
+        last_selection_date: item.last_selection_date ? (() => {
+          const date = new Date(item.last_selection_date);
+          return isNaN(date.getTime()) ? undefined : date;
+        })() : undefined,
+        selection_deadline: item.selection_deadline ? (() => {
+          const date = new Date(item.selection_deadline);
+          return isNaN(date.getTime()) ? undefined : date;
+        })() : undefined
       }));
       setTimePeriodUsage(processedData);
     } catch (error) {
@@ -368,51 +374,9 @@ export const useTimePeriods = () => {
 
   useEffect(() => {
     if (organization?.id && rotationData) {
-      // Calculate the active rotation year based on rotation start date
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      
-      if (rotationData.start_month) {
-        // Parse rotation start month
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-                            "July", "August", "September", "October", "November", "December"];
-        const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
-        
-        // Validate month index
-        if (startMonthIndex === -1) {
-          console.warn('[useTimePeriods] Invalid start_month, using current year:', rotationData.start_month);
-          fetchTimePeriodUsage();
-          return;
-        }
-        
-        const startDay = typeof rotationData.start_day === 'string' 
-          ? parseInt(rotationData.start_day, 10) 
-          : (rotationData.start_day || 1);
-        
-        // Create rotation start date for current year
-        const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
-        
-        // Validate the created date BEFORE trying to use it
-        if (isNaN(rotationStartThisYear.getTime())) {
-          console.warn('[useTimePeriods] Invalid rotation start date, using current year');
-          fetchTimePeriodUsage();
-          return;
-        }
-        
-        // If we've passed the rotation start date, we're in the next rotation year
-        const activeRotationYear = today >= rotationStartThisYear ? currentYear + 1 : currentYear;
-        
-        console.log('[useTimePeriods] Fetching for active rotation year:', {
-          today: today.toISOString(),
-          startMonth: rotationData.start_month,
-          startDay: startDay,
-          activeRotationYear
-        });
-        
-        fetchTimePeriodUsage(activeRotationYear);
-      } else {
-        fetchTimePeriodUsage();
-      }
+      // Fetch time period usage for current calendar year by default
+      // Parent components can call fetchTimePeriodUsage(specificYear) if needed
+      fetchTimePeriodUsage();
     }
   }, [organization?.id, rotationData]);
 
