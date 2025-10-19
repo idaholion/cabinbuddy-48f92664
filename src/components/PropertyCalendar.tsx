@@ -362,10 +362,10 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []); // Removed currentMonth dependency to prevent infinite loop
 
-// Utility function to parse date strings as local dates (avoiding timezone shifts)
+// Utility function to parse date strings as local dates at noon (avoiding timezone shifts)
 const parseLocalDate = (dateStr: string): Date => {
   const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
+  return new Date(year, month - 1, day, 12, 0, 0, 0); // Set to noon for check-in/check-out times
 };
 
 const getBookingsForDate = (date: Date) => {
@@ -602,13 +602,17 @@ const getBookingsForDate = (date: Date) => {
       return;
     }
     
-    // Auto-select the entire Friday-to-Friday window
+    // Auto-select the entire Friday-to-Friday window (noon to noon)
     const datesInRange: Date[] = [];
     const current = new Date(containingWindow.startDate);
+    current.setHours(12, 0, 0, 0); // Set to noon for check-in
     const windowEnd = new Date(containingWindow.endDate);
+    windowEnd.setHours(12, 0, 0, 0); // Set to noon for check-out
     
     while (current <= windowEnd) {
-      datesInRange.push(new Date(current));
+      const dateAtNoon = new Date(current);
+      dateAtNoon.setHours(12, 0, 0, 0);
+      datesInRange.push(dateAtNoon);
       current.setDate(current.getDate() + 1);
     }
     

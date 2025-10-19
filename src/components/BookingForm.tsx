@@ -18,10 +18,10 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
-import { parseDateOnly, calculateNights, toDateOnlyString } from '@/lib/date-utils';
+import { parseDateOnly, calculateNights, toDateOnlyString, parseDateAtNoon } from '@/lib/date-utils';
 
-// Use the imported parseDateOnly function from date-utils instead
-const parseLocalDate = parseDateOnly;
+// Use the imported parseDateAtNoon function for check-in/check-out times
+const parseLocalDate = parseDateAtNoon;
 
 interface BookingFormProps {
   open: boolean;
@@ -114,8 +114,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         existingAssignments.map((assignment: any) => ({
           host_name: assignment.host_name || '',
           host_email: assignment.host_email || '',
-          start_date: parseDateOnly(assignment.start_date),
-          end_date: parseDateOnly(assignment.end_date)
+          start_date: parseDateAtNoon(assignment.start_date),
+          end_date: parseDateAtNoon(assignment.end_date)
         })) : [];
 
       form.reset({
@@ -132,9 +132,17 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         prefilledFamilyGroup,
         prefilledHost
       });
-      // Use selected dates from calendar if provided, otherwise default to today
-      const defaultStartDate = selectedStartDate || new Date();
-      const defaultEndDate = selectedEndDate || new Date();
+      // Use selected dates from calendar if provided, otherwise default to today at noon
+      const defaultStartDate = selectedStartDate || (() => {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        return today;
+      })();
+      const defaultEndDate = selectedEndDate || (() => {
+        const endDate = new Date();
+        endDate.setHours(12, 0, 0, 0);
+        return endDate;
+      })();
       
       // Determine default family group based on user role and prefilled values
       let defaultFamilyGroup = '';

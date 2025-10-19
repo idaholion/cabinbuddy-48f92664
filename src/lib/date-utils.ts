@@ -17,6 +17,19 @@
 import { DateOnlyString } from '@/types/date-types';
 
 /**
+ * Safely parse a date-only string (YYYY-MM-DD) as local noon (12:00:00)
+ * This is used for check-in/check-out times to represent Friday noon to Friday noon bookings
+ * 
+ * @param dateString - Date string in YYYY-MM-DD format
+ * @returns Date object representing noon in the local timezone
+ */
+export function parseDateAtNoon(dateString: string | DateOnlyString | null | undefined): Date {
+  if (!dateString) return new Date();
+  // Add T12:00:00 to force local noon interpretation
+  return new Date(dateString + 'T12:00:00');
+}
+
+/**
  * Safely parse a date-only string (YYYY-MM-DD) as local midnight
  * 
  * @param dateString - Date string in YYYY-MM-DD format
