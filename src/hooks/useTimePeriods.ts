@@ -392,7 +392,7 @@ export const useTimePeriods = () => {
         // Create rotation start date for current year
         const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
         
-        // Validate the created date
+        // Validate the created date BEFORE trying to use it
         if (isNaN(rotationStartThisYear.getTime())) {
           console.warn('[useTimePeriods] Invalid rotation start date, using current year');
           fetchTimePeriodUsage();
@@ -404,7 +404,8 @@ export const useTimePeriods = () => {
         
         console.log('[useTimePeriods] Fetching for active rotation year:', {
           today: today.toISOString(),
-          rotationStartThisYear: rotationStartThisYear.toISOString(),
+          startMonth: rotationData.start_month,
+          startDay: startDay,
           activeRotationYear
         });
         
