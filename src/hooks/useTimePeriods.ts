@@ -85,10 +85,10 @@ export const useTimePeriods = () => {
 
       if (currentDate > endOfMonth) break;
 
-      // Create time period window
+      // Create time period window (Friday noon to Friday noon = 7 days for 7 nights)
       const windowStart = new Date(currentDate);
       const windowEnd = new Date(currentDate);
-      windowEnd.setDate(windowEnd.getDate() + maxNights - 1); // Subtract 1 to make it inclusive
+      windowEnd.setDate(windowEnd.getDate() + maxNights); // For 7-night stays, this is 7 days later
 
       const currentFamilyGroup = rotationOrder[currentGroupIndex % rotationOrder.length];
       
