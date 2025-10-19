@@ -607,8 +607,6 @@ const getBookingsForDate = (date: Date) => {
     }
     
     // Auto-select the entire Friday-to-Friday window (noon to noon)
-    // For visual selection, include all dates from start to end
-    // But for booking, use start at noon and end at noon (check-in to check-out)
     const windowStart = new Date(containingWindow.startDate);
     windowStart.setHours(12, 0, 0, 0);
     const windowEnd = new Date(containingWindow.endDate);
@@ -617,9 +615,8 @@ const getBookingsForDate = (date: Date) => {
     const datesInRange: Date[] = [];
     const current = new Date(windowStart);
     
-    // Include all dates from start up to (but not including) end for visual selection
-    // This shows the nights you're booking, not the checkout day
-    while (current < windowEnd) {
+    // Include all dates from start through end (including checkout day)
+    while (current <= windowEnd) {
       const dateAtNoon = new Date(current);
       dateAtNoon.setHours(12, 0, 0, 0);
       datesInRange.push(dateAtNoon);
@@ -662,8 +659,8 @@ const getBookingsForDate = (date: Date) => {
     // Select the full Friday-to-Friday range
     setSelectedDates(datesInRange);
     
-    // Since datesInRange now excludes the checkout day, the number of nights equals the number of dates
-    const nights = datesInRange.length;
+    // Number of nights is dates minus 1 (checkout day doesn't count as a night)
+    const nights = datesInRange.length - 1;
     toast({
       title: "Period Selected",
       description: `Selected ${windowStart.toLocaleDateString()} to ${windowEnd.toLocaleDateString()} (${nights} nights)`,
@@ -714,10 +711,8 @@ const getBookingsForDate = (date: Date) => {
     const startDate = new Date(sortedDates[0]);
     startDate.setHours(12, 0, 0, 0);
     
-    // End date is one week after start for a full time period
-    // Since datesInRange now excludes the checkout day, add 7 days to get checkout
+    // Last selected date is the checkout day
     const endDate = new Date(sortedDates[sortedDates.length - 1]);
-    endDate.setDate(endDate.getDate() + 1); // Add one day to get checkout date
     endDate.setHours(12, 0, 0, 0);
     
     console.log('[PropertyCalendar] Creating reservation from selection:', {
