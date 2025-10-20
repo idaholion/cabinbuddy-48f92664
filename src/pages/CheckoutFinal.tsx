@@ -1267,6 +1267,7 @@ const CheckoutFinal = () => {
                                   console.log('Opening Venmo URL:', venmoUrl);
                                   window.open(venmoUrl, '_blank');
                                 }}
+                                disabled={totalAmount <= 0}
                                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
                               >
                                 <Send className="h-4 w-4 mr-2" />
