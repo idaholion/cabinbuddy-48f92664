@@ -348,10 +348,12 @@ const CheckoutFinal = () => {
             .eq('organization_id', organization.id)
             .maybeSingle();
 
-          // Find receipts for this family group
-          const familyReceipts = receipts.filter(r => 
-            r.family_group === reservation.family_group
-          );
+      // Find receipts ONLY for this specific reservation's date range
+      const familyReceipts = receipts.filter(r => 
+        r.family_group === reservation.family_group &&
+        parseDateOnly(r.date) >= parseDateOnly(reservation.start_date) &&
+        parseDateOnly(r.date) <= parseDateOnly(reservation.end_date)
+      );
           const receiptsTotal = familyReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
 
           if (payment) {
