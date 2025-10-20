@@ -1263,15 +1263,18 @@ const CheckoutFinal = () => {
                                 onClick={() => {
                                   // Remove @ symbol if present
                                   const cleanHandle = checkoutData.venmoHandle.replace('@', '');
-                                  const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=Cabin stay payment`;
+                                  const absAmount = Math.abs(totalAmount);
+                                  const txnType = totalAmount < 0 ? 'charge' : 'pay';
+                                  const note = totalAmount < 0 ? 'Cabin stay refund request' : 'Cabin stay payment';
+                                  const venmoUrl = `https://venmo.com/${cleanHandle}?txn=${txnType}&amount=${absAmount}&note=${encodeURIComponent(note)}`;
                                   console.log('Opening Venmo URL:', venmoUrl);
                                   window.open(venmoUrl, '_blank');
                                 }}
-                                disabled={totalAmount <= 0}
+                                disabled={totalAmount === 0}
                                 className="text-blue-600 border-blue-200 hover:bg-blue-50"
                               >
                                 <Send className="h-4 w-4 mr-2" />
-                                Pay Now
+                                {totalAmount < 0 ? 'Request Refund' : 'Pay Now'}
                               </Button>
                             </div>
                           </div>
