@@ -335,14 +335,26 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     
     const usage = timePeriodUsage.find(u => u.family_group === userFamilyGroup);
     
+    console.log('[DEBUG] getUserUsageInfo called:', {
+      userFamilyGroup,
+      allUsageData: timePeriodUsage,
+      foundUsage: usage,
+      rotationYear,
+      currentPhase
+    });
+    
     if (currentPhase === 'primary') {
       const used = usage?.time_periods_used || 0;
       const allowed = rotationData.max_time_slots || 2;
-      return { used, allowed, remaining: allowed - used };
+      const result = { used, allowed, remaining: allowed - used };
+      console.log('[DEBUG] getUserUsageInfo PRIMARY result:', result);
+      return result;
     } else {
       const used = usage?.secondary_periods_used || 0;
       const allowed = rotationData.secondary_max_periods || 1;
-      return { used, allowed, remaining: allowed - used };
+      const result = { used, allowed, remaining: allowed - used };
+      console.log('[DEBUG] getUserUsageInfo SECONDARY result:', result);
+      return result;
     }
   };
 

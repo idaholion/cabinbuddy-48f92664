@@ -246,6 +246,12 @@ export const useTimePeriods = (rotationYear?: number) => {
         return;
       }
 
+      console.log('[DEBUG] useTimePeriods - Fetched raw usage data:', {
+        currentYear,
+        organizationId: organization.id,
+        rawData: data
+      });
+
       const processedData = (data || []).map(item => ({
         family_group: item.family_group,
         time_periods_used: item.time_periods_used,
@@ -262,6 +268,8 @@ export const useTimePeriods = (rotationYear?: number) => {
           return isNaN(date.getTime()) ? undefined : date;
         })() : undefined
       }));
+      
+      console.log('[DEBUG] useTimePeriods - Processed usage data:', processedData);
       setTimePeriodUsage(processedData);
     } catch (error) {
       console.error('Error in fetchTimePeriodUsage:', error);

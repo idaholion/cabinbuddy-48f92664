@@ -367,6 +367,12 @@ const CabinCalendar = () => {
                     <p className="text-sm text-muted-foreground">
                       {(() => {
                         const usageInfo = getUserUsageInfo(userGroup.name);
+                        console.log('[DEBUG] CabinCalendar - Selection Banner usageInfo:', {
+                          userGroupName: userGroup.name,
+                          usageInfo,
+                          currentPhase,
+                          rotationYear
+                        });
                         if (!usageInfo) return "You can now make your primary selections.";
                         return `You've selected ${usageInfo.used} of ${usageInfo.allowed} periods (${usageInfo.remaining} remaining)`;
                       })()}
