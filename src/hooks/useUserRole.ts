@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { supabase } from '@/integrations/supabase/client';
+import { useRole } from '@/contexts/RoleContext';
 
 // Name matching utility
 const isNameMatch = (userName: string, targetName: string): boolean => {
@@ -34,6 +35,7 @@ export const useUserRole = () => {
   const { user } = useAuth();
   const { familyGroups, loading: familyGroupsLoading } = useFamilyGroups();
   const { activeOrganization, loading: organizationLoading } = useMultiOrganization();
+  const { impersonatedFamilyGroup } = useRole();
   const [isGroupLead, setIsGroupLead] = useState(false);
   const [isCalendarKeeper, setIsCalendarKeeper] = useState(false);
   const [isNameMatchedGroupLead, setIsNameMatchedGroupLead] = useState(false);
@@ -227,6 +229,7 @@ export const useUserRole = () => {
 
     checkUserRole();
   }, [
+    impersonatedFamilyGroup,
     user?.email, 
     user?.id, 
     user?.user_metadata?.display_name,
@@ -241,6 +244,12 @@ export const useUserRole = () => {
     activeOrganization?.organization_id
   ]);
 
+  // Check if admin is impersonating a family group
+  const isAdmin = organizationDetails?.admin_email?.toLowerCase() === user?.email?.toLowerCase() || activeOrganization?.role === 'admin';
+  const impersonatedGroup = impersonatedFamilyGroup && isAdmin 
+    ? familyGroups.find(fg => fg.name === impersonatedFamilyGroup)
+    : null;
+
   return {
     isGroupLead,
     isNameMatchedGroupLead,
@@ -249,9 +258,9 @@ export const useUserRole = () => {
     isHost: !isGroupLead && !!userHostInfo?.canHost,
     isCalendarKeeper,
     isTreasurer: organizationDetails?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase(),
-    isAdmin: organizationDetails?.admin_email?.toLowerCase() === user?.email?.toLowerCase() || activeOrganization?.role === 'admin',
-    userFamilyGroup,
-    userHostInfo,
+    isAdmin,
+    userFamilyGroup: impersonatedGroup || userFamilyGroup,
+    userHostInfo: impersonatedGroup ? null : userHostInfo,
     loading,
   };
 };

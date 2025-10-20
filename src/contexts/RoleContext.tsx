@@ -11,6 +11,8 @@ interface RoleContextType {
   isOrgAdmin: boolean;
   canAccessSupervisorFeatures: boolean;
   toggleSupervisorMode: () => void;
+  impersonatedFamilyGroup: string | null;
+  setImpersonatedFamilyGroup: (familyGroup: string | null) => void;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -28,6 +30,9 @@ export const RoleProvider = ({ children }: RoleProviderProps) => {
     const saved = localStorage.getItem('activeRole');
     return (saved === 'supervisor' ? 'supervisor' : 'member') as ActiveRole;
   });
+
+  // Impersonation state (admin-only feature)
+  const [impersonatedFamilyGroup, setImpersonatedFamilyGroup] = useState<string | null>(null);
 
   // Save role preference to localStorage
   const setActiveRole = (role: ActiveRole) => {
@@ -58,6 +63,8 @@ export const RoleProvider = ({ children }: RoleProviderProps) => {
         isOrgAdmin,
         canAccessSupervisorFeatures,
         toggleSupervisorMode,
+        impersonatedFamilyGroup,
+        setImpersonatedFamilyGroup,
       }}
     >
       {children}

@@ -26,6 +26,8 @@ import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useRole } from "@/contexts/RoleContext";
+import { Eye, EyeOff } from "lucide-react";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -52,7 +54,8 @@ const CabinCalendar = () => {
   const [extensionEndDate, setExtensionEndDate] = useState<Date>(new Date());
 
   // Get user role information
-  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo } = useUserRole();
+  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo, isAdmin } = useUserRole();
+  const { impersonatedFamilyGroup, setImpersonatedFamilyGroup } = useRole();
   
   // Get user's family group and pending trade requests
   const userFamilyGroupName = userGroup?.name;
@@ -288,6 +291,56 @@ const CabinCalendar = () => {
           </CardHeader>
           
           <CardContent>
+            
+            {/* Admin Impersonation Controls */}
+            {isAdmin && (
+              <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg space-y-3">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">Admin View Mode</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={impersonatedFamilyGroup || "none"}
+                      onValueChange={(value) => setImpersonatedFamilyGroup(value === "none" ? null : value)}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="View as..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Your own view</SelectItem>
+                        {familyGroups.map(fg => (
+                          <SelectItem key={fg.name} value={fg.name}>
+                            View as: {fg.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {impersonatedFamilyGroup && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setImpersonatedFamilyGroup(null)}
+                      >
+                        <EyeOff className="h-4 w-4 mr-1" />
+                        Exit
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {impersonatedFamilyGroup && (
+                  <div className="p-3 bg-primary/10 border border-primary/20 rounded-md">
+                    <p className="text-sm text-primary font-medium">
+                      👁️ You are viewing as: <strong>{impersonatedFamilyGroup}</strong>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You can see exactly what members of this family group see, including their selection turn status.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Debug logging for button visibility */}
             {(() => {
