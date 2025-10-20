@@ -166,18 +166,14 @@ const CabinCalendar = () => {
     const monthNames = ["January", "February", "March", "April", "May", "June",
                         "July", "August", "September", "October", "November", "December"];
     const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
-    const startDay = typeof rotationData.start_day === 'string' 
-      ? parseInt(rotationData.start_day, 10) 
-      : (rotationData.start_day || 1);
     
-    // Create rotation start date for current year
-    const rotationStartThisYear = new Date(currentYear, startMonthIndex, startDay);
+    // Create rotation start date for current year (use 1st of month for year calculation)
+    const rotationStartThisYear = new Date(currentYear, startMonthIndex, 1);
     
     console.log('[CabinCalendar] getRotationYear calculation:', {
       today: today.toISOString(),
       currentYear,
       startMonth: rotationData.start_month,
-      startDay,
       rotationStartThisYear: rotationStartThisYear.toISOString(),
       hasPassedStartDate: today >= rotationStartThisYear,
       calculatedRotationYear: today >= rotationStartThisYear ? currentYear + 1 : currentYear
