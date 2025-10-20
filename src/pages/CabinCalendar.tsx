@@ -212,8 +212,8 @@ const CabinCalendar = () => {
     selectionLoading
   });
   
-  // For next year status, manually calculate since useSequentialSelection shares time period data
-  const getNextYearStatuses = (): Array<{
+  // For current rotation year status, manually calculate since useSequentialSelection shares time period data
+  const getCurrentRotationYearStatuses = (): Array<{
     familyGroup: string;
     status: SelectionStatus;
     isCurrentTurn: boolean;
@@ -222,19 +222,19 @@ const CabinCalendar = () => {
   }> => {
     if (!rotationData) return [];
     
-    const nextYear = rotationYear + 1;
-    const nextYearOrder = getRotationForYear(nextYear);
+    const currentYear = rotationYear; // The year being selected for (e.g., 2026)
+    const currentYearOrder = getRotationForYear(currentYear);
     const today = new Date();
     
-    // Check if selection period for next year has started
+    // Check if selection period for current rotation year has started
     // Selection starts on October 1st of the year before (e.g., Oct 1, 2025 for 2026 selection)
-    const selectionStartYear = nextYear - 1;
+    const selectionStartYear = currentYear - 1;
     const selectionStartDate = new Date(selectionStartYear, 9, 1); // October 1st (month 9)
     const selectionHasStarted = today >= selectionStartDate;
     
     // If selection hasn't started, everyone is waiting
     if (!selectionHasStarted) {
-      return nextYearOrder.map(familyGroup => ({
+      return currentYearOrder.map(familyGroup => ({
         familyGroup,
         status: 'waiting' as SelectionStatus,
         isCurrentTurn: false,
@@ -243,7 +243,7 @@ const CabinCalendar = () => {
     }
     
     // Selection has started, first family in order is selecting, rest are waiting
-    return nextYearOrder.map((familyGroup, index) => ({
+    return currentYearOrder.map((familyGroup, index) => ({
       familyGroup,
       status: index === 0 ? 'active' as SelectionStatus : 'waiting' as SelectionStatus,
       isCurrentTurn: index === 0,
@@ -252,15 +252,15 @@ const CabinCalendar = () => {
     }));
   };
   
-  const nextYearStatuses = getNextYearStatuses();
-  const nextYearCurrentFamily = nextYearStatuses.find(s => s.isCurrentTurn)?.familyGroup || null;
+  const currentRotationYearStatuses = getCurrentRotationYearStatuses();
+  const currentRotationYearCurrentFamily = currentRotationYearStatuses.find(s => s.isCurrentTurn)?.familyGroup || null;
   
-  // Get selection period extensions for next year
+  // Get selection period extensions for current rotation year
   const { 
     getExtensionForFamily, 
     createOrUpdateExtension,
     loading: extensionsLoading 
-  } = useSelectionExtensions(rotationYear + 1);
+  } = useSelectionExtensions(rotationYear);
   
   const { userFamilyGroup } = useUserRole();
 
@@ -451,18 +451,18 @@ const CabinCalendar = () => {
                          </SelectContent>
                        </Select>
 
-                       {/* 2026 Selection Status Dropdown - Narrow trigger, wide content */}
+                       {/* Selection Status Dropdown - Narrow trigger, wide content */}
                        <Select>
                          <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear + 1} Status`} />
+                           <SelectValue placeholder={`${rotationYear} Status`} />
                          </SelectTrigger>
                          <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
-                               {rotationYear + 1} Selection Status
+                               {rotationYear} Selection Status
                              </div>
                              <div className="space-y-1">
-                               {nextYearStatuses.map((familyStatus, index) => {
+                               {currentRotationYearStatuses.map((familyStatus, index) => {
                                  const getStatusDisplay = () => {
                                    switch (familyStatus.status) {
                                      case 'active':
@@ -510,22 +510,22 @@ const CabinCalendar = () => {
                              </div>
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                 <p className="font-medium">Selection begins October 1st</p>
-                {nextYearCurrentFamily && (() => {
+                {currentRotationYearCurrentFamily && (() => {
                   const selectionDays = rotationData?.selection_days || 7;
-                  const nextYear = rotationYear + 1;
-                  const selectionStartYear = nextYear - 1;
+                  const currentYear = rotationYear; // The year being selected for
+                  const selectionStartYear = currentYear - 1; // Year when selection starts
                   const baseStartDate = new Date(selectionStartYear, 9, 1); // October 1st
                   
                   // Calculate how many families have already completed their selection
-                  const nextYearOrder = getRotationForYear(nextYear);
-                  const currentFamilyIndex = nextYearOrder.indexOf(nextYearCurrentFamily);
+                  const currentYearOrder = getRotationForYear(currentYear);
+                  const currentFamilyIndex = currentYearOrder.indexOf(currentRotationYearCurrentFamily);
                   
                   // Add days for each family that has already selected
                   const startDate = new Date(baseStartDate);
                   startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
                   
                   // Check for extension
-                  const extension = getExtensionForFamily(nextYearCurrentFamily);
+                  const extension = getExtensionForFamily(currentRotationYearCurrentFamily);
                   const originalEndDate = new Date(startDate);
                   originalEndDate.setDate(originalEndDate.getDate() + selectionDays - 1);
                   
@@ -538,7 +538,7 @@ const CabinCalendar = () => {
                   };
                   
                   const handleExtendClick = () => {
-                    setSelectedFamilyForExtension(nextYearCurrentFamily);
+                    setSelectedFamilyForExtension(currentRotationYearCurrentFamily);
                     setExtensionEndDate(endDate);
                     setExtendDialogOpen(true);
                   };
@@ -686,11 +686,11 @@ const CabinCalendar = () => {
                 currentEndDate={extensionEndDate}
                 onExtend={async (newEndDate, reason) => {
                   const selectionDays = rotationData?.selection_days || 7;
-                  const nextYear = rotationYear + 1;
-                  const selectionStartYear = nextYear - 1;
+                  const currentYear = rotationYear; // The year being selected for
+                  const selectionStartYear = currentYear - 1; // Year when selection starts
                   const baseStartDate = new Date(selectionStartYear, 9, 1);
-                  const nextYearOrder = getRotationForYear(nextYear);
-                  const currentFamilyIndex = nextYearOrder.indexOf(selectedFamilyForExtension);
+                  const currentYearOrder = getRotationForYear(currentYear);
+                  const currentFamilyIndex = currentYearOrder.indexOf(selectedFamilyForExtension);
                   const startDate = new Date(baseStartDate);
                   startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
                   const originalEndDate = new Date(startDate);
