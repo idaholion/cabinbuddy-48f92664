@@ -1222,6 +1222,7 @@ export type Database = {
           billing_locked: boolean | null
           created_at: string
           created_by_user_id: string | null
+          credit_applied_to_future: boolean | null
           daily_occupancy: Json | null
           description: string | null
           due_date: string | null
@@ -1247,6 +1248,7 @@ export type Database = {
           billing_locked?: boolean | null
           created_at?: string
           created_by_user_id?: string | null
+          credit_applied_to_future?: boolean | null
           daily_occupancy?: Json | null
           description?: string | null
           due_date?: string | null
@@ -1272,6 +1274,7 @@ export type Database = {
           billing_locked?: boolean | null
           created_at?: string
           created_by_user_id?: string | null
+          credit_applied_to_future?: boolean | null
           daily_occupancy?: Json | null
           description?: string | null
           due_date?: string | null

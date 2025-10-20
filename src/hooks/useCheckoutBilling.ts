@@ -25,6 +25,7 @@ interface CheckoutBillingResult {
   totalGuests: number;
   loading: boolean;
   billingLocked: boolean;
+  previousCredit: number;
   refetch: () => Promise<void>;
   createDeferredPayment: () => Promise<boolean>;
   createSplitPayment: (
@@ -45,6 +46,7 @@ export const useCheckoutBilling = (
   const [dailyOccupancy, setDailyOccupancy] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [billingLocked, setBillingLocked] = useState(false);
+  const [previousCredit, setPreviousCredit] = useState(0);
   const { organization } = useOrganization();
   const { toast } = useToast();
 
@@ -193,8 +195,63 @@ export const useCheckoutBilling = (
     }
   };
 
+  // Fetch previous credits
+  const fetchPreviousCredits = async () => {
+    if (!organization?.id || !reservationId) {
+      setPreviousCredit(0);
+      return;
+    }
+
+    try {
+      // Get family group from current reservation
+      const { data: reservation, error: resError } = await supabase
+        .from('reservations')
+        .select('family_group')
+        .eq('id', reservationId)
+        .single();
+
+      if (resError || !reservation) {
+        setPreviousCredit(0);
+        return;
+      }
+
+      // Fetch all credits marked for future application
+      const { data: credits, error } = await supabase
+        .from('payments')
+        .select('balance_due, amount, amount_paid')
+        .eq('organization_id', organization.id)
+        .eq('family_group', reservation.family_group)
+        .eq('credit_applied_to_future', true)
+        .lt('balance_due', 0); // Only negative balances (credits)
+
+      if (error) {
+        console.error('Error fetching previous credits:', error);
+        setPreviousCredit(0);
+        return;
+      }
+
+      // Sum up all credits
+      const totalCredit = (credits || []).reduce((sum, payment) => {
+        const balanceDue = Number(payment.balance_due) || 0;
+        return sum + Math.abs(balanceDue);
+      }, 0);
+
+      console.log('📊 [CHECKOUT-BILLING] Previous credits found:', {
+        familyGroup: reservation.family_group,
+        creditCount: credits?.length || 0,
+        totalCredit
+      });
+
+      setPreviousCredit(totalCredit);
+    } catch (error) {
+      console.error('Error fetching previous credits:', error);
+      setPreviousCredit(0);
+    }
+  };
+
   useEffect(() => {
     fetchDailyOccupancy();
+    fetchPreviousCredits();
   }, [reservationId, checkInDate, checkOutDate, reservedGuests, toast]);
 
   // Calculate billing from daily occupancy
@@ -434,13 +491,14 @@ export const useCheckoutBilling = (
       damageDeposit: result.damageDeposit,
       subtotal: result.subtotal,
       tax: result.tax,
-      total: result.total,
+      total: result.total - previousCredit, // Apply credit to total
       details: result.details,
     },
     totalDays,
     totalGuests,
     loading,
     billingLocked,
+    previousCredit,
     refetch,
     createDeferredPayment,
     createSplitPayment,

@@ -358,7 +358,8 @@ export default function StayHistory() {
         adjustmentNotes: null,
         billingLocked: false,
         isVirtualSplit: true,
-        sourceFamily: reservation.splitData.sourceFamily
+        sourceFamily: reservation.splitData.sourceFamily,
+        creditAppliedToFuture: (splitPayment as any).credit_applied_to_future || false
       };
     }
     
@@ -486,7 +487,8 @@ export default function StayHistory() {
       dailyOccupancy,
       manualAdjustment: (payment as any)?.manual_adjustment_amount || 0,
       adjustmentNotes: (payment as any)?.adjustment_notes,
-      billingLocked: (payment as any)?.billing_locked
+      billingLocked: (payment as any)?.billing_locked,
+      creditAppliedToFuture: (payment as any)?.credit_applied_to_future || false
     };
   };
 
@@ -783,6 +785,20 @@ export default function StayHistory() {
 
                   {/* Right Column - Financial Summary */}
                   <div className="space-y-2">
+                    {/* Credit Applied to Future Badge */}
+                    {stayData.creditAppliedToFuture && stayData.amountDue < 0 && (
+                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 border-green-300 dark:border-green-700">
+                            Credit Applied to Future
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          ${Math.abs(stayData.amountDue).toFixed(2)} credit will be applied to your next season's billing
+                        </p>
+                      </div>
+                    )}
+                    
                     {stayData.previousBalance !== 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Previous Balance:</span>

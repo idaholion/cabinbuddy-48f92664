@@ -447,6 +447,7 @@ const CheckoutFinal = () => {
     totalGuests,
     loading: billingLoading,
     billingLocked,
+    previousCredit,
     refetch,
     createDeferredPayment,
     createSplitPayment 
@@ -462,6 +463,33 @@ const CheckoutFinal = () => {
   const totalAmount = enhancedBilling.total - checkoutData.receiptsTotal + previousBalance;
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+
+  // Fetch payment ID for the current reservation
+  useEffect(() => {
+    const fetchPaymentId = async () => {
+      if (!currentReservation?.id || !organization?.id) {
+        setPaymentId(null);
+        return;
+      }
+
+      try {
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('id')
+          .eq('reservation_id', currentReservation.id)
+          .eq('organization_id', organization.id)
+          .maybeSingle();
+
+        setPaymentId(payment?.id || null);
+      } catch (error) {
+        console.error('Error fetching payment ID:', error);
+        setPaymentId(null);
+      }
+    };
+
+    fetchPaymentId();
+  }, [currentReservation?.id, organization?.id]);
 
   const handleSaveOccupancy = async () => {
     if (!currentReservation) return;
@@ -726,6 +754,45 @@ const CheckoutFinal = () => {
       
       // Navigate to stay history after successful deferral
       setTimeout(() => navigate("/stay-history"), 1500);
+    }
+  };
+
+  const handleApplyCreditToFuture = async () => {
+    if (!paymentId || !organization?.id) {
+      toast({
+        title: "Error",
+        description: "Unable to apply credit. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Update payment record to mark credit as applied to future
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          credit_applied_to_future: true,
+          notes: `Credit of ${BillingCalculator.formatCurrency(Math.abs(totalAmount))} applied to future reservations`
+        })
+        .eq('id', paymentId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Credit Applied!",
+        description: `${BillingCalculator.formatCurrency(Math.abs(totalAmount))} will be deducted from your next season's billing.`
+      });
+      
+      // Navigate to stay history after a brief delay
+      setTimeout(() => navigate("/stay-history"), 1500);
+    } catch (error: any) {
+      console.error('Error applying credit:', error);
+      toast({
+        title: "Error",
+        description: "Failed to apply credit. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1224,6 +1291,15 @@ const CheckoutFinal = () => {
                       <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
                     </div>
                     
+                    {previousCredit > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Previous Credit Applied:</span>
+                        <span className="font-medium text-green-600">
+                          -{BillingCalculator.formatCurrency(previousCredit)}
+                        </span>
+                      </div>
+                    )}
+                    
                     {previousBalance !== 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Previous Balance:</span>
@@ -1252,31 +1328,61 @@ const CheckoutFinal = () => {
                             <h4 className="text-base font-medium">Pay via Venmo</h4>
                           </div>
                           <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
-                                <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                            {totalAmount < 0 ? (
+                              // Negative balance - show credit options
+                              <div className="space-y-2">
+                                <p className="text-sm text-muted-foreground">
+                                  You have a credit of {BillingCalculator.formatCurrency(Math.abs(totalAmount))}. Choose an option:
+                                </p>
+                                
+                                <Button
+                                  variant="outline"
+                                  className="w-full"
+                                  onClick={handleApplyCreditToFuture}
+                                >
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  Apply Credit to Future Reservations
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  onClick={() => {
+                                    const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                                    const absAmount = Math.abs(totalAmount);
+                                    const venmoUrl = `https://venmo.com/${cleanHandle}?txn=charge&amount=${absAmount}&note=${encodeURIComponent('Cabin stay refund request')}`;
+                                    console.log('Opening Venmo URL:', venmoUrl);
+                                    window.open(venmoUrl, '_blank');
+                                  }}
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Request Refund via Venmo
+                                </Button>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Remove @ symbol if present
-                                  const cleanHandle = checkoutData.venmoHandle.replace('@', '');
-                                  const absAmount = Math.abs(totalAmount);
-                                  const txnType = totalAmount < 0 ? 'charge' : 'pay';
-                                  const note = totalAmount < 0 ? 'Cabin stay refund request' : 'Cabin stay payment';
-                                  const venmoUrl = `https://venmo.com/${cleanHandle}?txn=${txnType}&amount=${absAmount}&note=${encodeURIComponent(note)}`;
-                                  console.log('Opening Venmo URL:', venmoUrl);
-                                  window.open(venmoUrl, '_blank');
-                                }}
-                                disabled={totalAmount === 0}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                              >
-                                <Send className="h-4 w-4 mr-2" />
-                                {totalAmount < 0 ? 'Request Refund' : 'Pay Now'}
-                              </Button>
-                            </div>
+                            ) : (
+                              // Positive balance - show pay now button
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
+                                  <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                                    const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=${encodeURIComponent('Cabin stay payment')}`;
+                                    console.log('Opening Venmo URL:', venmoUrl);
+                                    window.open(venmoUrl, '_blank');
+                                  }}
+                                  disabled={totalAmount === 0}
+                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                >
+                                  <Send className="h-4 w-4 mr-2" />
+                                  Pay Now
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </>
