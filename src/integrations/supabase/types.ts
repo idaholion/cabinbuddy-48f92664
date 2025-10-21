@@ -1057,6 +1057,7 @@ export type Database = {
           automated_reminders_7_day_enabled: boolean | null
           automated_reminders_enabled: boolean | null
           automated_selection_reminders_enabled: boolean | null
+          automated_selection_turn_notifications_enabled: boolean | null
           automated_work_weekend_1_day_enabled: boolean | null
           automated_work_weekend_3_day_enabled: boolean | null
           automated_work_weekend_7_day_enabled: boolean | null
@@ -1087,6 +1088,7 @@ export type Database = {
           automated_reminders_7_day_enabled?: boolean | null
           automated_reminders_enabled?: boolean | null
           automated_selection_reminders_enabled?: boolean | null
+          automated_selection_turn_notifications_enabled?: boolean | null
           automated_work_weekend_1_day_enabled?: boolean | null
           automated_work_weekend_3_day_enabled?: boolean | null
           automated_work_weekend_7_day_enabled?: boolean | null
@@ -1117,6 +1119,7 @@ export type Database = {
           automated_reminders_7_day_enabled?: boolean | null
           automated_reminders_enabled?: boolean | null
           automated_selection_reminders_enabled?: boolean | null
+          automated_selection_turn_notifications_enabled?: boolean | null
           automated_work_weekend_1_day_enabled?: boolean | null
           automated_work_weekend_3_day_enabled?: boolean | null
           automated_work_weekend_7_day_enabled?: boolean | null
@@ -2198,6 +2201,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      selection_turn_notifications_sent: {
+        Row: {
+          family_group: string
+          id: string
+          organization_id: string
+          phase: string
+          rotation_year: number
+          sent_at: string | null
+        }
+        Insert: {
+          family_group: string
+          id?: string
+          organization_id: string
+          phase: string
+          rotation_year: number
+          sent_at?: string | null
+        }
+        Update: {
+          family_group?: string
+          id?: string
+          organization_id?: string
+          phase?: string
+          rotation_year?: number
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selection_turn_notifications_sent_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_notes: {
         Row: {

@@ -12,6 +12,7 @@ import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview"
 interface AutomatedSettings {
   automated_reminders_enabled: boolean;
   automated_selection_reminders_enabled: boolean;
+  automated_selection_turn_notifications_enabled: boolean;
   automated_work_weekend_reminders_enabled: boolean;
   automated_reminders_7_day_enabled: boolean;
   automated_reminders_3_day_enabled: boolean;
@@ -26,6 +27,7 @@ export const AutomatedReminderSettings = () => {
   const [settings, setSettings] = useState<AutomatedSettings>({
     automated_reminders_enabled: false,
     automated_selection_reminders_enabled: false,
+    automated_selection_turn_notifications_enabled: false,
     automated_work_weekend_reminders_enabled: false,
     automated_reminders_7_day_enabled: true,
     automated_reminders_3_day_enabled: true,
@@ -51,7 +53,8 @@ export const AutomatedReminderSettings = () => {
         .from('organizations')
         .select(`
           automated_reminders_enabled, 
-          automated_selection_reminders_enabled, 
+          automated_selection_reminders_enabled,
+          automated_selection_turn_notifications_enabled,
           automated_work_weekend_reminders_enabled,
           automated_reminders_7_day_enabled,
           automated_reminders_3_day_enabled, 
@@ -72,6 +75,7 @@ export const AutomatedReminderSettings = () => {
       setSettings({
         automated_reminders_enabled: data?.automated_reminders_enabled || false,
         automated_selection_reminders_enabled: data?.automated_selection_reminders_enabled || false,
+        automated_selection_turn_notifications_enabled: data?.automated_selection_turn_notifications_enabled || false,
         automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
         automated_reminders_7_day_enabled: data?.automated_reminders_7_day_enabled ?? true,
         automated_reminders_3_day_enabled: data?.automated_reminders_3_day_enabled ?? true,
@@ -108,6 +112,7 @@ export const AutomatedReminderSettings = () => {
       const settingNames = {
         automated_reminders_enabled: 'reservation reminders',
         automated_selection_reminders_enabled: 'selection period reminders',
+        automated_selection_turn_notifications_enabled: 'selection turn notifications',
         automated_work_weekend_reminders_enabled: 'work weekend reminders',
         automated_reminders_7_day_enabled: 'reservation 7-day reminders',
         automated_reminders_3_day_enabled: 'reservation 3-day reminders',
@@ -137,7 +142,8 @@ export const AutomatedReminderSettings = () => {
   }
 
   const anyEnabled = settings.automated_reminders_enabled || 
-                    settings.automated_selection_reminders_enabled || 
+                    settings.automated_selection_reminders_enabled ||
+                    settings.automated_selection_turn_notifications_enabled ||
                     settings.automated_work_weekend_reminders_enabled ||
                     settings.automated_reminders_7_day_enabled ||
                     settings.automated_reminders_3_day_enabled ||
@@ -249,6 +255,40 @@ export const AutomatedReminderSettings = () => {
               </p>
               <p className="text-xs text-muted-foreground">
                 • Final reminder on the last day of selection periods
+              </p>
+            </div>
+          </div>
+
+          {/* Selection Turn Notifications */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-4 w-4 text-green-600" />
+                <div>
+                  <Label htmlFor="selection-turn-notifications" className="text-sm font-medium">
+                    Selection Turn Notifications
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically notify families when it becomes their turn to select (even without previous family clicking "I'm Done")
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="selection-turn-notifications"
+                checked={settings.automated_selection_turn_notifications_enabled}
+                onCheckedChange={(enabled) => handleToggle('automated_selection_turn_notifications_enabled', enabled)}
+              />
+            </div>
+            
+            <div className="border-l-4 border-green-200 pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • Detects when a family's turn becomes active
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Sends immediate notification to the current family
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Works even if previous family didn't click "I'm Done"
               </p>
             </div>
           </div>

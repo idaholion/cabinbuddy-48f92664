@@ -28,6 +28,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/contexts/RoleContext";
 import { Eye, EyeOff } from "lucide-react";
+import { SelectionTurnNotificationButton } from "@/components/SelectionTurnNotificationButton";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -372,6 +373,29 @@ const CabinCalendar = () => {
                       I'm Done Selecting
                     </Button>
                   </ConfirmationDialog>
+                </div>
+              </div>
+            )}
+            
+            {/* Admin Manual Notification Control */}
+            {(isCalendarKeeper || isAdmin || organization?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase()) && 
+             currentPhase === 'primary' && 
+             currentRotationYearCurrentFamily && 
+             (!userGroup || !canCurrentUserSelect(userGroup.name)) && (
+              <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold text-foreground mb-1">
+                      Current Selection Turn: {currentRotationYearCurrentFamily}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      You can manually send a notification to remind them it's their turn
+                    </p>
+                  </div>
+                  <SelectionTurnNotificationButton
+                    currentFamilyGroup={currentRotationYearCurrentFamily}
+                    rotationYear={rotationYear}
+                  />
                 </div>
               </div>
             )}
