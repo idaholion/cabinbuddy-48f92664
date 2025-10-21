@@ -51,9 +51,23 @@ export const ManualTemplateNotifications = () => {
     errorMessage: "Failed to send email"
   });
   
-  // Get current selection turn from sequential system
-  const currentYear = new Date().getFullYear();
-  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(currentYear);
+  // Get current rotation year for selections (selections in Oct 2025 are for 2026 reservations)
+  const getCurrentRotationYear = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-based (October = 9)
+    
+    // If we're in October or later, selections are for next year's reservations
+    const selectionStartMonth = 9; // October (0-based)
+    
+    if (currentMonth >= selectionStartMonth) {
+      return currentYear + 1; // Selections for next year
+    }
+    return currentYear; // Selections for current year
+  };
+  
+  const rotationYear = getCurrentRotationYear();
+  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
 
   // State management
   const [templates, setTemplates] = useState<ReminderTemplate[]>([]);
