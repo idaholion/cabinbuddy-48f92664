@@ -282,7 +282,8 @@ export const NotificationManagement = () => {
   };
 
   const fetchUpcomingSelectionPeriods = () => {
-    const scheduledPeriods = getUpcomingSelectionPeriods();
+    // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
+    const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
     
     // Merge scheduled periods with actual sequential selection status
     const displayInfo = getSelectionPeriodDisplayInfo(

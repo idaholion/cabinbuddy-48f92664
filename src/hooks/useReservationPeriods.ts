@@ -165,14 +165,19 @@ export const useReservationPeriods = () => {
     return new Date(year, month - 1, day); // month - 1 because JS months are 0-indexed
   };
 
-  // Get upcoming selection periods (within next 30 days)
-  const getUpcomingSelectionPeriods = () => {
+  // Get upcoming selection periods (within next 30 days OR currently active)
+  const getUpcomingSelectionPeriods = (currentFamilyGroup?: string) => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Reset to start of day for accurate comparison
     const thirtyDaysFromNow = new Date(now);
     thirtyDaysFromNow.setDate(now.getDate() + 30);
 
     const upcoming = periods.filter(period => {
+      // Always include the currently active family's period
+      if (currentFamilyGroup && period.current_family_group === currentFamilyGroup) {
+        return true;
+      }
+      
       // Use local date parsing to avoid timezone issues
       const startDate = parseLocalDate(period.selection_start_date);
       startDate.setHours(0, 0, 0, 0);
