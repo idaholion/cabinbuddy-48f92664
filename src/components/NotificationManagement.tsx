@@ -96,6 +96,14 @@ export const NotificationManagement = () => {
   // Use centralized rotation year calculation that matches Calendar page
   // Wait for rotationData to load before calculating year
   const rotationYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear();
+  
+  console.log('[NotificationManagement] Rotation year setup:', {
+    hasRotationData: !!rotationData,
+    rotationLoading,
+    calculatedRotationYear: rotationYear,
+    rotationDataStartMonth: rotationData?.start_month
+  });
+  
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
 
   // Utility function to parse date strings without timezone conversion
