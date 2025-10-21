@@ -205,10 +205,8 @@ const FamilyGroupSetup = () => {
         title: "Draft Restored",
         description: "Your previous work has been restored from auto-save.",
       });
-    } else {
-      // No saved data, mark as loaded to prevent re-running
-      hasLoadedAutoSave.current = true;
     }
+    // If there's no saved data, don't set hasLoadedAutoSave - let auto-populate run
   }, [loadSavedData, setValue, toast, form, getValues, familyGroups, clearSavedData, user?.id]);
 
   // Redirect regular group members to their profile page
