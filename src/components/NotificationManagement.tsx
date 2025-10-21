@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useNotifications } from "@/hooks/useNotifications";
-import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useWorkWeekends } from "@/hooks/useWorkWeekends";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
 import { useSequentialSelection } from "@/hooks/useSequentialSelection";
@@ -88,7 +87,6 @@ export const NotificationManagement = () => {
   const { toast } = useToast();
   const { organization } = useOrganization();
   const { sendNotification } = useNotifications();
-  const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
   const { getSelectionRotationYear, rotationData, loading: rotationLoading } = useRotationOrder();
