@@ -291,8 +291,15 @@ export const NotificationManagement = () => {
   };
 
   const fetchUpcomingSelectionPeriods = () => {
+    console.log('[NotificationManagement] fetchUpcomingSelectionPeriods called:', {
+      currentFamilyGroup,
+      rotationYear
+    });
+    
     // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
     const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
+    
+    console.log('[NotificationManagement] scheduledPeriods:', scheduledPeriods);
     
     // Merge scheduled periods with actual sequential selection status
     const displayInfo = getSelectionPeriodDisplayInfo(
@@ -301,10 +308,14 @@ export const NotificationManagement = () => {
       getDaysRemaining
     );
     
+    console.log('[NotificationManagement] displayInfo after getSelectionPeriodDisplayInfo:', displayInfo);
+    
     // Filter to only show active or upcoming
     const upcoming = displayInfo.filter(info => 
       info.status === 'active' || info.status === 'scheduled'
     );
+    
+    console.log('[NotificationManagement] final upcoming periods:', upcoming);
     
     setUpcomingSelectionPeriods(upcoming);
   };

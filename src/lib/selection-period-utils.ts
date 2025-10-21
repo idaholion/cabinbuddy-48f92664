@@ -37,10 +37,24 @@ export const getSelectionPeriodDisplayInfo = (
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  console.log('[getSelectionPeriodDisplayInfo] Called with:', {
+    periodsCount: periods.length,
+    currentFamilyGroup,
+    periods: periods.map(p => ({ family: p.current_family_group, start: p.selection_start_date }))
+  });
+
   return periods.map(period => {
     const scheduledStartDate = parseISO(period.selection_start_date);
     const daysUntilScheduled = differenceInDays(scheduledStartDate, today);
     const isCurrentlyActive = currentFamilyGroup === period.current_family_group;
+    
+    console.log('[getSelectionPeriodDisplayInfo] Processing period:', {
+      familyGroup: period.current_family_group,
+      currentFamilyGroup,
+      isCurrentlyActive,
+      scheduledStartDate: period.selection_start_date,
+      daysUntilScheduled
+    });
     
     let status: 'scheduled' | 'active' | 'completed' = 'scheduled';
     let displayText = '';
