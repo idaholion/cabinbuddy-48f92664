@@ -179,7 +179,7 @@ async function getTemplate(organizationId: string, reminderType: string) {
   try {
     const { data, error } = await supabase
       .from('reminder_templates')
-      .select('*')
+      .select('*, sms_message_template')
       .eq('organization_id', organizationId)
       .eq('reminder_type', reminderType)
       .single();
@@ -274,6 +274,13 @@ const handler = async (req: Request): Promise<Response> => {
               ${checklistHtml}
             </div>
           `;
+          
+          // Use custom SMS template if available, otherwise use default
+          if (template.sms_message_template) {
+            smsMessage = replaceVariables(template.sms_message_template, variables);
+          } else {
+            smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for details. - ${organizationName}`;
+          }
         } else {
           // Use default template with checklist based on days_until
           subject = `Cabin Reservation Reminder - ${days_until} day${days_until !== 1 ? 's' : ''} to go!`;
@@ -338,8 +345,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `;
         }
-        
-        smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for details. - ${organizationName}`;
+          
+          smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for details. - ${organizationName}`;
+        }
         break;
 
       case 'selection_period':
@@ -378,6 +386,13 @@ const handler = async (req: Request): Promise<Response> => {
               ${checklistHtml}
             </div>
           `;
+          
+          // Use custom SMS template if available, otherwise use default
+          if (selectionTemplate.sms_message_template) {
+            smsMessage = replaceVariables(selectionTemplate.sms_message_template, selectionVariables);
+          } else {
+            smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
+          }
         } else {
           // Default selection period template
           subject = `Calendar Selection Period Now Open - ${selection_data.selection_year}`;
@@ -399,8 +414,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `;
         }
-        
-        smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
+          
+          smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
+        }
         break;
 
       case 'selection_period_start':
@@ -439,6 +455,13 @@ const handler = async (req: Request): Promise<Response> => {
               ${checklistHtml}
             </div>
           `;
+          
+          // Use custom SMS template if available, otherwise use default
+          if (startTemplate.sms_message_template) {
+            smsMessage = replaceVariables(startTemplate.sms_message_template, startVariables);
+          } else {
+            smsMessage = `Hi ${selection_data.guest_name}! Your calendar selection for ${selection_data.selection_year} starts in 3 days (${selection_data.selection_start_date}). Be ready! - ${organizationName}`;
+          }
         } else {
           // Default selection period start template
           subject = `Calendar Selection Period Starting Soon - ${selection_data.selection_year}`;
@@ -500,6 +523,13 @@ const handler = async (req: Request): Promise<Response> => {
               ${checklistHtml}
             </div>
           `;
+          
+          // Use custom SMS template if available, otherwise use default
+          if (endTemplate.sms_message_template) {
+            smsMessage = replaceVariables(endTemplate.sms_message_template, endVariables);
+          } else {
+            smsMessage = `FINAL CALL: ${selection_data.guest_name}, your calendar selection for ${selection_data.selection_year} ends TODAY (${selection_data.selection_end_date})! Make your selections now! - ${organizationName}`;
+          }
         } else {
           // Default selection period end template
           subject = `LAST DAY: Calendar Selection Period Ends Today - ${selection_data.selection_year}`;
@@ -559,6 +589,13 @@ const handler = async (req: Request): Promise<Response> => {
               ${checklistHtml}
             </div>
           `;
+          
+          // Use custom SMS template if available, otherwise use default
+          if (turnReadyTemplate.sms_message_template) {
+            smsMessage = replaceVariables(turnReadyTemplate.sms_message_template, turnReadyVariables);
+          } else {
+            smsMessage = `Hi ${selection_data.guest_name}! It's now your turn to select cabin dates for ${selection_data.selection_year}. Log in to make your selections! - ${organizationName}`;
+          }
         } else {
           // Default selection turn ready template
           subject = `It's Your Turn to Select! - ${selection_data.selection_year}`;
@@ -585,8 +622,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           `;
         }
-        
-        smsMessage = `Hi ${selection_data.guest_name}! It's now your turn to select cabin dates for ${selection_data.selection_year}. Log in to make your selections! - ${organizationName}`;
+          
+          smsMessage = `Hi ${selection_data.guest_name}! It's now your turn to select cabin dates for ${selection_data.selection_year}. Log in to make your selections! - ${organizationName}`;
+        }
         break;
 
       case 'work_weekend_proposed':

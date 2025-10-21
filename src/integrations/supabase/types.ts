@@ -1631,6 +1631,7 @@ export type Database = {
           is_active: boolean | null
           organization_id: string
           reminder_type: string
+          sms_message_template: string | null
           sort_order: number | null
           subject_template: string
           updated_at: string
@@ -1645,6 +1646,7 @@ export type Database = {
           is_active?: boolean | null
           organization_id: string
           reminder_type: string
+          sms_message_template?: string | null
           sort_order?: number | null
           subject_template: string
           updated_at?: string
@@ -1659,6 +1661,7 @@ export type Database = {
           is_active?: boolean | null
           organization_id?: string
           reminder_type?: string
+          sms_message_template?: string | null
           sort_order?: number | null
           subject_template?: string
           updated_at?: string

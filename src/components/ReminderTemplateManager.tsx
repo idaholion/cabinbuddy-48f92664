@@ -19,6 +19,7 @@ interface ReminderTemplate {
   subject_template: string;
   custom_message: string;
   checklist_items: string[];
+  sms_message_template: string | null;
   is_active: boolean;
   days_in_advance: number | null;
   organization_id: string;
@@ -62,7 +63,8 @@ export const ReminderTemplateManager = () => {
           ? template.checklist_items as string[]
           : [],
         is_active: template.is_active ?? true,
-        days_in_advance: template.days_in_advance ?? null
+        days_in_advance: template.days_in_advance ?? null,
+        sms_message_template: template.sms_message_template ?? null
       }));
 
       setTemplates(templatesWithArrays);
@@ -100,6 +102,7 @@ export const ReminderTemplateManager = () => {
       subject_template: `${newTemplateType} Reminder`,
       custom_message: `Hi {{recipient_name}},\n\nThis is a reminder about the upcoming ${newTemplateType}.\n\nBest regards,\n{{organization_name}} Team`,
       checklist_items: [],
+      sms_message_template: null,
       is_active: true,
       days_in_advance: 7,
       organization_id: activeOrganization?.organization_id || '',
@@ -136,6 +139,7 @@ export const ReminderTemplateManager = () => {
             subject_template: template.subject_template,
             custom_message: template.custom_message,
             checklist_items: template.checklist_items,
+            sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
             created_by_user_id: user.id
@@ -152,6 +156,7 @@ export const ReminderTemplateManager = () => {
             subject_template: template.subject_template,
             custom_message: template.custom_message,
             checklist_items: template.checklist_items,
+            sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance
           })
@@ -306,7 +311,7 @@ export const ReminderTemplateManager = () => {
       )}
 
       <div className="text-base text-muted-foreground">
-        {isEditing ? "Editing reminder templates. " : ""}Customize the content of reminder notifications. Available variables: 
+        {isEditing ? "Editing reminder templates. " : ""}Customize the content of email and SMS reminder notifications. Available variables: 
         {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
@@ -404,6 +409,33 @@ export const ReminderTemplateManager = () => {
                   placeholder="Enter checklist items, one per line..."
                   readOnly={!isEditing}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <Label htmlFor={`sms-${template.id}`} className="text-base">SMS Message Template (Optional)</Label>
+                  <span className={`text-sm ${(template.sms_message_template?.length || 0) > 160 ? 'text-warning' : 'text-muted-foreground'}`}>
+                    {template.sms_message_template?.length || 0}/160 chars
+                    {(template.sms_message_template?.length || 0) > 160 && ` (${Math.ceil((template.sms_message_template?.length || 0) / 160)} messages)`}
+                  </span>
+                </div>
+                <Textarea
+                  id={`sms-${template.id}`}
+                  value={template.sms_message_template || ''}
+                  onChange={(e) => isEditing && updateTemplate(template.id, { 
+                    sms_message_template: e.target.value || null
+                  })}
+                  className="mt-1 text-base"
+                  rows={3}
+                  placeholder="Short SMS message (160 chars for single SMS). Leave empty to use default. Variables: {{guest_name}}, {{family_group_name}}, etc."
+                  readOnly={!isEditing}
+                  maxLength={480}
+                />
+                {(template.sms_message_template?.length || 0) > 160 && (
+                  <p className="text-sm text-warning mt-1">
+                    ⚠️ Messages over 160 characters will be sent as multiple SMS (costs more)
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
