@@ -128,8 +128,13 @@ export const useTimePeriods = (rotationYear?: number) => {
   ): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
+    if (!rotationData) {
+      errors.push('Rotation settings not found');
+      return { isValid: false, errors };
+    }
+
     // Check if all selection phases are active
-    const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
+    const allPhasesActive = rotationData.enable_secondary_selection && rotationData.enable_post_rotation_selection;
 
     // Normalize dates to noon for comparison with noon-based windows
     const normalizedStartDate = new Date(startDate);
@@ -187,18 +192,6 @@ export const useTimePeriods = (rotationYear?: number) => {
       return { isValid: false, errors };
     }
 
-    // Validate start day constraint
-    if (!rotationData) {
-      errors.push('Rotation settings not found');
-      return { isValid: false, errors };
-    }
-
-    const dayMap: { [key: string]: number } = {
-      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-      'Thursday': 4, 'Friday': 5, 'Saturday': 6
-    };
-    const requiredStartDay = dayMap[rotationData.start_day || 'Friday'];
-    
     // Allow booking to start on or after the required start day within the window
     if (startDate < relevantWindow.startDate) {
       errors.push(`Booking cannot start before ${relevantWindow.startDate.toDateString()}`);
@@ -206,12 +199,46 @@ export const useTimePeriods = (rotationYear?: number) => {
 
     // Calculate nights
     const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (nights > rotationData.max_nights!) {
-      errors.push(`Booking cannot exceed ${rotationData.max_nights} nights`);
+    
+    // Determine which selection phase we're in
+    const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+    const isPostRotation = allPhasesActive || (rotationData.enable_post_rotation_selection && 
+      usage && usage.time_periods_used >= usage.time_periods_allowed);
+    const isSecondaryPhase = !isPostRotation && rotationData.enable_secondary_selection && 
+      usage && usage.selection_round === 'secondary';
+    
+    // Determine min/max nights based on phase
+    let minNights = rotationData.min_nights_per_booking || 2;
+    let maxConsecutive: number;
+    
+    if (isPostRotation) {
+      minNights = rotationData.post_rotation_min_nights || 2;
+      maxConsecutive = rotationData.post_rotation_max_consecutive_nights || 14;
+    } else if (isSecondaryPhase) {
+      maxConsecutive = rotationData.max_consecutive_nights_secondary || 7;
+    } else {
+      maxConsecutive = rotationData.max_consecutive_nights_primary || 14;
     }
-
-    if (nights < 1) {
-      errors.push('Booking must be at least 1 night');
+    
+    if (nights < minNights && !adminOverride) {
+      errors.push(`Booking must be at least ${minNights} nights`);
+    }
+    
+    if (nights > maxConsecutive && !adminOverride) {
+      const phaseName = isPostRotation ? 'post-rotation' : isSecondaryPhase ? 'secondary' : 'primary';
+      errors.push(`Single booking cannot exceed ${maxConsecutive} consecutive nights during ${phaseName} selection`);
+    }
+    
+    // Enforce total nights budget for primary selection
+    if (!isPostRotation && !isSecondaryPhase && !adminOverride) {
+      const totalNightsLimit = rotationData.total_nights_allowed_primary || 14;
+      if (usage) {
+        // TODO: Calculate total nights already used from existing reservations
+        // For now, we'll just validate the single booking doesn't exceed the limit
+        if (nights > totalNightsLimit) {
+          errors.push(`Cannot book more than ${totalNightsLimit} total nights during primary selection`);
+        }
+      }
     }
 
     // Check if family group has available time periods

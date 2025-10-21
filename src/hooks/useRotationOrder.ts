@@ -18,6 +18,17 @@ interface RotationOrderData {
   secondary_selection_days?: number;
   selection_days?: number;
   enable_post_rotation_selection?: boolean;
+  // Virtual weeks system configuration
+  use_virtual_weeks_system?: boolean;
+  total_nights_allowed_primary?: number;
+  total_weeks_allowed_primary?: number;
+  total_weeks_allowed_secondary?: number;
+  min_nights_per_booking?: number;
+  max_consecutive_nights_primary?: number;
+  max_consecutive_nights_secondary?: number;
+  post_rotation_min_nights?: number;
+  post_rotation_max_consecutive_nights?: number | null;
+  post_rotation_max_weeks?: number | null;
 }
 
 interface DatabaseRotationOrder {

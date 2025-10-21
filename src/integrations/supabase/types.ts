@@ -1982,9 +1982,15 @@ export type Database = {
           enable_secondary_selection: boolean | null
           first_last_option: string | null
           id: string
+          max_consecutive_nights_primary: number | null
+          max_consecutive_nights_secondary: number | null
           max_nights: number | null
           max_time_slots: number | null
+          min_nights_per_booking: number | null
           organization_id: string
+          post_rotation_max_consecutive_nights: number | null
+          post_rotation_max_weeks: number | null
+          post_rotation_min_nights: number | null
           rotation_order: Json
           rotation_year: number
           secondary_max_periods: number | null
@@ -1993,7 +1999,11 @@ export type Database = {
           start_day: string | null
           start_month: string | null
           start_time: string | null
+          total_nights_allowed_primary: number | null
+          total_weeks_allowed_primary: number | null
+          total_weeks_allowed_secondary: number | null
           updated_at: string
+          use_virtual_weeks_system: boolean | null
         }
         Insert: {
           created_at?: string
@@ -2001,9 +2011,15 @@ export type Database = {
           enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
+          max_consecutive_nights_primary?: number | null
+          max_consecutive_nights_secondary?: number | null
           max_nights?: number | null
           max_time_slots?: number | null
+          min_nights_per_booking?: number | null
           organization_id: string
+          post_rotation_max_consecutive_nights?: number | null
+          post_rotation_max_weeks?: number | null
+          post_rotation_min_nights?: number | null
           rotation_order?: Json
           rotation_year: number
           secondary_max_periods?: number | null
@@ -2012,7 +2028,11 @@ export type Database = {
           start_day?: string | null
           start_month?: string | null
           start_time?: string | null
+          total_nights_allowed_primary?: number | null
+          total_weeks_allowed_primary?: number | null
+          total_weeks_allowed_secondary?: number | null
           updated_at?: string
+          use_virtual_weeks_system?: boolean | null
         }
         Update: {
           created_at?: string
@@ -2020,9 +2040,15 @@ export type Database = {
           enable_secondary_selection?: boolean | null
           first_last_option?: string | null
           id?: string
+          max_consecutive_nights_primary?: number | null
+          max_consecutive_nights_secondary?: number | null
           max_nights?: number | null
           max_time_slots?: number | null
+          min_nights_per_booking?: number | null
           organization_id?: string
+          post_rotation_max_consecutive_nights?: number | null
+          post_rotation_max_weeks?: number | null
+          post_rotation_min_nights?: number | null
           rotation_order?: Json
           rotation_year?: number
           secondary_max_periods?: number | null
@@ -2031,7 +2057,11 @@ export type Database = {
           start_day?: string | null
           start_month?: string | null
           start_time?: string | null
+          total_nights_allowed_primary?: number | null
+          total_weeks_allowed_primary?: number | null
+          total_weeks_allowed_secondary?: number | null
           updated_at?: string
+          use_virtual_weeks_system?: boolean | null
         }
         Relationships: [
           {
