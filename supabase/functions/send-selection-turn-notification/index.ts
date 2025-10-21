@@ -14,6 +14,7 @@ interface RequestBody {
   organization_id: string;
   family_group: string;
   rotation_year: number;
+  notification_type?: 'ending_tomorrow';
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -22,9 +23,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { organization_id, family_group, rotation_year }: RequestBody = await req.json();
+    const { organization_id, family_group, rotation_year, notification_type }: RequestBody = await req.json();
 
-    console.log(`Sending selection turn notification for ${family_group} in year ${rotation_year}`);
+    console.log(`Sending ${notification_type === 'ending_tomorrow' ? 'ending tomorrow' : 'selection turn'} notification for ${family_group} in year ${rotation_year}`);
 
     // Get family group details
     const { data: familyData, error: familyError } = await supabase
@@ -60,10 +61,12 @@ const handler = async (req: Request): Promise<Response> => {
     const periodsAllowed = usageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
-    // Send notification
+    // Send notification - use appropriate type based on notification_type
+    const notificationType = notification_type === 'ending_tomorrow' ? 'selection_period_end' : 'selection_period_start';
+    
     const { error: notifyError } = await supabase.functions.invoke('send-notification', {
       body: {
-        type: 'selection_turn_ready',
+        type: notificationType,
         organization_id: organization_id,
         selection_data: {
           family_group_name: familyData.name,

@@ -307,20 +307,8 @@ export const NotificationManagement = () => {
           title: "Notification Sent",
           description: "Work weekend notification sent successfully",
         });
-      } else if (event.type === 'selection_period') {
-        // Handle selection period notifications
-        await supabase.functions.invoke('send-selection-period-notifications', {
-          body: {
-            period_data: event,
-            notification_type: reminderType,
-            organization_id: organization?.id
-          }
-        });
-        toast({
-          title: "Notification Sent",
-          description: "Selection period notification sent successfully",
-        });
       }
+      // Note: Selection period notifications are now handled automatically by the system
     } catch (error) {
       console.error('Error sending notification:', error);
       toast({

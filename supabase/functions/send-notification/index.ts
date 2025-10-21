@@ -528,7 +528,7 @@ const handler = async (req: Request): Promise<Response> => {
       case 'selection_turn_ready':
         if (!selection_data) throw new Error('Selection data required for selection turn ready notification');
         
-        const turnReadyTemplate = await getTemplate(organization_id, 'selection_turn_ready');
+        const turnReadyTemplate = await getTemplate(organization_id, 'selection_period_start');
         
         const turnReadyVariables = {
           guest_name: selection_data.guest_name,
