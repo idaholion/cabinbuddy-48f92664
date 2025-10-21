@@ -51,10 +51,11 @@ export const ManualTemplateNotifications = () => {
     successMessage: "Email sent successfully!",
     errorMessage: "Failed to send email"
   });
-  const { getSelectionRotationYear } = useRotationOrder();
+  const { getSelectionRotationYear, rotationData, loading: rotationLoading } = useRotationOrder();
   
   // Use centralized rotation year calculation that matches Calendar page
-  const rotationYear = getSelectionRotationYear();
+  // Wait for rotationData to load before calculating year
+  const rotationYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear();
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
 
   // State management

@@ -91,10 +91,11 @@ export const NotificationManagement = () => {
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
-  const { getSelectionRotationYear } = useRotationOrder();
+  const { getSelectionRotationYear, rotationData, loading: rotationLoading } = useRotationOrder();
   
   // Use centralized rotation year calculation that matches Calendar page
-  const rotationYear = getSelectionRotationYear();
+  // Wait for rotationData to load before calculating year
+  const rotationYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear();
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
 
   // Utility function to parse date strings without timezone conversion
