@@ -212,48 +212,9 @@ const CabinCalendar = () => {
     selectionLoading
   });
   
-  // For current rotation year status, manually calculate since useSequentialSelection shares time period data
-  const getCurrentRotationYearStatuses = (): Array<{
-    familyGroup: string;
-    status: SelectionStatus;
-    isCurrentTurn: boolean;
-    daysRemaining: number | null;
-    dayCountText?: string;
-  }> => {
-    if (!rotationData) return [];
-    
-    const currentYear = rotationYear; // The year being selected for (e.g., 2026)
-    const currentYearOrder = getRotationForYear(currentYear);
-    const today = new Date();
-    
-    // Check if selection period for current rotation year has started
-    // Selection starts on October 1st of the year before (e.g., Oct 1, 2025 for 2026 selection)
-    const selectionStartYear = currentYear - 1;
-    const selectionStartDate = new Date(selectionStartYear, 9, 1); // October 1st (month 9)
-    const selectionHasStarted = today >= selectionStartDate;
-    
-    // If selection hasn't started, everyone is waiting
-    if (!selectionHasStarted) {
-      return currentYearOrder.map(familyGroup => ({
-        familyGroup,
-        status: 'waiting' as SelectionStatus,
-        isCurrentTurn: false,
-        daysRemaining: null
-      }));
-    }
-    
-    // Selection has started, first family in order is selecting, rest are waiting
-    return currentYearOrder.map((familyGroup, index) => ({
-      familyGroup,
-      status: index === 0 ? 'active' as SelectionStatus : 'waiting' as SelectionStatus,
-      isCurrentTurn: index === 0,
-      daysRemaining: null,
-      dayCountText: index === 0 ? 'selecting' : undefined
-    }));
-  };
-  
-  const currentRotationYearStatuses = getCurrentRotationYearStatuses();
-  const currentRotationYearCurrentFamily = currentRotationYearStatuses.find(s => s.isCurrentTurn)?.familyGroup || null;
+  // Use correct selection status from useSequentialSelection hook
+  const currentRotationYearStatuses = familyStatuses;
+  const currentRotationYearCurrentFamily = currentFamilyGroup;
   
   // Get selection period extensions for current rotation year
   const { 
