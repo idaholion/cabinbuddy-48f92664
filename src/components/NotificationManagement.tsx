@@ -119,12 +119,12 @@ export const NotificationManagement = () => {
     }
   }, [organization?.id]); // Remove getUpcomingSelectionPeriods dependency to prevent infinite loop
 
-  // Fetch selection periods when periods data is loaded
+  // Fetch selection periods when periods data is loaded OR when current family changes
   useEffect(() => {
     if (!periodsLoading && periods.length > 0) {
       fetchUpcomingSelectionPeriods();
     }
-  }, [periods, periodsLoading]);
+  }, [periods, periodsLoading, currentFamilyGroup]);
 
   // Sync work weekends from hook
   useEffect(() => {
