@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRobustMultiOrganization } from "@/hooks/useRobustMultiOrganization";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAsyncOperation } from "@/hooks/useAsyncOperation";
+import { useSequentialSelection } from "@/hooks/useSequentialSelection";
 
 interface ReminderTemplate {
   id: string;
@@ -49,6 +50,10 @@ export const ManualTemplateNotifications = () => {
     successMessage: "Email sent successfully!",
     errorMessage: "Failed to send email"
   });
+  
+  // Get current selection turn from sequential system
+  const currentYear = new Date().getFullYear();
+  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(currentYear);
 
   // State management
   const [templates, setTemplates] = useState<ReminderTemplate[]>([]);
@@ -147,7 +152,12 @@ export const ManualTemplateNotifications = () => {
       case 'recipient_name':
         return 'Family Group Lead';
       case 'family_group_name':
-        return 'Your Family Group';
+        // Use actual current family if it's a selection notification
+        return currentFamilyGroup || 'Your Family Group';
+      case 'current_family_group':
+        return currentFamilyGroup || '';
+      case 'days_remaining':
+        return currentFamilyGroup ? String(getDaysRemaining(currentFamilyGroup)) : '';
       default:
         return '';
     }

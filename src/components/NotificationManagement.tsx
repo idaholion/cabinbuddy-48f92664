@@ -12,7 +12,10 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useWorkWeekends } from "@/hooks/useWorkWeekends";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
+import { useSequentialSelection } from "@/hooks/useSequentialSelection";
 import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
+import { getSelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
+import type { SelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
 
 interface ReservationPeriod {
   id: string;
@@ -75,7 +78,7 @@ interface UpcomingReservation {
 
 export const NotificationManagement = () => {
   const [upcomingReservations, setUpcomingReservations] = useState<UpcomingReservation[]>([]);
-  const [upcomingSelectionPeriods, setUpcomingSelectionPeriods] = useState<ReservationPeriod[]>([]);
+  const [upcomingSelectionPeriods, setUpcomingSelectionPeriods] = useState<SelectionPeriodDisplayInfo[]>([]);
   const [upcomingWorkWeekends, setUpcomingWorkWeekends] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
@@ -87,6 +90,10 @@ export const NotificationManagement = () => {
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
+  
+  // Get current selection turn from sequential system
+  const currentYear = new Date().getFullYear();
+  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(currentYear);
 
   // Utility function to parse date strings without timezone conversion
   const parseLocalDate = (dateStr: string): Date => {
@@ -275,8 +282,21 @@ export const NotificationManagement = () => {
   };
 
   const fetchUpcomingSelectionPeriods = () => {
-    const periods = getUpcomingSelectionPeriods();
-    setUpcomingSelectionPeriods(periods);
+    const scheduledPeriods = getUpcomingSelectionPeriods();
+    
+    // Merge scheduled periods with actual sequential selection status
+    const displayInfo = getSelectionPeriodDisplayInfo(
+      scheduledPeriods,
+      currentFamilyGroup,
+      getDaysRemaining
+    );
+    
+    // Filter to only show active or upcoming
+    const upcoming = displayInfo.filter(info => 
+      info.status === 'active' || info.status === 'scheduled'
+    );
+    
+    setUpcomingSelectionPeriods(upcoming);
   };
 
 
@@ -385,23 +405,39 @@ export const NotificationManagement = () => {
       });
     });
 
-    // Add selection periods
+    // Add selection periods with actual status
     upcomingSelectionPeriods.forEach(period => {
-      const startDate = parseLocalDate(period.selection_start_date);
-      const timeDiff = startDate.getTime() - today.getTime();
-      const daysUntil = Math.ceil(timeDiff / (1000 * 3600 * 24));
+      const daysUntil = period.isCurrentlyActive ? 0 : period.daysUntilScheduled;
+      
+      let subtitle = '';
+      if (period.isCurrentlyActive) {
+        const daysRemainingText = period.daysRemaining !== undefined 
+          ? ` (${period.daysRemaining} days remaining)`
+          : '';
+        subtitle = `Active Now${daysRemainingText}`;
+        
+        // Show original scheduled dates if started early
+        if (period.daysUntilScheduled > 0) {
+          const scheduledStart = parseLocalDate(period.scheduledStartDate);
+          subtitle += ` - Originally scheduled for ${scheduledStart.toLocaleDateString()}`;
+        }
+      } else {
+        const scheduledStart = parseLocalDate(period.scheduledStartDate);
+        const scheduledEnd = parseLocalDate(period.scheduledEndDate);
+        subtitle = `Scheduled: ${scheduledStart.toLocaleDateString()} to ${scheduledEnd.toLocaleDateString()}`;
+      }
 
       const event: UpcomingEvent = {
-        id: `selection-${period.id}`,
+        id: `selection-${period.familyGroup}`,
         type: 'selection_period',
-        title: `${period.current_family_group} Selection Period`,
-        subtitle: `Selection window: ${parseLocalDate(period.selection_start_date).toLocaleDateString()} to ${parseLocalDate(period.selection_end_date).toLocaleDateString()}`,
-        start_date: period.selection_start_date,
-        end_date: period.selection_end_date,
-        contact_email: '', // No email field in ReservationPeriod
-        contact_name: period.current_family_group,
+        title: `${period.familyGroup} Selection Period`,
+        subtitle,
+        start_date: period.scheduledStartDate,
+        end_date: period.scheduledEndDate,
+        contact_email: '',
+        contact_name: period.familyGroup,
         days_until: daysUntil,
-        family_group: period.current_family_group
+        family_group: period.familyGroup
       };
       events.push(event);
     });
@@ -663,11 +699,8 @@ export const NotificationManagement = () => {
               ) : (
                 <div className="space-y-4">
                   {upcomingSelectionPeriods.map((period) => {
-                    const startDate = parseLocalDate(period.selection_start_date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const daysUntil = Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 3600 * 24));
-                    const periodId = `selection-${period.id}`;
+                    const daysUntil = period.isCurrentlyActive ? 0 : period.daysUntilScheduled;
+                    const periodId = `selection-${period.familyGroup}`;
 
                     return (
                       <Card key={periodId} className="border-l-4 border-l-secondary">
@@ -676,14 +709,14 @@ export const NotificationManagement = () => {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2">
                                 <Users className="h-4 w-4" />
-                                <h4 className="font-medium">{period.current_family_group} Selection Period</h4>
-                                <Badge variant={getReminderBadgeVariant(daysUntil)}>
-                                  {daysUntil} day{daysUntil !== 1 ? 's' : ''} away
+                                <h4 className="font-medium">{period.familyGroup} Selection Period</h4>
+                                <Badge variant={period.isCurrentlyActive ? 'default' : getReminderBadgeVariant(daysUntil)}>
+                                  {period.isCurrentlyActive ? 'Active Now' : `${daysUntil} day${daysUntil !== 1 ? 's' : ''} away`}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground mt-1">{period.current_family_group}'s turn</p>
+                              <p className="text-sm text-muted-foreground mt-1">{period.displayText}</p>
                               <p className="text-base text-muted-foreground">
-                                {startDate.toLocaleDateString()} - {parseLocalDate(period.selection_end_date).toLocaleDateString()}
+                                {parseLocalDate(period.scheduledStartDate).toLocaleDateString()} - {parseLocalDate(period.scheduledEndDate).toLocaleDateString()}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2 ml-4">
@@ -706,13 +739,13 @@ export const NotificationManagement = () => {
                                 onClick={() => handleSendEventNotification({
                                   id: periodId,
                                   type: 'selection_period',
-                                  title: `${period.current_family_group} Selection Period`,
-                                  start_date: period.selection_start_date,
-                                  end_date: period.selection_end_date,
+                                  title: `${period.familyGroup} Selection Period`,
+                                  start_date: period.scheduledStartDate,
+                                  end_date: period.scheduledEndDate,
                                   contact_email: '',
-                                  contact_name: period.current_family_group,
+                                  contact_name: period.familyGroup,
                                   days_until: daysUntil,
-                                  family_group: period.current_family_group
+                                  family_group: period.familyGroup
                                 })}
                                 disabled={sendingReminder === periodId || !selectedReminderTypes[periodId]}
                                 size="sm"
