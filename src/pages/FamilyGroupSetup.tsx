@@ -174,7 +174,20 @@ const FamilyGroupSetup = () => {
       if (!groupExists) {
         console.warn('⚠️ [AUTO_SAVE_LOAD] Saved data references non-existent group, clearing:', savedData.selectedGroup);
         clearSavedData();
-        hasLoadedAutoSave.current = true;
+        // Don't set hasLoadedAutoSave to true - let database load take over
+        return;
+      }
+      
+      // Check if auto-save data contains meaningful values (not just empty strings)
+      const hasSignificantData = savedData.leadName || 
+                                 savedData.leadEmail || 
+                                 savedData.leadPhone ||
+                                 (savedData.groupMembers && savedData.groupMembers.some((m: any) => m.name || m.email || m.phone));
+      
+      if (!hasSignificantData) {
+        console.warn('⚠️ [AUTO_SAVE_LOAD] Saved data is empty/incomplete, clearing to allow database load');
+        clearSavedData();
+        // Don't set hasLoadedAutoSave to true - let database load and auto-populate take over
         return;
       }
       
@@ -193,6 +206,7 @@ const FamilyGroupSetup = () => {
         description: "Your previous work has been restored from auto-save.",
       });
     } else {
+      // No saved data, mark as loaded to prevent re-running
       hasLoadedAutoSave.current = true;
     }
   }, [loadSavedData, setValue, toast, form, getValues, familyGroups, clearSavedData, user?.id]);
