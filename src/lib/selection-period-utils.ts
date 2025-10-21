@@ -32,7 +32,8 @@ export interface ReservationPeriod {
 export const getSelectionPeriodDisplayInfo = (
   periods: ReservationPeriod[],
   currentFamilyGroup: string | null,
-  getDaysRemaining?: (familyGroup: string) => number
+  getDaysRemaining?: (familyGroup: string) => number,
+  selectionDays: number = 14
 ): SelectionPeriodDisplayInfo[] => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -40,8 +41,12 @@ export const getSelectionPeriodDisplayInfo = (
   console.log('[getSelectionPeriodDisplayInfo] Called with:', {
     periodsCount: periods.length,
     currentFamilyGroup,
+    selectionDays,
     periods: periods.map(p => ({ family: p.current_family_group, start: p.selection_start_date }))
   });
+
+  // Track the cumulative start date for scheduled families
+  let nextScheduledStartDate = new Date(today);
 
   return periods.map(period => {
     const scheduledStartDate = parseISO(period.selection_start_date);
@@ -59,37 +64,58 @@ export const getSelectionPeriodDisplayInfo = (
     let status: 'scheduled' | 'active' | 'completed' = 'scheduled';
     let displayText = '';
     let daysRemaining: number | undefined;
+    let actualStartDate: string;
+    let actualEndDate: string;
+    let daysUntilActual: number;
 
     if (isCurrentlyActive) {
+      // Active family: their turn started today
       status = 'active';
       daysRemaining = getDaysRemaining ? getDaysRemaining(period.current_family_group) : undefined;
+      actualStartDate = today.toISOString().split('T')[0];
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + selectionDays - 1);
+      actualEndDate = endDate.toISOString().split('T')[0];
+      daysUntilActual = 0;
       
       if (daysUntilScheduled > 0) {
         // Started early
         displayText = `Active Now (Originally scheduled for ${scheduledStartDate.toLocaleDateString()})`;
-      } else if (daysUntilScheduled === 0) {
-        // Started on time
-        displayText = 'Active Now';
       } else {
-        // Started late (shouldn't happen but handle it)
         displayText = 'Active Now';
       }
+      
+      // Next scheduled family starts after this one ends
+      nextScheduledStartDate = new Date(endDate);
+      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
     } else if (daysUntilScheduled < 0) {
       // Past scheduled date and not active = completed
       status = 'completed';
       displayText = `Completed (was scheduled for ${scheduledStartDate.toLocaleDateString()})`;
+      actualStartDate = period.selection_start_date;
+      actualEndDate = period.selection_end_date;
+      daysUntilActual = daysUntilScheduled;
     } else {
-      // Future scheduled date
+      // Future scheduled date - calculate actual dates based on when previous families finish
       status = 'scheduled';
-      displayText = `Scheduled in ${daysUntilScheduled} day${daysUntilScheduled === 1 ? '' : 's'}`;
+      daysUntilActual = differenceInDays(nextScheduledStartDate, today);
+      actualStartDate = nextScheduledStartDate.toISOString().split('T')[0];
+      const endDate = new Date(nextScheduledStartDate);
+      endDate.setDate(endDate.getDate() + selectionDays - 1);
+      actualEndDate = endDate.toISOString().split('T')[0];
+      displayText = `Scheduled in ${daysUntilActual} day${daysUntilActual === 1 ? '' : 's'}`;
+      
+      // Next scheduled family starts after this one ends
+      nextScheduledStartDate = new Date(endDate);
+      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
     }
 
     return {
       familyGroup: period.current_family_group,
       status,
-      scheduledStartDate: period.selection_start_date,
-      scheduledEndDate: period.selection_end_date,
-      daysUntilScheduled,
+      scheduledStartDate: actualStartDate,
+      scheduledEndDate: actualEndDate,
+      daysUntilScheduled: daysUntilActual,
       isCurrentlyActive,
       displayText,
       daysRemaining

@@ -293,7 +293,8 @@ export const NotificationManagement = () => {
   const fetchUpcomingSelectionPeriods = () => {
     console.log('[NotificationManagement] fetchUpcomingSelectionPeriods called:', {
       currentFamilyGroup,
-      rotationYear
+      rotationYear,
+      selectionDays: rotationData?.selection_days
     });
     
     // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
@@ -305,7 +306,8 @@ export const NotificationManagement = () => {
     const displayInfo = getSelectionPeriodDisplayInfo(
       scheduledPeriods,
       currentFamilyGroup,
-      getDaysRemaining
+      getDaysRemaining,
+      rotationData?.selection_days || 14
     );
     
     console.log('[NotificationManagement] displayInfo after getSelectionPeriodDisplayInfo:', displayInfo);
