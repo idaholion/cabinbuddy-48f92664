@@ -1,4 +1,5 @@
-import { differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { parseDateOnly, toDateOnlyString } from '@/lib/date-utils';
 
 export interface SelectionPeriodDisplayInfo {
   familyGroup: string;
@@ -49,7 +50,7 @@ export const getSelectionPeriodDisplayInfo = (
   let nextScheduledStartDate = new Date(today);
 
   return periods.map(period => {
-    const scheduledStartDate = parseISO(period.selection_start_date);
+    const scheduledStartDate = parseDateOnly(period.selection_start_date);
     const daysUntilScheduled = differenceInDays(scheduledStartDate, today);
     const isCurrentlyActive = currentFamilyGroup === period.current_family_group;
     
@@ -72,10 +73,10 @@ export const getSelectionPeriodDisplayInfo = (
       // Active family: their turn started today
       status = 'active';
       daysRemaining = getDaysRemaining ? getDaysRemaining(period.current_family_group) : undefined;
-      actualStartDate = today.toISOString().split('T')[0];
+      actualStartDate = toDateOnlyString(today);
       const endDate = new Date(today);
       endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = endDate.toISOString().split('T')[0];
+      actualEndDate = toDateOnlyString(endDate);
       daysUntilActual = 0;
       
       if (daysUntilScheduled > 0) {
@@ -99,10 +100,10 @@ export const getSelectionPeriodDisplayInfo = (
       // Future scheduled date - calculate actual dates based on when previous families finish
       status = 'scheduled';
       daysUntilActual = differenceInDays(nextScheduledStartDate, today);
-      actualStartDate = nextScheduledStartDate.toISOString().split('T')[0];
+      actualStartDate = toDateOnlyString(nextScheduledStartDate);
       const endDate = new Date(nextScheduledStartDate);
       endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = endDate.toISOString().split('T')[0];
+      actualEndDate = toDateOnlyString(endDate);
       displayText = `Scheduled in ${daysUntilActual} day${daysUntilActual === 1 ? '' : 's'}`;
       
       // Next scheduled family starts after this one ends
