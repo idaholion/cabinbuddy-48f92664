@@ -30,7 +30,6 @@ interface ReminderPreview {
 interface Props {
   automatedSettings: {
     automated_reminders_enabled: boolean;
-    automated_selection_reminders_enabled: boolean;
     automated_work_weekend_reminders_enabled: boolean;
     automated_reminders_7_day_enabled: boolean;
     automated_reminders_3_day_enabled: boolean;
@@ -240,55 +239,6 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               content: generateWorkWeekendContent(workWeekendTemplate, '1-day', variables),
               eventDate: workDate,
               eventTitle: workWeekend.title,
-              enabled: true
-            });
-          }
-        }
-      });
-    }
-
-    // Generate selection period reminders
-    if (automatedSettings.automated_selection_reminders_enabled) {
-      periods.forEach(period => {
-        // Parse dates correctly to avoid timezone issues
-        const startDate = new Date(period.selection_start_date + 'T00:00:00');
-        const endDate = new Date(period.selection_end_date + 'T00:00:00');
-
-        // Find the specific family group that has this selection period
-        const currentGroup = familyGroups.find(group => group.name === period.current_family_group);
-        
-        if (currentGroup && currentGroup.lead_name && currentGroup.lead_email) {
-          // Start reminder (3 days before)
-          const startReminder = addDays(startDate, -3);
-          if (isAfter(startReminder, now) && isBefore(startReminder, thirtyDaysFromNow)) {
-            previews.push({
-              id: `sel-start-${period.id}`,
-              type: 'selection_period',
-              reminderType: 'selection_start',
-              sendDate: startReminder,
-              recipient: `${currentGroup.lead_name} (${currentGroup.lead_email})`,
-              familyGroup: currentGroup.name,
-              subject: generateSelectionSubject('start', period),
-              content: generateSelectionContent('start', period),
-              eventDate: startDate,
-              eventTitle: `${period.current_family_group} Selection Period`,
-              enabled: true
-            });
-          }
-
-          // End reminder (same day)
-          if (isAfter(endDate, now) && isBefore(endDate, thirtyDaysFromNow)) {
-            previews.push({
-              id: `sel-end-${period.id}`,
-              type: 'selection_period',
-              reminderType: 'selection_end',
-              sendDate: endDate,
-              recipient: `${currentGroup.lead_name} (${currentGroup.lead_email})`,
-              familyGroup: currentGroup.name,
-              subject: generateSelectionSubject('end', period),
-              content: generateSelectionContent('end', period),
-              eventDate: endDate,
-              eventTitle: `${period.current_family_group} Selection Period`,
               enabled: true
             });
           }

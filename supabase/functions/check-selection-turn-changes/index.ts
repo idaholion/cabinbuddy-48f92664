@@ -19,15 +19,26 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Checking for selection turn changes...');
 
     // Get organizations with automated selection turn notifications enabled
-    const { data: organizations, error: orgError } = await supabase
+    const { data: turnOrgs, error: turnOrgError } = await supabase
       .from('organizations')
       .select('id, name')
       .eq('automated_selection_turn_notifications_enabled', true);
 
-    if (orgError) throw orgError;
+    if (turnOrgError) throw turnOrgError;
 
-    if (!organizations || organizations.length === 0) {
-      console.log('No organizations have automated selection turn notifications enabled');
+    // Get organizations with ending tomorrow reminders enabled
+    const { data: endingOrgs, error: endingOrgError } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('automated_selection_ending_tomorrow_enabled', true);
+
+    if (endingOrgError) throw endingOrgError;
+
+    const allOrganizations = [...(turnOrgs || []), ...(endingOrgs || [])];
+    const uniqueOrgs = Array.from(new Map(allOrganizations.map(org => [org.id, org])).values());
+
+    if (uniqueOrgs.length === 0) {
+      console.log('No organizations have automated selection notifications enabled');
       return new Response(JSON.stringify({ 
         success: true,
         notifications_sent: 0,
@@ -38,11 +49,19 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    const turnOrgIds = new Set(turnOrgs?.map(o => o.id) || []);
+    const endingOrgIds = new Set(endingOrgs?.map(o => o.id) || []);
+
     let totalNotifications = 0;
     const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    for (const org of organizations) {
+    for (const org of uniqueOrgs) {
       console.log(`Checking organization: ${org.name}`);
+      const checkTurnNotifications = turnOrgIds.has(org.id);
+      const checkEndingTomorrow = endingOrgIds.has(org.id);
 
       // Check current year and next year
       for (const year of [currentYear, currentYear + 1]) {
@@ -76,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Determine current family using same logic as useSequentialSelection
         let currentFamily: string | null = null;
-        const now = new Date();
+        let currentExtension: any = null;
 
         for (const familyGroup of rotationOrder) {
           const usage = usageData.find(u => u.family_group === familyGroup);
@@ -90,6 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
           // If family hasn't used all their periods or has active extension, they're current
           if (usedPrimary < allowedPrimary || hasActiveExtension) {
             currentFamily = familyGroup;
+            currentExtension = hasActiveExtension ? extension : null;
             break;
           }
         }
@@ -99,47 +119,88 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Check if notification already sent
-        const { data: alreadySent } = await supabase
-          .from('selection_turn_notifications_sent')
-          .select('id')
-          .eq('organization_id', org.id)
-          .eq('rotation_year', year)
-          .eq('family_group', currentFamily)
-          .eq('phase', 'primary')
-          .maybeSingle();
+        // Check turn notifications
+        if (checkTurnNotifications) {
+          const { data: alreadySent } = await supabase
+            .from('selection_turn_notifications_sent')
+            .select('id')
+            .eq('organization_id', org.id)
+            .eq('rotation_year', year)
+            .eq('family_group', currentFamily)
+            .eq('phase', 'primary')
+            .maybeSingle();
 
-        if (alreadySent) {
-          console.log(`Notification already sent to ${currentFamily} for ${year}`);
-          continue;
-        }
+          if (!alreadySent) {
+            console.log(`Sending turn notification to ${currentFamily} for ${year}`);
+            const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+              body: {
+                organization_id: org.id,
+                family_group: currentFamily,
+                rotation_year: year
+              }
+            });
 
-        // Send notification
-        console.log(`Sending notification to ${currentFamily} for ${year}`);
-        const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
-          body: {
-            organization_id: org.id,
-            family_group: currentFamily,
-            rotation_year: year
+            if (!sendError) {
+              await supabase
+                .from('selection_turn_notifications_sent')
+                .insert({
+                  organization_id: org.id,
+                  rotation_year: year,
+                  family_group: currentFamily,
+                  phase: 'primary'
+                });
+              totalNotifications++;
+            } else {
+              console.error(`Error sending turn notification: ${sendError.message}`);
+            }
           }
-        });
-
-        if (sendError) {
-          console.error(`Error sending notification: ${sendError.message}`);
-          continue;
         }
 
-        // Record notification sent
-        await supabase
-          .from('selection_turn_notifications_sent')
-          .insert({
-            organization_id: org.id,
-            rotation_year: year,
-            family_group: currentFamily,
-            phase: 'primary'
-          });
+        // Check ending tomorrow notifications
+        if (checkEndingTomorrow && currentExtension) {
+          const extendedUntil = new Date(currentExtension.extended_until);
+          const isTomorrow = 
+            extendedUntil.getFullYear() === tomorrow.getFullYear() &&
+            extendedUntil.getMonth() === tomorrow.getMonth() &&
+            extendedUntil.getDate() === tomorrow.getDate();
 
-        totalNotifications++;
+          if (isTomorrow) {
+            const { data: endingAlreadySent } = await supabase
+              .from('selection_turn_notifications_sent')
+              .select('id')
+              .eq('organization_id', org.id)
+              .eq('rotation_year', year)
+              .eq('family_group', currentFamily)
+              .eq('phase', 'ending_tomorrow')
+              .maybeSingle();
+
+            if (!endingAlreadySent) {
+              console.log(`Sending ending tomorrow notification to ${currentFamily} for ${year}`);
+              const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+                body: {
+                  organization_id: org.id,
+                  family_group: currentFamily,
+                  rotation_year: year,
+                  notification_type: 'ending_tomorrow'
+                }
+              });
+
+              if (!sendError) {
+                await supabase
+                  .from('selection_turn_notifications_sent')
+                  .insert({
+                    organization_id: org.id,
+                    rotation_year: year,
+                    family_group: currentFamily,
+                    phase: 'ending_tomorrow'
+                  });
+                totalNotifications++;
+              } else {
+                console.error(`Error sending ending tomorrow notification: ${sendError.message}`);
+              }
+            }
+          }
+        }
       }
     }
 
@@ -148,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true,
       notifications_sent: totalNotifications,
-      organizations_checked: organizations.length
+      organizations_checked: uniqueOrgs.length
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

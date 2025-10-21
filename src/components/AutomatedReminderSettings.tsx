@@ -11,8 +11,8 @@ import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview"
 
 interface AutomatedSettings {
   automated_reminders_enabled: boolean;
-  automated_selection_reminders_enabled: boolean;
   automated_selection_turn_notifications_enabled: boolean;
+  automated_selection_ending_tomorrow_enabled: boolean;
   automated_work_weekend_reminders_enabled: boolean;
   automated_reminders_7_day_enabled: boolean;
   automated_reminders_3_day_enabled: boolean;
@@ -26,8 +26,8 @@ export const AutomatedReminderSettings = () => {
   const { organization, loading: orgLoading } = useOrganization();
   const [settings, setSettings] = useState<AutomatedSettings>({
     automated_reminders_enabled: false,
-    automated_selection_reminders_enabled: false,
     automated_selection_turn_notifications_enabled: false,
+    automated_selection_ending_tomorrow_enabled: false,
     automated_work_weekend_reminders_enabled: false,
     automated_reminders_7_day_enabled: true,
     automated_reminders_3_day_enabled: true,
@@ -53,8 +53,8 @@ export const AutomatedReminderSettings = () => {
         .from('organizations')
         .select(`
           automated_reminders_enabled, 
-          automated_selection_reminders_enabled,
           automated_selection_turn_notifications_enabled,
+          automated_selection_ending_tomorrow_enabled,
           automated_work_weekend_reminders_enabled,
           automated_reminders_7_day_enabled,
           automated_reminders_3_day_enabled, 
@@ -74,8 +74,8 @@ export const AutomatedReminderSettings = () => {
 
       setSettings({
         automated_reminders_enabled: data?.automated_reminders_enabled || false,
-        automated_selection_reminders_enabled: data?.automated_selection_reminders_enabled || false,
         automated_selection_turn_notifications_enabled: data?.automated_selection_turn_notifications_enabled || false,
+        automated_selection_ending_tomorrow_enabled: data?.automated_selection_ending_tomorrow_enabled || false,
         automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
         automated_reminders_7_day_enabled: data?.automated_reminders_7_day_enabled ?? true,
         automated_reminders_3_day_enabled: data?.automated_reminders_3_day_enabled ?? true,
@@ -111,8 +111,8 @@ export const AutomatedReminderSettings = () => {
       
       const settingNames = {
         automated_reminders_enabled: 'reservation reminders',
-        automated_selection_reminders_enabled: 'selection period reminders',
         automated_selection_turn_notifications_enabled: 'selection turn notifications',
+        automated_selection_ending_tomorrow_enabled: 'selection ending tomorrow reminders',
         automated_work_weekend_reminders_enabled: 'work weekend reminders',
         automated_reminders_7_day_enabled: 'reservation 7-day reminders',
         automated_reminders_3_day_enabled: 'reservation 3-day reminders',
@@ -142,8 +142,8 @@ export const AutomatedReminderSettings = () => {
   }
 
   const anyEnabled = settings.automated_reminders_enabled || 
-                    settings.automated_selection_reminders_enabled ||
                     settings.automated_selection_turn_notifications_enabled ||
+                    settings.automated_selection_ending_tomorrow_enabled ||
                     settings.automated_work_weekend_reminders_enabled ||
                     settings.automated_reminders_7_day_enabled ||
                     settings.automated_reminders_3_day_enabled ||
@@ -228,37 +228,6 @@ export const AutomatedReminderSettings = () => {
             </div>
           </div>
 
-          {/* Selection Period Reminders */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <div>
-                  <Label htmlFor="selection-reminders" className="text-sm font-medium">
-                    Selection Period Reminders
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Send notifications when selection periods start (3 days ahead) and end (same day)
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="selection-reminders"
-                checked={settings.automated_selection_reminders_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_selection_reminders_enabled', enabled)}
-              />
-            </div>
-            
-            <div className="border-l-4 border-blue-200 pl-4 space-y-1">
-              <p className="text-xs text-muted-foreground">
-                • Alerts families 3 days before selection periods open
-              </p>
-              <p className="text-xs text-muted-foreground">
-                • Final reminder on the last day of selection periods
-              </p>
-            </div>
-          </div>
-
           {/* Selection Turn Notifications */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -269,7 +238,7 @@ export const AutomatedReminderSettings = () => {
                     Selection Turn Notifications
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Automatically notify families when it becomes their turn to select (even without previous family clicking "I'm Done")
+                    Notify families when it's their turn to select reservations
                   </p>
                 </div>
               </div>
@@ -282,13 +251,41 @@ export const AutomatedReminderSettings = () => {
             
             <div className="border-l-4 border-green-200 pl-4 space-y-1">
               <p className="text-xs text-muted-foreground">
-                • Detects when a family's turn becomes active
+                • Sends "It's your turn NOW" when selection begins or previous family finishes
               </p>
               <p className="text-xs text-muted-foreground">
-                • Sends immediate notification to the current family
+                • Works automatically even if previous family doesn't click "I'm Done"
+              </p>
+            </div>
+          </div>
+
+          {/* Selection Ending Tomorrow */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <div>
+                  <Label htmlFor="selection-ending-tomorrow" className="text-sm font-medium">
+                    Selection Ending Tomorrow Reminders
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Remind families one day before their selection time expires
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="selection-ending-tomorrow"
+                checked={settings.automated_selection_ending_tomorrow_enabled}
+                onCheckedChange={(enabled) => handleToggle('automated_selection_ending_tomorrow_enabled', enabled)}
+              />
+            </div>
+            
+            <div className="border-l-4 border-blue-200 pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • Sends reminder at 9am the day before selection time ends
               </p>
               <p className="text-xs text-muted-foreground">
-                • Works even if previous family didn't click "I'm Done"
+                • Helps families avoid losing their turn
               </p>
             </div>
           </div>
