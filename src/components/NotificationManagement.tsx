@@ -13,6 +13,7 @@ import { useTimePeriods } from "@/hooks/useTimePeriods";
 import { useWorkWeekends } from "@/hooks/useWorkWeekends";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
 import { useSequentialSelection } from "@/hooks/useSequentialSelection";
+import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 import { getSelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
 import type { SelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
@@ -90,24 +91,10 @@ export const NotificationManagement = () => {
   const { calculateTimePeriodWindows } = useTimePeriods();
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
+  const { getSelectionRotationYear } = useRotationOrder();
   
-  // Get current rotation year for selections (selections in Oct 2025 are for 2026 reservations)
-  const getCurrentRotationYear = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth(); // 0-based (October = 9)
-    
-    // If we're in October or later, selections are for next year's reservations
-    // TODO: Make this configurable based on org's start_month setting
-    const selectionStartMonth = 9; // October (0-based)
-    
-    if (currentMonth >= selectionStartMonth) {
-      return currentYear + 1; // Selections for next year
-    }
-    return currentYear; // Selections for current year
-  };
-  
-  const rotationYear = getCurrentRotationYear();
+  // Use centralized rotation year calculation that matches Calendar page
+  const rotationYear = getSelectionRotationYear();
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
 
   // Utility function to parse date strings without timezone conversion

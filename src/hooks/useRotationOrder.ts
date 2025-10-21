@@ -83,6 +83,31 @@ export const useRotationOrder = () => {
     );
   };
 
+  const getSelectionRotationYear = (): number => {
+    if (!rotationData || !rotationData.start_month) {
+      return new Date().getFullYear();
+    }
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    // Parse rotation start month (e.g., "October" -> 9, zero-indexed)
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    const startMonthIndex = monthNames.findIndex(m => m === rotationData.start_month);
+    
+    // Create rotation start date for current year (use 1st of month for year calculation)
+    const rotationStartThisYear = new Date(currentYear, startMonthIndex, 1);
+    
+    // If we've passed the rotation start date, we're in the next rotation year
+    if (today >= rotationStartThisYear) {
+      return currentYear + 1;
+    }
+    
+    // Otherwise, we're still in the current rotation year
+    return currentYear;
+  };
+
   const fetchRotationOrder = async (year?: number) => {
     if (!organization?.id) return;
     
@@ -143,6 +168,7 @@ export const useRotationOrder = () => {
     loading,
     getRotationForYear,
     calculateRotationForYear,
+    getSelectionRotationYear,
     refetchRotationOrder: fetchRotationOrder
   };
 };
