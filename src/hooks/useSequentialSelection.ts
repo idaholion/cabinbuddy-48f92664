@@ -191,16 +191,20 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         const extension = getExtensionForFamily(familyGroup);
         const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
         
+        const isCurrentTurn = primaryCurrentFamily === familyGroup;
         let status: SelectionStatus = 'waiting';
-        // Only mark as completed if at/over limit AND no active extension
-        if (usedPrimary >= allowedPrimary && !hasActiveExtension) {
+        
+        // Set status based on current turn and completion
+        if (isCurrentTurn) {
+          status = 'active';
+        } else if (usedPrimary >= allowedPrimary && !hasActiveExtension) {
           status = 'completed';
         }
 
         return {
           familyGroup,
           status,
-          isCurrentTurn: primaryCurrentFamily === familyGroup,
+          isCurrentTurn,
           daysRemaining: null
         };
       });

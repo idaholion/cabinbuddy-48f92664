@@ -477,13 +477,14 @@ const CabinCalendar = () => {
                   const selectionStartYear = currentYear - 1; // Year when selection starts
                   const baseStartDate = new Date(selectionStartYear, 9, 1); // October 1st
                   
-                  // Calculate how many families have already completed their selection
-                  const currentYearOrder = getRotationForYear(currentYear);
-                  const currentFamilyIndex = currentYearOrder.indexOf(currentRotationYearCurrentFamily);
+                  // Count how many families have completed their selection (not just index)
+                  const completedFamiliesCount = currentRotationYearStatuses.filter(
+                    f => f.status === 'completed'
+                  ).length;
                   
-                  // Add days for each family that has already selected
+                  // Add days for each family that has already completed selection
                   const startDate = new Date(baseStartDate);
-                  startDate.setDate(startDate.getDate() + (currentFamilyIndex * selectionDays));
+                  startDate.setDate(startDate.getDate() + (completedFamiliesCount * selectionDays));
                   
                   // Check for extension
                   const extension = getExtensionForFamily(currentRotationYearCurrentFamily);
