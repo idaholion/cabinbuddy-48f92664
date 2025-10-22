@@ -88,11 +88,64 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       maxTimeSlots: rotationData.max_time_slots
     });
 
+    // Fetch reservation periods to check scheduled dates
+    const { data: periods, error } = await supabase
+      .from('reservation_periods')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .eq('rotation_year', rotationYear)
+      .order('current_group_index');
+
+    if (error) {
+      console.error('[useSequentialSelection] Error fetching periods:', error);
+      // Fall back to rotation order logic
+      fallbackToRotationOrder(rotationOrder);
+      return;
+    }
+
+    if (!periods || periods.length === 0) {
+      // No scheduled periods, use rotation order
+      fallbackToRotationOrder(rotationOrder);
+      return;
+    }
+
+    // Check which family's selection period is active based on today's date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (const period of periods) {
+      const startDate = new Date(period.selection_start_date + 'T00:00:00');
+      const endDate = new Date(period.selection_end_date + 'T00:00:00');
+      
+      // Check if today falls within this period's date range
+      if (today >= startDate && today <= endDate) {
+        // Also verify this family still has selections available
+        const usage = timePeriodUsage.find(u => u.family_group === period.current_family_group);
+        const used = usage?.time_periods_used || 0;
+        const allowed = rotationData.max_time_slots || 2;
+        
+        // Check for active extension
+        const extension = getExtensionForFamily(period.current_family_group);
+        const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
+        
+        if (used < allowed || hasActiveExtension) {
+          console.log('[useSequentialSelection] Setting current family based on scheduled period:', period.current_family_group);
+          setPrimaryCurrentFamily(period.current_family_group);
+          return;
+        }
+      }
+    }
+    
+    // If no period is active today, fall back to rotation order
+    fallbackToRotationOrder(rotationOrder);
+  };
+
+  const fallbackToRotationOrder = (rotationOrder: string[]) => {
     // Find the first family group that hasn't completed their primary selections
     for (const familyGroup of rotationOrder) {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
       const used = usage?.time_periods_used || 0;
-      const allowed = rotationData.max_time_slots || 2;
+      const allowed = rotationData?.max_time_slots || 2;
       
       // Check if family has an active extension
       const extension = getExtensionForFamily(familyGroup);
