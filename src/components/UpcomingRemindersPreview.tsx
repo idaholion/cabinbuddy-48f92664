@@ -9,9 +9,11 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useReservations } from '@/hooks/useReservations';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
+import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { supabase } from '@/integrations/supabase/client';
 import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
 import { parseDateOnly } from '@/lib/date-utils';
+import { getSelectionPeriodDisplayInfo } from '@/lib/selection-period-utils';
 
 interface ReminderPreview {
   id: string;
@@ -47,9 +49,12 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const { reservations } = useReservations();
   const { workWeekends } = useWorkWeekends();
   const { familyGroups } = useFamilyGroups();
+  const currentYear = new Date().getFullYear();
+  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(currentYear);
   const [reminderPreviews, setReminderPreviews] = useState<ReminderPreview[]>([]);
   const [reminderTemplates, setReminderTemplates] = useState<any[]>([]);
   const [reservationPeriods, setReservationPeriods] = useState<any[]>([]);
+  const [selectionDays, setSelectionDays] = useState<number>(14);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
@@ -80,7 +85,11 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       setReminderTemplates(templates || []);
       setReservationPeriods(periods || []);
       
-      generateReminderPreviews(templates || [], periods || []);
+      // Use default selection days of 14 (can be made configurable later)
+      const days = 14;
+      setSelectionDays(days);
+      
+      generateReminderPreviews(templates || [], periods || [], days);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {
@@ -88,7 +97,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     }
   };
 
-  const generateReminderPreviews = (templates: any[], periods: any[]) => {
+  const generateReminderPreviews = (templates: any[], periods: any[], days: number = 14) => {
     const now = new Date();
     const thirtyDaysFromNow = addDays(now, 30);
     const previews: ReminderPreview[] = [];
@@ -248,15 +257,34 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       });
     }
 
-    // Generate selection period reminders
+    // Generate selection period reminders using actual calculated dates
     if (automatedSettings.automated_selection_turn_notifications_enabled || automatedSettings.automated_selection_ending_tomorrow_enabled) {
-      periods.forEach(period => {
-        const startDate = parseDateOnly(period.selection_start_date);
-        const endDate = parseDateOnly(period.selection_end_date);
+      // Use the same logic as NotificationManagement to get actual dates
+      const displayInfo = getSelectionPeriodDisplayInfo(
+        periods,
+        currentFamilyGroup,
+        getDaysRemaining,
+        days
+      );
+      
+      // Filter to active or scheduled periods within the next 30 days
+      const upcomingPeriods = displayInfo.filter(info => 
+        (info.status === 'active' || info.status === 'scheduled') &&
+        info.actualStartDate
+      );
+      
+      upcomingPeriods.forEach(info => {
+        const startDate = parseDateOnly(info.actualStartDate!);
+        // Calculate end date: start date + selection days - 1
+        const endDate = addDays(startDate, days - 1);
         
-        if (isAfter(startDate, now) && isBefore(startDate, thirtyDaysFromNow)) {
+        if (isBefore(startDate, thirtyDaysFromNow)) {
+          // Find the original period for template variables
+          const period = periods.find(p => p.current_family_group === info.familyGroup);
+          if (!period) return;
+          
           // Selection turn notification (sent when period starts)
-          if (automatedSettings.automated_selection_turn_notifications_enabled) {
+          if (automatedSettings.automated_selection_turn_notifications_enabled && info.status === 'active') {
             previews.push({
               id: `sel-start-${period.id}`,
               type: 'selection_period',
