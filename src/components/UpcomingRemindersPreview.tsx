@@ -10,6 +10,8 @@ import { useReservations } from '@/hooks/useReservations';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
+import { useRotationOrder } from '@/hooks/useRotationOrder';
+import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { supabase } from '@/integrations/supabase/client';
 import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
 import { parseDateOnly } from '@/lib/date-utils';
@@ -49,20 +51,21 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const { reservations } = useReservations();
   const { workWeekends } = useWorkWeekends();
   const { familyGroups } = useFamilyGroups();
-  const currentYear = new Date().getFullYear();
-  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(currentYear);
+  const { getSelectionRotationYear } = useRotationOrder();
+  const rotationYear = getSelectionRotationYear();
+  const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
+  const { periods } = useReservationPeriods();
   const [reminderPreviews, setReminderPreviews] = useState<ReminderPreview[]>([]);
   const [reminderTemplates, setReminderTemplates] = useState<any[]>([]);
-  const [reservationPeriods, setReservationPeriods] = useState<any[]>([]);
   const [selectionDays, setSelectionDays] = useState<number>(14);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization?.id && currentFamilyGroup !== null) {
+    if (organization?.id && currentFamilyGroup !== null && periods.length > 0) {
       fetchData();
     }
-  }, [organization?.id, reservations, workWeekends, currentFamilyGroup]);
+  }, [organization?.id, reservations, workWeekends, currentFamilyGroup, periods]);
 
   const fetchData = async () => {
     if (!organization?.id) return;
@@ -76,20 +79,16 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
         .eq('organization_id', organization.id)
         .eq('is_active', true);
 
-      // Fetch reservation periods for selection reminders
-      const { data: periods } = await supabase
-        .from('reservation_periods')
-        .select('*')
-        .eq('organization_id', organization.id);
-
       setReminderTemplates(templates || []);
-      setReservationPeriods(periods || []);
       
       // Use default selection days of 14 (can be made configurable later)
       const days = 14;
       setSelectionDays(days);
       
-      generateReminderPreviews(templates || [], periods || [], days);
+      // Filter periods by rotation year to match NotificationManagement logic
+      const filteredPeriods = periods.filter(p => p.rotation_year === rotationYear);
+      
+      generateReminderPreviews(templates || [], filteredPeriods, days);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {
