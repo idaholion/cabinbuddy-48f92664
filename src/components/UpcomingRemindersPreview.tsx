@@ -59,10 +59,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization?.id) {
+    if (organization?.id && currentFamilyGroup !== undefined) {
       fetchData();
     }
-  }, [organization?.id, reservations, workWeekends]);
+  }, [organization?.id, reservations, workWeekends, currentFamilyGroup]);
 
   const fetchData = async () => {
     if (!organization?.id) return;
@@ -101,6 +101,14 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     const now = new Date();
     const thirtyDaysFromNow = addDays(now, 30);
     const previews: ReminderPreview[] = [];
+
+    console.log('[UpcomingRemindersPreview] Generating previews with:', {
+      templatesCount: templates.length,
+      periodsCount: periods.length,
+      currentFamilyGroup,
+      automatedSettings,
+      days
+    });
 
     // Generate reservation reminders
     if (automatedSettings.automated_reminders_enabled) {
@@ -259,6 +267,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
     // Generate selection period reminders using actual calculated dates
     if (automatedSettings.automated_selection_turn_notifications_enabled || automatedSettings.automated_selection_ending_tomorrow_enabled) {
+      console.log('[UpcomingRemindersPreview] Generating selection reminders...');
+      
       // Use the same logic as NotificationManagement to get actual dates
       const displayInfo = getSelectionPeriodDisplayInfo(
         periods,
@@ -267,24 +277,40 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
         days
       );
       
+      console.log('[UpcomingRemindersPreview] displayInfo:', displayInfo);
+      
       // Filter to active or scheduled periods within the next 30 days
       const upcomingPeriods = displayInfo.filter(info => 
         (info.status === 'active' || info.status === 'scheduled') &&
         info.actualStartDate
       );
       
+      console.log('[UpcomingRemindersPreview] upcomingPeriods:', upcomingPeriods);
+      
       upcomingPeriods.forEach(info => {
         const startDate = parseDateOnly(info.actualStartDate!);
         // Calculate end date: start date + selection days - 1
         const endDate = addDays(startDate, days - 1);
         
+        console.log('[UpcomingRemindersPreview] Processing period:', {
+          familyGroup: info.familyGroup,
+          startDate,
+          endDate,
+          thirtyDaysFromNow,
+          isBefore: isBefore(startDate, thirtyDaysFromNow)
+        });
+        
         if (isBefore(startDate, thirtyDaysFromNow)) {
           // Find the original period for template variables
           const period = periods.find(p => p.current_family_group === info.familyGroup);
-          if (!period) return;
+          if (!period) {
+            console.log('[UpcomingRemindersPreview] Period not found for:', info.familyGroup);
+            return;
+          }
           
           // Selection turn notification (sent when period starts) - show for both active and scheduled
           if (automatedSettings.automated_selection_turn_notifications_enabled) {
+            console.log('[UpcomingRemindersPreview] Adding selection turn notification for:', info.familyGroup);
             previews.push({
               id: `sel-start-${period.id}`,
               type: 'selection_period',
@@ -303,7 +329,13 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           // Selection ending tomorrow reminder
           if (automatedSettings.automated_selection_ending_tomorrow_enabled) {
             const dayBeforeEnd = addDays(endDate, -1);
+            console.log('[UpcomingRemindersPreview] Checking ending tomorrow:', {
+              familyGroup: info.familyGroup,
+              dayBeforeEnd,
+              isAfter: isAfter(dayBeforeEnd, now)
+            });
             if (isAfter(dayBeforeEnd, now)) {
+              console.log('[UpcomingRemindersPreview] Adding selection ending notification for:', info.familyGroup);
               previews.push({
                 id: `sel-end-${period.id}`,
                 type: 'selection_period',
@@ -322,6 +354,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
         }
       });
     }
+
+    console.log('[UpcomingRemindersPreview] Final previews count:', previews.length);
 
     // Sort by send date
     previews.sort((a, b) => a.sendDate.getTime() - b.sendDate.getTime());
