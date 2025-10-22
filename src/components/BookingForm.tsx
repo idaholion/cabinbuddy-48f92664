@@ -685,16 +685,13 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               </div>
             )}
 
-            {/* Host Assignments - Only show for calendar keepers or if not already set by role defaults */}
-            {watchedFamilyGroup && watchedStartDate && watchedEndDate && !isGroupMember && !isGroupLead && !isCalendarKeeper && (
-              <HostAssignmentForm
-                reservationStartDate={watchedStartDate}
-                reservationEndDate={watchedEndDate}
-                familyGroupHosts={familyGroupHosts}
-                value={watchedHostAssignments}
-                onChange={(assignments) => form.setValue('hostAssignments', assignments)}
-                disabled={submitting || reservationLoading}
-              />
+            {/* No host assigned warning */}
+            {watchedFamilyGroup && watchedStartDate && watchedEndDate && watchedHostAssignments.length === 0 && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  ℹ️ No host assigned yet. Consider assigning a host using the "Primary Host" dropdown above to specify who will be responsible for this reservation.
+                </p>
+              </div>
             )}
 
             {/* Submit Button */}
