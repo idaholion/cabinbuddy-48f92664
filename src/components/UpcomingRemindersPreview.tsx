@@ -283,8 +283,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           const period = periods.find(p => p.current_family_group === info.familyGroup);
           if (!period) return;
           
-          // Selection turn notification (sent when period starts)
-          if (automatedSettings.automated_selection_turn_notifications_enabled && info.status === 'active') {
+          // Selection turn notification (sent when period starts) - show for both active and scheduled
+          if (automatedSettings.automated_selection_turn_notifications_enabled) {
             previews.push({
               id: `sel-start-${period.id}`,
               type: 'selection_period',
