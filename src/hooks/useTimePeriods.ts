@@ -502,6 +502,15 @@ export const useTimePeriods = (rotationYear?: number) => {
     }
   }, [organization?.id, rotationData, fetchTimePeriodUsage]);
 
+  // Force reconciliation without checking hasReconciled flag
+  // Use this when you need to immediately recount (e.g., after deletion)
+  const forceReconcileUsageData = useCallback(async (year: number) => {
+    if (!organization?.id || !rotationData) return;
+
+    console.log(`[Force Reconciliation] Forcing reconciliation for year ${year}`);
+    await reconcileUsageData(year);
+  }, [organization?.id, rotationData, reconcileUsageData]);
+
   useEffect(() => {
     if (organization?.id && rotationData) {
       // Use provided rotation year or default to current year
@@ -535,5 +544,6 @@ export const useTimePeriods = (rotationYear?: number) => {
     fetchTimePeriodUsage,
     initializeTimePeriodUsage,
     updateTimePeriodUsage,
+    forceReconcileUsageData,
   };
 };

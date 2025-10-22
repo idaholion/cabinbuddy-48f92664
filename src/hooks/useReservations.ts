@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useReservationConflicts } from '@/hooks/useReservationConflicts';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useTimePeriods } from '@/hooks/useTimePeriods';
 
 interface ReservationData {
   start_date: string;
@@ -31,6 +32,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   const { toast } = useToast();
   const { validateReservationDates } = useReservationConflicts();
   const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper } = useUserRole();
+  const { forceReconcileUsageData } = useTimePeriods();
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
@@ -393,6 +395,10 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
       // Remove from local state
       setReservations(prev => prev.filter(res => res.id !== reservationId));
+      
+      // Force reconciliation to update usage counts in real-time
+      const currentYear = new Date().getFullYear();
+      await forceReconcileUsageData(currentYear);
       
       toast({
         title: "Success",
