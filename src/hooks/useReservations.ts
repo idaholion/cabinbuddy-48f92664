@@ -377,6 +377,9 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
     setLoading(true);
     try {
+      // Get the reservation to determine which year to reconcile
+      const reservationToDelete = reservations.find(r => r.id === reservationId);
+      
       const { error } = await supabase
         .from('reservations')
         .delete()
@@ -397,8 +400,16 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       setReservations(prev => prev.filter(res => res.id !== reservationId));
       
       // Force reconciliation to update usage counts in real-time
-      const currentYear = new Date().getFullYear();
-      await forceReconcileUsageData(currentYear);
+      // Use the year from the deleted reservation to ensure we reconcile the correct year
+      if (reservationToDelete?.start_date) {
+        const reservationYear = new Date(reservationToDelete.start_date).getFullYear();
+        console.log('[deleteReservation] Reconciling year:', reservationYear);
+        await forceReconcileUsageData(reservationYear);
+      } else {
+        // Fallback to current year if we can't determine reservation year
+        const currentYear = new Date().getFullYear();
+        await forceReconcileUsageData(currentYear);
+      }
       
       toast({
         title: "Success",
