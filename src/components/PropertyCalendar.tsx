@@ -1146,10 +1146,16 @@ const getBookingsForDate = (date: Date) => {
                       isSelected ? 'bg-primary/20 border-primary ring-1 ring-primary/50' : ''
                     } ${
                       isCheckout ? 'border-l-2 border-l-blue-400 border-dashed' : ''
-                    } hover:bg-accent/10 hover:shadow-cabin ${isAvailableForDrag ? 'cursor-pointer' : ''} group`}
-                    onClick={isAvailableForDrag ? () => handleDateClick(day) : () => {
-                      if (dayBookings.length > 0) {
-                        handleEditReservation(dayBookings[0]);
+                    } hover:bg-accent/10 hover:shadow-cabin cursor-pointer group`}
+                    onClick={(e) => {
+                      // Only handle date click if not clicking on a booking bar
+                      // The booking bars have their own click handlers with stopPropagation
+                      const target = e.target as HTMLElement;
+                      const isClickingBookingBar = target.closest('[data-booking-bar="true"]');
+                      
+                      if (!isClickingBookingBar) {
+                        // Allow time period selection even if there are bookings
+                        handleDateClick(day);
                       }
                     }}
                     onMouseDown={isAvailableForDrag ? (e) => handleDateMouseDown(day, e) : undefined}
@@ -1204,6 +1210,7 @@ const getBookingsForDate = (date: Date) => {
                          return (
                             <div
                               key={i}
+                              data-booking-bar="true"
                               className={`text-sm px-2 py-1 rounded truncate transition-colors border font-semibold cursor-pointer hover:opacity-80 relative z-10 ${
                                 groupColor 
                                   ? '' // We'll handle color via style for custom colors
