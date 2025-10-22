@@ -354,6 +354,11 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           data.endDate <= w.endDate
         );
 
+        // Check if this is a full time period booking (exact dates match)
+        const isTimePeriodBooking = window && 
+          data.startDate.getTime() === window.startDate.getTime() &&
+          data.endDate.getTime() === window.endDate.getTime();
+
         const hostAssignmentsData = data.hostAssignments.map(assignment => ({
           host_name: assignment.host_name,
           host_email: assignment.host_email,
@@ -366,15 +371,18 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           end_date: data.endDate.toISOString().split('T')[0],
           family_group: data.familyGroup,
           total_cost: data.totalCost,
-          allocated_start_date: window?.startDate.toISOString().split('T')[0],
-          allocated_end_date: window?.endDate.toISOString().split('T')[0],
-          time_period_number: window?.periodNumber,
+          allocated_start_date: isTimePeriodBooking ? window.startDate.toISOString().split('T')[0] : undefined,
+          allocated_end_date: isTimePeriodBooking ? window.endDate.toISOString().split('T')[0] : undefined,
+          time_period_number: isTimePeriodBooking ? window.periodNumber : undefined,
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (reservation) {
-          await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
+          // Only update time period usage if this is a full time period booking
+          if (isTimePeriodBooking) {
+            await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
+          }
           
           toast({
             title: "Booking Confirmed",

@@ -3248,6 +3248,10 @@ export type Database = {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
       }
+      supervisor_fix_barb_reservations: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       supervisor_fix_primary_organization_duplicates: {
         Args: Record<PropertyKey, never>
         Returns: Json
