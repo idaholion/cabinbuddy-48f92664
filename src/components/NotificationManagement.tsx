@@ -350,53 +350,14 @@ export const NotificationManagement = () => {
           info.status === 'active' || info.status === 'scheduled'
         );
         
-        allUpcoming.push(...primaryUpcoming);
-        
-        // Check if primary phase is done or nearly done - if so, preview secondary turns
+        // Check if primary phase is completely done
         const allPrimaryComplete = usageData?.every(u => 
           u.time_periods_used >= u.time_periods_allowed
         );
         
-        if (allPrimaryComplete || primaryUpcoming.length <= 2) {
-          // Calculate secondary phase turns
-          const rotationOrder = getRotationForYear(rotationYear);
-          const secondaryOrder = [...rotationOrder].reverse();
-          const secondaryDays = rotationData?.secondary_selection_days || 7;
-          
-          // Calculate start date for secondary (after last primary turn ends)
-          const lastPrimaryEndDate = primaryUpcoming.length > 0 
-            ? new Date(primaryUpcoming[primaryUpcoming.length - 1].scheduledEndDate)
-            : new Date();
-          lastPrimaryEndDate.setDate(lastPrimaryEndDate.getDate() + 1);
-          
-          let nextDate = lastPrimaryEndDate;
-          
-          secondaryOrder.forEach(familyGroup => {
-            const usage = usageData?.find(u => u.family_group === familyGroup);
-            const secondaryUsed = usage?.secondary_periods_used || 0;
-            const secondaryAllowed = rotationData?.secondary_max_periods || 1;
-            
-            if (secondaryUsed < secondaryAllowed) {
-              const startDate = toDateOnlyString(nextDate);
-              const endDate = new Date(nextDate);
-              endDate.setDate(endDate.getDate() + secondaryDays - 1);
-              const endDateStr = toDateOnlyString(endDate);
-              const daysUntil = differenceInDays(nextDate, new Date());
-              
-              allUpcoming.push({
-                familyGroup,
-                status: 'scheduled',
-                scheduledStartDate: startDate,
-                scheduledEndDate: endDateStr,
-                daysUntilScheduled: daysUntil,
-                isCurrentlyActive: false,
-                displayText: `Secondary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`
-              });
-              
-              nextDate = new Date(endDate);
-              nextDate.setDate(nextDate.getDate() + 1);
-            }
-          });
+        // If primary is not complete, only show primary turns
+        if (!allPrimaryComplete) {
+          allUpcoming.push(...primaryUpcoming);
         }
       } else {
         // We're in secondary phase
