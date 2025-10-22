@@ -352,16 +352,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       } else {
         // Create new reservation
-        const window = timePeriodWindows.find(w => 
-          w.familyGroup === data.familyGroup &&
-          data.startDate >= w.startDate &&
-          data.endDate <= w.endDate
-        );
-
-        // Check if this is a full time period booking (exact dates match)
-        const isTimePeriodBooking = window && 
-          data.startDate.getTime() === window.startDate.getTime() &&
-          data.endDate.getTime() === window.endDate.getTime();
+        // Consider it a time period booking if:
+        // 1. It's during their sequential selection turn
+        // 2. They're booking a full week (7 nights)
+        const isTimePeriodBooking = 
+          data.familyGroup === currentTurnGroup && 
+          nights === 7;
 
         const hostAssignmentsData = data.hostAssignments.map(assignment => ({
           host_name: assignment.host_name,
@@ -375,9 +371,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           end_date: data.endDate.toISOString().split('T')[0],
           family_group: data.familyGroup,
           total_cost: data.totalCost,
-          allocated_start_date: isTimePeriodBooking ? window.startDate.toISOString().split('T')[0] : undefined,
-          allocated_end_date: isTimePeriodBooking ? window.endDate.toISOString().split('T')[0] : undefined,
-          time_period_number: isTimePeriodBooking ? window.periodNumber : undefined,
+          allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : undefined,
+          allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : undefined,
+          time_period_number: isTimePeriodBooking ? 1 : undefined,
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
