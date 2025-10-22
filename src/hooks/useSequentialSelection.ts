@@ -195,9 +195,9 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         rotationYear
       });
       
-      // Keep current family if it's already their turn, even if they've reached their limit
-      // (they must click "I'm done selecting" to manually advance)
-      if (primaryCurrentFamily === familyGroup && (used <= allowed || hasActiveExtension)) {
+      // Keep current family if it's already their turn AND they still have selections remaining
+      // If they've reached their limit, allow advancing to next family on refresh
+      if (primaryCurrentFamily === familyGroup && (used < allowed || hasActiveExtension)) {
         console.log('[useSequentialSelection] Keeping current family (already their turn):', familyGroup);
         return;
       }
