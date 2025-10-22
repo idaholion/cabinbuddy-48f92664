@@ -282,13 +282,13 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       // Filter to active or scheduled periods within the next 30 days
       const upcomingPeriods = displayInfo.filter(info => 
         (info.status === 'active' || info.status === 'scheduled') &&
-        info.actualStartDate
+        info.scheduledStartDate
       );
       
       console.log('[UpcomingRemindersPreview] upcomingPeriods:', upcomingPeriods);
       
       upcomingPeriods.forEach(info => {
-        const startDate = parseDateOnly(info.actualStartDate!);
+        const startDate = parseDateOnly(info.scheduledStartDate!);
         // Calculate end date: start date + selection days - 1
         const endDate = addDays(startDate, days - 1);
         
