@@ -350,23 +350,30 @@ export const NotificationManagement = () => {
           info.status === 'active' || info.status === 'scheduled'
         );
         
+        // Always show remaining primary turns
+        allUpcoming.push(...primaryUpcoming);
+        
         // Check if primary phase is completely done
         const allPrimaryComplete = usageData?.every(u => 
           u.time_periods_used >= u.time_periods_allowed
         );
         
-        // If primary is not complete, only show primary turns
-        if (!allPrimaryComplete) {
-          allUpcoming.push(...primaryUpcoming);
-        } else {
+        // If primary is complete, also show secondary phase turns
+        if (allPrimaryComplete) {
           // Primary phase is done, calculate secondary phase turns
           const rotationOrder = getRotationForYear(rotationYear);
           const secondaryOrder = [...rotationOrder].reverse();
           const secondaryDays = rotationData?.secondary_selection_days || 7;
           
+          // Start secondary after last primary turn ends
+          const lastPrimaryEndDate = primaryUpcoming.length > 0 
+            ? new Date(primaryUpcoming[primaryUpcoming.length - 1].scheduledEndDate)
+            : new Date();
+          lastPrimaryEndDate.setDate(lastPrimaryEndDate.getDate() + 1);
+          
+          let nextDate = new Date(lastPrimaryEndDate);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          let nextDate = new Date(today);
           
           secondaryOrder.forEach(familyGroup => {
             const usage = usageData?.find(u => u.family_group === familyGroup);
