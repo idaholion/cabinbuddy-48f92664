@@ -358,6 +358,49 @@ export const NotificationManagement = () => {
         // If primary is not complete, only show primary turns
         if (!allPrimaryComplete) {
           allUpcoming.push(...primaryUpcoming);
+        } else {
+          // Primary phase is done, calculate secondary phase turns
+          const rotationOrder = getRotationForYear(rotationYear);
+          const secondaryOrder = [...rotationOrder].reverse();
+          const secondaryDays = rotationData?.secondary_selection_days || 7;
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          let nextDate = new Date(today);
+          
+          secondaryOrder.forEach(familyGroup => {
+            const usage = usageData?.find(u => u.family_group === familyGroup);
+            const secondaryUsed = usage?.secondary_periods_used || 0;
+            const secondaryAllowed = rotationData?.secondary_max_periods || 1;
+            
+            // Only show families that haven't completed their secondary selection
+            if (secondaryUsed < secondaryAllowed) {
+              const startDate = toDateOnlyString(nextDate);
+              const endDate = new Date(nextDate);
+              endDate.setDate(endDate.getDate() + secondaryDays - 1);
+              const endDateStr = toDateOnlyString(endDate);
+              const daysUntil = differenceInDays(nextDate, today);
+              
+              // Check if this is the active family (in secondary phase)
+              const isActive = familyGroup === secondaryCurrentFamily;
+              
+              allUpcoming.push({
+                familyGroup,
+                status: isActive ? 'active' : 'scheduled',
+                scheduledStartDate: startDate,
+                scheduledEndDate: endDateStr,
+                daysUntilScheduled: daysUntil,
+                isCurrentlyActive: isActive,
+                displayText: isActive 
+                  ? 'Active Now (Secondary Selection - 1 additional period)' 
+                  : `Secondary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'} (1 additional period)`,
+                daysRemaining: isActive ? getDaysRemaining(familyGroup) : undefined
+              });
+              
+              nextDate = new Date(endDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+            }
+          });
         }
       } else {
         // We're in secondary phase
