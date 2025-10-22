@@ -16,6 +16,7 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 import { parseDateOnly, calculateNights, toDateOnlyString, parseDateAtNoon } from '@/lib/date-utils';
@@ -74,8 +75,10 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   // Get current rotation order and determine whose turn it is
   const currentYear = currentMonth.getFullYear();
   const rotationOrder = getRotationForYear(currentYear);
-  const currentTurnIndex = Math.floor((currentMonth.getMonth()) / (rotationData?.max_time_slots || 2)) % rotationOrder.length;
-  const currentTurnGroup = rotationOrder[currentTurnIndex];
+  
+  // Use the sequential selection system to determine current turn
+  const { currentFamilyGroup } = useSequentialSelection(currentYear);
+  const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
