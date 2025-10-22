@@ -31,6 +31,8 @@ interface Props {
   automatedSettings: {
     automated_reminders_enabled: boolean;
     automated_work_weekend_reminders_enabled: boolean;
+    automated_selection_turn_notifications_enabled: boolean;
+    automated_selection_ending_tomorrow_enabled: boolean;
     automated_reminders_7_day_enabled: boolean;
     automated_reminders_3_day_enabled: boolean;
     automated_reminders_1_day_enabled: boolean;
@@ -241,6 +243,53 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
               eventTitle: workWeekend.title,
               enabled: true
             });
+          }
+        }
+      });
+    }
+
+    // Generate selection period reminders
+    if (automatedSettings.automated_selection_turn_notifications_enabled || automatedSettings.automated_selection_ending_tomorrow_enabled) {
+      periods.forEach(period => {
+        const startDate = parseDateOnly(period.selection_start_date);
+        const endDate = parseDateOnly(period.selection_end_date);
+        
+        if (isAfter(startDate, now) && isBefore(startDate, thirtyDaysFromNow)) {
+          // Selection turn notification (sent when period starts)
+          if (automatedSettings.automated_selection_turn_notifications_enabled) {
+            previews.push({
+              id: `sel-start-${period.id}`,
+              type: 'selection_period',
+              reminderType: 'selection_start',
+              sendDate: startDate,
+              recipient: period.current_family_group,
+              familyGroup: period.current_family_group,
+              subject: generateSelectionSubject('start', period),
+              content: generateSelectionContent('start', period),
+              eventDate: startDate,
+              eventTitle: `${period.current_family_group} Selection Period`,
+              enabled: true
+            });
+          }
+          
+          // Selection ending tomorrow reminder
+          if (automatedSettings.automated_selection_ending_tomorrow_enabled) {
+            const dayBeforeEnd = addDays(endDate, -1);
+            if (isAfter(dayBeforeEnd, now)) {
+              previews.push({
+                id: `sel-end-${period.id}`,
+                type: 'selection_period',
+                reminderType: 'selection_end',
+                sendDate: dayBeforeEnd,
+                recipient: period.current_family_group,
+                familyGroup: period.current_family_group,
+                subject: generateSelectionSubject('end', period),
+                content: generateSelectionContent('end', period),
+                eventDate: endDate,
+                eventTitle: `${period.current_family_group} Selection Deadline`,
+                enabled: true
+              });
+            }
           }
         }
       });
