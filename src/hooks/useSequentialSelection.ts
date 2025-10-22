@@ -96,6 +96,17 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       .eq('rotation_year', rotationYear)
       .order('current_group_index');
 
+    console.log('[useSequentialSelection] Fetched periods:', {
+      periodsCount: periods?.length || 0,
+      error: error?.message,
+      rotationYear,
+      periods: periods?.map(p => ({
+        family: p.current_family_group,
+        start: p.selection_start_date,
+        end: p.selection_end_date
+      }))
+    });
+
     if (error) {
       console.error('[useSequentialSelection] Error fetching periods:', error);
       // Fall back to rotation order logic
@@ -104,6 +115,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     }
 
     if (!periods || periods.length === 0) {
+      console.log('[useSequentialSelection] No periods found, using rotation order');
       // No scheduled periods, use rotation order
       fallbackToRotationOrder(rotationOrder);
       return;
@@ -113,9 +125,18 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    console.log('[useSequentialSelection] Checking periods against today:', today.toISOString());
+    
     for (const period of periods) {
       const startDate = new Date(period.selection_start_date + 'T00:00:00');
       const endDate = new Date(period.selection_end_date + 'T00:00:00');
+      
+      console.log('[useSequentialSelection] Checking period:', {
+        family: period.current_family_group,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        todayInRange: today >= startDate && today <= endDate
+      });
       
       // Check if today falls within this period's date range
       if (today >= startDate && today <= endDate) {
@@ -128,14 +149,25 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         const extension = getExtensionForFamily(period.current_family_group);
         const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
         
+        console.log('[useSequentialSelection] Period matches today, checking eligibility:', {
+          family: period.current_family_group,
+          used,
+          allowed,
+          hasExtension: hasActiveExtension,
+          canSelect: used < allowed || hasActiveExtension
+        });
+        
         if (used < allowed || hasActiveExtension) {
           console.log('[useSequentialSelection] Setting current family based on scheduled period:', period.current_family_group);
           setPrimaryCurrentFamily(period.current_family_group);
           return;
+        } else {
+          console.log('[useSequentialSelection] Family has no selections remaining:', period.current_family_group);
         }
       }
     }
     
+    console.log('[useSequentialSelection] No active period found, using rotation order');
     // If no period is active today, fall back to rotation order
     fallbackToRotationOrder(rotationOrder);
   };
