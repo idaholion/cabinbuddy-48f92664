@@ -407,11 +407,106 @@ export const useTimePeriods = (rotationYear?: number) => {
     }
   };
 
+  // Reconcile usage data with actual reservations
+  const reconcileUsageData = useCallback(async (year: number) => {
+    if (!organization?.id || !rotationData) return;
+
+    try {
+      // Fetch all reservations for this year
+      const { data: reservations, error: resError } = await supabase
+        .from('reservations')
+        .select('family_group, start_date, end_date')
+        .eq('organization_id', organization.id)
+        .gte('start_date', `${year}-01-01`)
+        .lt('start_date', `${year + 1}-01-01`);
+
+      if (resError || !reservations) {
+        console.error('Error fetching reservations for reconciliation:', resError);
+        return;
+      }
+
+      // Count time periods per family (Friday-to-Friday is 1 period)
+      const familyCounts: Record<string, number> = {};
+      reservations.forEach(res => {
+        if (!familyCounts[res.family_group]) {
+          familyCounts[res.family_group] = 0;
+        }
+        // Count Friday-to-Friday periods (7-day periods)
+        const start = new Date(res.start_date);
+        const end = new Date(res.end_date);
+        const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const periods = Math.floor(days / 7);
+        familyCounts[res.family_group] += periods;
+      });
+
+      // Update or create usage records to match actual reservations
+      for (const [familyGroup, actualCount] of Object.entries(familyCounts)) {
+        const { data: existing, error: fetchError } = await supabase
+          .from('time_period_usage')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('family_group', familyGroup)
+          .eq('rotation_year', year)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error('Error checking usage for', familyGroup, fetchError);
+          continue;
+        }
+
+        if (!existing) {
+          // Create new record
+          const { error: insertError } = await supabase
+            .from('time_period_usage')
+            .insert({
+              organization_id: organization.id,
+              family_group: familyGroup,
+              rotation_year: year,
+              time_periods_used: actualCount,
+              time_periods_allowed: rotationData.max_time_slots || 2,
+              last_selection_date: new Date().toISOString()
+            });
+
+          if (insertError) {
+            console.error('Error creating usage record for', familyGroup, insertError);
+          } else {
+            console.log(`[Reconciliation] Created usage record for ${familyGroup}: ${actualCount} periods`);
+          }
+        } else if (existing.time_periods_used !== actualCount) {
+          // Update existing record
+          const { error: updateError } = await supabase
+            .from('time_period_usage')
+            .update({
+              time_periods_used: actualCount,
+              last_selection_date: new Date().toISOString()
+            })
+            .eq('id', existing.id);
+
+          if (updateError) {
+            console.error('Error updating usage for', familyGroup, updateError);
+          } else {
+            console.log(`[Reconciliation] Updated usage for ${familyGroup}: ${existing.time_periods_used} → ${actualCount}`);
+          }
+        }
+      }
+
+      // Refresh usage data after reconciliation
+      await fetchTimePeriodUsage(year);
+    } catch (error) {
+      console.error('Error in reconcileUsageData:', error);
+    }
+  }, [organization?.id, rotationData, fetchTimePeriodUsage]);
+
   useEffect(() => {
     if (organization?.id && rotationData) {
       // Use provided rotation year or default to current year
       const yearToFetch = rotationYear || new Date().getFullYear();
-      fetchTimePeriodUsage(yearToFetch);
+      
+      // First fetch existing usage data
+      fetchTimePeriodUsage(yearToFetch).then(() => {
+        // Then reconcile with actual reservations
+        reconcileUsageData(yearToFetch);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization?.id, rotationData, rotationYear]);
