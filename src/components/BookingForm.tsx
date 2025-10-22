@@ -382,7 +382,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         if (reservation) {
           // Only update time period usage if this is a full time period booking
           if (isTimePeriodBooking) {
-            await updateTimePeriodUsage(data.familyGroup, currentMonth.getFullYear());
+            await updateTimePeriodUsage(data.familyGroup, data.startDate.getFullYear());
           }
           
           toast({
