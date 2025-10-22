@@ -51,10 +51,38 @@ export const getSelectionPeriodDisplayInfo = (
     ? periods.findIndex(p => p.current_family_group === currentFamilyGroup)
     : -1;
 
-  // Track the cumulative start date for scheduled families
-  let nextScheduledStartDate = new Date(today);
+  // Create a map to store calculated dates for each family
+  const familyDates = new Map<string, { actualStartDate: string; actualEndDate: string; daysUntilActual: number }>();
+  
+  // If there's an active family, calculate sequential dates starting from them
+  if (activeIndex >= 0) {
+    let nextDate = new Date(today);
+    
+    // Process families in order: active family, then those after in array, then wrap to beginning
+    for (let i = 0; i < periods.length; i++) {
+      const currentIndex = (activeIndex + i) % periods.length;
+      const period = periods[currentIndex];
+      const isActive = i === 0;
+      
+      const actualStartDate = toDateOnlyString(nextDate);
+      const endDate = new Date(nextDate);
+      endDate.setDate(endDate.getDate() + selectionDays - 1);
+      const actualEndDate = toDateOnlyString(endDate);
+      const daysUntilActual = differenceInDays(nextDate, today);
+      
+      familyDates.set(period.current_family_group, {
+        actualStartDate,
+        actualEndDate,
+        daysUntilActual
+      });
+      
+      // Next family starts after this one ends
+      nextDate = new Date(endDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+    }
+  }
 
-  return periods.map((period, index) => {
+  return periods.map(period => {
     const scheduledStartDate = parseDateOnly(period.selection_start_date);
     const daysUntilScheduled = differenceInDays(scheduledStartDate, today);
     const isCurrentlyActive = currentFamilyGroup === period.current_family_group;
@@ -64,9 +92,7 @@ export const getSelectionPeriodDisplayInfo = (
       currentFamilyGroup,
       isCurrentlyActive,
       scheduledStartDate: period.selection_start_date,
-      daysUntilScheduled,
-      index,
-      activeIndex
+      daysUntilScheduled
     });
     
     let status: 'scheduled' | 'active' | 'completed' = 'scheduled';
@@ -76,14 +102,15 @@ export const getSelectionPeriodDisplayInfo = (
     let actualEndDate: string;
     let daysUntilActual: number;
 
+    // Check if we have calculated dates for this family
+    const calculatedDates = familyDates.get(period.current_family_group);
+    
     if (isCurrentlyActive) {
       // Active family: their turn started today
       status = 'active';
       daysRemaining = getDaysRemaining ? getDaysRemaining(period.current_family_group) : undefined;
-      actualStartDate = toDateOnlyString(today);
-      const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = toDateOnlyString(endDate);
+      actualStartDate = calculatedDates!.actualStartDate;
+      actualEndDate = calculatedDates!.actualEndDate;
       daysUntilActual = 0;
       
       if (daysUntilScheduled > 0) {
@@ -92,10 +119,6 @@ export const getSelectionPeriodDisplayInfo = (
       } else {
         displayText = 'Active Now';
       }
-      
-      // Next scheduled family starts after this one ends
-      nextScheduledStartDate = new Date(endDate);
-      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
     } else if (daysUntilScheduled < 0) {
       // Past their original scheduled date = completed
       status = 'completed';
@@ -103,45 +126,20 @@ export const getSelectionPeriodDisplayInfo = (
       actualStartDate = period.selection_start_date;
       actualEndDate = period.selection_end_date;
       daysUntilActual = daysUntilScheduled;
-    } else if (activeIndex >= 0 && index > activeIndex) {
-      // Families after the active family in the array are scheduled sequentially
+    } else if (calculatedDates) {
+      // Future scheduled date with calculated sequential dates
       status = 'scheduled';
-      daysUntilActual = differenceInDays(nextScheduledStartDate, today);
-      actualStartDate = toDateOnlyString(nextScheduledStartDate);
-      const endDate = new Date(nextScheduledStartDate);
-      endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = toDateOnlyString(endDate);
+      actualStartDate = calculatedDates.actualStartDate;
+      actualEndDate = calculatedDates.actualEndDate;
+      daysUntilActual = calculatedDates.daysUntilActual;
       displayText = `Scheduled in ${daysUntilActual} day${daysUntilActual === 1 ? '' : 's'}`;
-      
-      // Next scheduled family starts after this one ends
-      nextScheduledStartDate = new Date(endDate);
-      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
-    } else if (activeIndex >= 0 && index < activeIndex && daysUntilScheduled >= 0) {
-      // Families before active family but with future scheduled dates go after the active sequence
-      status = 'scheduled';
-      daysUntilActual = differenceInDays(nextScheduledStartDate, today);
-      actualStartDate = toDateOnlyString(nextScheduledStartDate);
-      const endDate = new Date(nextScheduledStartDate);
-      endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = toDateOnlyString(endDate);
-      displayText = `Scheduled in ${daysUntilActual} day${daysUntilActual === 1 ? '' : 's'}`;
-      
-      // Next scheduled family starts after this one ends
-      nextScheduledStartDate = new Date(endDate);
-      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
     } else {
-      // No active family and future scheduled date
+      // Fallback for families without calculated dates
       status = 'scheduled';
-      daysUntilActual = differenceInDays(nextScheduledStartDate, today);
-      actualStartDate = toDateOnlyString(nextScheduledStartDate);
-      const endDate = new Date(nextScheduledStartDate);
-      endDate.setDate(endDate.getDate() + selectionDays - 1);
-      actualEndDate = toDateOnlyString(endDate);
+      actualStartDate = period.selection_start_date;
+      actualEndDate = period.selection_end_date;
+      daysUntilActual = daysUntilScheduled;
       displayText = `Scheduled in ${daysUntilActual} day${daysUntilActual === 1 ? '' : 's'}`;
-      
-      // Next scheduled family starts after this one ends
-      nextScheduledStartDate = new Date(endDate);
-      nextScheduledStartDate.setDate(nextScheduledStartDate.getDate() + 1);
     }
 
     return {
