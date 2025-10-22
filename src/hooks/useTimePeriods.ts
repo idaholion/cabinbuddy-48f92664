@@ -408,8 +408,12 @@ export const useTimePeriods = (rotationYear?: number) => {
   };
 
   // Reconcile usage data with actual reservations
+  const [hasReconciled, setHasReconciled] = useState<Record<number, boolean>>({});
+
   const reconcileUsageData = useCallback(async (year: number) => {
     if (!organization?.id || !rotationData) return;
+
+    console.log(`[Reconciliation] Starting reconciliation for year ${year}`);
 
     try {
       // Fetch all reservations for this year
@@ -492,6 +496,7 @@ export const useTimePeriods = (rotationYear?: number) => {
 
       // Refresh usage data after reconciliation
       await fetchTimePeriodUsage(year);
+      console.log(`[Reconciliation] Completed reconciliation for year ${year}`);
     } catch (error) {
       console.error('Error in reconcileUsageData:', error);
     }
@@ -502,11 +507,22 @@ export const useTimePeriods = (rotationYear?: number) => {
       // Use provided rotation year or default to current year
       const yearToFetch = rotationYear || new Date().getFullYear();
       
-      // First fetch existing usage data
-      fetchTimePeriodUsage(yearToFetch).then(() => {
-        // Then reconcile with actual reservations
-        reconcileUsageData(yearToFetch);
-      });
+      // Only reconcile once per year to prevent automatic advancement
+      if (!hasReconciled[yearToFetch]) {
+        console.log(`[Reconciliation] First load for year ${yearToFetch}, fetching and reconciling`);
+        
+        // First fetch existing usage data
+        fetchTimePeriodUsage(yearToFetch).then(() => {
+          // Then reconcile with actual reservations (only once)
+          reconcileUsageData(yearToFetch).then(() => {
+            setHasReconciled(prev => ({ ...prev, [yearToFetch]: true }));
+          });
+        });
+      } else {
+        console.log(`[Reconciliation] Already reconciled for year ${yearToFetch}, only fetching usage`);
+        // Just fetch usage data without reconciling to avoid triggering state changes
+        fetchTimePeriodUsage(yearToFetch);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization?.id, rotationData, rotationYear]);
