@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { calculateNights } from '@/lib/date-utils';
 
 interface TimePeriodWindow {
   startDate: Date;
@@ -437,8 +436,10 @@ export const useTimePeriods = (rotationYear?: number) => {
           familyCounts[res.family_group] = 0;
         }
         // Count Friday-to-Friday periods (7-day periods)
-        const nights = calculateNights(res.start_date, res.end_date);
-        const periods = Math.floor(nights / 7);
+        const start = new Date(res.start_date);
+        const end = new Date(res.end_date);
+        const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const periods = Math.floor(days / 7);
         familyCounts[res.family_group] += periods;
       });
 
