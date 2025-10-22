@@ -34,7 +34,8 @@ export const getSelectionPeriodDisplayInfo = (
   periods: ReservationPeriod[],
   currentFamilyGroup: string | null,
   getDaysRemaining?: (familyGroup: string) => number,
-  selectionDays: number = 14
+  selectionDays: number = 14,
+  timePeriodUsage?: Map<string, { used: number; allowed: number }>
 ): SelectionPeriodDisplayInfo[] => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -58,11 +59,23 @@ export const getSelectionPeriodDisplayInfo = (
   if (activeIndex >= 0) {
     let nextDate = new Date(today);
     
-    // Process families in order: active family, then those after in array, then wrap to beginning
-    for (let i = 0; i < periods.length; i++) {
-      const currentIndex = (activeIndex + i) % periods.length;
+    // Process families in order, skipping those who have completed their selections
+    let processedCount = 0;
+    let currentOffset = 0;
+    
+    while (processedCount < periods.length && currentOffset < periods.length * 2) {
+      const currentIndex = (activeIndex + currentOffset) % periods.length;
       const period = periods[currentIndex];
-      const isActive = i === 0;
+      
+      // Check if this family has completed their selections
+      const usage = timePeriodUsage?.get(period.current_family_group);
+      const hasCompleted = usage && usage.used >= usage.allowed;
+      
+      // Skip completed families unless they're the current active family
+      if (hasCompleted && currentOffset > 0) {
+        currentOffset++;
+        continue;
+      }
       
       const actualStartDate = toDateOnlyString(nextDate);
       const endDate = new Date(nextDate);
@@ -79,6 +92,9 @@ export const getSelectionPeriodDisplayInfo = (
       // Next family starts after this one ends
       nextDate = new Date(endDate);
       nextDate.setDate(nextDate.getDate() + 1);
+      
+      processedCount++;
+      currentOffset++;
     }
   }
 
@@ -87,12 +103,18 @@ export const getSelectionPeriodDisplayInfo = (
     const daysUntilScheduled = differenceInDays(scheduledStartDate, today);
     const isCurrentlyActive = currentFamilyGroup === period.current_family_group;
     
+    // Check if this family has completed their selections
+    const usage = timePeriodUsage?.get(period.current_family_group);
+    const hasCompleted = usage && usage.used >= usage.allowed;
+    
     console.log('[getSelectionPeriodDisplayInfo] Processing period:', {
       familyGroup: period.current_family_group,
       currentFamilyGroup,
       isCurrentlyActive,
       scheduledStartDate: period.selection_start_date,
-      daysUntilScheduled
+      daysUntilScheduled,
+      usage,
+      hasCompleted
     });
     
     let status: 'scheduled' | 'active' | 'completed' = 'scheduled';
@@ -105,7 +127,14 @@ export const getSelectionPeriodDisplayInfo = (
     // Check if we have calculated dates for this family
     const calculatedDates = familyDates.get(period.current_family_group);
     
-    if (isCurrentlyActive) {
+    // If family has completed selections and is not currently active, mark as completed
+    if (hasCompleted && !isCurrentlyActive) {
+      status = 'completed';
+      displayText = 'Selection Completed';
+      actualStartDate = period.selection_start_date;
+      actualEndDate = period.selection_end_date;
+      daysUntilActual = daysUntilScheduled;
+    } else if (isCurrentlyActive) {
       // Active family: their turn started today
       status = 'active';
       daysRemaining = getDaysRemaining ? getDaysRemaining(period.current_family_group) : undefined;

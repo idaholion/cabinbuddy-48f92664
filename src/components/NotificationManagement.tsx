@@ -290,36 +290,58 @@ export const NotificationManagement = () => {
     }
   };
 
-  const fetchUpcomingSelectionPeriods = () => {
+  const fetchUpcomingSelectionPeriods = async () => {
     console.log('[NotificationManagement] fetchUpcomingSelectionPeriods called:', {
       currentFamilyGroup,
       rotationYear,
       selectionDays: rotationData?.selection_days
     });
     
-    // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
-    const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
-    
-    console.log('[NotificationManagement] scheduledPeriods:', scheduledPeriods);
-    
-    // Merge scheduled periods with actual sequential selection status
-    const displayInfo = getSelectionPeriodDisplayInfo(
-      scheduledPeriods,
-      currentFamilyGroup,
-      getDaysRemaining,
-      rotationData?.selection_days || 14
-    );
-    
-    console.log('[NotificationManagement] displayInfo after getSelectionPeriodDisplayInfo:', displayInfo);
-    
-    // Filter to only show active or upcoming
-    const upcoming = displayInfo.filter(info => 
-      info.status === 'active' || info.status === 'scheduled'
-    );
-    
-    console.log('[NotificationManagement] final upcoming periods:', upcoming);
-    
-    setUpcomingSelectionPeriods(upcoming);
+    try {
+      // Fetch time period usage to identify completed families
+      const { data: usageData } = await supabase
+        .from('time_period_usage')
+        .select('family_group, time_periods_used, time_periods_allowed')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear);
+      
+      // Create usage map
+      const usageMap = new Map(
+        usageData?.map(u => [
+          u.family_group, 
+          { used: u.time_periods_used, allowed: u.time_periods_allowed }
+        ]) || []
+      );
+      
+      console.log('[NotificationManagement] usageMap:', Array.from(usageMap.entries()));
+      
+      // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
+      const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
+      
+      console.log('[NotificationManagement] scheduledPeriods:', scheduledPeriods);
+      
+      // Merge scheduled periods with actual sequential selection status
+      const displayInfo = getSelectionPeriodDisplayInfo(
+        scheduledPeriods,
+        currentFamilyGroup,
+        getDaysRemaining,
+        rotationData?.selection_days || 14,
+        usageMap
+      );
+      
+      console.log('[NotificationManagement] displayInfo after getSelectionPeriodDisplayInfo:', displayInfo);
+      
+      // Filter to only show active or upcoming (not completed)
+      const upcoming = displayInfo.filter(info => 
+        info.status === 'active' || info.status === 'scheduled'
+      );
+      
+      console.log('[NotificationManagement] final upcoming periods:', upcoming);
+      
+      setUpcomingSelectionPeriods(upcoming);
+    } catch (error) {
+      console.error('[NotificationManagement] Error fetching selection periods:', error);
+    }
   };
 
 
