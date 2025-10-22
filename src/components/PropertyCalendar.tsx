@@ -1032,7 +1032,6 @@ const getBookingsForDate = (date: Date) => {
                     setCurrentMonth(newDate);
                     onMonthChange?.(newDate);
                   }}
-                  reservations={reservations}
                   onNavigateMonth={navigateMonth}
                 />
                 
