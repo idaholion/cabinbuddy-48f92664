@@ -347,7 +347,6 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Team</strong></p>
             </div>
           `;
-        }
           
           smsMessage = `Hi ${reservation.guest_name}! Your cabin reservation (${reservation.family_group_name}) is in ${days_until} day${days_until !== 1 ? 's' : ''}. Check-in: ${new Date(reservation.check_in_date).toLocaleDateString()}. Check your email for details. - ${organizationName}`;
         }
