@@ -1153,9 +1153,21 @@ const getBookingsForDate = (date: Date) => {
                       const target = e.target as HTMLElement;
                       const isClickingBookingBar = target.closest('[data-booking-bar="true"]');
                       
+                      console.log('=== Calendar cell clicked ===', {
+                        date: day.toDateString(),
+                        target: target.tagName,
+                        targetClasses: target.className,
+                        isClickingBookingBar: !!isClickingBookingBar,
+                        hasBookings: dayBookings.length > 0,
+                        isAvailableForDrag
+                      });
+                      
                       if (!isClickingBookingBar) {
                         // Allow time period selection even if there are bookings
+                        console.log('=== Calling handleDateClick ===');
                         handleDateClick(day);
+                      } else {
+                        console.log('=== Detected booking bar click, not calling handleDateClick ===');
                       }
                     }}
                     onMouseDown={isAvailableForDrag ? (e) => handleDateMouseDown(day, e) : undefined}
