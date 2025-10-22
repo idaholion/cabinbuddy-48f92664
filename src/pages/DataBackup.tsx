@@ -352,10 +352,11 @@ export default function DataBackup() {
               </div>
               
               <div className="text-base text-muted-foreground">
-                <p>• Automatic backups are created weekly</p>
+                <p>• Automatic backups are created daily at 2 AM UTC</p>
                 <p>• Only the 3 most recent backups are kept</p>
                 <p>• Manual backups can be created anytime</p>
                 <p>• Backups include all critical organization data</p>
+                <p>• Download backups locally for extra safety</p>
               </div>
             </CardContent>
           </Card>

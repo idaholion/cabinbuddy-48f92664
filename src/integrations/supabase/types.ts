@@ -3175,6 +3175,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reset_selection_for_testing: {
+        Args: { org_id: string; target_family_name: string }
+        Returns: Json
+      }
       revoke_guest_access: { Args: { org_id: string }; Returns: boolean }
       set_primary_organization: { Args: { org_id: string }; Returns: boolean }
       supervisor_bulk_remove_host_member: {
