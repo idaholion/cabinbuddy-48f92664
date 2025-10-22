@@ -59,10 +59,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization?.id && currentFamilyGroup !== undefined) {
+    if (organization?.id) {
       fetchData();
     }
-  }, [organization?.id, reservations, workWeekends, currentFamilyGroup]);
+  }, [organization?.id, reservations, workWeekends]);
 
   const fetchData = async () => {
     if (!organization?.id) return;
