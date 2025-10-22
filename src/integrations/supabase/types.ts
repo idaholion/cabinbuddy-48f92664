@@ -2994,14 +2994,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      assign_default_colors: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      backfill_checklist_images: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      assign_default_colors: { Args: never; Returns: undefined }
+      backfill_checklist_images: { Args: never; Returns: number }
       claim_family_member_profile: {
         Args: {
           p_family_group_name: string
@@ -3043,10 +3037,7 @@ export type Database = {
         Args: { p_expires_days?: number; p_notes?: string }
         Returns: string
       }
-      debug_auth_context: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      debug_auth_context: { Args: never; Returns: Json }
       delete_image_safely: {
         Args: {
           p_force_delete?: boolean
@@ -3071,14 +3062,8 @@ export type Database = {
         Args: { p_current_group_id?: string; p_organization_id: string }
         Returns: string[]
       }
-      get_current_user_email: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_next_invoice_number: {
-        Args: { org_id: string }
-        Returns: string
-      }
+      get_current_user_email: { Args: never; Returns: string }
+      get_next_invoice_number: { Args: { org_id: string }; Returns: string }
       get_organization_user_emails: {
         Args: { org_id: string }
         Returns: {
@@ -3147,12 +3132,9 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: Json
       }
-      get_user_organization_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_organization_id: { Args: never; Returns: string }
       get_user_organizations: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           is_primary: boolean
           joined_at: string
@@ -3170,22 +3152,13 @@ export type Database = {
         Args: { p_family_group_name: string; p_organization_id: string }
         Returns: boolean
       }
-      is_organization_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_supervisor: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      is_organization_admin: { Args: never; Returns: boolean }
+      is_supervisor: { Args: never; Returns: boolean }
       link_orphaned_payments_to_reservations: {
         Args: { p_organization_id: string }
         Returns: Json
       }
-      migrate_existing_checklist_images: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      migrate_existing_checklist_images: { Args: never; Returns: number }
       rename_family_group: {
         Args: {
           p_new_name: string
@@ -3202,14 +3175,8 @@ export type Database = {
         }
         Returns: Json
       }
-      revoke_guest_access: {
-        Args: { org_id: string }
-        Returns: boolean
-      }
-      set_primary_organization: {
-        Args: { org_id: string }
-        Returns: boolean
-      }
+      revoke_guest_access: { Args: { org_id: string }; Returns: boolean }
+      set_primary_organization: { Args: { org_id: string }; Returns: boolean }
       supervisor_bulk_remove_host_member: {
         Args: {
           p_confirmation_code: string
@@ -3241,19 +3208,16 @@ export type Database = {
         Returns: number
       }
       supervisor_cleanup_duplicate_family_groups: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: string
       }
       supervisor_delete_organization: {
         Args: { p_confirmation_code: string; p_organization_id: string }
         Returns: string
       }
-      supervisor_fix_barb_reservations: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      supervisor_fix_barb_reservations: { Args: never; Returns: string }
       supervisor_fix_primary_organization_duplicates: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Json
       }
       supervisor_fix_user_email: {
@@ -3276,7 +3240,7 @@ export type Database = {
         Returns: Json
       }
       supervisor_normalize_emails_and_fix_membership: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: string
       }
       supervisor_remove_user_from_organization: {
@@ -3315,10 +3279,7 @@ export type Database = {
         Args: { operation_name?: string; target_org_id: string }
         Returns: boolean
       }
-      validate_trial_code: {
-        Args: { p_code: string }
-        Returns: boolean
-      }
+      validate_trial_code: { Args: { p_code: string }; Returns: boolean }
     }
     Enums: {
       billing_cycle_status: "draft" | "active" | "completed" | "cancelled"
