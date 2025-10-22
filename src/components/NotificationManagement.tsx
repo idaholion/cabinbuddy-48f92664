@@ -336,22 +336,56 @@ export const NotificationManagement = () => {
       
       // Calculate primary phase remaining turns
       if (!isSecondaryPhase) {
-        const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
-        const primaryDisplayInfo = getSelectionPeriodDisplayInfo(
-          scheduledPeriods,
-          currentFamilyGroup,
-          getDaysRemaining,
-          rotationData?.selection_days || 14,
-          usageMap
-        );
+        // Generate complete primary schedule from rotation order
+        const rotationOrder = getRotationForYear(rotationYear);
+        const primaryDays = rotationData?.selection_days || 14;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         
-        // Only show active or scheduled (not completed)
-        const primaryUpcoming = primaryDisplayInfo.filter(info => 
-          info.status === 'active' || info.status === 'scheduled'
-        );
+        // Find current family index in rotation
+        const currentIndex = rotationOrder.findIndex(f => f === currentFamilyGroup);
         
-        // Always show remaining primary turns
-        allUpcoming.push(...primaryUpcoming);
+        let nextDate = new Date(today);
+        
+        // Generate turns for all families that haven't completed primary
+        rotationOrder.forEach((familyGroup, index) => {
+          const usage = usageData?.find(u => u.family_group === familyGroup);
+          const primaryUsed = usage?.time_periods_used || 0;
+          const primaryAllowed = usage?.time_periods_allowed || 2;
+          
+          // Skip families that already completed their primary selections
+          if (primaryUsed >= primaryAllowed) {
+            return;
+          }
+          
+          // Skip families that already went (before current family)
+          if (currentIndex >= 0 && index < currentIndex) {
+            return;
+          }
+          
+          const isActive = familyGroup === currentFamilyGroup;
+          const startDate = toDateOnlyString(nextDate);
+          const endDate = new Date(nextDate);
+          endDate.setDate(endDate.getDate() + primaryDays - 1);
+          const endDateStr = toDateOnlyString(endDate);
+          const daysUntil = differenceInDays(nextDate, today);
+          
+          allUpcoming.push({
+            familyGroup,
+            status: isActive ? 'active' : 'scheduled',
+            scheduledStartDate: startDate,
+            scheduledEndDate: endDateStr,
+            daysUntilScheduled: daysUntil,
+            isCurrentlyActive: isActive,
+            displayText: isActive 
+              ? `Active Now (Primary Selection - up to 2 periods)` 
+              : `Primary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'} (up to 2 periods)`,
+            daysRemaining: isActive ? getDaysRemaining(familyGroup) : undefined
+          });
+          
+          nextDate = new Date(endDate);
+          nextDate.setDate(nextDate.getDate() + 1);
+        });
         
         // Check if primary phase is completely done
         const allPrimaryComplete = usageData?.every(u => 
@@ -365,9 +399,9 @@ export const NotificationManagement = () => {
           const secondaryOrder = [...rotationOrder].reverse();
           const secondaryDays = rotationData?.secondary_selection_days || 7;
           
-          // Start secondary after last primary turn ends
-          const lastPrimaryEndDate = primaryUpcoming.length > 0 
-            ? new Date(primaryUpcoming[primaryUpcoming.length - 1].scheduledEndDate)
+          // Start secondary after last primary turn ends (calculate from last family in allUpcoming)
+          const lastPrimaryEndDate = allUpcoming.length > 0 
+            ? new Date(allUpcoming[allUpcoming.length - 1].scheduledEndDate)
             : new Date();
           lastPrimaryEndDate.setDate(lastPrimaryEndDate.getDate() + 1);
           
