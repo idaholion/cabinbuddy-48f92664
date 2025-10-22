@@ -17,6 +17,11 @@ interface RequestBody {
   notification_type?: 'ending_tomorrow';
 }
 
+interface UsageData {
+  time_periods_used: number;
+  time_periods_allowed: number;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -61,6 +66,33 @@ const handler = async (req: Request): Promise<Response> => {
     const periodsAllowed = usageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
+    // Get all usage data to determine if we're in primary or secondary phase
+    const { data: allUsageData } = await supabase
+      .from('time_period_usage')
+      .select('time_periods_used, time_periods_allowed')
+      .eq('organization_id', organization_id)
+      .eq('rotation_year', rotation_year);
+
+    // Determine if we're in secondary phase (all families have used their primary allocation)
+    const isSecondaryPhase = allUsageData?.every(
+      (usage: UsageData) => usage.time_periods_used >= usage.time_periods_allowed
+    ) || false;
+
+    // Get rotation settings for selection days
+    const { data: rotationData } = await supabase
+      .from('rotation_settings')
+      .select('selection_days, secondary_selection_days')
+      .eq('organization_id', organization_id)
+      .eq('rotation_year', rotation_year)
+      .maybeSingle();
+
+    const selectionDays = isSecondaryPhase 
+      ? (rotationData?.secondary_selection_days || 7)
+      : (rotationData?.selection_days || 14);
+    
+    const selectionWeeks = selectionDays === 7 ? '1 week' : '2 weeks';
+    const maxPeriods = isSecondaryPhase ? '1 additional period' : 'up to 2 periods';
+
     // Send notification - use appropriate type based on notification_type
     const notificationType = notification_type === 'ending_tomorrow' ? 'selection_period_end' : 'selection_period_start';
     
@@ -76,7 +108,10 @@ const handler = async (req: Request): Promise<Response> => {
           selection_year: rotation_year.toString(),
           selection_start_date: periodData?.selection_start_date || '',
           selection_end_date: periodData?.selection_end_date || '',
-          available_periods: `${periodsRemaining} of ${periodsAllowed} periods remaining`
+          available_periods: `${periodsRemaining} of ${periodsAllowed} periods remaining`,
+          selection_window: selectionWeeks,
+          max_periods: maxPeriods,
+          is_secondary_phase: isSecondaryPhase
         }
       }
     });

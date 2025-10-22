@@ -70,6 +70,9 @@ interface NotificationRequest {
     selection_start_date: string;
     selection_end_date: string;
     available_periods: string;
+    selection_window?: string;  // e.g., "2 weeks" or "1 week"
+    max_periods?: string;  // e.g., "up to 2 periods" or "1 additional period"
+    is_secondary_phase?: boolean;
   };
   // For work weekend notifications
   work_weekend_data?: {
@@ -460,31 +463,47 @@ const handler = async (req: Request): Promise<Response> => {
           if (startTemplate.sms_message_template) {
             smsMessage = replaceVariables(startTemplate.sms_message_template, startVariables);
           } else {
-            smsMessage = `Hi ${selection_data.guest_name}! Your calendar selection for ${selection_data.selection_year} starts in 3 days (${selection_data.selection_start_date}). Be ready! - ${organizationName}`;
+            const selectionWindow = selection_data.selection_window || '2 weeks';
+            const maxPeriods = selection_data.max_periods || 'up to 2 periods';
+            const phaseText = selection_data.is_secondary_phase ? 'secondary calendar selection' : 'calendar selection';
+            smsMessage = `Hi ${selection_data.guest_name}! Your ${phaseText} for ${selection_data.selection_year} starts now. You have ${selectionWindow} to select ${maxPeriods}. - ${organizationName}`;
           }
         } else {
           // Default selection period start template
-          subject = `Calendar Selection Period Starting Soon - ${selection_data.selection_year}`;
+          const selectionWindow = selection_data.selection_window || '2 weeks';
+          const maxPeriods = selection_data.max_periods || 'up to 2 periods';
+          const phaseText = selection_data.is_secondary_phase ? 'Secondary Calendar Selection' : 'Calendar Selection';
+          
+          subject = `${phaseText} Period Starts Now - ${selection_data.selection_year}`;
           htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
-              <h1 style="color: #2d5d2d; text-align: center;">📅 Your Selection Period Starts Soon!</h1>
+              <h1 style="color: #2d5d2d; text-align: center;">📅 Your Selection Period Starts Now!</h1>
               <p>Hi ${selection_data.guest_name},</p>
-              <p>Just a reminder that your calendar selection period for <strong>${selection_data.selection_year}</strong> starts in 3 days!</p>
+              <p>Your ${phaseText.toLowerCase()} period for <strong>${selection_data.selection_year}</strong> is now active!</p>
               
-              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">📋 Selection Details:</h3>
                 <p><strong>Family Group:</strong> ${selection_data.family_group_name}</p>
-                <p><strong>Selection Period:</strong> ${selection_data.selection_start_date} to ${selection_data.selection_end_date}</p>
+                <p><strong>Selection Window:</strong> ${selectionWindow}</p>
+                <p><strong>You Can Select:</strong> ${maxPeriods}</p>
                 <p><strong>Available Periods:</strong> ${selection_data.available_periods}</p>
               </div>
               
-              <p>Please be ready to log into the cabin management system when your selection period opens.</p>
+              <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #f57c00; margin-top: 0;">⏰ Action Needed</h3>
+                <p>Please log into the cabin management system to make your selections. You have ${selectionWindow} to complete your selections.</p>
+              </div>
+              
+              <p>Happy selecting!</p>
               <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
             </div>
           `;
         }
         
-        smsMessage = `Hi ${selection_data.guest_name}! Your calendar selection for ${selection_data.selection_year} starts in 3 days (${selection_data.selection_start_date}). Be ready! - ${organizationName}`;
+        const selectionWindow = selection_data.selection_window || '2 weeks';
+        const maxPeriods = selection_data.max_periods || 'up to 2 periods';
+        const phaseText = selection_data.is_secondary_phase ? 'secondary calendar selection' : 'calendar selection';
+        smsMessage = `Hi ${selection_data.guest_name}! Your ${phaseText} for ${selection_data.selection_year} starts now. You have ${selectionWindow} to select ${maxPeriods}. - ${organizationName}`;
         break;
 
       case 'selection_period_end':
