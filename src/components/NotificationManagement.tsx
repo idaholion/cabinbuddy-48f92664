@@ -16,6 +16,8 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 import { getSelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
 import type { SelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
+import { toDateOnlyString } from "@/lib/date-utils";
+import { differenceInDays } from "date-fns";
 
 interface ReservationPeriod {
   id: string;
@@ -89,7 +91,7 @@ export const NotificationManagement = () => {
   const { sendNotification } = useNotifications();
   const { workWeekends } = useWorkWeekends();
   const { getUpcomingSelectionPeriods, periods, loading: periodsLoading } = useReservationPeriods();
-  const { getSelectionRotationYear, rotationData, loading: rotationLoading } = useRotationOrder();
+  const { getSelectionRotationYear, getRotationForYear, rotationData, loading: rotationLoading } = useRotationOrder();
   
   // Use centralized rotation year calculation that matches Calendar page
   // Wait for rotationData to load before calculating year
@@ -301,9 +303,20 @@ export const NotificationManagement = () => {
       // Fetch time period usage to identify completed families
       const { data: usageData } = await supabase
         .from('time_period_usage')
-        .select('family_group, time_periods_used, time_periods_allowed')
+        .select('family_group, time_periods_used, time_periods_allowed, secondary_periods_used')
         .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear);
+      
+      // Fetch secondary selection status
+      const { data: secondaryData } = await supabase
+        .from('secondary_selection_status')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .maybeSingle();
+      
+      const isSecondaryPhase = secondaryData?.started_at != null;
+      const secondaryCurrentFamily = secondaryData?.current_family_group;
       
       // Create usage map
       const usageMap = new Map(
@@ -313,32 +326,132 @@ export const NotificationManagement = () => {
         ]) || []
       );
       
-      console.log('[NotificationManagement] usageMap:', Array.from(usageMap.entries()));
+      console.log('[NotificationManagement] Phase info:', {
+        isSecondaryPhase,
+        secondaryCurrentFamily,
+        usageMap: Array.from(usageMap.entries())
+      });
       
-      // Pass currentFamilyGroup so it includes the active family even if scheduled date is far out
-      const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
+      const allUpcoming: SelectionPeriodDisplayInfo[] = [];
       
-      console.log('[NotificationManagement] scheduledPeriods:', scheduledPeriods);
+      // Calculate primary phase remaining turns
+      if (!isSecondaryPhase) {
+        const scheduledPeriods = getUpcomingSelectionPeriods(currentFamilyGroup || undefined);
+        const primaryDisplayInfo = getSelectionPeriodDisplayInfo(
+          scheduledPeriods,
+          currentFamilyGroup,
+          getDaysRemaining,
+          rotationData?.selection_days || 14,
+          usageMap
+        );
+        
+        // Only show active or scheduled (not completed)
+        const primaryUpcoming = primaryDisplayInfo.filter(info => 
+          info.status === 'active' || info.status === 'scheduled'
+        );
+        
+        allUpcoming.push(...primaryUpcoming);
+        
+        // Check if primary phase is done or nearly done - if so, preview secondary turns
+        const allPrimaryComplete = usageData?.every(u => 
+          u.time_periods_used >= u.time_periods_allowed
+        );
+        
+        if (allPrimaryComplete || primaryUpcoming.length <= 2) {
+          // Calculate secondary phase turns
+          const rotationOrder = getRotationForYear(rotationYear);
+          const secondaryOrder = [...rotationOrder].reverse();
+          const secondaryDays = rotationData?.secondary_selection_days || 7;
+          
+          // Calculate start date for secondary (after last primary turn ends)
+          const lastPrimaryEndDate = primaryUpcoming.length > 0 
+            ? new Date(primaryUpcoming[primaryUpcoming.length - 1].scheduledEndDate)
+            : new Date();
+          lastPrimaryEndDate.setDate(lastPrimaryEndDate.getDate() + 1);
+          
+          let nextDate = lastPrimaryEndDate;
+          
+          secondaryOrder.forEach(familyGroup => {
+            const usage = usageData?.find(u => u.family_group === familyGroup);
+            const secondaryUsed = usage?.secondary_periods_used || 0;
+            const secondaryAllowed = rotationData?.secondary_max_periods || 1;
+            
+            if (secondaryUsed < secondaryAllowed) {
+              const startDate = toDateOnlyString(nextDate);
+              const endDate = new Date(nextDate);
+              endDate.setDate(endDate.getDate() + secondaryDays - 1);
+              const endDateStr = toDateOnlyString(endDate);
+              const daysUntil = differenceInDays(nextDate, new Date());
+              
+              allUpcoming.push({
+                familyGroup,
+                status: 'scheduled',
+                scheduledStartDate: startDate,
+                scheduledEndDate: endDateStr,
+                daysUntilScheduled: daysUntil,
+                isCurrentlyActive: false,
+                displayText: `Secondary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`
+              });
+              
+              nextDate = new Date(endDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+            }
+          });
+        }
+      } else {
+        // We're in secondary phase
+        const rotationOrder = getRotationForYear(rotationYear);
+        const secondaryOrder = [...rotationOrder].reverse();
+        const secondaryDays = rotationData?.secondary_selection_days || 7;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let nextDate = new Date(today);
+        
+        // Find the current family index
+        const currentIndex = secondaryOrder.findIndex(f => f === secondaryCurrentFamily);
+        
+        secondaryOrder.forEach((familyGroup, index) => {
+          const usage = usageData?.find(u => u.family_group === familyGroup);
+          const secondaryUsed = usage?.secondary_periods_used || 0;
+          const secondaryAllowed = rotationData?.secondary_max_periods || 1;
+          const isActive = familyGroup === secondaryCurrentFamily;
+          
+          // Skip completed families (unless they're currently active)
+          if (secondaryUsed >= secondaryAllowed && !isActive) {
+            return;
+          }
+          
+          // Skip families that already went before current
+          if (currentIndex >= 0 && index < currentIndex && !isActive) {
+            return;
+          }
+          
+          const startDate = toDateOnlyString(nextDate);
+          const endDate = new Date(nextDate);
+          endDate.setDate(endDate.getDate() + secondaryDays - 1);
+          const endDateStr = toDateOnlyString(endDate);
+          const daysUntil = differenceInDays(nextDate, today);
+          
+          allUpcoming.push({
+            familyGroup,
+            status: isActive ? 'active' : 'scheduled',
+            scheduledStartDate: startDate,
+            scheduledEndDate: endDateStr,
+            daysUntilScheduled: daysUntil,
+            isCurrentlyActive: isActive,
+            displayText: isActive ? 'Active Now (Secondary)' : `Secondary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'}`,
+            daysRemaining: isActive ? getDaysRemaining(familyGroup) : undefined
+          });
+          
+          nextDate = new Date(endDate);
+          nextDate.setDate(nextDate.getDate() + 1);
+        });
+      }
       
-      // Merge scheduled periods with actual sequential selection status
-      const displayInfo = getSelectionPeriodDisplayInfo(
-        scheduledPeriods,
-        currentFamilyGroup,
-        getDaysRemaining,
-        rotationData?.selection_days || 14,
-        usageMap
-      );
+      console.log('[NotificationManagement] allUpcoming:', allUpcoming);
       
-      console.log('[NotificationManagement] displayInfo after getSelectionPeriodDisplayInfo:', displayInfo);
-      
-      // Filter to only show active or upcoming (not completed)
-      const upcoming = displayInfo.filter(info => 
-        info.status === 'active' || info.status === 'scheduled'
-      );
-      
-      console.log('[NotificationManagement] final upcoming periods:', upcoming);
-      
-      setUpcomingSelectionPeriods(upcoming);
+      setUpcomingSelectionPeriods(allUpcoming);
     } catch (error) {
       console.error('[NotificationManagement] Error fetching selection periods:', error);
     }
