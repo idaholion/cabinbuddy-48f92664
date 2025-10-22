@@ -233,10 +233,11 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       arr.findIndex(h => h.email?.toLowerCase() === host.email?.toLowerCase()) === index
     ) : [];
 
-  // Calculate time period windows for current month
+  // Calculate time period windows for the month of the selected dates (or editing reservation)
+  const relevantMonth = selectedStartDate || (editingReservation ? parseLocalDate(editingReservation.start_date) : currentMonth);
   const timePeriodWindows = calculateTimePeriodWindows(
-    currentMonth.getFullYear(),
-    currentMonth
+    relevantMonth.getFullYear(),
+    relevantMonth
   );
 
   // Custom validation for edit mode
