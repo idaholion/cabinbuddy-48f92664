@@ -527,36 +527,8 @@ const getBookingsForDate = (date: Date) => {
     
     if (isDragging) return;
     
-    // First check if there are existing reservations on this date (unfiltered)
-    const allBookings = reservations.filter(reservation => {
-      const startDate = parseLocalDate(reservation.start_date);
-      const endDate = parseLocalDate(reservation.end_date);
-      
-      // Normalize dates to avoid timezone issues
-      const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-      const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      
-      return checkDate >= reservationStart && checkDate <= reservationEnd;
-    });
-    
-    console.log('=== Date click analysis ===', {
-      clickedDate: date.toDateString(),
-      allBookingsFound: allBookings.length,
-      bookingDetails: allBookings.map(b => ({
-        id: b.id,
-        family: b.family_group,
-        start: b.start_date,
-        end: b.end_date
-      }))
-    });
-    
-    // If there are existing reservations, prioritize opening the first one for editing
-    if (allBookings.length > 0) {
-      console.log('=== Opening existing reservation for editing ===', allBookings[0]);
-      handleEditReservation(allBookings[0]);
-      return;
-    }
+    // Skip the reservation check - let booking bars handle their own clicks
+    // This function should only handle time period selection
     
     const validation = isDateSelectable(date);
     if (!validation.selectable) {
