@@ -186,7 +186,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const getWorkWeekendsForDate = (date: Date) => {
     if (!filterOptions.showWorkWeekends) return [];
     
-    return workWeekends.filter(ww => {
+    const matchingWeekends = workWeekends.filter(ww => {
       if (ww.status !== 'fully_approved') return false;
       const startDate = parseLocalDate(ww.start_date);
       const endDate = parseLocalDate(ww.end_date);
@@ -195,8 +195,26 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
       const workWeekendStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const workWeekendEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       
-      return checkDate >= workWeekendStart && checkDate <= workWeekendEnd;
+      const matches = checkDate >= workWeekendStart && checkDate <= workWeekendEnd;
+      
+      // Debug logging for June/July 2026 dates
+      if (date.getFullYear() === 2026 && (date.getMonth() === 5 || date.getMonth() === 6)) {
+        console.log('[WorkWeekend Debug]', {
+          checkDate: date.toISOString().split('T')[0],
+          workWeekend: {
+            title: ww.title,
+            start: ww.start_date,
+            end: ww.end_date,
+            status: ww.status
+          },
+          matches
+        });
+      }
+      
+      return matches;
     });
+    
+    return matchingWeekends;
   };
 
   // Function to determine text color based on background color for better contrast
