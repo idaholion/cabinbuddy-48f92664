@@ -157,17 +157,42 @@ Deno.serve(async (req) => {
     const paymentRecords = [];
 
     // Create payments for reservations without them
+    // ONLY if they already have occupancy data from check-ins
     for (const reservation of reservations || []) {
       if (existingReservationIds.has(reservation.id)) {
         continue;
       }
 
       try {
-        // Calculate billing using organization settings
-        const nights = Math.ceil((new Date(reservation.end_date).getTime() - new Date(reservation.start_date).getTime()) / (1000 * 60 * 60 * 24));
-        const guests = reservation.guest_count || 4;
+        // Check if there's existing occupancy data from checkin_sessions
+        const { data: checkinData, error: checkinError } = await supabase
+          .from('checkin_sessions')
+          .select('daily_occupancy')
+          .eq('organization_id', organizationId)
+          .eq('family_group', reservation.family_group)
+          .gte('check_date', reservation.start_date)
+          .lt('check_date', reservation.end_date)
+          .order('check_date');
         
-        // Use organization's actual settings
+        if (checkinError) {
+          console.error(`Error fetching checkin data for reservation ${reservation.id}:`, checkinError);
+          continue;
+        }
+        
+        // Skip if no occupancy data exists - user needs to enter it via "Edit Occupancy"
+        if (!checkinData || checkinData.length === 0) {
+          console.log(`Skipping reservation ${reservation.id} - no occupancy data yet`);
+          continue;
+        }
+        
+        // Build daily occupancy from checkin sessions
+        const dailyOccupancy = checkinData.map((session: any) => ({
+          date: session.check_date,
+          guests: session.guest_count || 0,
+          cost: 0, // Will be calculated below
+        }));
+        
+        // Calculate billing using organization settings and actual occupancy
         const billingConfig: BillingConfig = {
           method: configData.financial_method || 'per-person-per-day',
           amount: configData.nightly_rate || 0,
@@ -175,25 +200,24 @@ Deno.serve(async (req) => {
           taxRate: configData.tax_rate || 0,
         };
         
-        const billing = BillingCalculator.calculateStayBilling(
-          billingConfig,
-          {
-            nights,
-            guests,
-            checkInDate: new Date(reservation.start_date),
-            checkOutDate: new Date(reservation.end_date),
-          }
-        );
+        // Calculate costs for each day
+        let totalCost = 0;
+        for (const day of dailyOccupancy) {
+          const dayCost = day.guests * billingConfig.amount;
+          day.cost = dayCost;
+          totalCost += dayCost;
+        }
 
         paymentRecords.push({
           organization_id: organizationId,
           reservation_id: reservation.id,
           family_group: reservation.family_group,
-          amount: billing.total,
+          amount: totalCost,
           amount_paid: 0,
           status: 'pending',
           payment_type: 'use_fee',
-          description: `Season ${year} - ${reservation.family_group}`,
+          description: `Use fee - ${reservation.start_date} to ${reservation.end_date}`,
+          daily_occupancy: dailyOccupancy,
           created_by_user_id: user.id,
         });
 
