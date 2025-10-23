@@ -352,10 +352,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       } else {
         // Create new reservation
-        // Consider it a time period booking if:
+        // Consider it a time period booking ONLY if:
         // 1. It's during their sequential selection turn
         // 2. They're booking a full week (7 nights)
+        // 3. Admin hasn't overridden it as a manual booking
         const isTimePeriodBooking = 
+          !data.adminOverride &&
           data.familyGroup === currentTurnGroup && 
           nights === 7;
 
@@ -371,9 +373,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           end_date: data.endDate.toISOString().split('T')[0],
           family_group: data.familyGroup,
           total_cost: data.totalCost,
-          allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : undefined,
-          allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : undefined,
-          time_period_number: isTimePeriodBooking ? 1 : undefined,
+          allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : null,
+          allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : null,
+          time_period_number: isTimePeriodBooking ? 1 : null,
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
