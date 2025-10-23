@@ -352,9 +352,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       } else {
         // Create new reservation
-        // Check if organization uses Static Weeks method (time period windows)
-        const timePeriodWindows = calculateTimePeriodWindows(currentYear, currentMonth);
-        const usesStaticWeeks = timePeriodWindows.length > 0 && rotationData?.max_time_slots;
+        // Check if organization uses Static Weeks method (virtual weeks system)
+        // For "Group Order Rotates", use_virtual_weeks_system should be false/undefined
+        const usesStaticWeeks = rotationData?.use_virtual_weeks_system === true;
         
         // Consider it a time period booking ONLY if:
         // 1. Organization uses Static Weeks method (not Group Order Rotates)
