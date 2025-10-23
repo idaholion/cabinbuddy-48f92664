@@ -837,103 +837,101 @@ export default function StayHistory() {
                 </div>
 
                 {/* Action Buttons */}
-                {stayData.paymentId && (
-                  <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-                    {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                    onClick={() => setEditOccupancyStay({
-                      startDate: parseDateOnly(reservation.start_date),
-                      endDate: parseDateOnly(reservation.end_date),
-                      family_group: reservation.family_group,
-                      reservationId: reservation.id,
-                      dailyOccupancy: stayData.dailyOccupancy
-                    })}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Occupancy
-                      </Button>
-                    )}
-                    {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setAdjustBillingStay({
-                          ...reservation,
-                          paymentId: stayData.paymentId,
-                          calculatedAmount: stayData.billingAmount,
-                          manualAdjustment: stayData.manualAdjustment,
-                          adjustmentNotes: stayData.adjustmentNotes,
-                          billingLocked: stayData.billingLocked
-                        })}
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Adjust Billing
-                      </Button>
-                    )}
-                    {stayData.amountDue > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRecordPaymentStay({
-                          ...reservation,
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+                  {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditOccupancyStay({
+                        startDate: parseDateOnly(reservation.start_date),
+                        endDate: parseDateOnly(reservation.end_date),
+                        family_group: reservation.family_group,
+                        reservationId: reservation.id,
+                        dailyOccupancy: stayData.dailyOccupancy
+                      })}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Occupancy
+                    </Button>
+                  )}
+                  {!reservation.isVirtualSplit && stayData.paymentId && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAdjustBillingStay({
+                        ...reservation,
+                        paymentId: stayData.paymentId,
+                        calculatedAmount: stayData.billingAmount,
+                        manualAdjustment: stayData.manualAdjustment,
+                        adjustmentNotes: stayData.adjustmentNotes,
+                        billingLocked: stayData.billingLocked
+                      })}
+                    >
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Adjust Billing
+                    </Button>
+                  )}
+                  {stayData.paymentId && stayData.amountDue > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRecordPaymentStay({
+                        ...reservation,
                           paymentId: stayData.paymentId,
                           amountDue: stayData.amountDue
                         })}
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Record Payment
-                      </Button>
-                    )}
-                    {stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && isUserReservationOwner(reservation) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSplitCostStay({
-                          ...reservation,
-                          paymentId: stayData.paymentId,
-                          dailyOccupancy: stayData.dailyOccupancy,
-                          billingAmount: stayData.billingAmount,
-                          user_id: reservation.user_id,
-                          organization_id: reservation.organization_id
-                        })}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Split Costs
-                      </Button>
-                    )}
-                    {stayData.amountPaid > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setViewReceiptPayment(stayData)}
-                      >
-                        <Receipt className="h-4 w-4 mr-2" />
-                        View Receipt
-                      </Button>
-                    )}
-                    {canDeleteStays && (
-                      <ConfirmationDialog
-                        title={reservation.isVirtualSplit ? "Delete Guest Split" : "Delete Stay"}
-                        description={
-                          reservation.isVirtualSplit 
-                            ? "Are you sure you want to delete this guest split? This will remove the split payment record and the source payment. Note: The original reservation's occupancy numbers will not be updated and must be edited manually if needed. This action cannot be undone."
-                            : "Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
-                        }
-                        confirmText="Delete"
-                        cancelText="Cancel"
-                        variant="destructive"
-                        onConfirm={() => reservation.isVirtualSplit ? handleDeleteSplit(stayData.paymentId!) : handleDeleteStay(reservation.id)}
-                      >
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {reservation.isVirtualSplit ? "Delete Split" : "Delete Stay"}
-                        </Button>
-                      </ConfirmationDialog>
-                    )}
-                  </div>
-                )}
+                       >
+                         <DollarSign className="h-4 w-4 mr-2" />
+                         Record Payment
+                       </Button>
+                     )}
+                   {stayData.paymentId && isUserReservationOwner(reservation) && !reservation.isVirtualSplit && stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && (
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => setSplitCostStay({
+                         ...reservation,
+                         paymentId: stayData.paymentId,
+                         dailyOccupancy: stayData.dailyOccupancy,
+                         billingAmount: stayData.billingAmount,
+                         user_id: reservation.user_id,
+                         organization_id: reservation.organization_id
+                       })}
+                     >
+                       <Users className="h-4 w-4 mr-2" />
+                       Split Costs
+                     </Button>
+                   )}
+                   {stayData.paymentId && stayData.amountPaid > 0 && (
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => setViewReceiptPayment(stayData)}
+                     >
+                       <Receipt className="h-4 w-4 mr-2" />
+                       View Receipt
+                     </Button>
+                   )}
+                   {canDeleteStays && (
+                     <ConfirmationDialog
+                       title={reservation.isVirtualSplit ? "Delete Guest Split" : "Delete Stay"}
+                       description={
+                         reservation.isVirtualSplit 
+                           ? "Are you sure you want to delete this guest split? This will remove the split payment record and the source payment. Note: The original reservation's occupancy numbers will not be updated and must be edited manually if needed. This action cannot be undone."
+                           : "Are you sure you want to delete this stay? This will remove the reservation and all associated payment records. This action cannot be undone."
+                       }
+                       confirmText="Delete"
+                       cancelText="Cancel"
+                       variant="destructive"
+                       onConfirm={() => reservation.isVirtualSplit ? handleDeleteSplit(stayData.paymentId!) : handleDeleteStay(reservation.id)}
+                     >
+                       <Button variant="destructive" size="sm">
+                         <Trash2 className="h-4 w-4 mr-2" />
+                         {reservation.isVirtualSplit ? "Delete Split" : "Delete Stay"}
+                       </Button>
+                     </ConfirmationDialog>
+                   )}
+                 </div>
               </CardContent>
             </Card>
           );

@@ -92,28 +92,77 @@ export const useDailyOccupancySync = (organizationId: string) => {
 
       if (paymentFetchError) throw paymentFetchError;
 
-      if (paymentsArray && paymentsArray.length > 0) {
-        // Get billing configuration once for all payments
-        const { data: settingsArray, error: settingsError } = await supabase
-          .from('reservation_settings')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .limit(1);
+      // Get reservation and settings data
+      const { data: reservation } = await supabase
+        .from('reservations')
+        .select('start_date, end_date, family_group, organization_id')
+        .eq('id', reservationId)
+        .single();
 
-        if (settingsError) {
-          console.error('Error fetching settings:', settingsError);
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+
+      const { data: settingsArray, error: settingsError } = await supabase
+        .from('reservation_settings')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .limit(1);
+
+      if (settingsError) {
+        console.error('Error fetching settings:', settingsError);
+      }
+
+      const settings = settingsArray?.[0];
+
+      // If no payment exists, create one
+      if (!paymentsArray || paymentsArray.length === 0) {
+        console.log('No payment found for reservation, creating one...');
+        
+        // Calculate billing amount
+        let amount = 0;
+        if (settings && !skipBillingRecalc) {
+          const billingConfig = {
+            method: (settings as any).financial_method || 'per_person_per_night',
+            amount: (settings as any).nightly_rate || 0,
+            taxRate: settings.tax_rate || 0,
+          };
+
+          const dailyOccupancyRecord: Record<string, number> = {};
+          occupancyData.forEach(day => {
+            dailyOccupancyRecord[day.date] = day.guests;
+          });
+
+          const billing = BillingCalculator.calculateFromDailyOccupancy(
+            billingConfig as any,
+            dailyOccupancyRecord,
+            { startDate: parseDateOnly(reservation.start_date), endDate: parseDateOnly(reservation.end_date) }
+          );
+          amount = billing.total;
         }
 
-        const settings = settingsArray?.[0];
-        
-        // Get reservation dates once
-        const { data: reservation } = await supabase
-          .from('reservations')
-          .select('start_date, end_date')
-          .eq('id', reservationId)
-          .single();
+        const { error: insertError } = await supabase
+          .from('payments')
+          .insert({
+            reservation_id: reservationId,
+            organization_id: reservation.organization_id,
+            family_group: reservation.family_group,
+            amount: amount,
+            daily_occupancy: occupancyData,
+            description: `Use fee - ${reservation.start_date} to ${reservation.end_date}`,
+            status: 'pending',
+          } as any);
 
-        // Update ALL payment records
+        if (insertError) throw insertError;
+        
+        if (shouldShowToast) {
+          toast({
+            title: "Payment record created",
+            description: "Guest counts and billing have been set",
+          });
+        }
+      } else {
+        // Update ALL existing payment records
         for (const payment of paymentsArray) {
           const updates: any = {
             daily_occupancy: occupancyData,
@@ -121,7 +170,7 @@ export const useDailyOccupancySync = (organizationId: string) => {
           };
 
           // Recalculate billing if not locked and not skipped
-          if (!payment.billing_locked && !skipBillingRecalc && settings && reservation) {
+          if (!payment.billing_locked && !skipBillingRecalc && settings) {
             const billingConfig = {
               method: (settings as any).financial_method || 'per_person_per_night',
               amount: (settings as any).nightly_rate || 0,
@@ -148,6 +197,18 @@ export const useDailyOccupancySync = (organizationId: string) => {
             .eq('id', payment.id);
 
           if (updateError) throw updateError;
+        }
+
+        if (shouldShowToast) {
+          const hasLockedPayments = paymentsArray?.some(p => p.billing_locked);
+          toast({
+            title: hasLockedPayments 
+              ? "Guest counts updated" 
+              : "Guest counts and billing updated",
+            description: hasLockedPayments
+              ? "Billing is locked - costs remain unchanged"
+              : "Charges have been recalculated",
+          });
         }
       }
 
