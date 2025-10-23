@@ -120,7 +120,8 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   // Removed aggressive error recovery that was causing flashing
   
   const [selectedProperty, setSelectedProperty] = useState("property");
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Temporarily default to June 2026 for debugging
+  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 5, 1));
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showMultiPeriodForm, setShowMultiPeriodForm] = useState(false);
   const [showWorkWeekendForm, setShowWorkWeekendForm] = useState(false);
