@@ -77,6 +77,11 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const { workWeekends, refetchWorkWeekends } = useWorkWeekends();
   const { toast } = useToast();
   
+  // Debug: Log work weekends data
+  useEffect(() => {
+    console.log('[PropertyCalendar] Work weekends loaded:', workWeekends);
+  }, [workWeekends]);
+  
   // Check if user is calendar keeper (case-insensitive email comparison)
   const isCalendarKeeper = organization?.calendar_keeper_email?.toLowerCase() === user?.email?.toLowerCase();
   
