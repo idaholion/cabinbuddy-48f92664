@@ -27,6 +27,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { usePaymentSync } from "@/hooks/usePaymentSync";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
@@ -49,6 +50,7 @@ export default function StayHistory() {
   const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
+  const { syncing, syncPayments } = usePaymentSync();
 
   const loading = reservationsLoading || receiptsLoading || settingsLoading;
 
@@ -144,6 +146,17 @@ export default function StayHistory() {
     } catch (error: any) {
       console.error('Error linking orphaned payments:', error);
       toast.error(error.message || "Failed to link orphaned payments");
+    }
+  };
+
+  const handleSyncPayments = async () => {
+    if (!organization?.id) return;
+    
+    const currentYear = selectedYear === 0 ? new Date().getFullYear() : selectedYear;
+    const result = await syncPayments(organization.id, currentYear);
+    
+    if (result?.success) {
+      await handleSync();
     }
   };
 
@@ -657,6 +670,16 @@ export default function StayHistory() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Data
             </Button>
+            {isAdmin && payments.length === 0 && (
+              <Button 
+                variant="default" 
+                onClick={handleSyncPayments}
+                disabled={syncing}
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                {syncing ? 'Syncing...' : 'Rebuild Payments'}
+              </Button>
+            )}
             {isAdmin && orphanedPaymentsCount > 0 && (
               <Button variant="outline" onClick={handleLinkOrphanedPayments}>
                 <AlertCircle className="h-4 w-4 mr-2" />
