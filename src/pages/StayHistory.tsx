@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -162,24 +162,6 @@ export default function StayHistory() {
     }
   };
 
-  const handleFixEmptyOccupancy = async () => {
-    if (!organization?.id) return;
-    
-    try {
-      const { data, error } = await supabase.rpc('fix_empty_occupancy_payments', {
-        p_organization_id: organization.id
-      });
-      
-      if (error) throw error;
-      
-      const result = data as { success: boolean; updated_count: number; message: string };
-      toast.success(result.message || 'Fixed empty occupancy charges');
-      await handleSync();
-    } catch (error: any) {
-      console.error('Error fixing payments:', error);
-      toast.error(error.message || "Failed to fix payments");
-    }
-  };
 
   const handleApplyCreditToFuture = async (paymentId: string, amount: number) => {
     if (!paymentId || !organization?.id) {
@@ -752,18 +734,18 @@ export default function StayHistory() {
           )}
 
           <div className="flex gap-2 ml-auto">
+            {isAdmin && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/financial-admin-tools">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin Tools
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" onClick={handleSync}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Data
             </Button>
-            {isAdmin && payments.length > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={handleFixEmptyOccupancy}
-              >
-                Fix Empty Occupancy Charges
-              </Button>
-            )}
             {isAdmin && (
               <Button 
                 variant="default" 

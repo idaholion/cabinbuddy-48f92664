@@ -60,6 +60,7 @@ const CheckoutFinal = React.lazy(() => import("./pages/CheckoutFinal"));
 const StayHistory = React.lazy(() => import("./pages/StayHistory"));
 const PhotoSharing = React.lazy(() => import("./pages/PhotoSharing"));
 const DataBackup = React.lazy(() => import("./pages/DataBackup"));
+const FinancialAdminTools = React.lazy(() => import("./pages/FinancialAdminTools"));
 const Messaging = React.lazy(() => import("./pages/Messaging"));
 const Demo = React.lazy(() => import("./pages/Demo"));
 const CalendarKeeperManagement = React.lazy(() => import("./pages/CalendarKeeperManagement"));
@@ -144,6 +145,7 @@ const AppContent = () => {
         <Route path="/finance-reports" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/billing" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><BillingDashboard /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/invoice-settings" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><InvoiceSettings /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/financial-admin-tools" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialAdminTools /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-season-summary" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminSeasonSummary /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/survey-responses" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SurveyResponses /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
