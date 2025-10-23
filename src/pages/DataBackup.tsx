@@ -11,6 +11,7 @@ import { NavigationHeader } from "@/components/ui/navigation-header";
 import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useRole } from "@/contexts/RoleContext";
 
 interface BackupMetadata {
   id: string;
@@ -36,7 +37,6 @@ export default function DataBackup() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSupervisor, setIsSupervisor] = useState(false);
   const [checking, setChecking] = useState(true);
   const [restoreDialog, setRestoreDialog] = useState<{open: boolean, backup?: BackupMetadata, preview?: any}>({open: false});
   const [restoring, setRestoring] = useState(false);
@@ -44,24 +44,16 @@ export default function DataBackup() {
   const [orgFilter, setOrgFilter] = useState<string>('all');
   const [organizations, setOrganizations] = useState<{id: string, name: string}[]>([]);
   const { toast } = useToast();
+  const { canAccessSupervisorFeatures } = useRole();
 
   const checkAdminStatus = async () => {
     try {
-      // Check both admin and supervisor status
-      const [adminResult, supervisorResult] = await Promise.all([
-        supabase.rpc('is_organization_admin'),
-        supabase.rpc('is_supervisor')
-      ]);
-      
-      if (adminResult.error) throw adminResult.error;
-      if (supervisorResult.error) throw supervisorResult.error;
-      
-      setIsAdmin(adminResult.data || false);
-      setIsSupervisor(supervisorResult.data || false);
+      const { data, error } = await supabase.rpc('is_organization_admin');
+      if (error) throw error;
+      setIsAdmin(data || false);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
-      setIsSupervisor(false);
     } finally {
       setChecking(false);
     }
@@ -387,16 +379,16 @@ export default function DataBackup() {
 
         <div className="space-y-6">
           {/* Role Info Card */}
-          {isSupervisor && (
+          {canAccessSupervisorFeatures && (
             <Card className="border-amber-500/20 bg-amber-500/5">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
                   <Info className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium mb-1">Supervisor Access</h4>
+                    <h4 className="font-medium mb-1">Supervisor Mode Active</h4>
                     <p className="text-sm text-muted-foreground">
-                      You're viewing as a <strong>supervisor</strong> and can see backups for all organizations. 
-                      Organization admins can only see backups for their own organization.
+                      You're in <strong>supervisor mode</strong> and can see backups for all organizations. 
+                      Exit supervisor mode to view only your organization's backups.
                     </p>
                   </div>
                 </div>
@@ -412,7 +404,7 @@ export default function DataBackup() {
                 <div>
                   <h4 className="font-medium mb-2">What's Included in Backups</h4>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Each backup contains a complete snapshot of {isSupervisor ? 'an' : 'your'} organization's data:
+                    Each backup contains a complete snapshot of {canAccessSupervisorFeatures ? 'an' : 'your'} organization's data:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     <span>• Organization Settings</span>
@@ -483,9 +475,9 @@ export default function DataBackup() {
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Backup History
-                  {!isSupervisor && <Badge variant="outline" className="text-xs ml-2">Your Organization Only</Badge>}
+                  {!canAccessSupervisorFeatures && <Badge variant="outline" className="text-xs ml-2">Your Organization Only</Badge>}
                 </CardTitle>
-                {isSupervisor && organizations.length > 1 && (
+                {canAccessSupervisorFeatures && organizations.length > 1 && (
                   <select
                     value={orgFilter}
                     onChange={(e) => setOrgFilter(e.target.value)}
