@@ -1738,6 +1738,7 @@ export type Database = {
           cleaning_fee: number | null
           created_at: string
           damage_deposit: number | null
+          default_occupancy: number | null
           email_delivery_enabled: boolean | null
           financial_method: string | null
           id: string
@@ -1790,6 +1791,7 @@ export type Database = {
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
+          default_occupancy?: number | null
           email_delivery_enabled?: boolean | null
           financial_method?: string | null
           id?: string
@@ -1842,6 +1844,7 @@ export type Database = {
           cleaning_fee?: number | null
           created_at?: string
           damage_deposit?: number | null
+          default_occupancy?: number | null
           email_delivery_enabled?: boolean | null
           financial_method?: string | null
           id?: string

@@ -57,6 +57,7 @@ export default function ReservationSetup() {
   const [seasonStartDay, setSeasonStartDay] = useState("1");
   const [seasonEndMonth, setSeasonEndMonth] = useState("12");
   const [seasonEndDay, setSeasonEndDay] = useState("31");
+  const [defaultOccupancy, setDefaultOccupancy] = useState("0");
   
   // Secondary selection
   const [enableSecondarySelection, setEnableSecondarySelection] = useState(false);
@@ -120,6 +121,7 @@ export default function ReservationSetup() {
           setBedrooms(data.bedrooms?.toString() || "");
           setBathrooms(data.bathrooms?.toString() || "");
           setMaxGuests(data.max_guests?.toString() || "");
+          setDefaultOccupancy(data.default_occupancy?.toString() || "0");
           
           // Only load season dates if they're not the old default (October 1-31)
           // Otherwise keep the new defaults (January 1 - December 31)
@@ -338,6 +340,7 @@ export default function ReservationSetup() {
       season_start_day: seasonStartDay ? parseInt(seasonStartDay) : 1,
       season_end_month: seasonEndMonth ? parseInt(seasonEndMonth) : 12,
       season_end_day: seasonEndDay ? parseInt(seasonEndDay) : 31,
+      default_occupancy: defaultOccupancy ? parseInt(defaultOccupancy) : 0,
     };
 
     // Save to database
@@ -1239,6 +1242,26 @@ export default function ReservationSetup() {
             <p className="text-base text-muted-foreground">
               Define your cabin's usage season for billing calculations and payment tracking. This determines which reservations are included in season summaries.
             </p>
+            
+            {/* Default Occupancy Setting */}
+            <div className="p-4 bg-muted/50 rounded-lg border border-border space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="defaultOccupancy" className="text-base font-medium">Default Occupancy (Guests)</Label>
+                <Input 
+                  id="defaultOccupancy"
+                  type="number"
+                  min="0"
+                  max="50"
+                  placeholder="0"
+                  value={defaultOccupancy}
+                  onChange={(e) => setDefaultOccupancy(e.target.value)}
+                  className="w-32 text-lg"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Default number of guests to assume when occupancy data is not available. <strong>Setting this to 0 (recommended)</strong> means billing will require explicit occupancy entry for accurate calculations.
+                </p>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Season Start Date */}
