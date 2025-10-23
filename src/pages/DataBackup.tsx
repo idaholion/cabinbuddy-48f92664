@@ -36,6 +36,7 @@ export default function DataBackup() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSupervisor, setIsSupervisor] = useState(false);
   const [checking, setChecking] = useState(true);
   const [restoreDialog, setRestoreDialog] = useState<{open: boolean, backup?: BackupMetadata, preview?: any}>({open: false});
   const [restoring, setRestoring] = useState(false);
@@ -46,12 +47,21 @@ export default function DataBackup() {
 
   const checkAdminStatus = async () => {
     try {
-      const { data, error } = await supabase.rpc('is_organization_admin');
-      if (error) throw error;
-      setIsAdmin(data || false);
+      // Check both admin and supervisor status
+      const [adminResult, supervisorResult] = await Promise.all([
+        supabase.rpc('is_organization_admin'),
+        supabase.rpc('is_supervisor')
+      ]);
+      
+      if (adminResult.error) throw adminResult.error;
+      if (supervisorResult.error) throw supervisorResult.error;
+      
+      setIsAdmin(adminResult.data || false);
+      setIsSupervisor(supervisorResult.data || false);
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
+      setIsSupervisor(false);
     } finally {
       setChecking(false);
     }
@@ -376,6 +386,24 @@ export default function DataBackup() {
         </PageHeader>
 
         <div className="space-y-6">
+          {/* Role Info Card */}
+          {isSupervisor && (
+            <Card className="border-amber-500/20 bg-amber-500/5">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium mb-1">Supervisor Access</h4>
+                    <p className="text-sm text-muted-foreground">
+                      You're viewing as a <strong>supervisor</strong> and can see backups for all organizations. 
+                      Organization admins can only see backups for their own organization.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Info Card - What's Included in Backups */}
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="pt-6">
@@ -384,7 +412,7 @@ export default function DataBackup() {
                 <div>
                   <h4 className="font-medium mb-2">What's Included in Backups</h4>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Each backup contains a complete snapshot of your organization's data:
+                    Each backup contains a complete snapshot of {isSupervisor ? 'an' : 'your'} organization's data:
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     <span>• Organization Settings</span>
@@ -455,14 +483,15 @@ export default function DataBackup() {
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
                   Backup History
+                  {!isSupervisor && <Badge variant="outline" className="text-xs ml-2">Your Organization Only</Badge>}
                 </CardTitle>
-                {organizations.length > 1 && (
+                {isSupervisor && organizations.length > 1 && (
                   <select
                     value={orgFilter}
                     onChange={(e) => setOrgFilter(e.target.value)}
                     className="px-3 py-1 text-sm border rounded-md bg-background"
                   >
-                    <option value="all">All Organizations</option>
+                    <option value="all">All Organizations ({organizations.length})</option>
                     {organizations.map(org => (
                       <option key={org.id} value={org.id}>{org.name}</option>
                     ))}
