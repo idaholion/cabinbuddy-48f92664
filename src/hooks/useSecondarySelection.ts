@@ -64,17 +64,31 @@ export const useSecondarySelection = (rotationYear: number) => {
   const checkIfSecondaryRoundShouldStart = async () => {
     if (!organization?.id || !rotationData || !timePeriodUsage.length) return;
 
-    // Check if all family groups have completed their primary selections
+    // Check if all family groups have EXPLICITLY completed their primary selections (turn_completed = true)
     const rotationOrder = getRotationForYear(rotationYear);
-    const allCompletedPrimary = rotationOrder.every(familyGroup => {
-      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-      return usage && usage.time_periods_used >= (rotationData.max_time_slots || 2);
-    });
+    
+    // Check turn_completed flags from database
+    const completionChecks = await Promise.all(
+      rotationOrder.map(async (familyGroup) => {
+        const { data: turnData } = await supabase
+          .from('time_period_usage')
+          .select('turn_completed')
+          .eq('organization_id', organization.id)
+          .eq('rotation_year', rotationYear)
+          .eq('family_group', familyGroup)
+          .maybeSingle();
+        
+        return turnData?.turn_completed || false;
+      })
+    );
+    
+    const allCompletedPrimary = completionChecks.every(completed => completed);
 
     // Check if secondary selection is enabled
     const secondaryEnabled = rotationData.enable_secondary_selection;
 
     if (allCompletedPrimary && secondaryEnabled && !secondaryStatus) {
+      console.log('[useSecondarySelection] All primary turns completed, starting secondary selection');
       await startSecondarySelection();
     }
   };
@@ -103,6 +117,7 @@ export const useSecondarySelection = (rotationYear: number) => {
           rotation_year: rotationYear,
           current_family_group: firstEligibleFamily,
           current_group_index: reverseOrder.indexOf(firstEligibleFamily),
+          turn_completed: false, // Start with turn not completed
           started_at: new Date().toISOString()
         });
 
@@ -127,48 +142,71 @@ export const useSecondarySelection = (rotationYear: number) => {
   const advanceSecondarySelection = async () => {
     if (!organization?.id || !secondaryStatus || !rotationData) return;
 
-    const rotationOrder = getRotationForYear(rotationYear);
-    const reverseOrder = [...rotationOrder].reverse();
-    
-    let nextIndex = (secondaryStatus.current_group_index + 1) % reverseOrder.length;
-    let nextFamily = reverseOrder[nextIndex];
-    
-    // Find next family with remaining secondary periods
-    let attempts = 0;
-    while (attempts < reverseOrder.length) {
-      const usage = timePeriodUsage.find(u => u.family_group === nextFamily);
-      const remainingSecondary = (rotationData.secondary_max_periods || 1) - (usage?.secondary_periods_used || 0);
-      
-      if (remainingSecondary > 0) {
-        break;
+    console.log('[useSecondarySelection] Advancing secondary selection');
+
+    try {
+      // CRITICAL: Mark current family's turn as completed in secondary_selection_status
+      const { error: updateError } = await supabase
+        .from('secondary_selection_status')
+        .update({ turn_completed: true })
+        .eq('id', secondaryStatus.id);
+
+      if (updateError) {
+        console.error('[useSecondarySelection] Error marking turn as completed:', updateError);
+        throw updateError;
       }
+
+      console.log('[useSecondarySelection] Marked turn as completed for:', secondaryStatus.current_family_group);
+
+      const rotationOrder = getRotationForYear(rotationYear);
+      const reverseOrder = [...rotationOrder].reverse();
       
-      nextIndex = (nextIndex + 1) % reverseOrder.length;
-      nextFamily = reverseOrder[nextIndex];
-      attempts++;
+      let nextIndex = (secondaryStatus.current_group_index + 1) % reverseOrder.length;
+      let nextFamily = reverseOrder[nextIndex];
+      
+      // Find next family with remaining secondary periods
+      let attempts = 0;
+      while (attempts < reverseOrder.length) {
+        const usage = timePeriodUsage.find(u => u.family_group === nextFamily);
+        const remainingSecondary = (rotationData.secondary_max_periods || 1) - (usage?.secondary_periods_used || 0);
+        
+        if (remainingSecondary > 0) {
+          break;
+        }
+        
+        nextIndex = (nextIndex + 1) % reverseOrder.length;
+        nextFamily = reverseOrder[nextIndex];
+        attempts++;
+      }
+
+      // If no one has remaining secondary periods, end secondary selection
+      if (attempts >= reverseOrder.length) {
+        await endSecondarySelection();
+        return;
+      }
+
+      // Create new secondary selection status for next family (with turn_completed = false)
+      const { error } = await supabase
+        .from('secondary_selection_status')
+        .update({
+          current_family_group: nextFamily,
+          current_group_index: nextIndex,
+          turn_completed: false, // Reset for new family
+          started_at: new Date().toISOString(), // Reset start time for new family
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', secondaryStatus.id);
+
+      if (error) {
+        console.error('Error advancing secondary selection:', error);
+        return;
+      }
+
+      console.log('[useSecondarySelection] Advanced to next family:', nextFamily);
+      fetchSecondarySelectionStatus();
+    } catch (error) {
+      console.error('[useSecondarySelection] Error in advanceSecondarySelection:', error);
     }
-
-    // If no one has remaining secondary periods, end secondary selection
-    if (attempts >= reverseOrder.length) {
-      await endSecondarySelection();
-      return;
-    }
-
-    const { error } = await supabase
-      .from('secondary_selection_status')
-      .update({
-        current_family_group: nextFamily,
-        current_group_index: nextIndex,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', secondaryStatus.id);
-
-    if (error) {
-      console.error('Error advancing secondary selection:', error);
-      return;
-    }
-
-    fetchSecondarySelectionStatus();
   };
 
   const endSecondarySelection = async () => {
