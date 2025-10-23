@@ -3054,6 +3054,10 @@ export type Database = {
         Args: { p_family_group: string; p_organization_id: string }
         Returns: boolean
       }
+      fix_empty_occupancy_payments: {
+        Args: { p_organization_id: string }
+        Returns: Json
+      }
       generate_guest_access_token: {
         Args: { expires_hours?: number; org_id: string }
         Returns: string
