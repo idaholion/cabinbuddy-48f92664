@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { usePaymentSync } from "@/hooks/usePaymentSync";
+import { BillingCalculator } from "@/lib/billing-calculator";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
@@ -177,6 +178,34 @@ export default function StayHistory() {
     } catch (error: any) {
       console.error('Error fixing payments:', error);
       toast.error(error.message || "Failed to fix payments");
+    }
+  };
+
+  const handleApplyCreditToFuture = async (paymentId: string, amount: number) => {
+    if (!paymentId || !organization?.id) {
+      toast.error("Unable to apply credit. Please try again.");
+      return;
+    }
+    
+    try {
+      // Update payment record to mark credit as applied to future
+      const { error } = await supabase
+        .from('payments')
+        .update({
+          credit_applied_to_future: true,
+          notes: `Credit of ${BillingCalculator.formatCurrency(Math.abs(amount))} applied to future reservations`
+        })
+        .eq('id', paymentId);
+        
+      if (error) throw error;
+      
+      toast.success(`${BillingCalculator.formatCurrency(Math.abs(amount))} will be deducted from your next season's billing.`);
+      
+      // Refresh data
+      await handleSync();
+    } catch (error: any) {
+      console.error('Error applying credit:', error);
+      toast.error("Failed to apply credit. Please try again.");
     }
   };
 
@@ -888,38 +917,69 @@ export default function StayHistory() {
                 </div>
 
                 {/* Venmo Payment Section */}
-                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && (
+                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-blue-600" />
                       <h4 className="text-base font-medium">
-                        {stayData.amountDue < 0 ? 'Request Refund via Venmo' : 'Pay via Venmo'}
+                        {stayData.amountDue < 0 ? 'Credit Options' : 'Pay via Venmo'}
                       </h4>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {stayData.amountDue < 0 ? 'Credit' : 'Amount'}: ${Math.abs(stayData.amountDue).toFixed(2)}
+                      {stayData.amountDue < 0 ? (
+                        // Negative balance - show credit options
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground mb-3">
+                            You have a credit of ${Math.abs(stayData.amountDue).toFixed(2)}. Choose an option:
                           </p>
+                          
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => handleApplyCreditToFuture(stayData.paymentId, stayData.amountDue)}
+                            disabled={!stayData.paymentId}
+                          >
+                            <CalendarIcon className="h-4 w-4 mr-2" />
+                            Apply Credit to Future Reservations
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={() => {
+                              const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=charge&amount=${Math.abs(stayData.amountDue)}&note=${encodeURIComponent('Cabin stay refund request')}`;
+                              window.open(venmoUrl, '_blank');
+                            }}
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Request ${Math.abs(stayData.amountDue).toFixed(2)} Refund via Venmo
+                          </Button>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                            const txnType = stayData.amountDue < 0 ? 'charge' : 'pay';
-                            const noteText = stayData.amountDue < 0 ? 'Cabin stay refund request' : 'Cabin stay payment';
-                            const venmoUrl = `https://venmo.com/${cleanHandle}?txn=${txnType}&amount=${Math.abs(stayData.amountDue)}&note=${encodeURIComponent(noteText)}`;
-                            window.open(venmoUrl, '_blank');
-                          }}
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {stayData.amountDue < 0 ? `Request $${Math.abs(stayData.amountDue).toFixed(2)} Refund` : 'Pay Now'}
-                        </Button>
-                      </div>
+                      ) : (
+                        // Positive balance - show pay now button
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Amount: ${stayData.amountDue.toFixed(2)}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue}&note=${encodeURIComponent('Cabin stay payment')}`;
+                              window.open(venmoUrl, '_blank');
+                            }}
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            Pay Now
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
