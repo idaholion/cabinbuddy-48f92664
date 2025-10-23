@@ -31,7 +31,7 @@ interface UseSequentialSelectionReturn {
 
 export const useSequentialSelection = (rotationYear: number): UseSequentialSelectionReturn => {
   const { organization } = useOrganization();
-  const { rotationData, getRotationForYear } = useRotationOrder();
+  const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder();
   const { timePeriodUsage } = useTimePeriods(rotationYear);
   const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
   const { 
@@ -60,8 +60,16 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     }
 
     const checkPhaseAndFamily = async () => {
-      // Determine current phase
+      // Determine current phase - use CALCULATED rotation for target year
       const rotationOrder = getRotationForYear(rotationYear);
+      
+      console.log('[useSequentialSelection] Calculated rotation order for year:', {
+        targetYear: rotationYear,
+        baseYear: rotationData?.rotation_year,
+        baseOrder: rotationData?.rotation_order,
+        calculatedOrder: rotationOrder,
+        firstLastOption: rotationData?.first_last_option
+      });
       
       // Check if all families have completed their turns (not just reached their limit)
       const completionChecks = await Promise.all(
