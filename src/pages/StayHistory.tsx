@@ -670,14 +670,14 @@ export default function StayHistory() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Data
             </Button>
-            {isAdmin && payments.length === 0 && (
+            {isAdmin && (
               <Button 
                 variant="default" 
                 onClick={handleSyncPayments}
                 disabled={syncing}
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                {syncing ? 'Syncing...' : 'Rebuild Payments'}
+                {syncing ? 'Syncing...' : 'Sync Payments'}
               </Button>
             )}
             {isAdmin && orphanedPaymentsCount > 0 && (
