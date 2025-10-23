@@ -2451,6 +2451,7 @@ export type Database = {
           selection_round: string | null
           time_periods_allowed: number
           time_periods_used: number
+          turn_completed: boolean | null
           updated_at: string
         }
         Insert: {
@@ -2466,6 +2467,7 @@ export type Database = {
           selection_round?: string | null
           time_periods_allowed?: number
           time_periods_used?: number
+          turn_completed?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -2481,6 +2483,7 @@ export type Database = {
           selection_round?: string | null
           time_periods_allowed?: number
           time_periods_used?: number
+          turn_completed?: boolean | null
           updated_at?: string
         }
         Relationships: [

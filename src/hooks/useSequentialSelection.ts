@@ -52,30 +52,39 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       return;
     }
 
-    // Determine current phase
-    const rotationOrder = getRotationForYear(rotationYear);
-    const allCompletedPrimary = rotationOrder.every(familyGroup => {
-      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-      const used = usage?.time_periods_used || 0;
-      const allowed = rotationData.max_time_slots || 2;
+    const checkPhaseAndFamily = async () => {
+      // Determine current phase
+      const rotationOrder = getRotationForYear(rotationYear);
       
-      // Check for active extension
-      const extension = getExtensionForFamily(familyGroup);
-      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
+      // Check if all families have completed their turns (not just reached their limit)
+      const completionChecks = await Promise.all(
+        rotationOrder.map(async (familyGroup) => {
+          const { data: turnData } = await supabase
+            .from('time_period_usage')
+            .select('turn_completed')
+            .eq('organization_id', organization.id)
+            .eq('rotation_year', rotationYear)
+            .eq('family_group', familyGroup)
+            .maybeSingle();
+          
+          return turnData?.turn_completed || false;
+        })
+      );
       
-      // Only completed if at/over limit AND no active extension
-      return (used >= allowed) && !hasActiveExtension;
-    });
+      const allCompletedPrimary = completionChecks.every(completed => completed);
 
-    if (allCompletedPrimary && rotationData.enable_secondary_selection) {
-      setCurrentPhase('secondary');
-    } else {
-      setCurrentPhase('primary');
-      // Determine current family for primary phase
-      determinePrimaryCurrentFamily(rotationOrder);
-    }
-    
-    setLoading(false);
+      if (allCompletedPrimary && rotationData.enable_secondary_selection) {
+        setCurrentPhase('secondary');
+      } else {
+        setCurrentPhase('primary');
+        // Determine current family for primary phase
+        await determinePrimaryCurrentFamily(rotationOrder);
+      }
+      
+      setLoading(false);
+    };
+
+    checkPhaseAndFamily();
   }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id, getExtensionForFamily]);
 
   // Determine which family group's turn it is in primary phase
@@ -172,8 +181,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     fallbackToRotationOrder(rotationOrder);
   };
 
-  const fallbackToRotationOrder = (rotationOrder: string[]) => {
-    // Find the first family group that hasn't completed their primary selections
+  const fallbackToRotationOrder = async (rotationOrder: string[]) => {
+    if (!organization?.id) return;
+    
+    // Find the first family group that hasn't explicitly completed their turn
     for (const familyGroup of rotationOrder) {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
       const used = usage?.time_periods_used || 0;
@@ -183,28 +194,33 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const extension = getExtensionForFamily(familyGroup);
       const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
       
+      // Check turn_completed flag from database
+      const { data: turnData } = await supabase
+        .from('time_period_usage')
+        .select('turn_completed')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('family_group', familyGroup)
+        .maybeSingle();
+      
+      const turnCompleted = turnData?.turn_completed || false;
+      
       console.log('[useSequentialSelection] Checking family:', {
         familyGroup,
         used,
         allowed,
+        turnCompleted,
         extension: extension ? {
           extended_until: extension.extended_until,
           hasActiveExtension
         } : null,
-        canStillSelect: used < allowed || hasActiveExtension,
         rotationYear
       });
       
-      // Keep current family if it's already their turn, even if they've reached their limit
-      // (they must click "I'm done selecting" to manually advance)
-      if (primaryCurrentFamily === familyGroup && (used <= allowed || hasActiveExtension)) {
-        console.log('[useSequentialSelection] Keeping current family (already their turn):', familyGroup);
-        return;
-      }
-      
-      // Otherwise, only set as current if they have remaining selections
-      if (used < allowed || hasActiveExtension) {
-        console.log('[useSequentialSelection] Setting current family:', familyGroup);
+      // CRITICAL FIX: Only skip to next family if they've explicitly completed their turn
+      // A family reaching their limit does NOT automatically complete their turn
+      if (!turnCompleted) {
+        console.log('[useSequentialSelection] Setting current family (turn not completed):', familyGroup);
         setPrimaryCurrentFamily(familyGroup);
         return;
       }
@@ -344,33 +360,60 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const advancePrimarySelection = async (): Promise<void> => {
     if (!organization?.id || !rotationData || !primaryCurrentFamily) return;
 
-    const rotationOrder = getRotationForYear(rotationYear);
-    const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
-    
-    // Find next family group that hasn't completed their selections
-    for (let i = 1; i < rotationOrder.length; i++) {
-      const nextIndex = (currentIndex + i) % rotationOrder.length;
-      const nextFamily = rotationOrder[nextIndex];
-      const usage = timePeriodUsage.find(u => u.family_group === nextFamily);
-      const used = usage?.time_periods_used || 0;
-      const allowed = rotationData.max_time_slots || 2;
-      
-      // Check for active extension
-      const extension = getExtensionForFamily(nextFamily);
-      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
-      
-      // Can advance to this family if under limit OR has active extension
-      if (used < allowed || hasActiveExtension) {
-        setPrimaryCurrentFamily(nextFamily);
-        
-        // Send notification to the next family
-        await sendSelectionTurnNotification(nextFamily, rotationYear);
-        return;
+    console.log('[useSequentialSelection] Advancing primary selection from:', primaryCurrentFamily);
+
+    try {
+      // CRITICAL: Mark current family's turn as completed in the database
+      const { error: updateError } = await supabase
+        .from('time_period_usage')
+        .update({ turn_completed: true })
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('family_group', primaryCurrentFamily);
+
+      if (updateError) {
+        console.error('[useSequentialSelection] Error marking turn as completed:', updateError);
+        throw updateError;
       }
+
+      console.log('[useSequentialSelection] Marked turn as completed for:', primaryCurrentFamily);
+
+      const rotationOrder = getRotationForYear(rotationYear);
+      const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
+      
+      // Find next family group that hasn't completed their turn
+      for (let i = 1; i <= rotationOrder.length; i++) {
+        const nextIndex = (currentIndex + i) % rotationOrder.length;
+        const nextFamily = rotationOrder[nextIndex];
+        
+        // Check if next family has completed their turn
+        const { data: nextTurnData } = await supabase
+          .from('time_period_usage')
+          .select('turn_completed')
+          .eq('organization_id', organization.id)
+          .eq('rotation_year', rotationYear)
+          .eq('family_group', nextFamily)
+          .maybeSingle();
+        
+        const nextTurnCompleted = nextTurnData?.turn_completed || false;
+        
+        // Advance to first family that hasn't completed their turn
+        if (!nextTurnCompleted) {
+          console.log('[useSequentialSelection] Advancing to next family:', nextFamily);
+          setPrimaryCurrentFamily(nextFamily);
+          
+          // Send notification to the next family
+          await sendSelectionTurnNotification(nextFamily, rotationYear);
+          return;
+        }
+      }
+      
+      // If all families have completed, end primary phase
+      console.log('[useSequentialSelection] All families have completed primary phase');
+      setPrimaryCurrentFamily(null);
+    } catch (error) {
+      console.error('[useSequentialSelection] Error in advancePrimarySelection:', error);
     }
-    
-    // If no one has remaining selections, end primary phase
-    setPrimaryCurrentFamily(null);
   };
 
   const sendSelectionTurnNotification = async (familyGroup: string, year: number): Promise<void> => {
