@@ -62,8 +62,13 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (organization?.id && currentFamilyGroup !== null && periods.length > 0) {
+    if (organization?.id && currentFamilyGroup !== null) {
+      // Always fetch data to ensure we clear stale reminders when periods become empty
       fetchData();
+    } else {
+      // Clear reminders if we don't have required data
+      setReminderPreviews([]);
+      setLoading(false);
     }
   }, [organization?.id, reservations, workWeekends, currentFamilyGroup, periods]);
 
