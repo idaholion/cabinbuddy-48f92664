@@ -194,18 +194,9 @@ export const useReservationPeriods = () => {
     }
   }, [organization?.id]);
 
-  // Auto-generate periods for 2026 if none exist and rotation data is available
-  useEffect(() => {
-    if (organization?.id && rotationData && periods.length === 0 && !loading) {
-      // Only generate once - add a flag to prevent repeated attempts
-      const hasAttemptedGeneration = sessionStorage.getItem(`periods-generated-${organization.id}`);
-      if (!hasAttemptedGeneration) {
-        console.log('No reservation periods found, generating for 2025 selections (2026 reservations)');
-        sessionStorage.setItem(`periods-generated-${organization.id}`, 'true');
-        generateReservationPeriods(2025);
-      }
-    }
-  }, [organization?.id, rotationData, periods.length, loading]);
+  // NOTE: Auto-generation disabled for rotating order method
+  // reservation_periods are only used for static week method
+  // For rotating order method, use turn_completed flags instead
 
   return {
     periods,

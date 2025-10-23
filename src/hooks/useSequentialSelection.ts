@@ -111,112 +111,27 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id, getExtensionForFamily]);
 
   // Determine which family group's turn it is in primary phase
+  // For rotating order method, use turn_completed flags ONLY
   const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
     if (!organization?.id || !rotationData) return;
 
-    console.log('[useSequentialSelection] determinePrimaryCurrentFamily called:', {
+    console.log('[useSequentialSelection] determinePrimaryCurrentFamily - using rotation order method:', {
       rotationOrder,
-      timePeriodUsage,
-      maxTimeSlots: rotationData.max_time_slots
+      rotationYear
     });
 
-    // Fetch reservation periods to check scheduled dates
-    const { data: periods, error } = await supabase
-      .from('reservation_periods')
-      .select('*')
-      .eq('organization_id', organization.id)
-      .eq('rotation_year', rotationYear)
-      .order('current_group_index');
-
-    console.log('[useSequentialSelection] Fetched periods:', {
-      periodsCount: periods?.length || 0,
-      error: error?.message,
-      rotationYear,
-      periods: periods?.map(p => ({
-        family: p.current_family_group,
-        start: p.selection_start_date,
-        end: p.selection_end_date
-      }))
-    });
-
-    if (error) {
-      console.error('[useSequentialSelection] Error fetching periods:', error);
-      // Fall back to rotation order logic
-      fallbackToRotationOrder(rotationOrder);
-      return;
-    }
-
-    if (!periods || periods.length === 0) {
-      console.log('[useSequentialSelection] No periods found, using rotation order');
-      // No scheduled periods, use rotation order
-      fallbackToRotationOrder(rotationOrder);
-      return;
-    }
-
-    // Check which family's selection period is active based on today's date
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    console.log('[useSequentialSelection] Checking periods against today:', today.toISOString());
-    
-    for (const period of periods) {
-      const startDate = new Date(period.selection_start_date + 'T00:00:00');
-      const endDate = new Date(period.selection_end_date + 'T00:00:00');
-      
-      console.log('[useSequentialSelection] Checking period:', {
-        family: period.current_family_group,
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        todayInRange: today >= startDate && today <= endDate
-      });
-      
-      // Check if today falls within this period's date range
-      if (today >= startDate && today <= endDate) {
-        // Also verify this family still has selections available
-        const usage = timePeriodUsage.find(u => u.family_group === period.current_family_group);
-        const used = usage?.time_periods_used || 0;
-        const allowed = rotationData.max_time_slots || 2;
-        
-        // Check for active extension
-        const extension = getExtensionForFamily(period.current_family_group);
-        const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
-        
-        console.log('[useSequentialSelection] Period matches today, checking eligibility:', {
-          family: period.current_family_group,
-          used,
-          allowed,
-          hasExtension: hasActiveExtension,
-          canSelect: used < allowed || hasActiveExtension
-        });
-        
-        if (used < allowed || hasActiveExtension) {
-          console.log('[useSequentialSelection] Setting current family based on scheduled period:', period.current_family_group);
-          setPrimaryCurrentFamily(period.current_family_group);
-          return;
-        } else {
-          console.log('[useSequentialSelection] Family has no selections remaining:', period.current_family_group);
-        }
-      }
-    }
-    
-    console.log('[useSequentialSelection] No active period found, using rotation order');
-    // If no period is active today, fall back to rotation order
-    fallbackToRotationOrder(rotationOrder);
+    // For rotating order method, always use rotation order + turn_completed logic
+    // NO date-based reservation_periods needed
+    await fallbackToRotationOrder(rotationOrder);
   };
 
   const fallbackToRotationOrder = async (rotationOrder: string[]) => {
     if (!organization?.id) return;
     
+    console.log('[useSequentialSelection] Using rotation order to determine current family');
+    
     // Find the first family group that hasn't explicitly completed their turn
     for (const familyGroup of rotationOrder) {
-      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-      const used = usage?.time_periods_used || 0;
-      const allowed = rotationData?.max_time_slots || 2;
-      
-      // Check if family has an active extension
-      const extension = getExtensionForFamily(familyGroup);
-      const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
-      
       // Check turn_completed flag from database
       const { data: turnData } = await supabase
         .from('time_period_usage')
@@ -228,26 +143,24 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       const turnCompleted = turnData?.turn_completed || false;
       
-      console.log('[useSequentialSelection] Family eligibility check:', {
+      console.log('[useSequentialSelection] Checking family:', {
         familyGroup,
-        used,
-        allowed,
         turnCompleted,
-        hasActiveExtension,
-        decision: !turnCompleted ? 'SET AS CURRENT (turn not completed)' : 'SKIP (turn completed)',
         rotationYear
       });
       
-      // CRITICAL FIX: Only skip to next family if they've explicitly completed their turn
-      // A family reaching their limit does NOT automatically complete their turn
+      // Only skip if they've explicitly clicked "I'm done"
       if (!turnCompleted) {
-        console.log('[useSequentialSelection] Setting current family (turn not completed):', familyGroup);
+        console.log('[useSequentialSelection] ✓ Current family (has not clicked "I\'m done"):', familyGroup);
         setPrimaryCurrentFamily(familyGroup);
         return;
+      } else {
+        console.log('[useSequentialSelection] ✗ Skip family (already clicked "I\'m done"):', familyGroup);
       }
     }
     
     // If all have completed, no current family
+    console.log('[useSequentialSelection] All families have completed their turns');
     setPrimaryCurrentFamily(null);
   };
 
