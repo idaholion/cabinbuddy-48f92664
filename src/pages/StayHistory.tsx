@@ -888,30 +888,36 @@ export default function StayHistory() {
                 </div>
 
                 {/* Venmo Payment Section */}
-                {financialSettings?.venmo_handle && stayData.amountDue > 0 && (
+                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-blue-600" />
-                      <h4 className="text-base font-medium">Pay via Venmo</h4>
+                      <h4 className="text-base font-medium">
+                        {stayData.amountDue < 0 ? 'Request Refund via Venmo' : 'Pay via Venmo'}
+                      </h4>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
-                          <p className="text-sm text-muted-foreground">Amount: ${stayData.amountDue.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {stayData.amountDue < 0 ? 'Credit' : 'Amount'}: ${Math.abs(stayData.amountDue).toFixed(2)}
+                          </p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => {
                             const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                            const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue}&note=${encodeURIComponent('Cabin stay payment')}`;
+                            const txnType = stayData.amountDue < 0 ? 'charge' : 'pay';
+                            const noteText = stayData.amountDue < 0 ? 'Cabin stay refund request' : 'Cabin stay payment';
+                            const venmoUrl = `https://venmo.com/${cleanHandle}?txn=${txnType}&amount=${Math.abs(stayData.amountDue)}&note=${encodeURIComponent(noteText)}`;
                             window.open(venmoUrl, '_blank');
                           }}
                           className="text-blue-600 border-blue-200 hover:bg-blue-50"
                         >
                           <Send className="h-4 w-4 mr-2" />
-                          Pay Now
+                          {stayData.amountDue < 0 ? `Request $${Math.abs(stayData.amountDue).toFixed(2)} Refund` : 'Pay Now'}
                         </Button>
                       </div>
                     </div>
