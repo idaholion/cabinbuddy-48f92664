@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ArrowLeft, Calendar, Users, DollarSign, MapPin, Clock, User } from "lucide-react";
+import { ArrowLeft, Calendar, Users, DollarSign, MapPin, Clock, User, History } from "lucide-react";
 import { useReservations } from "@/hooks/useReservations";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -265,6 +265,10 @@ const ReservationDetail = () => {
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="flex flex-wrap gap-2 justify-center">
+              <Button onClick={() => navigate('/stay-history')} variant="outline">
+                <History className="mr-2 h-4 w-4" />
+                Back to Stay History
+              </Button>
               <Button onClick={() => navigate('/calendar')} variant="outline">
                 <Calendar className="mr-2 h-4 w-4" />
                 View Calendar
