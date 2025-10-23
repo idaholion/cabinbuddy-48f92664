@@ -3038,6 +3038,10 @@ export type Database = {
         Returns: string
       }
       debug_auth_context: { Args: never; Returns: Json }
+      delete_all_organization_payments: {
+        Args: { p_confirmation_code: string; p_organization_id: string }
+        Returns: Json
+      }
       delete_image_safely: {
         Args: {
           p_force_delete?: boolean

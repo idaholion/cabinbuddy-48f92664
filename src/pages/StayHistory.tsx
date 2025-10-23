@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
@@ -38,6 +39,7 @@ export default function StayHistory() {
   const [splitCostStay, setSplitCostStay] = useState<any>(null);
   const [viewReceiptPayment, setViewReceiptPayment] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   const { user } = useAuth();
   const { claimedProfile } = useProfileClaiming();
@@ -157,6 +159,27 @@ export default function StayHistory() {
     
     if (result?.success) {
       await handleSync();
+    }
+  };
+
+  const handleDeleteAllPayments = async () => {
+    if (!organization?.id) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('delete_all_organization_payments', {
+        p_organization_id: organization.id,
+        p_confirmation_code: 'DELETE_ALL_PAYMENTS'
+      });
+      
+      if (error) throw error;
+      
+      const result = data as { success: boolean; deleted_count: number; message: string };
+      toast.success(result.message || 'All payments deleted successfully');
+      await handleSync();
+      setShowDeleteAllDialog(false);
+    } catch (error: any) {
+      console.error('Error deleting payments:', error);
+      toast.error(error.message || "Failed to delete payments");
     }
   };
 
@@ -670,6 +693,15 @@ export default function StayHistory() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Data
             </Button>
+            {isAdmin && payments.length > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={() => setShowDeleteAllDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete All Payments
+              </Button>
+            )}
             {isAdmin && (
               <Button 
                 variant="default" 
@@ -1059,6 +1091,27 @@ export default function StayHistory() {
           year={selectedYear || new Date().getFullYear()}
         />
       )}
+
+      <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Payments?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all {payments.length} payment records for your organization. 
+              This action cannot be undone. You will need to re-enter occupancy data and recreate payments from scratch.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAllPayments}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Delete All Payments
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
