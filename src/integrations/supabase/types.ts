@@ -3155,7 +3155,7 @@ export type Database = {
       is_organization_admin: { Args: never; Returns: boolean }
       is_supervisor: { Args: never; Returns: boolean }
       link_orphaned_payments_to_reservations: {
-        Args: { p_organization_id?: string }
+        Args: { p_organization_id: string }
         Returns: Json
       }
       migrate_existing_checklist_images: { Args: never; Returns: number }
