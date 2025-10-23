@@ -77,11 +77,6 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const { workWeekends, refetchWorkWeekends } = useWorkWeekends();
   const { toast } = useToast();
   
-  // Debug: Log work weekends data
-  useEffect(() => {
-    console.log('[PropertyCalendar] Work weekends loaded:', workWeekends);
-  }, [workWeekends]);
-  
   // Check if user is calendar keeper (case-insensitive email comparison)
   const isCalendarKeeper = organization?.calendar_keeper_email?.toLowerCase() === user?.email?.toLowerCase();
   
@@ -120,8 +115,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   // Removed aggressive error recovery that was causing flashing
   
   const [selectedProperty, setSelectedProperty] = useState("property");
-  // Temporarily default to June 2026 for debugging
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 5, 1));
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showMultiPeriodForm, setShowMultiPeriodForm] = useState(false);
   const [showWorkWeekendForm, setShowWorkWeekendForm] = useState(false);
@@ -192,7 +186,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const getWorkWeekendsForDate = (date: Date) => {
     if (!filterOptions.showWorkWeekends) return [];
     
-    const matchingWeekends = workWeekends.filter(ww => {
+    return workWeekends.filter(ww => {
       if (ww.status !== 'fully_approved') return false;
       const startDate = parseLocalDate(ww.start_date);
       const endDate = parseLocalDate(ww.end_date);
@@ -201,26 +195,8 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
       const workWeekendStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
       const workWeekendEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       
-      const matches = checkDate >= workWeekendStart && checkDate <= workWeekendEnd;
-      
-      // Debug logging for June/July 2026 dates
-      if (date.getFullYear() === 2026 && (date.getMonth() === 5 || date.getMonth() === 6)) {
-        console.log('[WorkWeekend Debug]', {
-          checkDate: date.toISOString().split('T')[0],
-          workWeekend: {
-            title: ww.title,
-            start: ww.start_date,
-            end: ww.end_date,
-            status: ww.status
-          },
-          matches
-        });
-      }
-      
-      return matches;
+      return checkDate >= workWeekendStart && checkDate <= workWeekendEnd;
     });
-    
-    return matchingWeekends;
   };
 
   // Function to determine text color based on background color for better contrast
@@ -1114,19 +1090,6 @@ const getBookingsForDate = (date: Date) => {
                      {calendarDays.map((day, index) => {
                 const dayBookings = getBookingsForDate(day);
                 const dayWorkWeekends = getWorkWeekendsForDate(day);
-                
-                // Debug for June/July 2026 - check all days
-                if (day.getFullYear() === 2026 && (day.getMonth() === 5 || day.getMonth() === 6)) {
-                  const dateStr = day.toISOString().split('T')[0];
-                  if (dayWorkWeekends.length > 0) {
-                    console.error(`🟢 GREEN DOT on ${dateStr}:`, {
-                      dayWorkWeekends,
-                      workWeekendsInMemory: workWeekends,
-                      filterEnabled: filterOptions.showWorkWeekends
-                    });
-                  }
-                }
-                
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
