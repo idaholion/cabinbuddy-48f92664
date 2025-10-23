@@ -26,7 +26,8 @@ import {
   User,
   Shield,
   StickyNote,
-  CreditCard
+  CreditCard,
+  Database
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -415,6 +416,18 @@ export function AppSidebar() {
                   >
                     <Settings className="h-4 w-4" />
                     <span>Manage Organizations</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Data Backup">
+                  <NavLink 
+                    to="/data-backup" 
+                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                  >
+                    <Database className="h-4 w-4" />
+                    <span>Data Backup</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
