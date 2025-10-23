@@ -84,6 +84,11 @@ const setupItems = [
     icon: Receipt,
   },
   {
+    title: "Financial Admin Tools",
+    url: "/financial-admin-tools",
+    icon: Settings,
+  },
+  {
     title: "Reservation Setup",
     url: "/reservation-setup", 
     icon: Calendar,
