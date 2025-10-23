@@ -47,6 +47,13 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[useSequentialSelection] Component mount/update:', {
+      hasRotationData: !!rotationData,
+      timePeriodUsageCount: timePeriodUsage.length,
+      organizationId: organization?.id,
+      rotationYear
+    });
+
     if (!rotationData || !timePeriodUsage.length || !organization?.id) {
       setLoading(false);
       return;
@@ -72,6 +79,14 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       );
       
       const allCompletedPrimary = completionChecks.every(completed => completed);
+
+      console.log('[useSequentialSelection] Phase determination:', {
+        allCompletedPrimary,
+        completionChecks,
+        rotationOrder,
+        enableSecondarySelection: rotationData.enable_secondary_selection,
+        decidedPhase: allCompletedPrimary && rotationData.enable_secondary_selection ? 'secondary' : 'primary'
+      });
 
       if (allCompletedPrimary && rotationData.enable_secondary_selection) {
         setCurrentPhase('secondary');
@@ -205,15 +220,13 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       const turnCompleted = turnData?.turn_completed || false;
       
-      console.log('[useSequentialSelection] Checking family:', {
+      console.log('[useSequentialSelection] Family eligibility check:', {
         familyGroup,
         used,
         allowed,
         turnCompleted,
-        extension: extension ? {
-          extended_until: extension.extended_until,
-          hasActiveExtension
-        } : null,
+        hasActiveExtension,
+        decision: !turnCompleted ? 'SET AS CURRENT (turn not completed)' : 'SKIP (turn completed)',
         rotationYear
       });
       
