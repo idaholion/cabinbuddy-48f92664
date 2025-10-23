@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -886,6 +886,37 @@ export default function StayHistory() {
                     </div>
                   </div>
                 </div>
+
+                {/* Venmo Payment Section */}
+                {financialSettings?.venmo_handle && stayData.amountDue > 0 && (
+                  <div className="mt-4 pt-4 border-t space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-blue-600" />
+                      <h4 className="text-base font-medium">Pay via Venmo</h4>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
+                          <p className="text-sm text-muted-foreground">Amount: ${stayData.amountDue.toFixed(2)}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                            const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue}&note=${encodeURIComponent('Cabin stay payment')}`;
+                            window.open(venmoUrl, '_blank');
+                          }}
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Pay Now
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">

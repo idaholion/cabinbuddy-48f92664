@@ -35,6 +35,7 @@ export const RecordPaymentDialog = ({
   const [amount, setAmount] = useState(stay.balanceDue);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [checkNumber, setCheckNumber] = useState('');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -60,11 +61,17 @@ export const RecordPaymentDialog = ({
 
     setSaving(true);
     try {
+      // Build payment reference based on method
+      let paymentRef = reference;
+      if (paymentMethod === 'check' && checkNumber) {
+        paymentRef = checkNumber + (reference ? ` - ${reference}` : '');
+      }
+      
       await onSave({
         amount,
         paidDate,
         paymentMethod,
-        paymentReference: reference || undefined,
+        paymentReference: paymentRef || undefined,
         notes: notes || undefined,
       });
       toast({
@@ -156,13 +163,44 @@ export const RecordPaymentDialog = ({
             </Select>
           </div>
 
+          {/* Check Number Field - Only show when check is selected */}
+          {paymentMethod === 'check' && (
+            <div>
+              <Label htmlFor="checkNumber">Check Number *</Label>
+              <Input
+                id="checkNumber"
+                value={checkNumber}
+                onChange={(e) => setCheckNumber(e.target.value)}
+                placeholder="e.g., 1234"
+                className="mt-1"
+              />
+            </div>
+          )}
+
+          {/* Payment Reference Field - Label changes based on method */}
           <div>
-            <Label htmlFor="reference">Payment Reference/Confirmation #</Label>
+            <Label htmlFor="reference">
+              {paymentMethod === 'check' 
+                ? 'Additional Reference (optional)' 
+                : paymentMethod === 'venmo' 
+                ? 'Venmo Transaction ID' 
+                : paymentMethod === 'zelle'
+                ? 'Zelle Confirmation #'
+                : 'Payment Reference/Confirmation #'}
+            </Label>
             <Input
               id="reference"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              placeholder="e.g., Check #1234, Transaction ID"
+              placeholder={
+                paymentMethod === 'check' 
+                  ? 'Optional memo or note'
+                  : paymentMethod === 'venmo'
+                  ? 'e.g., Transaction ID'
+                  : paymentMethod === 'zelle'
+                  ? 'e.g., Confirmation number'
+                  : 'e.g., Transaction ID, Confirmation #'
+              }
               className="mt-1"
             />
           </div>
