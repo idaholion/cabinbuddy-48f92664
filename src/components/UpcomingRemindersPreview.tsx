@@ -269,97 +269,83 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       });
     }
 
-    // Generate selection period reminders using actual calculated dates
-    // NOTE: In sequential selection mode, only show notifications for the currently ACTIVE period
-    // Future periods are not pre-created, so don't show phantom notifications
-    if ((automatedSettings.automated_selection_turn_notifications_enabled || automatedSettings.automated_selection_ending_tomorrow_enabled) && periods.length > 0) {
-      console.log('[UpcomingRemindersPreview] Generating selection reminders for sequential mode...');
+    // Generate SELECTION PERIOD reminders for SEQUENTIAL SELECTION MODE
+    // In sequential mode, we generate reminders based on the CURRENT active family's turn,
+    // NOT from the reservation_periods database table (which is for static week method only)
+    if (automatedSettings.automated_selection_turn_notifications_enabled || automatedSettings.automated_selection_ending_tomorrow_enabled) {
+      console.log('[UpcomingRemindersPreview] Generating selection period reminders for current active family:', currentFamilyGroup);
       
-      // Use the same logic as NotificationManagement to get actual dates
-      const displayInfo = getSelectionPeriodDisplayInfo(
-        periods,
-        currentFamilyGroup,
-        getDaysRemaining,
-        days
-      );
-      
-      console.log('[UpcomingRemindersPreview] displayInfo:', displayInfo);
-      
-      // IMPORTANT: Only show notifications for ACTIVE periods in sequential selection
-      // Don't show future "scheduled" periods as they don't actually exist yet
-      const upcomingPeriods = displayInfo.filter(info => 
-        info.status === 'active' && // Only active, not scheduled
-        info.scheduledStartDate
-      );
-      
-      console.log('[UpcomingRemindersPreview] Active periods only:', upcomingPeriods);
-      
-      upcomingPeriods.forEach(info => {
-        const startDate = parseDateOnly(info.scheduledStartDate!);
-        // Calculate end date: start date + selection days - 1
-        const endDate = addDays(startDate, days - 1);
-        
-        console.log('[UpcomingRemindersPreview] Processing active period:', {
-          familyGroup: info.familyGroup,
-          startDate,
-          endDate,
-          thirtyDaysFromNow,
-          isBefore: isBefore(startDate, thirtyDaysFromNow)
-        });
-        
-        if (isBefore(startDate, thirtyDaysFromNow)) {
-          // Find the original period for template variables
-          const period = periods.find(p => p.current_family_group === info.familyGroup);
-          if (!period) {
-            console.log('[UpcomingRemindersPreview] Period not found for:', info.familyGroup);
-            return;
-          }
+      // Only generate reminders if there's an active family currently selecting
+      if (currentFamilyGroup) {
+        // Find family group details
+        const familyGroup = familyGroups.find(fg => fg.name === currentFamilyGroup);
+        if (!familyGroup) {
+          console.log('[UpcomingRemindersPreview] Family group not found:', currentFamilyGroup);
+        } else {
+          // Calculate selection period dates based on ACTUAL current state
+          // The active family's turn is happening NOW (ongoing)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const selectionEndDate = addDays(today, days - 1);
           
-          // Selection turn notification (sent when period starts) - only for active period
+          console.log('[UpcomingRemindersPreview] Active selection period:', {
+            familyGroup: currentFamilyGroup,
+            startDate: format(today, 'yyyy-MM-dd'),
+            endDate: format(selectionEndDate, 'yyyy-MM-dd'),
+            selectionDays: days
+          });
+          
+          // Selection turn START notification (sent when period begins)
+          // For the current active family, this would have been sent when their turn started
           if (automatedSettings.automated_selection_turn_notifications_enabled) {
-            console.log('[UpcomingRemindersPreview] Adding selection turn notification for active period:', info.familyGroup);
+            console.log('[UpcomingRemindersPreview] Adding selection start notification for:', currentFamilyGroup);
             previews.push({
-              id: `sel-start-${period.id}`,
+              id: `sel-start-${currentFamilyGroup}-${rotationYear}`,
               type: 'selection_period',
               reminderType: 'selection_start',
-              sendDate: startDate,
-              recipient: period.current_family_group,
-              familyGroup: period.current_family_group,
-              subject: generateSelectionSubject('start', period),
-              content: generateSelectionContent('start', period),
-              eventDate: startDate,
-              eventTitle: `${period.current_family_group} Selection Period`,
+              sendDate: today,
+              recipient: currentFamilyGroup,
+              familyGroup: currentFamilyGroup,
+              subject: `Your Selection Period Has Started - ${rotationYear}`,
+              content: `It's now your turn to make your cabin reservations for ${rotationYear}. You have ${days} days to complete your selections.`,
+              eventDate: today,
+              eventTitle: `${currentFamilyGroup} Selection Period`,
               enabled: true
             });
           }
           
-          // Selection ending tomorrow reminder
+          // Selection ENDING TOMORROW reminder
           if (automatedSettings.automated_selection_ending_tomorrow_enabled) {
-            const dayBeforeEnd = addDays(endDate, -1);
-            console.log('[UpcomingRemindersPreview] Checking ending tomorrow for active period:', {
-              familyGroup: info.familyGroup,
-              dayBeforeEnd,
-              isAfter: isAfter(dayBeforeEnd, now)
+            const dayBeforeEnd = addDays(selectionEndDate, -1);
+            console.log('[UpcomingRemindersPreview] Checking selection ending tomorrow:', {
+              familyGroup: currentFamilyGroup,
+              dayBeforeEnd: format(dayBeforeEnd, 'yyyy-MM-dd'),
+              now: format(now, 'yyyy-MM-dd'),
+              willShowReminder: isAfter(dayBeforeEnd, now) || dayBeforeEnd.getTime() === now.getTime()
             });
-            if (isAfter(dayBeforeEnd, now)) {
-              console.log('[UpcomingRemindersPreview] Adding selection ending notification for active period:', info.familyGroup);
+            
+            // Only show if the "day before end" hasn't passed yet
+            if (isAfter(dayBeforeEnd, now) || dayBeforeEnd.getTime() === now.getTime()) {
+              console.log('[UpcomingRemindersPreview] Adding selection ending notification for:', currentFamilyGroup);
               previews.push({
-                id: `sel-end-${period.id}`,
+                id: `sel-end-${currentFamilyGroup}-${rotationYear}`,
                 type: 'selection_period',
                 reminderType: 'selection_end',
                 sendDate: dayBeforeEnd,
-                recipient: period.current_family_group,
-                familyGroup: period.current_family_group,
-                subject: generateSelectionSubject('end', period),
-                content: generateSelectionContent('end', period),
-                eventDate: endDate,
-                eventTitle: `${period.current_family_group} Selection Deadline`,
+                recipient: currentFamilyGroup,
+                familyGroup: currentFamilyGroup,
+                subject: `Your Selection Period Ends Tomorrow - ${rotationYear}`,
+                content: `Reminder: Your selection period ends tomorrow (${format(selectionEndDate, 'MMM d, yyyy')}). Please complete your cabin reservations soon.`,
+                eventDate: selectionEndDate,
+                eventTitle: `${currentFamilyGroup} Selection Deadline`,
                 enabled: true
               });
             }
           }
         }
-      });
+      } else {
+        console.log('[UpcomingRemindersPreview] No active family currently selecting for year', rotationYear);
+      }
     }
 
     console.log('[UpcomingRemindersPreview] Final previews count:', previews.length);
