@@ -1111,8 +1111,19 @@ const getBookingsForDate = (date: Date) => {
                   
                   <div className="grid grid-cols-7 gap-1">
                      {calendarDays.map((day, index) => {
-                const dayBookings = getBookingsForDate(day);
+                 const dayBookings = getBookingsForDate(day);
                 const dayWorkWeekends = getWorkWeekendsForDate(day);
+                
+                // Debug for June/July 2026
+                if (day.getFullYear() === 2026 && day.getMonth() >= 5 && day.getMonth() <= 6 && day.getDate() >= 26) {
+                  console.log(`[Calendar Day ${day.toISOString().split('T')[0]}]`, {
+                    dayWorkWeekends,
+                    hasWorkWeekend: dayWorkWeekends.length > 0,
+                    allWorkWeekends: workWeekends.length,
+                    filterEnabled: filterOptions.showWorkWeekends
+                  });
+                }
+                
                 const timePeriod = getTimePeriodForDate(day);
                 const tradeRequests = getTradeRequestsForDate(day);
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
