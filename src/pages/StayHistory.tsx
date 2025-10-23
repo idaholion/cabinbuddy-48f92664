@@ -647,9 +647,43 @@ export default function StayHistory() {
   if (!filteredReservations || filteredReservations.length === 0) {
     return (
       <div className="container mx-auto p-6 space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Stay History</h1>
-          <p className="text-muted-foreground">View your past cabin stays and related costs</p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Stay History</h1>
+            <p className="text-muted-foreground">View your past cabin stays and related costs</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            {/* Year Filter */}
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Family Group Filter (Admin only) */}
+            {isAdmin && (
+              <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select family group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Family Groups</SelectItem>
+                  {familyGroups.map((group) => (
+                    <SelectItem key={group.id} value={group.name}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         <Card>
@@ -659,7 +693,10 @@ export default function StayHistory() {
               <div>
                 <h3 className="text-lg font-semibold mb-2">No Past Stays Found</h3>
                 <p className="text-muted-foreground mb-4">
-                  You haven't completed any stays yet. Book your next stay to see it here!
+                  {selectedYear === 0 
+                    ? "You haven't completed any stays yet. Book your next stay to see it here!"
+                    : `No stays found for ${selectedYear}. Try selecting a different year or book your next stay!`
+                  }
                 </p>
                 <Button asChild>
                   <Link to="/calendar">View Calendar</Link>
