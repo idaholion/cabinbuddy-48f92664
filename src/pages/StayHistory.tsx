@@ -839,7 +839,7 @@ export default function StayHistory() {
                 {/* Action Buttons */}
                 {stayData.paymentId && (
                   <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-                    {!reservation.isVirtualSplit && (
+                    {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -855,7 +855,7 @@ export default function StayHistory() {
                         Edit Occupancy
                       </Button>
                     )}
-                    {!reservation.isVirtualSplit && (
+                    {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
                       <Button
                         variant="outline"
                         size="sm"
