@@ -352,11 +352,17 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       } else {
         // Create new reservation
+        // Check if organization uses Static Weeks method (time period windows)
+        const timePeriodWindows = calculateTimePeriodWindows(currentYear, currentMonth);
+        const usesStaticWeeks = timePeriodWindows.length > 0 && rotationData?.max_time_slots;
+        
         // Consider it a time period booking ONLY if:
-        // 1. It's during their sequential selection turn
-        // 2. They're booking a full week (7 nights)
-        // 3. Admin hasn't overridden it as a manual booking
+        // 1. Organization uses Static Weeks method (not Group Order Rotates)
+        // 2. It's during their sequential selection turn
+        // 3. They're booking a full week (7 nights)
+        // 4. Admin hasn't overridden it as a manual booking
         const isTimePeriodBooking = 
+          usesStaticWeeks &&
           !data.adminOverride &&
           data.familyGroup === currentTurnGroup && 
           nights === 7;
