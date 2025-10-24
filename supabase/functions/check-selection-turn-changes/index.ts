@@ -93,29 +93,104 @@ const handler = async (req: Request): Promise<Response> => {
           .eq('organization_id', org.id)
           .eq('rotation_year', year);
 
-        // Determine current family using same logic as useSequentialSelection
-        let currentFamily: string | null = null;
-        let currentExtension: any = null;
+        // Get current family from rotation_orders table (explicit tracking)
+        const { data: currentTurnData } = await supabase
+          .from('rotation_orders')
+          .select('current_primary_turn_family')
+          .eq('organization_id', org.id)
+          .eq('rotation_year', year)
+          .maybeSingle();
 
-        for (const familyGroup of rotationOrder) {
-          const usage = usageData.find(u => u.family_group === familyGroup);
+        let currentFamily = currentTurnData?.current_primary_turn_family || null;
+
+        if (!currentFamily) {
+          console.log(`No current family for ${org.name} year ${year}`);
+          continue;
+        }
+
+        // Check for active extension for the current family
+        const currentExtension = extensionsData?.find(e => 
+          e.family_group === currentFamily && new Date(e.extended_until) >= now
+        );
+
+        // Check if current family's extension has expired
+        const expiredExtension = extensionsData?.find(e => 
+          e.family_group === currentFamily && new Date(e.extended_until) < now
+        );
+
+        // If extension expired and they haven't completed, auto-advance
+        if (expiredExtension && checkTurnNotifications) {
+          const usage = usageData.find(u => u.family_group === currentFamily);
+          const turnCompleted = usage?.turn_completed || false;
           const usedPrimary = usage?.time_periods_used || 0;
           const allowedPrimary = usage?.time_periods_allowed || 0;
 
-          // Check for active extension
-          const extension = extensionsData?.find(e => e.family_group === familyGroup);
-          const hasActiveExtension = extension && new Date(extension.extended_until) >= now;
+          // Only auto-advance if they haven't explicitly completed and haven't used all periods
+          if (!turnCompleted && usedPrimary < allowedPrimary) {
+            console.log(`Auto-advancing from ${currentFamily} due to expired extension`);
+            
+            // Mark turn as completed
+            await supabase
+              .from('time_period_usage')
+              .update({ turn_completed: true })
+              .eq('organization_id', org.id)
+              .eq('rotation_year', year)
+              .eq('family_group', currentFamily);
 
-          // If family hasn't used all their periods or has active extension, they're current
-          if (usedPrimary < allowedPrimary || hasActiveExtension) {
-            currentFamily = familyGroup;
-            currentExtension = hasActiveExtension ? extension : null;
-            break;
+            // Find next family
+            const currentIndex = rotationOrder.indexOf(currentFamily);
+            let nextFamily: string | null = null;
+
+            for (let i = 1; i <= rotationOrder.length; i++) {
+              const nextIndex = (currentIndex + i) % rotationOrder.length;
+              const candidateFamily = rotationOrder[nextIndex];
+              
+              const nextUsage = usageData.find(u => u.family_group === candidateFamily);
+              const nextTurnCompleted = nextUsage?.turn_completed || false;
+              
+              if (!nextTurnCompleted) {
+                nextFamily = candidateFamily;
+                break;
+              }
+            }
+
+            // Update current_primary_turn_family
+            await supabase
+              .from('rotation_orders')
+              .update({ current_primary_turn_family: nextFamily })
+              .eq('organization_id', org.id)
+              .eq('rotation_year', year);
+
+            currentFamily = nextFamily;
+
+            if (currentFamily) {
+              // Send notification to new family
+              console.log(`Sending turn notification to ${currentFamily} after auto-advance`);
+              await supabase.functions.invoke('send-selection-turn-notification', {
+                body: {
+                  organization_id: org.id,
+                  family_group: currentFamily,
+                  rotation_year: year
+                }
+              });
+
+              await supabase
+                .from('selection_turn_notifications_sent')
+                .insert({
+                  organization_id: org.id,
+                  rotation_year: year,
+                  family_group: currentFamily,
+                  phase: 'primary'
+                });
+              totalNotifications++;
+            }
+            
+            continue; // Skip to next iteration since we already handled this
           }
         }
 
         if (!currentFamily) {
-          console.log(`No current family for ${org.name} year ${year}`);
+          console.log(`No current family for ${org.name} year ${year} after auto-advance check`);
           continue;
         }
 
@@ -157,46 +232,53 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         // Check ending tomorrow notifications
-        if (checkEndingTomorrow && currentExtension) {
-          const extendedUntil = new Date(currentExtension.extended_until);
-          const isTomorrow = 
-            extendedUntil.getFullYear() === tomorrow.getFullYear() &&
-            extendedUntil.getMonth() === tomorrow.getMonth() &&
-            extendedUntil.getDate() === tomorrow.getDate();
+        if (checkEndingTomorrow) {
+          // Re-fetch current extension for ending tomorrow check
+          const extension = extensionsData?.find(e => 
+            e.family_group === currentFamily && new Date(e.extended_until) >= now
+          );
 
-          if (isTomorrow) {
-            const { data: endingAlreadySent } = await supabase
-              .from('selection_turn_notifications_sent')
-              .select('id')
-              .eq('organization_id', org.id)
-              .eq('rotation_year', year)
-              .eq('family_group', currentFamily)
-              .eq('phase', 'ending_tomorrow')
-              .maybeSingle();
+          if (extension) {
+            const extendedUntil = new Date(extension.extended_until);
+            const isTomorrow = 
+              extendedUntil.getFullYear() === tomorrow.getFullYear() &&
+              extendedUntil.getMonth() === tomorrow.getMonth() &&
+              extendedUntil.getDate() === tomorrow.getDate();
 
-            if (!endingAlreadySent) {
-              console.log(`Sending ending tomorrow notification to ${currentFamily} for ${year}`);
-              const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
-                body: {
-                  organization_id: org.id,
-                  family_group: currentFamily,
-                  rotation_year: year,
-                  notification_type: 'ending_tomorrow'
-                }
-              });
+            if (isTomorrow) {
+              const { data: endingAlreadySent } = await supabase
+                .from('selection_turn_notifications_sent')
+                .select('id')
+                .eq('organization_id', org.id)
+                .eq('rotation_year', year)
+                .eq('family_group', currentFamily)
+                .eq('phase', 'ending_tomorrow')
+                .maybeSingle();
 
-              if (!sendError) {
-                await supabase
-                  .from('selection_turn_notifications_sent')
-                  .insert({
+              if (!endingAlreadySent) {
+                console.log(`Sending ending tomorrow notification to ${currentFamily} for ${year}`);
+                const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+                  body: {
                     organization_id: org.id,
-                    rotation_year: year,
                     family_group: currentFamily,
-                    phase: 'ending_tomorrow'
-                  });
-                totalNotifications++;
-              } else {
-                console.error(`Error sending ending tomorrow notification: ${sendError.message}`);
+                    rotation_year: year,
+                    notification_type: 'ending_tomorrow'
+                  }
+                });
+
+                if (!sendError) {
+                  await supabase
+                    .from('selection_turn_notifications_sent')
+                    .insert({
+                      organization_id: org.id,
+                      rotation_year: year,
+                      family_group: currentFamily,
+                      phase: 'ending_tomorrow'
+                    });
+                  totalNotifications++;
+                } else {
+                  console.error(`Error sending ending tomorrow notification: ${sendError.message}`);
+                }
               }
             }
           }

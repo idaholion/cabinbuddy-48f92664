@@ -126,57 +126,33 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id, getExtensionForFamily]);
 
   // Determine which family group's turn it is in primary phase
-  // For rotating order method, use turn_completed flags ONLY
+  // Now uses explicit current_primary_turn_family field from rotation_orders
   const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
     if (!organization?.id || !rotationData) return;
 
-    console.log('[useSequentialSelection] determinePrimaryCurrentFamily - using rotation order method:', {
-      rotationOrder,
+    console.log('[useSequentialSelection] determinePrimaryCurrentFamily - reading from rotation_orders');
+
+    // Read the explicit current_primary_turn_family field
+    const { data: rotationOrderData, error } = await supabase
+      .from('rotation_orders')
+      .select('current_primary_turn_family')
+      .eq('organization_id', organization.id)
+      .eq('rotation_year', rotationYear)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[useSequentialSelection] Error fetching current_primary_turn_family:', error);
+      return;
+    }
+
+    const currentFamily = rotationOrderData?.current_primary_turn_family || null;
+    
+    console.log('[useSequentialSelection] Current family from DB:', {
+      currentFamily,
       rotationYear
     });
 
-    // For rotating order method, always use rotation order + turn_completed logic
-    // NO date-based reservation_periods needed
-    await fallbackToRotationOrder(rotationOrder);
-  };
-
-  const fallbackToRotationOrder = async (rotationOrder: string[]) => {
-    if (!organization?.id) return;
-    
-    console.log('[useSequentialSelection] Using rotation order to determine current family');
-    
-    // Find the first family group that hasn't explicitly completed their turn
-    for (const familyGroup of rotationOrder) {
-      // Check turn_completed flag from database
-      const { data: turnData } = await supabase
-        .from('time_period_usage')
-        .select('turn_completed')
-        .eq('organization_id', organization.id)
-        .eq('rotation_year', rotationYear)
-        .eq('family_group', familyGroup)
-        .maybeSingle();
-      
-      const turnCompleted = turnData?.turn_completed || false;
-      
-      console.log('[useSequentialSelection] Checking family:', {
-        familyGroup,
-        turnCompleted,
-        rotationYear
-      });
-      
-      // Only skip if they've explicitly clicked "I'm done"
-      if (!turnCompleted) {
-        console.log('[useSequentialSelection] ✓ Current family (has not clicked "I\'m done"):', familyGroup);
-        setPrimaryCurrentFamily(familyGroup);
-        return;
-      } else {
-        console.log('[useSequentialSelection] ✗ Skip family (already clicked "I\'m done"):', familyGroup);
-      }
-    }
-    
-    // If all have completed, no current family
-    console.log('[useSequentialSelection] All families have completed their turns');
-    setPrimaryCurrentFamily(null);
+    setPrimaryCurrentFamily(currentFamily);
   };
 
   const calculateDaysRemaining = (familyGroup: string, phase: SelectionPhase): number | null => {
@@ -331,9 +307,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
       
       // Find next family group that hasn't completed their turn
+      let nextFamily: string | null = null;
       for (let i = 1; i <= rotationOrder.length; i++) {
         const nextIndex = (currentIndex + i) % rotationOrder.length;
-        const nextFamily = rotationOrder[nextIndex];
+        const candidateFamily = rotationOrder[nextIndex];
         
         // Check if next family has completed their turn
         const { data: nextTurnData } = await supabase
@@ -341,25 +318,41 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
           .select('turn_completed')
           .eq('organization_id', organization.id)
           .eq('rotation_year', rotationYear)
-          .eq('family_group', nextFamily)
+          .eq('family_group', candidateFamily)
           .maybeSingle();
         
         const nextTurnCompleted = nextTurnData?.turn_completed || false;
         
         // Advance to first family that hasn't completed their turn
         if (!nextTurnCompleted) {
-          console.log('[useSequentialSelection] Advancing to next family:', nextFamily);
-          setPrimaryCurrentFamily(nextFamily);
-          
-          // Send notification to the next family
-          await sendSelectionTurnNotification(nextFamily, rotationYear);
-          return;
+          nextFamily = candidateFamily;
+          break;
         }
       }
       
-      // If all families have completed, end primary phase
-      console.log('[useSequentialSelection] All families have completed primary phase');
-      setPrimaryCurrentFamily(null);
+      // Update current_primary_turn_family in rotation_orders
+      const { error: rotationUpdateError } = await supabase
+        .from('rotation_orders')
+        .update({ current_primary_turn_family: nextFamily })
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear);
+
+      if (rotationUpdateError) {
+        console.error('[useSequentialSelection] Error updating current_primary_turn_family:', rotationUpdateError);
+        throw rotationUpdateError;
+      }
+
+      if (nextFamily) {
+        console.log('[useSequentialSelection] Advancing to next family:', nextFamily);
+        setPrimaryCurrentFamily(nextFamily);
+        
+        // Send notification to the next family
+        await sendSelectionTurnNotification(nextFamily, rotationYear);
+      } else {
+        // If all families have completed, end primary phase
+        console.log('[useSequentialSelection] All families have completed primary phase');
+        setPrimaryCurrentFamily(null);
+      }
     } catch (error) {
       console.error('[useSequentialSelection] Error in advancePrimarySelection:', error);
     }
