@@ -29,6 +29,7 @@ interface TimePeriodUsageData {
   selection_round?: string;
   last_selection_date?: Date;
   selection_deadline?: Date;
+  turn_completed?: boolean;
 }
 
 export const useTimePeriods = (rotationYear?: number) => {
@@ -286,6 +287,7 @@ export const useTimePeriods = (rotationYear?: number) => {
         secondary_periods_used: item.secondary_periods_used || 0,
         secondary_periods_allowed: item.secondary_periods_allowed || 1,
         selection_round: item.selection_round || 'primary',
+        turn_completed: item.turn_completed || false,
         last_selection_date: item.last_selection_date ? (() => {
           const date = new Date(item.last_selection_date);
           return isNaN(date.getTime()) ? undefined : date;

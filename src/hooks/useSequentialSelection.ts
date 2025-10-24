@@ -51,7 +51,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       hasRotationData: !!rotationData,
       timePeriodUsageCount: timePeriodUsage.length,
       organizationId: organization?.id,
-      rotationYear
+      rotationYear,
+      timePeriodUsageDetails: timePeriodUsage.map(u => ({
+        family: u.family_group,
+        used: u.time_periods_used,
+        turnCompleted: u.turn_completed
+      }))
     });
 
     if (!rotationData || !timePeriodUsage.length || !organization?.id) {
@@ -62,6 +67,16 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     const checkPhaseAndFamily = async () => {
       // Determine current phase - use CALCULATED rotation for target year
       const rotationOrder = getRotationForYear(rotationYear);
+      
+      console.log('[useSequentialSelection] DIAGNOSTIC - Full state:', {
+        rotationOrder,
+        timePeriodUsage: timePeriodUsage.map(u => ({
+          family: u.family_group,
+          used: u.time_periods_used,
+          turnCompleted: u.turn_completed,
+          maxAllowed: rotationData?.max_time_slots
+        }))
+      });
       
       console.log('[useSequentialSelection] Calculated rotation order for year:', {
         targetYear: rotationYear,
