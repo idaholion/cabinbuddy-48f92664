@@ -346,6 +346,28 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         console.log('[useSequentialSelection] Advancing to next family:', nextFamily);
         setPrimaryCurrentFamily(nextFamily);
         
+        // Update next family's selection start date to TODAY
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        const newEndDate = new Date();
+        newEndDate.setDate(newEndDate.getDate() + (rotationData.selection_days || 14) - 1);
+        const formattedEndDate = newEndDate.toISOString().split('T')[0];
+        
+        const { error: periodUpdateError } = await supabase
+          .from('reservation_periods')
+          .update({
+            selection_start_date: today,
+            selection_end_date: formattedEndDate
+          })
+          .eq('organization_id', organization.id)
+          .eq('rotation_year', rotationYear)
+          .eq('current_family_group', nextFamily);
+        
+        if (periodUpdateError) {
+          console.error('[useSequentialSelection] Error updating next period dates:', periodUpdateError);
+        } else {
+          console.log(`[useSequentialSelection] Updated ${nextFamily} start date to ${today}`);
+        }
+        
         // Send notification to the next family
         await sendSelectionTurnNotification(nextFamily, rotationYear);
       } else {

@@ -14,6 +14,8 @@ import { SecondarySelectionManager } from "@/components/SecondarySelectionManage
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useReservationPeriods } from "@/hooks/useReservationPeriods";
+import { parseISO, format } from "date-fns";
 import { useSequentialSelection, SelectionStatus } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectionExtensions } from "@/hooks/useSelectionExtensions";
@@ -37,6 +39,7 @@ const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
+  const { periods: reservationPeriods } = useReservationPeriods();
   const { toast } = useToast();
   
   // State variables
@@ -496,31 +499,27 @@ const CabinCalendar = () => {
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                 <p className="font-medium">Selection begins October 1st</p>
                 {currentRotationYearCurrentFamily && (() => {
-                  const selectionDays = rotationData?.selection_days || 7;
-                  const currentYear = rotationYear; // The year being selected for
-                  const selectionStartYear = currentYear - 1; // Year when selection starts
-                  const baseStartDate = new Date(selectionStartYear, 9, 1); // October 1st
-                  
-                  // Count how many families have completed their selection (not just index)
-                  const completedFamiliesCount = currentRotationYearStatuses.filter(
-                    f => f.status === 'completed'
-                  ).length;
-                  
-                  // Add days for each family that has already completed selection
-                  const startDate = new Date(baseStartDate);
-                  startDate.setDate(startDate.getDate() + (completedFamiliesCount * selectionDays));
+                  // Get actual selection period from reservation_periods table
+                  const currentPeriod = reservationPeriods?.find(
+                    p => p.current_family_group === currentRotationYearCurrentFamily && 
+                         p.rotation_year === rotationYear
+                  );
+
+                  if (!currentPeriod) {
+                    return <div className="text-xs text-muted-foreground">Selection period not found</div>;
+                  }
+
+                  const startDate = parseISO(currentPeriod.selection_start_date);
+                  const originalEndDate = parseISO(currentPeriod.selection_end_date);
                   
                   // Check for extension
                   const extension = getExtensionForFamily(currentRotationYearCurrentFamily);
-                  const originalEndDate = new Date(startDate);
-                  originalEndDate.setDate(originalEndDate.getDate() + selectionDays - 1);
-                  
                   const endDate = extension 
                     ? new Date(extension.extended_until)
                     : originalEndDate;
-                  
+
                   const formatDate = (date: Date) => {
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return format(date, 'MMM d');
                   };
                   
                   const handleExtendClick = () => {
