@@ -415,7 +415,6 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin-top: 30px;">Best regards,<br><strong>${organizationName} Calendar Keeper</strong></p>
             </div>
           `;
-        }
           
           smsMessage = `Hi ${selection_data.guest_name}! Calendar selection for ${selection_data.selection_year} is now open. Please make your selections by ${selection_data.selection_end_date}. - ${organizationName}`;
         }
