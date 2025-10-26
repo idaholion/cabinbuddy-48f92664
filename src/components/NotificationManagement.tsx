@@ -296,7 +296,8 @@ export const NotificationManagement = () => {
     console.log('[NotificationManagement] fetchUpcomingSelectionPeriods called:', {
       currentFamilyGroup,
       rotationYear,
-      selectionDays: rotationData?.selection_days
+      selectionDays: rotationData?.selection_days,
+      periodsInHook: periods.length
     });
     
     try {
