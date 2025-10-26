@@ -356,20 +356,43 @@ export const NotificationManagement = () => {
           const primaryUsed = usage?.time_periods_used || 0;
           const primaryAllowed = usage?.time_periods_allowed || 2;
           
-          const primaryDays = rotationData?.selection_days || 14;
+          // Find the actual period record from reservation_periods table
+          const currentPeriod = periods.find(p => 
+            p.current_family_group === currentFamilyGroup && 
+            p.rotation_year === rotationYear &&
+            !p.reservations_completed
+          );
+          
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
-          // Calculate end date from today
-          const daysLeft = getDaysRemaining(currentFamilyGroup) || primaryDays;
-          const endDate = new Date(today);
-          endDate.setDate(endDate.getDate() + daysLeft - 1);
+          // Use actual dates from reservation_periods if available, otherwise calculate
+          let startDateStr: string;
+          let endDateStr: string;
+          let daysLeft: number;
+          
+          if (currentPeriod) {
+            // Use the actual stored dates from the database
+            startDateStr = currentPeriod.selection_start_date;
+            endDateStr = currentPeriod.selection_end_date;
+            const startDate = parseLocalDate(startDateStr);
+            const endDate = parseLocalDate(endDateStr);
+            daysLeft = differenceInDays(endDate, today) + 1; // +1 to include end day
+          } else {
+            // Fallback to calculation if no period found
+            const primaryDays = rotationData?.selection_days || 14;
+            daysLeft = getDaysRemaining(currentFamilyGroup) || primaryDays;
+            startDateStr = toDateOnlyString(today);
+            const endDate = new Date(today);
+            endDate.setDate(endDate.getDate() + daysLeft - 1);
+            endDateStr = toDateOnlyString(endDate);
+          }
           
           allUpcoming.push({
             familyGroup: currentFamilyGroup,
             status: 'active',
-            scheduledStartDate: toDateOnlyString(today),
-            scheduledEndDate: toDateOnlyString(endDate),
+            scheduledStartDate: startDateStr,
+            scheduledEndDate: endDateStr,
             daysUntilScheduled: 0,
             isCurrentlyActive: true,
             displayText: `Active Now (Primary Selection - ${primaryUsed}/${primaryAllowed} periods used)`,
@@ -379,8 +402,6 @@ export const NotificationManagement = () => {
           // Then show future turns for families that haven't completed
           const rotationOrder = getRotationForYear(rotationYear);
           const currentIndex = rotationOrder.findIndex(f => f === currentFamilyGroup);
-          let nextDate = new Date(endDate);
-          nextDate.setDate(nextDate.getDate() + 1);
           
           rotationOrder.forEach((familyGroup, index) => {
             // Skip current family (already shown)
@@ -396,11 +417,44 @@ export const NotificationManagement = () => {
             // Skip families that already completed
             if (primaryUsed >= primaryAllowed) return;
             
-            const startDate = toDateOnlyString(nextDate);
-            const endDate = new Date(nextDate);
-            endDate.setDate(endDate.getDate() + primaryDays - 1);
-            const endDateStr = toDateOnlyString(endDate);
-            const daysUntil = differenceInDays(nextDate, today);
+            // Find the actual period record from reservation_periods table
+            const futurePeriod = periods.find(p => 
+              p.current_family_group === familyGroup && 
+              p.rotation_year === rotationYear &&
+              !p.reservations_completed
+            );
+            
+            let startDate: string;
+            let endDateStr: string;
+            
+            if (futurePeriod) {
+              // Use actual stored dates from database
+              startDate = futurePeriod.selection_start_date;
+              endDateStr = futurePeriod.selection_end_date;
+            } else {
+              // Fallback: calculate dates sequentially
+              // This shouldn't happen if reservation_periods is properly populated
+              const primaryDays = rotationData?.selection_days || 14;
+              const lastPeriodEndDate = periods
+                .filter(p => p.rotation_year === rotationYear)
+                .sort((a, b) => b.current_group_index - a.current_group_index)[0]?.selection_end_date;
+              
+              if (lastPeriodEndDate) {
+                const nextDate = new Date(parseLocalDate(lastPeriodEndDate));
+                nextDate.setDate(nextDate.getDate() + 1);
+                startDate = toDateOnlyString(nextDate);
+                const endDate = new Date(nextDate);
+                endDate.setDate(endDate.getDate() + primaryDays - 1);
+                endDateStr = toDateOnlyString(endDate);
+              } else {
+                return; // Skip if we can't determine dates
+              }
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDateObj = parseLocalDate(startDate);
+            const daysUntil = differenceInDays(startDateObj, today);
             
             allUpcoming.push({
               familyGroup,
@@ -412,9 +466,6 @@ export const NotificationManagement = () => {
               displayText: `Primary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'} (up to ${primaryAllowed} periods)`,
               daysRemaining: undefined
             });
-            
-            nextDate = new Date(endDate);
-            nextDate.setDate(nextDate.getDate() + 1);
           });
         }
         
