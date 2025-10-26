@@ -214,6 +214,21 @@ export const useReservationPeriods = () => {
       );
       const secondaryRotationOrder = [...primaryRotationOrder].reverse();
 
+      // Check if secondary periods already exist (to avoid duplicates)
+      const { data: existingSecondary } = await supabase
+        .from('reservation_periods')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', reservationYear)
+        .gte('current_group_index', primaryRotationOrder.length)
+        .limit(1);
+
+      if (existingSecondary && existingSecondary.length > 0) {
+        console.log('Secondary periods already exist for', reservationYear);
+        await fetchReservationPeriods();
+        return;
+      }
+
       console.log(`Generating secondary periods for ${reservationYear}`);
 
       const selectionDays = rotationData.secondary_selection_days || 7;

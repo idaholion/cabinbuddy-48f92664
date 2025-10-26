@@ -5,6 +5,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
+import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { getFirstNameFromFullName } from '@/lib/reservation-utils';
 
 export type SelectionPhase = 'primary' | 'secondary';
@@ -34,6 +35,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder();
   const { timePeriodUsage } = useTimePeriods(rotationYear);
   const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
+  const { generateSecondaryPeriods } = useReservationPeriods();
   const { 
     secondaryStatus, 
     isSecondaryRoundActive, 
@@ -103,15 +105,27 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       const allCompletedPrimary = completionChecks.every(completed => completed);
 
+      // Check if secondary periods exist in database
+      const { data: secondaryPeriods } = await supabase
+        .from('reservation_periods')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .gte('current_group_index', rotationOrder.length)
+        .limit(1);
+
+      const hasSecondaryPeriods = secondaryPeriods && secondaryPeriods.length > 0;
+
       console.log('[useSequentialSelection] Phase determination:', {
         allCompletedPrimary,
         completionChecks,
         rotationOrder,
         enableSecondarySelection: rotationData.enable_secondary_selection,
-        decidedPhase: allCompletedPrimary && rotationData.enable_secondary_selection ? 'secondary' : 'primary'
+        hasSecondaryPeriods,
+        decidedPhase: allCompletedPrimary && rotationData.enable_secondary_selection && hasSecondaryPeriods ? 'secondary' : 'primary'
       });
 
-      if (allCompletedPrimary && rotationData.enable_secondary_selection) {
+      if (allCompletedPrimary && rotationData.enable_secondary_selection && hasSecondaryPeriods) {
         setCurrentPhase('secondary');
       } else {
         setCurrentPhase('primary');
@@ -378,9 +392,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         // If secondary selection is enabled, generate secondary periods
         if (rotationData.enable_secondary_selection) {
           console.log('[useSequentialSelection] Generating secondary selection periods');
-          // Trigger secondary period generation (this should be imported from useReservationPeriods)
-          // For now, log that we need to generate them
-          // The actual generation will happen via useReservationPeriods hook in the component
+          await generateSecondaryPeriods(rotationYear);
         }
       }
     } catch (error) {
