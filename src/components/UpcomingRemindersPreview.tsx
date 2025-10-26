@@ -283,32 +283,42 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           console.log('[UpcomingRemindersPreview] Family group not found:', currentFamilyGroup);
         } else {
           // Calculate selection period dates based on ACTUAL current state
-          // The active family's turn is happening NOW (ongoing)
+          // The active family's turn may have started earlier, not necessarily today
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const selectionEndDate = addDays(today, days - 1);
+          
+          // Get days remaining in current turn (if available)
+          const daysRemaining = getDaysRemaining?.(currentFamilyGroup);
+          
+          // If we know days remaining, calculate the actual start date
+          // Otherwise assume it started today (fallback)
+          const daysSinceStart = daysRemaining !== undefined ? (days - daysRemaining) : 0;
+          const actualStartDate = addDays(today, -daysSinceStart);
+          const selectionEndDate = addDays(actualStartDate, days - 1);
           
           console.log('[UpcomingRemindersPreview] Active selection period:', {
             familyGroup: currentFamilyGroup,
-            startDate: format(today, 'yyyy-MM-dd'),
+            actualStartDate: format(actualStartDate, 'yyyy-MM-dd'),
             endDate: format(selectionEndDate, 'yyyy-MM-dd'),
-            selectionDays: days
+            selectionDays: days,
+            daysRemaining,
+            daysSinceStart
           });
           
           // Selection turn START notification (sent when period begins)
-          // For the current active family, this would have been sent when their turn started
+          // This was sent when the family's turn actually started
           if (automatedSettings.automated_selection_turn_notifications_enabled) {
             console.log('[UpcomingRemindersPreview] Adding selection start notification for:', currentFamilyGroup);
             previews.push({
               id: `sel-start-${currentFamilyGroup}-${rotationYear}`,
               type: 'selection_period',
               reminderType: 'selection_start',
-              sendDate: today,
+              sendDate: actualStartDate,
               recipient: currentFamilyGroup,
               familyGroup: currentFamilyGroup,
               subject: `Your Selection Period Has Started - ${rotationYear}`,
               content: `It's now your turn to make your cabin reservations for ${rotationYear}. You have ${days} days to complete your selections.`,
-              eventDate: today,
+              eventDate: actualStartDate,
               eventTitle: `${currentFamilyGroup} Selection Period`,
               enabled: true
             });
