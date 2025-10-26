@@ -335,6 +335,12 @@ export const NotificationManagement = () => {
       
       const allUpcoming: SelectionPeriodDisplayInfo[] = [];
       
+      console.log('[NotificationManagement] Building selection periods:', {
+        isSecondaryPhase,
+        currentFamilyGroup,
+        rotationYear
+      });
+      
       // Calculate primary phase remaining turns
       if (!isSecondaryPhase) {
         // Generate complete primary schedule from rotation order
@@ -343,8 +349,17 @@ export const NotificationManagement = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
+        console.log('[NotificationManagement] Primary phase setup:', {
+          rotationOrder,
+          primaryDays,
+          today: today.toISOString(),
+          currentFamilyGroup
+        });
+        
         // Find current family index in rotation
         const currentIndex = rotationOrder.findIndex(f => f === currentFamilyGroup);
+        
+        console.log('[NotificationManagement] Current family index:', currentIndex);
         
         let nextDate = new Date(today);
         
@@ -370,6 +385,17 @@ export const NotificationManagement = () => {
           endDate.setDate(endDate.getDate() + primaryDays - 1);
           const endDateStr = toDateOnlyString(endDate);
           const daysUntil = differenceInDays(nextDate, today);
+          
+          console.log('[NotificationManagement] Adding selection period:', {
+            familyGroup,
+            isActive,
+            currentFamilyGroup,
+            startDate,
+            endDateStr,
+            daysUntil,
+            primaryUsed,
+            primaryAllowed
+          });
           
           allUpcoming.push({
             familyGroup,
