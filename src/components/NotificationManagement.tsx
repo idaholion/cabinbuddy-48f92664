@@ -349,76 +349,34 @@ export const NotificationManagement = () => {
       
       // Calculate primary phase remaining turns
       if (!isSecondaryPhase) {
-        // Generate complete primary schedule from rotation order
-        const rotationOrder = getRotationForYear(rotationYear);
-        const primaryDays = rotationData?.selection_days || 14;
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Show ONLY the current active family's selection period
+        // Don't try to predict future turns - just show who's up now
+        const usage = usageData?.find(u => u.family_group === currentFamilyGroup);
+        const primaryUsed = usage?.time_periods_used || 0;
+        const primaryAllowed = usage?.time_periods_allowed || 2;
         
-        console.log('[NotificationManagement] Primary phase setup:', {
-          rotationOrder,
-          primaryDays,
-          today: today.toISOString(),
-          currentFamilyGroup
-        });
-        
-        // Find current family index in rotation
-        const currentIndex = rotationOrder.findIndex(f => f === currentFamilyGroup);
-        
-        console.log('[NotificationManagement] Current family index:', currentIndex);
-        
-        let nextDate = new Date(today);
-        
-        // Generate turns for all families that haven't completed primary
-        rotationOrder.forEach((familyGroup, index) => {
-          const usage = usageData?.find(u => u.family_group === familyGroup);
-          const primaryUsed = usage?.time_periods_used || 0;
-          const primaryAllowed = usage?.time_periods_allowed || 2;
+        // Only show if current family hasn't completed
+        if (currentFamilyGroup && primaryUsed < primaryAllowed) {
+          const primaryDays = rotationData?.selection_days || 14;
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
           
-          // Skip families that already completed their primary selections
-          if (primaryUsed >= primaryAllowed) {
-            return;
-          }
-          
-          // Skip families that already went (before current family)
-          if (currentIndex >= 0 && index < currentIndex) {
-            return;
-          }
-          
-          const isActive = familyGroup === currentFamilyGroup;
-          const startDate = toDateOnlyString(nextDate);
-          const endDate = new Date(nextDate);
-          endDate.setDate(endDate.getDate() + primaryDays - 1);
-          const endDateStr = toDateOnlyString(endDate);
-          const daysUntil = differenceInDays(nextDate, today);
-          
-          console.log('[NotificationManagement] Adding selection period:', {
-            familyGroup,
-            isActive,
-            currentFamilyGroup,
-            startDate,
-            endDateStr,
-            daysUntil,
-            primaryUsed,
-            primaryAllowed
-          });
+          // Calculate when this turn will end (today + remaining days)
+          const daysLeft = getDaysRemaining(currentFamilyGroup) || primaryDays;
+          const endDate = new Date(today);
+          endDate.setDate(endDate.getDate() + daysLeft - 1);
           
           allUpcoming.push({
-            familyGroup,
-            status: isActive ? 'active' : 'scheduled',
-            scheduledStartDate: startDate,
-            scheduledEndDate: endDateStr,
-            daysUntilScheduled: daysUntil,
-            isCurrentlyActive: isActive,
-            displayText: isActive 
-              ? `Active Now (Primary Selection - up to 2 periods)` 
-              : `Primary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'} (up to 2 periods)`,
-            daysRemaining: isActive ? getDaysRemaining(familyGroup) : undefined
+            familyGroup: currentFamilyGroup,
+            status: 'active',
+            scheduledStartDate: toDateOnlyString(today),
+            scheduledEndDate: toDateOnlyString(endDate),
+            daysUntilScheduled: 0,
+            isCurrentlyActive: true,
+            displayText: `Active Now (Primary Selection - ${primaryUsed}/${primaryAllowed} periods used)`,
+            daysRemaining: daysLeft
           });
-          
-          nextDate = new Date(endDate);
-          nextDate.setDate(nextDate.getDate() + 1);
-        });
+        }
         
         // Check if primary phase is completely done
         const allPrimaryComplete = usageData?.every(u => 
