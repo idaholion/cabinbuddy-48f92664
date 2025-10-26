@@ -194,14 +194,110 @@ export const useReservationPeriods = () => {
     }
   }, [organization?.id]);
 
-  // NOTE: Auto-generation disabled for rotating order method
-  // reservation_periods are only used for static week method
-  // For rotating order method, use turn_completed flags instead
+  // Generate secondary selection periods after primary phase completes
+  const generateSecondaryPeriods = async (selectionYear: number) => {
+    if (!organization?.id || !rotationData) {
+      console.error('Missing organization or rotation data for secondary periods');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const reservationYear = selectionYear + 1;
+      
+      // Get reversed rotation order for secondary selection
+      const primaryRotationOrder = calculateRotationForYear(
+        rotationData.rotation_order,
+        rotationData.rotation_year,
+        reservationYear,
+        rotationData.first_last_option || 'first'
+      );
+      const secondaryRotationOrder = [...primaryRotationOrder].reverse();
+
+      console.log(`Generating secondary periods for ${reservationYear}`);
+
+      const selectionDays = rotationData.secondary_selection_days || 7;
+      
+      // Find the last primary period end date
+      const { data: lastPrimaryPeriod } = await supabase
+        .from('reservation_periods')
+        .select('selection_end_date')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', reservationYear)
+        .order('selection_end_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!lastPrimaryPeriod) {
+        console.error('No primary periods found to base secondary periods on');
+        return;
+      }
+
+      // Start secondary periods the day after last primary period ends
+      const lastEndDate = new Date(lastPrimaryPeriod.selection_end_date);
+      let currentStartDate = new Date(lastEndDate);
+      currentStartDate.setDate(currentStartDate.getDate() + 1);
+
+      const secondaryPeriodsToInsert = [];
+
+      for (let i = 0; i < secondaryRotationOrder.length; i++) {
+        const familyGroup = secondaryRotationOrder[i];
+        const endDate = new Date(currentStartDate);
+        endDate.setDate(endDate.getDate() + selectionDays - 1);
+
+        secondaryPeriodsToInsert.push({
+          organization_id: organization.id,
+          rotation_year: reservationYear,
+          current_family_group: familyGroup,
+          current_group_index: primaryRotationOrder.length + i, // Continue indexing after primary
+          selection_start_date: currentStartDate.toISOString().split('T')[0],
+          selection_end_date: endDate.toISOString().split('T')[0],
+          reservations_completed: false
+        });
+
+        currentStartDate = new Date(endDate);
+        currentStartDate.setDate(currentStartDate.getDate() + 1);
+      }
+
+      // Insert secondary periods
+      const { error } = await supabase
+        .from('reservation_periods')
+        .insert(secondaryPeriodsToInsert);
+
+      if (error) {
+        console.error('Error inserting secondary periods:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate secondary selection periods",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Generated secondary periods:', secondaryPeriodsToInsert.length);
+      toast({
+        title: "Success",
+        description: `Generated ${secondaryPeriodsToInsert.length} secondary selection periods`,
+      });
+
+      await fetchReservationPeriods();
+    } catch (error) {
+      console.error('Error in generateSecondaryPeriods:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate secondary selection periods",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     periods,
     loading,
     generateReservationPeriods,
+    generateSecondaryPeriods,
     fetchReservationPeriods,
     getUpcomingSelectionPeriods,
   };

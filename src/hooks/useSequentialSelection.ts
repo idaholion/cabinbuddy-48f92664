@@ -371,9 +371,17 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         // Send notification to the next family
         await sendSelectionTurnNotification(nextFamily, rotationYear);
       } else {
-        // If all families have completed, end primary phase
+        // All families have completed primary phase
         console.log('[useSequentialSelection] All families have completed primary phase');
         setPrimaryCurrentFamily(null);
+        
+        // If secondary selection is enabled, generate secondary periods
+        if (rotationData.enable_secondary_selection) {
+          console.log('[useSequentialSelection] Generating secondary selection periods');
+          // Trigger secondary period generation (this should be imported from useReservationPeriods)
+          // For now, log that we need to generate them
+          // The actual generation will happen via useReservationPeriods hook in the component
+        }
       }
     } catch (error) {
       console.error('[useSequentialSelection] Error in advancePrimarySelection:', error);

@@ -474,54 +474,42 @@ export const NotificationManagement = () => {
           u.time_periods_used >= u.time_periods_allowed
         );
         
-        // If primary is complete, also show secondary phase turns
+        // If primary is complete, show secondary periods from reservation_periods table
         if (allPrimaryComplete) {
-          // Primary phase is done, calculate secondary phase turns
-          const rotationOrder = getRotationForYear(rotationYear);
-          const secondaryOrder = [...rotationOrder].reverse();
-          const secondaryDays = rotationData?.secondary_selection_days || 7;
+          // Fetch secondary periods from database (should already be generated)
+          const secondaryPeriods = periods.filter(p => 
+            p.rotation_year === rotationYear &&
+            p.current_group_index >= (getRotationForYear(rotationYear)?.length || 0) // Index indicates secondary
+          );
           
-          // Start secondary after last primary turn ends (calculate from last family in allUpcoming)
-          const lastPrimaryEndDate = allUpcoming.length > 0 
-            ? new Date(allUpcoming[allUpcoming.length - 1].scheduledEndDate)
-            : new Date();
-          lastPrimaryEndDate.setDate(lastPrimaryEndDate.getDate() + 1);
-          
-          let nextDate = new Date(lastPrimaryEndDate);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
-          secondaryOrder.forEach(familyGroup => {
-            const usage = usageData?.find(u => u.family_group === familyGroup);
+          secondaryPeriods.forEach(period => {
+            const usage = usageData?.find(u => u.family_group === period.current_family_group);
             const secondaryUsed = usage?.secondary_periods_used || 0;
             const secondaryAllowed = rotationData?.secondary_max_periods || 1;
             
             // Only show families that haven't completed their secondary selection
             if (secondaryUsed < secondaryAllowed) {
-              const startDate = toDateOnlyString(nextDate);
-              const endDate = new Date(nextDate);
-              endDate.setDate(endDate.getDate() + secondaryDays - 1);
-              const endDateStr = toDateOnlyString(endDate);
-              const daysUntil = differenceInDays(nextDate, today);
+              const startDateObj = parseLocalDate(period.selection_start_date);
+              const endDateObj = parseLocalDate(period.selection_end_date);
+              const daysUntil = differenceInDays(startDateObj, today);
               
-              // Check if this is the active family (in secondary phase)
-              const isActive = familyGroup === secondaryCurrentFamily;
+              const isActive = period.current_family_group === secondaryCurrentFamily;
               
               allUpcoming.push({
-                familyGroup,
+                familyGroup: period.current_family_group,
                 status: isActive ? 'active' : 'scheduled',
-                scheduledStartDate: startDate,
-                scheduledEndDate: endDateStr,
+                scheduledStartDate: period.selection_start_date,
+                scheduledEndDate: period.selection_end_date,
                 daysUntilScheduled: daysUntil,
                 isCurrentlyActive: isActive,
                 displayText: isActive 
                   ? 'Active Now (Secondary Selection - 1 additional period)' 
                   : `Secondary Selection in ${daysUntil} day${daysUntil === 1 ? '' : 's'} (1 additional period)`,
-                daysRemaining: isActive ? getDaysRemaining(familyGroup) : undefined
+                daysRemaining: isActive ? getDaysRemaining(period.current_family_group) : undefined
               });
-              
-              nextDate = new Date(endDate);
-              nextDate.setDate(nextDate.getDate() + 1);
             }
           });
         }
