@@ -283,26 +283,43 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           console.log('[UpcomingRemindersPreview] Family group not found:', currentFamilyGroup);
         } else {
           // Calculate selection period dates based on ACTUAL current state
-          // The active family's turn may have started earlier, not necessarily today
+          // Need to determine when the current family's turn actually started
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           
-          // Get days remaining in current turn (if available)
+          // Get days remaining - this tells us how many days are left in their turn
           const daysRemaining = getDaysRemaining?.(currentFamilyGroup);
           
-          // If we know days remaining, calculate the actual start date
-          // Otherwise assume it started today (fallback)
-          const daysSinceStart = daysRemaining !== undefined ? (days - daysRemaining) : 0;
-          const actualStartDate = addDays(today, -daysSinceStart);
-          const selectionEndDate = addDays(actualStartDate, days - 1);
+          let actualStartDate: Date;
+          let selectionEndDate: Date;
           
-          console.log('[UpcomingRemindersPreview] Active selection period:', {
+          if (daysRemaining !== undefined && daysRemaining !== null) {
+            // Calculate backwards: if 3 days remaining out of 14 total days,
+            // then they're on day 11, so turn started 11 days ago
+            const daysSinceStart = Math.max(0, days - daysRemaining);
+            actualStartDate = addDays(today, -daysSinceStart);
+            selectionEndDate = addDays(today, daysRemaining - 1);
+            
+            console.log('[UpcomingRemindersPreview] Calculated from days remaining:', {
+              familyGroup: currentFamilyGroup,
+              totalDays: days,
+              daysRemaining,
+              daysSinceStart,
+              actualStart: format(actualStartDate, 'yyyy-MM-dd'),
+              endDate: format(selectionEndDate, 'yyyy-MM-dd'),
+              today: format(today, 'yyyy-MM-dd')
+            });
+          } else {
+            // Fallback: assume turn just started today
+            actualStartDate = today;
+            selectionEndDate = addDays(today, days - 1);
+            console.log('[UpcomingRemindersPreview] Using fallback dates (turn starts today)');
+          }
+          
+          console.log('[UpcomingRemindersPreview] Final selection period:', {
             familyGroup: currentFamilyGroup,
-            actualStartDate: format(actualStartDate, 'yyyy-MM-dd'),
-            endDate: format(selectionEndDate, 'yyyy-MM-dd'),
-            selectionDays: days,
-            daysRemaining,
-            daysSinceStart
+            startDate: format(actualStartDate, 'yyyy-MM-dd'),
+            endDate: format(selectionEndDate, 'yyyy-MM-dd')
           });
           
           // Selection turn START notification (sent when period begins)
@@ -327,15 +344,19 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           // Selection ENDING TOMORROW reminder
           if (automatedSettings.automated_selection_ending_tomorrow_enabled) {
             const dayBeforeEnd = addDays(selectionEndDate, -1);
+            const isInFuture = isAfter(dayBeforeEnd, now) || format(dayBeforeEnd, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+            
             console.log('[UpcomingRemindersPreview] Checking selection ending tomorrow:', {
               familyGroup: currentFamilyGroup,
+              endDate: format(selectionEndDate, 'yyyy-MM-dd'),
               dayBeforeEnd: format(dayBeforeEnd, 'yyyy-MM-dd'),
               now: format(now, 'yyyy-MM-dd'),
-              willShowReminder: isAfter(dayBeforeEnd, now) || dayBeforeEnd.getTime() === now.getTime()
+              isInFuture,
+              willShowReminder: isInFuture
             });
             
-            // Only show if the "day before end" hasn't passed yet
-            if (isAfter(dayBeforeEnd, now) || dayBeforeEnd.getTime() === now.getTime()) {
+            // Show if the "day before end" is today or in the future
+            if (isInFuture) {
               console.log('[UpcomingRemindersPreview] Adding selection ending notification for:', currentFamilyGroup);
               previews.push({
                 id: `sel-end-${currentFamilyGroup}-${rotationYear}`,
@@ -350,6 +371,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
                 eventTitle: `${currentFamilyGroup} Selection Deadline`,
                 enabled: true
               });
+            } else {
+              console.log('[UpcomingRemindersPreview] Skipping selection ending notification - date has passed');
             }
           }
         }
