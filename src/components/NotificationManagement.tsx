@@ -293,12 +293,18 @@ export const NotificationManagement = () => {
   };
 
   const fetchUpcomingSelectionPeriods = async () => {
-    console.log('[NotificationManagement] fetchUpcomingSelectionPeriods called:', {
-      currentFamilyGroup,
-      rotationYear,
-      selectionDays: rotationData?.selection_days,
-      periodsInHook: periods.length
-    });
+    console.log('[NotificationManagement] === FUNCTION START ===');
+    console.log('[NotificationManagement] currentFamilyGroup:', currentFamilyGroup);
+    console.log('[NotificationManagement] rotationYear:', rotationYear);
+    console.log('[NotificationManagement] organization?.id:', organization?.id);
+    
+    if (!organization?.id || !rotationYear) {
+      console.error('[NotificationManagement] EARLY RETURN - Missing data:', {
+        hasOrg: !!organization?.id,
+        hasRotationYear: !!rotationYear
+      });
+      return;
+    }
     
     try {
       // Fetch time period usage to identify completed families
