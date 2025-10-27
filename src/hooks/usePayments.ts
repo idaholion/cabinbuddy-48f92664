@@ -51,14 +51,6 @@ export const usePayments = () => {
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!organization?.id) return;
 
-    console.log(`[usePayments] Fetching payments for organization:`, {
-      orgId: organization.id,
-      orgName: organization.name,
-      year: year || 'all',
-      page,
-      limit
-    });
-
     try {
       setLoading(true);
       
@@ -81,8 +73,6 @@ export const usePayments = () => {
         const startDate = `${year}-01-01`;
         const endDate = `${year}-12-31`;
         
-        console.log(`[usePayments] Fetching payments with year filter: ${year}`);
-        
         // Fetch ALL payments with reservation data
         const { data: allPayments, error: allError } = await supabase
           .from('payments')
@@ -95,18 +85,12 @@ export const usePayments = () => {
         
         if (allError) throw allError;
         
-        console.log(`[usePayments] Fetched ${allPayments?.length || 0} total payments`);
-        
         // Filter payments by year - prioritize reservation dates over creation dates
         const filteredPayments = (allPayments || []).filter(payment => {
           // If payment has a linked reservation, use reservation start_date
           if (payment.reservation && payment.reservation.start_date) {
             const reservationYear = new Date(payment.reservation.start_date).getFullYear();
-            const matches = reservationYear === year;
-            if (matches) {
-              console.log(`[usePayments] ✓ Including payment ${payment.id} - reservation year ${reservationYear}`);
-            }
-            return matches;
+            return reservationYear === year;
           }
           
           // For orphaned payments, try to extract year from daily_occupancy dates
@@ -115,28 +99,13 @@ export const usePayments = () => {
             const firstOccupancyDate = paymentAny.daily_occupancy[0].date;
             if (firstOccupancyDate) {
               const occupancyYear = new Date(firstOccupancyDate).getFullYear();
-              const matches = occupancyYear === year;
-              if (matches) {
-                console.log(`[usePayments] ✓ Including orphaned payment ${payment.id} - occupancy year ${occupancyYear}`);
-              }
-              return matches;
+              return occupancyYear === year;
             }
           }
           
           // Fallback to payment created_at date
           const paymentYear = new Date(payment.created_at).getFullYear();
-          const matches = paymentYear === year;
-          if (matches) {
-            console.log(`[usePayments] ✓ Including payment ${payment.id} - created year ${paymentYear}`);
-          }
-          return matches;
-        });
-        
-        console.log(`[usePayments] Year filter ${year}: ${filteredPayments.length} payments match`);
-        console.log(`[usePayments] Breakdown:`, {
-          withReservation: filteredPayments.filter(p => p.reservation_id).length,
-          orphaned: filteredPayments.filter(p => !p.reservation_id).length,
-          familyGroups: [...new Set(filteredPayments.map(p => p.family_group))]
+          return paymentYear === year;
         });
         
         setPayments(filteredPayments);
@@ -146,8 +115,6 @@ export const usePayments = () => {
       }
 
       // When no year filter, fetch ALL payments (not just first 50)
-      console.log(`[usePayments] Fetching all payments without year filter`);
-      
       const { data, error } = await supabase
         .from('payments')
         .select(`
@@ -158,8 +125,6 @@ export const usePayments = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      console.log(`[usePayments] Fetched ${data?.length || 0} total payments (all years)`);
       
       setPayments(data || []);
       setPagination({ page: 1, limit: 50, total: data?.length || 0 });

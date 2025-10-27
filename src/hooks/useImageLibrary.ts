@@ -41,10 +41,7 @@ export const useImageLibrary = () => {
   const { toast } = useToast();
 
   const fetchImages = async () => {
-    console.log('📸 [useImageLibrary] Fetching images for organization:', organization?.id);
-    
     if (!organization?.id) {
-      console.log('📸 [useImageLibrary] No organization found, skipping fetch');
       return;
     }
 
@@ -54,12 +51,6 @@ export const useImageLibrary = () => {
       console.error('📸 [useImageLibrary] No authenticated session found');
       return;
     }
-    
-    console.log('📸 [useImageLibrary] Authentication context:', {
-      userId: session.user.id,
-      userEmail: session.user.email,
-      organizationId: organization.id
-    });
 
     setLoading(true);
     try {
@@ -74,7 +65,6 @@ export const useImageLibrary = () => {
         return;
       }
 
-      console.log('📸 [useImageLibrary] Successfully fetched images:', data?.length || 0);
       setImages(data || []);
     } catch (error) {
       console.error('📸 [useImageLibrary] Exception fetching images:', error);

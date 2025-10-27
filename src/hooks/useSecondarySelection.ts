@@ -88,7 +88,6 @@ export const useSecondarySelection = (rotationYear: number) => {
     const secondaryEnabled = rotationData.enable_secondary_selection;
 
     if (allCompletedPrimary && secondaryEnabled && !secondaryStatus) {
-      console.log('[useSecondarySelection] All primary turns completed, starting secondary selection');
       await startSecondarySelection();
     }
   };
@@ -142,8 +141,6 @@ export const useSecondarySelection = (rotationYear: number) => {
   const advanceSecondarySelection = async () => {
     if (!organization?.id || !secondaryStatus || !rotationData) return;
 
-    console.log('[useSecondarySelection] Advancing secondary selection');
-
     try {
       // CRITICAL: Mark current family's turn as completed in secondary_selection_status
       const { error: updateError } = await supabase
@@ -155,8 +152,6 @@ export const useSecondarySelection = (rotationYear: number) => {
         console.error('[useSecondarySelection] Error marking turn as completed:', updateError);
         throw updateError;
       }
-
-      console.log('[useSecondarySelection] Marked turn as completed for:', secondaryStatus.current_family_group);
 
       const rotationOrder = getRotationForYear(rotationYear);
       const reverseOrder = [...rotationOrder].reverse();
@@ -202,7 +197,6 @@ export const useSecondarySelection = (rotationYear: number) => {
         return;
       }
 
-      console.log('[useSecondarySelection] Advanced to next family:', nextFamily);
       fetchSecondarySelectionStatus();
     } catch (error) {
       console.error('[useSecondarySelection] Error in advanceSecondarySelection:', error);

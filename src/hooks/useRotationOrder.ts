@@ -85,7 +85,6 @@ export const useRotationOrder = () => {
 
   const getSelectionRotationYear = (): number => {
     if (!rotationData || !rotationData.start_month) {
-      console.log('[useRotationOrder] getSelectionRotationYear - NO rotationData, returning current year');
       return new Date().getFullYear();
     }
     
@@ -100,20 +99,7 @@ export const useRotationOrder = () => {
     // Create rotation start date for current year (use 1st of month for year calculation)
     const rotationStartThisYear = new Date(currentYear, startMonthIndex, 1);
     
-    const calculatedYear = today >= rotationStartThisYear ? currentYear + 1 : currentYear;
-    
-    console.log('[useRotationOrder] getSelectionRotationYear calculation:', {
-      hasRotationData: !!rotationData,
-      startMonth: rotationData.start_month,
-      today: today.toISOString(),
-      currentYear,
-      startMonthIndex,
-      rotationStartThisYear: rotationStartThisYear.toISOString(),
-      hasPassedStartDate: today >= rotationStartThisYear,
-      calculatedYear
-    });
-    
-    return calculatedYear;
+    return today >= rotationStartThisYear ? currentYear + 1 : currentYear;
   };
 
   const fetchRotationOrder = async (year?: number) => {
