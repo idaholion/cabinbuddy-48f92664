@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { ErrorState } from '@/components/ui/error-boundary';
+import { logger } from '@/lib/logger';
 
 interface Props {
   children: ReactNode;
@@ -22,17 +23,17 @@ class AppErrorBoundaryClass extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: any) {
-    // Log error in development
-    if (process.env.NODE_ENV === 'development') {
-      console.group('🚨 Application Error Boundary');
-      console.error('Error:', error);
-      console.error('Error Info:', errorInfo);
-      console.groupEnd();
-    }
+    // Log error with proper context
+    logger.error(error.message, {
+      component: 'AppErrorBoundary',
+      action: 'componentDidCatch',
+      errorInfo: errorInfo?.componentStack,
+      route: window.location.pathname
+    });
 
-    // In production, this would be sent to monitoring service
+    // In production, error is already sent via logger
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Send to error monitoring service
+      // Logger handles production monitoring
     }
   }
 

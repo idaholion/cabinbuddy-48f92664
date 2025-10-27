@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Users, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { parseDateOnly } from '@/lib/date-utils';
+import { logger } from '@/lib/logger';
 
 interface DailyBreakdown {
   date: string;
@@ -75,7 +76,12 @@ export const GuestCostSplitDialog = ({
       .rpc('get_organization_user_emails', { org_id: organizationId });
 
     if (error) {
-      console.error('Error fetching users:', error);
+      logger.error('Failed to fetch organization users', { 
+        component: 'GuestCostSplitDialog', 
+        action: 'fetchUsers',
+        organizationId,
+        error: error.message 
+      });
       toast({
         title: 'Error',
         description: 'Failed to load organization users',
@@ -91,7 +97,12 @@ export const GuestCostSplitDialog = ({
       .eq('organization_id', organizationId);
 
     if (fgError) {
-      console.error('Error fetching family groups:', fgError);
+      logger.error('Failed to fetch family groups', {
+        component: 'GuestCostSplitDialog',
+        action: 'fetchUsers',
+        organizationId,
+        error: fgError.message
+      });
     }
 
     console.log('🔍 [SPLIT] Family Groups:', familyGroups);
@@ -288,7 +299,12 @@ export const GuestCostSplitDialog = ({
       const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
       
       if (sessionError || !session) {
-        console.error('❌ [SPLIT] Session refresh failed:', sessionError);
+        logger.error('Session refresh failed during cost split', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          organizationId,
+          error: sessionError?.message
+        });
         throw new Error('Authentication session expired. Please log in again.');
       }
       
@@ -332,13 +348,23 @@ export const GuestCostSplitDialog = ({
       
       console.log('👤 [SPLIT] Membership check result:', userOrgData);
       if (userOrgError) {
-        console.error('❌ [SPLIT] Membership check error:', userOrgError);
+        logger.error('Organization membership check failed', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          userId: user.id,
+          organizationId,
+          error: userOrgError.message
+        });
       }
       
       if (!userOrgData) {
-        console.error('❌ [SPLIT] ORGANIZATION MISMATCH!');
-        console.error('  User is attempting to create payment in organization:', organizationId);
-        console.error('  But user is not a member of this organization!');
+        logger.error('Organization mismatch - user not member', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          userId: user.id,
+          userEmail: user.email,
+          organizationId
+        });
         
         // Get user's actual organization
         const { data: userActualOrg } = await supabase
@@ -381,7 +407,12 @@ export const GuestCostSplitDialog = ({
       });
 
       if (!currentSession || sessionCheckError) {
-        console.error('❌ [SPLIT] No valid session!', sessionCheckError);
+        logger.error('Invalid session during cost split', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          organizationId,
+          error: sessionCheckError?.message
+        });
         toast({
           title: "Session Error",
           description: "Your session has expired. Please refresh the page and try again.",
@@ -434,14 +465,15 @@ export const GuestCostSplitDialog = ({
         .single();
 
       if (sourcePaymentError) {
-        console.error('❌ [SPLIT] Source payment error:', sourcePaymentError);
-        console.error('❌ [SPLIT] Error details:', JSON.stringify(sourcePaymentError, null, 2));
-        console.error('❌ [SPLIT] Payment data that failed:', {
-          organization_id: organizationId,
-          family_group: sourceFamilyGroup,
-          created_by_user_id: user.id,
-          user_email: user.email,
-          user_org_membership: userOrgData
+        logger.error('Source payment creation failed', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          organizationId,
+          familyGroup: sourceFamilyGroup,
+          userId: user.id,
+          userEmail: user.email,
+          error: sourcePaymentError.message,
+          errorCode: sourcePaymentError.code
         });
         
         // User-friendly error message
@@ -496,7 +528,14 @@ export const GuestCostSplitDialog = ({
           .single();
 
         if (guestPaymentError) {
-          console.error(`❌ [SPLIT] Guest payment error for ${splitUser.displayName}:`, guestPaymentError);
+          logger.error('Guest payment creation failed', {
+            component: 'GuestCostSplitDialog',
+            action: 'handleSplitCosts',
+            organizationId,
+            guestUser: splitUser.displayName,
+            familyGroup: splitUser.familyGroup,
+            error: guestPaymentError.message
+          });
           throw guestPaymentError;
         }
         console.log(`✅ [SPLIT] Guest payment created for ${splitUser.displayName}:`, guestPayment.id);
@@ -521,7 +560,13 @@ export const GuestCostSplitDialog = ({
           .single();
 
         if (splitError) {
-          console.error(`❌ [SPLIT] Split tracking error for ${splitUser.displayName}:`, splitError);
+          logger.error('Split tracking record creation failed', {
+            component: 'GuestCostSplitDialog',
+            action: 'handleSplitCosts',
+            organizationId,
+            guestUser: splitUser.displayName,
+            error: splitError.message
+          });
           throw splitError;
         }
         console.log(`✅ [SPLIT] Split tracking created for ${splitUser.displayName}:`, splitRecord.id);
@@ -536,7 +581,13 @@ export const GuestCostSplitDialog = ({
         });
 
         if (notificationError) {
-          console.error(`⚠️ [SPLIT] Notification error for ${splitUser.displayName}:`, notificationError);
+          logger.warn('Guest split notification failed', {
+            component: 'GuestCostSplitDialog',
+            action: 'handleSplitCosts',
+            organizationId,
+            guestUser: splitUser.displayName,
+            error: notificationError.message
+          });
         } else {
           console.log(`✅ [SPLIT] Notification sent for ${splitUser.displayName}`);
         }
@@ -560,12 +611,15 @@ export const GuestCostSplitDialog = ({
       onOpenChange(false);
 
     } catch (error: any) {
-      console.error('❌ [SPLIT] Error creating split:', error);
-      console.error('❌ [SPLIT] Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
+      logger.error('Failed to create cost split', {
+        component: 'GuestCostSplitDialog',
+        action: 'handleSplitCosts',
+        organizationId,
+        sourceFamilyGroup,
+        error: error.message,
+        errorCode: error.code,
+        errorDetails: error.details,
+        errorHint: error.hint
       });
       toast({
         title: 'Error',

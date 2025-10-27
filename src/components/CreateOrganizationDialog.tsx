@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Plus } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/lib/logger';
 
 interface CreateOrganizationResult {
   success: boolean;
@@ -133,7 +134,12 @@ export const CreateOrganizationDialog = ({
         const codeConsumed = await consumeTrialCode(trialCode, user.id);
         
         if (!codeConsumed) {
-          console.error('❌ [CREATE_ORG] Failed to consume trial code');
+          logger.error('Trial code consumption failed', {
+            component: 'CreateOrganizationDialog',
+            action: 'handleSubmit',
+            userId: user.id,
+            hasTrialCode: !!trialCode
+          });
           throw new Error('Invalid or expired trial code. Please contact support.');
         }
         
@@ -158,7 +164,13 @@ export const CreateOrganizationDialog = ({
       });
 
       if (error) {
-        console.error('❌ [CREATE_ORG] Database function RPC error:', error);
+        logger.error('Organization creation RPC failed', {
+          component: 'CreateOrganizationDialog',
+          action: 'handleSubmit',
+          userId: user?.id,
+          orgName: formData.name,
+          error: error.message
+        });
         throw new Error(`Database error: ${error.message}`);
       }
 
@@ -169,7 +181,14 @@ export const CreateOrganizationDialog = ({
 
       if (!result || !result.success) {
         const errorMessage = result?.error || 'Unknown error occurred';
-        console.error('❌ [CREATE_ORG] Function returned error:', errorMessage);
+        logger.error('Organization creation function returned error', {
+          component: 'CreateOrganizationDialog',
+          action: 'handleSubmit',
+          userId: user?.id,
+          orgName: formData.name,
+          error: errorMessage,
+          errorCode: result?.error_code
+        });
         throw new Error(errorMessage);
       }
 
@@ -192,7 +211,13 @@ export const CreateOrganizationDialog = ({
       onOrganizationCreated?.();
 
     } catch (error) {
-      console.error('💥 [CREATE_ORG] Fatal error:', error);
+      logger.error('Fatal error during organization creation', {
+        component: 'CreateOrganizationDialog',
+        action: 'handleSubmit',
+        userId: user?.id,
+        orgName: formData.name,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
       
       // Extract user-friendly error message
       let errorMessage = "Failed to create organization";

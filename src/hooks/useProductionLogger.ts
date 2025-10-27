@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/lib/logger';
 
 interface LogContext {
   component?: string;
@@ -52,7 +53,7 @@ export const useProductionLogger = () => {
 
     // Essential error logging only
     if (severity === 'critical' || severity === 'high') {
-      console.error('Error:', error.message);
+      logger.error(error.message, context);
     }
 
     // In production, send to monitoring service
@@ -77,7 +78,7 @@ export const useProductionLogger = () => {
 
     // Essential action logging only
     if (!success) {
-      console.error(`Action failed: ${actionType}`);
+      logger.error(`Action failed: ${actionType}`, context);
     }
 
     // In production, send to analytics service
@@ -155,7 +156,11 @@ export const withErrorLogging = <T extends any[]>(
       const duration = Date.now() - startTime;
       
       // Essential error logging only
-      console.error('Async operation failed:', error.message);
+      logger.error('Async operation failed', {
+        ...context,
+        duration,
+        errorMessage: error.message
+      });
       
       throw error;
     }
