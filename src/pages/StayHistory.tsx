@@ -379,6 +379,12 @@ export default function StayHistory() {
   // Track which family groups have had receipts applied (to avoid double-counting)
   const familyGroupsWithReceipts = new Set<string>();
 
+  // Helper function to check if daily occupancy has valid guest data
+  const hasValidOccupancyData = (dailyOccupancy: any[]): boolean => {
+    if (!dailyOccupancy || dailyOccupancy.length === 0) return false;
+    return dailyOccupancy.some(day => (day.guests || 0) > 0);
+  };
+
   const calculateStayData = (reservation: any, previousBalance: number = 0, isNewestInGroup: boolean = false) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
@@ -403,7 +409,8 @@ export default function StayHistory() {
         billingLocked: false,
         isVirtualSplit: true,
         sourceFamily: reservation.splitData.sourceFamily,
-        creditAppliedToFuture: (splitPayment as any).credit_applied_to_future || false
+        creditAppliedToFuture: (splitPayment as any).credit_applied_to_future || false,
+        hasOccupancyData: hasValidOccupancyData(days)
       };
     }
     
@@ -532,7 +539,8 @@ export default function StayHistory() {
       manualAdjustment: (payment as any)?.manual_adjustment_amount || 0,
       adjustmentNotes: (payment as any)?.adjustment_notes,
       billingLocked: (payment as any)?.billing_locked,
-      creditAppliedToFuture: (payment as any)?.credit_applied_to_future || false
+      creditAppliedToFuture: (payment as any)?.credit_applied_to_future || false,
+      hasOccupancyData: hasValidOccupancyData(dailyOccupancy)
     };
   };
 
@@ -823,11 +831,13 @@ export default function StayHistory() {
                       )}
                       {stayData.paymentId && (
                         <Badge variant={
+                          stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'secondary' :
                           stayData.amountDue <= 0 ? 'default' : 
                           stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
                           'destructive'
                         }>
-                          {stayData.amountDue <= 0 ? 'paid' : 
+                          {stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'pending' :
+                           stayData.amountDue <= 0 ? 'paid' : 
                            stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'partial' : 
                            'pending'}
                         </Badge>
@@ -868,7 +878,14 @@ export default function StayHistory() {
                       <div>
                         <div className="text-sm font-medium text-muted-foreground">Daily Occupancy</div>
                         <div className="text-sm">
-                          {stayData.dailyOccupancy.reduce((sum: number, day: any) => sum + (day.guests || 0), 0)} total guest-nights
+                          {!stayData.hasOccupancyData ? (
+                            <span className="text-amber-600 dark:text-amber-500 flex items-center gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              No guest counts entered
+                            </span>
+                          ) : (
+                            `${stayData.dailyOccupancy.reduce((sum: number, day: any) => sum + (day.guests || 0), 0)} total guest-nights`
+                          )}
                         </div>
                       </div>
                     )}
