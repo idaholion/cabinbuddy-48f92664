@@ -255,6 +255,19 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         throw updateError;
       }
 
+      // Clean up any "ending tomorrow" notification records for this family
+      const { error: cleanupError } = await supabase
+        .from('selection_turn_notifications_sent')
+        .delete()
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('family_group', primaryCurrentFamily)
+        .eq('phase', 'ending_tomorrow');
+
+      if (cleanupError) {
+        console.error('[useSequentialSelection] Error cleaning up ending_tomorrow notifications:', cleanupError);
+      }
+
       const rotationOrder = getRotationForYear(rotationYear);
       const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
       

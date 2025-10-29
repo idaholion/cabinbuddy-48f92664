@@ -32,6 +32,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending ${notification_type === 'ending_tomorrow' ? 'ending tomorrow' : 'selection turn'} notification for ${family_group} in year ${rotation_year}`);
 
+    // Check if family has completed their turn before sending
+    const { data: usageData } = await supabase
+      .from('time_period_usage')
+      .select('turn_completed')
+      .eq('organization_id', organization_id)
+      .eq('rotation_year', rotation_year)
+      .eq('family_group', family_group)
+      .maybeSingle();
+
+    if (usageData?.turn_completed) {
+      console.log(`Skipping notification for ${family_group} - turn already completed`);
+      return new Response(JSON.stringify({ 
+        success: true,
+        skipped: true,
+        message: `Turn already completed for ${family_group}`
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Get family group details
     const { data: familyData, error: familyError } = await supabase
       .from('family_groups')
@@ -54,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     // Get time period usage to calculate available periods
-    const { data: usageData } = await supabase
+    const { data: periodUsageData } = await supabase
       .from('time_period_usage')
       .select('time_periods_used, time_periods_allowed')
       .eq('organization_id', organization_id)
@@ -62,8 +83,8 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('family_group', family_group)
       .maybeSingle();
 
-    const periodsUsed = usageData?.time_periods_used || 0;
-    const periodsAllowed = usageData?.time_periods_allowed || 0;
+    const periodsUsed = periodUsageData?.time_periods_used || 0;
+    const periodsAllowed = periodUsageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
     // Get all usage data to determine if we're in primary or secondary phase

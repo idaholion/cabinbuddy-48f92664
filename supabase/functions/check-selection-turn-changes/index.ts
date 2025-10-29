@@ -233,6 +233,15 @@ const handler = async (req: Request): Promise<Response> => {
 
         // Check ending tomorrow notifications
         if (checkEndingTomorrow) {
+          // Check if family has already completed their turn
+          const usage = usageData.find(u => u.family_group === currentFamily);
+          const turnCompleted = usage?.turn_completed || false;
+
+          if (turnCompleted) {
+            console.log(`Skipping ending tomorrow notification for ${currentFamily} - turn already completed`);
+            continue;
+          }
+
           // Re-fetch current extension for ending tomorrow check
           const extension = extensionsData?.find(e => 
             e.family_group === currentFamily && new Date(e.extended_until) >= now
