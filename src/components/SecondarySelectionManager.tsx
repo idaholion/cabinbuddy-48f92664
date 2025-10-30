@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,7 +7,6 @@ import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { SecondarySelectionBookingForm } from './SecondarySelectionBookingForm';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -53,7 +51,6 @@ export function SecondarySelectionManager({
     advanceSelection
   } = useSequentialSelection(rotationYear);
 
-  const [showBookingForm, setShowBookingForm] = useState(false);
   const { toast } = useToast();
 
   if (loading) {
@@ -237,16 +234,6 @@ export function SecondarySelectionManager({
             </p>
           </div>
           <div className="flex gap-2">
-            {remaining > 0 && (
-              <Button
-                size="lg"
-                onClick={() => setShowBookingForm(true)}
-                className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap"
-              >
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Select Additional Week
-              </Button>
-            )}
             <ConfirmationDialog
               title="Confirm Selection Complete"
               description={
@@ -280,22 +267,6 @@ export function SecondarySelectionManager({
           </div>
         </div>
       </div>
-
-      {/* Booking Form */}
-      {userFamilyGroup && (
-        <SecondarySelectionBookingForm
-          open={showBookingForm}
-          onOpenChange={setShowBookingForm}
-          currentMonth={currentMonth}
-          familyGroup={userFamilyGroup}
-          onBookingComplete={async () => {
-            setShowBookingForm(false);
-            // Refresh time period usage and secondary selection status
-            await fetchTimePeriodUsage(rotationYear);
-            await refetchSecondaryStatus();
-          }}
-        />
-      )}
     </>
   );
 }
