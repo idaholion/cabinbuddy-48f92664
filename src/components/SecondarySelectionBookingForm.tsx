@@ -46,8 +46,17 @@ export function SecondarySelectionBookingForm({
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder();
-  const { calculateTimePeriodWindows, timePeriodUsage, updateTimePeriodUsage } = useTimePeriods();
-  const { currentPhase, currentFamilyGroup } = useSequentialSelection(new Date().getFullYear());
+  
+  // Use rotation year logic to get the correct year (same as SecondarySelectionManager)
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const startMonth = 9; // October (0-indexed)
+  const rotationStartThisYear = new Date(currentYear, startMonth, 1);
+  const hasPassedStartDate = today >= rotationStartThisYear;
+  const rotationYear = hasPassedStartDate ? currentYear + 1 : currentYear;
+  
+  const { calculateTimePeriodWindows, timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
+  const { currentPhase, currentFamilyGroup } = useSequentialSelection(rotationYear);
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -62,9 +71,9 @@ export function SecondarySelectionBookingForm({
     }
   });
 
-  const currentYear = currentMonth.getFullYear();
-  const rotationOrder = getRotationForYear(currentYear);
-  const timePeriodWindows = calculateTimePeriodWindows(currentYear, currentMonth);
+  const monthYear = currentMonth.getFullYear();
+  const rotationOrder = getRotationForYear(monthYear);
+  const timePeriodWindows = calculateTimePeriodWindows(monthYear, currentMonth);
 
   // Get family group's current usage
   const familyUsage = timePeriodUsage.find(u => u.family_group === familyGroup);
@@ -123,7 +132,7 @@ export function SecondarySelectionBookingForm({
       if (reservationError) throw reservationError;
 
       // Update secondary period usage
-      await updateSecondaryTimePeriodUsage(familyGroup, currentYear);
+      await updateSecondaryTimePeriodUsage(familyGroup, rotationYear);
 
       // Move to next family in secondary selection order
       await advanceSecondarySelection();
@@ -164,7 +173,11 @@ export function SecondarySelectionBookingForm({
 
     if (error) {
       console.error('Error updating secondary usage:', error);
+      throw error;
     }
+    
+    // Refresh time period usage to get latest data
+    await fetchTimePeriodUsage(year);
   };
 
   const advanceSecondarySelection = async () => {
@@ -191,7 +204,7 @@ export function SecondarySelectionBookingForm({
           updated_at: new Date().toISOString()
         })
         .eq('organization_id', organization.id)
-        .eq('rotation_year', currentYear);
+        .eq('rotation_year', monthYear);
 
       if (error) {
         console.error('Error advancing secondary selection:', error);

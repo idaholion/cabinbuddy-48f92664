@@ -31,7 +31,7 @@ export function SecondarySelectionManager({
   
   const { familyGroups } = useFamilyGroups();
   const { rotationData } = useRotationOrder();
-  const { timePeriodUsage } = useTimePeriods(rotationYear);
+  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const {
     secondaryStatus,
     loading,
@@ -42,7 +42,8 @@ export function SecondarySelectionManager({
     getCurrentSelectionDays,
     hasSelectionTimeExpired,
     startSecondarySelection,
-    advanceSecondarySelection
+    advanceSecondarySelection,
+    refetchSecondaryStatus
   } = useSecondarySelection(rotationYear);
 
   const {
@@ -275,9 +276,11 @@ export function SecondarySelectionManager({
           onOpenChange={setShowBookingForm}
           currentMonth={currentMonth}
           familyGroup={userFamilyGroup}
-          onBookingComplete={() => {
+          onBookingComplete={async () => {
             setShowBookingForm(false);
-            // Refresh data will happen automatically via hooks
+            // Refresh time period usage and secondary selection status
+            await fetchTimePeriodUsage(rotationYear);
+            await refetchSecondaryStatus();
           }}
         />
       )}
