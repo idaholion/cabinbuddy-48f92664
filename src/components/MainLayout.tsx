@@ -16,6 +16,7 @@ interface MainLayoutProps {
 export const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/home';
+  const isFAQPage = location.pathname === '/faq';
   const isMobile = useIsMobile();
 
   return (
@@ -35,8 +36,8 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="w-8" /> {/* Spacer for balance */}
               </div>
             )}
-            {/* Only show header with contextual help on non-home pages */}
-            {!isHomePage && (
+            {/* Only show header with contextual help on non-home and non-FAQ pages */}
+            {!isHomePage && !isFAQPage && (
               <div className="p-6 pb-0">
                 <div className="flex items-center justify-end mb-4">
                   <ContextualHelp />
