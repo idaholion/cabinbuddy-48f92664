@@ -79,6 +79,7 @@ export default function FAQ() {
               title="Frequently Asked Questions"
               subtitle="Find answers to common questions about Cabin Buddy"
               icon={HelpCircle}
+              backgroundImage={true}
             />
           </div>
           {isAdmin && (
