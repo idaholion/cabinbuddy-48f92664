@@ -27,7 +27,8 @@ import {
   Shield,
   StickyNote,
   CreditCard,
-  Database
+  Database,
+  HelpCircle
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -164,6 +165,11 @@ const resourcesItems = [
 ];
 
 const helpItems = [
+  {
+    title: "FAQ",
+    url: "/faq",
+    icon: HelpCircle,
+  },
   {
     title: "Feature Guide",
     url: "/features",
