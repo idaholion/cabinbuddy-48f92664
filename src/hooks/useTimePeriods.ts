@@ -171,10 +171,35 @@ export const useTimePeriods = (rotationYear?: number) => {
       const isInWindow = normalizedStartDate >= windowStart && normalizedStartDate < windowEnd;
       const matchesFamily = allPhasesActive || adminOverride || isSecondarySelection || window.familyGroup === familyGroup;
       
+      console.log('[useTimePeriods] Checking start window:', {
+        windowStart: windowStart.toISOString(),
+        windowEnd: windowEnd.toISOString(),
+        windowFamily: window.familyGroup,
+        normalizedStartDate: normalizedStartDate.toISOString(),
+        isInWindow,
+        matchesFamily,
+        isSecondarySelection,
+        available: window.available
+      });
+      
       return isInWindow && matchesFamily;
     });
     
     if (!startWindow) {
+      console.log('[useTimePeriods] NO START WINDOW FOUND', {
+        allPhasesActive,
+        adminOverride,
+        isSecondarySelection,
+        familyGroup,
+        normalizedStartDate: normalizedStartDate.toISOString(),
+        totalWindows: sortedWindows.length,
+        windowDetails: sortedWindows.map(w => ({
+          start: new Date(w.startDate).toISOString(),
+          end: new Date(w.endDate).toISOString(),
+          family: w.familyGroup,
+          available: w.available
+        }))
+      });
       if (allPhasesActive || adminOverride || isSecondarySelection) {
         errors.push('Booking start date must fall within a valid time period window');
       } else {
