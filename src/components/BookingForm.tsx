@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
+import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 import { parseDateOnly, calculateNights, toDateOnlyString, parseDateAtNoon } from '@/lib/date-utils';
@@ -76,10 +77,19 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const currentYear = currentMonth.getFullYear();
   const rotationOrder = getRotationForYear(currentYear);
   
+  // Check secondary selection status to prevent regular bookings during user's turn
+  const { isSecondaryRoundActive: isSecondaryActive, isCurrentFamilyTurn } = useSecondarySelection(currentYear);
+  
   // Use the sequential selection system to determine current turn and check if secondary selection is active
   const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
   const isSecondarySelectionActive = currentPhase === 'secondary';
+  
+  // Check if user should use secondary selection form instead
+  const shouldUseSecondaryForm = !editingReservation && 
+    isSecondaryActive && 
+    userFamilyGroupName && 
+    isCurrentFamilyTurn(userFamilyGroupName);
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
@@ -466,42 +476,61 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
-          
-          {/* Test Override Mode Indicator */}
-          {testOverrideMode && (
-            <div className="mt-2 p-3 bg-orange-100 border border-orange-200 rounded-lg">
-              <p className="text-sm font-medium text-orange-700">
-                🧪 Test Mode Active - All time window restrictions bypassed
-              </p>
-            </div>
-          )}
-          
-          {userFamilyGroupName && !testOverrideMode && (
-            <div className="mt-2 p-3 bg-primary/10 rounded-lg">
-              <p className="text-sm font-medium">
-                {userFamilyGroupName === currentTurnGroup ? (
-                  <>
-                    <span className="text-primary">✓ It's your family group's turn to book!</span>
-                    <br />
-                    <span className="text-muted-foreground">
-                      Time periods available: {familyUsage ? 
-                        Math.max(0, familyUsage.time_periods_allowed - familyUsage.time_periods_used) : 
-                        rotationData?.max_time_slots || 2} remaining
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">
-                    Current turn: {currentTurnGroup} • Your group: {userFamilyGroupName}
-                  </span>
-                )}
-              </p>
-            </div>
-          )}
         </DialogHeader>
+        
+        {/* Secondary Selection Active - Redirect to proper form */}
+        {shouldUseSecondaryForm ? (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">
+              Secondary Selection Active
+            </h3>
+            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+              It's currently your turn for secondary selection! Please use the "Select Additional Week" button in the Secondary Selection section above to make your booking.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              className="w-full"
+            >
+              Close and Use Secondary Selection
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Test Override Mode Indicator */}
+            {testOverrideMode && (
+              <div className="mt-2 p-3 bg-orange-100 border border-orange-200 rounded-lg">
+                <p className="text-sm font-medium text-orange-700">
+                  🧪 Test Mode Active - All time window restrictions bypassed
+                </p>
+              </div>
+            )}
+            
+            {userFamilyGroupName && !testOverrideMode && (
+              <div className="mt-2 p-3 bg-primary/10 rounded-lg">
+                <p className="text-sm font-medium">
+                  {userFamilyGroupName === currentTurnGroup ? (
+                    <>
+                      <span className="text-primary">✓ It's your family group's turn to book!</span>
+                      <br />
+                      <span className="text-muted-foreground">
+                        Time periods available: {familyUsage ? 
+                          Math.max(0, familyUsage.time_periods_allowed - familyUsage.time_periods_used) : 
+                          rotationData?.max_time_slots || 2} remaining
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Current turn: {currentTurnGroup} • Your group: {userFamilyGroupName}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Family Group Selection */}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Family Group Selection */}
             <FormField
               control={form.control}
               name="familyGroup"
@@ -775,9 +804,11 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                   (editingReservation ? "Update Booking" : "Confirm Booking")
                 }
               </Button>
-            </div>
-          </form>
-        </Form>
+              </div>
+            </form>
+          </Form>
+          </>
+        )}
       </DialogContent>
       
       {/* Delete Confirmation Dialog */}
