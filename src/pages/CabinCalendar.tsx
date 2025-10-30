@@ -509,7 +509,18 @@ const CabinCalendar = () => {
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                 <p className="font-medium">Selection begins October 1st</p>
                 {currentRotationYearCurrentFamily && (() => {
-                  // Get actual selection period from reservation_periods table
+                  // Secondary selection phase: show rolling window info
+                  if (currentPhase === 'secondary') {
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <p className="font-semibold text-primary">Secondary Selection Active</p>
+                        <p>Current: {currentRotationYearCurrentFamily}</p>
+                        <p className="text-xs">7-day rolling selection period</p>
+                      </div>
+                    );
+                  }
+                  
+                  // Primary selection phase: show actual selection period dates
                   const currentPeriod = reservationPeriods?.find(
                     p => p.current_family_group === currentRotationYearCurrentFamily && 
                          p.rotation_year === rotationYear
