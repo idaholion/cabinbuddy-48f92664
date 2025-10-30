@@ -171,6 +171,12 @@ const helpItems = [
     icon: HelpCircle,
   },
   {
+    title: "FAQ Management",
+    url: "/faq-management",
+    icon: Settings,
+    adminOnly: true,
+  },
+  {
     title: "Feature Guide",
     url: "/features",
     icon: Sparkles,
@@ -392,7 +398,9 @@ export function AppSidebar() {
           <SidebarGroupLabel>Help</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {helpItems.map((item) => (
+              {helpItems
+                .filter(item => !item.adminOnly || isAdmin || canAccessSupervisorFeatures)
+                .map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 

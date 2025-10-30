@@ -1,5 +1,5 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare, Monitor } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare, Monitor, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
@@ -233,6 +233,13 @@ const Index = () => {
                   <Link to="/group-member-profile">
                     <User className="h-4 w-4 mr-2" />
                     Group Member Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/faq">
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    FAQ
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
