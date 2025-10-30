@@ -9,6 +9,8 @@ import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { SecondarySelectionBookingForm } from './SecondarySelectionBookingForm';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface SecondarySelectionManagerProps {
   currentMonth: Date;
@@ -51,6 +53,7 @@ export function SecondarySelectionManager({
   } = useSequentialSelection(rotationYear);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const { toast } = useToast();
 
   if (loading) {
     return (
@@ -207,6 +210,11 @@ export function SecondarySelectionManager({
   const isUserTurn = userFamilyGroup && isCurrentFamilyTurn(userFamilyGroup);
   const remaining = userFamilyGroup ? getRemainingSecondaryPeriods(userFamilyGroup) : 0;
   
+  // Calculate used periods for display
+  const totalAllowed = rotationData?.secondary_max_periods || 1;
+  const usage = userFamilyGroup ? timePeriodUsage.find(u => u.family_group === userFamilyGroup) : undefined;
+  const used = usage?.secondary_periods_used || 0;
+  
   if (!isUserTurn) {
     return null; // Don't show anything if it's not the user's turn
   }
@@ -221,20 +229,42 @@ export function SecondarySelectionManager({
               It's Your Turn for Secondary Selection!
             </h3>
             <p className="text-sm text-muted-foreground">
-              You can select {remaining} additional week{remaining !== 1 ? 's' : ''}.
+              You've selected {used} of {totalAllowed} periods ({remaining} remaining)
               {getCurrentSelectionDays() && (
-                <> You have {getCurrentSelectionDays()?.daysRemaining} day{getCurrentSelectionDays()?.daysRemaining !== 1 ? 's' : ''} remaining.</>
+                <> • {getCurrentSelectionDays()?.daysRemaining} day{getCurrentSelectionDays()?.daysRemaining !== 1 ? 's' : ''} remaining</>
               )}
             </p>
           </div>
-          <Button
-            size="lg"
-            onClick={() => setShowBookingForm(true)}
-            className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap"
+          <ConfirmationDialog
+            title="Confirm Selection Complete"
+            description={
+              remaining > 0
+                ? `You have only selected ${used} periods out of ${totalAllowed}. Are you sure you want to finish early and pass the selection to the next family group?`
+                : "Confirm that you have completed your secondary selection and are ready to pass the selection to the next family group."
+            }
+            confirmText="Yes, I'm Done"
+            onConfirm={async () => {
+              try {
+                await advanceSecondarySelection();
+                toast({
+                  title: "Selection Complete",
+                  description: "Your secondary selection period has been marked complete. The next family group has been notified.",
+                });
+              } catch (error) {
+                console.error('Error advancing secondary selection:', error);
+                toast({
+                  title: "Error",
+                  description: "Failed to complete selection. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            }}
           >
-            <CheckCircle className="h-5 w-5 mr-2" />
-            Select Additional Week
-          </Button>
+            <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap">
+              <CheckCircle className="h-5 w-5 mr-2" />
+              I'm Done Selecting
+            </Button>
+          </ConfirmationDialog>
         </div>
       </div>
 
