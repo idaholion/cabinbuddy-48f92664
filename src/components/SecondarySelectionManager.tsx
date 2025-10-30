@@ -19,7 +19,14 @@ export function SecondarySelectionManager({
   currentMonth, 
   userFamilyGroup 
 }: SecondarySelectionManagerProps) {
-  const currentYear = currentMonth.getFullYear();
+  // Use rotation year logic to get the correct year (same as calendar)
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const startMonth = 9; // October (0-indexed)
+  const rotationStartThisYear = new Date(currentYear, startMonth, 1);
+  const hasPassedStartDate = today >= rotationStartThisYear;
+  const rotationYear = hasPassedStartDate ? currentYear + 1 : currentYear;
+  
   const { familyGroups } = useFamilyGroups();
   const { rotationData } = useRotationOrder();
   const { timePeriodUsage } = useTimePeriods();
@@ -34,14 +41,14 @@ export function SecondarySelectionManager({
     hasSelectionTimeExpired,
     startSecondarySelection,
     advanceSecondarySelection
-  } = useSecondarySelection(currentYear);
+  } = useSecondarySelection(rotationYear);
 
   const {
     currentPhase,
     familyStatuses,
     canCurrentUserSelect,
     advanceSelection
-  } = useSequentialSelection(currentYear);
+  } = useSequentialSelection(rotationYear);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
 
@@ -188,7 +195,7 @@ export function SecondarySelectionManager({
           <Alert>
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              All family groups have completed their secondary selections for {currentYear}.
+              All family groups have completed their secondary selections for {rotationYear}.
             </AlertDescription>
           </Alert>
         </CardContent>
