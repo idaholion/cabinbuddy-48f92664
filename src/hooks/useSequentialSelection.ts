@@ -50,15 +50,19 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!rotationData || !timePeriodUsage.length || !organization?.id) {
+    if (!rotationData || !organization?.id) {
       setLoading(false);
       return;
     }
+
+    let isMounted = true;
 
     const checkPhaseAndFamily = async () => {
       // Determine current phase - use CALCULATED rotation for target year
       const rotationOrder = getRotationForYear(rotationYear);
       
+      if (!isMounted) return;
+
       // Check if all families have completed their turns (not just reached their limit)
       const completionChecks = await Promise.all(
         rotationOrder.map(async (familyGroup) => {
@@ -74,6 +78,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         })
       );
       
+      if (!isMounted) return;
+      
       const allCompletedPrimary = completionChecks.every(completed => completed);
 
       // Check if secondary selection is active by looking at secondary_selection_status table
@@ -83,6 +89,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
         .maybeSingle();
+
+      if (!isMounted) return;
 
       const isSecondaryActive = secondaryStatus && secondaryStatus.current_family_group;
 
@@ -94,11 +102,17 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         await determinePrimaryCurrentFamily(rotationOrder);
       }
       
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     };
 
     checkPhaseAndFamily();
-  }, [rotationData, timePeriodUsage, getRotationForYear, rotationYear, organization?.id, getExtensionForFamily]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [rotationData, rotationYear, organization?.id]);
 
   // Determine which family group's turn it is in primary phase
   // Now uses explicit current_primary_turn_family field from rotation_orders
