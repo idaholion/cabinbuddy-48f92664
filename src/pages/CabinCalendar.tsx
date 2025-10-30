@@ -380,6 +380,16 @@ const CabinCalendar = () => {
               </div>
             )}
             
+            {/* Secondary Selection Manager */}
+            {currentPhase === 'secondary' && (
+              <div className="mb-4">
+                <SecondarySelectionManager 
+                  currentMonth={currentCalendarMonth}
+                  userFamilyGroup={userGroup?.name}
+                />
+              </div>
+            )}
+            
             {/* Admin Manual Notification Control */}
             {(isCalendarKeeper || isAdmin || organization?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase()) && 
              currentPhase === 'primary' && 
