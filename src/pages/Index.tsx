@@ -1,7 +1,6 @@
 
-import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, MoreHorizontal, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare, Monitor, HelpCircle } from "lucide-react";
+import { Calendar, Home, Users, Settings, LogIn, ShoppingCart, Receipt, CheckCircle, Clock, LogOut, Camera, User, Shield, Plus, UserPlus, FileText, CreditCard, DollarSign, Building, ClipboardList, Database, History, MessageSquare, Monitor, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRobustUserRole } from "@/hooks/useRobustUserRole";
@@ -141,114 +140,12 @@ const Index = () => {
               </Link>
             </Button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline">
-                  <MoreHorizontal className="h-5 w-5 mr-3" />
-                  More
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                side="top"
-                className="w-56 max-h-[60vh] overflow-y-auto z-50 bg-background border shadow-lg"
-                sideOffset={16}
-                avoidCollisions={true}
-                collisionPadding={24}
-              >
-                <DropdownMenuItem asChild>
-                  <Link to="/manage-organizations">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Manage Organizations
-                  </Link>
-                </DropdownMenuItem>
-                <JoinOrganizationDialog>
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Join Organization
-                  </DropdownMenuItem>
-                </JoinOrganizationDialog>
-                <DropdownMenuItem asChild>
-                  <Link to="/family-setup?mode=create">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Organization
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/add-receipt">
-                    <Receipt className="h-4 w-4 mr-2" />
-                    Add Receipt
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/stay-history">
-                    <History className="h-4 w-4 mr-2" />
-                    Stay History
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/shopping-list">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Shopping List
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/documents">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Documents
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/photos">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Family Photos
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/cabin-rules">
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Cabin Rules
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/seasonal-checklists">
-                    <ClipboardList className="h-4 w-4 mr-2" />
-                    Seasonal Checklists
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/finance-reports">
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Financial Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/messaging">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Messaging
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/group-member-profile">
-                    <User className="h-4 w-4 mr-2" />
-                    Group Member Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/faq">
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    FAQ
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button className="px-6 py-4 text-lg font-medium shadow-cabin w-full" variant="outline" asChild>
+              <Link to="/faq">
+                <HelpCircle className="h-5 w-5 mr-3" />
+                FAQ
+              </Link>
+            </Button>
 
             {/* Explore Features Button */}
             <Button 
