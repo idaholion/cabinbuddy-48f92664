@@ -30,12 +30,12 @@ export default function FAQ() {
   return (
     <MainLayout>
       <div 
-        className="relative min-h-screen hero-background-stable"
+        className="relative min-h-screen hero-background-stable w-full"
         style={{
           backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
         }}
       >
-        <div className="container max-w-4xl mx-auto px-4 py-8 relative z-10">
+        <div className="container max-w-4xl mx-auto px-4 py-8 relative z-10 w-full">
         <PageHeader
           title="Frequently Asked Questions"
           subtitle="Find answers to common questions about Cabin Buddy"
