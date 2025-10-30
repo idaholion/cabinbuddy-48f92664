@@ -76,9 +76,10 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const currentYear = currentMonth.getFullYear();
   const rotationOrder = getRotationForYear(currentYear);
   
-  // Use the sequential selection system to determine current turn
-  const { currentFamilyGroup } = useSequentialSelection(currentYear);
+  // Use the sequential selection system to determine current turn and check if secondary selection is active
+  const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
+  const isSecondarySelectionActive = currentPhase === 'secondary';
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
@@ -282,7 +283,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride)
+        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -305,7 +306,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
-        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows, data.adminOverride);
+        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows, data.adminOverride, isSecondarySelectionActive);
     
     if (!validation.isValid) {
       toast({

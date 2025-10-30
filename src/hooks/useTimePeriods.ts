@@ -125,7 +125,8 @@ export const useTimePeriods = (rotationYear?: number) => {
     endDate: Date,
     familyGroup: string,
     timePeriodWindows: TimePeriodWindow[],
-    adminOverride: boolean = false
+    adminOverride: boolean = false,
+    isSecondarySelection: boolean = false
   ): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
@@ -151,6 +152,7 @@ export const useTimePeriods = (rotationYear?: number) => {
       normalizedEndDate: normalizedEndDate.toISOString(),
       allPhasesActive,
       adminOverride,
+      isSecondarySelection,
       windowCount: timePeriodWindows.length
     });
 
@@ -161,18 +163,19 @@ export const useTimePeriods = (rotationYear?: number) => {
     );
     
     // Find window that contains the start date
+    // During secondary selection, allow booking in any available window
     const startWindow = sortedWindows.find(window => {
       const windowStart = new Date(window.startDate);
       const windowEnd = new Date(window.endDate);
       
       const isInWindow = normalizedStartDate >= windowStart && normalizedStartDate < windowEnd;
-      const matchesFamily = allPhasesActive || adminOverride || window.familyGroup === familyGroup;
+      const matchesFamily = allPhasesActive || adminOverride || isSecondarySelection || window.familyGroup === familyGroup;
       
       return isInWindow && matchesFamily;
     });
     
     if (!startWindow) {
-      if (allPhasesActive || adminOverride) {
+      if (allPhasesActive || adminOverride || isSecondarySelection) {
         errors.push('Booking start date must fall within a valid time period window');
       } else {
         errors.push('Booking start date must fall within your assigned time period window');
@@ -186,13 +189,13 @@ export const useTimePeriods = (rotationYear?: number) => {
       const windowEnd = new Date(window.endDate);
       
       const isInWindow = normalizedEndDate > windowStart && normalizedEndDate <= windowEnd;
-      const matchesFamily = allPhasesActive || adminOverride || window.familyGroup === familyGroup;
+      const matchesFamily = allPhasesActive || adminOverride || isSecondarySelection || window.familyGroup === familyGroup;
       
       return isInWindow && matchesFamily;
     });
     
     if (!endWindow) {
-      if (allPhasesActive || adminOverride) {
+      if (allPhasesActive || adminOverride || isSecondarySelection) {
         errors.push('Booking end date must fall within a valid time period window');
       } else {
         errors.push('Booking end date must fall within your assigned time period window');
@@ -210,7 +213,7 @@ export const useTimePeriods = (rotationYear?: number) => {
     }
     
     // If spanning multiple windows, verify they are consecutive and all match family group
-    if (startWindowIndex !== endWindowIndex && !allPhasesActive && !adminOverride) {
+    if (startWindowIndex !== endWindowIndex && !allPhasesActive && !adminOverride && !isSecondarySelection) {
       for (let i = startWindowIndex; i <= endWindowIndex; i++) {
         if (sortedWindows[i].familyGroup !== familyGroup) {
           errors.push(`Cannot book across periods assigned to different family groups`);
@@ -247,8 +250,8 @@ export const useTimePeriods = (rotationYear?: number) => {
     const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
     const isPostRotation = allPhasesActive || (rotationData.enable_post_rotation_selection && 
       usage && usage.time_periods_used >= usage.time_periods_allowed);
-    const isSecondaryPhase = !isPostRotation && rotationData.enable_secondary_selection && 
-      usage && usage.selection_round === 'secondary';
+    const isSecondaryPhase = isSecondarySelection || (!isPostRotation && rotationData.enable_secondary_selection && 
+      usage && usage.selection_round === 'secondary');
     
     // Determine min/max nights based on phase
     let minNights = rotationData.min_nights_per_booking || 2;
@@ -285,9 +288,9 @@ export const useTimePeriods = (rotationYear?: number) => {
     }
 
     // Check if family group has available time periods
-    // Skip this check if admin override is enabled OR if all selection phases are active
+    // Skip this check if admin override is enabled OR if all selection phases are active OR if this is secondary selection
     
-    if (!adminOverride && !allPhasesActive) {
+    if (!adminOverride && !allPhasesActive && !isSecondarySelection) {
       const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
       if (usage && usage.time_periods_used >= usage.time_periods_allowed) {
         errors.push('This family group has already used all allocated time periods for this year');
