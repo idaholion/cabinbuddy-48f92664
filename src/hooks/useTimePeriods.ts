@@ -51,6 +51,14 @@ export const useTimePeriods = (rotationYear?: number) => {
     const currentYear = new Date().getFullYear();
     const monthYear = month.getFullYear();
     
+    console.log('[calculateTimePeriodWindows] Called with:', {
+      inputYear: year,
+      inputMonth: month.toISOString(),
+      monthYear: monthYear,
+      monthMonth: month.getMonth(),
+      monthName: month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    });
+    
     // Allow booking for current year and up to 2 years in the future
     // This supports advance planning while preventing unreasonable future dates
     if (monthYear < currentYear || monthYear > currentYear + 2) {
@@ -73,6 +81,13 @@ export const useTimePeriods = (rotationYear?: number) => {
     // Calculate time period windows only for the specific month being viewed
     const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
     const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    
+    console.log('[calculateTimePeriodWindows] Month range:', {
+      startOfMonth: startOfMonth.toISOString(),
+      endOfMonth: endOfMonth.toISOString(),
+      startMonth: startOfMonth.getMonth(),
+      endMonth: endOfMonth.getMonth()
+    });
     
     let currentDate = new Date(startOfMonth);
     let periodNumber = 1;
