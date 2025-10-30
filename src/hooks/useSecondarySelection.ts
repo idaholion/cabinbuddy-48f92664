@@ -88,6 +88,7 @@ export const useSecondarySelection = (rotationYear: number) => {
     const secondaryEnabled = rotationData.enable_secondary_selection;
 
     if (allCompletedPrimary && secondaryEnabled && !secondaryStatus) {
+      console.log('[useSecondarySelection] Starting secondary selection round');
       await startSecondarySelection();
     }
   };
@@ -271,6 +272,7 @@ export const useSecondarySelection = (rotationYear: number) => {
     startSecondarySelection,
     advanceSecondarySelection,
     endSecondarySelection,
+    checkIfSecondaryRoundShouldStart,
     refetchSecondaryStatus: fetchSecondarySelectionStatus
   };
 };

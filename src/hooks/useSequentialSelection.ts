@@ -41,7 +41,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     isSecondaryRoundActive, 
     isCurrentFamilyTurn,
     advanceSecondarySelection,
-    endSecondarySelection 
+    endSecondarySelection,
+    checkIfSecondaryRoundShouldStart
   } = useSecondarySelection(rotationYear);
 
   const [loading, setLoading] = useState(true);
@@ -336,9 +337,14 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         // All families have completed primary phase
         setPrimaryCurrentFamily(null);
         
-        // If secondary selection is enabled, generate secondary periods
+        // If secondary selection is enabled, generate secondary periods and start secondary round
         if (rotationData.enable_secondary_selection) {
+          console.log('[useSequentialSelection] Primary complete, generating secondary periods');
           await generateSecondaryPeriods(rotationYear);
+          
+          // Trigger check to start secondary selection round
+          console.log('[useSequentialSelection] Triggering secondary selection start');
+          await checkIfSecondaryRoundShouldStart();
         }
       }
     } catch (error) {
