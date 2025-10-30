@@ -133,12 +133,16 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
     setLoading(true);
     try {
+      console.log('Creating reservation with data:', reservationData);
+      
       const dataToSave = {
         ...reservationData,
         organization_id: organization.id,
         user_id: user.id,
         status: reservationData.status || 'confirmed'
       };
+
+      console.log('Inserting into database:', dataToSave);
 
       const { data: newReservation, error } = await supabase
         .from('reservations')
@@ -147,16 +151,18 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
         .single();
 
       if (error) {
-        console.error('Error creating reservation:', error);
+        console.error('Database error creating reservation:', error);
         toast({
           title: "Error",
-          description: "Failed to create reservation. Please try again.",
+          description: `Failed to create reservation: ${error.message}`,
           variant: "destructive",
         });
-        return null;
+        throw error;
       }
 
+      console.log('Reservation created successfully:', newReservation);
       setReservations(prev => [...prev, newReservation]);
+      
       toast({
         title: "Success",
         description: "Reservation created successfully!",
@@ -167,11 +173,12 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       console.error('Error in createReservation:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       });
-      return null;
+      throw error;
     } finally {
+      console.log('Create reservation complete, resetting loading state');
       setLoading(false);
     }
   };

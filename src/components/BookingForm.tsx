@@ -319,6 +319,19 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const canMakeBooking = watchedAdminOverride || allPhasesActive || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
+    // Prevent double submission
+    if (submitting) {
+      console.log('Submission already in progress, ignoring duplicate');
+      return;
+    }
+
+    console.log('=== Form submission started ===', {
+      familyGroup: data.familyGroup,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      isEditing: !!editingReservation
+    });
+
     // Final validation - bypass in test mode
     const validation = testOverrideMode 
       ? { isValid: true, errors: [] } // Always valid in test mode
@@ -327,6 +340,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows, data.adminOverride, isSecondarySelectionActive);
     
     if (!validation.isValid) {
+      console.log('Validation failed:', validation.errors);
       toast({
         title: editingReservation ? "Edit Invalid" : "Booking Invalid",
         description: validation.errors.join('. '),
@@ -337,6 +351,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
     setSubmitting(true);
     try {
+      console.log('Starting reservation creation/update...');
       const nights = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24));
       
       if (editingReservation) {
@@ -422,12 +437,14 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       }
     } catch (error) {
+      console.error('Error in form submission:', error);
       toast({
         title: editingReservation ? "Update Failed" : "Booking Failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
+      console.log('Form submission complete, resetting submitting state');
       setSubmitting(false);
     }
   };
