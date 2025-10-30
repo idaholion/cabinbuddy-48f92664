@@ -28,6 +28,7 @@ interface UseSequentialSelectionReturn {
   getDaysRemaining: (familyGroup: string) => number | null;
   loading: boolean;
   getUserUsageInfo: (userFamilyGroup: string) => { used: number; allowed: number; remaining: number } | null;
+  secondarySelectionStartDate: Date | null;
 }
 
 export const useSequentialSelection = (rotationYear: number): UseSequentialSelectionReturn => {
@@ -454,6 +455,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     advanceSelection,
     getDaysRemaining,
     loading,
-    getUserUsageInfo
+    getUserUsageInfo,
+    secondarySelectionStartDate: secondaryStatus?.started_at ? new Date(secondaryStatus.started_at) : null
   };
 };

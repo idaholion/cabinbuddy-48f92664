@@ -15,7 +15,7 @@ import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, addDays } from "date-fns";
 import { useSequentialSelection, SelectionStatus } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectionExtensions } from "@/hooks/useSelectionExtensions";
@@ -204,7 +204,8 @@ const CabinCalendar = () => {
     canCurrentUserSelect,
     advanceSelection,
     currentFamilyGroup,
-    getUserUsageInfo
+    getUserUsageInfo,
+    secondarySelectionStartDate
   } = useSequentialSelection(rotationYear);
   
   console.log('[CabinCalendar] Selection state:', {
@@ -509,13 +510,25 @@ const CabinCalendar = () => {
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                 <p className="font-medium">Selection begins October 1st</p>
                 {currentRotationYearCurrentFamily && (() => {
-                  // Secondary selection phase: show rolling window info
+                  // Secondary selection phase: show actual selection dates
                   if (currentPhase === 'secondary') {
+                    if (!secondarySelectionStartDate || !rotationData) {
+                      return (
+                        <div className="space-y-1 mt-2">
+                          <p className="font-semibold text-primary">Secondary Selection Active</p>
+                          <p className="text-xs">7-day rolling selection period</p>
+                        </div>
+                      );
+                    }
+                    
+                    const startDate = secondarySelectionStartDate;
+                    const selectionDays = rotationData.secondary_selection_days || 7;
+                    const endDate = addDays(startDate, selectionDays);
+                    
                     return (
                       <div className="space-y-1 mt-2">
                         <p className="font-semibold text-primary">Secondary Selection Active</p>
-                        <p>Current: {currentRotationYearCurrentFamily}</p>
-                        <p className="text-xs">7-day rolling selection period</p>
+                        <p className="text-xs">Selection period: {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}</p>
                       </div>
                     );
                   }
