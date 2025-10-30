@@ -29,7 +29,7 @@ export function SecondarySelectionManager({
   
   const { familyGroups } = useFamilyGroups();
   const { rotationData } = useRotationOrder();
-  const { timePeriodUsage } = useTimePeriods();
+  const { timePeriodUsage } = useTimePeriods(rotationYear);
   const {
     secondaryStatus,
     loading,
