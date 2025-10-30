@@ -206,12 +206,12 @@ export function SecondarySelectionManager({
 
   // Show simple banner when it's the user's turn
   const isUserTurn = userFamilyGroup && isCurrentFamilyTurn(userFamilyGroup);
-  const remaining = userFamilyGroup ? getRemainingSecondaryPeriods(userFamilyGroup) : 0;
   
   // Calculate used periods for display
   const totalAllowed = rotationData?.secondary_max_periods || 1;
   const usage = userFamilyGroup ? timePeriodUsage.find(u => u.family_group === userFamilyGroup) : undefined;
   const used = usage?.secondary_periods_used || 0;
+  const remaining = Math.max(0, totalAllowed - used);
   
   if (!isUserTurn) {
     return null; // Don't show anything if it's not the user's turn
