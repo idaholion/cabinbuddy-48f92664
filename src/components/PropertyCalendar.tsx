@@ -691,6 +691,9 @@ const getBookingsForDate = (date: Date) => {
       selectedDatesCount: selectedDates.length,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
+      currentMonth: currentMonth.toISOString(),
+      startDateYear: startDate.getFullYear(),
+      currentMonthYear: currentMonth.getFullYear(),
       nights: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
     });
     
