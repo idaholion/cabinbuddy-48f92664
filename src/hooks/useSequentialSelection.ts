@@ -76,18 +76,17 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       const allCompletedPrimary = completionChecks.every(completed => completed);
 
-      // Check if secondary periods exist in database
-      const { data: secondaryPeriods } = await supabase
-        .from('reservation_periods')
-        .select('id')
+      // Check if secondary selection is active by looking at secondary_selection_status table
+      const { data: secondaryStatus } = await supabase
+        .from('secondary_selection_status')
+        .select('id, current_family_group')
         .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
-        .gte('current_group_index', rotationOrder.length)
-        .limit(1);
+        .maybeSingle();
 
-      const hasSecondaryPeriods = secondaryPeriods && secondaryPeriods.length > 0;
+      const isSecondaryActive = secondaryStatus && secondaryStatus.current_family_group;
 
-      if (allCompletedPrimary && rotationData.enable_secondary_selection && hasSecondaryPeriods) {
+      if (allCompletedPrimary && rotationData.enable_secondary_selection && isSecondaryActive) {
         setCurrentPhase('secondary');
       } else {
         setCurrentPhase('primary');
