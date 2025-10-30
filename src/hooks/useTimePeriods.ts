@@ -154,44 +154,86 @@ export const useTimePeriods = (rotationYear?: number) => {
       windowCount: timePeriodWindows.length
     });
 
-    // Find the relevant time period window
-    // When all phases are active, allow booking any available window, not just the family's assigned window
-    const relevantWindow = timePeriodWindows.find(window => {
+    // Find the relevant time period window(s)
+    // Support bookings that span multiple consecutive time periods
+    const sortedWindows = [...timePeriodWindows].sort((a, b) => 
+      new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+    
+    // Find window that contains the start date
+    const startWindow = sortedWindows.find(window => {
       const windowStart = new Date(window.startDate);
       const windowEnd = new Date(window.endDate);
       
-      console.log('[useTimePeriods] Checking window:', {
-        windowFamilyGroup: window.familyGroup,
-        windowStart: windowStart.toISOString(),
-        windowEnd: windowEnd.toISOString(),
-        startMatch: normalizedStartDate >= windowStart,
-        endMatch: normalizedEndDate <= windowEnd
-      });
+      const isInWindow = normalizedStartDate >= windowStart && normalizedStartDate < windowEnd;
+      const matchesFamily = allPhasesActive || adminOverride || window.familyGroup === familyGroup;
       
-      const datesMatch = normalizedStartDate >= windowStart && normalizedEndDate <= windowEnd;
-      
-      // If all phases active, only check dates. Otherwise, also check family group assignment
-      if (allPhasesActive || adminOverride) {
-        return datesMatch;
-      }
-      
-      return window.familyGroup === familyGroup && datesMatch;
+      return isInWindow && matchesFamily;
     });
     
-    console.log('[useTimePeriods] Relevant window found:', relevantWindow ? {
-      familyGroup: relevantWindow.familyGroup,
-      startDate: new Date(relevantWindow.startDate).toISOString(),
-      endDate: new Date(relevantWindow.endDate).toISOString()
-    } : null);
-
-    if (!relevantWindow) {
+    if (!startWindow) {
       if (allPhasesActive || adminOverride) {
-        errors.push('Booking dates must fall within a valid time period window');
+        errors.push('Booking start date must fall within a valid time period window');
       } else {
-        errors.push('Booking dates must fall within your assigned time period window');
+        errors.push('Booking start date must fall within your assigned time period window');
       }
       return { isValid: false, errors };
     }
+    
+    // Find window that contains (or ends on) the end date
+    const endWindow = sortedWindows.find(window => {
+      const windowStart = new Date(window.startDate);
+      const windowEnd = new Date(window.endDate);
+      
+      const isInWindow = normalizedEndDate > windowStart && normalizedEndDate <= windowEnd;
+      const matchesFamily = allPhasesActive || adminOverride || window.familyGroup === familyGroup;
+      
+      return isInWindow && matchesFamily;
+    });
+    
+    if (!endWindow) {
+      if (allPhasesActive || adminOverride) {
+        errors.push('Booking end date must fall within a valid time period window');
+      } else {
+        errors.push('Booking end date must fall within your assigned time period window');
+      }
+      return { isValid: false, errors };
+    }
+    
+    // Check if booking spans consecutive windows
+    const startWindowIndex = sortedWindows.indexOf(startWindow);
+    const endWindowIndex = sortedWindows.indexOf(endWindow);
+    
+    if (startWindowIndex > endWindowIndex) {
+      errors.push('Invalid date range: end date is before start date');
+      return { isValid: false, errors };
+    }
+    
+    // If spanning multiple windows, verify they are consecutive and all match family group
+    if (startWindowIndex !== endWindowIndex && !allPhasesActive && !adminOverride) {
+      for (let i = startWindowIndex; i <= endWindowIndex; i++) {
+        if (sortedWindows[i].familyGroup !== familyGroup) {
+          errors.push(`Cannot book across periods assigned to different family groups`);
+          return { isValid: false, errors };
+        }
+      }
+    }
+    
+    console.log('[useTimePeriods] Valid window(s) found:', {
+      startWindow: {
+        familyGroup: startWindow.familyGroup,
+        startDate: new Date(startWindow.startDate).toISOString(),
+        endDate: new Date(startWindow.endDate).toISOString()
+      },
+      endWindow: {
+        familyGroup: endWindow.familyGroup,
+        startDate: new Date(endWindow.startDate).toISOString(),
+        endDate: new Date(endWindow.endDate).toISOString()
+      },
+      spansMultipleWindows: startWindowIndex !== endWindowIndex
+    });
+    
+    const relevantWindow = startWindow; // Use start window for subsequent checks
 
     // Allow booking to start on or after the required start day within the window
     if (startDate < relevantWindow.startDate) {
