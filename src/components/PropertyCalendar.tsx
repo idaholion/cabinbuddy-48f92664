@@ -521,6 +521,13 @@ const getBookingsForDate = (date: Date) => {
   const handleDateClick = (date: Date) => {
     console.log('=== handleDateClick called ===', {
       date: date.toISOString(),
+      dateString: date.toString(),
+      year: date.getFullYear(),
+      month: date.getMonth(),
+      day: date.getDate(),
+      dayOfWeek: date.getDay(),
+      currentMonthYear: currentMonth.getFullYear(),
+      currentMonthMonth: currentMonth.getMonth(),
       isDragging,
       reservationsCount: reservations.length
     });
