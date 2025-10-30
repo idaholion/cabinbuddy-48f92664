@@ -21,6 +21,7 @@ import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 import { parseDateOnly, calculateNights, toDateOnlyString, parseDateAtNoon } from '@/lib/date-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Use the imported parseDateAtNoon function for check-in/check-out times
 const parseLocalDate = parseDateAtNoon;
@@ -85,8 +86,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
   const isSecondarySelectionActive = currentPhase === 'secondary';
   
-  // Check if user should use secondary selection form instead
-  const shouldUseSecondaryForm = !editingReservation && 
+  // Check if this is a secondary selection booking (but don't block the form)
+  const isSecondarySelectionBooking = !editingReservation && 
     isSecondaryActive && 
     userFamilyGroupName && 
     isCurrentFamilyTurn(userFamilyGroupName);
@@ -400,16 +401,21 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         // For "Group Order Rotates", use_virtual_weeks_system should be false/undefined
         const usesStaticWeeks = rotationData?.use_virtual_weeks_system === true;
         
+        // Check if this is a secondary selection booking
+        const isSecondaryBooking = isSecondarySelectionBooking && nights === 7;
+        
         // Consider it a time period booking ONLY if:
         // 1. Organization uses Static Weeks method (not Group Order Rotates)
         // 2. It's during their sequential selection turn
         // 3. They're booking a full week (7 nights)
         // 4. Admin hasn't overridden it as a manual booking
+        // OR it's a secondary selection booking
         const isTimePeriodBooking = 
-          usesStaticWeeks &&
+          (usesStaticWeeks &&
           !data.adminOverride &&
           data.familyGroup === currentTurnGroup && 
-          nights === 7;
+          nights === 7) ||
+          isSecondaryBooking;
 
         const hostAssignmentsData = data.hostAssignments.map(assignment => ({
           host_name: assignment.host_name,
@@ -425,14 +431,34 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           total_cost: data.totalCost,
           allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : null,
           allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : null,
-          time_period_number: isTimePeriodBooking ? 1 : null,
+          time_period_number: isSecondaryBooking ? -1 : (isTimePeriodBooking ? 1 : null),
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (reservation) {
-          // Only update time period usage if this is a full time period booking
-          if (isTimePeriodBooking) {
+          // Update time period usage appropriately
+          if (isSecondaryBooking) {
+            // For secondary selection, increment secondary_periods_used
+            const { data: usageData, error } = await supabase
+              .from('time_period_usage')
+              .select('secondary_periods_used')
+              .eq('family_group', data.familyGroup)
+              .eq('rotation_year', data.startDate.getFullYear())
+              .single();
+            
+            if (usageData) {
+              await supabase
+                .from('time_period_usage')
+                .update({ 
+                  secondary_periods_used: (usageData.secondary_periods_used || 0) + 1,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('family_group', data.familyGroup)
+                .eq('rotation_year', data.startDate.getFullYear());
+            }
+          } else if (isTimePeriodBooking) {
+            // For primary selection, use existing logic
             await updateTimePeriodUsage(data.familyGroup, data.startDate.getFullYear());
           }
           
@@ -478,35 +504,25 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
         </DialogHeader>
         
-        {/* Secondary Selection Active - Redirect to proper form */}
-        {shouldUseSecondaryForm ? (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">
-              Secondary Selection Active
-            </h3>
-            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
-              It's currently your turn for secondary selection! Please use the "Select Additional Week" button in the Secondary Selection section above to make your booking.
+        {/* Secondary Selection Indicator */}
+        {isSecondarySelectionBooking && (
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+            <p className="text-sm font-medium text-primary">
+              🎯 Secondary Selection Active - This booking will count toward your additional selection
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              className="w-full"
-            >
-              Close and Use Secondary Selection
-            </Button>
           </div>
-        ) : (
-          <>
-            {/* Test Override Mode Indicator */}
-            {testOverrideMode && (
-              <div className="mt-2 p-3 bg-orange-100 border border-orange-200 rounded-lg">
-                <p className="text-sm font-medium text-orange-700">
-                  🧪 Test Mode Active - All time window restrictions bypassed
-                </p>
-              </div>
-            )}
-            
-            {userFamilyGroupName && !testOverrideMode && (
+        )}
+        
+        {/* Test Override Mode Indicator */}
+        {testOverrideMode && (
+          <div className="mt-2 p-3 bg-orange-100 border border-orange-200 rounded-lg">
+            <p className="text-sm font-medium text-orange-700">
+              🧪 Test Mode Active - All time window restrictions bypassed
+            </p>
+          </div>
+        )}
+        
+        {userFamilyGroupName && !testOverrideMode && (
               <div className="mt-2 p-3 bg-primary/10 rounded-lg">
                 <p className="text-sm font-medium">
                   {userFamilyGroupName === currentTurnGroup ? (
@@ -807,8 +823,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               </div>
             </form>
           </Form>
-          </>
-        )}
       </DialogContent>
       
       {/* Delete Confirmation Dialog */}
