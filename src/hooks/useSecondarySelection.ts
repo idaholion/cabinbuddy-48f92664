@@ -198,6 +198,35 @@ export const useSecondarySelection = (rotationYear: number) => {
         return;
       }
 
+      // Send notification to the next family
+      try {
+        const { error: notifyError } = await supabase.functions.invoke('send-selection-turn-notification', {
+          body: {
+            organization_id: organization.id,
+            family_group: nextFamily,
+            rotation_year: rotationYear
+          }
+        });
+
+        if (notifyError) {
+          console.error('[useSecondarySelection] Error sending notification:', notifyError);
+        } else {
+          console.log(`[useSecondarySelection] Notification sent to ${nextFamily} for secondary selection`);
+          
+          // Track that notification was sent
+          await supabase
+            .from('selection_turn_notifications_sent')
+            .insert({
+              organization_id: organization.id,
+              rotation_year: rotationYear,
+              family_group: nextFamily,
+              phase: 'secondary'
+            });
+        }
+      } catch (notifyError) {
+        console.error('[useSecondarySelection] Failed to send notification:', notifyError);
+      }
+
       fetchSecondarySelectionStatus();
     } catch (error) {
       console.error('[useSecondarySelection] Error in advanceSecondarySelection:', error);
