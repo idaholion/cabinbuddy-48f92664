@@ -30,12 +30,13 @@ export default function FAQ() {
   return (
     <MainLayout>
       <div 
-        className="relative min-h-screen hero-background-stable w-full"
+        className="fixed inset-0 hero-background-stable"
         style={{
-          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'
+          backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
+          zIndex: -1
         }}
-      >
-        <div className="container max-w-4xl mx-auto px-4 py-8 relative z-10 w-full">
+      />
+      <div className="relative container max-w-4xl mx-auto px-4 py-8">
         <PageHeader
           title="Frequently Asked Questions"
           subtitle="Find answers to common questions about Cabin Buddy"
@@ -109,7 +110,6 @@ export default function FAQ() {
           </CardContent>
         </Card>
         </div>
-      </div>
     </MainLayout>
   );
 }
