@@ -238,10 +238,28 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     ) : [];
 
   // Calculate time period windows for the month of the selected dates (or editing reservation)
+  // For bookings that might span month boundaries, calculate windows for both months
   const relevantMonth = selectedStartDate || (editingReservation ? parseLocalDate(editingReservation.start_date) : currentMonth);
-  const timePeriodWindows = calculateTimePeriodWindows(
+  
+  // Generate windows for the relevant month and the previous month to catch periods that span months
+  const prevMonth = new Date(relevantMonth);
+  prevMonth.setMonth(prevMonth.getMonth() - 1);
+  
+  const windowsCurrentMonth = calculateTimePeriodWindows(
     relevantMonth.getFullYear(),
     relevantMonth
+  );
+  const windowsPrevMonth = calculateTimePeriodWindows(
+    prevMonth.getFullYear(),
+    prevMonth
+  );
+  
+  // Combine and deduplicate windows
+  const timePeriodWindows = [...windowsPrevMonth, ...windowsCurrentMonth].filter((window, index, self) =>
+    index === self.findIndex(w => 
+      w.startDate.getTime() === window.startDate.getTime() &&
+      w.endDate.getTime() === window.endDate.getTime()
+    )
   );
 
   // Custom validation for edit mode
