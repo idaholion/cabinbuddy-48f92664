@@ -82,6 +82,7 @@ const FamilyGroupHealthCheck = React.lazy(() => import("./pages/FamilyGroupHealt
 // Lazy load utility pages
 const GuestAccess = React.lazy(() => import("./pages/GuestAccess"));
 const FAQ = React.lazy(() => import("./pages/FAQ"));
+const FAQManagement = React.lazy(() => import("./pages/FAQManagement"));
 
 import { SupervisorRoute } from "./components/SupervisorRoute";
 import { AdminTreasurerRoute } from "./components/AdminTreasurerRoute";
@@ -164,6 +165,7 @@ const AppContent = () => {
         <Route path="/demo" element={<Suspense fallback={<LoadingSpinner />}><Demo /></Suspense>} />
         <Route path="/privacy-policy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />
         <Route path="/faq" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQ /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/faq-management" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQManagement /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/trial-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><TrialCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />

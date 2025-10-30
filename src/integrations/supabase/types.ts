@@ -628,6 +628,50 @@ export type Database = {
           },
         ]
       }
+      faq_items: {
+        Row: {
+          answer: string
+          category: string
+          category_order: number
+          created_at: string
+          id: string
+          item_order: number
+          organization_id: string
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category: string
+          category_order?: number
+          created_at?: string
+          id?: string
+          item_order?: number
+          organization_id: string
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          category_order?: number
+          created_at?: string
+          id?: string
+          item_order?: number
+          organization_id?: string
+          question?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       features: {
         Row: {
           category: string
