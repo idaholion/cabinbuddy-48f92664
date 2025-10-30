@@ -236,36 +236,48 @@ export function SecondarySelectionManager({
               )}
             </p>
           </div>
-          <ConfirmationDialog
-            title="Confirm Selection Complete"
-            description={
-              remaining > 0
-                ? `You have only selected ${used} periods out of ${totalAllowed}. Are you sure you want to finish early and pass the selection to the next family group?`
-                : "Confirm that you have completed your secondary selection and are ready to pass the selection to the next family group."
-            }
-            confirmText="Yes, I'm Done"
-            onConfirm={async () => {
-              try {
-                await advanceSecondarySelection();
-                toast({
-                  title: "Selection Complete",
-                  description: "Your secondary selection period has been marked complete. The next family group has been notified.",
-                });
-              } catch (error) {
-                console.error('Error advancing secondary selection:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to complete selection. Please try again.",
-                  variant: "destructive",
-                });
+          <div className="flex gap-2">
+            {remaining > 0 && (
+              <Button
+                size="lg"
+                onClick={() => setShowBookingForm(true)}
+                className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap"
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Select Additional Week
+              </Button>
+            )}
+            <ConfirmationDialog
+              title="Confirm Selection Complete"
+              description={
+                remaining > 0
+                  ? `You have only selected ${used} periods out of ${totalAllowed}. Are you sure you want to finish early and pass the selection to the next family group?`
+                  : "Confirm that you have completed your secondary selection and are ready to pass the selection to the next family group."
               }
-            }}
-          >
-            <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap">
-              <CheckCircle className="h-5 w-5 mr-2" />
-              I'm Done Selecting
-            </Button>
-          </ConfirmationDialog>
+              confirmText="Yes, I'm Done"
+              onConfirm={async () => {
+                try {
+                  await advanceSecondarySelection();
+                  toast({
+                    title: "Selection Complete",
+                    description: "Your secondary selection period has been marked complete. The next family group has been notified.",
+                  });
+                } catch (error) {
+                  console.error('Error advancing secondary selection:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to complete selection. Please try again.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              <Button size="lg" variant="outline" className="shadow-lg whitespace-nowrap">
+                <CheckCircle className="h-5 w-5 mr-2" />
+                I'm Done Selecting
+              </Button>
+            </ConfirmationDialog>
+          </div>
         </div>
       </div>
 
