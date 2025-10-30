@@ -235,13 +235,13 @@ export function SecondarySelectionManager({
           </div>
           <div className="flex gap-2">
             <ConfirmationDialog
-              title="Confirm Selection Complete"
+              title={remaining > 0 ? "Finish Early?" : "Confirm Selection Complete"}
               description={
                 remaining > 0
-                  ? `You have only selected ${used} periods out of ${totalAllowed}. Are you sure you want to finish early and pass the selection to the next family group?`
-                  : "Confirm that you have completed your secondary selection and are ready to pass the selection to the next family group."
+                  ? `You have selected ${used} of ${totalAllowed} periods. You still have ${remaining} remaining. Are you sure you want to finish early and pass the selection to the next family group?`
+                  : `Great! You've selected all ${totalAllowed} of your available periods. Click confirm to complete your secondary selection.`
               }
-              confirmText="Yes, I'm Done"
+              confirmText={remaining > 0 ? "Yes, Finish Early" : "Complete Selection"}
               onConfirm={async () => {
                 try {
                   await advanceSecondarySelection();
