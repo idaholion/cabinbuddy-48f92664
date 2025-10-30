@@ -78,15 +78,16 @@ export const useTimePeriods = (rotationYear?: number) => {
     };
     const startDayIndex = dayMap[startDay] ?? 5;
 
-    // Calculate time period windows only for the specific month being viewed
-    const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-    const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+    // Calculate time period windows that might include dates in the viewed month
+    // Start from 2 months before to catch windows that start earlier but extend into this month
+    const startOfMonth = new Date(month.getFullYear(), month.getMonth() - 2, 1);
+    const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 2, 0);
     
-    console.log('[calculateTimePeriodWindows] Month range:', {
+    console.log('[calculateTimePeriodWindows] Month range (extended):', {
       startOfMonth: startOfMonth.toISOString(),
       endOfMonth: endOfMonth.toISOString(),
-      startMonth: startOfMonth.getMonth(),
-      endMonth: endOfMonth.getMonth()
+      targetMonth: month.getMonth(),
+      targetYear: month.getFullYear()
     });
     
     let currentDate = new Date(startOfMonth);
