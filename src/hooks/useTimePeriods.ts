@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +39,12 @@ export const useTimePeriods = (rotationYear?: number) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [timePeriodUsage, setTimePeriodUsage] = useState<TimePeriodUsageData[]>([]);
+  const rotationYearRef = useRef<number | undefined>(rotationYear);
+
+  // Keep ref in sync with rotationYear prop
+  useEffect(() => {
+    rotationYearRef.current = rotationYear;
+  }, [rotationYear]);
 
   // Calculate time period windows based on rotation settings
   const calculateTimePeriodWindows = (
@@ -646,8 +652,10 @@ export const useTimePeriods = (rotationYear?: number) => {
 
   // Real-time subscription for time_period_usage updates
   useEffect(() => {
-    if (!organization?.id || !rotationYear) return;
+    if (!organization?.id) return;
 
+    console.log('[Real-time Setup] Setting up subscription for organization:', organization.id);
+    
     const channel = supabase
       .channel('time-period-usage-changes')
       .on(
@@ -659,16 +667,26 @@ export const useTimePeriods = (rotationYear?: number) => {
           filter: `organization_id=eq.${organization.id}`
         },
         (payload) => {
-          console.log('[Real-time] Time period usage updated:', payload);
-          fetchTimePeriodUsage(rotationYear);
+          console.log('[Real-time Event] Time period usage updated:', payload);
+          console.log('[Real-time Event] Current rotation year from ref:', rotationYearRef.current);
+          
+          // Use the ref to get the current rotation year
+          const yearToFetch = rotationYearRef.current || new Date().getFullYear();
+          console.log('[Real-time Event] Fetching data for year:', yearToFetch);
+          
+          // Force a refetch of the usage data
+          fetchTimePeriodUsage(yearToFetch);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Real-time] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Real-time Cleanup] Removing subscription');
       supabase.removeChannel(channel);
     };
-  }, [organization?.id, rotationYear, fetchTimePeriodUsage]);
+  }, [organization?.id, fetchTimePeriodUsage]);
 
   return {
     timePeriodUsage,
