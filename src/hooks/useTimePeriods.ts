@@ -504,10 +504,10 @@ export const useTimePeriods = (rotationYear?: number) => {
     console.log(`[Reconciliation] Starting reconciliation for year ${year}`);
 
     try {
-      // Fetch all reservations for this year
+      // Fetch all reservations for this year (need time_period_number to identify secondary)
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
-        .select('family_group, start_date, end_date')
+        .select('family_group, start_date, end_date, time_period_number')
         .eq('organization_id', organization.id)
         .gte('start_date', `${year}-01-01`)
         .lt('start_date', `${year + 1}-01-01`);
@@ -517,22 +517,39 @@ export const useTimePeriods = (rotationYear?: number) => {
         return;
       }
 
-      // Count time periods per family (Friday-to-Friday is 1 period)
-      const familyCounts: Record<string, number> = {};
+      // Separate primary and secondary period counts
+      const primaryCounts: Record<string, number> = {};
+      const secondaryCounts: Record<string, number> = {};
+      
       reservations.forEach(res => {
-        if (!familyCounts[res.family_group]) {
-          familyCounts[res.family_group] = 0;
-        }
-        // Count Friday-to-Friday periods (7-day periods)
+        const familyGroup = res.family_group;
+        const isSecondary = (res as any).time_period_number === -1;
+        
+        // Initialize counters if needed
+        if (!primaryCounts[familyGroup]) primaryCounts[familyGroup] = 0;
+        if (!secondaryCounts[familyGroup]) secondaryCounts[familyGroup] = 0;
+        
+        // Count periods (7-day periods)
         const start = new Date(res.start_date);
         const end = new Date(res.end_date);
         const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
         const periods = Math.floor(days / 7);
-        familyCounts[res.family_group] += periods;
+        
+        // Add to appropriate counter
+        if (isSecondary) {
+          secondaryCounts[familyGroup] += periods;
+        } else {
+          primaryCounts[familyGroup] += periods;
+        }
       });
 
+      // Get all family groups from both counts
+      const allFamilyGroups = new Set([...Object.keys(primaryCounts), ...Object.keys(secondaryCounts)]);
+      
       // Update or create usage records to match actual reservations
-      for (const [familyGroup, actualCount] of Object.entries(familyCounts)) {
+      for (const familyGroup of allFamilyGroups) {
+        const primaryCount = primaryCounts[familyGroup] || 0;
+        const secondaryCount = secondaryCounts[familyGroup] || 0;
         const { data: existing, error: fetchError } = await supabase
           .from('time_period_usage')
           .select('*')
@@ -554,22 +571,25 @@ export const useTimePeriods = (rotationYear?: number) => {
               organization_id: organization.id,
               family_group: familyGroup,
               rotation_year: year,
-              time_periods_used: actualCount,
+              time_periods_used: primaryCount,
+              secondary_periods_used: secondaryCount,
               time_periods_allowed: rotationData.max_time_slots || 2,
+              secondary_periods_allowed: rotationData.secondary_max_periods || 1,
               last_selection_date: new Date().toISOString()
             });
 
           if (insertError) {
             console.error('Error creating usage record for', familyGroup, insertError);
           } else {
-            console.log(`[Reconciliation] Created usage record for ${familyGroup}: ${actualCount} periods`);
+            console.log(`[Reconciliation] Created usage record for ${familyGroup}: ${primaryCount} primary, ${secondaryCount} secondary periods`);
           }
-        } else if (existing.time_periods_used !== actualCount) {
+        } else if (existing.time_periods_used !== primaryCount || (existing.secondary_periods_used || 0) !== secondaryCount) {
           // Update existing record
           const { error: updateError } = await supabase
             .from('time_period_usage')
             .update({
-              time_periods_used: actualCount,
+              time_periods_used: primaryCount,
+              secondary_periods_used: secondaryCount,
               last_selection_date: new Date().toISOString()
             })
             .eq('id', existing.id);
@@ -577,7 +597,7 @@ export const useTimePeriods = (rotationYear?: number) => {
           if (updateError) {
             console.error('Error updating usage for', familyGroup, updateError);
           } else {
-            console.log(`[Reconciliation] Updated usage for ${familyGroup}: ${existing.time_periods_used} → ${actualCount}`);
+            console.log(`[Reconciliation] Updated usage for ${familyGroup}: primary ${existing.time_periods_used} → ${primaryCount}, secondary ${existing.secondary_periods_used || 0} → ${secondaryCount}`);
           }
         }
       }
@@ -623,6 +643,32 @@ export const useTimePeriods = (rotationYear?: number) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organization?.id, rotationData, rotationYear]);
+
+  // Real-time subscription for time_period_usage updates
+  useEffect(() => {
+    if (!organization?.id || !rotationYear) return;
+
+    const channel = supabase
+      .channel('time-period-usage-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'time_period_usage',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        (payload) => {
+          console.log('[Real-time] Time period usage updated:', payload);
+          fetchTimePeriodUsage(rotationYear);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [organization?.id, rotationYear, fetchTimePeriodUsage]);
 
   return {
     timePeriodUsage,
