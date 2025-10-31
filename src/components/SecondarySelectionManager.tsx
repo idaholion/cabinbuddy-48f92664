@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
@@ -52,6 +53,7 @@ export function SecondarySelectionManager({
   } = useSequentialSelection(rotationYear);
 
   const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   if (loading) {
     return (
@@ -234,6 +236,46 @@ export function SecondarySelectionManager({
             </p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              size="lg" 
+              variant="ghost"
+              onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  await Promise.all([
+                    fetchTimePeriodUsage(rotationYear),
+                    refetchSecondaryStatus()
+                  ]);
+                  toast({
+                    title: "Info Updated",
+                    description: "Selection information has been refreshed.",
+                  });
+                } catch (error) {
+                  console.error('Error refreshing:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to refresh. Please try again.",
+                    variant: "destructive",
+                  });
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }}
+              disabled={isRefreshing}
+              className="whitespace-nowrap"
+            >
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-5 w-5 mr-2" />
+                  Refresh Info
+                </>
+              )}
+            </Button>
             <ConfirmationDialog
               title={remaining > 0 ? "Finish Early?" : "Confirm Selection Complete"}
               description={
@@ -245,6 +287,13 @@ export function SecondarySelectionManager({
               onConfirm={async () => {
                 try {
                   await advanceSecondarySelection();
+                  
+                  // Force refresh all data immediately after advancing
+                  await Promise.all([
+                    fetchTimePeriodUsage(rotationYear),
+                    refetchSecondaryStatus()
+                  ]);
+                  
                   toast({
                     title: "Selection Complete",
                     description: "Your secondary selection period has been marked complete. The next family group has been notified.",
