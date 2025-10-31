@@ -31,6 +31,40 @@ export const useSecondarySelection = (rotationYear: number) => {
     checkIfSecondaryRoundShouldStart();
   }, [organization?.id, rotationYear, timePeriodUsage]);
 
+  // Real-time subscription for secondary_selection_status updates
+  useEffect(() => {
+    if (!organization?.id) return;
+
+    console.log('[Secondary Selection] Setting up real-time subscription for organization:', organization.id);
+    
+    const channel = supabase
+      .channel('secondary-selection-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'secondary_selection_status',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        (payload) => {
+          console.log('[Secondary Selection] Real-time event received:', payload);
+          console.log('[Secondary Selection] Rotation year:', rotationYear);
+          
+          // Refetch the status when any change occurs
+          fetchSecondarySelectionStatus();
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Secondary Selection] Subscription status:', status);
+      });
+
+    return () => {
+      console.log('[Secondary Selection] Cleaning up subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [organization?.id, rotationYear]);
+
   const fetchSecondarySelectionStatus = async () => {
     if (!organization?.id) return;
 
