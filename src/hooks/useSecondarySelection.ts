@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
@@ -24,6 +24,14 @@ export const useSecondarySelection = (rotationYear: number) => {
   const [loading, setLoading] = useState(true);
   const [isSecondaryRoundActive, setIsSecondaryRoundActive] = useState(false);
   const [selectionStartTime, setSelectionStartTime] = useState<Date | null>(null);
+  
+  // Use ref to avoid stale closure in real-time subscription
+  const rotationYearRef = useRef(rotationYear);
+  
+  // Keep ref in sync with prop
+  useEffect(() => {
+    rotationYearRef.current = rotationYear;
+  }, [rotationYear]);
 
   useEffect(() => {
     if (!organization?.id) return;
@@ -47,12 +55,34 @@ export const useSecondarySelection = (rotationYear: number) => {
           table: 'secondary_selection_status',
           filter: `organization_id=eq.${organization.id}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('[Secondary Selection] Real-time event received:', payload);
-          console.log('[Secondary Selection] Rotation year:', rotationYear);
+          console.log('[Secondary Selection] Using rotation year from ref:', rotationYearRef.current);
           
-          // Refetch the status when any change occurs
-          fetchSecondarySelectionStatus();
+          // Fetch with current rotation year from ref to avoid stale closure
+          try {
+            const { data, error } = await supabase
+              .from('secondary_selection_status')
+              .select('*')
+              .eq('organization_id', organization.id)
+              .eq('rotation_year', rotationYearRef.current)
+              .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+              console.error('[Secondary Selection] Error fetching in real-time:', error);
+              return;
+            }
+
+            console.log('[Secondary Selection] Real-time fetch result:', data);
+            setSecondaryStatus(data);
+            setIsSecondaryRoundActive(!!data?.current_family_group);
+            
+            if (data?.started_at) {
+              setSelectionStartTime(new Date(data.started_at));
+            }
+          } catch (error) {
+            console.error('[Secondary Selection] Error in real-time callback:', error);
+          }
         }
       )
       .subscribe((status) => {
@@ -63,7 +93,7 @@ export const useSecondarySelection = (rotationYear: number) => {
       console.log('[Secondary Selection] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, [organization?.id, rotationYear]);
+  }, [organization?.id]);
 
   const fetchSecondarySelectionStatus = async () => {
     if (!organization?.id) return;
