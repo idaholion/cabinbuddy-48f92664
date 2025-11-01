@@ -88,12 +88,10 @@ export function SecondarySelectionManager({
     );
   }
 
-  // Check if primary round is complete by checking turn_completed flags
+  // Check if primary round is complete by checking if secondary selection is active
   const secondarySelectionOrder = getSecondarySelectionOrder();
-  const isPrimaryRoundComplete = secondarySelectionOrder.every(familyGroup => {
-    const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-    return usage && usage.turn_completed === true;
-  });
+  const isPrimaryRoundComplete = isSecondaryRoundActive || 
+    (timePeriodUsage.length > 0 && timePeriodUsage.some(u => u.selection_round === 'secondary'));
 
   const allSecondaryComplete = secondarySelectionOrder.every(familyGroup => {
     const remaining = getRemainingSecondaryPeriods(familyGroup);
