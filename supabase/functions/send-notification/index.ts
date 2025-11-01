@@ -934,39 +934,57 @@ const handler = async (req: Request): Promise<Response> => {
         break;
     }
 
+    // Determine recipient email and phone based on notification type
+    let recipientEmail: string | undefined;
+    let recipientPhone: string | undefined;
+    
+    if (type === 'reminder' || type === 'confirmation' || type === 'cancellation' || type === 'assistance_request') {
+      recipientEmail = reservation?.guest_email;
+      recipientPhone = reservation?.guest_phone;
+    } else if (type === 'selection_period' || type === 'selection_period_start' || type === 'selection_period_end' || type === 'selection_turn_ready') {
+      recipientEmail = selection_data?.guest_email;
+      recipientPhone = selection_data?.guest_phone;
+    } else if (type.startsWith('work_weekend_')) {
+      recipientEmail = work_weekend_data?.recipient_email;
+      recipientPhone = work_weekend_data?.recipient_phone;
+    }
+
     // Send email using Resend
     let emailResponse;
     if (type === 'manual_template') {
       // Manual templates handle their own email sending
       emailResponse = { message: 'Manual template emails sent individually' };
-    } else {
+    } else if (recipientEmail) {
+      console.log(`📧 Sending email to: ${recipientEmail}`);
       emailResponse = await resend.emails.send({
         from: "CabinBuddy <noreply@cabinbuddy.org>",
-        to: [reservation?.guest_email, selection_data?.guest_email, work_weekend_data?.recipient_email].filter(Boolean) as string[],
+        to: [recipientEmail],
         subject: subject,
         html: htmlContent,
       });
       
-      console.log("📧 Email sent:", emailResponse);
+      console.log("✅ Email sent:", emailResponse);
+    } else {
+      console.log("⏭️ Email skipped - no recipient email found");
+      emailResponse = { message: 'No recipient email provided' };
     }
 
     // Send SMS if phone number is provided and SMS message is not empty
     let smsResponse = null;
     if (type !== 'manual_template') {
-      const phoneNumber = reservation?.guest_phone || selection_data?.guest_phone || work_weekend_data?.recipient_phone;
-      if (phoneNumber && smsMessage) {
-        console.log("📱 Attempting to send SMS...");
-        smsResponse = await sendSMS(phoneNumber, smsMessage);
+      if (recipientPhone && smsMessage) {
+        console.log(`📱 Attempting to send SMS to: ${recipientPhone}`);
+        smsResponse = await sendSMS(recipientPhone, smsMessage);
         
         if (smsResponse && !smsResponse.error) {
-          console.log(`✅ ${type} SMS sent successfully`);
+          console.log(`✅ ${type} SMS sent successfully to ${recipientPhone}`);
         } else if (smsResponse && smsResponse.error) {
-          console.error(`❌ ${type} SMS failed:`, smsResponse.error);
+          console.error(`❌ ${type} SMS failed for ${recipientPhone}:`, smsResponse.error);
         } else {
           console.log(`⚠️ ${type} SMS skipped (credentials not configured)`);
         }
       } else {
-        console.log("⏭️ SMS skipped - missing phone number or message");
+        console.log(`⏭️ SMS skipped - missing ${!recipientPhone ? 'phone number' : 'message'}`);
       }
     }
 
