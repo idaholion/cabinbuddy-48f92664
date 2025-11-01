@@ -125,7 +125,7 @@ export function SecondarySelectionBookingForm({
           guest_count: data.guestCount,
           host_assignments: data.hostAssignments as any,
           status: 'confirmed',
-          time_period_number: null // Secondary selections have no period number
+          time_period_number: -1 // CRITICAL: -1 marks this as a secondary selection
         });
 
       if (reservationError) throw reservationError;
