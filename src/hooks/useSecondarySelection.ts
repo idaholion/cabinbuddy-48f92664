@@ -262,6 +262,18 @@ export const useSecondarySelection = (rotationYear: number) => {
         return;
       }
 
+      // CRITICAL: Reset turn_completed in time_period_usage for the new family
+      const { error: usageError } = await supabase
+        .from('time_period_usage')
+        .update({ turn_completed: false })
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('family_group', nextFamily);
+
+      if (usageError) {
+        console.error('[useSecondarySelection] Error resetting turn_completed for new family:', usageError);
+      }
+
       // Send notification to the next family
       try {
         const { error: notifyError } = await supabase.functions.invoke('send-selection-turn-notification', {
