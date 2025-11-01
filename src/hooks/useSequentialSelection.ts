@@ -93,6 +93,9 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
       if (!isMounted) return;
 
+      // CRITICAL FIX: If secondary_selection_status has an active current_family_group,
+      // we ARE in secondary phase regardless of primary completion status.
+      // The secondary_selection_status record is the source of truth.
       const isSecondaryActive = secondaryStatus && secondaryStatus.current_family_group;
 
       console.log('=== USE SEQUENTIAL SELECTION PHASE CHECK ===', {
@@ -101,11 +104,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         enableSecondarySelection: rotationData.enable_secondary_selection,
         secondaryStatus,
         isSecondaryActive,
-        willBeSecondary: allCompletedPrimary && rotationData.enable_secondary_selection && isSecondaryActive,
+        willBeSecondary: rotationData.enable_secondary_selection && isSecondaryActive,
         completionChecks
       });
 
-      if (allCompletedPrimary && rotationData.enable_secondary_selection && isSecondaryActive) {
+      // If secondary selection status has an active family, we're in secondary phase
+      if (rotationData.enable_secondary_selection && isSecondaryActive) {
         setCurrentPhase('secondary');
       } else {
         setCurrentPhase('primary');
