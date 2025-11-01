@@ -95,6 +95,16 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
       const isSecondaryActive = secondaryStatus && secondaryStatus.current_family_group;
 
+      console.log('=== USE SEQUENTIAL SELECTION PHASE CHECK ===', {
+        rotationYear,
+        allCompletedPrimary,
+        enableSecondarySelection: rotationData.enable_secondary_selection,
+        secondaryStatus,
+        isSecondaryActive,
+        willBeSecondary: allCompletedPrimary && rotationData.enable_secondary_selection && isSecondaryActive,
+        completionChecks
+      });
+
       if (allCompletedPrimary && rotationData.enable_secondary_selection && isSecondaryActive) {
         setCurrentPhase('secondary');
       } else {

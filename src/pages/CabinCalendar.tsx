@@ -208,13 +208,14 @@ const CabinCalendar = () => {
     secondarySelectionStartDate
   } = useSequentialSelection(rotationYear);
   
-  console.log('[CabinCalendar] Selection state:', {
+  console.log('=== CABIN CALENDAR SELECTION STATE ===', {
     rotationYear,
     currentPhase,
     currentFamilyGroup,
     userGroup: userGroup?.name,
     canSelect: userGroup ? canCurrentUserSelect(userGroup.name) : false,
-    selectionLoading
+    selectionLoading,
+    willShowSecondaryManager: currentPhase === 'secondary'
   });
   
   // Use correct selection status from useSequentialSelection hook

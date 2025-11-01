@@ -20,6 +20,8 @@ export function SecondarySelectionManager({
   currentMonth, 
   userFamilyGroup 
 }: SecondarySelectionManagerProps) {
+  console.log('=== SECONDARY SELECTION MANAGER RENDERED ===', { userFamilyGroup });
+  
   // Use rotation year logic to get the correct year (same as calendar)
   const today = new Date();
   const currentYear = today.getFullYear();
