@@ -1236,7 +1236,7 @@ const getBookingsForDate = (date: Date) => {
                              >
                               <div className="flex items-center justify-between">
                                 <span className="truncate font-bold text-sm">{getHostFirstName(booking)}</span>
-                                {booking.time_period_number && booking.allocated_start_date && booking.allocated_end_date && (
+                                {booking.time_period_number > 0 && booking.allocated_start_date && booking.allocated_end_date && (
                                   <span className="ml-1 text-xs opacity-80">P{booking.time_period_number}</span>
                                 )}
                               </div>
