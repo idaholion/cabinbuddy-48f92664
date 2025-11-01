@@ -207,6 +207,15 @@ export function SecondarySelectionManager({
   // Show simple banner when it's the user's turn
   const isUserTurn = userFamilyGroup && isCurrentFamilyTurn(userFamilyGroup);
   
+  // Debug logging
+  console.log('[SecondarySelectionManager] Debug Info:', {
+    userFamilyGroup,
+    currentFamily: secondaryStatus?.current_family_group,
+    isUserTurn,
+    secondaryStatus,
+    timePeriodUsage
+  });
+  
   // Calculate used periods for display
   const totalAllowed = rotationData?.secondary_max_periods || 1;
   const usage = userFamilyGroup ? timePeriodUsage.find(u => u.family_group === userFamilyGroup) : undefined;
