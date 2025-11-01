@@ -87,32 +87,21 @@ const handler = async (req: Request): Promise<Response> => {
     const periodsAllowed = periodUsageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
-    // Get all usage data to determine if we're in primary or secondary phase
-    const { data: allUsageData } = await supabase
-      .from('time_period_usage')
-      .select('time_periods_used, time_periods_allowed')
-      .eq('organization_id', organization_id)
-      .eq('rotation_year', rotation_year);
-
-    // Determine if we're in secondary phase (all families have used their primary allocation)
-    const isSecondaryPhase = allUsageData?.every(
-      (usage: UsageData) => usage.time_periods_used >= usage.time_periods_allowed
-    ) || false;
-
-    // Get rotation settings for selection days
-    const { data: rotationData } = await supabase
-      .from('rotation_settings')
-      .select('selection_days, secondary_selection_days')
+    // Check if we're in secondary phase by looking for secondary_selection_status record
+    const { data: secondaryStatus } = await supabase
+      .from('secondary_selection_status')
+      .select('id')
       .eq('organization_id', organization_id)
       .eq('rotation_year', rotation_year)
       .maybeSingle();
 
-    const selectionDays = isSecondaryPhase 
-      ? (rotationData?.secondary_selection_days || 7)
-      : (rotationData?.selection_days || 14);
-    
-    const selectionWeeks = selectionDays === 7 ? '1 week' : '2 weeks';
-    const maxPeriods = isSecondaryPhase ? '1 additional period' : 'up to 2 periods';
+    const isSecondaryPhase = !!secondaryStatus;
+
+    // For secondary phase: 1 week, 1 period
+    // For primary phase: 2 weeks, up to 2 periods
+    const selectionDays = isSecondaryPhase ? 7 : 14;
+    const selectionWeeks = isSecondaryPhase ? '1 week' : '2 weeks';
+    const maxPeriods = isSecondaryPhase ? '1 period' : 'up to 2 periods';
 
     // Send notification - use appropriate type based on notification_type
     const notificationType = notification_type === 'ending_tomorrow' ? 'selection_period_end' : 'selection_period_start';
