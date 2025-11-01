@@ -1,3 +1,5 @@
+console.log('🔄 CABIN CALENDAR LOADED - CODE VERSION: 2025-11-01-02:00 FIX');
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
