@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ManualTemplateNotifications } from "@/components/ManualTemplateNotifications";
+import { SelectionTurnNotificationSender } from "@/components/SelectionTurnNotificationSender";
 
 const CalendarKeeperManagement = () => {
   useEffect(() => {
@@ -27,9 +28,10 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
               <TabsTrigger value="manual-templates">Manual Notifications</TabsTrigger>
+              <TabsTrigger value="selection-turn">Selection Turn</TabsTrigger>
               <TabsTrigger value="lookup">Reservation Lookup</TabsTrigger>
               <TabsTrigger value="test">Test System</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -40,6 +42,9 @@ const CalendarKeeperManagement = () => {
             </TabsContent>
             <TabsContent value="manual-templates" className="mt-6">
               <ManualTemplateNotifications />
+            </TabsContent>
+            <TabsContent value="selection-turn" className="mt-6 flex justify-center">
+              <SelectionTurnNotificationSender />
             </TabsContent>
             <TabsContent value="lookup" className="mt-6">
               <ReservationLookup />
