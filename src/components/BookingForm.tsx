@@ -695,6 +695,45 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               />
             </div>
 
+            {/* Submit Button */}
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              
+              {editingReservation && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={submitting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+              
+              <Button 
+                type="submit" 
+                disabled={
+                  !currentValidation.isValid || 
+                  !canMakeBooking || 
+                  submitting || 
+                  reservationLoading
+                }
+              >
+                {submitting ? 
+                  (editingReservation ? "Updating Booking..." : "Creating Booking...") : 
+                  (editingReservation ? "Update Booking" : "Confirm Booking")
+                }
+              </Button>
+            </div>
+
             {/* Admin Override Checkbox - Only show for calendar keepers */}
             {(isCalendarKeeper || testOverrideMode) && (
               <FormField
@@ -782,45 +821,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                 </p>
               </div>
             )}
-
-            {/* Submit Button */}
-            <div className="flex justify-end space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              
-              {editingReservation && (
-                <Button 
-                  type="button" 
-                  variant="destructive" 
-                  onClick={() => setShowDeleteDialog(true)}
-                  disabled={submitting}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              )}
-              
-              <Button 
-                type="submit" 
-                disabled={
-                  !currentValidation.isValid || 
-                  !canMakeBooking || 
-                  submitting || 
-                  reservationLoading
-                }
-              >
-                {submitting ? 
-                  (editingReservation ? "Updating Booking..." : "Creating Booking...") : 
-                  (editingReservation ? "Update Booking" : "Confirm Booking")
-                }
-              </Button>
-              </div>
             </form>
           </Form>
       </DialogContent>
