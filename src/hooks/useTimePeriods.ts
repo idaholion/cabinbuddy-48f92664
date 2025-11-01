@@ -542,14 +542,9 @@ export const useTimePeriods = (rotationYear?: number) => {
         const resCreatedAt = new Date(res.created_at);
         
         // Determine if this is a secondary selection:
-        // 1. Has time_period_number = -1 (old marker for secondary selections), OR
-        // 2. Has no period number (null) AND was created AFTER secondary selection started
-        // Note: Static weeks reservations will have time_period_number = 1, 2, 3, etc.
-        const isSecondary = 
-          res.time_period_number === -1 ||
-          (res.time_period_number === null && 
-           secondaryStartDate && 
-           resCreatedAt >= secondaryStartDate);
+        // ONLY count reservations explicitly marked with time_period_number = -1
+        // Do NOT count null time_period_number as those could be admin overrides or old data from primary selection
+        const isSecondary = res.time_period_number === -1;
         
         // Initialize counters if needed
         if (!primaryCounts[familyGroup]) primaryCounts[familyGroup] = 0;
