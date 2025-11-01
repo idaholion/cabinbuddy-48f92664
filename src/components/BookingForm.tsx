@@ -85,12 +85,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
   const isSecondarySelectionActive = currentPhase === 'secondary';
-  
-  // Check if this is a secondary selection booking (but don't block the form)
-  const isSecondarySelectionBooking = !editingReservation && 
-    isSecondaryActive && 
-    userFamilyGroupName && 
-    isCurrentFamilyTurn(userFamilyGroupName);
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
@@ -401,21 +395,16 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         // For "Group Order Rotates", use_virtual_weeks_system should be false/undefined
         const usesStaticWeeks = rotationData?.use_virtual_weeks_system === true;
         
-        // Check if this is a secondary selection booking
-        const isSecondaryBooking = isSecondarySelectionBooking && nights === 7;
-        
         // Consider it a time period booking ONLY if:
         // 1. Organization uses Static Weeks method (not Group Order Rotates)
         // 2. It's during their sequential selection turn
         // 3. They're booking a full week (7 nights)
         // 4. Admin hasn't overridden it as a manual booking
-        // OR it's a secondary selection booking
         const isTimePeriodBooking = 
-          (usesStaticWeeks &&
+          usesStaticWeeks &&
           !data.adminOverride &&
           data.familyGroup === currentTurnGroup && 
-          nights === 7) ||
-          isSecondaryBooking;
+          nights === 7;
 
         const hostAssignmentsData = data.hostAssignments.map(assignment => ({
           host_name: assignment.host_name,
@@ -431,34 +420,14 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           total_cost: data.totalCost,
           allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : null,
           allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : null,
-          time_period_number: isSecondaryBooking ? -1 : (isTimePeriodBooking ? 1 : null),
+          time_period_number: isTimePeriodBooking ? 1 : null,
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
 
         if (reservation) {
-          // Update time period usage appropriately
-          if (isSecondaryBooking) {
-            // For secondary selection, increment secondary_periods_used
-            const { data: usageData, error } = await supabase
-              .from('time_period_usage')
-              .select('secondary_periods_used')
-              .eq('family_group', data.familyGroup)
-              .eq('rotation_year', data.startDate.getFullYear())
-              .single();
-            
-            if (usageData) {
-              await supabase
-                .from('time_period_usage')
-                .update({ 
-                  secondary_periods_used: (usageData.secondary_periods_used || 0) + 1,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('family_group', data.familyGroup)
-                .eq('rotation_year', data.startDate.getFullYear());
-            }
-          } else if (isTimePeriodBooking) {
-            // For primary selection, use existing logic
+          // Update time period usage for static weeks system only
+          if (isTimePeriodBooking) {
             await updateTimePeriodUsage(data.familyGroup, data.startDate.getFullYear());
           }
           
@@ -503,15 +472,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         <DialogHeader>
           <DialogTitle>{editingReservation ? 'Edit Booking' : 'New Booking'}</DialogTitle>
         </DialogHeader>
-        
-        {/* Secondary Selection Indicator */}
-        {isSecondarySelectionBooking && (
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
-            <p className="text-sm font-medium text-primary">
-              🎯 Secondary Selection Active - This booking will count toward your additional selection
-            </p>
-          </div>
-        )}
         
         {/* Test Override Mode Indicator */}
         {testOverrideMode && (

@@ -510,7 +510,7 @@ export const useTimePeriods = (rotationYear?: number) => {
     console.log(`[Reconciliation] Starting reconciliation for year ${year}`);
 
     try {
-      // Fetch all reservations for this year (need time_period_number to identify secondary)
+      // Fetch all reservations for this year
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
         .select('family_group, start_date, end_date, time_period_number')
@@ -523,13 +523,32 @@ export const useTimePeriods = (rotationYear?: number) => {
         return;
       }
 
+      // Fetch when secondary selection started (if at all)
+      const { data: secondaryStatus } = await supabase
+        .from('secondary_selection_status')
+        .select('started_at')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', year)
+        .maybeSingle();
+
+      const secondaryStartDate = secondaryStatus?.started_at ? new Date(secondaryStatus.started_at) : null;
+
       // Separate primary and secondary period counts
       const primaryCounts: Record<string, number> = {};
       const secondaryCounts: Record<string, number> = {};
       
       reservations.forEach(res => {
         const familyGroup = res.family_group;
-        const isSecondary = (res as any).time_period_number === -1;
+        const resStartDate = new Date(res.start_date);
+        
+        // Determine if this is a secondary selection:
+        // - Has no period number (null)
+        // - Was created AFTER secondary selection started
+        // Note: Static weeks reservations will have time_period_number = 1, 2, 3, etc.
+        const isSecondary = 
+          res.time_period_number === null && 
+          secondaryStartDate && 
+          resStartDate >= secondaryStartDate;
         
         // Initialize counters if needed
         if (!primaryCounts[familyGroup]) primaryCounts[familyGroup] = 0;
@@ -544,9 +563,12 @@ export const useTimePeriods = (rotationYear?: number) => {
         // Add to appropriate counter
         if (isSecondary) {
           secondaryCounts[familyGroup] += periods;
-        } else {
+        } else if (res.time_period_number !== null) {
+          // Only count as primary if it has a period number (static weeks)
           primaryCounts[familyGroup] += periods;
         }
+        // Ignore reservations with null period number made before secondary started
+        // (these are manual/admin bookings or bookings from sequential rotation primary)
       });
 
       // Get all family groups from both counts
