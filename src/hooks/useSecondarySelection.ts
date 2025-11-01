@@ -318,14 +318,7 @@ export const useSecondarySelection = (rotationYear: number) => {
   };
 
   const isCurrentFamilyTurn = (familyGroup: string): boolean => {
-    const isTurn = secondaryStatus?.current_family_group === familyGroup;
-    console.log('[useSecondarySelection] isCurrentFamilyTurn check:', {
-      familyGroup,
-      currentFamilyGroup: secondaryStatus?.current_family_group,
-      isTurn,
-      secondaryStatus
-    });
-    return isTurn;
+    return secondaryStatus?.current_family_group === familyGroup;
   };
 
   const getRemainingSecondaryPeriods = (familyGroup: string): number => {
