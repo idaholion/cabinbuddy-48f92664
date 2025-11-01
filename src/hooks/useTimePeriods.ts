@@ -510,10 +510,10 @@ export const useTimePeriods = (rotationYear?: number) => {
     console.log(`[Reconciliation] Starting reconciliation for year ${year}`);
 
     try {
-      // Fetch all reservations for this year
+      // Fetch all reservations for this year (need created_at to determine secondary selections)
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
-        .select('family_group, start_date, end_date, time_period_number')
+        .select('family_group, start_date, end_date, time_period_number, created_at')
         .eq('organization_id', organization.id)
         .gte('start_date', `${year}-01-01`)
         .lt('start_date', `${year + 1}-01-01`);
@@ -539,16 +539,17 @@ export const useTimePeriods = (rotationYear?: number) => {
       
       reservations.forEach(res => {
         const familyGroup = res.family_group;
-        const resStartDate = new Date(res.start_date);
+        const resCreatedAt = new Date(res.created_at);
         
         // Determine if this is a secondary selection:
-        // - Has no period number (null)
-        // - Was created AFTER secondary selection started
+        // 1. Has time_period_number = -1 (old marker for secondary selections), OR
+        // 2. Has no period number (null) AND was created AFTER secondary selection started
         // Note: Static weeks reservations will have time_period_number = 1, 2, 3, etc.
         const isSecondary = 
-          res.time_period_number === null && 
-          secondaryStartDate && 
-          resStartDate >= secondaryStartDate;
+          res.time_period_number === -1 ||
+          (res.time_period_number === null && 
+           secondaryStartDate && 
+           resCreatedAt >= secondaryStartDate);
         
         // Initialize counters if needed
         if (!primaryCounts[familyGroup]) primaryCounts[familyGroup] = 0;
