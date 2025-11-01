@@ -413,6 +413,17 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           end_date: assignment.end_date.toISOString().split('T')[0]
         }));
 
+        // Determine time_period_number based on booking context:
+        // - For static weeks (isTimePeriodBooking): use period number
+        // - For secondary selection phase: use -1 as marker
+        // - For rotation primary or admin overrides: use null
+        let timePeriodNumber = null;
+        if (isTimePeriodBooking) {
+          timePeriodNumber = 1; // Static week booking
+        } else if (currentPhase === 'secondary') {
+          timePeriodNumber = -1; // Secondary selection marker for rotation systems
+        }
+
         const reservation = await createReservation({
           start_date: data.startDate.toISOString().split('T')[0],
           end_date: data.endDate.toISOString().split('T')[0],
@@ -420,7 +431,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           total_cost: data.totalCost,
           allocated_start_date: isTimePeriodBooking ? data.startDate.toISOString().split('T')[0] : null,
           allocated_end_date: isTimePeriodBooking ? data.endDate.toISOString().split('T')[0] : null,
-          time_period_number: isTimePeriodBooking ? 1 : null,
+          time_period_number: timePeriodNumber,
           nights_used: nights,
           host_assignments: hostAssignmentsData
         }, testOverrideMode); // Pass testOverrideMode parameter
