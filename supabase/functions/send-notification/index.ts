@@ -432,6 +432,8 @@ const handler = async (req: Request): Promise<Response> => {
           selection_start_date: selection_data.selection_start_date,
           selection_end_date: selection_data.selection_end_date,
           available_periods: selection_data.available_periods,
+          selection_window: selection_data.selection_window || '2 weeks',
+          max_periods: selection_data.max_periods || 'up to 2 periods',
           organization_name: organizationName,
         };
 
