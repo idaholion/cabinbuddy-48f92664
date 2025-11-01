@@ -117,29 +117,40 @@ const handler = async (req: Request): Promise<Response> => {
     // Send notification - use appropriate type based on notification_type
     const notificationType = notification_type === 'ending_tomorrow' ? 'selection_period_end' : 'selection_period_start';
     
-    const { error: notifyError } = await supabase.functions.invoke('send-notification', {
-      body: {
-        type: notificationType,
-        organization_id: organization_id,
-        selection_data: {
-          family_group_name: familyData.name,
-          guest_email: familyData.lead_email,
-          guest_name: familyData.lead_name || familyData.name,
-          guest_phone: familyData.lead_phone,
-          selection_year: rotation_year.toString(),
-          selection_start_date: periodData?.selection_start_date || '',
-          selection_end_date: periodData?.selection_end_date || '',
-          available_periods: `${periodsRemaining} of ${periodsAllowed} periods remaining`,
-          selection_window: selectionWeeks,
-          max_periods: maxPeriods,
-          is_secondary_phase: isSecondaryPhase
-        }
+    const notificationBody = {
+      type: notificationType,
+      organization_id: organization_id,
+      selection_data: {
+        family_group_name: familyData.name,
+        guest_email: familyData.lead_email,
+        guest_name: familyData.lead_name || familyData.name,
+        guest_phone: familyData.lead_phone,
+        selection_year: rotation_year.toString(),
+        selection_start_date: periodData?.selection_start_date || '',
+        selection_end_date: periodData?.selection_end_date || '',
+        available_periods: `${periodsRemaining} of ${periodsAllowed} periods remaining`,
+        selection_window: selectionWeeks,
+        max_periods: maxPeriods,
+        is_secondary_phase: isSecondaryPhase
       }
+    };
+
+    console.log(`📧 Invoking send-notification for ${familyData.name}:`, {
+      email: familyData.lead_email,
+      phone: familyData.lead_phone,
+      type: notificationType
+    });
+    
+    const { data: notifyData, error: notifyError } = await supabase.functions.invoke('send-notification', {
+      body: notificationBody
     });
 
     if (notifyError) {
+      console.error(`❌ send-notification invoke failed:`, notifyError);
       throw notifyError;
     }
+    
+    console.log(`✅ send-notification response:`, notifyData);
 
     console.log(`Notification sent successfully to ${familyData.name}`);
 
