@@ -65,6 +65,59 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Check current year and next year
       for (const year of [currentYear, currentYear + 1]) {
+        // Check for secondary selection phase
+        const { data: secondaryStatus } = await supabase
+          .from('secondary_selection_status')
+          .select('*')
+          .eq('organization_id', org.id)
+          .eq('rotation_year', year)
+          .maybeSingle();
+
+        // If in secondary phase, handle secondary notifications
+        if (secondaryStatus && checkTurnNotifications) {
+          const currentSecondaryFamily = secondaryStatus.current_family_group;
+
+          if (currentSecondaryFamily) {
+            const { data: secondaryAlreadySent } = await supabase
+              .from('selection_turn_notifications_sent')
+              .select('id')
+              .eq('organization_id', org.id)
+              .eq('rotation_year', year)
+              .eq('family_group', currentSecondaryFamily)
+              .eq('phase', 'secondary')
+              .maybeSingle();
+
+            if (!secondaryAlreadySent) {
+              console.log(`Sending secondary turn notification to ${currentSecondaryFamily} for ${year}`);
+              const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+                body: {
+                  organization_id: org.id,
+                  family_group: currentSecondaryFamily,
+                  rotation_year: year
+                }
+              });
+
+              if (!sendError) {
+                await supabase
+                  .from('selection_turn_notifications_sent')
+                  .insert({
+                    organization_id: org.id,
+                    rotation_year: year,
+                    family_group: currentSecondaryFamily,
+                    phase: 'secondary'
+                  });
+                totalNotifications++;
+              } else {
+                console.error(`Error sending secondary turn notification: ${sendError.message}`);
+              }
+            }
+          }
+          
+          // Skip primary checking if we're in secondary phase
+          continue;
+        }
+
+        // PRIMARY PHASE LOGIC (existing code)
         // Get rotation order for this year
         const { data: rotationData } = await supabase
           .from('rotation_orders')
