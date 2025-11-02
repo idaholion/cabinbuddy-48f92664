@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.sync-organization-payments]
 verify_jwt = true
+
+[functions.create-split-payments]
+verify_jwt = true
