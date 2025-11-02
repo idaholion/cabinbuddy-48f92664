@@ -458,6 +458,21 @@ export const GuestCostSplitDialog = ({
         user_role: userOrgData?.role
       });
       
+      // CRITICAL DEBUG: Check organization membership right before insert
+      const { data: membershipCheck } = await supabase
+        .from('user_organizations')
+        .select('user_id, organization_id, role')
+        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      
+      console.log('🔐 [SPLIT] FINAL membership check before source payment insert:', {
+        user_id: user.id,
+        organization_id: organizationId,
+        membership_found: !!membershipCheck,
+        membership_data: membershipCheck
+      });
+      
       const { data: sourcePayment, error: sourcePaymentError } = await supabase
         .from('payments')
         .insert([sourcePaymentData])
@@ -472,19 +487,38 @@ export const GuestCostSplitDialog = ({
           familyGroup: sourceFamilyGroup,
           userId: user.id,
           userEmail: user.email,
+          membershipExists: !!membershipCheck,
           error: sourcePaymentError.message,
-          errorCode: sourcePaymentError.code
+          errorCode: sourcePaymentError.code,
+          errorDetails: JSON.stringify(sourcePaymentError)
+        });
+        
+        console.error('❌ [SPLIT] Source payment insert failed:', {
+          error: sourcePaymentError,
+          attempted_data: sourcePaymentData,
+          user_context: {
+            id: user.id,
+            email: user.email,
+            in_org: !!membershipCheck
+          }
         });
         
         // User-friendly error message
-        const friendlyMsg = sourcePaymentError.message?.includes('row-level security') 
-          ? `Permission denied: Unable to create payment record. Your account (${user.email}) may not have proper access to this organization. Please contact your administrator.`
-          : sourcePaymentError.message || 'Failed to create payment record';
+        let friendlyMsg = sourcePaymentError.message || 'Failed to create payment record';
+        
+        if (sourcePaymentError.message?.includes('row-level security')) {
+          if (!membershipCheck) {
+            friendlyMsg = `Organization access error: You (${user.email}) don't appear to be a member of this organization. This might be a session issue. Please refresh the page and try again.`;
+          } else {
+            friendlyMsg = `Permission denied: RLS policy blocking insert. User ${user.email} IS in organization but policy check failed. This might be a database policy configuration issue. Please contact support.`;
+          }
+        }
         
         toast({
           title: "Payment Creation Failed",
           description: friendlyMsg,
           variant: "destructive",
+          duration: 10000,
         });
         throw new Error(friendlyMsg);
       }
