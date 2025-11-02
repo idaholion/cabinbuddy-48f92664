@@ -490,10 +490,33 @@ export const GuestCostSplitDialog = ({
       }
       console.log('✅ [SPLIT] Source payment created:', sourcePayment);
 
-      // Create payments and split records for each guest
-      console.log('📝 [SPLIT] Creating split payments for', calculatedUsers.length, 'users...');
-      const splitPromises = calculatedUsers.map(async (splitUser, index) => {
+      // Create payments and split records for each guest (SEQUENTIALLY to avoid auth race conditions)
+      console.log('📝 [SPLIT] Creating split payments for', calculatedUsers.length, 'users sequentially...');
+      const splitResults = [];
+      
+      for (let index = 0; index < calculatedUsers.length; index++) {
+        const splitUser = calculatedUsers[index];
         console.log(`📝 [SPLIT] Processing user ${index + 1}/${calculatedUsers.length}:`, splitUser.displayName);
+        
+        // Verify auth session is still valid before each operation
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log('🔐 [SPLIT] Auth check before creating payment for', splitUser.displayName, {
+          auth_uid: currentSession?.user?.id,
+          auth_email: currentSession?.user?.email,
+          session_expires: currentSession?.expires_at,
+          creating_for_family: splitUser.familyGroup
+        });
+        
+        if (!currentSession?.user?.id) {
+          const errorMsg = `Auth session lost while processing split for ${splitUser.displayName}. Please refresh and try again.`;
+          logger.error(errorMsg, {
+            component: 'GuestCostSplitDialog',
+            action: 'handleSplitCosts',
+            organizationId,
+            splitUserIndex: index
+          });
+          throw new Error(errorMsg);
+        }
         
         // Create guest's daily occupancy
         const guestDailyOccupancy = dailyBreakdown
@@ -534,9 +557,18 @@ export const GuestCostSplitDialog = ({
             organizationId,
             guestUser: splitUser.displayName,
             familyGroup: splitUser.familyGroup,
-            error: guestPaymentError.message
+            authenticatedUser: user.email,
+            authenticatedUserId: user.id,
+            error: guestPaymentError.message,
+            errorCode: guestPaymentError.code
           });
-          throw guestPaymentError;
+          
+          // Enhanced error message with auth context
+          const friendlyMsg = guestPaymentError.message?.includes('row-level security') 
+            ? `Permission denied: Unable to create payment for ${splitUser.displayName} (${splitUser.familyGroup}). Your account (${user.email}) may have lost access during the operation. Please verify you're still in this organization and try again.`
+            : `Failed to create payment for ${splitUser.displayName}: ${guestPaymentError.message}`;
+          
+          throw new Error(friendlyMsg);
         }
         console.log(`✅ [SPLIT] Guest payment created for ${splitUser.displayName}:`, guestPayment.id);
 
@@ -592,11 +624,16 @@ export const GuestCostSplitDialog = ({
           console.log(`✅ [SPLIT] Notification sent for ${splitUser.displayName}`);
         }
 
-        return { user: splitUser, payment: guestPayment };
-      });
-
-      console.log('⏳ [SPLIT] Waiting for all split operations to complete...');
-      await Promise.all(splitPromises);
+        splitResults.push({ user: splitUser, payment: guestPayment });
+        
+        // Small delay between operations to ensure auth stability
+        if (index < calculatedUsers.length - 1) {
+          console.log(`⏱️ [SPLIT] Pausing 200ms before next operation...`);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+      }
+      
+      console.log('✅ [SPLIT] All split operations completed successfully!');
 
       const totalSplit = calculatedUsers.reduce((sum, u) => sum + u.totalAmount, 0);
       const userNames = calculatedUsers.map(u => u.displayName).join(', ');
