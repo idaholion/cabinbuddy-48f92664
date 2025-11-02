@@ -317,22 +317,7 @@ export const GuestCostSplitDialog = ({
       // Use the memoized values already calculated at component level
       console.log('💰 [SPLIT] Using calculated costs:', { sourceTotal, perDiem, calculatedUsers });
       
-      const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
-
-      // Create source payment (Person A - reduced amount)
-      const sourceDailyOccupancy = dailyBreakdown.map(day => ({
-        date: day.date,
-        guests: sourceDailyGuests[day.date] || 0,
-        cost: (sourceDailyGuests[day.date] || 0) * perDiem
-      }));
       
-      console.log('📝 [SPLIT] Creating source payment with data:', {
-        organization_id: organizationId,
-        family_group: sourceFamilyGroup,
-        amount: sourceTotal,
-        daily_occupancy: sourceDailyOccupancy
-      });
-
       // CRITICAL: Verify user is in the correct organization
       console.log('🔍 [SPLIT] Verifying organization membership...');
       console.log('  User ID:', user.id);
@@ -397,277 +382,64 @@ export const GuestCostSplitDialog = ({
 
       console.log('✅ [SPLIT] Organization membership confirmed:', userOrgData);
 
-      // CRITICAL: Verify session is valid before attempting insert
-      const { data: { session: currentSession }, error: sessionCheckError } = await supabase.auth.getSession();
-      console.log('🔐 [SPLIT] Current session check:', {
-        has_session: !!currentSession,
-        session_user_id: currentSession?.user?.id,
-        session_error: sessionCheckError,
-        matches_user: currentSession?.user?.id === user.id
-      });
-
-      if (!currentSession || sessionCheckError) {
-        logger.error('Invalid session during cost split', {
-          component: 'GuestCostSplitDialog',
-          action: 'handleSplitCosts',
-          organizationId,
-          error: sessionCheckError?.message
-        });
-        toast({
-          title: "Session Error",
-          description: "Your session has expired. Please refresh the page and try again.",
-          variant: "destructive",
-        });
-        throw new Error('No valid session');
-      }
-
-      // CRITICAL DEBUG: Log exact values before insert
-      console.log('🔍 [SPLIT] PRE-INSERT VALUES:', {
-        organizationId_value: organizationId,
-        organizationId_type: typeof organizationId,
-        sourceFamilyGroup_value: sourceFamilyGroup,
-        sourceFamilyGroup_type: typeof sourceFamilyGroup,
-        sourceUserId_value: sourceUserId,
-        sourceUserId_type: typeof sourceUserId,
-        currentUserId: user.id,
-        currentUserEmail: user.email
-      });
-
-      // Insert source payment with extremely detailed logging
-      const sourcePaymentData = {
-        organization_id: organizationId,
-        reservation_id: reservationId || null,
-        family_group: sourceFamilyGroup,
-        payment_type: 'use_fee' as const,
-        amount: sourceTotal,
-        amount_paid: 0,
-        status: 'deferred' as const,
-        due_date: seasonEnd.toISOString().split('T')[0],
-        description: `Use fee (split with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}) - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
-        notes: `Cost split with: ${calculatedUsers.map(u => u.displayName).join(', ')}`,
-        daily_occupancy: sourceDailyOccupancy,
-        created_by_user_id: user.id,
-      };
+      // Call edge function to create all payments with service role permissions
+      console.log('📞 [SPLIT] Calling edge function to create split payments...');
       
-      console.log('📝 [SPLIT] About to insert source payment with data:', JSON.stringify(sourcePaymentData, null, 2));
-      console.log('🔑 [SPLIT] Auth context:', {
-        user_id: user.id,
-        user_email: user.email,
-        organization_id: organizationId,
-        is_in_org: userOrgData ? 'YES' : 'NO',
-        user_role: userOrgData?.role
-      });
+      const sourceDailyOccupancy = dailyBreakdown.map(day => ({
+        date: day.date,
+        guests: sourceDailyGuests[day.date] || 0,
+        cost: (sourceDailyGuests[day.date] || 0) * perDiem
+      }));
       
-      // CRITICAL DEBUG: Check organization membership right before insert
-      const { data: membershipCheck } = await supabase
-        .from('user_organizations')
-        .select('user_id, organization_id, role')
-        .eq('user_id', user.id)
-        .eq('organization_id', organizationId)
-        .maybeSingle();
+      const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
       
-      console.log('🔐 [SPLIT] FINAL membership check before source payment insert:', {
-        user_id: user.id,
-        organization_id: organizationId,
-        membership_found: !!membershipCheck,
-        membership_data: membershipCheck
-      });
-      
-      const { data: sourcePayment, error: sourcePaymentError } = await supabase
-        .from('payments')
-        .insert([sourcePaymentData])
-        .select()
-        .single();
-
-      if (sourcePaymentError) {
-        logger.error('Source payment creation failed', {
-          component: 'GuestCostSplitDialog',
-          action: 'handleSplitCosts',
-          organizationId,
-          familyGroup: sourceFamilyGroup,
-          userId: user.id,
-          userEmail: user.email,
-          membershipExists: !!membershipCheck,
-          error: sourcePaymentError.message,
-          errorCode: sourcePaymentError.code,
-          errorDetails: JSON.stringify(sourcePaymentError)
-        });
-        
-        console.error('❌ [SPLIT] Source payment insert failed:', {
-          error: sourcePaymentError,
-          attempted_data: sourcePaymentData,
-          user_context: {
-            id: user.id,
-            email: user.email,
-            in_org: !!membershipCheck
-          }
-        });
-        
-        // User-friendly error message
-        let friendlyMsg = sourcePaymentError.message || 'Failed to create payment record';
-        
-        if (sourcePaymentError.message?.includes('row-level security')) {
-          if (!membershipCheck) {
-            friendlyMsg = `Organization access error: You (${user.email}) don't appear to be a member of this organization. This might be a session issue. Please refresh the page and try again.`;
-          } else {
-            friendlyMsg = `Permission denied: RLS policy blocking insert. User ${user.email} IS in organization but policy check failed. This might be a database policy configuration issue. Please contact support.`;
-          }
-        }
-        
-        toast({
-          title: "Payment Creation Failed",
-          description: friendlyMsg,
-          variant: "destructive",
-          duration: 10000,
-        });
-        throw new Error(friendlyMsg);
-      }
-      console.log('✅ [SPLIT] Source payment created:', sourcePayment);
-
-      // Create payments and split records for each guest (SEQUENTIALLY to avoid auth race conditions)
-      console.log('📝 [SPLIT] Creating split payments for', calculatedUsers.length, 'users sequentially...');
-      const splitResults = [];
-      
-      for (let index = 0; index < calculatedUsers.length; index++) {
-        const splitUser = calculatedUsers[index];
-        console.log(`📝 [SPLIT] Processing user ${index + 1}/${calculatedUsers.length}:`, splitUser.displayName);
-        
-        // Verify auth session is still valid before each operation
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log('🔐 [SPLIT] Auth check before creating payment for', splitUser.displayName, {
-          auth_uid: currentSession?.user?.id,
-          auth_email: currentSession?.user?.email,
-          session_expires: currentSession?.expires_at,
-          creating_for_family: splitUser.familyGroup
-        });
-        
-        if (!currentSession?.user?.id) {
-          const errorMsg = `Auth session lost while processing split for ${splitUser.displayName}. Please refresh and try again.`;
-          logger.error(errorMsg, {
-            component: 'GuestCostSplitDialog',
-            action: 'handleSplitCosts',
-            organizationId,
-            splitUserIndex: index
-          });
-          throw new Error(errorMsg);
-        }
-        
-        // Create guest's daily occupancy
-        const guestDailyOccupancy = dailyBreakdown
-          .map(day => ({
-            date: day.date,
-            guests: splitUser.dailyGuests[day.date] || 0,
-            cost: (splitUser.dailyGuests[day.date] || 0) * perDiem
-          }))
-          .filter(day => day.guests > 0);
-        
-        console.log(`  Daily occupancy for ${splitUser.displayName}:`, guestDailyOccupancy);
-
-        // Create guest's payment
-        console.log(`  Creating payment for ${splitUser.displayName}...`);
-        const { data: guestPayment, error: guestPaymentError } = await supabase
-          .from('payments')
-          .insert({
-            organization_id: organizationId,
-            reservation_id: reservationId || null,
-            family_group: splitUser.familyGroup,
-            payment_type: 'use_fee',
-            amount: splitUser.totalAmount,
-            amount_paid: 0,
-            status: 'deferred',
-            due_date: seasonEnd.toISOString().split('T')[0],
-            description: `Guest cost split - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
-            daily_occupancy: guestDailyOccupancy,
-            created_by_user_id: user.id,
-            notes: `Split from ${sourceFamilyGroup}`
-          })
-          .select()
-          .single();
-
-        if (guestPaymentError) {
-          logger.error('Guest payment creation failed', {
-            component: 'GuestCostSplitDialog',
-            action: 'handleSplitCosts',
-            organizationId,
-            guestUser: splitUser.displayName,
-            familyGroup: splitUser.familyGroup,
-            authenticatedUser: user.email,
-            authenticatedUserId: user.id,
-            error: guestPaymentError.message,
-            errorCode: guestPaymentError.code
-          });
-          
-          // Enhanced error message with auth context
-          const friendlyMsg = guestPaymentError.message?.includes('row-level security') 
-            ? `Permission denied: Unable to create payment for ${splitUser.displayName} (${splitUser.familyGroup}). Your account (${user.email}) may have lost access during the operation. Please verify you're still in this organization and try again.`
-            : `Failed to create payment for ${splitUser.displayName}: ${guestPaymentError.message}`;
-          
-          throw new Error(friendlyMsg);
-        }
-        console.log(`✅ [SPLIT] Guest payment created for ${splitUser.displayName}:`, guestPayment.id);
-
-        // Create split tracking record
-        console.log(`  Creating split tracking record for ${splitUser.displayName}...`);
-        const { data: splitRecord, error: splitError } = await supabase
-          .from('payment_splits')
-          .insert({
-            organization_id: organizationId,
-            source_payment_id: sourcePayment.id,
-            split_payment_id: guestPayment.id,
-            source_family_group: sourceFamilyGroup,
-            source_user_id: sourceUserId,
-            split_to_family_group: splitUser.familyGroup,
-            split_to_user_id: splitUser.userId,
-            daily_occupancy_split: guestDailyOccupancy,
-            created_by_user_id: user.id,
-            notification_status: 'pending'
-          })
-          .select()
-          .single();
-
-        if (splitError) {
-          logger.error('Split tracking record creation failed', {
-            component: 'GuestCostSplitDialog',
-            action: 'handleSplitCosts',
-            organizationId,
-            guestUser: splitUser.displayName,
-            error: splitError.message
-          });
-          throw splitError;
-        }
-        console.log(`✅ [SPLIT] Split tracking created for ${splitUser.displayName}:`, splitRecord.id);
-
-        // Send notification
-        console.log(`  Sending notification for ${splitUser.displayName}...`);
-        const { error: notificationError } = await supabase.functions.invoke('send-guest-split-notification', {
+      const { data: edgeFunctionResult, error: edgeFunctionError } = await supabase.functions.invoke(
+        'create-split-payments',
+        {
           body: {
-            splitId: splitRecord.id,
-            organizationId: organizationId
-          }
-        });
-
-        if (notificationError) {
-          logger.warn('Guest split notification failed', {
-            component: 'GuestCostSplitDialog',
-            action: 'handleSplitCosts',
             organizationId,
-            guestUser: splitUser.displayName,
-            error: notificationError.message
-          });
-        } else {
-          console.log(`✅ [SPLIT] Notification sent for ${splitUser.displayName}`);
+            reservationId,
+            sourceFamilyGroup,
+            sourceUserId,
+            sourceAmount: sourceTotal,
+            sourceDailyOccupancy,
+            splitUsers: calculatedUsers.map(u => ({
+              userId: u.userId,
+              familyGroup: u.familyGroup,
+              displayName: u.displayName,
+              amount: u.totalAmount,
+              dailyOccupancy: dailyBreakdown
+                .map(day => ({
+                  date: day.date,
+                  guests: u.dailyGuests[day.date] || 0,
+                  cost: (u.dailyGuests[day.date] || 0) * perDiem
+                }))
+                .filter(day => day.guests > 0)
+            })),
+            description: `Use fee (split with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}) - ${dailyBreakdown[0]?.date} to ${dailyBreakdown[dailyBreakdown.length - 1]?.date}`,
+            dateRange: {
+              start: dailyBreakdown[0]?.date,
+              end: dailyBreakdown[dailyBreakdown.length - 1]?.date
+            }
+          }
         }
+      );
 
-        splitResults.push({ user: splitUser, payment: guestPayment });
-        
-        // Small delay between operations to ensure auth stability
-        if (index < calculatedUsers.length - 1) {
-          console.log(`⏱️ [SPLIT] Pausing 200ms before next operation...`);
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
+      if (edgeFunctionError) {
+        logger.error('Edge function call failed', {
+          component: 'GuestCostSplitDialog',
+          action: 'handleSplitCosts',
+          organizationId,
+          error: edgeFunctionError.message
+        });
+        throw new Error(edgeFunctionError.message || 'Failed to create split payments');
       }
-      
-      console.log('✅ [SPLIT] All split operations completed successfully!');
+
+      if (!edgeFunctionResult?.success) {
+        throw new Error(edgeFunctionResult?.error || 'Failed to create split payments');
+      }
+
+      console.log('✅ [SPLIT] Edge function completed successfully:', edgeFunctionResult);
 
       const totalSplit = calculatedUsers.reduce((sum, u) => sum + u.totalAmount, 0);
       const userNames = calculatedUsers.map(u => u.displayName).join(', ');
