@@ -29,44 +29,39 @@ export const CleanupDuplicatePayments = () => {
 
       console.log('🔍 Checking for failed split payments...');
 
-      // Find orphaned source payments (no reservation_id, created for split attempts)
-      // Remove date filter to catch ALL failed split attempts, not just from today
-      const { data: orphanedPayments, error: orphanedError } = await supabase
+      // Find all payments with "split" in description for this reservation
+      const { data: allSplitPayments, error: allError } = await supabase
         .from('payments')
         .select('*')
         .eq('organization_id', orgData)
         .eq('family_group', 'Woolf Family')
         .like('description', '%split with%')
-        .is('reservation_id', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
 
-      if (orphanedError) throw orphanedError;
+      if (allError) throw allError;
 
-      // Find the original payment that might have been modified
-      const { data: originalPayment, error: originalError } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('organization_id', orgData)
-        .eq('family_group', 'Woolf Family')
-        .eq('description', 'Use fee (split with 1 person) - 2025-10-06 to 2025-10-11')
-        .maybeSingle();
+      console.log('Found payments:', allSplitPayments);
 
-      if (originalError && originalError.code !== 'PGRST116') {
-        console.warn('Could not find original payment:', originalError);
+      if (!allSplitPayments || allSplitPayments.length === 0) {
+        setFailedSplitData(null);
+        toast.success('No split payments found');
+        setChecking(false);
+        return;
       }
 
-      const totalIssues = (orphanedPayments?.length || 0) + (originalPayment ? 1 : 0);
+      // Keep the oldest payment, mark rest as duplicates
+      const [originalPayment, ...duplicates] = allSplitPayments;
 
       setFailedSplitData({
-        orphanedPayments: orphanedPayments || [],
+        orphanedPayments: duplicates,
         originalPayment,
-        totalToCleanup: totalIssues
+        totalToCleanup: duplicates.length
       });
 
-      if (totalIssues > 0) {
-        toast.info(`Found ${totalIssues} issue(s) from failed split attempts`);
+      if (duplicates.length > 0) {
+        toast.info(`Found ${duplicates.length} duplicate payment(s)`);
       } else {
-        toast.success('No failed split issues found');
+        toast.success('No duplicate payments found');
       }
     } catch (error: any) {
       console.error('Error checking for failed splits:', error);
