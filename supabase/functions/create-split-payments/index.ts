@@ -44,18 +44,16 @@ Deno.serve(async (req) => {
 
     console.log('🔐 [SPLIT-FUNCTION] Auth header present:', authHeader.substring(0, 20) + '...');
 
+    // Extract JWT token from Bearer header
+    const token = authHeader.replace('Bearer ', '');
+
     // Create authenticated client to verify user
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     console.log('👤 [SPLIT-FUNCTION] User lookup result:', {
       hasUser: !!user,
