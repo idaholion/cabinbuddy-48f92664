@@ -67,7 +67,37 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get family group details
-...
+    const { data: familyData, error: familyError } = await supabase
+      .from('family_groups')
+      .select('name, lead_name, lead_email, lead_phone')
+      .eq('organization_id', organization_id)
+      .eq('name', family_group)
+      .single();
+
+    if (familyError || !familyData) {
+      throw new Error(`Family group not found: ${family_group}`);
+    }
+
+    // Get reservation period details
+    const { data: periodData } = await supabase
+      .from('reservation_periods')
+      .select('selection_start_date, selection_end_date')
+      .eq('organization_id', organization_id)
+      .eq('rotation_year', rotation_year)
+      .eq('current_family_group', family_group)
+      .maybeSingle();
+
+    // Get time period usage to calculate available periods
+    const { data: periodUsageData } = await supabase
+      .from('time_period_usage')
+      .select('time_periods_used, time_periods_allowed')
+      .eq('organization_id', organization_id)
+      .eq('rotation_year', rotation_year)
+      .eq('family_group', family_group)
+      .maybeSingle();
+
+    const periodsUsed = periodUsageData?.time_periods_used || 0;
+    const periodsAllowed = periodUsageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
     // Determine if we're in secondary phase based on the earlier query
