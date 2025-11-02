@@ -30,13 +30,13 @@ export const CleanupDuplicatePayments = () => {
       console.log('🔍 Checking for failed split payments...');
 
       // Find orphaned source payments (no reservation_id, created for split attempts)
+      // Remove date filter to catch ALL failed split attempts, not just from today
       const { data: orphanedPayments, error: orphanedError } = await supabase
         .from('payments')
         .select('*')
         .eq('organization_id', orgData)
         .eq('family_group', 'Woolf Family')
         .like('description', '%split with%')
-        .gte('created_at', '2025-11-02')
         .is('reservation_id', null)
         .order('created_at', { ascending: false });
 
@@ -49,7 +49,7 @@ export const CleanupDuplicatePayments = () => {
         .eq('organization_id', orgData)
         .eq('family_group', 'Woolf Family')
         .eq('description', 'Use fee (split with 1 person) - 2025-10-06 to 2025-10-11')
-        .single();
+        .maybeSingle();
 
       if (originalError && originalError.code !== 'PGRST116') {
         console.warn('Could not find original payment:', originalError);
