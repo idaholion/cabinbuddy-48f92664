@@ -38,8 +38,11 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('❌ [SPLIT-FUNCTION] Missing authorization header');
       throw new Error('Missing authorization header');
     }
+
+    console.log('🔐 [SPLIT-FUNCTION] Auth header present:', authHeader.substring(0, 20) + '...');
 
     // Create authenticated client to verify user
     const supabaseClient = createClient(
@@ -53,8 +56,17 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    console.log('👤 [SPLIT-FUNCTION] User lookup result:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      error: userError?.message
+    });
+    
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      console.error('❌ [SPLIT-FUNCTION] User authentication failed:', userError);
+      throw new Error('Unauthorized: ' + (userError?.message || 'No user found'));
     }
 
     // Create service role client for elevated permissions
