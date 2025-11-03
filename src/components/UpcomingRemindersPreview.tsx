@@ -396,8 +396,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       const secondaryFamily = secondaryStatus.current_family_group;
       const secondaryDays = 7; // Secondary selection default
       
-      // Calculate end date from started_at
-      const startDate = parseDateOnly(secondaryStatus.started_at);
+      // Calculate end date from started_at timestamp
+      // Extract date portion from timestamp (YYYY-MM-DD) before parsing
+      const startedAtDate = secondaryStatus.started_at.split('T')[0];
+      const startDate = parseDateOnly(startedAtDate);
       const endDate = addDays(startDate, secondaryDays);
       const dayBeforeEnd = addDays(endDate, -1);
       
