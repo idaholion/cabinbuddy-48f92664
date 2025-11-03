@@ -199,23 +199,41 @@ async function getTemplate(organizationId: string, reminderType: string) {
   }
 }
 
-async function getOrganizationName(organizationId: string): Promise<string> {
+async function getOrganizationSettings(organizationId: string): Promise<{
+  name: string;
+  calendar_keeper_email?: string;
+  calendar_keeper_phone?: string;
+  calendar_keeper_name?: string;
+  calendar_keeper_receives_notification_copies: boolean;
+}> {
   try {
     const { data, error } = await supabase
       .from('organizations')
-      .select('name')
+      .select('name, calendar_keeper_email, calendar_keeper_phone, calendar_keeper_name, calendar_keeper_receives_notification_copies')
       .eq('id', organizationId)
       .single();
 
     if (error) {
-      console.error('Error fetching organization name:', error);
-      return 'CabinBuddy';
+      console.error('Error fetching organization settings:', error);
+      return { 
+        name: 'CabinBuddy',
+        calendar_keeper_receives_notification_copies: false
+      };
     }
 
-    return data.name || 'CabinBuddy';
+    return {
+      name: data.name || 'CabinBuddy',
+      calendar_keeper_email: data.calendar_keeper_email,
+      calendar_keeper_phone: data.calendar_keeper_phone,
+      calendar_keeper_name: data.calendar_keeper_name,
+      calendar_keeper_receives_notification_copies: data.calendar_keeper_receives_notification_copies || false
+    };
   } catch (error) {
-    console.error('Error fetching organization name:', error);
-    return 'CabinBuddy';
+    console.error('Error fetching organization settings:', error);
+    return { 
+      name: 'CabinBuddy',
+      calendar_keeper_receives_notification_copies: false
+    };
   }
 }
 
@@ -231,7 +249,8 @@ const handler = async (req: Request): Promise<Response> => {
     let htmlContent = "";
     let smsMessage = "";
     
-    const organizationName = await getOrganizationName(organization_id);
+    const orgSettings = await getOrganizationSettings(organization_id);
+    const organizationName = orgSettings.name;
 
     switch (type) {
       case 'reminder':
@@ -987,6 +1006,63 @@ const handler = async (req: Request): Promise<Response> => {
         }
       } else {
         console.log(`⏭️ SMS skipped - missing ${!recipientPhone ? 'phone number' : 'message'}`);
+      }
+    }
+
+    // Send copy to calendar keeper if enabled
+    if (type !== 'manual_template' && orgSettings.calendar_keeper_receives_notification_copies) {
+      let copyRecipientName = '';
+      let copyRecipientEmail = '';
+      
+      if (type === 'reminder' || type === 'confirmation' || type === 'cancellation' || type === 'assistance_request') {
+        copyRecipientName = reservation?.guest_name || '';
+        copyRecipientEmail = reservation?.guest_email || '';
+      } else if (type === 'selection_period' || type === 'selection_period_start' || type === 'selection_period_end' || type === 'selection_turn_ready') {
+        copyRecipientName = selection_data?.guest_name || '';
+        copyRecipientEmail = selection_data?.guest_email || '';
+      } else if (type.startsWith('work_weekend_')) {
+        copyRecipientName = work_weekend_data?.recipient_name || '';
+        copyRecipientEmail = work_weekend_data?.recipient_email || '';
+      }
+      
+      if (orgSettings.calendar_keeper_email) {
+        const copySubject = `[COPY] ${subject}`;
+        const copyHtmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+            <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+              <p style="margin: 0; color: #1565c0; font-weight: bold;">📋 Calendar Keeper Copy</p>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #424242;">
+                <strong>Original Recipient:</strong> ${copyRecipientName} (${copyRecipientEmail})<br/>
+                <strong>Notification Type:</strong> ${type.replace(/_/g, ' ').toUpperCase()}
+              </p>
+            </div>
+            ${htmlContent}
+          </div>
+        `;
+        
+        console.log(`📧 Sending copy to calendar keeper: ${orgSettings.calendar_keeper_email}`);
+        try {
+          await resend.emails.send({
+            from: "CabinBuddy <noreply@cabinbuddy.org>",
+            to: [orgSettings.calendar_keeper_email],
+            subject: copySubject,
+            html: copyHtmlContent,
+          });
+          console.log(`✅ Calendar keeper email copy sent successfully`);
+        } catch (error) {
+          console.error(`❌ Failed to send calendar keeper email copy:`, error);
+        }
+      }
+      
+      if (orgSettings.calendar_keeper_phone && smsMessage) {
+        const copySms = `[COPY for Calendar Keeper] To: ${copyRecipientName}. ${smsMessage}`;
+        console.log(`📱 Sending SMS copy to calendar keeper: ${orgSettings.calendar_keeper_phone}`);
+        try {
+          await sendSMS(orgSettings.calendar_keeper_phone, copySms);
+          console.log(`✅ Calendar keeper SMS copy sent successfully`);
+        } catch (error) {
+          console.error(`❌ Failed to send calendar keeper SMS copy:`, error);
+        }
       }
     }
 

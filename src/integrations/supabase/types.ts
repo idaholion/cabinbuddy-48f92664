@@ -1110,6 +1110,7 @@ export type Database = {
           calendar_keeper_email: string | null
           calendar_keeper_name: string | null
           calendar_keeper_phone: string | null
+          calendar_keeper_receives_notification_copies: boolean | null
           code: string
           created_at: string
           guest_access_token: string | null
@@ -1142,6 +1143,7 @@ export type Database = {
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
+          calendar_keeper_receives_notification_copies?: boolean | null
           code: string
           created_at?: string
           guest_access_token?: string | null
@@ -1174,6 +1176,7 @@ export type Database = {
           calendar_keeper_email?: string | null
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
+          calendar_keeper_receives_notification_copies?: boolean | null
           code?: string
           created_at?: string
           guest_access_token?: string | null

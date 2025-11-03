@@ -20,6 +20,7 @@ interface AutomatedSettings {
   automated_work_weekend_7_day_enabled: boolean;
   automated_work_weekend_3_day_enabled: boolean;
   automated_work_weekend_1_day_enabled: boolean;
+  calendar_keeper_receives_notification_copies: boolean;
 }
 
 export const AutomatedReminderSettings = () => {
@@ -35,6 +36,7 @@ export const AutomatedReminderSettings = () => {
     automated_work_weekend_7_day_enabled: true,
     automated_work_weekend_3_day_enabled: true,
     automated_work_weekend_1_day_enabled: true,
+    calendar_keeper_receives_notification_copies: false,
   });
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -61,7 +63,8 @@ export const AutomatedReminderSettings = () => {
           automated_reminders_1_day_enabled,
           automated_work_weekend_7_day_enabled,
           automated_work_weekend_3_day_enabled,
-          automated_work_weekend_1_day_enabled
+          automated_work_weekend_1_day_enabled,
+          calendar_keeper_receives_notification_copies
         `)
         .eq('id', organization.id)
         .single();
@@ -83,6 +86,7 @@ export const AutomatedReminderSettings = () => {
         automated_work_weekend_7_day_enabled: data?.automated_work_weekend_7_day_enabled ?? true,
         automated_work_weekend_3_day_enabled: data?.automated_work_weekend_3_day_enabled ?? true,
         automated_work_weekend_1_day_enabled: data?.automated_work_weekend_1_day_enabled ?? true,
+        calendar_keeper_receives_notification_copies: data?.calendar_keeper_receives_notification_copies || false,
       });
     } catch (error) {
       console.error('Error:', error);
@@ -374,6 +378,40 @@ export const AutomatedReminderSettings = () => {
               </div>
             </div>
           )}
+
+          {/* Calendar Keeper Notification Copies */}
+          <div className="space-y-4 border-t pt-6 mt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Settings className="h-4 w-4 text-blue-600" />
+                <div>
+                  <Label htmlFor="calendar-keeper-copies" className="text-sm font-medium">
+                    Calendar Keeper Notification Copies
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Send copies of all automated notifications to the calendar keeper
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="calendar-keeper-copies"
+                checked={settings.calendar_keeper_receives_notification_copies}
+                onCheckedChange={(enabled) => handleToggle('calendar_keeper_receives_notification_copies', enabled)}
+              />
+            </div>
+            
+            <div className="border-l-4 border-muted pl-4 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                • All notification copies will include "[COPY]" in the subject/message
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Copies include metadata showing original recipient and notification type
+              </p>
+              <p className="text-xs text-muted-foreground">
+                • Helps with quality control and troubleshooting notification issues
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
