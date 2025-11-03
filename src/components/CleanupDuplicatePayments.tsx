@@ -116,19 +116,19 @@ export const CleanupDuplicatePayments = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trash2 className="h-5 w-5" />
-          Cleanup Failed Split Operations
+          Cleanup Duplicate Payments
         </CardTitle>
         <CardDescription>
-          Remove orphaned payments created from failed split cost attempts
+          Legacy cleanup and diagnostic tool for orphaned payment records
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            When a split cost operation fails due to RLS errors, it can leave behind orphaned 
-            "source" payments that aren't visible in the regular Stay History view. This tool 
-            cleans up those orphaned payments so the split can be retried cleanly.
+            This tool identifies and removes orphaned payment records from legacy data or edge function failures. 
+            Modern split cost operations use improved edge functions that prevent orphaned payments, 
+            making this tool primarily useful for historical cleanup or rare edge cases.
           </AlertDescription>
         </Alert>
 

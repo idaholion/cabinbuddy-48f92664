@@ -11,6 +11,7 @@ import { Settings, DollarSign, AlertCircle, RefreshCw, Link2 } from "lucide-reac
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
+import { CleanupDuplicatePayments } from "@/components/CleanupDuplicatePayments";
 
 export default function FinancialAdminTools() {
   const { organization } = useOrganization();
@@ -273,6 +274,9 @@ export default function FinancialAdminTools() {
           </CardContent>
         </Card>
       )}
+
+      {/* Cleanup Duplicate Payments */}
+      <CleanupDuplicatePayments />
 
       {/* Confirmation Dialog for Fix Empty Occupancy */}
       <AlertDialog open={showFixConfirmDialog} onOpenChange={setShowFixConfirmDialog}>

@@ -24,7 +24,7 @@ import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { CleanupDuplicatePayments } from "@/components/CleanupDuplicatePayments";
+
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
@@ -779,10 +779,6 @@ export default function StayHistory() {
         </div>
       </div>
 
-      {/* Cleanup Duplicate Payments - Admin Only */}
-      {isAdmin && (
-        <CleanupDuplicatePayments />
-      )}
 
       {/* Summary Stats */}
       <div className="grid gap-4 md:grid-cols-3">
