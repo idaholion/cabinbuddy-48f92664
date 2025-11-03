@@ -20,7 +20,7 @@ import { getSelectionPeriodDisplayInfo } from '@/lib/selection-period-utils';
 interface ReminderPreview {
   id: string;
   type: 'reservation' | 'work_weekend' | 'selection_period';
-  reminderType: '7_day' | '3_day' | '1_day' | 'selection_start' | 'selection_end';
+  reminderType: '7_day' | '3_day' | '1_day' | 'selection_start' | 'selection_end' | 'selection_end_secondary';
   sendDate: Date;
   recipient: string;
   familyGroup: string;
@@ -29,6 +29,7 @@ interface ReminderPreview {
   eventDate: Date;
   eventTitle: string;
   enabled: boolean;
+  isSecondarySelection?: boolean;
 }
 
 interface Props {
@@ -101,6 +102,15 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       );
       setCompletedFamilies(completedSet);
       
+      // Fetch active secondary selection status
+      const { data: secondaryStatus } = await supabase
+        .from('secondary_selection_status')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('turn_completed', false)
+        .maybeSingle();
+      
       // Use default selection days of 14 (can be made configurable later)
       const days = 14;
       setSelectionDays(days);
@@ -108,7 +118,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       // Filter periods by rotation year to match NotificationManagement logic
       const filteredPeriods = periods.filter(p => p.rotation_year === rotationYear);
       
-      generateReminderPreviews(templates || [], filteredPeriods, days, completedSet);
+      generateReminderPreviews(templates || [], filteredPeriods, days, completedSet, secondaryStatus);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {
@@ -116,7 +126,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     }
   };
 
-  const generateReminderPreviews = (templates: any[], periods: any[], days: number = 14, completedFamiliesSet: Set<string> = new Set()) => {
+  const generateReminderPreviews = (templates: any[], periods: any[], days: number = 14, completedFamiliesSet: Set<string> = new Set(), secondaryStatus: any = null) => {
     const now = new Date();
     const thirtyDaysFromNow = addDays(now, 30);
     const previews: ReminderPreview[] = [];
@@ -375,6 +385,51 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
           }
         }
       });
+    }
+
+    // Generate SECONDARY selection reminders (only for currently active family)
+    if (secondaryStatus && secondaryStatus.current_family_group && 
+        automatedSettings.automated_selection_ending_tomorrow_enabled) {
+      
+      console.log('[UpcomingRemindersPreview] Generating secondary selection reminders for:', secondaryStatus.current_family_group);
+      
+      const secondaryFamily = secondaryStatus.current_family_group;
+      const secondaryDays = 7; // Secondary selection default
+      
+      // Calculate end date from started_at
+      const startDate = parseDateOnly(secondaryStatus.started_at);
+      const endDate = addDays(startDate, secondaryDays);
+      const dayBeforeEnd = addDays(endDate, -1);
+      
+      const isInFuture = isAfter(dayBeforeEnd, now) || 
+                         format(dayBeforeEnd, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+      
+      console.log('[UpcomingRemindersPreview] Secondary selection reminder check:', {
+        family: secondaryFamily,
+        startDate: format(startDate, 'yyyy-MM-dd'),
+        endDate: format(endDate, 'yyyy-MM-dd'),
+        dayBeforeEnd: format(dayBeforeEnd, 'yyyy-MM-dd'),
+        isInFuture,
+        withinWindow: isBefore(dayBeforeEnd, thirtyDaysFromNow)
+      });
+      
+      if (isInFuture && isBefore(dayBeforeEnd, thirtyDaysFromNow)) {
+        console.log('[UpcomingRemindersPreview] Adding secondary selection ending notification');
+        previews.push({
+          id: `sel-end-secondary-${secondaryFamily}-${rotationYear}`,
+          type: 'selection_period',
+          reminderType: 'selection_end_secondary',
+          sendDate: dayBeforeEnd,
+          recipient: secondaryFamily,
+          familyGroup: secondaryFamily,
+          subject: `Your Secondary Selection Period Ends Tomorrow - ${rotationYear}`,
+          content: `Reminder: Your secondary selection period ends tomorrow (${format(endDate, 'MMM d, yyyy')}). You have ${secondaryDays} days total for secondary selections.\n\nThis is your opportunity to make additional cabin reservations from available time periods.`,
+          eventDate: endDate,
+          eventTitle: `${secondaryFamily} Secondary Selection Deadline`,
+          enabled: true,
+          isSecondarySelection: true
+        });
+      }
     }
 
     console.log('[UpcomingRemindersPreview] Final previews count:', previews.length);
@@ -673,6 +728,11 @@ Don't miss out on making your reservations!`;
                           <Badge variant="outline" className="text-xs">
                             {reminder.reminderType.replace('_', ' ')}
                           </Badge>
+                          {reminder.isSecondarySelection && (
+                            <Badge variant="secondary" className="text-xs">
+                              Secondary Round
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">{reminder.subject}</p>
                         <p className="text-xs text-muted-foreground">
