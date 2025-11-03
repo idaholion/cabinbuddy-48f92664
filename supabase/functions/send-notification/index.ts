@@ -205,11 +205,39 @@ async function getOrganizationSettings(organizationId: string): Promise<{
   calendar_keeper_phone?: string;
   calendar_keeper_name?: string;
   calendar_keeper_receives_notification_copies: boolean;
+  ck_copy_reminder_7_day?: boolean;
+  ck_copy_reminder_3_day?: boolean;
+  ck_copy_reminder_1_day?: boolean;
+  ck_copy_selection_turn_start?: boolean;
+  ck_copy_selection_ending_tomorrow?: boolean;
+  ck_copy_work_weekend_reminder?: boolean;
+  ck_copy_work_weekend_proposed?: boolean;
+  ck_copy_work_weekend_invitation?: boolean;
+  ck_copy_confirmation?: boolean;
+  ck_copy_cancellation?: boolean;
+  ck_copy_manual_template?: boolean;
 }> {
   try {
     const { data, error } = await supabase
       .from('organizations')
-      .select('name, calendar_keeper_email, calendar_keeper_phone, calendar_keeper_name, calendar_keeper_receives_notification_copies')
+      .select(`
+        name, 
+        calendar_keeper_email, 
+        calendar_keeper_phone, 
+        calendar_keeper_name, 
+        calendar_keeper_receives_notification_copies,
+        ck_copy_reminder_7_day,
+        ck_copy_reminder_3_day,
+        ck_copy_reminder_1_day,
+        ck_copy_selection_turn_start,
+        ck_copy_selection_ending_tomorrow,
+        ck_copy_work_weekend_reminder,
+        ck_copy_work_weekend_proposed,
+        ck_copy_work_weekend_invitation,
+        ck_copy_confirmation,
+        ck_copy_cancellation,
+        ck_copy_manual_template
+      `)
       .eq('id', organizationId)
       .single();
 
@@ -1009,8 +1037,33 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send copy to calendar keeper if enabled
+    // Determine if calendar keeper should receive a copy based on notification type
+    let shouldSendCopy = false;
     if (type !== 'manual_template' && orgSettings.calendar_keeper_receives_notification_copies) {
+      // Check granular filters based on notification type
+      if (type === 'reminder' && reservation?.days_until) {
+        if (reservation.days_until === 7) shouldSendCopy = orgSettings.ck_copy_reminder_7_day ?? true;
+        else if (reservation.days_until === 3) shouldSendCopy = orgSettings.ck_copy_reminder_3_day ?? true;
+        else if (reservation.days_until === 1) shouldSendCopy = orgSettings.ck_copy_reminder_1_day ?? true;
+      } else if (type === 'selection_period_start' || type === 'selection_period' || type === 'selection_turn_ready') {
+        shouldSendCopy = orgSettings.ck_copy_selection_turn_start ?? true;
+      } else if (type === 'selection_period_end') {
+        shouldSendCopy = orgSettings.ck_copy_selection_ending_tomorrow ?? true;
+      } else if (type === 'work_weekend_reminder') {
+        shouldSendCopy = orgSettings.ck_copy_work_weekend_reminder ?? true;
+      } else if (type === 'work_weekend_proposed') {
+        shouldSendCopy = orgSettings.ck_copy_work_weekend_proposed ?? false;
+      } else if (type === 'work_weekend_invitation') {
+        shouldSendCopy = orgSettings.ck_copy_work_weekend_invitation ?? false;
+      } else if (type === 'confirmation') {
+        shouldSendCopy = orgSettings.ck_copy_confirmation ?? false;
+      } else if (type === 'cancellation') {
+        shouldSendCopy = orgSettings.ck_copy_cancellation ?? true;
+      }
+    }
+
+    // Send copy to calendar keeper if filter allows it
+    if (shouldSendCopy) {
       let copyRecipientName = '';
       let copyRecipientEmail = '';
       
@@ -1040,7 +1093,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         `;
         
-        console.log(`📧 Sending copy to calendar keeper: ${orgSettings.calendar_keeper_email}`);
+        console.log(`📧 Sending copy to calendar keeper: ${orgSettings.calendar_keeper_email} (type: ${type})`);
         try {
           await resend.emails.send({
             from: "CabinBuddy <noreply@cabinbuddy.org>",

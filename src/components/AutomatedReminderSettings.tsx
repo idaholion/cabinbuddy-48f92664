@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Settings, AlertTriangle, Calendar, Hammer, Eye, EyeOff } from "lucide-react";
@@ -21,6 +22,17 @@ interface AutomatedSettings {
   automated_work_weekend_3_day_enabled: boolean;
   automated_work_weekend_1_day_enabled: boolean;
   calendar_keeper_receives_notification_copies: boolean;
+  ck_copy_reminder_7_day: boolean;
+  ck_copy_reminder_3_day: boolean;
+  ck_copy_reminder_1_day: boolean;
+  ck_copy_selection_turn_start: boolean;
+  ck_copy_selection_ending_tomorrow: boolean;
+  ck_copy_work_weekend_reminder: boolean;
+  ck_copy_work_weekend_proposed: boolean;
+  ck_copy_work_weekend_invitation: boolean;
+  ck_copy_confirmation: boolean;
+  ck_copy_cancellation: boolean;
+  ck_copy_manual_template: boolean;
 }
 
 export const AutomatedReminderSettings = () => {
@@ -37,6 +49,17 @@ export const AutomatedReminderSettings = () => {
     automated_work_weekend_3_day_enabled: true,
     automated_work_weekend_1_day_enabled: true,
     calendar_keeper_receives_notification_copies: false,
+    ck_copy_reminder_7_day: true,
+    ck_copy_reminder_3_day: true,
+    ck_copy_reminder_1_day: true,
+    ck_copy_selection_turn_start: true,
+    ck_copy_selection_ending_tomorrow: true,
+    ck_copy_work_weekend_reminder: true,
+    ck_copy_work_weekend_proposed: false,
+    ck_copy_work_weekend_invitation: false,
+    ck_copy_confirmation: false,
+    ck_copy_cancellation: true,
+    ck_copy_manual_template: false,
   });
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -64,7 +87,18 @@ export const AutomatedReminderSettings = () => {
           automated_work_weekend_7_day_enabled,
           automated_work_weekend_3_day_enabled,
           automated_work_weekend_1_day_enabled,
-          calendar_keeper_receives_notification_copies
+          calendar_keeper_receives_notification_copies,
+          ck_copy_reminder_7_day,
+          ck_copy_reminder_3_day,
+          ck_copy_reminder_1_day,
+          ck_copy_selection_turn_start,
+          ck_copy_selection_ending_tomorrow,
+          ck_copy_work_weekend_reminder,
+          ck_copy_work_weekend_proposed,
+          ck_copy_work_weekend_invitation,
+          ck_copy_confirmation,
+          ck_copy_cancellation,
+          ck_copy_manual_template
         `)
         .eq('id', organization.id)
         .single();
@@ -87,6 +121,17 @@ export const AutomatedReminderSettings = () => {
         automated_work_weekend_3_day_enabled: data?.automated_work_weekend_3_day_enabled ?? true,
         automated_work_weekend_1_day_enabled: data?.automated_work_weekend_1_day_enabled ?? true,
         calendar_keeper_receives_notification_copies: data?.calendar_keeper_receives_notification_copies || false,
+        ck_copy_reminder_7_day: data?.ck_copy_reminder_7_day ?? true,
+        ck_copy_reminder_3_day: data?.ck_copy_reminder_3_day ?? true,
+        ck_copy_reminder_1_day: data?.ck_copy_reminder_1_day ?? true,
+        ck_copy_selection_turn_start: data?.ck_copy_selection_turn_start ?? true,
+        ck_copy_selection_ending_tomorrow: data?.ck_copy_selection_ending_tomorrow ?? true,
+        ck_copy_work_weekend_reminder: data?.ck_copy_work_weekend_reminder ?? true,
+        ck_copy_work_weekend_proposed: data?.ck_copy_work_weekend_proposed ?? false,
+        ck_copy_work_weekend_invitation: data?.ck_copy_work_weekend_invitation ?? false,
+        ck_copy_confirmation: data?.ck_copy_confirmation ?? false,
+        ck_copy_cancellation: data?.ck_copy_cancellation ?? true,
+        ck_copy_manual_template: data?.ck_copy_manual_template ?? false,
       });
     } catch (error) {
       console.error('Error:', error);
@@ -382,16 +427,13 @@ export const AutomatedReminderSettings = () => {
           {/* Calendar Keeper Notification Copies */}
           <div className="space-y-4 border-t pt-6 mt-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Settings className="h-4 w-4 text-blue-600" />
-                <div>
-                  <Label htmlFor="calendar-keeper-copies" className="text-sm font-medium">
-                    Calendar Keeper Notification Copies
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    Send copies of all automated notifications to the calendar keeper
-                  </p>
-                </div>
+              <div className="space-y-0.5">
+                <Label htmlFor="calendar-keeper-copies" className="text-sm font-medium">
+                  Calendar Keeper Notification Copies
+                </Label>
+                <CardDescription>
+                  Enable to receive copies of automated notifications with granular filtering options
+                </CardDescription>
               </div>
               <Switch
                 id="calendar-keeper-copies"
@@ -399,18 +441,145 @@ export const AutomatedReminderSettings = () => {
                 onCheckedChange={(enabled) => handleToggle('calendar_keeper_receives_notification_copies', enabled)}
               />
             </div>
-            
-            <div className="border-l-4 border-muted pl-4 space-y-1">
-              <p className="text-xs text-muted-foreground">
-                • All notification copies will include "[COPY]" in the subject/message
-              </p>
-              <p className="text-xs text-muted-foreground">
-                • Copies include metadata showing original recipient and notification type
-              </p>
-              <p className="text-xs text-muted-foreground">
-                • Helps with quality control and troubleshooting notification issues
-              </p>
-            </div>
+
+            {settings.calendar_keeper_receives_notification_copies && (
+              <div className="ml-6 space-y-6 pt-4 border-l-2 border-border pl-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Reservation Reminders</h4>
+                    <CardDescription className="mb-3">
+                      Copies of automated reminders sent before reservations
+                    </CardDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-reminder-7"
+                          checked={settings.ck_copy_reminder_7_day}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_reminder_7_day', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-reminder-7" className="text-sm cursor-pointer">7-day reminders</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-reminder-3"
+                          checked={settings.ck_copy_reminder_3_day}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_reminder_3_day', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-reminder-3" className="text-sm cursor-pointer">3-day reminders</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-reminder-1"
+                          checked={settings.ck_copy_reminder_1_day}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_reminder_1_day', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-reminder-1" className="text-sm cursor-pointer">1-day reminders</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Selection Period Notifications</h4>
+                    <CardDescription className="mb-3">
+                      Copies of calendar selection turn notifications
+                    </CardDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-selection-start"
+                          checked={settings.ck_copy_selection_turn_start}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_selection_turn_start', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-selection-start" className="text-sm cursor-pointer">Selection turn start notifications</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-selection-ending"
+                          checked={settings.ck_copy_selection_ending_tomorrow}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_selection_ending_tomorrow', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-selection-ending" className="text-sm cursor-pointer">Selection ending tomorrow reminders</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Work Weekend Notifications</h4>
+                    <CardDescription className="mb-3">
+                      Copies of work weekend related communications
+                    </CardDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-work-reminder"
+                          checked={settings.ck_copy_work_weekend_reminder}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_work_weekend_reminder', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-work-reminder" className="text-sm cursor-pointer">Work weekend reminders (7/3/1 day)</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-work-proposed"
+                          checked={settings.ck_copy_work_weekend_proposed}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_work_weekend_proposed', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-work-proposed" className="text-sm cursor-pointer">Work weekend proposals</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-work-invitation"
+                          checked={settings.ck_copy_work_weekend_invitation}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_work_weekend_invitation', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-work-invitation" className="text-sm cursor-pointer">Work weekend invitations</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Booking Status Notifications</h4>
+                    <CardDescription className="mb-3">
+                      Copies of booking confirmations and cancellations
+                    </CardDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-confirmation"
+                          checked={settings.ck_copy_confirmation}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_confirmation', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-confirmation" className="text-sm cursor-pointer">Booking confirmations</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-cancellation"
+                          checked={settings.ck_copy_cancellation}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_cancellation', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-cancellation" className="text-sm cursor-pointer">Booking cancellations</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Manual Notifications</h4>
+                    <CardDescription className="mb-3">
+                      Copies of custom template notifications sent manually
+                    </CardDescription>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="ck-copy-manual"
+                          checked={settings.ck_copy_manual_template}
+                          onCheckedChange={(checked) => handleToggle('ck_copy_manual_template', checked as boolean)}
+                        />
+                        <label htmlFor="ck-copy-manual" className="text-sm cursor-pointer">Manual template notifications</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

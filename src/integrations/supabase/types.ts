@@ -1111,6 +1111,17 @@ export type Database = {
           calendar_keeper_name: string | null
           calendar_keeper_phone: string | null
           calendar_keeper_receives_notification_copies: boolean | null
+          ck_copy_cancellation: boolean | null
+          ck_copy_confirmation: boolean | null
+          ck_copy_manual_template: boolean | null
+          ck_copy_reminder_1_day: boolean | null
+          ck_copy_reminder_3_day: boolean | null
+          ck_copy_reminder_7_day: boolean | null
+          ck_copy_selection_ending_tomorrow: boolean | null
+          ck_copy_selection_turn_start: boolean | null
+          ck_copy_work_weekend_invitation: boolean | null
+          ck_copy_work_weekend_proposed: boolean | null
+          ck_copy_work_weekend_reminder: boolean | null
           code: string
           created_at: string
           guest_access_token: string | null
@@ -1144,6 +1155,17 @@ export type Database = {
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
           calendar_keeper_receives_notification_copies?: boolean | null
+          ck_copy_cancellation?: boolean | null
+          ck_copy_confirmation?: boolean | null
+          ck_copy_manual_template?: boolean | null
+          ck_copy_reminder_1_day?: boolean | null
+          ck_copy_reminder_3_day?: boolean | null
+          ck_copy_reminder_7_day?: boolean | null
+          ck_copy_selection_ending_tomorrow?: boolean | null
+          ck_copy_selection_turn_start?: boolean | null
+          ck_copy_work_weekend_invitation?: boolean | null
+          ck_copy_work_weekend_proposed?: boolean | null
+          ck_copy_work_weekend_reminder?: boolean | null
           code: string
           created_at?: string
           guest_access_token?: string | null
@@ -1177,6 +1199,17 @@ export type Database = {
           calendar_keeper_name?: string | null
           calendar_keeper_phone?: string | null
           calendar_keeper_receives_notification_copies?: boolean | null
+          ck_copy_cancellation?: boolean | null
+          ck_copy_confirmation?: boolean | null
+          ck_copy_manual_template?: boolean | null
+          ck_copy_reminder_1_day?: boolean | null
+          ck_copy_reminder_3_day?: boolean | null
+          ck_copy_reminder_7_day?: boolean | null
+          ck_copy_selection_ending_tomorrow?: boolean | null
+          ck_copy_selection_turn_start?: boolean | null
+          ck_copy_work_weekend_invitation?: boolean | null
+          ck_copy_work_weekend_proposed?: boolean | null
+          ck_copy_work_weekend_reminder?: boolean | null
           code?: string
           created_at?: string
           guest_access_token?: string | null
