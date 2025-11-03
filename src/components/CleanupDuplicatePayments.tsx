@@ -99,7 +99,7 @@ export const CleanupDuplicatePayments = () => {
       toast.success(`Successfully cleaned up ${deletedCount} orphaned payment(s)`);
       
       if (failedSplitData.originalPayment) {
-        toast.info('The original reservation payment remains. Barb can now retry the split operation.');
+        toast.info('The original reservation payment remains. You can now retry the split operation.');
       }
       
       setFailedSplitData(null);
@@ -201,9 +201,9 @@ export const CleanupDuplicatePayments = () => {
           <ol className="text-sm space-y-2 list-decimal list-inside">
             <li>The orphaned payments will be deleted</li>
             <li>The original reservation payment will remain (with any modified guest counts)</li>
-            <li>Barb can go to Stay History and find the Woolf Family Oct 6-11 reservation</li>
-            <li>She can retry "Split Cost" - the improved code should now work without RLS errors</li>
-            <li>If needed, she can manually adjust guest counts before splitting</li>
+            <li>Go to Stay History and find the affected reservation</li>
+            <li>Retry the split cost operation using the improved code</li>
+            <li>If needed, manually adjust guest counts before splitting</li>
           </ol>
         </div>
       </CardContent>
