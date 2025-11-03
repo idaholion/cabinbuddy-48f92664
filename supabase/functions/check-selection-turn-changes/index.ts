@@ -78,6 +78,12 @@ const handler = async (req: Request): Promise<Response> => {
           const currentSecondaryFamily = secondaryStatus.current_family_group;
 
           if (currentSecondaryFamily) {
+            // CRITICAL: Check if turn is already completed before sending notification
+            if (secondaryStatus.turn_completed) {
+              console.log(`Skipping notification for ${currentSecondaryFamily} - secondary turn already completed`);
+              continue;
+            }
+
             const { data: secondaryAlreadySent } = await supabase
               .from('selection_turn_notifications_sent')
               .select('id')
