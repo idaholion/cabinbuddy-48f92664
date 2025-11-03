@@ -60,6 +60,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const [selectionDays, setSelectionDays] = useState<number>(14);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [completedFamilies, setCompletedFamilies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (organization?.id && currentFamilyGroup !== null) {
@@ -86,6 +87,20 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
       setReminderTemplates(templates || []);
       
+      // Fetch families that have clicked "I'm Done" for this rotation year
+      const { data: timePeriodUsage } = await supabase
+        .from('time_period_usage')
+        .select('family_group, turn_completed')
+        .eq('organization_id', organization.id)
+        .eq('rotation_year', rotationYear)
+        .eq('turn_completed', true);
+
+      // Create a set of family groups that have completed their turn
+      const completedSet = new Set(
+        (timePeriodUsage || []).map(usage => usage.family_group)
+      );
+      setCompletedFamilies(completedSet);
+      
       // Use default selection days of 14 (can be made configurable later)
       const days = 14;
       setSelectionDays(days);
@@ -93,7 +108,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       // Filter periods by rotation year to match NotificationManagement logic
       const filteredPeriods = periods.filter(p => p.rotation_year === rotationYear);
       
-      generateReminderPreviews(templates || [], filteredPeriods, days);
+      generateReminderPreviews(templates || [], filteredPeriods, days, completedSet);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {
@@ -101,7 +116,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     }
   };
 
-  const generateReminderPreviews = (templates: any[], periods: any[], days: number = 14) => {
+  const generateReminderPreviews = (templates: any[], periods: any[], days: number = 14, completedFamiliesSet: Set<string> = new Set()) => {
     const now = new Date();
     const thirtyDaysFromNow = addDays(now, 30);
     const previews: ReminderPreview[] = [];
@@ -111,7 +126,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       periodsCount: periods.length,
       currentFamilyGroup,
       automatedSettings,
-      days
+      days,
+      completedFamiliesCount: completedFamiliesSet.size
     });
 
     // Generate reservation reminders
@@ -275,12 +291,15 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       console.log('[UpcomingRemindersPreview] Generating selection period reminders using reservation_periods data');
       
       // Get all active and upcoming periods from the database
+      // Filter out periods where families have clicked "I'm Done"
       const activePeriods = periods.filter(p => 
         p.rotation_year === rotationYear && 
-        !p.reservations_completed
+        !p.reservations_completed &&
+        !completedFamiliesSet.has(p.current_family_group)
       );
       
       console.log('[UpcomingRemindersPreview] Active periods found:', activePeriods.length);
+      console.log('[UpcomingRemindersPreview] Completed families (filtered out):', Array.from(completedFamiliesSet));
       
       activePeriods.forEach(period => {
         const familyGroup = familyGroups.find(fg => fg.name === period.current_family_group);
