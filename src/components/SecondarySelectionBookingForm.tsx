@@ -12,6 +12,7 @@ import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
+import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ export function SecondarySelectionBookingForm({
   
   const { calculateTimePeriodWindows, timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const { currentPhase, currentFamilyGroup } = useSequentialSelection(rotationYear);
+  const { advanceSecondarySelection } = useSecondarySelection(rotationYear);
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -179,37 +181,8 @@ export function SecondarySelectionBookingForm({
     await fetchTimePeriodUsage(year);
   };
 
-  const advanceSecondarySelection = async () => {
-    if (!organization?.id || !rotationOrder.length || !currentFamilyGroup) return;
-
-    // Get reverse order for secondary selection
-    const reverseOrder = [...rotationOrder].reverse();
-    const currentIndex = reverseOrder.findIndex(group => group === familyGroup);
-    const nextIndex = (currentIndex + 1) % reverseOrder.length;
-    const nextFamily = reverseOrder[nextIndex];
-
-    // Check if next family has remaining secondary periods
-    const nextFamilyUsage = timePeriodUsage.find(u => u.family_group === nextFamily);
-    const nextFamilyRemaining = rotationData ? 
-      (rotationData.secondary_max_periods || 1) - (nextFamilyUsage?.secondary_periods_used || 0) : 0;
-
-    if (nextFamilyRemaining > 0) {
-      // Update secondary selection status to next family
-      const { error } = await supabase
-        .from('secondary_selection_status')
-        .update({
-          current_family_group: nextFamily,
-          current_group_index: nextIndex,
-          updated_at: new Date().toISOString()
-        })
-        .eq('organization_id', organization.id)
-        .eq('rotation_year', monthYear);
-
-      if (error) {
-        console.error('Error advancing secondary selection:', error);
-      }
-    }
-  };
+  // Removed local advanceSecondarySelection - now using hook version
+  // which properly marks turn_completed and sends notifications
 
   if (!isCurrentFamilyTurn()) {
     return (
