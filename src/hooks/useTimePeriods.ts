@@ -513,7 +513,7 @@ export const useTimePeriods = (rotationYear?: number) => {
       // Fetch all reservations for this year (need created_at to determine secondary selections)
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
-        .select('family_group, start_date, end_date, time_period_number, created_at')
+        .select('id, family_group, start_date, end_date, time_period_number, created_at')
         .eq('organization_id', organization.id)
         .gte('start_date', `${year}-01-01`)
         .lt('start_date', `${year + 1}-01-01`);
@@ -560,8 +560,18 @@ export const useTimePeriods = (rotationYear?: number) => {
         if (isSecondary) {
           secondaryCounts[familyGroup] += periods;
         } else if (res.time_period_number !== null) {
-          // Only count as primary if it has a period number (static weeks)
-          primaryCounts[familyGroup] += periods;
+          // SAFETY CHECK: Verify organization actually uses static weeks
+          // This prevents incorrect counting if period numbers somehow exist in rotating selection org
+          const orgAllocationModel = organization.allocation_model || 
+            (organization.use_virtual_weeks_system ? 'static_weeks' : 'rotating_selection');
+          
+          if (orgAllocationModel !== 'static_weeks') {
+            console.warn(`SAFETY: Reservation ${res.id} has period number but org uses ${orgAllocationModel}. Ignoring period counting.`);
+            // Don't count this - it's likely corrupted data or test data
+          } else {
+            // Only count as primary if it has a period number (static weeks)
+            primaryCounts[familyGroup] += periods;
+          }
         }
         // Ignore reservations with null period number made before secondary started
         // (these are manual/admin bookings or bookings from sequential rotation primary)

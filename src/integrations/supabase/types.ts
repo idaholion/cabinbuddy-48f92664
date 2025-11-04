@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      allocation_model_audit: {
+        Row: {
+          approved_by: string | null
+          change_reason: string | null
+          changed_at: string | null
+          changed_by_user_id: string | null
+          id: string
+          new_model: string | null
+          old_model: string | null
+          organization_id: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          change_reason?: string | null
+          changed_at?: string | null
+          changed_by_user_id?: string | null
+          id?: string
+          new_model?: string | null
+          old_model?: string | null
+          organization_id?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          change_reason?: string | null
+          changed_at?: string | null
+          changed_by_user_id?: string | null
+          id?: string
+          new_model?: string | null
+          old_model?: string | null
+          organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocation_model_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_metadata: {
         Row: {
           backup_type: string
@@ -1094,6 +1135,7 @@ export type Database = {
           admin_email: string | null
           admin_name: string | null
           admin_phone: string | null
+          allocation_model: string | null
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
           automated_reminders_1_day_enabled: boolean | null
@@ -1127,6 +1169,7 @@ export type Database = {
           guest_access_token: string | null
           guest_token_expires_at: string | null
           id: string
+          is_test_organization: boolean | null
           name: string
           treasurer_email: string | null
           treasurer_name: string | null
@@ -1138,6 +1181,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allocation_model?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_1_day_enabled?: boolean | null
@@ -1171,6 +1215,7 @@ export type Database = {
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
+          is_test_organization?: boolean | null
           name: string
           treasurer_email?: string | null
           treasurer_name?: string | null
@@ -1182,6 +1227,7 @@ export type Database = {
           admin_email?: string | null
           admin_name?: string | null
           admin_phone?: string | null
+          allocation_model?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_reminders_1_day_enabled?: boolean | null
@@ -1215,6 +1261,7 @@ export type Database = {
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
+          is_test_organization?: boolean | null
           name?: string
           treasurer_email?: string | null
           treasurer_name?: string | null

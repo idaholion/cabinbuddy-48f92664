@@ -18,6 +18,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
 import { parseDateOnly, calculateNights, toDateOnlyString, parseDateAtNoon } from '@/lib/date-utils';
@@ -70,6 +71,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     updateTimePeriodUsage,
     timePeriodUsage 
   } = useTimePeriods();
+  const { getAllocationModel, isStaticWeeks } = useOrganizationContext();
 
   // Get user's family group name for legacy compatibility  
   const userFamilyGroupName = userFamilyGroup?.name;
@@ -391,20 +393,31 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         }
       } else {
         // Create new reservation
-        // Check if organization uses Static Weeks method (virtual weeks system)
-        // For "Group Order Rotates", use_virtual_weeks_system should be false/undefined
-        const usesStaticWeeks = rotationData?.use_virtual_weeks_system === true;
+        // SAFETY CHECK: Use allocation model from organization context
+        // This prevents static week logic from being applied to rotating selection orgs
+        const allocationModel = getAllocationModel();
         
         // Consider it a time period booking ONLY if:
-        // 1. Organization uses Static Weeks method (not Group Order Rotates)
+        // 1. Organization uses Static Weeks allocation model (not rotating selection)
         // 2. It's during their sequential selection turn
         // 3. They're booking a full week (7 nights)
         // 4. Admin hasn't overridden it as a manual booking
         const isTimePeriodBooking = 
-          usesStaticWeeks &&
+          isStaticWeeks() &&
           !data.adminOverride &&
           data.familyGroup === currentTurnGroup && 
           nights === 7;
+
+        // CRITICAL SAFETY CHECK: Block period booking if wrong allocation model
+        if (isTimePeriodBooking && allocationModel !== 'static_weeks') {
+          console.error('SAFETY BLOCK: Attempted period booking in', allocationModel, 'organization');
+          toast({
+            title: "Booking Error",
+            description: "This organization uses rotating selection, not static weeks. Period booking is not available.",
+            variant: "destructive"
+          });
+          return;
+        }
 
         const hostAssignmentsData = data.hostAssignments.map(assignment => ({
           host_name: assignment.host_name,

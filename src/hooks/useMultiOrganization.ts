@@ -11,6 +11,9 @@ interface UserOrganization {
   role: string;
   is_primary: boolean;
   joined_at: string;
+  allocation_model?: string;
+  is_test_organization?: boolean;
+  use_virtual_weeks_system?: boolean;
 }
 
 interface OrganizationData {
@@ -52,7 +55,10 @@ export const useMultiOrganization = () => {
           joined_at,
           organizations!user_organizations_organization_id_fkey (
             name,
-            code
+            code,
+            allocation_model,
+            is_test_organization,
+            use_virtual_weeks_system
           )
         `)
         .eq('user_id', user.id);
@@ -69,7 +75,10 @@ export const useMultiOrganization = () => {
         organization_code: (item.organizations as any).code || '',
         role: item.role,
         is_primary: item.is_primary,
-        joined_at: item.joined_at
+        joined_at: item.joined_at,
+        allocation_model: (item.organizations as any).allocation_model,
+        is_test_organization: (item.organizations as any).is_test_organization,
+        use_virtual_weeks_system: (item.organizations as any).use_virtual_weeks_system
       })) || [];
 
       setOrganizations(transformedData);
