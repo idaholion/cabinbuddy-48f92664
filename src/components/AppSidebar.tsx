@@ -28,7 +28,8 @@ import {
   StickyNote,
   CreditCard,
   Database,
-  HelpCircle
+  HelpCircle,
+  FileCode
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -180,6 +181,12 @@ const helpItems = [
     title: "Feature Guide",
     url: "/features",
     icon: Sparkles,
+  },
+  {
+    title: "Admin Documentation",
+    url: "/admin-documentation",
+    icon: FileCode,
+    adminOnly: true,
   },
 ];
 

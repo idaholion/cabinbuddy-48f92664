@@ -76,6 +76,7 @@ const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/Supe
 const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));
 const FamilyGroupHealthCheck = React.lazy(() => import("./pages/FamilyGroupHealthCheck"));
+const AdminDocumentation = React.lazy(() => import("./pages/AdminDocumentation"));
 
 
 
@@ -170,6 +171,7 @@ const AppContent = () => {
         <Route path="/supervisor/trial-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><TrialCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/family-group-health-check" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/admin-documentation" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminTreasurerRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
         </Routes>
