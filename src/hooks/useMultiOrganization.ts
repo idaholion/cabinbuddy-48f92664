@@ -57,8 +57,7 @@ export const useMultiOrganization = () => {
             name,
             code,
             allocation_model,
-            is_test_organization,
-            use_virtual_weeks_system
+            is_test_organization
           )
         `)
         .eq('user_id', user.id);
@@ -78,7 +77,8 @@ export const useMultiOrganization = () => {
         joined_at: item.joined_at,
         allocation_model: (item.organizations as any).allocation_model,
         is_test_organization: (item.organizations as any).is_test_organization,
-        use_virtual_weeks_system: (item.organizations as any).use_virtual_weeks_system
+        // Derive use_virtual_weeks_system from allocation_model for backwards compatibility
+        use_virtual_weeks_system: (item.organizations as any).allocation_model === 'static_weeks'
       })) || [];
 
       setOrganizations(transformedData);

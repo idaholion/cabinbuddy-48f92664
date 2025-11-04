@@ -224,16 +224,6 @@ export function AppSidebar() {
     location.pathname.includes('mode=create') ||
     location.search.includes('mode=create');
   
-  // Debug for role detection
-  console.log('🔍 [SIDEBAR DEBUG] Role status:', {
-    userEmail: user?.email,
-    isAdmin,
-    canAccessSupervisorFeatures,
-    roleLoading,
-    helpItemsCount: helpItems.length,
-    filteredHelpItems: helpItems.filter(item => !item.adminOnly || isAdmin || canAccessSupervisorFeatures).length
-  });
-  
   // Debug for alpha alpha specifically - more detailed logging
   if (user?.email?.toLowerCase().includes('alpha')) {
     console.log('🔍 [ALPHA DEBUG] Sidebar data:', {
