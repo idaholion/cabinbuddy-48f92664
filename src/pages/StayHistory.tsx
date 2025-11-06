@@ -336,8 +336,13 @@ export default function StayHistory() {
   const createVirtualReservationsFromSplits = () => {
     if (!user?.id) return [];
     
-    return paymentSplits
-      .filter(split => {
+    console.log('[StayHistory] createVirtualReservationsFromSplits called');
+    console.log('[StayHistory] Total payment splits:', paymentSplits.length);
+    console.log('[StayHistory] Selected family group:', selectedFamilyGroup);
+    console.log('[StayHistory] Is admin:', isAdmin, 'Is calendar keeper:', isCalendarKeeper);
+    
+    const afterFirstFilter = paymentSplits.filter(split => {
+      const shouldInclude = (() => {
         // Admins and Calendar Keepers see all splits in the organization
         if (isAdmin || isCalendarKeeper) {
           // If a specific family group is selected, filter to that group
@@ -348,7 +353,21 @@ export default function StayHistory() {
         }
         // Regular users only see splits where they are the recipient
         return split.split_to_user_id === user.id;
-      })
+      })();
+      
+      console.log('[StayHistory] Split filter result:', {
+        splitId: split.id,
+        splitToFamily: split.split_to_family_group,
+        selectedFamily: selectedFamilyGroup,
+        shouldInclude
+      });
+      
+      return shouldInclude;
+    });
+    
+    console.log('[StayHistory] After first filter:', afterFirstFilter.length);
+    
+    return afterFirstFilter
       .filter(split => 
         split.daily_occupancy_split && 
         Array.isArray(split.daily_occupancy_split) &&
