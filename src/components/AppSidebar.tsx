@@ -29,7 +29,8 @@ import {
   CreditCard,
   Database,
   HelpCircle,
-  FileCode
+  FileCode,
+  Bell
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -85,11 +86,6 @@ const setupItems = [
     title: "Billing & Invoices",
     url: "/billing",
     icon: Receipt,
-  },
-  {
-    title: "Financial Admin Tools",
-    url: "/financial-admin-tools",
-    icon: Settings,
   },
   {
     title: "Reservation Setup",
@@ -148,12 +144,6 @@ const resourcesItems = [
     icon: CheckSquare,
   },
   {
-    title: "Checklist Creator",
-    url: "/checklist-creator",
-    icon: Plus,
-    adminOnly: true,
-  },
-  {
     title: "Documents",
     url: "/documents",
     icon: FileText,
@@ -172,21 +162,37 @@ const helpItems = [
     icon: HelpCircle,
   },
   {
-    title: "FAQ Management",
-    url: "/faq-management",
-    icon: Settings,
-    adminOnly: true,
-  },
-  {
     title: "Feature Guide",
     url: "/features",
     icon: Sparkles,
+  },
+];
+
+const adminItems = [
+  {
+    title: "Notification Monitoring",
+    url: "/notification-monitoring",
+    icon: Bell,
+  },
+  {
+    title: "Financial Admin Tools",
+    url: "/financial-admin-tools",
+    icon: Settings,
+  },
+  {
+    title: "Checklist Creator",
+    url: "/checklist-creator",
+    icon: Plus,
+  },
+  {
+    title: "FAQ Management",
+    url: "/faq-management",
+    icon: Settings,
   },
   {
     title: "Admin Documentation",
     url: "/admin-documentation",
     icon: FileCode,
-    adminOnly: true,
   },
 ];
 
@@ -340,24 +346,19 @@ export function AppSidebar() {
           <SidebarGroupLabel>Resources</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {resourcesItems.map((item) => {
-                // Hide admin-only items for non-admins
-                if (item.adminOnly && !isAdmin) return null;
-                
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={item.title}>
-                      <NavLink 
-                        to={item.url} 
-                        className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {resourcesItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
               
                {/* Messaging and Family Voting moved to Resources */}
                <SidebarMenuItem>
@@ -405,9 +406,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Help</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {helpItems
-                .filter(item => !item.adminOnly || isAdmin || canAccessSupervisorFeatures)
-                .map((item) => (
+              {helpItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
@@ -423,6 +422,30 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin Tools */}
+        {(isAdmin || canAccessSupervisorFeatures) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink 
+                        to={item.url} 
+                        className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Organizations - moved above Setup */}
         <SidebarGroup>
