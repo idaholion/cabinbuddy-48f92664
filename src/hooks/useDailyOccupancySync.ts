@@ -326,9 +326,128 @@ export const useDailyOccupancySync = (organizationId: string) => {
     }
   }, [toast, updateOccupancy]);
 
+  const updateSplitOccupancy = useCallback(async (
+    splitId: string,
+    splitPaymentId: string,
+    occupancyData: DailyOccupancyData[]
+  ) => {
+    setSyncing(true);
+    try {
+      // 1. Get the split record and associated data
+      const { data: split, error: splitError } = await supabase
+        .from('payment_splits')
+        .select('*, source_payment:payments!payment_splits_source_payment_id_fkey(*)')
+        .eq('id', splitId)
+        .single();
+
+      if (splitError) throw splitError;
+
+      // 2. Check if source payment is billing locked
+      const sourceLocked = split.source_payment?.billing_locked ?? false;
+
+      // 3. Get financial settings
+      const { data: settingsArray } = await supabase
+        .from('reservation_settings')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .limit(1);
+
+      const settings = settingsArray?.[0];
+
+      // 4. Calculate new billing amount
+      let newAmount = 0;
+      if (settings && !sourceLocked) {
+        const billingConfig = {
+          method: (settings as any).financial_method || 'per_person_per_night',
+          amount: (settings as any).nightly_rate || 0,
+          taxRate: settings.tax_rate || 0,
+        };
+
+        const dailyOccupancyRecord: Record<string, number> = {};
+        occupancyData.forEach(day => {
+          dailyOccupancyRecord[day.date] = day.guests;
+        });
+
+        // Calculate billing for the split period
+        const dates = occupancyData.map(d => d.date).sort();
+        const startDate = parseDateOnly(dates[0]);
+        const endDate = parseDateOnly(dates[dates.length - 1]);
+
+        const billing = BillingCalculator.calculateFromDailyOccupancy(
+          billingConfig as any,
+          dailyOccupancyRecord,
+          { startDate, endDate }
+        );
+        newAmount = billing.total;
+      }
+
+      // 5. Update payment_splits.daily_occupancy_split
+      const { error: splitUpdateError } = await supabase
+        .from('payment_splits')
+        .update({
+          daily_occupancy_split: occupancyData as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', splitId);
+
+      if (splitUpdateError) throw splitUpdateError;
+
+      // 6. Update the split payment record
+      const { data: splitPayment } = await supabase
+        .from('payments')
+        .select('amount_paid')
+        .eq('id', splitPaymentId)
+        .single();
+
+      const amountPaid = splitPayment?.amount_paid || 0;
+      const newBalanceDue = newAmount - amountPaid;
+
+      const paymentUpdates: any = {
+        daily_occupancy: occupancyData,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Only update amount if not locked
+      if (!sourceLocked) {
+        paymentUpdates.amount = newAmount;
+        paymentUpdates.balance_due = newBalanceDue;
+        paymentUpdates.status = newBalanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
+      }
+
+      const { error: paymentUpdateError } = await supabase
+        .from('payments')
+        .update(paymentUpdates)
+        .eq('id', splitPaymentId);
+
+      if (paymentUpdateError) throw paymentUpdateError;
+
+      toast({
+        title: sourceLocked 
+          ? "Guest counts updated" 
+          : "Guest counts and billing updated",
+        description: sourceLocked
+          ? "Source billing is locked - costs remain unchanged"
+          : "Split charges have been recalculated",
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating split occupancy:', error);
+      toast({
+        title: "Error updating split occupancy",
+        description: "Please try again",
+        variant: "destructive",
+      });
+      return { success: false, error };
+    } finally {
+      setSyncing(false);
+    }
+  }, [organizationId, toast]);
+
   return {
     fetchOccupancyData,
     updateOccupancy,
+    updateSplitOccupancy,
     getBillingLockStatus,
     recalculateBilling,
     syncing,

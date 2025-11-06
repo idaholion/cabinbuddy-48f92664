@@ -1027,7 +1027,7 @@ export default function StayHistory() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-                  {!reservation.isVirtualSplit && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
+                  {(isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -1035,7 +1035,9 @@ export default function StayHistory() {
                         startDate: parseDateOnly(reservation.start_date),
                         endDate: parseDateOnly(reservation.end_date),
                         family_group: reservation.family_group,
-                        reservationId: reservation.id,
+                        reservationId: reservation.isVirtualSplit ? null : reservation.id,
+                        splitId: reservation.isVirtualSplit ? reservation.splitData?.splitId : undefined,
+                        splitPaymentId: reservation.isVirtualSplit ? reservation.splitData?.payment?.id : undefined,
                         dailyOccupancy: stayData.dailyOccupancy
                       })}
                     >
@@ -1152,6 +1154,8 @@ export default function StayHistory() {
           currentOccupancy={editOccupancyStay.dailyOccupancy || []}
           onSave={handleSaveOccupancy}
           organizationId={organization.id}
+          splitId={editOccupancyStay.splitId}
+          splitPaymentId={editOccupancyStay.splitPaymentId}
         />
       )}
 

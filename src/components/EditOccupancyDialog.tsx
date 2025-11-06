@@ -22,11 +22,13 @@ interface EditOccupancyDialogProps {
     startDate: Date;
     endDate: Date;
     family_group: string;
-    reservationId: string;
+    reservationId: string | null;
   };
   currentOccupancy: DailyOccupancy[];
   onSave: (occupancy: DailyOccupancy[]) => Promise<void>;
   organizationId: string;
+  splitId?: string;
+  splitPaymentId?: string;
 }
 
 export const EditOccupancyDialog = ({
@@ -36,10 +38,13 @@ export const EditOccupancyDialog = ({
   currentOccupancy,
   onSave,
   organizationId,
+  splitId,
+  splitPaymentId,
 }: EditOccupancyDialogProps) => {
   const { toast } = useToast();
-  const { updateOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
+  const { updateOccupancy, updateSplitOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
   const [billingLocked, setBillingLocked] = useState(false);
+  const isSplit = !!splitId && !!splitPaymentId;
   
   // Only include nights spent (exclude checkout day)
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
@@ -95,8 +100,16 @@ export const EditOccupancyDialog = ({
     try {
       console.log('EditOccupancyDialog - Saving occupancy:', occupancy);
       console.log('Total guests:', occupancy.reduce((sum, day) => sum + (day.guests || 0), 0));
+      console.log('Is split?', isSplit, 'splitId:', splitId, 'splitPaymentId:', splitPaymentId);
       
-      const result = await updateOccupancy(stay.reservationId, occupancy);
+      let result;
+      if (isSplit) {
+        // Update split occupancy
+        result = await updateSplitOccupancy(splitId!, splitPaymentId!, occupancy);
+      } else {
+        // Update regular reservation occupancy
+        result = await updateOccupancy(stay.reservationId!, occupancy);
+      }
       
       if (result.success) {
         await onSave(occupancy); // Still call parent callback for any additional logic
