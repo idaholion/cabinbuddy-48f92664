@@ -1174,9 +1174,47 @@ export default function StayHistory() {
             family_group: recordPaymentStay.family_group
           }}
           onSave={async (paymentData) => {
-            // Handle recording the payment via usePayments
-            await fetchPayments();
-            setRecordPaymentStay(null);
+            if (!recordPaymentStay?.paymentId || !organization?.id) return;
+            
+            try {
+              // Get the current payment details
+              const { data: payment, error: fetchError } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('id', recordPaymentStay.paymentId)
+                .single();
+
+              if (fetchError) throw fetchError;
+
+              const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
+              const newBalanceDue = payment.amount - newAmountPaid;
+
+              // Update the payment
+              const { error: updateError } = await supabase
+                .from('payments')
+                .update({
+                  amount_paid: newAmountPaid,
+                  balance_due: newBalanceDue,
+                  status: newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending',
+                  payment_method: paymentData.paymentMethod as any,
+                  payment_reference: paymentData.paymentReference,
+                  paid_date: newBalanceDue <= 0 ? paymentData.paidDate : payment.paid_date,
+                  notes: paymentData.notes || payment.notes,
+                  updated_by_user_id: user?.id,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', recordPaymentStay.paymentId);
+
+              if (updateError) throw updateError;
+
+              await fetchPayments();
+              toast.success("Payment recorded successfully");
+              setRecordPaymentStay(null);
+            } catch (error: any) {
+              console.error('Error recording payment:', error);
+              toast.error("Failed to record payment. Please try again.");
+              throw error;
+            }
           }}
         />
       )}
