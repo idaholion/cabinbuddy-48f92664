@@ -624,60 +624,62 @@ export default function StayHistory() {
   }
 
   // BACKWARD CREDIT CASCADE: Distribute overpayments from recent reservations to older ones
-  // Group reservations by family group for backward credit distribution
-  const reservationsByFamilyGroup = new Map<string, any[]>();
+  // Group reservations by primary host (not just family group) to properly track individual balances
+  const reservationsByHost = new Map<string, any[]>();
   
   for (const item of reservationsWithBalance) {
-    const familyGroup = item.reservation.family_group;
-    if (!reservationsByFamilyGroup.has(familyGroup)) {
-      reservationsByFamilyGroup.set(familyGroup, []);
+    const hostKey = getPrimaryHostKey(item.reservation);
+    if (!reservationsByHost.has(hostKey)) {
+      reservationsByHost.set(hostKey, []);
     }
-    reservationsByFamilyGroup.get(familyGroup)!.push(item);
+    reservationsByHost.get(hostKey)!.push(item);
   }
   
-  // For each family group, check if the most recent reservation has credit (negative amountDue)
-  for (const [familyGroup, groupReservations] of reservationsByFamilyGroup) {
+  // For each host, check if any reservation has an overpayment (negative currentBalance)
+  for (const [hostKey, hostReservations] of reservationsByHost) {
     // Sort by date (oldest first) to maintain chronological order
-    groupReservations.sort((a, b) => 
+    hostReservations.sort((a, b) => 
       parseDateOnly(a.reservation.start_date).getTime() - parseDateOnly(b.reservation.start_date).getTime()
     );
     
-    // Find the most recent reservation (last in sorted array)
-    const mostRecentIndex = groupReservations.length - 1;
-    const mostRecent = groupReservations[mostRecentIndex];
+    console.log(`[CREDIT CASCADE] Processing ${hostReservations.length} reservations for host ${hostKey}`);
     
-    // Check if there's a credit (negative amountDue means overpayment)
-    if (mostRecent.stayData.amountDue < 0) {
-      let remainingCredit = Math.abs(mostRecent.stayData.amountDue);
-      console.log(`[CREDIT CASCADE] ${familyGroup} has credit of $${remainingCredit.toFixed(2)} from most recent reservation`);
+    // Check each reservation for overpayment (negative currentBalance)
+    for (let i = hostReservations.length - 1; i >= 0; i--) {
+      const currentItem = hostReservations[i];
       
-      // Iterate backward from second-to-last reservation to first
-      for (let i = mostRecentIndex - 1; i >= 0 && remainingCredit > 0; i--) {
-        const olderItem = groupReservations[i];
+      // If this reservation has overpayment (paid more than billed for THIS stay)
+      if (currentItem.stayData.currentBalance < 0) {
+        let remainingCredit = Math.abs(currentItem.stayData.currentBalance);
+        const familyGroup = currentItem.reservation.family_group;
         
-        // Only apply credit if the older reservation has an amount due
-        if (olderItem.stayData.amountDue > 0) {
-          const creditToApply = Math.min(remainingCredit, olderItem.stayData.amountDue);
+        console.log(`[CREDIT CASCADE] ${familyGroup} reservation on ${currentItem.reservation.start_date} has overpayment of $${remainingCredit.toFixed(2)}`);
+        
+        // Distribute this credit backward to older reservations with balances due
+        for (let j = i - 1; j >= 0 && remainingCredit > 0; j--) {
+          const olderItem = hostReservations[j];
           
-          console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${olderItem.reservation.start_date} reservation`);
-          
-          // Add credit tracking field
-          olderItem.stayData.creditFromFuturePayment = creditToApply;
-          
-          // Reduce the amount due by the applied credit
-          olderItem.stayData.amountDue -= creditToApply;
-          
-          // Reduce remaining credit
-          remainingCredit -= creditToApply;
+          // Only apply credit if the older reservation has an amount due
+          if (olderItem.stayData.amountDue > 0) {
+            const creditToApply = Math.min(remainingCredit, olderItem.stayData.amountDue);
+            
+            console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${olderItem.reservation.start_date} reservation (was $${olderItem.stayData.amountDue.toFixed(2)})`);
+            
+            // Add credit tracking field
+            olderItem.stayData.creditFromFuturePayment = (olderItem.stayData.creditFromFuturePayment || 0) + creditToApply;
+            
+            // Reduce the amount due by the applied credit
+            olderItem.stayData.amountDue -= creditToApply;
+            
+            // Reduce remaining credit
+            remainingCredit -= creditToApply;
+            
+            console.log(`[CREDIT CASCADE] After credit: ${olderItem.reservation.start_date} now has $${olderItem.stayData.amountDue.toFixed(2)} due`);
+          }
         }
+        
+        console.log(`[CREDIT CASCADE] Credit cascade complete for ${currentItem.reservation.start_date}. Unused credit: $${remainingCredit.toFixed(2)}`);
       }
-      
-      // Update the most recent reservation's amountDue to reflect distributed credit
-      // If all credit was distributed, amountDue should be 0
-      // If some credit remains, it stays negative
-      mostRecent.stayData.amountDue = remainingCredit > 0 ? -remainingCredit : 0;
-      
-      console.log(`[CREDIT CASCADE] ${familyGroup} credit cascade complete. Remaining credit: $${remainingCredit.toFixed(2)}`);
     }
   }
   
