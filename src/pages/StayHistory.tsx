@@ -565,6 +565,13 @@ export default function StayHistory() {
   
   // Helper function to get the primary host identifier for a reservation
   const getPrimaryHostKey = (reservation: any) => {
+    // For virtual split reservations, use the user_id (which is set to split_to_user_id)
+    if (reservation.isVirtualSplit) {
+      const hostKey = reservation.user_id || 'unknown';
+      console.log(`[BALANCE DEBUG] Virtual Split ${reservation.id}: hostKey=${hostKey}, dates=${reservation.start_date} to ${reservation.end_date}`);
+      return hostKey;
+    }
+    
     // For host_assignments, use the first host's email as the identifier
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
