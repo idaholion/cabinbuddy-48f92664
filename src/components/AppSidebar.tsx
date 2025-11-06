@@ -180,6 +180,11 @@ const adminItems = [
     icon: Settings,
   },
   {
+    title: "Data Backup",
+    url: "/data-backup",
+    icon: Database,
+  },
+  {
     title: "Checklist Creator",
     url: "/checklist-creator",
     icon: Plus,
@@ -460,18 +465,6 @@ export function AppSidebar() {
                   >
                     <Settings className="h-4 w-4" />
                     <span>Manage Organizations</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Data Backup">
-                  <NavLink 
-                    to="/data-backup" 
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Database className="h-4 w-4" />
-                    <span>Data Backup</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
