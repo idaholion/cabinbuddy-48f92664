@@ -655,26 +655,28 @@ export default function StayHistory() {
         
         console.log(`[CREDIT CASCADE] ${familyGroup} reservation on ${currentItem.reservation.start_date} has overpayment of $${remainingCredit.toFixed(2)}`);
         
-        // Distribute this credit backward to older reservations with balances due
+        // Distribute this credit backward to older reservations
+        // Apply credit to currentBalance (not amountDue) so it cascades through previousBalance chain
         for (let j = i - 1; j >= 0 && remainingCredit > 0; j--) {
           const olderItem = hostReservations[j];
           
-          // Only apply credit if the older reservation has an amount due
-          if (olderItem.stayData.amountDue > 0) {
-            const creditToApply = Math.min(remainingCredit, olderItem.stayData.amountDue);
+          // Apply credit to currentBalance first (the charge for THIS reservation only)
+          if (olderItem.stayData.currentBalance > 0) {
+            const creditToApply = Math.min(remainingCredit, olderItem.stayData.currentBalance);
             
-            console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${olderItem.reservation.start_date} reservation (was $${olderItem.stayData.amountDue.toFixed(2)})`);
+            console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${olderItem.reservation.start_date} currentBalance $${olderItem.stayData.currentBalance.toFixed(2)} (amountDue was $${olderItem.stayData.amountDue.toFixed(2)})`);
             
             // Add credit tracking field
             olderItem.stayData.creditFromFuturePayment = (olderItem.stayData.creditFromFuturePayment || 0) + creditToApply;
             
-            // Reduce the amount due by the applied credit
+            // Reduce both currentBalance and amountDue by the applied credit
+            olderItem.stayData.currentBalance -= creditToApply;
             olderItem.stayData.amountDue -= creditToApply;
             
             // Reduce remaining credit
             remainingCredit -= creditToApply;
             
-            console.log(`[CREDIT CASCADE] After credit: ${olderItem.reservation.start_date} now has $${olderItem.stayData.amountDue.toFixed(2)} due`);
+            console.log(`[CREDIT CASCADE] After credit: ${olderItem.reservation.start_date} currentBalance=$${olderItem.stayData.currentBalance.toFixed(2)}, amountDue=$${olderItem.stayData.amountDue.toFixed(2)}`);
           }
         }
         
