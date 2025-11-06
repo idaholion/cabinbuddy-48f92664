@@ -410,7 +410,7 @@ export default function StayHistory() {
         amountPaid: Number(splitPayment.amount_paid) || 0,
         currentBalance: Number(splitPayment.balance_due) || 0,
         previousBalance: previousBalance,
-        amountDue: Number(splitPayment.balance_due) || 0,
+        amountDue: (Number(splitPayment.balance_due) || 0) + previousBalance,
         billingMethod: "Guest cost split",
         paymentId: splitPayment.id,
         paymentStatus: splitPayment.status,
@@ -975,15 +975,6 @@ export default function StayHistory() {
                         ${stayData.amountDue.toFixed(2)}
                       </span>
                     </div>
-                    {/* For virtual splits, show total balance due if there's a previous balance */}
-                    {reservation.isVirtualSplit && stayData.previousBalance !== 0 && (
-                      <div className="flex justify-between text-sm bg-muted/50 -mx-3 px-3 py-2 rounded mt-2">
-                        <span className="font-bold">Total Balance Due:</span>
-                        <span className={`font-bold text-lg ${(stayData.previousBalance + stayData.amountDue) > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                          ${(stayData.previousBalance + stayData.amountDue).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
 
