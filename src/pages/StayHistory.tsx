@@ -1045,7 +1045,7 @@ export default function StayHistory() {
                       Edit Occupancy
                     </Button>
                   )}
-                  {!reservation.isVirtualSplit && stayData.paymentId && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
+                  {stayData.paymentId && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
                     <Button
                       variant="outline"
                       size="sm"
