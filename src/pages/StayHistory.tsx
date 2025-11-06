@@ -338,7 +338,13 @@ export default function StayHistory() {
     return paymentSplits
       .filter(split => {
         // Admins and Calendar Keepers see all splits in the organization
-        if (isAdmin || isCalendarKeeper) return true;
+        if (isAdmin || isCalendarKeeper) {
+          // If a specific family group is selected, filter to that group
+          if (selectedFamilyGroup !== "all") {
+            return split.split_to_family_group === selectedFamilyGroup;
+          }
+          return true;
+        }
         // Regular users only see splits where they are the recipient
         return split.split_to_user_id === user.id;
       })
