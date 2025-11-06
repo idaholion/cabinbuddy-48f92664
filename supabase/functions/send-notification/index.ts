@@ -1133,7 +1133,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-notification function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

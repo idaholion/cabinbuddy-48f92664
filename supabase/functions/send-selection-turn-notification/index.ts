@@ -142,20 +142,40 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (notifyError) {
       console.error(`❌ send-notification invoke failed:`, notifyError);
-      throw notifyError;
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Failed to invoke send-notification',
+        details: notifyError.message
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
     
     console.log(`✅ send-notification response:`, notifyData);
 
-    console.log(`Notification sent successfully to ${familyData.name}`);
-
-    return new Response(JSON.stringify({ 
-      success: true,
-      message: `Notification sent to ${familyData.name}`
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    // Check if notification was actually delivered
+    if (notifyData && notifyData.success) {
+      console.log(`Notification sent successfully to ${familyData.name}`);
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: `Notification sent to ${familyData.name}`,
+        delivery_details: notifyData
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } else {
+      console.error(`❌ Notification delivery failed:`, notifyData);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Notification delivery failed',
+        details: notifyData
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
   } catch (error) {
     console.error('Error sending selection turn notification:', error);

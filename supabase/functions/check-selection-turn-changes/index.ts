@@ -95,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
 
             if (!secondaryAlreadySent) {
               console.log(`Sending secondary turn notification to ${currentSecondaryFamily} for ${year}`);
-              const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+              const { data: notifyResponse, error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
                 body: {
                   organization_id: org.id,
                   family_group: currentSecondaryFamily,
@@ -103,7 +103,10 @@ const handler = async (req: Request): Promise<Response> => {
                 }
               });
 
-              if (!sendError) {
+              console.log(`Notification response:`, { data: notifyResponse, error: sendError });
+
+              // Only record as sent if the response indicates success
+              if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
                 await supabase
                   .from('selection_turn_notifications_sent')
                   .insert({
@@ -113,8 +116,13 @@ const handler = async (req: Request): Promise<Response> => {
                     phase: 'secondary'
                   });
                 totalNotifications++;
+                console.log(`✅ Successfully sent and recorded secondary notification for ${currentSecondaryFamily}`);
               } else {
-                console.error(`Error sending secondary turn notification: ${sendError.message}`);
+                console.error(`❌ Failed to send secondary turn notification:`, {
+                  error: sendError,
+                  response: notifyResponse,
+                  family: currentSecondaryFamily
+                });
               }
             }
           }
@@ -225,7 +233,7 @@ const handler = async (req: Request): Promise<Response> => {
             if (currentFamily) {
               // Send notification to new family
               console.log(`Sending turn notification to ${currentFamily} after auto-advance`);
-              await supabase.functions.invoke('send-selection-turn-notification', {
+              const { data: notifyResponse, error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
                 body: {
                   organization_id: org.id,
                   family_group: currentFamily,
@@ -233,15 +241,26 @@ const handler = async (req: Request): Promise<Response> => {
                 }
               });
 
-              await supabase
-                .from('selection_turn_notifications_sent')
-                .insert({
-                  organization_id: org.id,
-                  rotation_year: year,
-                  family_group: currentFamily,
-                  phase: 'primary'
+              console.log(`Auto-advance notification response:`, { data: notifyResponse, error: sendError });
+
+              if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
+                await supabase
+                  .from('selection_turn_notifications_sent')
+                  .insert({
+                    organization_id: org.id,
+                    rotation_year: year,
+                    family_group: currentFamily,
+                    phase: 'primary'
+                  });
+                totalNotifications++;
+                console.log(`✅ Successfully sent and recorded primary notification after auto-advance for ${currentFamily}`);
+              } else {
+                console.error(`❌ Failed to send auto-advance notification:`, {
+                  error: sendError,
+                  response: notifyResponse,
+                  family: currentFamily
                 });
-              totalNotifications++;
+              }
             }
             
             continue; // Skip to next iteration since we already handled this
@@ -266,7 +285,7 @@ const handler = async (req: Request): Promise<Response> => {
 
           if (!alreadySent) {
             console.log(`Sending turn notification to ${currentFamily} for ${year}`);
-            const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+            const { data: notifyResponse, error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
               body: {
                 organization_id: org.id,
                 family_group: currentFamily,
@@ -274,7 +293,9 @@ const handler = async (req: Request): Promise<Response> => {
               }
             });
 
-            if (!sendError) {
+            console.log(`Primary notification response:`, { data: notifyResponse, error: sendError });
+
+            if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
               await supabase
                 .from('selection_turn_notifications_sent')
                 .insert({
@@ -284,8 +305,13 @@ const handler = async (req: Request): Promise<Response> => {
                   phase: 'primary'
                 });
               totalNotifications++;
+              console.log(`✅ Successfully sent and recorded primary notification for ${currentFamily}`);
             } else {
-              console.error(`Error sending turn notification: ${sendError.message}`);
+              console.error(`❌ Failed to send primary turn notification:`, {
+                error: sendError,
+                response: notifyResponse,
+                family: currentFamily
+              });
             }
           }
         }
@@ -325,7 +351,7 @@ const handler = async (req: Request): Promise<Response> => {
 
               if (!endingAlreadySent) {
                 console.log(`Sending ending tomorrow notification to ${currentFamily} for ${year}`);
-                const { error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
+                const { data: notifyResponse, error: sendError } = await supabase.functions.invoke('send-selection-turn-notification', {
                   body: {
                     organization_id: org.id,
                     family_group: currentFamily,
@@ -334,7 +360,9 @@ const handler = async (req: Request): Promise<Response> => {
                   }
                 });
 
-                if (!sendError) {
+                console.log(`Ending tomorrow notification response:`, { data: notifyResponse, error: sendError });
+
+                if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
                   await supabase
                     .from('selection_turn_notifications_sent')
                     .insert({
@@ -344,8 +372,13 @@ const handler = async (req: Request): Promise<Response> => {
                       phase: 'ending_tomorrow'
                     });
                   totalNotifications++;
+                  console.log(`✅ Successfully sent and recorded ending tomorrow notification for ${currentFamily}`);
                 } else {
-                  console.error(`Error sending ending tomorrow notification: ${sendError.message}`);
+                  console.error(`❌ Failed to send ending tomorrow notification:`, {
+                    error: sendError,
+                    response: notifyResponse,
+                    family: currentFamily
+                  });
                 }
               }
             }
