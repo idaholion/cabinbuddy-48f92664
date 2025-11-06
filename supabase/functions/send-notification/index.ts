@@ -159,7 +159,12 @@ async function sendSMS(to: string, message: string) {
     console.log("✅ SMS sent successfully!");
     console.log("  - Message SID:", result.sid);
     console.log("  - Status:", result.status);
-    return result;
+    return { 
+      success: true, 
+      sid: result.sid, 
+      status: result.status,
+      to: to
+    };
   } catch (error) {
     console.error("❌ Exception while sending SMS:", error);
     console.error("  - Error name:", error instanceof Error ? error.name : 'Unknown');
@@ -1025,8 +1030,8 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`📱 Attempting to send SMS to: ${recipientPhone}`);
         smsResponse = await sendSMS(recipientPhone, smsMessage);
         
-        if (smsResponse && !smsResponse.error) {
-          console.log(`✅ ${type} SMS sent successfully to ${recipientPhone}`);
+        if (smsResponse && smsResponse.success) {
+          console.log(`✅ ${type} SMS sent successfully to ${recipientPhone} (SID: ${smsResponse.sid})`);
         } else if (smsResponse && smsResponse.error) {
           console.error(`❌ ${type} SMS failed for ${recipientPhone}:`, smsResponse.error);
         } else {
@@ -1119,10 +1124,26 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Determine SMS status for logging
+    const smsWasAttempted = recipientPhone && smsMessage && type !== 'manual_template';
+    const smsWasSent = smsResponse && smsResponse.success;
+    const smsStatus = smsResponse 
+      ? (smsResponse.success ? 'sent' : 'failed') 
+      : (smsWasAttempted ? 'skipped_no_credentials' : 'skipped_no_phone');
+    const twilioSid = smsResponse?.sid || null;
+
     return new Response(JSON.stringify({
       email: emailResponse,
       sms: smsResponse,
-      success: true
+      success: true,
+      // Enhanced tracking for monitoring
+      email_sent: !!emailResponse && recipientEmail !== undefined,
+      sms_sent: smsWasSent,
+      sms_status: smsStatus,
+      twilio_sid: twilioSid,
+      recipient_email: recipientEmail || 'unknown',
+      recipient_phone: recipientPhone || null,
+      notification_type: type
     }), {
       status: 200,
       headers: {

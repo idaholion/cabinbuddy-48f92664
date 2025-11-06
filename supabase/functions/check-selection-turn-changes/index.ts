@@ -115,6 +115,28 @@ const handler = async (req: Request): Promise<Response> => {
                     family_group: currentSecondaryFamily,
                     phase: 'secondary'
                   });
+                
+                // Log to notification_log for monitoring
+                await supabase
+                  .from('notification_log')
+                  .insert({
+                    organization_id: org.id,
+                    family_group: currentSecondaryFamily,
+                    notification_type: 'selection_turn_ready',
+                    recipient_email: notifyResponse?.recipient_email || 'unknown',
+                    email_sent: notifyResponse?.email_sent || false,
+                    sms_sent: notifyResponse?.sms_sent || false,
+                    sms_status: notifyResponse?.sms_status || null,
+                    twilio_sid: notifyResponse?.twilio_sid || null,
+                    metadata: {
+                      phase: 'secondary',
+                      rotation_year: year,
+                      triggered_by: 'cron_job',
+                      recipient_phone: notifyResponse?.recipient_phone,
+                      timestamp: new Date().toISOString()
+                    }
+                  });
+                
                 totalNotifications++;
                 console.log(`✅ Successfully sent and recorded secondary notification for ${currentSecondaryFamily}`);
               } else {
@@ -252,6 +274,28 @@ const handler = async (req: Request): Promise<Response> => {
                     family_group: currentFamily,
                     phase: 'primary'
                   });
+                
+                // Log to notification_log for monitoring
+                await supabase
+                  .from('notification_log')
+                  .insert({
+                    organization_id: org.id,
+                    family_group: currentFamily,
+                    notification_type: 'selection_turn_ready',
+                    recipient_email: notifyResponse?.recipient_email || 'unknown',
+                    email_sent: notifyResponse?.email_sent || false,
+                    sms_sent: notifyResponse?.sms_sent || false,
+                    sms_status: notifyResponse?.sms_status || null,
+                    twilio_sid: notifyResponse?.twilio_sid || null,
+                    metadata: {
+                      phase: 'primary_auto_advance',
+                      rotation_year: year,
+                      triggered_by: 'cron_job',
+                      recipient_phone: notifyResponse?.recipient_phone,
+                      timestamp: new Date().toISOString()
+                    }
+                  });
+                
                 totalNotifications++;
                 console.log(`✅ Successfully sent and recorded primary notification after auto-advance for ${currentFamily}`);
               } else {
@@ -304,6 +348,28 @@ const handler = async (req: Request): Promise<Response> => {
                   family_group: currentFamily,
                   phase: 'primary'
                 });
+              
+              // Log to notification_log for monitoring
+              await supabase
+                .from('notification_log')
+                .insert({
+                  organization_id: org.id,
+                  family_group: currentFamily,
+                  notification_type: 'selection_turn_ready',
+                  recipient_email: notifyResponse?.recipient_email || 'unknown',
+                  email_sent: notifyResponse?.email_sent || false,
+                  sms_sent: notifyResponse?.sms_sent || false,
+                  sms_status: notifyResponse?.sms_status || null,
+                  twilio_sid: notifyResponse?.twilio_sid || null,
+                  metadata: {
+                    phase: 'primary',
+                    rotation_year: year,
+                    triggered_by: 'cron_job',
+                    recipient_phone: notifyResponse?.recipient_phone,
+                    timestamp: new Date().toISOString()
+                  }
+                });
+              
               totalNotifications++;
               console.log(`✅ Successfully sent and recorded primary notification for ${currentFamily}`);
             } else {
@@ -371,6 +437,28 @@ const handler = async (req: Request): Promise<Response> => {
                       family_group: currentFamily,
                       phase: 'ending_tomorrow'
                     });
+                  
+                  // Log to notification_log for monitoring
+                  await supabase
+                    .from('notification_log')
+                    .insert({
+                      organization_id: org.id,
+                      family_group: currentFamily,
+                      notification_type: 'selection_ending_tomorrow',
+                      recipient_email: notifyResponse?.recipient_email || 'unknown',
+                      email_sent: notifyResponse?.email_sent || false,
+                      sms_sent: notifyResponse?.sms_sent || false,
+                      sms_status: notifyResponse?.sms_status || null,
+                      twilio_sid: notifyResponse?.twilio_sid || null,
+                      metadata: {
+                        phase: 'ending_tomorrow',
+                        rotation_year: year,
+                        triggered_by: 'cron_job',
+                        recipient_phone: notifyResponse?.recipient_phone,
+                        timestamp: new Date().toISOString()
+                      }
+                    });
+                  
                   totalNotifications++;
                   console.log(`✅ Successfully sent and recorded ending tomorrow notification for ${currentFamily}`);
                 } else {

@@ -32,6 +32,12 @@ const DOC_FILES: DocFile[] = [
     title: 'Season Summary Phase 3',
     path: '/docs/SEASON_SUMMARY_PHASE3.md',
     description: 'Documentation for Season Summary feature implementation'
+  },
+  {
+    name: 'monitoring-reminder',
+    title: 'Notification Monitoring TODO',
+    path: '/docs/MONITORING_REMINDER.md',
+    description: 'Tracking notification system visibility gaps and monitoring dashboard requirements'
   }
 ];
 
@@ -213,7 +219,7 @@ export default function AdminDocumentation() {
       </div>
 
       <Tabs value={activeDoc} onValueChange={setActiveDoc} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           {DOC_FILES.map(doc => (
             <TabsTrigger key={doc.name} value={doc.name} className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
