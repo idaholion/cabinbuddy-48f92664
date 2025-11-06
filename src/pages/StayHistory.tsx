@@ -367,17 +367,37 @@ export default function StayHistory() {
     
     console.log('[StayHistory] After first filter:', afterFirstFilter.length);
     
-    return afterFirstFilter
-      .filter(split => 
-        split.daily_occupancy_split && 
+    const afterDataValidation = afterFirstFilter.filter(split => {
+      const isValid = split.daily_occupancy_split && 
         Array.isArray(split.daily_occupancy_split) &&
         split.daily_occupancy_split.length > 0 &&
-        split.split_payment
-      )
-      .map(split => {
+        split.split_payment;
+      
+      console.log('[StayHistory] Data validation:', {
+        splitId: split.id,
+        hasDailyOccupancy: !!split.daily_occupancy_split,
+        isArray: Array.isArray(split.daily_occupancy_split),
+        length: split.daily_occupancy_split?.length,
+        hasPayment: !!split.split_payment,
+        isValid
+      });
+      
+      return isValid;
+    });
+    
+    console.log('[StayHistory] After data validation:', afterDataValidation.length);
+    
+    const mapped = afterDataValidation.map(split => {
         const days = split.daily_occupancy_split;
         const startDate = days[0]?.date;
         const endDate = days[days.length - 1]?.date;
+        
+        console.log('[StayHistory] Mapping split:', {
+          splitId: split.id,
+          startDate,
+          endDate,
+          familyGroup: split.split_to_family_group
+        });
         
         return {
           id: `split-${split.id}`,
@@ -385,7 +405,7 @@ export default function StayHistory() {
           end_date: endDate,
           family_group: split.split_to_family_group,
           status: 'confirmed',
-          user_id: split.split_to_user_id, // Use the actual recipient's user_id
+          user_id: split.split_to_user_id,
           organization_id: organization?.id,
           isVirtualSplit: true,
           splitData: {
@@ -395,8 +415,11 @@ export default function StayHistory() {
             dailyOccupancy: days
           }
         };
-      })
-      .filter(virtualRes => {
+      });
+    
+    console.log('[StayHistory] After mapping:', mapped.length);
+    
+    const finalFiltered = mapped.filter(virtualRes => {
         // Apply same filters as regular reservations
         const checkOutDate = parseDateOnly(virtualRes.end_date);
         const checkInDate = parseDateOnly(virtualRes.start_date);
@@ -404,8 +427,23 @@ export default function StayHistory() {
         const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
         const matchesFamily = selectedFamilyGroup === "all" || virtualRes.family_group === selectedFamilyGroup;
         
+        console.log('[StayHistory] Final filter check:', {
+          id: virtualRes.id,
+          checkOutDate: checkOutDate.toISOString(),
+          isPast,
+          matchesYear,
+          matchesFamily,
+          virtualFamily: virtualRes.family_group,
+          selectedFamily: selectedFamilyGroup,
+          willInclude: isPast && matchesYear && matchesFamily
+        });
+        
         return isPast && matchesYear && matchesFamily;
       });
+    
+    console.log('[StayHistory] Final filtered count:', finalFiltered.length);
+    
+    return finalFiltered;
   };
 
   // Merge virtual split reservations with real reservations
