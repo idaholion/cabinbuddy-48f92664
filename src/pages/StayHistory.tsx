@@ -1221,13 +1221,20 @@ export default function StayHistory() {
               const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
               const newBalanceDue = payment.amount - newAmountPaid;
 
-              // Update the payment
+              console.log('[STAY-HISTORY] Recording payment:', {
+                paymentId: payment.id,
+                currentAmountPaid: payment.amount_paid,
+                paymentAmount: paymentData.amount,
+                newAmountPaid,
+                newBalanceDue
+              });
+
+              // Update the payment (balance_due is auto-calculated by database)
               const { error: updateError } = await supabase
                 .from('payments')
                 .update({
                   amount_paid: newAmountPaid,
-                  balance_due: newBalanceDue,
-                  status: newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending',
+                  status: (newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending') as any,
                   payment_method: paymentData.paymentMethod as any,
                   payment_reference: paymentData.paymentReference,
                   paid_date: newBalanceDue <= 0 ? paymentData.paidDate : payment.paid_date,
@@ -1235,7 +1242,12 @@ export default function StayHistory() {
                   updated_by_user_id: user?.id,
                   updated_at: new Date().toISOString()
                 })
-                .eq('id', recordPaymentStay.paymentId);
+                .eq('id', payment.id);
+
+              console.log('[STAY-HISTORY] Payment update result:', {
+                success: !updateError,
+                error: updateError
+              });
 
               if (updateError) throw updateError;
 

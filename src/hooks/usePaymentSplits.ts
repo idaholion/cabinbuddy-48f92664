@@ -121,8 +121,20 @@ export const usePaymentSplits = () => {
     notes?: string
   ) => {
     try {
+      console.log('[PAYMENT-SPLIT] Starting payment recording:', {
+        splitPaymentId,
+        amountPaid,
+        paymentMethod,
+        paymentReference
+      });
+
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        console.error('[PAYMENT-SPLIT] User not authenticated');
+        throw new Error("Not authenticated");
+      }
+
+      console.log('[PAYMENT-SPLIT] User authenticated:', user.id);
 
       // Get the current payment details
       const { data: payment, error: fetchError } = await supabase
@@ -131,27 +143,57 @@ export const usePaymentSplits = () => {
         .eq('id', splitPaymentId)
         .single();
 
-      if (fetchError) throw fetchError;
+      console.log('[PAYMENT-SPLIT] Payment fetch result:', {
+        hasPayment: !!payment,
+        error: fetchError,
+        currentAmountPaid: payment?.amount_paid,
+        totalAmount: payment?.amount
+      });
+
+      if (fetchError) {
+        console.error('[PAYMENT-SPLIT] Payment fetch error:', fetchError);
+        throw fetchError;
+      }
 
       const newAmountPaid = (payment.amount_paid || 0) + amountPaid;
       const newBalanceDue = payment.amount - newAmountPaid;
 
-      // Update the payment (balance_due is auto-calculated by database)
-      const { error: updateError } = await supabase
-        .from('payments')
-        .update({
-          amount_paid: newAmountPaid,
-          status: newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending',
-          payment_method: paymentMethod as any,
-          payment_reference: paymentReference,
-          paid_date: newBalanceDue <= 0 ? new Date().toISOString().split('T')[0] : payment.paid_date,
-          notes: notes || payment.notes,
-          updated_by_user_id: user.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', splitPaymentId);
+      console.log('[PAYMENT-SPLIT] Calculated values:', {
+        newAmountPaid,
+        newBalanceDue,
+        newStatus: newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending'
+      });
 
-      if (updateError) throw updateError;
+      // Update the payment (balance_due is auto-calculated by database)
+      const updateData = {
+        amount_paid: newAmountPaid,
+        status: (newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending') as any,
+        payment_method: paymentMethod as any,
+        payment_reference: paymentReference,
+        paid_date: newBalanceDue <= 0 ? new Date().toISOString().split('T')[0] : payment.paid_date,
+        notes: notes || payment.notes,
+        updated_by_user_id: user.id,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('[PAYMENT-SPLIT] Update data:', updateData);
+
+      const { data: updatedPayment, error: updateError } = await supabase
+        .from('payments')
+        .update(updateData)
+        .eq('id', splitPaymentId)
+        .select();
+
+      console.log('[PAYMENT-SPLIT] Update result:', {
+        success: !updateError,
+        error: updateError,
+        updatedPayment
+      });
+
+      if (updateError) {
+        console.error('[PAYMENT-SPLIT] Update error:', updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Payment Recorded",
