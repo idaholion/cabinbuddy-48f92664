@@ -336,13 +336,8 @@ export default function StayHistory() {
   const createVirtualReservationsFromSplits = () => {
     if (!user?.id) return [];
     
-    console.log('[StayHistory] createVirtualReservationsFromSplits called');
-    console.log('[StayHistory] Total payment splits:', paymentSplits.length);
-    console.log('[StayHistory] Selected family group:', selectedFamilyGroup);
-    console.log('[StayHistory] Is admin:', isAdmin, 'Is calendar keeper:', isCalendarKeeper);
-    
-    const afterFirstFilter = paymentSplits.filter(split => {
-      const shouldInclude = (() => {
+    return paymentSplits
+      .filter(split => {
         // Admins and Calendar Keepers see all splits in the organization
         if (isAdmin || isCalendarKeeper) {
           // If a specific family group is selected, filter to that group
@@ -353,51 +348,17 @@ export default function StayHistory() {
         }
         // Regular users only see splits where they are the recipient
         return split.split_to_user_id === user.id;
-      })();
-      
-      console.log('[StayHistory] Split filter result:', {
-        splitId: split.id,
-        splitToFamily: split.split_to_family_group,
-        selectedFamily: selectedFamilyGroup,
-        shouldInclude
-      });
-      
-      return shouldInclude;
-    });
-    
-    console.log('[StayHistory] After first filter:', afterFirstFilter.length);
-    
-    const afterDataValidation = afterFirstFilter.filter(split => {
-      const isValid = split.daily_occupancy_split && 
+      })
+      .filter(split => 
+        split.daily_occupancy_split && 
         Array.isArray(split.daily_occupancy_split) &&
         split.daily_occupancy_split.length > 0 &&
-        split.split_payment;
-      
-      console.log('[StayHistory] Data validation:', {
-        splitId: split.id,
-        hasDailyOccupancy: !!split.daily_occupancy_split,
-        isArray: Array.isArray(split.daily_occupancy_split),
-        length: split.daily_occupancy_split?.length,
-        hasPayment: !!split.split_payment,
-        isValid
-      });
-      
-      return isValid;
-    });
-    
-    console.log('[StayHistory] After data validation:', afterDataValidation.length);
-    
-    const mapped = afterDataValidation.map(split => {
+        split.split_payment
+      )
+      .map(split => {
         const days = split.daily_occupancy_split;
         const startDate = days[0]?.date;
         const endDate = days[days.length - 1]?.date;
-        
-        console.log('[StayHistory] Mapping split:', {
-          splitId: split.id,
-          startDate,
-          endDate,
-          familyGroup: split.split_to_family_group
-        });
         
         return {
           id: `split-${split.id}`,
@@ -415,11 +376,8 @@ export default function StayHistory() {
             dailyOccupancy: days
           }
         };
-      });
-    
-    console.log('[StayHistory] After mapping:', mapped.length);
-    
-    const finalFiltered = mapped.filter(virtualRes => {
+      })
+      .filter(virtualRes => {
         // Apply same filters as regular reservations
         const checkOutDate = parseDateOnly(virtualRes.end_date);
         const checkInDate = parseDateOnly(virtualRes.start_date);
@@ -427,23 +385,8 @@ export default function StayHistory() {
         const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
         const matchesFamily = selectedFamilyGroup === "all" || virtualRes.family_group === selectedFamilyGroup;
         
-        console.log('[StayHistory] Final filter check:', {
-          id: virtualRes.id,
-          checkOutDate: checkOutDate.toISOString(),
-          isPast,
-          matchesYear,
-          matchesFamily,
-          virtualFamily: virtualRes.family_group,
-          selectedFamily: selectedFamilyGroup,
-          willInclude: isPast && matchesYear && matchesFamily
-        });
-        
         return isPast && matchesYear && matchesFamily;
       });
-    
-    console.log('[StayHistory] Final filtered count:', finalFiltered.length);
-    
-    return finalFiltered;
   };
 
   // Merge virtual split reservations with real reservations
@@ -723,7 +666,7 @@ export default function StayHistory() {
     );
   }
 
-  if (!filteredReservations || filteredReservations.length === 0) {
+  if (!allReservations || allReservations.length === 0) {
     return (
       <div className="container mx-auto p-6 space-y-8">
         <div className="flex flex-col gap-4">
