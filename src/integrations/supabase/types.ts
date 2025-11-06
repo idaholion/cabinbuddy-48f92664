@@ -1028,33 +1028,51 @@ export type Database = {
       notification_log: {
         Row: {
           email_sent: boolean | null
+          email_status: string | null
           family_group: string
           id: string
           notification_type: string
           organization_id: string
+          recipient_email: string | null
+          recipient_phone: string | null
           reservation_period_id: string | null
           sent_at: string
+          sms_error: string | null
           sms_sent: boolean | null
+          sms_status: string | null
+          twilio_sid: string | null
         }
         Insert: {
           email_sent?: boolean | null
+          email_status?: string | null
           family_group: string
           id?: string
           notification_type: string
           organization_id: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
           reservation_period_id?: string | null
           sent_at?: string
+          sms_error?: string | null
           sms_sent?: boolean | null
+          sms_status?: string | null
+          twilio_sid?: string | null
         }
         Update: {
           email_sent?: boolean | null
+          email_status?: string | null
           family_group?: string
           id?: string
           notification_type?: string
           organization_id?: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
           reservation_period_id?: string | null
           sent_at?: string
+          sms_error?: string | null
           sms_sent?: boolean | null
+          sms_status?: string | null
+          twilio_sid?: string | null
         }
         Relationships: [
           {
