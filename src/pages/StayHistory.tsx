@@ -427,8 +427,11 @@ export default function StayHistory() {
       checkOutDate: checkOutDate.toISOString().split('T')[0]
     });
     
-    // First try to match by reservation_id
-    let payment = payments.find(p => p.reservation_id === reservation.id);
+    // Match payment by both reservation_id AND family_group for split reservations
+    let payment = payments.find(p => 
+      p.reservation_id === reservation.id && 
+      p.family_group === reservation.family_group
+    );
     
     if (payment) {
       console.log(`[StayHistory] ✓ Found payment by reservation_id:`, {
