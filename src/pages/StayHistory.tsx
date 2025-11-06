@@ -623,6 +623,64 @@ export default function StayHistory() {
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
+  // BACKWARD CREDIT CASCADE: Distribute overpayments from recent reservations to older ones
+  // Group reservations by family group for backward credit distribution
+  const reservationsByFamilyGroup = new Map<string, any[]>();
+  
+  for (const item of reservationsWithBalance) {
+    const familyGroup = item.reservation.family_group;
+    if (!reservationsByFamilyGroup.has(familyGroup)) {
+      reservationsByFamilyGroup.set(familyGroup, []);
+    }
+    reservationsByFamilyGroup.get(familyGroup)!.push(item);
+  }
+  
+  // For each family group, check if the most recent reservation has credit (negative amountDue)
+  for (const [familyGroup, groupReservations] of reservationsByFamilyGroup) {
+    // Sort by date (oldest first) to maintain chronological order
+    groupReservations.sort((a, b) => 
+      parseDateOnly(a.reservation.start_date).getTime() - parseDateOnly(b.reservation.start_date).getTime()
+    );
+    
+    // Find the most recent reservation (last in sorted array)
+    const mostRecentIndex = groupReservations.length - 1;
+    const mostRecent = groupReservations[mostRecentIndex];
+    
+    // Check if there's a credit (negative amountDue means overpayment)
+    if (mostRecent.stayData.amountDue < 0) {
+      let remainingCredit = Math.abs(mostRecent.stayData.amountDue);
+      console.log(`[CREDIT CASCADE] ${familyGroup} has credit of $${remainingCredit.toFixed(2)} from most recent reservation`);
+      
+      // Iterate backward from second-to-last reservation to first
+      for (let i = mostRecentIndex - 1; i >= 0 && remainingCredit > 0; i--) {
+        const olderItem = groupReservations[i];
+        
+        // Only apply credit if the older reservation has an amount due
+        if (olderItem.stayData.amountDue > 0) {
+          const creditToApply = Math.min(remainingCredit, olderItem.stayData.amountDue);
+          
+          console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${olderItem.reservation.start_date} reservation`);
+          
+          // Add credit tracking field
+          olderItem.stayData.creditFromFuturePayment = creditToApply;
+          
+          // Reduce the amount due by the applied credit
+          olderItem.stayData.amountDue -= creditToApply;
+          
+          // Reduce remaining credit
+          remainingCredit -= creditToApply;
+        }
+      }
+      
+      // Update the most recent reservation's amountDue to reflect distributed credit
+      // If all credit was distributed, amountDue should be 0
+      // If some credit remains, it stays negative
+      mostRecent.stayData.amountDue = remainingCredit > 0 ? -remainingCredit : 0;
+      
+      console.log(`[CREDIT CASCADE] ${familyGroup} credit cascade complete. Remaining credit: $${remainingCredit.toFixed(2)}`);
+    }
+  }
+  
   // Reverse to show most recent first in the UI
   const displayReservations = [...reservationsWithBalance].reverse();
 
@@ -976,12 +1034,23 @@ export default function StayHistory() {
                       <span className="text-muted-foreground">Amount Paid:</span>
                       <span className="font-medium">${stayData.amountPaid.toFixed(2)}</span>
                     </div>
+                    {stayData.creditFromFuturePayment && stayData.creditFromFuturePayment > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Credit from Future Payment:</span>
+                        <span className="font-medium text-green-600">-${stayData.creditFromFuturePayment.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm border-t pt-2">
                       <span className="font-semibold">Amount Due:</span>
                       <span className={`font-bold ${stayData.amountDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
                         ${stayData.amountDue.toFixed(2)}
                       </span>
                     </div>
+                    {stayData.creditFromFuturePayment && stayData.creditFromFuturePayment > 0 && stayData.amountDue === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Paid with credit from recent payment
+                      </p>
+                    )}
                   </div>
                 </div>
 
