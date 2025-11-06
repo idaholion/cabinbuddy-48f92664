@@ -970,13 +970,14 @@ export default function StayHistory() {
                       <span className="font-medium">${stayData.amountPaid.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm border-t pt-2">
-                      <span className="font-semibold">This Stay Balance:</span>
+                      <span className="font-semibold">Amount Due:</span>
                       <span className={`font-bold ${stayData.amountDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
                         ${stayData.amountDue.toFixed(2)}
                       </span>
                     </div>
-                    {stayData.previousBalance !== 0 && (
-                      <div className="flex justify-between text-sm bg-muted/50 -mx-3 px-3 py-2 rounded">
+                    {/* For virtual splits, show total balance due if there's a previous balance */}
+                    {reservation.isVirtualSplit && stayData.previousBalance !== 0 && (
+                      <div className="flex justify-between text-sm bg-muted/50 -mx-3 px-3 py-2 rounded mt-2">
                         <span className="font-bold">Total Balance Due:</span>
                         <span className={`font-bold text-lg ${(stayData.previousBalance + stayData.amountDue) > 0 ? 'text-destructive' : 'text-green-600'}`}>
                           ${(stayData.previousBalance + stayData.amountDue).toFixed(2)}
