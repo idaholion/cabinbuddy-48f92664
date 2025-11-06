@@ -568,7 +568,7 @@ export default function StayHistory() {
     // For virtual split reservations, use the user_id (which is set to split_to_user_id)
     if (reservation.isVirtualSplit) {
       const hostKey = reservation.user_id || 'unknown';
-      console.log(`[BALANCE DEBUG] Virtual Split ${reservation.id}: hostKey=${hostKey}, dates=${reservation.start_date} to ${reservation.end_date}`);
+      console.log(`[BALANCE DEBUG] Virtual Split ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
       return hostKey;
     }
     
@@ -576,11 +576,11 @@ export default function StayHistory() {
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
       const hostKey = primaryHost.host_email?.toLowerCase() || primaryHost.host_name || reservation.user_id || 'unknown';
-      console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, dates=${reservation.start_date} to ${reservation.end_date}`);
+      console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
       return hostKey;
     }
     // Fallback to user_id
-    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: using user_id=${reservation.user_id}, dates=${reservation.start_date} to ${reservation.end_date}`);
+    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: using user_id=${reservation.user_id}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
     return reservation.user_id || 'unknown';
   };
   
@@ -608,7 +608,7 @@ export default function StayHistory() {
     const isNewestInGroup = newestReservationByFamily.get(reservation.family_group) === reservation.id;
     const stayData = calculateStayData(reservation, previousBalance, isNewestInGroup);
     
-    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, previousBalance=${previousBalance.toFixed(2)}, currentBalance=${stayData.currentBalance.toFixed(2)}, amountDue=${stayData.amountDue.toFixed(2)}`);
+    console.log(`[BALANCE DEBUG] Processing: ${reservation.isVirtualSplit ? 'SPLIT' : 'REGULAR'} ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}, previousBalance=${previousBalance.toFixed(2)}, currentBalance=${stayData.currentBalance.toFixed(2)}, amountDue=${stayData.amountDue.toFixed(2)}, newRunningTotal=${(previousBalance + stayData.currentBalance).toFixed(2)}`);
     
     reservationsWithBalance.push({ reservation, stayData });
     
