@@ -369,6 +369,16 @@ export default function StayHistory() {
             dailyOccupancy: days
           }
         };
+      })
+      .filter(virtualRes => {
+        // Apply same filters as regular reservations
+        const checkOutDate = parseDateOnly(virtualRes.end_date);
+        const checkInDate = parseDateOnly(virtualRes.start_date);
+        const isPast = checkOutDate < new Date();
+        const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
+        const matchesFamily = selectedFamilyGroup === "all" || virtualRes.family_group === selectedFamilyGroup;
+        
+        return isPast && matchesYear && matchesFamily;
       });
   };
 
