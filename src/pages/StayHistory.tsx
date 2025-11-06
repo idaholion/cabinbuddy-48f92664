@@ -653,6 +653,11 @@ export default function StayHistory() {
         let remainingCredit = Math.abs(currentItem.stayData.currentBalance);
         const familyGroup = currentItem.reservation.family_group;
         
+        // Track credit distribution from this reservation
+        currentItem.stayData.creditDistributedToOlders = 0;
+        currentItem.stayData.totalPaymentAmount = currentItem.stayData.amountPaid;
+        currentItem.stayData.effectiveAmountPaid = currentItem.stayData.billingAmount;
+        
         console.log(`[CREDIT CASCADE] ${familyGroup} reservation on ${currentItem.reservation.start_date} has overpayment of $${remainingCredit.toFixed(2)}`);
         
         // Distribute this credit backward to older reservations
@@ -668,6 +673,9 @@ export default function StayHistory() {
             
             // Add credit tracking field
             olderItem.stayData.creditFromFuturePayment = (olderItem.stayData.creditFromFuturePayment || 0) + creditToApply;
+            
+            // Track total credit distributed from the current reservation
+            currentItem.stayData.creditDistributedToOlders! += creditToApply;
             
             // Reduce currentBalance by the applied credit
             olderItem.stayData.currentBalance -= creditToApply;
@@ -1046,23 +1054,45 @@ export default function StayHistory() {
                     )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Amount Paid:</span>
-                      <span className="font-medium">${stayData.amountPaid.toFixed(2)}</span>
+                      <span className="font-medium">
+                        ${(stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 
+                          ? stayData.effectiveAmountPaid || stayData.billingAmount 
+                          : stayData.amountPaid
+                        ).toFixed(2)}
+                      </span>
                     </div>
+                    {stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Total Payment Made:</span>
+                          <span className="font-medium">${(stayData.totalPaymentAmount || stayData.amountPaid).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Credit to Earlier Stays:</span>
+                          <span className="font-medium text-green-600">-${stayData.creditDistributedToOlders.toFixed(2)}</span>
+                        </div>
+                      </>
+                    )}
                     {stayData.creditFromFuturePayment && stayData.creditFromFuturePayment > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Credit from Future Payment:</span>
+                        <span className="text-muted-foreground">Credit from Later Payment:</span>
                         <span className="font-medium text-green-600">-${stayData.creditFromFuturePayment.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm border-t pt-2">
                       <span className="font-semibold">Amount Due:</span>
-                      <span className={`font-bold ${stayData.amountDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        ${stayData.amountDue.toFixed(2)}
+                      <span className={`font-bold ${((stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0) ? 0 : stayData.amountDue) > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                        ${(stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 ? 0 : stayData.amountDue).toFixed(2)}
                       </span>
                     </div>
                     {stayData.creditFromFuturePayment && stayData.creditFromFuturePayment > 0 && stayData.amountDue === 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Paid with credit from recent payment
+                        Paid with credit from later payment
+                      </p>
+                    )}
+                    {stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Payment covered this stay plus {Math.floor(stayData.creditDistributedToOlders / stayData.billingAmount)} earlier stay(s)
                       </p>
                     )}
                   </div>
