@@ -669,19 +669,29 @@ export default function StayHistory() {
             // Add credit tracking field
             olderItem.stayData.creditFromFuturePayment = (olderItem.stayData.creditFromFuturePayment || 0) + creditToApply;
             
-            // Reduce both currentBalance and amountDue by the applied credit
+            // Reduce currentBalance by the applied credit
             olderItem.stayData.currentBalance -= creditToApply;
-            olderItem.stayData.amountDue -= creditToApply;
             
             // Reduce remaining credit
             remainingCredit -= creditToApply;
             
-            console.log(`[CREDIT CASCADE] After credit: ${olderItem.reservation.start_date} currentBalance=$${olderItem.stayData.currentBalance.toFixed(2)}, amountDue=$${olderItem.stayData.amountDue.toFixed(2)}`);
+            console.log(`[CREDIT CASCADE] After credit: ${olderItem.reservation.start_date} currentBalance=$${olderItem.stayData.currentBalance.toFixed(2)}`);
           }
         }
         
         console.log(`[CREDIT CASCADE] Credit cascade complete for ${currentItem.reservation.start_date}. Unused credit: $${remainingCredit.toFixed(2)}`);
       }
+    }
+    
+    // RECALCULATE running balances after credits have been applied
+    // This ensures previousBalance flows correctly through the chain
+    let runningBalance = 0;
+    for (const item of hostReservations) {
+      item.stayData.previousBalance = runningBalance;
+      item.stayData.amountDue = item.stayData.currentBalance + runningBalance;
+      runningBalance += item.stayData.currentBalance;
+      
+      console.log(`[RECALC] ${item.reservation.start_date}: previousBalance=$${item.stayData.previousBalance.toFixed(2)}, currentBalance=$${item.stayData.currentBalance.toFixed(2)}, amountDue=$${item.stayData.amountDue.toFixed(2)}, runningBalance=$${runningBalance.toFixed(2)}`);
     }
   }
   
