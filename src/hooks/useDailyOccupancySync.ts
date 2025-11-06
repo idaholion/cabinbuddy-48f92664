@@ -407,10 +407,9 @@ export const useDailyOccupancySync = (organizationId: string) => {
         updated_at: new Date().toISOString(),
       };
 
-      // Only update amount if not locked
+      // Only update amount if not locked (balance_due is auto-calculated by database)
       if (!sourceLocked) {
         paymentUpdates.amount = newAmount;
-        paymentUpdates.balance_due = newBalanceDue;
         paymentUpdates.status = newBalanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
       }
 
