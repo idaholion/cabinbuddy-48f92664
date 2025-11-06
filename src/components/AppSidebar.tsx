@@ -30,7 +30,10 @@ import {
   Database,
   HelpCircle,
   FileCode,
-  Bell
+  Bell,
+  AlertCircle,
+  BookOpen,
+  ListChecks
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -76,16 +79,6 @@ const setupItems = [
     title: "Use Fee Setup",
     url: "/use-fee-setup",
     icon: DollarSign,
-  },
-  {
-    title: "Financial Dashboard",
-    url: "/finance-reports",
-    icon: DollarSign,
-  },
-  {
-    title: "Billing & Invoices",
-    url: "/billing",
-    icon: Receipt,
   },
   {
     title: "Reservation Setup",
@@ -170,14 +163,39 @@ const helpItems = [
 
 const adminItems = [
   {
-    title: "Notification Monitoring",
-    url: "/notification-monitoring",
-    icon: Bell,
+    title: "Financial Dashboard",
+    url: "/finance-reports",
+    icon: DollarSign,
+  },
+  {
+    title: "Billing & Invoices",
+    url: "/billing",
+    icon: Receipt,
+  },
+  {
+    title: "Invoice Settings",
+    url: "/invoice-settings",
+    icon: FileText,
   },
   {
     title: "Financial Admin Tools",
     url: "/financial-admin-tools",
     icon: Settings,
+  },
+  {
+    title: "Google Calendar Setup",
+    url: "/google-calendar-setup",
+    icon: Calendar,
+  },
+  {
+    title: "Family Group Health Check",
+    url: "/family-group-health-check",
+    icon: AlertCircle,
+  },
+  {
+    title: "Notification Monitoring",
+    url: "/notification-monitoring",
+    icon: Bell,
   },
   {
     title: "Data Backup",
@@ -187,17 +205,17 @@ const adminItems = [
   {
     title: "Checklist Creator",
     url: "/checklist-creator",
-    icon: Plus,
+    icon: ListChecks,
   },
   {
     title: "FAQ Management",
     url: "/faq-management",
-    icon: Settings,
+    icon: HelpCircle,
   },
   {
     title: "Admin Documentation",
     url: "/admin-documentation",
-    icon: FileCode,
+    icon: BookOpen,
   },
 ];
 
@@ -532,10 +550,6 @@ export function AppSidebar() {
                     }
                     if (item.title === "Family Group Setup") {
                       return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Show during setup flow
-                    }
-                    if (item.title === "Financial Dashboard") {
-                      // Show Financial Dashboard to: admin/treasurer always, OR all members if enabled by admin
-                      return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow;
                     }
                     return isAdmin || isAnyGroupLead || canAccessSupervisorFeatures || isOnSetupFlow; // Default: show during setup
                   })

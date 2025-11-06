@@ -140,7 +140,7 @@ const AppContent = () => {
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/data-backup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/data-backup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></AdminTreasurerRoute>} />
         
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         
