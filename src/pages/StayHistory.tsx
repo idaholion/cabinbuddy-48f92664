@@ -409,7 +409,7 @@ export default function StayHistory() {
         billingAmount: Number(splitPayment.amount) || 0,
         amountPaid: Number(splitPayment.amount_paid) || 0,
         currentBalance: Number(splitPayment.balance_due) || 0,
-        previousBalance: 0,
+        previousBalance: previousBalance,
         amountDue: Number(splitPayment.balance_due) || 0,
         billingMethod: "Guest cost split",
         paymentId: splitPayment.id,
