@@ -232,6 +232,7 @@ export default function StayHistory() {
       const success = await deleteReservation(reservationId);
       if (success) {
         await fetchPayments();
+        await fetchPaymentSplits();
         toast.success("Stay deleted successfully");
       }
     } catch (error) {
