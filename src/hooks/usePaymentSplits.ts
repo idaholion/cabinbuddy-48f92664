@@ -136,12 +136,11 @@ export const usePaymentSplits = () => {
       const newAmountPaid = (payment.amount_paid || 0) + amountPaid;
       const newBalanceDue = payment.amount - newAmountPaid;
 
-      // Update the payment
+      // Update the payment (balance_due is auto-calculated by database)
       const { error: updateError } = await supabase
         .from('payments')
         .update({
           amount_paid: newAmountPaid,
-          balance_due: newBalanceDue,
           status: newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending',
           payment_method: paymentMethod as any,
           payment_reference: paymentReference,
