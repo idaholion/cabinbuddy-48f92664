@@ -612,13 +612,17 @@ export default function StayHistory() {
   // Reverse to show most recent first in the UI
   const displayReservations = [...reservationsWithBalance].reverse();
 
-  // Calculate summary stats
-  const totalStays = filteredReservations.length;
-  const totalNights = filteredReservations.reduce((sum, res) => {
+  // Calculate summary stats (including virtual split reservations)
+  const totalStays = allReservations.length;
+  const totalNights = allReservations.reduce((sum, res) => {
+    if (res.isVirtualSplit) {
+      // For virtual splits, count the days in daily occupancy
+      return sum + (res.splitData?.dailyOccupancy?.length || 0);
+    }
     const nights = differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
     return sum + nights;
   }, 0);
-  const totalPaid = filteredReservations.reduce((sum, res) => {
+  const totalPaid = allReservations.reduce((sum, res) => {
     const stayData = calculateStayData(res);
     return sum + stayData.amountPaid;
   }, 0);
