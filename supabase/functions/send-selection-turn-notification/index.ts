@@ -78,14 +78,48 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Family group not found: ${family_group}`);
     }
 
-    // Get reservation period details
-    const { data: periodData } = await supabase
-      .from('reservation_periods')
-      .select('selection_start_date, selection_end_date')
-      .eq('organization_id', organization_id)
-      .eq('rotation_year', rotation_year)
-      .eq('current_family_group', family_group)
-      .maybeSingle();
+    // Get selection dates based on phase
+    let selectionStartDate = '';
+    let selectionEndDate = '';
+    
+    if (isSecondaryPhase) {
+      // For secondary phase, calculate dates dynamically from started_at
+      const { data: secondaryData } = await supabase
+        .from('secondary_selection_status')
+        .select('started_at')
+        .eq('organization_id', organization_id)
+        .eq('rotation_year', rotation_year)
+        .eq('current_family_group', family_group)
+        .maybeSingle();
+      
+      const { data: rotationData } = await supabase
+        .from('rotation_orders')
+        .select('secondary_selection_days')
+        .eq('organization_id', organization_id)
+        .eq('rotation_year', rotation_year)
+        .maybeSingle();
+      
+      if (secondaryData?.started_at && rotationData?.secondary_selection_days) {
+        const startDate = new Date(secondaryData.started_at);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + rotationData.secondary_selection_days);
+        
+        selectionStartDate = startDate.toISOString().split('T')[0];
+        selectionEndDate = endDate.toISOString().split('T')[0];
+      }
+    } else {
+      // For primary phase, use reservation_periods (which are dynamically updated)
+      const { data: periodData } = await supabase
+        .from('reservation_periods')
+        .select('selection_start_date, selection_end_date')
+        .eq('organization_id', organization_id)
+        .eq('rotation_year', rotation_year)
+        .eq('current_family_group', family_group)
+        .maybeSingle();
+      
+      selectionStartDate = periodData?.selection_start_date || '';
+      selectionEndDate = periodData?.selection_end_date || '';
+    }
 
     // Get time period usage to calculate available periods
     const { data: periodUsageData } = await supabase
@@ -121,8 +155,8 @@ const handler = async (req: Request): Promise<Response> => {
         guest_name: familyData.lead_name || familyData.name,
         guest_phone: familyData.lead_phone,
         selection_year: rotation_year.toString(),
-        selection_start_date: periodData?.selection_start_date || '',
-        selection_end_date: periodData?.selection_end_date || '',
+        selection_start_date: selectionStartDate,
+        selection_end_date: selectionEndDate,
         available_periods: `${periodsRemaining} of ${periodsAllowed} periods remaining`,
         selection_window: selectionWeeks,
         max_periods: maxPeriods,
