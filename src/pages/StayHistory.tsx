@@ -529,6 +529,7 @@ export default function StayHistory() {
     let amountPaid = 0;
     let billingMethod = "Not calculated";
     let dailyOccupancy: any[] = [];
+    let manualAdjustment = 0;
 
     if (payment) {
       billingAmount = Number(payment.amount) || 0;
@@ -536,12 +537,14 @@ export default function StayHistory() {
       // Cast to any to access potential extra fields
       const paymentAny = payment as any;
       dailyOccupancy = paymentAny.daily_occupancy || [];
+      manualAdjustment = paymentAny.manual_adjustment_amount || 0;
       billingMethod = dailyOccupancy.length > 0 
         ? "Daily occupancy" 
         : "Session-based";
     }
 
-    const currentBalance = billingAmount - amountPaid - receiptsTotal;
+    // Include manual adjustment in balance calculation
+    const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
     return {
@@ -557,7 +560,7 @@ export default function StayHistory() {
       paymentId: payment?.id,
       paymentStatus: payment?.status,
       dailyOccupancy,
-      manualAdjustment: (payment as any)?.manual_adjustment_amount || 0,
+      manualAdjustment,
       adjustmentNotes: (payment as any)?.adjustment_notes,
       billingLocked: (payment as any)?.billing_locked,
       creditAppliedToFuture: (payment as any)?.credit_applied_to_future || false,
@@ -1193,7 +1196,7 @@ export default function StayHistory() {
                       onClick={() => setAdjustBillingStay({
                         ...reservation,
                         paymentId: stayData.paymentId,
-                        calculatedAmount: stayData.billingAmount,
+                        calculatedAmount: stayData.billingAmount - stayData.manualAdjustment,
                         manualAdjustment: stayData.manualAdjustment,
                         adjustmentNotes: stayData.adjustmentNotes,
                         billingLocked: stayData.billingLocked

@@ -188,7 +188,10 @@ export const useDailyOccupancySync = (organizationId: string) => {
               dailyOccupancyRecord,
               { startDate: parseDateOnly(reservation.start_date), endDate: parseDateOnly(reservation.end_date) }
             );
-            updates.amount = billing.total;
+            
+            // Preserve manual adjustment when recalculating
+            const manualAdjustment = (payment as any).manual_adjustment_amount || 0;
+            updates.amount = billing.total + manualAdjustment;
           }
 
           const { error: updateError } = await supabase
