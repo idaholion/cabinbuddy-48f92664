@@ -21,7 +21,7 @@ import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
-import { PaymentReceiptDialog } from "@/components/PaymentReceiptDialog";
+import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 
@@ -38,7 +38,7 @@ export default function StayHistory() {
   const [adjustBillingStay, setAdjustBillingStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [splitCostStay, setSplitCostStay] = useState<any>(null);
-  const [viewReceiptPayment, setViewReceiptPayment] = useState<any>(null);
+  const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   
 
@@ -1245,14 +1245,18 @@ export default function StayHistory() {
                        Split Costs
                      </Button>
                    )}
-                   {stayData.paymentId && stayData.amountPaid > 0 && (
+                   {stayData.paymentId && (
                      <Button
                        variant="outline"
                        size="sm"
-                       onClick={() => setViewReceiptPayment(stayData)}
+                       onClick={() => setViewPaymentHistory({
+                         paymentId: stayData.paymentId,
+                         familyGroup: reservation.family_group,
+                         totalAmount: stayData.billingAmount + stayData.manualAdjustment
+                       })}
                      >
                        <Receipt className="h-4 w-4 mr-2" />
-                       View Receipt
+                       Payment History
                      </Button>
                    )}
                    {canDeleteStays && (
@@ -1408,18 +1412,17 @@ export default function StayHistory() {
         />
       )}
 
-      {viewReceiptPayment && (
-        <PaymentReceiptDialog
-          open={!!viewReceiptPayment}
-          onOpenChange={(open) => !open && setViewReceiptPayment(null)}
-          payment={{
-            id: viewReceiptPayment.paymentId,
-            amount: viewReceiptPayment.billingAmount,
-            amount_paid: viewReceiptPayment.amountPaid,
-            family_group: viewReceiptPayment.family_group || "",
-            description: "Stay payment"
+      {viewPaymentHistory && (
+        <PaymentHistoryDialog
+          open={!!viewPaymentHistory}
+          onOpenChange={(open) => !open && setViewPaymentHistory(null)}
+          paymentId={viewPaymentHistory.paymentId}
+          familyGroup={viewPaymentHistory.familyGroup}
+          totalAmount={viewPaymentHistory.totalAmount}
+          onPaymentUpdated={async () => {
+            const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+            await fetchPayments(1, 50, yearFilter);
           }}
-          isTestMode={false}
         />
       )}
 
