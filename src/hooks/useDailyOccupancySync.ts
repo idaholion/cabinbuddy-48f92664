@@ -192,6 +192,7 @@ export const useDailyOccupancySync = (organizationId: string) => {
             // Preserve manual adjustment when recalculating
             const manualAdjustment = (payment as any).manual_adjustment_amount || 0;
             updates.amount = billing.total + manualAdjustment;
+            updates.manual_adjustment_amount = manualAdjustment;
           }
 
           const { error: updateError } = await supabase
