@@ -1160,7 +1160,11 @@ export default function StayHistory() {
                         reservationId: reservation.isVirtualSplit ? null : reservation.id,
                         splitId: reservation.isVirtualSplit ? reservation.splitData?.splitId : undefined,
                         splitPaymentId: reservation.isVirtualSplit ? reservation.splitData?.payment?.id : undefined,
-                        dailyOccupancy: stayData.dailyOccupancy
+                        dailyOccupancy: stayData.dailyOccupancy,
+                        paymentId: stayData.paymentId,
+                        billingAmount: stayData.billingAmount,
+                        user_id: reservation.user_id,
+                        organization_id: reservation.organization_id
                       })}
                     >
                       <Edit className="h-4 w-4 mr-2" />
@@ -1181,24 +1185,6 @@ export default function StayHistory() {
                          Record Payment
                        </Button>
                      )}
-                    {stayData.paymentId && isUserReservationOwner(reservation) && !reservation.isVirtualSplit && stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditOccupancyStay({
-                          ...reservation,
-                          paymentId: stayData.paymentId,
-                          dailyOccupancy: stayData.dailyOccupancy,
-                          billingAmount: stayData.billingAmount,
-                          user_id: reservation.user_id,
-                          organization_id: reservation.organization_id,
-                          enableSplit: true // Flag to enable split mode
-                        })}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Split Costs
-                      </Button>
-                    )}
                    {stayData.paymentId && (
                      <Button
                        variant="outline"
@@ -1266,13 +1252,13 @@ export default function StayHistory() {
           organizationId={organization.id}
           splitId={editOccupancyStay.splitId}
           splitPaymentId={editOccupancyStay.splitPaymentId}
-          sourceUserId={editOccupancyStay.enableSplit && user ? user.id : undefined}
-          dailyBreakdown={editOccupancyStay.enableSplit ? editOccupancyStay.dailyOccupancy?.map((d: any) => ({
+          sourceUserId={user?.id}
+          dailyBreakdown={editOccupancyStay.dailyOccupancy?.map((d: any) => ({
             date: d.date,
             guests: d.guests || 0,
             cost: d.cost || 0
-          })) : undefined}
-          totalAmount={editOccupancyStay.enableSplit ? editOccupancyStay.billingAmount || 0 : undefined}
+          }))}
+          totalAmount={editOccupancyStay.billingAmount || 0}
           onSplitCreated={() => {
             const yearFilter = selectedYear === 0 ? undefined : selectedYear;
             fetchPayments(1, 50, yearFilter);

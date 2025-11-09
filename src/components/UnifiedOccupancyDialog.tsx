@@ -392,7 +392,7 @@ export const UnifiedOccupancyDialog = ({
     return { sourceTotal, users: updatedUsers, perDiem };
   }, [mode, dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers, occupancy]);
 
-  const canSplit = sourceUserId && dailyBreakdown && totalAmount > 0;
+  const canSplit = sourceUserId && dailyBreakdown && dailyBreakdown.length > 0 && totalAmount > 0 && stay.reservationId && !isSplit;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
