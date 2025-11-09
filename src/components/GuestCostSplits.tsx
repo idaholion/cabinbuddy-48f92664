@@ -15,15 +15,17 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { SplitDetailsDialog } from "@/components/SplitDetailsDialog";
+import { EditSplitOccupancyDialog } from "@/components/EditSplitOccupancyDialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, Users, Calendar, Info, ArrowRight, ArrowLeft, Eye, Trash2 } from "lucide-react";
+import { DollarSign, Users, Calendar, Info, ArrowRight, ArrowLeft, Eye, Trash2, Edit } from "lucide-react";
 
 export const GuestCostSplits = () => {
   const { splits, loading, recordSplitPayment, deleteSplit } = usePaymentSplits();
   const { isAdmin } = useUserRole();
   const [selectedSplit, setSelectedSplit] = useState<string | null>(null);
   const [viewDetailsSplitId, setViewDetailsSplitId] = useState<string | null>(null);
+  const [editSplitId, setEditSplitId] = useState<string | null>(null);
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("check");
@@ -205,6 +207,16 @@ export const GuestCostSplits = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+
+                        {(isSent || isAdmin) && (split.split_payment?.amount_paid || 0) === 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditSplitId(split.id)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                         
                         {!isSent && (split.split_payment?.balance_due || 0) > 0 && (
                           <Dialog open={recordDialogOpen && selectedSplit === split.id} onOpenChange={(open) => {
@@ -373,6 +385,12 @@ export const GuestCostSplits = () => {
         open={!!viewDetailsSplitId}
         onOpenChange={(open) => !open && setViewDetailsSplitId(null)}
         splitId={viewDetailsSplitId}
+      />
+      
+      <EditSplitOccupancyDialog
+        open={!!editSplitId}
+        onOpenChange={(open) => !open && setEditSplitId(null)}
+        splitId={editSplitId}
       />
       
       {/* Summary Cards */}
