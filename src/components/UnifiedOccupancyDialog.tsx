@@ -96,6 +96,8 @@ export const UnifiedOccupancyDialog = ({
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
   const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
+  const [perDiem, setPerDiem] = useState<number>(0);
+  const [billingConfig, setBillingConfig] = useState<any>(null);
 
   useEffect(() => {
     if (open && stay.reservationId) {
@@ -107,8 +109,45 @@ export const UnifiedOccupancyDialog = ({
     if (open && mode === "split") {
       fetchUsers();
       initializeSourceGuests();
+      fetchBillingConfig();
     }
   }, [open, mode]);
+
+  const fetchBillingConfig = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reservation_settings')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching billing config:', error);
+        return;
+      }
+
+      if (data) {
+        setBillingConfig({
+          method: data.financial_method || 'per-person-per-day',
+          amount: data.nightly_rate || 0,
+          taxRate: data.tax_rate || 0,
+          cleaningFee: data.cleaning_fee || 0,
+          petFee: data.pet_fee || 0,
+          damageDeposit: data.damage_deposit || 0,
+        });
+
+        // Calculate per-diem rate based on billing method
+        if (data.financial_method === 'per-person-per-day') {
+          setPerDiem(data.nightly_rate || 0);
+        } else {
+          // For other methods, we'll need to calculate per-diem differently
+          setPerDiem(data.nightly_rate || 0);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching billing config:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     if (!sourceUserId) return;
@@ -170,12 +209,36 @@ export const UnifiedOccupancyDialog = ({
     setUsers(filteredUsers);
   };
 
+  const generateEmptyOccupancy = (): DailyOccupancy[] => {
+    const dates: DailyOccupancy[] = [];
+    const current = new Date(stay.startDate);
+    const end = new Date(addDays(stay.endDate, -1));
+    
+    while (current <= end) {
+      dates.push({
+        date: format(current, 'yyyy-MM-dd'),
+        guests: 0,
+      });
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  };
+
   const initializeSourceGuests = () => {
     const initial: Record<string, number> = {};
-    occupancy.forEach(occ => {
-      initial[occ.date] = occ.guests;
+    
+    // If we have existing occupancy data, use it; otherwise initialize to 0
+    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
+    
+    dataSource.forEach(occ => {
+      initial[occ.date] = 0; // Start with 0 for split mode
     });
     setSourceDailyGuests(initial);
+    
+    // If no occupancy data exists, initialize occupancy with empty data
+    if (occupancy.length === 0) {
+      setOccupancy(generateEmptyOccupancy());
+    }
   };
 
   // Simple mode handlers
@@ -206,7 +269,9 @@ export const UnifiedOccupancyDialog = ({
   const handleUserToggle = (user: OrgUser, checked: boolean) => {
     if (checked) {
       const initialGuests: Record<string, number> = {};
-      occupancy.forEach(occ => {
+      const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
+      
+      dataSource.forEach(occ => {
         initialGuests[occ.date] = 0;
       });
       
@@ -246,6 +311,19 @@ export const UnifiedOccupancyDialog = ({
       return false;
     }
 
+    // Check that at least one day has guest counts > 0
+    const hasAnyGuests = Object.values(sourceDailyGuests).some(guests => guests > 0) ||
+      selectedUsers.some(user => Object.values(user.dailyGuests).some(guests => guests > 0));
+    
+    if (!hasAnyGuests) {
+      toast({
+        title: 'No Guest Counts',
+        description: 'Please enter at least one guest count before creating the split',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     const hasInvalidUser = calculatedUsers.some(user => user.totalAmount <= 0);
     
     if (hasInvalidUser) {
@@ -255,21 +333,6 @@ export const UnifiedOccupancyDialog = ({
         variant: 'destructive',
       });
       return false;
-    }
-
-    for (const day of occupancy) {
-      const sourceGuests = sourceDailyGuests[day.date] || 0;
-      const otherGuests = selectedUsers.reduce((sum, u) => sum + (u.dailyGuests[day.date] || 0), 0);
-      const total = sourceGuests + otherGuests;
-      
-      if (Math.abs(total - day.guests) > 0.01) {
-        toast({
-          title: 'Guest Count Mismatch',
-          description: `On ${parseDateOnly(day.date).toLocaleDateString()}, total guests don't match (${total} vs ${day.guests})`,
-          variant: 'destructive',
-        });
-        return false;
-      }
     }
 
     return true;
@@ -373,37 +436,34 @@ export const UnifiedOccupancyDialog = ({
   };
 
   // Calculate costs for split mode
-  const { sourceTotal, users: calculatedUsers, perDiem } = useMemo(() => {
-    if (mode !== "split" || !dailyBreakdown || totalAmount === 0) {
-      return { sourceTotal: 0, users: [], perDiem: 0 };
+  const { sourceTotal, users: calculatedUsers } = useMemo(() => {
+    if (mode !== "split" || perDiem === 0) {
+      return { sourceTotal: 0, users: [] };
     }
 
-    const totalGuestNights = dailyBreakdown.reduce((sum, d) => sum + d.guests, 0);
-    const perDiem = totalGuestNights > 0 ? totalAmount / totalGuestNights : 0;
+    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
 
-    const sourceTotal = occupancy.reduce((sum, day) => {
+    const sourceTotal = dataSource.reduce((sum, day) => {
       return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
     }, 0);
 
     const updatedUsers = selectedUsers.map(user => {
-      const userTotal = occupancy.reduce((sum, day) => {
+      const userTotal = dataSource.reduce((sum, day) => {
         return sum + (user.dailyGuests[day.date] || 0) * perDiem;
       }, 0);
       return { ...user, totalAmount: userTotal };
     });
 
-    return { sourceTotal, users: updatedUsers, perDiem };
-  }, [mode, dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers, occupancy]);
+    return { sourceTotal, users: updatedUsers };
+  }, [mode, perDiem, sourceDailyGuests, selectedUsers, occupancy]);
 
-  const canSplit = sourceUserId && dailyBreakdown && dailyBreakdown.length > 0 && totalAmount > 0 && stay.reservationId && !isSplit;
+  const canSplit = sourceUserId && stay.reservationId && !isSplit;
   
   // Get reason why split is disabled
   const getSplitDisabledReason = () => {
     if (isSplit) return "This is already a split reservation";
     if (!stay.reservationId) return "No reservation ID available";
     if (!sourceUserId) return "User information not available";
-    if (!dailyBreakdown || dailyBreakdown.length === 0) return "No occupancy data available";
-    if (totalAmount <= 0) return "No payment recorded for this stay";
     return "";
   };
 
@@ -488,15 +548,6 @@ export const UnifiedOccupancyDialog = ({
             </TooltipProvider>
           </TabsList>
 
-          {!canSplit && (
-            <Alert className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Split Costs is not available:</strong> {getSplitDisabledReason()}
-              </AlertDescription>
-            </Alert>
-          )}
-
           <TabsContent value="simple" className="space-y-4">
             <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
               <span className="text-sm font-medium">Quick Fill:</span>
@@ -570,7 +621,7 @@ export const UnifiedOccupancyDialog = ({
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Assign guest counts for each person each day. Total must match the occupancy for each day.
+                    Enter guest counts for each person for each day. The system will calculate costs based on ${perDiem.toFixed(2)} per guest per night.
                   </AlertDescription>
                 </Alert>
 
@@ -590,16 +641,15 @@ export const UnifiedOccupancyDialog = ({
                               </div>
                             </th>
                           ))}
-                          <th className="text-right p-3 font-bold">Total</th>
+                          <th className="text-right p-3 font-bold">Total Guests</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {occupancy.map(day => {
+                        {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
                           const sourceGuests = sourceDailyGuests[day.date] || 0;
                           const otherGuests = selectedUsers.reduce((sum, u) => 
                             sum + (u.dailyGuests[day.date] || 0), 0);
                           const dayTotal = sourceGuests + otherGuests;
-                          const isValid = Math.abs(dayTotal - day.guests) < 0.01;
                           
                           return (
                             <tr key={day.date} className="border-t">
@@ -610,7 +660,6 @@ export const UnifiedOccupancyDialog = ({
                                 <Input
                                   type="number"
                                   min="0"
-                                  max={day.guests}
                                   value={sourceGuests}
                                   onChange={(e) => handleSplitGuestCountChange(day.date, 'source', e.target.value)}
                                   className="w-20 ml-auto"
@@ -621,15 +670,14 @@ export const UnifiedOccupancyDialog = ({
                                   <Input
                                     type="number"
                                     min="0"
-                                    max={day.guests}
                                     value={user.dailyGuests[day.date] || 0}
                                     onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
                                     className="w-20 ml-auto"
                                   />
                                 </td>
                               ))}
-                              <td className={`text-right p-3 font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
-                                {dayTotal} / {day.guests}
+                              <td className="text-right p-3 font-semibold text-muted-foreground">
+                                {dayTotal} guests
                               </td>
                             </tr>
                           );
@@ -647,6 +695,9 @@ export const UnifiedOccupancyDialog = ({
                     <div className="text-xl font-bold text-primary">
                       {BillingCalculator.formatCurrency(sourceTotal)}
                     </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {Object.values(sourceDailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
+                    </div>
                   </div>
                   {calculatedUsers.map(user => (
                     <div key={user.userId}>
@@ -655,6 +706,9 @@ export const UnifiedOccupancyDialog = ({
                       </div>
                       <div className="text-xl font-bold text-green-600">
                         {BillingCalculator.formatCurrency(user.totalAmount)}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {Object.values(user.dailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
                       </div>
                     </div>
                   ))}
