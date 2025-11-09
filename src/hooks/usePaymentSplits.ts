@@ -213,6 +213,53 @@ export const usePaymentSplits = () => {
     }
   };
 
+  const updateSplitOccupancy = async (
+    splitId: string,
+    sourceOccupancy: { [date: string]: number },
+    recipientOccupancy: { [date: string]: number },
+    perDiem: number
+  ) => {
+    try {
+      console.log('[PAYMENT-SPLIT] Updating split occupancy:', {
+        splitId,
+        sourceOccupancy,
+        recipientOccupancy,
+        perDiem
+      });
+
+      const { data, error } = await supabase.functions.invoke('update-split-occupancy', {
+        body: {
+          splitId,
+          sourceOccupancy,
+          recipientOccupancy,
+          perDiem,
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to update split occupancy');
+      }
+
+      toast({
+        title: "Split Updated",
+        description: "Guest cost split occupancy has been updated successfully.",
+      });
+
+      await fetchSplits();
+      return true;
+    } catch (error: any) {
+      console.error('Error updating split occupancy:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update split. Please try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const deleteSplit = async (splitId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -221,6 +268,11 @@ export const usePaymentSplits = () => {
       // Find the split
       const split = splits.find(s => s.id === splitId);
       if (!split) throw new Error("Split not found");
+
+      // Check if recipient has made any payments
+      if (split.split_payment && split.split_payment.amount_paid > 0) {
+        throw new Error("Cannot delete split after recipient has made payments");
+      }
 
       // Delete the split payment (this will cascade to delete the split record)
       const { error: splitPaymentError } = await supabase
@@ -249,7 +301,7 @@ export const usePaymentSplits = () => {
       console.error('Error deleting split:', error);
       toast({
         title: "Error",
-        description: "Failed to delete split. Please try again.",
+        description: error.message || "Failed to delete split. Please try again.",
         variant: "destructive",
       });
       return false;
@@ -265,6 +317,7 @@ export const usePaymentSplits = () => {
     loading,
     refetch: fetchSplits,
     recordSplitPayment,
+    updateSplitOccupancy,
     deleteSplit,
   };
 };

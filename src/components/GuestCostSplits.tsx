@@ -13,20 +13,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { SplitDetailsDialog } from "@/components/SplitDetailsDialog";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, Users, Calendar, Info, ArrowRight, ArrowLeft } from "lucide-react";
+import { DollarSign, Users, Calendar, Info, ArrowRight, ArrowLeft, Eye, Trash2 } from "lucide-react";
 
 export const GuestCostSplits = () => {
-  const { splits, loading, recordSplitPayment } = usePaymentSplits();
+  const { splits, loading, recordSplitPayment, deleteSplit } = usePaymentSplits();
   const { isAdmin } = useUserRole();
   const [selectedSplit, setSelectedSplit] = useState<string | null>(null);
+  const [viewDetailsSplitId, setViewDetailsSplitId] = useState<string | null>(null);
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<string>("check");
   const [paymentReference, setPaymentReference] = useState("");
   const [notes, setNotes] = useState("");
   const [recording, setRecording] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Get current user ID
@@ -96,6 +100,13 @@ export const GuestCostSplits = () => {
       setSelectedSplit(null);
     }
     setRecording(false);
+  };
+
+  const handleDeleteSplit = async (splitId: string) => {
+    setDeleting(true);
+    const success = await deleteSplit(splitId);
+    setDeleting(false);
+    return success;
   };
 
   if (loading) {
@@ -186,8 +197,17 @@ export const GuestCostSplits = () => {
                       {getStatusBadge(split.split_payment?.status || 'pending')}
                     </TableCell>
                     <TableCell className="text-right">
-                      {!isSent && (split.split_payment?.balance_due || 0) > 0 && (
-                        <Dialog open={recordDialogOpen && selectedSplit === split.id} onOpenChange={(open) => {
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setViewDetailsSplitId(split.id)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        
+                        {!isSent && (split.split_payment?.balance_due || 0) > 0 && (
+                          <Dialog open={recordDialogOpen && selectedSplit === split.id} onOpenChange={(open) => {
                           setRecordDialogOpen(open);
                           if (!open) setSelectedSplit(null);
                         }}>
@@ -276,7 +296,28 @@ export const GuestCostSplits = () => {
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                      )}
+                        )}
+
+                        {(isSent || isAdmin) && (split.split_payment?.amount_paid || 0) === 0 && (
+                          <ConfirmationDialog
+                            title="Delete Split"
+                            description="Are you sure you want to delete this guest cost split? This will remove both the source and recipient payment records. This action cannot be undone."
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            variant="destructive"
+                            onConfirm={() => handleDeleteSplit(split.id)}
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-destructive hover:text-destructive"
+                              disabled={deleting}
+                            >
+                              {deleting ? <LoadingSpinner size="sm" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                          </ConfirmationDialog>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -328,6 +369,12 @@ export const GuestCostSplits = () => {
 
   return (
     <div className="space-y-6">
+      <SplitDetailsDialog
+        open={!!viewDetailsSplitId}
+        onOpenChange={(open) => !open && setViewDetailsSplitId(null)}
+        splitId={viewDetailsSplitId}
+      />
+      
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
