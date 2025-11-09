@@ -488,6 +488,15 @@ export const UnifiedOccupancyDialog = ({
             </TooltipProvider>
           </TabsList>
 
+          {!canSplit && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Split Costs is not available:</strong> {getSplitDisabledReason()}
+              </AlertDescription>
+            </Alert>
+          )}
+
           <TabsContent value="simple" className="space-y-4">
             <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
               <span className="text-sm font-medium">Quick Fill:</span>
