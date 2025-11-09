@@ -17,9 +17,8 @@ import { format, differenceInDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
+import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
-import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -35,7 +34,6 @@ export default function StayHistory() {
   const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = All Years
   const [editOccupancyStay, setEditOccupancyStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
-  const [splitCostStay, setSplitCostStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   
@@ -1183,23 +1181,24 @@ export default function StayHistory() {
                          Record Payment
                        </Button>
                      )}
-                   {stayData.paymentId && isUserReservationOwner(reservation) && !reservation.isVirtualSplit && stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && (
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => setSplitCostStay({
-                         ...reservation,
-                         paymentId: stayData.paymentId,
-                         dailyOccupancy: stayData.dailyOccupancy,
-                         billingAmount: stayData.billingAmount,
-                         user_id: reservation.user_id,
-                         organization_id: reservation.organization_id
-                       })}
-                     >
-                       <Users className="h-4 w-4 mr-2" />
-                       Split Costs
-                     </Button>
-                   )}
+                    {stayData.paymentId && isUserReservationOwner(reservation) && !reservation.isVirtualSplit && stayData.dailyOccupancy && stayData.dailyOccupancy.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditOccupancyStay({
+                          ...reservation,
+                          paymentId: stayData.paymentId,
+                          dailyOccupancy: stayData.dailyOccupancy,
+                          billingAmount: stayData.billingAmount,
+                          user_id: reservation.user_id,
+                          organization_id: reservation.organization_id,
+                          enableSplit: true // Flag to enable split mode
+                        })}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Split Costs
+                      </Button>
+                    )}
                    {stayData.paymentId && (
                      <Button
                        variant="outline"
@@ -1258,7 +1257,7 @@ export default function StayHistory() {
 
       {/* Dialogs */}
       {editOccupancyStay && organization && (
-        <EditOccupancyDialog
+        <UnifiedOccupancyDialog
           open={true}
           onOpenChange={(open) => !open && setEditOccupancyStay(null)}
           stay={editOccupancyStay}
@@ -1267,6 +1266,18 @@ export default function StayHistory() {
           organizationId={organization.id}
           splitId={editOccupancyStay.splitId}
           splitPaymentId={editOccupancyStay.splitPaymentId}
+          sourceUserId={editOccupancyStay.enableSplit && user ? user.id : undefined}
+          dailyBreakdown={editOccupancyStay.enableSplit ? editOccupancyStay.dailyOccupancy?.map((d: any) => ({
+            date: d.date,
+            guests: d.guests || 0,
+            cost: d.cost || 0
+          })) : undefined}
+          totalAmount={editOccupancyStay.enableSplit ? editOccupancyStay.billingAmount || 0 : undefined}
+          onSplitCreated={() => {
+            const yearFilter = selectedYear === 0 ? undefined : selectedYear;
+            fetchPayments(1, 50, yearFilter);
+            setEditOccupancyStay(null);
+          }}
         />
       )}
 
@@ -1333,27 +1344,6 @@ export default function StayHistory() {
               toast.error("Failed to record payment. Please try again.");
               throw error;
             }
-          }}
-        />
-      )}
-
-      {splitCostStay && splitCostStay.dailyOccupancy && splitCostStay.dailyOccupancy.length > 0 && user && (
-        <GuestCostSplitDialog
-          open={!!splitCostStay}
-          onOpenChange={(open) => !open && setSplitCostStay(null)}
-          organizationId={splitCostStay.organization_id}
-          reservationId={splitCostStay.id}
-          dailyBreakdown={splitCostStay.dailyOccupancy.map((d: any) => ({
-            date: d.date,
-            guests: d.guests || 0,
-            cost: d.cost || 0
-          }))}
-          totalAmount={splitCostStay.billingAmount || 0}
-          sourceUserId={user.id}
-          sourceFamilyGroup={splitCostStay.family_group}
-          onSplitCreated={() => {
-            fetchPayments();
-            setSplitCostStay(null);
           }}
         />
       )}
