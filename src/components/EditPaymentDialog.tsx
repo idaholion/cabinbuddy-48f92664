@@ -51,11 +51,9 @@ export const EditPaymentDialog = ({
     setSaving(true);
     try {
       const status = amountPaid >= payment.amount ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
-      const balanceDue = payment.amount - amountPaid;
       
       await onSave({
         amount_paid: amountPaid,
-        balance_due: balanceDue,
         status,
         payment_method: paymentMethod || undefined,
         payment_reference: reference || undefined,
