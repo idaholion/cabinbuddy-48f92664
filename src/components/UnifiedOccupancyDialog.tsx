@@ -231,7 +231,7 @@ export const UnifiedOccupancyDialog = ({
     const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
     
     dataSource.forEach(occ => {
-      initial[occ.date] = 0; // Start with 0 for split mode
+      initial[occ.date] = occ.guests || 0; // Pre-populate with existing guest counts
     });
     setSourceDailyGuests(initial);
     
@@ -291,7 +291,17 @@ export const UnifiedOccupancyDialog = ({
     const count = parseInt(value) || 0;
     
     if (userIdOrSource === 'source') {
+      // Update source daily guests
       setSourceDailyGuests(prev => ({ ...prev, [date]: count }));
+      
+      // Also update occupancy state for two-way sync with Simple Entry
+      setOccupancy(prev => {
+        const existing = prev.find(o => o.date === date);
+        if (existing) {
+          return prev.map(o => o.date === date ? { ...o, guests: count } : o);
+        }
+        return [...prev, { date, guests: count }];
+      });
     } else {
       setSelectedUsers(prev => prev.map(user => 
         user.userId === userIdOrSource
