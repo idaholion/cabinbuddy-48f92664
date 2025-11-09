@@ -18,7 +18,6 @@ import { parseDateOnly } from "@/lib/date-utils";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditOccupancyDialog } from "@/components/EditOccupancyDialog";
-import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
@@ -35,7 +34,6 @@ export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = All Years
   const [editOccupancyStay, setEditOccupancyStay] = useState<any>(null);
-  const [adjustBillingStay, setAdjustBillingStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [splitCostStay, setSplitCostStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
@@ -199,32 +197,6 @@ export default function StayHistory() {
     await fetchPayments(1, 50, yearFilter);
     toast.success("Occupancy updated successfully");
     setEditOccupancyStay(null);
-  };
-
-  const handleSaveBillingAdjustment = async (data: { manualAdjustment: number; adjustmentNotes: string; billingLocked: boolean }) => {
-    if (!adjustBillingStay?.paymentId || !organization?.id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          manual_adjustment_amount: data.manualAdjustment,
-          adjustment_notes: data.adjustmentNotes,
-          billing_locked: data.billingLocked
-        })
-        .eq('id', adjustBillingStay.paymentId)
-        .eq('organization_id', organization.id);
-
-      if (error) throw error;
-      
-      const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-      await fetchPayments(1, 50, yearFilter);
-      toast.success("Billing adjustment saved successfully");
-      setAdjustBillingStay(null);
-    } catch (error) {
-      toast.error("Failed to save billing adjustment");
-      throw error;
-    }
   };
 
   const handleDeleteStay = async (reservationId: string) => {
@@ -1197,23 +1169,6 @@ export default function StayHistory() {
                       Edit Occupancy
                     </Button>
                   )}
-                  {stayData.paymentId && (isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAdjustBillingStay({
-                        ...reservation,
-                        paymentId: stayData.paymentId,
-                        calculatedAmount: stayData.billingAmount - stayData.manualAdjustment,
-                        manualAdjustment: stayData.manualAdjustment,
-                        adjustmentNotes: stayData.adjustmentNotes,
-                        billingLocked: stayData.billingLocked
-                      })}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Adjust Billing
-                    </Button>
-                  )}
                   {stayData.paymentId && stayData.amountDue > 0 && (
                     <Button
                       variant="outline"
@@ -1312,15 +1267,6 @@ export default function StayHistory() {
           organizationId={organization.id}
           splitId={editOccupancyStay.splitId}
           splitPaymentId={editOccupancyStay.splitPaymentId}
-        />
-      )}
-
-      {adjustBillingStay && (
-        <AdjustBillingDialog
-          open={true}
-          onOpenChange={(open) => !open && setAdjustBillingStay(null)}
-          stay={adjustBillingStay}
-          onSave={handleSaveBillingAdjustment}
         />
       )}
 
