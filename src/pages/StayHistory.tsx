@@ -1044,10 +1044,18 @@ export default function StayHistory() {
                       <span className="font-medium">${stayData.billingAmount.toFixed(2)}</span>
                     </div>
                     {stayData.manualAdjustment !== 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Manual Adjustment:</span>
-                        <span className="font-medium">${stayData.manualAdjustment.toFixed(2)}</span>
-                      </div>
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Manual Adjustment:</span>
+                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                            {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                          <span className="text-muted-foreground">Total Amount:</span>
+                          <span>${(stayData.billingAmount + stayData.manualAdjustment).toFixed(2)}</span>
+                        </div>
+                      </>
                     )}
                     {stayData.receiptsTotal > 0 && (
                       <div className="flex justify-between text-sm">
