@@ -16,6 +16,8 @@ import { BillingCalculator } from "@/lib/billing-calculator";
 import { parseDateOnly } from "@/lib/date-utils";
 import { logger } from "@/lib/logger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface DailyOccupancy {
   date: string;
@@ -80,6 +82,7 @@ export const UnifiedOccupancyDialog = ({
   const [billingLocked, setBillingLocked] = useState(false);
   const isSplit = !!splitId && !!splitPaymentId;
   const [mode, setMode] = useState<"simple" | "split">("simple");
+  const [pendingMode, setPendingMode] = useState<"simple" | "split" | null>(null);
   
   // Simple mode state
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
@@ -393,6 +396,52 @@ export const UnifiedOccupancyDialog = ({
   }, [mode, dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers, occupancy]);
 
   const canSplit = sourceUserId && dailyBreakdown && dailyBreakdown.length > 0 && totalAmount > 0 && stay.reservationId && !isSplit;
+  
+  // Get reason why split is disabled
+  const getSplitDisabledReason = () => {
+    if (isSplit) return "This is already a split reservation";
+    if (!stay.reservationId) return "No reservation ID available";
+    if (!sourceUserId) return "User information not available";
+    if (!dailyBreakdown || dailyBreakdown.length === 0) return "No occupancy data available";
+    if (totalAmount <= 0) return "No payment recorded for this stay";
+    return "";
+  };
+
+  // Check if there are unsaved changes
+  const hasSimpleChanges = () => {
+    if (occupancy.length !== filteredOccupancy.length) return true;
+    return occupancy.some((occ, idx) => {
+      const original = filteredOccupancy.find(o => o.date === occ.date);
+      return !original || original.guests !== occ.guests;
+    });
+  };
+
+  const hasSplitChanges = () => {
+    return selectedUsers.length > 0 || Object.keys(sourceDailyGuests).some(date => sourceDailyGuests[date] !== (occupancy.find(o => o.date === date)?.guests || 0));
+  };
+
+  const handleModeChange = (newMode: "simple" | "split") => {
+    if (newMode === mode) return;
+    
+    const hasChanges = mode === "simple" ? hasSimpleChanges() : hasSplitChanges();
+    
+    if (hasChanges) {
+      setPendingMode(newMode);
+    } else {
+      setMode(newMode);
+    }
+  };
+
+  const handleConfirmModeSwitch = () => {
+    if (pendingMode) {
+      setMode(pendingMode);
+      setPendingMode(null);
+    }
+  };
+
+  const handleCancelModeSwitch = () => {
+    setPendingMode(null);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -417,13 +466,26 @@ export const UnifiedOccupancyDialog = ({
           </p>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "simple" | "split")}>
+        <Tabs value={mode} onValueChange={(v) => handleModeChange(v as "simple" | "split")}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="simple">Simple Entry</TabsTrigger>
-            <TabsTrigger value="split" disabled={!canSplit}>
-              Split Costs
-              {!canSplit && <span className="ml-1 text-xs opacity-50">(N/A)</span>}
-            </TabsTrigger>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex-1">
+                    <TabsTrigger value="split" disabled={!canSplit} className="w-full">
+                      Split Costs
+                      {!canSplit && <span className="ml-1 text-xs opacity-50">(N/A)</span>}
+                    </TabsTrigger>
+                  </div>
+                </TooltipTrigger>
+                {!canSplit && (
+                  <TooltipContent>
+                    <p>{getSplitDisabledReason()}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </TabsList>
 
           <TabsContent value="simple" className="space-y-4">
@@ -608,6 +670,23 @@ export const UnifiedOccupancyDialog = ({
           )}
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog open={!!pendingMode} onOpenChange={(open) => !open && handleCancelModeSwitch()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes in the current tab. Switching tabs will discard these changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelModeSwitch}>Stay Here</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmModeSwitch} className="bg-destructive hover:bg-destructive/90">
+              Switch Tab
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
