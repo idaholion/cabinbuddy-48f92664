@@ -42,6 +42,7 @@ const AddReceipt = () => {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const { toast } = useToast();
+  const [uploadDescription, setUploadDescription] = useState("");
 
   // Quality options
   const qualityOptions = {
@@ -140,12 +141,13 @@ const AddReceipt = () => {
       try {
         await createReceipt({
           amount: parseFloat(uploadAmount),
-          description: `Receipt uploaded: ${processedFile.name}`,
+          description: uploadDescription || `Receipt uploaded: ${processedFile.name}`,
           date: new Date().toISOString().split('T')[0],
           image: processedFile,
           family_group: claimedProfile?.family_group_name
         });
         setUploadAmount("");
+        setUploadDescription("");
         setFileInfo(null);
         toast({
           title: "Receipt uploaded",
@@ -194,12 +196,13 @@ const AddReceipt = () => {
         try {
           await createReceipt({
             amount: parseFloat(uploadAmount),
-            description: `Receipt uploaded: ${processedFile.name}`,
+            description: uploadDescription || `Receipt uploaded: ${processedFile.name}`,
             date: new Date().toISOString().split('T')[0],
             image: processedFile,
             family_group: claimedProfile?.family_group_name
           });
           setUploadAmount("");
+          setUploadDescription("");
           setFileInfo(null);
           event.target.value = "";
           toast({
@@ -258,12 +261,13 @@ const AddReceipt = () => {
         try {
           await createReceipt({
             amount: parseFloat(uploadAmount),
-            description: `Receipt uploaded: ${file.name}`,
+            description: uploadDescription || `Receipt uploaded: ${file.name}`,
             date: new Date().toISOString().split('T')[0],
             image: file,
             family_group: claimedProfile?.family_group_name
           });
           setUploadAmount("");
+          setUploadDescription("");
           setFileInfo(null);
           toast({
             title: "Receipt uploaded",
@@ -303,13 +307,14 @@ const AddReceipt = () => {
           
           await createReceipt({
             amount: parseFloat(uploadAmount),
-            description: `Receipt photo ${source === CameraSource.Camera ? 'taken' : 'selected'}`,
+            description: uploadDescription || `Receipt photo ${source === CameraSource.Camera ? 'taken' : 'selected'}`,
             date: new Date().toISOString().split('T')[0],
             image: file,
             family_group: claimedProfile?.family_group_name
           });
           
           setUploadAmount("");
+          setUploadDescription("");
           toast({
             title: "Receipt captured",
             description: `Receipt photo has been ${source === CameraSource.Camera ? 'taken' : 'selected'} and uploaded successfully.`,
@@ -462,12 +467,13 @@ const AddReceipt = () => {
       try {
         await createReceipt({
           amount: parseFloat(uploadAmount),
-          description: `Receipt uploaded: ${currentFile.name}`,
+          description: uploadDescription || `Receipt uploaded: ${currentFile.name}`,
           date: new Date().toISOString().split('T')[0],
           image: currentFile,
           family_group: claimedProfile?.family_group_name
         });
         setUploadAmount("");
+        setUploadDescription("");
         setCurrentFile(null);
         setFileInfo(null);
       } catch (error) {
@@ -576,12 +582,24 @@ const AddReceipt = () => {
                     Drag and drop your receipt here
                   </p>
                   <p className="text-body text-muted-foreground mt-1">
-                    Supports images and PDF files
-                  </p>
-                </div>
+                  Supports images and PDF files
+                </p>
+              </div>
 
-                <div className="pt-4 border-t">
-                  <Label htmlFor="upload-amount" className="text-label">Receipt Amount</Label>
+              <div>
+                <Label htmlFor="upload-description" className="text-label">Description</Label>
+                <Textarea
+                  id="upload-description"
+                  placeholder="Enter receipt description..."
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  rows={3}
+                  className="text-body placeholder:text-body"
+                />
+              </div>
+
+              <div className="pt-4 border-t">
+                <Label htmlFor="upload-amount" className="text-label">Receipt Amount</Label>
                   <div className="flex gap-2">
                     <Input
                       id="upload-amount"
