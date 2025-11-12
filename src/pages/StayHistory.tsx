@@ -623,6 +623,7 @@ export default function StayHistory() {
       // If this reservation has overpayment (paid more than billed for THIS stay)
       if (currentItem.stayData.currentBalance < 0) {
         let remainingCredit = Math.abs(currentItem.stayData.currentBalance);
+        const originalCredit = remainingCredit;
         const familyGroup = currentItem.reservation.family_group;
         
         // Track credit distribution from this reservation
@@ -657,6 +658,13 @@ export default function StayHistory() {
             
             console.log(`[CREDIT CASCADE] After credit: ${newerItem.reservation.start_date} currentBalance=$${newerItem.stayData.currentBalance.toFixed(2)}`);
           }
+        }
+        
+        // "Consume" the distributed credit from the source stay so it doesn't also flow forward as previousBalance
+        const creditConsumed = originalCredit - remainingCredit;
+        if (creditConsumed > 0) {
+          currentItem.stayData.currentBalance += creditConsumed;
+          console.log(`[CREDIT CASCADE] Consumed $${creditConsumed.toFixed(2)} from source stay. New currentBalance: $${currentItem.stayData.currentBalance.toFixed(2)}`);
         }
         
         console.log(`[CREDIT CASCADE] Credit cascade complete for ${currentItem.reservation.start_date}. Unused credit: $${remainingCredit.toFixed(2)}`);
