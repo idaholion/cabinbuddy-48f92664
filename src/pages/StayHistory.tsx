@@ -22,6 +22,7 @@ import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +37,7 @@ export default function StayHistory() {
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
   
 
   const { user } = useAuth();
@@ -1154,6 +1156,11 @@ export default function StayHistory() {
                               const cleanHandle = financialSettings.venmo_handle.replace('@', '');
                               const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue}&note=${encodeURIComponent('Cabin stay payment')}`;
                               window.open(venmoUrl, '_blank');
+                              setVenmoConfirmStay({
+                                ...reservation,
+                                paymentId: stayData.paymentId,
+                                amountDue: stayData.amountDue
+                              });
                             }}
                             className="text-blue-600 border-blue-200 hover:bg-blue-50"
                           >
@@ -1375,6 +1382,30 @@ export default function StayHistory() {
           year={selectedYear || new Date().getFullYear()}
         />
       )}
+
+      {/* Venmo Payment Confirmation Dialog */}
+      <Dialog open={!!venmoConfirmStay} onOpenChange={(open) => !open && setVenmoConfirmStay(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Did you complete your Venmo payment?</DialogTitle>
+            <DialogDescription>
+              We opened Venmo in a new window so you can send ${venmoConfirmStay?.amountDue?.toFixed(2)}. 
+              Once you've completed the payment, click "Yes, I've Paid" below to record it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
+            <Button variant="outline" onClick={() => setVenmoConfirmStay(null)}>
+              Not Yet
+            </Button>
+            <Button onClick={() => {
+              setRecordPaymentStay(venmoConfirmStay);
+              setVenmoConfirmStay(null);
+            }}>
+              Yes, I've Paid
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
