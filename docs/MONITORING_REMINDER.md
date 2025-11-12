@@ -117,6 +117,8 @@ CREATE TABLE notification_attempts (
 - [ ] Add SMS status tracking to database
 - [ ] Update edge functions to log SMS attempts
 - [ ] Add unified notification history view
+- [ ] Add automatic Venmo Payment Recording
+- [ ] Add Payment Notification System
 
 ### Medium Priority:
 - [ ] Create notification analytics reports
