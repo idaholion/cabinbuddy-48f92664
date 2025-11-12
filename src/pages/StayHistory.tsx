@@ -731,7 +731,11 @@ export default function StayHistory() {
       if (newestRes && newestRes.stayData.amountDue <= 0) {
         // Newest is paid/overpaid, zero out all older stays
         hostReservations.forEach(res => {
-          if (res.reservation.id !== newestResId) {
+          if (res.reservation.id !== newestResId && res.stayData.amountDue > 0) {
+            res.stayData.originalAmountDue = res.stayData.amountDue;
+            res.stayData.paidViaLaterStay = true;
+            res.stayData.amountDue = 0;
+          } else if (res.reservation.id !== newestResId) {
             res.stayData.amountDue = 0;
           }
         });
@@ -1138,6 +1142,11 @@ export default function StayHistory() {
                       <span className="font-semibold">Amount Due:</span>
                       <span className={`font-bold ${((stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ? 0 : stayData.amountDue) > 0 ? 'text-destructive' : 'text-green-600'}`}>
                         ${(stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 ? 0 : stayData.amountDue).toFixed(2)}
+                        {stayData.paidViaLaterStay && stayData.originalAmountDue && (
+                          <span className="text-muted-foreground font-normal text-xs ml-2">
+                            (orig. ${stayData.originalAmountDue.toFixed(2)} paid at later stay)
+                          </span>
+                        )}
                       </span>
                     </div>
                     {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.currentBalance === 0 && stayData.previousBalance < 0 && (
