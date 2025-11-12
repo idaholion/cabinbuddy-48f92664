@@ -746,9 +746,9 @@ export default function StayHistory() {
   
   // Calculate current balance (only sum the newest stay's amountDue per host)
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
-    const reservation = displayReservations.find(r => r.id === resId);
-    if (reservation) {
-      return sum + reservation.stayData.amountDue;
+    const reservationItem = displayReservations.find(r => r.reservation.id === resId);
+    if (reservationItem) {
+      return sum + reservationItem.stayData.amountDue;
     }
     return sum;
   }, 0);
