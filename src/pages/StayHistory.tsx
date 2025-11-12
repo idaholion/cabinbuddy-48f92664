@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -712,6 +712,11 @@ export default function StayHistory() {
     const stayData = calculateStayData(res);
     return sum + stayData.amountPaid;
   }, 0);
+  
+  // Calculate current balance (sum of all amounts due)
+  const currentBalance = displayReservations.reduce((sum, { stayData }) => {
+    return sum + stayData.amountDue;
+  }, 0);
 
   // Count orphaned payments (for admin debugging)
   const orphanedPaymentsCount = payments.filter(p => 
@@ -884,7 +889,7 @@ export default function StayHistory() {
 
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Stays</CardTitle>
@@ -910,6 +915,21 @@ export default function StayHistory() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalPaid.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${
+              currentBalance > 0 ? 'text-red-600 dark:text-red-400' : 
+              currentBalance < 0 ? 'text-green-600 dark:text-green-400' : 
+              ''
+            }`}>
+              {currentBalance < 0 ? '+' : ''}${Math.abs(currentBalance).toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -1098,10 +1118,9 @@ export default function StayHistory() {
                   </div>
                 </div>
 
-                {/* Venmo Payment Section */}
-                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && (
-                  stayData.amountDue > 0 || (stayData.amountDue < 0 && lastReservationByHost.get(getPrimaryHostKey(reservation)) === reservation.id)
-                ) && (
+                {/* Venmo Payment Section - Only show on newest stay */}
+                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
+                  lastReservationByHost.get(getPrimaryHostKey(reservation)) === reservation.id && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-blue-600" />
