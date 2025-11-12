@@ -718,7 +718,7 @@ export default function StayHistory() {
     // Group by primary host
     const hostGroups = new Map<string, typeof displayReservations>();
     reservations.forEach(res => {
-      const hostKey = getPrimaryHostKey(res);
+      const hostKey = getPrimaryHostKey(res.reservation);
       if (!hostGroups.has(hostKey)) {
         hostGroups.set(hostKey, []);
       }
@@ -728,12 +728,12 @@ export default function StayHistory() {
     // For each host group, check if newest stay is paid
     hostGroups.forEach((hostReservations, hostKey) => {
       const newestResId = lastReservationByHost.get(hostKey);
-      const newestRes = hostReservations.find(r => r.id === newestResId);
+      const newestRes = hostReservations.find(r => r.reservation.id === newestResId);
       
       if (newestRes && newestRes.stayData.amountDue <= 0) {
         // Newest is paid/overpaid, zero out all older stays
         hostReservations.forEach(res => {
-          if (res.id !== newestResId) {
+          if (res.reservation.id !== newestResId) {
             res.stayData.amountDue = 0;
           }
         });
