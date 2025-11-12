@@ -1063,9 +1063,9 @@ export default function StayHistory() {
                         </div>
                       </>
                     )}
-                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && (
+                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.previousBalance >= 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Credit from Earlier Payment:</span>
+                        <span className="text-muted-foreground">Credit Applied from Earlier Payment:</span>
                         <span className="font-medium text-green-600">-${stayData.creditFromEarlierPayment.toFixed(2)}</span>
                       </div>
                     )}
@@ -1075,9 +1075,9 @@ export default function StayHistory() {
                         ${(stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 ? 0 : stayData.amountDue).toFixed(2)}
                       </span>
                     </div>
-                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.amountDue === 0 && (
+                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.currentBalance === 0 && stayData.previousBalance < 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Paid with credit from earlier payment
+                        Covered by credit from earlier overpayment (included in previous balance)
                       </p>
                     )}
                     {stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 && (
