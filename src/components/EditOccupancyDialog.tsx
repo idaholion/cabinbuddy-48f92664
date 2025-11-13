@@ -66,6 +66,9 @@ export const EditOccupancyDialog = ({
   
   const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(filteredOccupancy);
   const [fillValue, setFillValue] = useState<string>("0");
+  
+  // Calculate total guest count across all days
+  const totalGuests = occupancy.reduce((sum, day) => sum + (day.guests || 0), 0);
 
   useEffect(() => {
     if (open && stay.reservationId) {
@@ -191,6 +194,17 @@ export const EditOccupancyDialog = ({
             })}
           </div>
         </ScrollArea>
+
+        {/* Total Guest Count */}
+        <div className="flex items-center justify-between p-3 border-t bg-muted/30 rounded-lg">
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">Total Guest Count:</span>
+            <span className="text-xs text-muted-foreground">
+              {days.length} nights × average {(totalGuests / days.length).toFixed(1)} guests/night
+            </span>
+          </div>
+          <span className="text-lg font-bold">{totalGuests}</span>
+        </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
