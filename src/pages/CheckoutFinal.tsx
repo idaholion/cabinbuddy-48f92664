@@ -84,12 +84,67 @@ const CheckoutFinal = () => {
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
   const [splitUsers, setSplitUsers] = useState<UserSplit[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<Array<{
+    userId: string;
+    email: string;
+    displayName: string;
+    familyGroup: string;
+  }>>([]);
+  const [showUserSelection, setShowUserSelection] = useState(false);
+  const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
   
   const { organization } = useOrganization();
   const { updateOccupancy, syncing: syncingOccupancy } = useDailyOccupancySync(organization?.id || '');
   
   // Check if there are unsaved occupancy changes
   const hasOccupancyChanges = Object.keys(editedOccupancy).length > 0;
+  
+  // Fetch available users for split
+  useEffect(() => {
+    if (organization?.id && user?.id) {
+      fetchAvailableUsers();
+    }
+  }, [organization?.id, user?.id]);
+
+  const fetchAvailableUsers = async () => {
+    if (!organization?.id || !user?.id) return;
+
+    const { data, error } = await supabase
+      .rpc('get_organization_user_emails', { org_id: organization.id });
+
+    if (error) {
+      console.error('Failed to fetch organization users:', error);
+      return;
+    }
+
+    // Get family groups
+    const { data: familyGroups } = await supabase
+      .from('family_groups')
+      .select('name, lead_email, host_members')
+      .eq('organization_id', organization.id);
+
+    // Filter out current user and enrich with family group info
+    const enrichedUsers = (data?.filter((u: any) => u.user_id !== user.id) || []).map((u: any) => {
+      const userFamilyGroup = familyGroups?.find(fg => {
+        if (fg.lead_email?.toLowerCase() === u.email?.toLowerCase()) return true;
+        if (fg.host_members && Array.isArray(fg.host_members)) {
+          return fg.host_members.some((hm: any) => 
+            hm.email?.toLowerCase() === u.email?.toLowerCase()
+          );
+        }
+        return false;
+      });
+
+      return {
+        userId: u.user_id,
+        email: u.email,
+        displayName: u.display_name || u.email,
+        familyGroup: userFamilyGroup?.name || 'Unknown'
+      };
+    });
+
+    setAvailableUsers(enrichedUsers);
+  };
   
   const { isAdmin } = useOrgAdmin();
 
@@ -561,66 +616,63 @@ const CheckoutFinal = () => {
     });
   }, [financialSettings, checkInDate, checkOutDate, dailyBreakdown]);
 
-  // Calculate source user's breakdown - memoized
-  const sourceUserBreakdown = useMemo((): UserSplit | null => {
-    if (!splitMode || splitUsers.length === 0 || !financialSettings || !checkInDate || !checkOutDate) return null;
+  // Handle guest count changes in split mode
+  const handleSplitGuestCountChange = (date: string, userId: string, value: string) => {
+    const numValue = Math.max(0, parseInt(value) || 0);
+    const originalGuests = dailyBreakdown.find(d => d.date === date)?.guests || 0;
     
-    // Source user gets remaining guest nights after splits are allocated
-    const sourceGuestsByDate: Record<string, number> = {};
+    if (userId === 'source') {
+      // Calculate total guests assigned to other users
+      const otherUsersTotal = splitUsers.reduce((sum, user) => 
+        sum + (user.dailyGuests[date] || 0), 0);
+      
+      // Source can't be more than original minus others
+      const maxSource = Math.max(0, originalGuests - otherUsersTotal);
+      const adjustedValue = Math.min(numValue, maxSource);
+      
+      setSourceDailyGuests(prev => ({ ...prev, [date]: adjustedValue }));
+    } else {
+      // Update specific user's guest count
+      setSplitUsers(prev => {
+        const updated = prev.map(user => {
+          if (user.userId === userId) {
+            // Calculate max this user can have
+            const otherUsersTotal = prev
+              .filter(u => u.userId !== userId)
+              .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
+            const currentSourceGuests = sourceDailyGuests[date] || 0;
+            const maxForUser = Math.max(0, originalGuests - currentSourceGuests - otherUsersTotal);
+            const adjustedValue = Math.min(numValue, maxForUser);
+            
+            return {
+              ...user,
+              dailyGuests: { ...user.dailyGuests, [date]: adjustedValue }
+            };
+          }
+          return user;
+        });
+        
+        // Recalculate costs for all users with updated guest counts
+        return calculateSplitCostBreakdowns(updated);
+      });
+    }
+  };
+
+  // Calculate source user's breakdown
+  const sourceUserBreakdown = useMemo(() => {
+    if (!splitMode || !financialSettings || !checkInDate || !checkOutDate) return null;
     
-    dailyBreakdown.forEach(day => {
-      const splitGuestsForDay = splitUsers.reduce((sum, user) => 
-        sum + (user.dailyGuests[day.date] || 0), 0
-      );
-      sourceGuestsByDate[day.date] = day.guests - splitGuestsForDay;
-    });
-
-    const billingConfigLocal = {
-      method: financialSettings.billing_method,
-      amount: financialSettings.billing_amount,
-      taxRate: financialSettings.tax_rate || 0,
-      cleaningFee: financialSettings.cleaning_fee || 0,
-      petFee: financialSettings.pet_fee || 0,
-      damageDeposit: financialSettings.damage_deposit || 0,
-    };
-
-    const stayDates = { startDate: checkInDate, endDate: checkOutDate };
-    const sourceBilling = BillingCalculator.calculateFromDailyOccupancy(
-      billingConfigLocal,
-      sourceGuestsByDate,
-      stayDates
-    );
-
-    // Prorate fees
-    const allTotalGuestNights = dailyBreakdown.reduce((sum, day) => sum + day.guests, 0);
-    const sourceTotalGuestNights = Object.values(sourceGuestsByDate).reduce((sum, guests) => sum + guests, 0);
-    const sourceProportion = allTotalGuestNights > 0 ? sourceTotalGuestNights / allTotalGuestNights : 0;
-
-    const proratedCleaningFee = billingConfigLocal.cleaningFee * sourceProportion;
-    const proratedPetFee = billingConfigLocal.petFee * sourceProportion;
-    const proratedDamageDeposit = billingConfigLocal.damageDeposit * sourceProportion;
-
-    const subtotal = sourceBilling.baseAmount + proratedCleaningFee + proratedPetFee;
-    const tax = billingConfigLocal.taxRate ? (subtotal * billingConfigLocal.taxRate) / 100 : 0;
-    const total = subtotal + tax + proratedDamageDeposit;
-
-    return {
-      userId: user?.id || '',
-      familyGroup: currentReservation?.family_group || '',
+    const sourceData = {
+      userId: user?.id || 'source',
+      familyGroup: claimedProfile?.family_group_name || currentReservation?.family_group || '',
       displayName: 'You',
-      dailyGuests: sourceGuestsByDate,
-      costBreakdown: {
-        baseAmount: sourceBilling.baseAmount,
-        cleaningFee: proratedCleaningFee,
-        petFee: proratedPetFee,
-        subtotal,
-        tax,
-        damageDeposit: proratedDamageDeposit,
-        total,
-        details: sourceBilling.details
-      }
+      dailyGuests: sourceDailyGuests
     };
-  }, [splitMode, splitUsers, financialSettings, checkInDate, checkOutDate, dailyBreakdown, user, currentReservation]);
+    
+    const calculated = calculateSplitCostBreakdowns([sourceData]);
+    return calculated[0] || null;
+  }, [splitMode, financialSettings, checkInDate, checkOutDate, sourceDailyGuests, user?.id, claimedProfile, currentReservation, calculateSplitCostBreakdowns]);
+
 
   // Calculate total of all splits for verification - memoized
   const splitTotal = useMemo((): number => {
@@ -1113,47 +1165,119 @@ const CheckoutFinal = () => {
                       Split Guest Costs
                     </CardTitle>
                     <CardDescription>
-                      Divide costs among multiple guests staying together
+                      {!splitMode 
+                        ? "Divide costs among multiple guests staying together"
+                        : `Split mode active - ${splitUsers.length + 1} people`
+                      }
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     {!splitMode ? (
                       <Button
                         variant="default"
-                        onClick={() => setSplitCostsOpen(true)}
+                        onClick={() => {
+                          // Initialize source daily guests from billing data
+                          const initialSourceGuests: Record<string, number> = {};
+                          dailyBreakdown.forEach(day => {
+                            initialSourceGuests[day.date] = day.guests;
+                          });
+                          setSourceDailyGuests(initialSourceGuests);
+                          setSplitMode(true);
+                          setShowUserSelection(true);
+                        }}
                         className="w-full bg-purple-600 hover:bg-purple-700"
                       >
                         <Users className="h-4 w-4 mr-2" />
-                        Configure Split
+                        Enable Split Mode
                       </Button>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                          <span className="text-sm font-medium">Split mode active - {splitUsers.length + 1} people</span>
+                      <>
+                        {/* User Selection Section */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium">Select People to Split With</Label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowUserSelection(!showUserSelection)}
+                            >
+                              {showUserSelection ? 'Hide' : 'Show'} Users
+                            </Button>
+                          </div>
+                          
+                          {showUserSelection && (
+                            <div className="border rounded-lg p-3 bg-muted/30 space-y-2 max-h-48 overflow-y-auto">
+                              {availableUsers.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No other users available</p>
+                              ) : (
+                                availableUsers.map(user => {
+                                  const isSelected = splitUsers.some(su => su.userId === user.userId);
+                                  return (
+                                    <div key={user.userId} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={user.userId}
+                                        checked={isSelected}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            // Add user with initial empty daily guests
+                                            const newUser: UserSplit = {
+                                              userId: user.userId,
+                                              familyGroup: user.familyGroup,
+                                              displayName: user.displayName,
+                                              dailyGuests: {},
+                                              costBreakdown: {
+                                                baseAmount: 0,
+                                                cleaningFee: 0,
+                                                petFee: 0,
+                                                subtotal: 0,
+                                                tax: 0,
+                                                damageDeposit: 0,
+                                                total: 0,
+                                                details: ''
+                                              }
+                                            };
+                                            setSplitUsers(prev => [...prev, newUser]);
+                                          } else {
+                                            // Remove user
+                                            setSplitUsers(prev => prev.filter(su => su.userId !== user.userId));
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={user.userId}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                      >
+                                        {user.displayName}
+                                        <span className="text-muted-foreground ml-1">({user.familyGroup})</span>
+                                      </label>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
-                            size="sm"
                             onClick={() => {
                               setSplitMode(false);
                               setSplitUsers([]);
+                              setSourceDailyGuests({});
+                              setShowUserSelection(false);
                               toast({
                                 title: "Split Cancelled",
                                 description: "Returned to single cost breakdown",
                               });
                             }}
+                            className="flex-1"
                           >
                             Cancel Split
                           </Button>
                         </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => setSplitCostsOpen(true)}
-                          className="w-full"
-                        >
-                          <Edit3 className="h-4 w-4 mr-2" />
-                          Edit Split Configuration
-                        </Button>
-                      </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -1194,7 +1318,7 @@ const CheckoutFinal = () => {
                           </TableHeader>
                           <TableBody>
                             {dailyBreakdown.map(day => {
-                              const sourceGuests = sourceUserBreakdown?.dailyGuests[day.date] || 0;
+                              const sourceGuests = sourceDailyGuests[day.date] || 0;
                               const otherGuests = splitUsers.reduce((sum, u) => 
                                 sum + (u.dailyGuests[day.date] || 0), 0);
                               const dayTotal = sourceGuests + otherGuests;
@@ -1206,11 +1330,23 @@ const CheckoutFinal = () => {
                                     {parseDateOnly(day.date).toLocaleDateString()}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {sourceGuests}
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={sourceDailyGuests[day.date] || 0}
+                                      onChange={(e) => handleSplitGuestCountChange(day.date, 'source', e.target.value)}
+                                      className="w-20 text-right"
+                                    />
                                   </TableCell>
                                   {splitUsers.map(user => (
                                     <TableCell key={user.userId} className="text-right">
-                                      {user.dailyGuests[day.date] || 0}
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        value={user.dailyGuests[day.date] || 0}
+                                        onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
+                                        className="w-20 text-right"
+                                      />
                                     </TableCell>
                                   ))}
                                   <TableCell className={`text-right font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
