@@ -1104,7 +1104,17 @@ const CheckoutFinal = () => {
                           variant={splitMode ? "default" : "outline"}
                           size="sm"
                           onClick={() => {
+                            console.log('Split Costs button clicked, splitMode before:', splitMode);
                             setSplitMode(true);
+                            // Initialize source daily guests from current occupancy
+                            if (Object.keys(sourceDailyGuests).length === 0) {
+                              const initial: Record<string, number> = {};
+                              dailyBreakdown.forEach(day => {
+                                initial[day.date] = editedOccupancy[day.date] ?? day.guests;
+                              });
+                              console.log('Initializing sourceDailyGuests:', initial);
+                              setSourceDailyGuests(initial);
+                            }
                             if (availableUsers.length === 0) {
                               fetchAvailableUsers();
                             }
