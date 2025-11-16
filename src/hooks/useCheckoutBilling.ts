@@ -252,7 +252,7 @@ export const useCheckoutBilling = (
   useEffect(() => {
     fetchDailyOccupancy();
     fetchPreviousCredits();
-  }, [reservationId, checkInDate, checkOutDate, reservedGuests, toast]);
+  }, [reservationId, checkInDate, checkOutDate, reservedGuests]);
 
   // Calculate billing from daily occupancy
   const calculateBilling = () => {
