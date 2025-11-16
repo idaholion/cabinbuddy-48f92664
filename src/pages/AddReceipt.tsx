@@ -832,7 +832,7 @@ const AddReceipt = () => {
                 <div className="flex justify-between items-center font-bold text-body-large">
                   <span>Total:</span>
                   <span className="text-primary">
-                    ${receipts.reduce((sum, receipt) => sum + receipt.amount, 0).toFixed(2)}
+                    ${filteredReceipts.reduce((sum, receipt) => sum + receipt.amount, 0).toFixed(2)}
                   </span>
                 </div>
               </div>
