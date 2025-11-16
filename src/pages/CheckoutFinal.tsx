@@ -94,9 +94,12 @@ const CheckoutFinal = () => {
   const { isAdmin } = useOrgAdmin();
 
   // Get the most recent reservation for the current user's stay
-  // Prioritize original reservations, then transferred-in reservations
+  // Prioritize reservations that include today's date (active stays)
   const getCurrentUserReservation = () => {
     if (!user) return undefined;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
     const userReservations = reservations.filter(r => {
       // Only show confirmed reservations
@@ -134,8 +137,25 @@ const CheckoutFinal = () => {
       return r.user_id === user.id;
     });
     
-    // Sort by start date descending to get most recent
-    return userReservations.sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime())[0];
+    // First, try to find an active reservation (today is between start and end date)
+    const activeReservation = userReservations.find(r => {
+      const startDate = parseDateOnly(r.start_date);
+      const endDate = parseDateOnly(r.end_date);
+      return today >= startDate && today <= endDate;
+    });
+    
+    if (activeReservation) return activeReservation;
+    
+    // If no active reservation, find the most recent past reservation (for post-stay checkout)
+    const pastReservations = userReservations.filter(r => {
+      const endDate = parseDateOnly(r.end_date);
+      return today > endDate;
+    });
+    
+    // Sort by end date descending (most recently ended first)
+    return pastReservations.sort((a, b) => 
+      parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime()
+    )[0];
   };
 
   const currentReservation = getCurrentUserReservation();
