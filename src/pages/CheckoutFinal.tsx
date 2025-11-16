@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -1079,57 +1079,250 @@ const CheckoutFinal = () => {
                     </CardTitle>
                     <CardDescription>
                       {splitMode 
-                        ? "Split mode active - costs shown in individual breakdowns below"
+                        ? "Split mode active - edit guest counts for each person"
                         : billingLocked 
                           ? "Billing is locked - guest counts can be updated but charges are frozen"
                           : "Edit guest counts to recalculate charges"
                       }
                     </CardDescription>
+                    
+                    {/* Mode Toggle */}
+                    <div className="flex items-center gap-4 mt-4 p-3 bg-muted/50 rounded-lg">
+                      <Label className="text-sm font-medium">Mode:</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={!splitMode ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSplitMode(false);
+                            setShowUserSelection(false);
+                          }}
+                        >
+                          Simple Entry
+                        </Button>
+                        <Button
+                          variant={splitMode ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSplitMode(true);
+                            if (availableUsers.length === 0) {
+                              fetchAvailableUsers();
+                            }
+                          }}
+                        >
+                          <Users className="h-4 w-4 mr-1" />
+                          Split Costs
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* User Selection for Split Mode */}
+                    {splitMode && (
+                      <div className="mt-4 space-y-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowUserSelection(!showUserSelection)}
+                          className="w-full"
+                        >
+                          {showUserSelection ? 'Hide' : 'Show'} User Selection
+                          {showUserSelection ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+                        </Button>
+                        
+                        {showUserSelection && (
+                          <div className="border rounded-lg p-4 space-y-2 bg-background">
+                            <p className="text-sm font-medium mb-2">Select people to split costs with:</p>
+                            {availableUsers.map((user) => {
+                              const isSelected = splitUsers.some(su => su.userId === user.userId);
+                              return (
+                                <div key={user.userId} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`user-${user.userId}`}
+                                    checked={isSelected}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        const emptyDailyGuests: Record<string, number> = {};
+                                        dailyBreakdown.forEach(day => {
+                                          emptyDailyGuests[day.date] = 0;
+                                        });
+                                        setSplitUsers(prev => [...prev, {
+                                          userId: user.userId,
+                                          displayName: user.displayName,
+                                          familyGroup: user.familyGroup,
+                                          dailyGuests: emptyDailyGuests,
+                                          costBreakdown: {
+                                            baseAmount: 0,
+                                            cleaningFee: 0,
+                                            petFee: 0,
+                                            subtotal: 0,
+                                            tax: 0,
+                                            damageDeposit: 0,
+                                            total: 0,
+                                            details: ''
+                                          }
+                                        }]);
+                                      } else {
+                                        setSplitUsers(prev => prev.filter(su => su.userId !== user.userId));
+                                      }
+                                    }}
+                                  />
+                                  <Label
+                                    htmlFor={`user-${user.userId}`}
+                                    className="text-sm cursor-pointer flex-1"
+                                  >
+                                    {user.displayName}
+                                    <span className="text-muted-foreground ml-2">({user.familyGroup})</span>
+                                  </Label>
+                                </div>
+                              );
+                            })}
+                            {availableUsers.length === 0 && (
+                              <p className="text-sm text-muted-foreground">Loading users...</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 text-sm font-medium text-muted-foreground pb-2 border-b`}>
-                        <span>Date</span>
-                        <span className="text-center">Guests</span>
-                        {!splitMode && <span className="text-right">Cost</span>}
-                      </div>
-                      {dailyBreakdown.map((day, index) => {
-                        const editedGuests = editedOccupancy[day.date] ?? day.guests;
-                        return (
-                          <div key={index} className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 items-center text-sm py-1`}>
-                            <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                            <div className="flex justify-center">
-                              <Input
-                                type="number"
-                                min="0"
-                                max="20"
-                                value={editedGuests}
-                                onChange={(e) => {
-                                  const newValue = parseInt(e.target.value) || 0;
-                                  setEditedOccupancy(prev => ({
-                                    ...prev,
-                                    [day.date]: newValue
-                                  }));
-                                }}
-                                className="w-20 h-8 text-center"
-                                disabled={paymentCreated}
-                              />
-                            </div>
-                            {!splitMode && (
-                              <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
-                            )}
+                      {!splitMode ? (
+                        <>
+                          {/* Simple Entry Mode */}
+                          <div className="grid grid-cols-3 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                            <span>Date</span>
+                            <span className="text-center">Guests</span>
+                            <span className="text-right">Cost</span>
                           </div>
-                        );
-                      })}
-                      <div className="pt-2 border-t mt-2">
-                        <div className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 text-sm font-semibold`}>
-                          <span>Total ({totalDays} days)</span>
-                          <span className="text-center">{totalGuests} guests</span>
-                          {!splitMode && (
-                            <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
+                          {dailyBreakdown.map((day, index) => {
+                            const editedGuests = editedOccupancy[day.date] ?? day.guests;
+                            return (
+                              <div key={index} className="grid grid-cols-3 gap-2 items-center text-sm py-1">
+                                <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                <div className="flex justify-center">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    value={editedGuests}
+                                    onChange={(e) => {
+                                      const newValue = parseInt(e.target.value) || 0;
+                                      setEditedOccupancy(prev => ({
+                                        ...prev,
+                                        [day.date]: newValue
+                                      }));
+                                    }}
+                                    className="w-20 h-8 text-center"
+                                    disabled={paymentCreated}
+                                  />
+                                </div>
+                                <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
+                              </div>
+                            );
+                          })}
+                          <div className="pt-2 border-t mt-2">
+                            <div className="grid grid-cols-3 gap-2 text-sm font-semibold">
+                              <span>Total ({totalDays} days)</span>
+                              <span className="text-center">{totalGuests} guests</span>
+                              <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Split Mode - Multi-column table */}
+                          <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="w-[100px]">Date</TableHead>
+                                  <TableHead className="text-center">You</TableHead>
+                                  {splitUsers.map(user => (
+                                    <TableHead key={user.userId} className="text-center">
+                                      {user.displayName}
+                                    </TableHead>
+                                  ))}
+                                  <TableHead className="text-center">Total</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {dailyBreakdown.map((day) => {
+                                  const sourceGuests = sourceDailyGuests[day.date] ?? (editedOccupancy[day.date] ?? day.guests);
+                                  const splitGuestTotals = splitUsers.reduce((sum, user) => sum + (user.dailyGuests[day.date] || 0), 0);
+                                  const dailyTotal = sourceGuests + splitGuestTotals;
+                                  const originalTotal = day.guests;
+                                  const isValid = dailyTotal === originalTotal;
+                                  
+                                  return (
+                                    <TableRow key={day.date} className={!isValid ? 'bg-destructive/10' : ''}>
+                                      <TableCell className="font-medium">
+                                        {parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          max={originalTotal}
+                                          value={sourceGuests}
+                                          onChange={(e) => {
+                                            const newValue = parseInt(e.target.value) || 0;
+                                            setSourceDailyGuests(prev => ({
+                                              ...prev,
+                                              [day.date]: newValue
+                                            }));
+                                          }}
+                                          className="w-20 h-8 text-center mx-auto"
+                                        />
+                                      </TableCell>
+                                      {splitUsers.map(user => (
+                                        <TableCell key={user.userId}>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            max={originalTotal}
+                                            value={user.dailyGuests[day.date] || 0}
+                                            onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
+                                            className="w-20 h-8 text-center mx-auto"
+                                          />
+                                        </TableCell>
+                                      ))}
+                                      <TableCell className="text-center font-medium">
+                                        <span className={!isValid ? 'text-destructive' : ''}>
+                                          {dailyTotal} {!isValid && `(should be ${originalTotal})`}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                          
+                          {/* Split Mode Cost Summary */}
+                          {splitUsers.length > 0 && (
+                            <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">
+                              <h4 className="font-semibold text-sm">Cost Breakdown:</h4>
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span>You:</span>
+                                  <span className="font-medium">{BillingCalculator.formatCurrency(sourceUserBreakdown.costBreakdown.total)}</span>
+                                </div>
+                                {splitUsers.map(user => (
+                                  <div key={user.userId} className="flex justify-between text-sm">
+                                    <span>{user.displayName}:</span>
+                                    <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.total)}</span>
+                                  </div>
+                                ))}
+                                <Separator />
+                                <div className="flex justify-between text-sm font-bold">
+                                  <span>Grand Total:</span>
+                                  <span>{BillingCalculator.formatCurrency(sourceUserBreakdown.costBreakdown.total + splitUsers.reduce((sum, u) => sum + u.costBreakdown.total, 0))}</span>
+                                </div>
+                              </div>
+                            </div>
                           )}
-                        </div>
-                      </div>
+                        </>
+                      )}
                       
                       {/* Save/Cancel buttons */}
                       {hasOccupancyChanges && !paymentCreated && (
