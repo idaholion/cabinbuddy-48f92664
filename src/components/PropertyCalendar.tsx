@@ -1717,6 +1717,7 @@ const getBookingsForDate = (date: Date) => {
             setEditingReservation(null);
             setSelectedStartDate(null);
             setSelectedEndDate(null);
+            clearSelection();
           }
         }}
         currentMonth={currentMonth}
