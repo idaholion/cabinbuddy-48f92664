@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { useReceipts } from "@/hooks/useReceipts";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
 
 const AddReceipt = () => {
   const { receipts, loading, createReceipt, deleteReceipt, refetchReceipts } = useReceipts();
+  const { familyGroups } = useFamilyGroups();
   const { claimedProfile } = useEnhancedProfileClaim();
   const [amount, setAmount] = useState("");
   const [uploadAmount, setUploadAmount] = useState("");
@@ -26,6 +29,7 @@ const AddReceipt = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
   const [fileInfo, setFileInfo] = useState<{
     name: string;
     size: number;
@@ -50,6 +54,14 @@ const AddReceipt = () => {
     balanced: { maxWidth: 1920, maxHeight: 1080, quality: 0.8, label: "Balanced", description: "Good quality, moderate file size" },
     small: { maxWidth: 1280, maxHeight: 720, quality: 0.6, label: "Small File", description: "Lower quality, smallest file size" }
   };
+
+  // Filter receipts by selected family group
+  const filteredReceipts = useMemo(() => {
+    if (selectedFamilyGroup === "all") {
+      return receipts;
+    }
+    return receipts.filter(receipt => receipt.family_group === selectedFamilyGroup);
+  }, [receipts, selectedFamilyGroup]);
 
   // Image compression/resizing function
   const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
@@ -707,10 +719,28 @@ const AddReceipt = () => {
                 Receipt List
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Family Group Filter */}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="family-filter" className="whitespace-nowrap text-sm">Filter:</Label>
+                <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                  <SelectTrigger id="family-filter" className="w-[200px]">
+                    <SelectValue placeholder="Select family group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Family Groups</SelectItem>
+                    {familyGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <ScrollArea className="h-80">
                 <div className="space-y-3">
-                  {receipts.map((receipt) => (
+                  {filteredReceipts.map((receipt) => (
                     <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
                       {receipt.image_url ? (
                         <img 
@@ -783,6 +813,11 @@ const AddReceipt = () => {
                       </Button>
                     </div>
                   ))}
+                  {filteredReceipts.length === 0 && receipts.length > 0 && (
+                    <div className="text-center py-8 text-muted-foreground text-body">
+                      No receipts found for selected family group
+                    </div>
+                  )}
                   {receipts.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground text-body">
                       No receipts added yet
@@ -790,7 +825,10 @@ const AddReceipt = () => {
                   )}
                 </div>
               </ScrollArea>
-              <div className="mt-4 pt-4 border-t">
+              <div className="mt-4 pt-4 border-t space-y-1">
+                <div className="text-sm text-muted-foreground">
+                  Showing {filteredReceipts.length} of {receipts.length} receipts
+                </div>
                 <div className="flex justify-between items-center font-bold text-body-large">
                   <span>Total:</span>
                   <span className="text-primary">
