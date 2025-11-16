@@ -132,7 +132,7 @@ serve(async (req) => {
         }
 
         // Update source payment
-        const { error: sourceError } = await supabaseClient
+        const { error: sourceUpdateError } = await supabaseClient
           .from('payments')
           .update({
             daily_occupancy: sourceDailyOccupancy,
@@ -140,8 +140,8 @@ serve(async (req) => {
           })
           .eq('id', split.source_payment_id);
 
-        if (sourceError) {
-          throw new Error(`Failed to update source payment: ${sourceError.message}`);
+        if (sourceUpdateError) {
+          throw new Error(`Failed to update source payment: ${sourceUpdateError.message}`);
         }
 
         console.log(`[BACKFILL-SPLIT] Successfully updated split ${split.id}`);
