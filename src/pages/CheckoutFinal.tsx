@@ -1240,87 +1240,69 @@ const CheckoutFinal = () => {
                         </>
                       ) : (
                         <>
-                          {/* Split Mode - Multi-column table - ALWAYS show */}
-                          <div className="overflow-x-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="w-[100px]">Date</TableHead>
-                                  <TableHead className="text-center">You</TableHead>
+                          {/* Split Mode - Simple Grid Layout */}
+                          <div className="space-y-4">
+                            {/* Header */}
+                            <div className="grid gap-2 text-sm font-medium pb-2 border-b" style={{ gridTemplateColumns: `120px repeat(${splitUsers.length + 1}, 100px) 80px` }}>
+                              <div>Date</div>
+                              <div className="text-center">You</div>
+                              {splitUsers.map(user => (
+                                <div key={user.userId} className="text-center truncate" title={user.displayName}>
+                                  {user.displayName}
+                                </div>
+                              ))}
+                              <div className="text-center">Total</div>
+                            </div>
+                            
+                            {/* Data Rows */}
+                            {dailyBreakdown.map((day) => {
+                              const sourceGuests = sourceDailyGuests[day.date] ?? (editedOccupancy[day.date] ?? day.guests);
+                              const splitGuestTotals = splitUsers.reduce((sum, user) => sum + (user.dailyGuests[day.date] || 0), 0);
+                              const dailyTotal = sourceGuests + splitGuestTotals;
+                              const originalTotal = day.guests;
+                              const isValid = dailyTotal === originalTotal;
+                              
+                              return (
+                                <div key={day.date} className="grid gap-2 items-center py-1" style={{ gridTemplateColumns: `120px repeat(${splitUsers.length + 1}, 100px) 80px` }}>
+                                  <div className="text-sm">
+                                    {parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  </div>
+                                  <div className="flex justify-center">
+                                    <input
+                                      type="number"
+                                      value={sourceGuests}
+                                      onInput={(e) => {
+                                        const val = (e.target as HTMLInputElement).value;
+                                        const newValue = parseInt(val) || 0;
+                                        setSourceDailyGuests(prev => ({ ...prev, [day.date]: newValue }));
+                                      }}
+                                      className="w-20 h-8 text-center border rounded px-2"
+                                    />
+                                  </div>
                                   {splitUsers.map(user => (
-                                    <TableHead key={user.userId} className="text-center">
-                                      {user.displayName}
-                                    </TableHead>
+                                    <div key={user.userId} className="flex justify-center">
+                                      <input
+                                        type="number"
+                                        value={user.dailyGuests[day.date] || 0}
+                                        onInput={(e) => {
+                                          const val = (e.target as HTMLInputElement).value;
+                                          handleSplitGuestCountChange(day.date, user.userId, val);
+                                        }}
+                                        className="w-20 h-8 text-center border rounded px-2"
+                                      />
+                                    </div>
                                   ))}
-                                  <TableHead className="text-center">Total</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {dailyBreakdown.map((day) => {
-                                  const sourceGuests = sourceDailyGuests[day.date] ?? (editedOccupancy[day.date] ?? day.guests);
-                                  const splitGuestTotals = splitUsers.reduce((sum, user) => sum + (user.dailyGuests[day.date] || 0), 0);
-                                  const dailyTotal = sourceGuests + splitGuestTotals;
-                                  const originalTotal = day.guests;
-                                  const isValid = dailyTotal === originalTotal;
-                                  
-                                  return (
-                                    <TableRow key={day.date} className={!isValid ? 'bg-destructive/10' : ''}>
-                                      <TableCell className="font-medium">
-                                        {parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                      </TableCell>
-                                      <TableCell className="p-2">
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          max={originalTotal}
-                                          value={sourceGuests}
-                                          onInput={(e) => {
-                                            const target = e.target as HTMLInputElement;
-                                            console.log('Source input onInput:', day.date, target.value);
-                                            const newValue = parseInt(target.value) || 0;
-                                            setSourceDailyGuests(prev => {
-                                              const updated = { ...prev, [day.date]: newValue };
-                                              console.log('Updated sourceDailyGuests:', updated);
-                                              return updated;
-                                            });
-                                          }}
-                                          className="w-20 h-8 text-center border border-input rounded-md px-2 bg-background"
-                                          style={{ pointerEvents: 'auto' }}
-                                        />
-                                      </TableCell>
-                                      {splitUsers.map(user => (
-                                        <TableCell key={user.userId} className="p-2">
-                                          <input
-                                            type="number"
-                                            min={0}
-                                            max={originalTotal}
-                                            value={user.dailyGuests[day.date] || 0}
-                                            onInput={(e) => {
-                                              const target = e.target as HTMLInputElement;
-                                              console.log('Split user input onInput:', day.date, user.userId, target.value);
-                                              handleSplitGuestCountChange(day.date, user.userId, target.value);
-                                            }}
-                                            className="w-20 h-8 text-center border border-input rounded-md px-2 bg-background"
-                                            style={{ pointerEvents: 'auto' }}
-                                          />
-                                        </TableCell>
-                                      ))}
-                                      <TableCell className="text-center font-medium">
-                                        <span className={!isValid ? 'text-destructive' : ''}>
-                                          {dailyTotal} {!isValid && `(should be ${originalTotal})`}
-                                        </span>
-                                      </TableCell>
-                                    </TableRow>
-                                  );
-                                })}
-                              </TableBody>
-                            </Table>
+                                  <div className={`text-center text-sm font-medium ${!isValid ? 'text-destructive' : ''}`}>
+                                    {dailyTotal}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                           
                           {splitUsers.length === 0 && (
                             <div className="mt-4 text-center py-4 text-sm text-muted-foreground bg-muted/30 rounded-lg">
-                              <p>Add people using "Show User Selection" above to split costs with others.</p>
-                              <p className="mt-1">You can edit your guest counts in the "You" column.</p>
+                              <p>Add people using "Show User Selection" above to split costs.</p>
                             </div>
                           )}
                           
