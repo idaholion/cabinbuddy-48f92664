@@ -97,6 +97,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showNoHostDialog, setShowNoHostDialog] = useState(false);
 
   const form = useForm<BookingFormData>({
     defaultValues: {
@@ -326,6 +327,12 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const canMakeBooking = watchedAdminOverride || allPhasesActive || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
+    // Check if no host is assigned and confirmation hasn't been given
+    if (data.hostAssignments.length === 0 && !showNoHostDialog) {
+      setShowNoHostDialog(true);
+      return; // Stop submission and show dialog
+    }
+
     // Prevent double submission
     if (submitting) {
       console.log('Submission already in progress, ignoring duplicate');
@@ -829,6 +836,34 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete Reservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* No Host Confirmation Dialog */}
+      <AlertDialog open={showNoHostDialog} onOpenChange={setShowNoHostDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No Primary Host Selected</AlertDialogTitle>
+            <AlertDialogDescription>
+              You haven't selected a Primary Host for this reservation. 
+              The Primary Host is responsible for managing this stay.
+              <br />
+              <br />
+              Are you sure you want to continue without assigning a host?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowNoHostDialog(false)}>
+              Go Back and Select Host
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowNoHostDialog(false);
+              // Trigger actual submission by calling onSubmit with form data
+              form.handleSubmit(onSubmit)();
+            }}>
+              Continue Without Host
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
