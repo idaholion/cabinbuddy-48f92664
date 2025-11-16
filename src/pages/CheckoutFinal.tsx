@@ -1272,6 +1272,7 @@ const CheckoutFinal = () => {
                                             }));
                                           }}
                                           className="w-20 h-8 text-center mx-auto"
+                                          disabled={false}
                                         />
                                       </TableCell>
                                       {splitUsers.map(user => (
@@ -1283,6 +1284,7 @@ const CheckoutFinal = () => {
                                             value={user.dailyGuests[day.date] || 0}
                                             onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
                                             className="w-20 h-8 text-center mx-auto"
+                                            disabled={false}
                                           />
                                         </TableCell>
                                       ))}
@@ -1299,7 +1301,7 @@ const CheckoutFinal = () => {
                           </div>
                           
                           {/* Split Mode Cost Summary */}
-                          {splitUsers.length > 0 && (
+                          {sourceUserBreakdown && (
                             <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3">
                               <h4 className="font-semibold text-sm">Cost Breakdown:</h4>
                               <div className="space-y-2">
