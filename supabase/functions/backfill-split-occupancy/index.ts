@@ -75,15 +75,34 @@ serve(async (req) => {
           continue;
         }
 
+        // Get the source payment to determine original occupancy
+        const { data: sourcePayment, error: sourceError } = await supabaseClient
+          .from('payments')
+          .select('daily_occupancy')
+          .eq('id', split.source_payment_id)
+          .single();
+
+        if (sourceError || !sourcePayment) {
+          console.log(`[BACKFILL-SPLIT] Skipping split ${split.id} - source payment not found`);
+          continue;
+        }
+
         // Build recipient and source daily occupancy arrays
         const recipientDailyOccupancy = [];
         const sourceDailyOccupancy = [];
 
         for (const day of dailySplit) {
-          const perDiem = day.perDiem || 0;
-          const recipientGuests = day.recipientGuests || 0;
-          const sourceGuests = day.sourceGuests || 0;
-          const recipientCost = recipientGuests * perDiem;
+          // Handle both old and new data formats
+          const recipientGuests = day.recipientGuests || day.guests || 0;
+          const recipientCost = day.recipientCost || day.cost || 0;
+          const perDiem = day.perDiem || (recipientGuests > 0 ? recipientCost / recipientGuests : 0);
+
+          // Find original occupancy for this date from source payment
+          const sourceDay = (sourcePayment.daily_occupancy as any[])?.find(d => d.date === day.date);
+          const originalGuests = sourceDay?.guests || 0;
+          
+          // Source keeps what's left after split
+          const sourceGuests = Math.max(0, originalGuests - recipientGuests);
           const sourceCost = sourceGuests * perDiem;
 
           recipientDailyOccupancy.push({
