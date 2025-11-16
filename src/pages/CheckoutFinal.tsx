@@ -619,43 +619,27 @@ const CheckoutFinal = () => {
   // Handle guest count changes in split mode
   const handleSplitGuestCountChange = (date: string, userId: string, value: string) => {
     const numValue = Math.max(0, parseInt(value) || 0);
-    const originalGuests = dailyBreakdown.find(d => d.date === date)?.guests || 0;
     
-    if (userId === 'source') {
-      // Calculate total guests assigned to other users
-      const otherUsersTotal = splitUsers.reduce((sum, user) => 
-        sum + (user.dailyGuests[date] || 0), 0);
-      
-      // Source can't be more than original minus others
-      const maxSource = Math.max(0, originalGuests - otherUsersTotal);
-      const adjustedValue = Math.min(numValue, maxSource);
-      
-      setSourceDailyGuests(prev => ({ ...prev, [date]: adjustedValue }));
-    } else {
-      // Update specific user's guest count
-      setSplitUsers(prev => {
-        const updated = prev.map(user => {
-          if (user.userId === userId) {
-            // Calculate max this user can have
-            const otherUsersTotal = prev
-              .filter(u => u.userId !== userId)
-              .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
-            const currentSourceGuests = sourceDailyGuests[date] || 0;
-            const maxForUser = Math.max(0, originalGuests - currentSourceGuests - otherUsersTotal);
-            const adjustedValue = Math.min(numValue, maxForUser);
-            
-            return {
-              ...user,
-              dailyGuests: { ...user.dailyGuests, [date]: adjustedValue }
-            };
-          }
-          return user;
-        });
-        
-        // Recalculate costs for all users with updated guest counts
-        return calculateSplitCostBreakdowns(updated);
+    console.log('handleSplitGuestCountChange called:', { date, userId, value, numValue });
+    
+    // Update specific user's guest count
+    setSplitUsers(prev => {
+      const updated = prev.map(user => {
+        if (user.userId === userId) {
+          console.log('Updating user:', userId, 'date:', date, 'from', user.dailyGuests[date], 'to', numValue);
+          return {
+            ...user,
+            dailyGuests: { ...user.dailyGuests, [date]: numValue }
+          };
+        }
+        return user;
       });
-    }
+      
+      console.log('Updated splitUsers:', updated);
+      
+      // Recalculate costs for all users with updated guest counts
+      return calculateSplitCostBreakdowns(updated);
+    });
   };
 
   // Calculate source user's breakdown
@@ -1286,7 +1270,12 @@ const CheckoutFinal = () => {
                                         value={user.dailyGuests[day.date] || 0}
                                         onInput={(e) => {
                                           const val = (e.target as HTMLInputElement).value;
+                                          console.log('Split user input - user:', user.displayName, 'date:', day.date, 'value entered:', val);
+                                          console.log('Current dailyGuests for this user:', user.dailyGuests);
                                           handleSplitGuestCountChange(day.date, user.userId, val);
+                                        }}
+                                        onChange={(e) => {
+                                          console.log('onChange fired for', user.displayName, e.target.value);
                                         }}
                                         className="w-20 h-8 text-center border rounded px-2"
                                       />
