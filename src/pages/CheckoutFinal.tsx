@@ -657,6 +657,56 @@ const CheckoutFinal = () => {
     return calculated[0] || null;
   }, [splitMode, financialSettings, checkInDate, checkOutDate, sourceDailyGuests, user?.id, claimedProfile, currentReservation, calculateSplitCostBreakdowns]);
 
+  // Create deferred payment for a specific user in split mode
+  const createDeferredPaymentForUser = async (
+    userId: string,
+    familyGroup: string,
+    displayName: string,
+    amount: number,
+    dailyOccupancy: Record<string, number>
+  ) => {
+    if (!currentReservation || !organization) return;
+
+    try {
+      setIsCreatingPayment(true);
+
+      const { error } = await supabase
+        .from('payments')
+        .insert([{
+          organization_id: organization.organization_id,
+          family_group: familyGroup,
+          reservation_id: currentReservation.id,
+          amount: amount,
+          balance_due: amount,
+          amount_paid: 0,
+          payment_type: 'reservation_balance' as const,
+          status: 'pending' as const,
+          description: `Cabin stay - ${displayName}'s share`,
+          due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+          daily_occupancy: dailyOccupancy,
+          created_by_user_id: user?.id
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Payment Recorded",
+        description: `${displayName}'s payment of ${BillingCalculator.formatCurrency(amount)} has been added to their season balance.`,
+      });
+
+      setPaymentCreated(true);
+    } catch (error: any) {
+      console.error('Error creating deferred payment:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to record payment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
 
   // Calculate total of all splits for verification - memoized
   const splitTotal = useMemo((): number => {
@@ -1345,6 +1395,298 @@ const CheckoutFinal = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Split Mode Cost Breakdowns - Individual cards for each person */}
+              {splitMode && sourceUserBreakdown && (() => {
+                // Calculate total guest-nights for proportional share calculation
+                const sourceTotalGuestNights = Object.values(sourceDailyGuests).reduce((sum, guests) => sum + guests, 0);
+                const allGuestNights = sourceTotalGuestNights + splitUsers.reduce((sum, user) => 
+                  sum + Object.values(user.dailyGuests).reduce((s, g) => s + g, 0), 0
+                );
+
+                // Use the calculated source user's cost breakdown
+                const sourceBreakdown = sourceUserBreakdown.costBreakdown;
+                const sourcePercentage = allGuestNights > 0 ? sourceTotalGuestNights / allGuestNights : 0;
+                const sourceReceiptsShare = checkoutData.receiptsTotal * sourcePercentage;
+                const sourceCreditShare = previousCredit * sourcePercentage;
+                const sourceBalanceShare = previousBalance * sourcePercentage;
+                const sourceTotal = sourceBreakdown.total - sourceReceiptsShare - sourceCreditShare + sourceBalanceShare;
+
+                return (
+                  <>
+                    {/* Source User (You) Cost Breakdown */}
+                    <Card className="mb-6">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <DollarSign className="h-5 w-5" />
+                          Your Cost Breakdown
+                        </CardTitle>
+                        <CardDescription>
+                          Based on {sourceTotalGuestNights} guest-night{sourceTotalGuestNights !== 1 ? 's' : ''} ({Math.round(sourcePercentage * 100)}% of total)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Base rate:</span>
+                            <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.baseAmount)}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            {sourceBreakdown.details}
+                          </div>
+                          
+                          {sourceBreakdown.cleaningFee > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Cleaning fee (proportional):</span>
+                              <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.cleaningFee)}</span>
+                            </div>
+                          )}
+                          
+                          {sourceBreakdown.petFee > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Pet fee:</span>
+                              <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.petFee)}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Subtotal:</span>
+                            <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.subtotal)}</span>
+                          </div>
+                          
+                          {sourceBreakdown.tax > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Tax:</span>
+                              <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.tax)}</span>
+                            </div>
+                          )}
+                          
+                          {sourceBreakdown.damageDeposit > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Damage deposit (proportional):</span>
+                              <span className="font-medium">{BillingCalculator.formatCurrency(sourceBreakdown.damageDeposit)}</span>
+                            </div>
+                          )}
+                          
+                          {sourceReceiptsShare > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Less: Your share of receipts:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceReceiptsShare)}</span>
+                            </div>
+                          )}
+                          
+                          {sourceCreditShare > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Your share of credit:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceCreditShare)}</span>
+                            </div>
+                          )}
+                          
+                          {sourceBalanceShare !== 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Your share of previous balance:</span>
+                              <span className={`font-medium ${sourceBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                                {sourceBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(sourceBalanceShare))}
+                              </span>
+                            </div>
+                          )}
+                          
+                          <Separator />
+                          
+                          <div className="flex justify-between text-lg font-semibold">
+                            <span>Your Total Amount Due:</span>
+                            <span className={sourceTotal < 0 ? 'text-green-600' : 'text-primary'}>
+                              {BillingCalculator.formatCurrency(sourceTotal)}
+                            </span>
+                          </div>
+
+                          {/* Venmo Payment for Source User */}
+                          {checkoutData.venmoHandle && (
+                            <>
+                              <Separator className="my-4" />
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2">
+                                  <CreditCard className="h-5 w-5 text-blue-600" />
+                                  <h4 className="text-base font-medium">Your Payment Options</h4>
+                                </div>
+                                <Button
+                                  className="w-full"
+                                  onClick={() => {
+                                    const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                                    const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${Math.abs(sourceTotal)}&note=${encodeURIComponent('Cabin stay - My share')}`;
+                                    window.open(venmoUrl, '_blank');
+                                  }}
+                                >
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  Pay Your Share via Venmo ({BillingCalculator.formatCurrency(Math.abs(sourceTotal))})
+                                </Button>
+                              </div>
+                            </>
+                          )}
+
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={async () => {
+                              await createDeferredPaymentForUser(
+                                user?.id || '',
+                                claimedProfile?.family_group_name || currentReservation?.family_group || '',
+                                claimedProfile?.member_name || 'You',
+                                sourceTotal,
+                                sourceDailyGuests
+                              );
+                            }}
+                          >
+                            <Clock className="h-4 w-4 mr-2" />
+                            I'll Pay by End of Season
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Each Split User's Cost Breakdown */}
+                    {splitUsers.map(user => {
+                      const userGuestNights = Object.values(user.dailyGuests).reduce((sum, guests) => sum + guests, 0);
+                      const userPercentage = allGuestNights > 0 ? userGuestNights / allGuestNights : 0;
+                      const userReceiptsShare = checkoutData.receiptsTotal * userPercentage;
+                      const userCreditShare = previousCredit * userPercentage;
+                      const userBalanceShare = previousBalance * userPercentage;
+                      const userTotal = user.costBreakdown.total - userReceiptsShare - userCreditShare + userBalanceShare;
+
+                      return (
+                        <Card key={user.userId} className="mb-6">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <DollarSign className="h-5 w-5" />
+                              {user.displayName}'s Cost Breakdown
+                            </CardTitle>
+                            <CardDescription>
+                              Based on {userGuestNights} guest-night{userGuestNights !== 1 ? 's' : ''} ({Math.round(userPercentage * 100)}% of total)
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Base rate:</span>
+                                <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.baseAmount)}</span>
+                              </div>
+                              <div className="text-sm text-muted-foreground mb-2">
+                                {user.costBreakdown.details}
+                              </div>
+                              
+                              {user.costBreakdown.cleaningFee > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Cleaning fee (proportional):</span>
+                                  <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.cleaningFee)}</span>
+                                </div>
+                              )}
+                              
+                              {user.costBreakdown.petFee > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Pet fee:</span>
+                                  <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.petFee)}</span>
+                                </div>
+                              )}
+                              
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Subtotal:</span>
+                                <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.subtotal)}</span>
+                              </div>
+                              
+                              {user.costBreakdown.tax > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Tax:</span>
+                                  <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.tax)}</span>
+                                </div>
+                              )}
+                              
+                              {user.costBreakdown.damageDeposit > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Damage deposit (proportional):</span>
+                                  <span className="font-medium">{BillingCalculator.formatCurrency(user.costBreakdown.damageDeposit)}</span>
+                                </div>
+                              )}
+                              
+                              {userReceiptsShare > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Less: Their share of receipts:</span>
+                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userReceiptsShare)}</span>
+                                </div>
+                              )}
+                              
+                              {userCreditShare > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Their share of credit:</span>
+                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userCreditShare)}</span>
+                                </div>
+                              )}
+                              
+                              {userBalanceShare !== 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Their share of previous balance:</span>
+                                  <span className={`font-medium ${userBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                                    {userBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(userBalanceShare))}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              <Separator />
+                              
+                              <div className="flex justify-between text-lg font-semibold">
+                                <span>Their Total Amount Due:</span>
+                                <span className={userTotal < 0 ? 'text-green-600' : 'text-primary'}>
+                                  {BillingCalculator.formatCurrency(userTotal)}
+                                </span>
+                              </div>
+
+                              {/* Payment Options for Split User */}
+                              {checkoutData.venmoHandle && (
+                                <>
+                                  <Separator className="my-4" />
+                                  <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                      <CreditCard className="h-5 w-5 text-blue-600" />
+                                      <h4 className="text-base font-medium">Payment Options for {user.displayName}</h4>
+                                    </div>
+                                    <Button
+                                      className="w-full"
+                                      onClick={() => {
+                                        const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                                        const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${Math.abs(userTotal)}&note=${encodeURIComponent(`Cabin stay - ${user.displayName}'s share`)}`;
+                                        window.open(venmoUrl, '_blank');
+                                      }}
+                                    >
+                                      <CreditCard className="h-4 w-4 mr-2" />
+                                      Pay via Venmo ({BillingCalculator.formatCurrency(Math.abs(userTotal))})
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
+
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={async () => {
+                                  await createDeferredPaymentForUser(
+                                    user.userId,
+                                    user.familyGroup,
+                                    user.displayName,
+                                    userTotal,
+                                    user.dailyGuests
+                                  );
+                                }}
+                              >
+                                <Clock className="h-4 w-4 mr-2" />
+                                They'll Pay by End of Season
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </>
+                );
+              })()}
 
               {/* Cost Breakdown - Single view (split details shown in Daily Occupancy card above) */}
               {!splitMode && (
