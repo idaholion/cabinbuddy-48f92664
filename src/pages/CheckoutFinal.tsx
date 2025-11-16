@@ -22,11 +22,29 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Lock } from "lucide-react";
+import { Lock, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+interface UserSplit {
+  userId: string;
+  familyGroup: string;
+  displayName: string;
+  dailyGuests: Record<string, number>;
+  costBreakdown: {
+    baseAmount: number;
+    cleaningFee: number;
+    petFee: number;
+    subtotal: number;
+    tax: number;
+    damageDeposit: number;
+    total: number;
+    details: string;
+  };
+}
 
 const CheckoutFinal = () => {
   const navigate = useNavigate();
@@ -54,6 +72,10 @@ const CheckoutFinal = () => {
   const [splitCostsOpen, setSplitCostsOpen] = useState(false);
   const [editedOccupancy, setEditedOccupancy] = useState<Record<string, number>>({});
   const [paymentCreated, setPaymentCreated] = useState(false);
+  
+  // Split mode state
+  const [splitMode, setSplitMode] = useState(false);
+  const [splitUsers, setSplitUsers] = useState<UserSplit[]>([]);
   
   const { organization } = useOrganization();
   const { updateOccupancy, syncing: syncingOccupancy } = useDailyOccupancySync(organization?.id || '');
@@ -248,6 +270,210 @@ const CheckoutFinal = () => {
 
     loadCheckoutStatus();
   }, [currentReservation?.id, currentReservation?.family_group, currentReservation?.start_date, currentReservation?.end_date]);
+
+  // Calculate split cost breakdowns
+  const calculateSplitCostBreakdowns = (splitData: any[]): UserSplit[] => {
+    if (!financialSettings) return [];
+    
+    const billingConfig = {
+      method: financialSettings.billing_method,
+      amount: financialSettings.billing_amount,
+      taxRate: financialSettings.tax_rate || 0,
+      cleaningFee: financialSettings.cleaning_fee || 0,
+      petFee: financialSettings.pet_fee || 0,
+      damageDeposit: financialSettings.damage_deposit || 0,
+    };
+
+    // Calculate total guest nights across all users
+    const allTotalGuestNights = dailyBreakdown.reduce((sum, day) => sum + day.guests, 0);
+
+    return splitData.map(user => {
+      // Convert daily guests to the format BillingCalculator expects
+      const dailyOccupancyData: Record<string, number> = user.dailyGuests;
+      
+      // Calculate billing using the same method as main billing
+      const stayDates = {
+        startDate: checkInDate!,
+        endDate: checkOutDate!
+      };
+      
+      const userBilling = BillingCalculator.calculateFromDailyOccupancy(
+        billingConfig,
+        dailyOccupancyData,
+        stayDates
+      );
+
+      // Prorate cleaning fee, pet fee, and damage deposit based on guest nights
+      const totalGuestNights = Object.values(dailyOccupancyData).reduce((sum, guests) => sum + guests, 0);
+      const userProportion = allTotalGuestNights > 0 ? totalGuestNights / allTotalGuestNights : 0;
+
+      const proratedCleaningFee = billingConfig.cleaningFee * userProportion;
+      const proratedPetFee = billingConfig.petFee * userProportion;
+      const proratedDamageDeposit = billingConfig.damageDeposit * userProportion;
+
+      const subtotal = userBilling.baseAmount + proratedCleaningFee + proratedPetFee;
+      const tax = billingConfig.taxRate ? (subtotal * billingConfig.taxRate) / 100 : 0;
+      const total = subtotal + tax + proratedDamageDeposit;
+
+      return {
+        userId: user.userId,
+        familyGroup: user.familyGroup,
+        displayName: user.displayName,
+        dailyGuests: user.dailyGuests,
+        costBreakdown: {
+          baseAmount: userBilling.baseAmount,
+          cleaningFee: proratedCleaningFee,
+          petFee: proratedPetFee,
+          subtotal,
+          tax,
+          damageDeposit: proratedDamageDeposit,
+          total,
+          details: userBilling.details
+        }
+      };
+    });
+  };
+
+  // Calculate source user's breakdown
+  const calculateSourceUserBreakdown = (): UserSplit | null => {
+    if (!splitMode || splitUsers.length === 0 || !financialSettings || !checkInDate || !checkOutDate) return null;
+    
+    // Source user gets remaining guest nights after splits are allocated
+    const sourceGuestsByDate: Record<string, number> = {};
+    
+    dailyBreakdown.forEach(day => {
+      const splitGuestsForDay = splitUsers.reduce((sum, user) => 
+        sum + (user.dailyGuests[day.date] || 0), 0
+      );
+      sourceGuestsByDate[day.date] = day.guests - splitGuestsForDay;
+    });
+
+    const billingConfig = {
+      method: financialSettings.billing_method,
+      amount: financialSettings.billing_amount,
+      taxRate: financialSettings.tax_rate || 0,
+      cleaningFee: financialSettings.cleaning_fee || 0,
+      petFee: financialSettings.pet_fee || 0,
+      damageDeposit: financialSettings.damage_deposit || 0,
+    };
+
+    const stayDates = { startDate: checkInDate, endDate: checkOutDate };
+    const sourceBilling = BillingCalculator.calculateFromDailyOccupancy(
+      billingConfig,
+      sourceGuestsByDate,
+      stayDates
+    );
+
+    // Prorate fees
+    const allTotalGuestNights = dailyBreakdown.reduce((sum, day) => sum + day.guests, 0);
+    const sourceTotalGuestNights = Object.values(sourceGuestsByDate).reduce((sum, guests) => sum + guests, 0);
+    const sourceProportion = allTotalGuestNights > 0 ? sourceTotalGuestNights / allTotalGuestNights : 0;
+
+    const proratedCleaningFee = billingConfig.cleaningFee * sourceProportion;
+    const proratedPetFee = billingConfig.petFee * sourceProportion;
+    const proratedDamageDeposit = billingConfig.damageDeposit * sourceProportion;
+
+    const subtotal = sourceBilling.baseAmount + proratedCleaningFee + proratedPetFee;
+    const tax = billingConfig.taxRate ? (subtotal * billingConfig.taxRate) / 100 : 0;
+    const total = subtotal + tax + proratedDamageDeposit;
+
+    return {
+      userId: user?.id || '',
+      familyGroup: currentReservation?.family_group || '',
+      displayName: 'You',
+      dailyGuests: sourceGuestsByDate,
+      costBreakdown: {
+        baseAmount: sourceBilling.baseAmount,
+        cleaningFee: proratedCleaningFee,
+        petFee: proratedPetFee,
+        subtotal,
+        tax,
+        damageDeposit: proratedDamageDeposit,
+        total,
+        details: sourceBilling.details
+      }
+    };
+  };
+
+  // Calculate total of all splits for verification
+  const calculateSplitTotal = (): number => {
+    if (!splitMode || splitUsers.length === 0) return 0;
+    
+    const sourceBreakdown = calculateSourceUserBreakdown();
+    const sourceTotal = sourceBreakdown?.costBreakdown.total || 0;
+    const splitTotal = splitUsers.reduce((sum, user) => sum + user.costBreakdown.total, 0);
+    
+    return sourceTotal + splitTotal;
+  };
+
+  // Render cost breakdown helper
+  const renderCostBreakdown = (breakdown: UserSplit['costBreakdown'], includeReceipts: boolean = false) => (
+    <div className="space-y-3">
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Base rate:</span>
+        <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.baseAmount)}</span>
+      </div>
+      <div className="text-sm text-muted-foreground mb-2">
+        {breakdown.details}
+      </div>
+      
+      {breakdown.cleaningFee > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Cleaning fee (prorated):</span>
+          <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.cleaningFee)}</span>
+        </div>
+      )}
+      
+      {breakdown.petFee > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Pet fee (prorated):</span>
+          <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.petFee)}</span>
+        </div>
+      )}
+      
+      <div className="flex justify-between">
+        <span className="text-muted-foreground">Subtotal:</span>
+        <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.subtotal)}</span>
+      </div>
+      
+      {breakdown.tax > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Tax:</span>
+          <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.tax)}</span>
+        </div>
+      )}
+      
+      {breakdown.damageDeposit > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Damage deposit (prorated):</span>
+          <span className="font-medium">{BillingCalculator.formatCurrency(breakdown.damageDeposit)}</span>
+        </div>
+      )}
+      
+      {includeReceipts && checkoutData.receiptsTotal > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Less: Receipts submitted:</span>
+          <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
+        </div>
+      )}
+      
+      {includeReceipts && previousCredit > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Previous Credit Applied:</span>
+          <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(previousCredit)}</span>
+        </div>
+      )}
+      
+      <Separator />
+      
+      <div className="flex justify-between text-lg font-semibold">
+        <span>Amount Due:</span>
+        <span className={breakdown.total < 0 ? 'text-green-600' : 'text-primary'}>
+          {BillingCalculator.formatCurrency(includeReceipts ? breakdown.total - checkoutData.receiptsTotal - previousCredit : breakdown.total)}
+        </span>
+      </div>
+    </div>
+  );
 
   // Calculate stay dates from the current reservation, or use sample data
   const sampleData = !currentReservation ? generateSampleData() : null;
@@ -770,23 +996,25 @@ const CheckoutFinal = () => {
                       )}
                     </CardTitle>
                     <CardDescription>
-                      {billingLocked 
-                        ? "Billing is locked - guest counts can be updated but charges are frozen"
-                        : "Edit guest counts to recalculate charges"
+                      {splitMode 
+                        ? "Split mode active - costs shown in individual breakdowns below"
+                        : billingLocked 
+                          ? "Billing is locked - guest counts can be updated but charges are frozen"
+                          : "Edit guest counts to recalculate charges"
                       }
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div className="grid grid-cols-3 gap-2 text-sm font-medium text-muted-foreground pb-2 border-b">
+                      <div className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 text-sm font-medium text-muted-foreground pb-2 border-b`}>
                         <span>Date</span>
                         <span className="text-center">Guests</span>
-                        <span className="text-right">Cost</span>
+                        {!splitMode && <span className="text-right">Cost</span>}
                       </div>
                       {dailyBreakdown.map((day, index) => {
                         const editedGuests = editedOccupancy[day.date] ?? day.guests;
                         return (
-                          <div key={index} className="grid grid-cols-3 gap-2 items-center text-sm py-1">
+                          <div key={index} className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 items-center text-sm py-1`}>
                             <span>{parseDateOnly(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                             <div className="flex justify-center">
                               <Input
@@ -805,15 +1033,19 @@ const CheckoutFinal = () => {
                                 disabled={paymentCreated}
                               />
                             </div>
-                            <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
+                            {!splitMode && (
+                              <span className="text-right font-medium">{BillingCalculator.formatCurrency(day.cost)}</span>
+                            )}
                           </div>
                         );
                       })}
                       <div className="pt-2 border-t mt-2">
-                        <div className="grid grid-cols-3 gap-2 text-sm font-semibold">
+                        <div className={`grid ${splitMode ? 'grid-cols-2' : 'grid-cols-3'} gap-2 text-sm font-semibold`}>
                           <span>Total ({totalDays} days)</span>
                           <span className="text-center">{totalGuests} guests</span>
-                          <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
+                          {!splitMode && (
+                            <span className="text-right">{BillingCalculator.formatCurrency(enhancedBilling.baseAmount)}</span>
+                          )}
                         </div>
                       </div>
                       
@@ -837,26 +1069,138 @@ const CheckoutFinal = () => {
                         </div>
                       )}
                       
-                      {/* Split Guest Costs Button */}
-                      {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation && isUserReservationOwner(currentReservation) && (
-                        <div className="pt-4 mt-4 border-t">
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Split Mode Toggle Card */}
+              {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation && isUserReservationOwner(currentReservation) && (
+                <Card className="mb-6 border-purple-200 dark:border-purple-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                      <Users className="h-5 w-5" />
+                      Split Guest Costs
+                    </CardTitle>
+                    <CardDescription>
+                      Divide costs among multiple guests staying together
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!splitMode ? (
+                      <Button
+                        variant="default"
+                        onClick={() => setSplitCostsOpen(true)}
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Configure Split
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                          <span className="text-sm font-medium">Split mode active - {splitUsers.length + 1} people</span>
                           <Button
                             variant="outline"
-                            onClick={() => setSplitCostsOpen(true)}
-                            className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/20"
+                            size="sm"
+                            onClick={() => {
+                              setSplitMode(false);
+                              setSplitUsers([]);
+                              toast({
+                                title: "Split Cancelled",
+                                description: "Returned to single cost breakdown",
+                              });
+                            }}
                           >
-                            <Users className="h-4 w-4 mr-2" />
-                            Split Guest Costs
+                            Cancel Split
                           </Button>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => setSplitCostsOpen(true)}
+                          className="w-full"
+                        >
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Edit Split Configuration
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Cost Breakdown */}
-              <Card className="mb-6">
+              {/* Cost Breakdown - Multi-user when split mode active */}
+              {splitMode && splitUsers.length > 0 ? (
+                <div className="space-y-4 mb-6">
+                  {/* Source User's Breakdown */}
+                  {calculateSourceUserBreakdown() && (
+                    <Card className="border-blue-200 dark:border-blue-800">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                          <DollarSign className="h-5 w-5" />
+                          Your Cost Breakdown
+                        </CardTitle>
+                        <CardDescription>
+                          Based on your {Object.values(calculateSourceUserBreakdown()!.dailyGuests).reduce((sum, g) => sum + g, 0)} guest nights
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {renderCostBreakdown(calculateSourceUserBreakdown()!.costBreakdown, true)}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Each Split User's Breakdown */}
+                  {splitUsers.map((splitUser, index) => (
+                    <Card key={splitUser.userId} className="border-purple-200 dark:border-purple-800">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                          <Users className="h-5 w-5" />
+                          {splitUser.displayName}'s Cost Breakdown
+                        </CardTitle>
+                        <CardDescription>
+                          Based on their {Object.values(splitUser.dailyGuests).reduce((sum, g) => sum + g, 0)} guest nights
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {renderCostBreakdown(splitUser.costBreakdown)}
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {/* Total Verification Card */}
+                  <Card className="border-green-200 dark:border-green-800">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                        <TrendingUp className="h-5 w-5" />
+                        Split Total Verification
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Original total:</span>
+                          <span className="font-medium">{BillingCalculator.formatCurrency(enhancedBilling.total)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Sum of all splits:</span>
+                          <span className="font-medium">{BillingCalculator.formatCurrency(calculateSplitTotal())}</span>
+                        </div>
+                        {Math.abs(enhancedBilling.total - calculateSplitTotal()) > 0.01 && (
+                          <Alert variant="destructive" className="mt-3">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              Warning: Split totals don't match original amount by {BillingCalculator.formatCurrency(Math.abs(enhancedBilling.total - calculateSplitTotal()))}. Please review the split configuration.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                // Original single cost breakdown
+                <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5" />
@@ -1022,6 +1366,7 @@ const CheckoutFinal = () => {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* Confirmation */}
               <Card>
@@ -1068,14 +1413,21 @@ const CheckoutFinal = () => {
             totalAmount={enhancedBilling.total}
             sourceUserId={user.id}
             sourceFamilyGroup={currentReservation.family_group}
-            onSplitCreated={async () => {
-              // Refresh billing data to show updated amounts
-              await refetch();
-              toast({
-                title: "Costs Split Successfully",
-                description: "Guest will be notified via email and charges have been updated.",
-              });
+            onSplitCreated={async (splitData) => {
+              // Enable split mode
+              setSplitMode(true);
+              
+              // Calculate cost breakdowns for each user
+              const calculatedSplits = calculateSplitCostBreakdowns(splitData);
+              setSplitUsers(calculatedSplits);
+              
+              // Close dialog
               setSplitCostsOpen(false);
+              
+              toast({
+                title: "Split Configured",
+                description: "Cost breakdown updated to show individual charges. Review amounts below.",
+              });
             }}
           />
         )}

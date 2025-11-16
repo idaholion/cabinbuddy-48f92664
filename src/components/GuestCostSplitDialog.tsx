@@ -27,7 +27,7 @@ interface GuestCostSplitDialogProps {
   totalAmount: number;
   sourceUserId: string;
   sourceFamilyGroup: string;
-  onSplitCreated?: () => void;
+  onSplitCreated?: (splitData: UserSplit[]) => void;
 }
 
 interface OrgUser {
@@ -450,7 +450,7 @@ export const GuestCostSplitDialog = ({
         description: `Successfully split ${BillingCalculator.formatCurrency(totalSplit)} with ${calculatedUsers.length} ${calculatedUsers.length === 1 ? 'person' : 'people'}. They will be notified.`,
       });
 
-      onSplitCreated?.();
+      onSplitCreated?.(calculatedUsers);
       onOpenChange(false);
 
     } catch (error: any) {
