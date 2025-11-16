@@ -1265,11 +1265,13 @@ const CheckoutFinal = () => {
                                           max={originalTotal}
                                           value={sourceGuests}
                                           onChange={(e) => {
+                                            console.log('Source input changed:', day.date, e.target.value);
                                             const newValue = parseInt(e.target.value) || 0;
-                                            setSourceDailyGuests(prev => ({
-                                              ...prev,
-                                              [day.date]: newValue
-                                            }));
+                                            setSourceDailyGuests(prev => {
+                                              const updated = { ...prev, [day.date]: newValue };
+                                              console.log('Updated sourceDailyGuests:', updated);
+                                              return updated;
+                                            });
                                           }}
                                           className="w-20 h-8 text-center mx-auto"
                                           disabled={false}
@@ -1282,7 +1284,10 @@ const CheckoutFinal = () => {
                                             min="0"
                                             max={originalTotal}
                                             value={user.dailyGuests[day.date] || 0}
-                                            onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
+                                            onChange={(e) => {
+                                              console.log('Split user input changed:', day.date, user.userId, e.target.value);
+                                              handleSplitGuestCountChange(day.date, user.userId, e.target.value);
+                                            }}
                                             className="w-20 h-8 text-center mx-auto"
                                             disabled={false}
                                           />
