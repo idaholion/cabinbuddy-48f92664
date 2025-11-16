@@ -122,13 +122,12 @@ serve(async (req) => {
         const recipientTotal = recipientDailyOccupancy.reduce((sum, day) => sum + day.cost, 0);
         const sourceTotal = sourceDailyOccupancy.reduce((sum, day) => sum + day.cost, 0);
 
-        // Update recipient payment
+        // Update recipient payment (balance_due is auto-calculated by trigger)
         const { error: recipientError } = await supabaseClient
           .from('payments')
           .update({
             daily_occupancy: recipientDailyOccupancy,
             amount: recipientTotal,
-            balance_due: recipientTotal,
             updated_at: new Date().toISOString(),
           })
           .eq('id', split.split_payment_id);
@@ -137,13 +136,12 @@ serve(async (req) => {
           throw new Error(`Failed to update recipient payment: ${recipientError.message}`);
         }
 
-        // Update source payment
+        // Update source payment (balance_due is auto-calculated by trigger)
         const { error: sourceUpdateError } = await supabaseClient
           .from('payments')
           .update({
             daily_occupancy: sourceDailyOccupancy,
             amount: sourceTotal,
-            balance_due: sourceTotal,
             updated_at: new Date().toISOString(),
           })
           .eq('id', split.source_payment_id);
