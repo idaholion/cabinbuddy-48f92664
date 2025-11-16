@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -978,65 +979,127 @@ const CheckoutFinal = () => {
               </div>
             )}
             
-            {/* Checkout Checklist Status - informational only, not a blocker */}
-            {!checkoutData.isSample && (
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {checklistStatus?.isComplete ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                        Checkout Checklist Completed
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="h-5 w-5 text-muted-foreground" />
-                        Checkout Checklist
-                      </>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    {checklistStatus?.isComplete 
-                      ? `Completed ${checklistStatus.completedAt ? new Date(checklistStatus.completedAt).toLocaleString() : 'recently'}`
-                      : "Don't forget to finish the checkout checklist before you go"
-                    }
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {checklistStatus?.isComplete ? (
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        All {checklistStatus.totalTasks} checklist tasks have been completed. Thank you!
-                      </p>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate("/checkout-list")}
-                      >
-                        View Checklist
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">
-                          {checklistStatus 
-                            ? `${checklistStatus.completedTasks} of ${checklistStatus.totalTasks} tasks completed`
-                            : 'Not yet started'
-                          }
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate("/checkout-list")}
-                      >
-                        Go to Checklist
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {/* Compact Side-by-Side Reminders */}
+            {(!checkoutData.isSample || canEarlyCheckout) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {/* Checkout Checklist Collapsible */}
+                {!checkoutData.isSample && (
+                  <Collapsible defaultOpen={false}>
+                    <CollapsibleTrigger asChild>
+                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-primary">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {checklistStatus?.isComplete ? (
+                                <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                              ) : (
+                                <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                              )}
+                              <div>
+                                <p className="font-medium text-sm">Checkout Checklist</p>
+                                {checklistStatus?.isComplete ? (
+                                  <Badge variant="secondary" className="mt-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                    Complete
+                                  </Badge>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {checklistStatus 
+                                      ? `${checklistStatus.completedTasks}/${checklistStatus.totalTasks} done`
+                                      : 'Not started'
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <Card className="mt-2">
+                        <CardContent className="p-4">
+                          {checklistStatus?.isComplete ? (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                All {checklistStatus.totalTasks} checklist tasks have been completed. Thank you!
+                              </p>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/checkout-list")}
+                                className="w-full"
+                              >
+                                View Checklist
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <p className="text-sm text-muted-foreground">
+                                Don't forget to finish the checkout checklist before you go
+                              </p>
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate("/checkout-list")}
+                                className="w-full"
+                              >
+                                Go to Checklist
+                              </Button>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
+                {/* Early Checkout Collapsible */}
+                {canEarlyCheckout && (
+                  <Collapsible defaultOpen={false}>
+                    <CollapsibleTrigger asChild>
+                      <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-orange-500">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-5 w-5 text-orange-600 shrink-0" />
+                              <div>
+                                <p className="font-medium text-sm">Early Checkout</p>
+                                <Badge variant="secondary" className="mt-1 text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100">
+                                  Available
+                                </Badge>
+                              </div>
+                            </div>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <Card className="mt-2">
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">
+                              Your reservation continues until {checkOutDate?.toLocaleDateString()}
+                            </p>
+                            <p className="text-sm">
+                              Cancel remaining days, transfer to family, or offer to others
+                            </p>
+                            <Button
+                              variant="outline"
+                              onClick={() => setEarlyCheckoutOpen(true)}
+                              className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              Early Checkout
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
             )}
 
             {/* Transferred Reservation Notice */}
@@ -1060,40 +1123,6 @@ const CheckoutFinal = () => {
               </Card>
             )}
 
-            {/* Early Checkout Option - Available even when checklist is incomplete */}
-            {canEarlyCheckout && (
-              <Card className="mb-6 border-orange-200 dark:border-orange-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                    <Clock className="h-5 w-5" />
-                    Early Checkout Available
-                  </CardTitle>
-                  <CardDescription>
-                    Leaving early? Manage your remaining reservation time.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Your reservation continues until {checkOutDate?.toLocaleDateString()}
-                      </p>
-                      <p className="text-sm font-medium">
-                        Cancel remaining days, transfer to family, or offer to others
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setEarlyCheckoutOpen(true)}
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      Early Checkout
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             {/* Main checkout content - always accessible */}
             <div className="space-y-6">
