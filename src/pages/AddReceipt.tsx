@@ -755,21 +755,21 @@ const AddReceipt = () => {
                 </Select>
               </div>
               
-              <div ref={scrollContainerRef} className="relative">
-                {/* Scroll Up Button */}
-                <div className="absolute top-2 left-0 right-0 z-10 flex justify-center pointer-events-none">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={scrollUp}
-                    className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all pointer-events-auto shadow-md"
-                  >
-                    <ChevronUp className="h-5 w-5" />
-                  </Button>
-                </div>
+              {/* Scroll Up Button */}
+              <div className="flex justify-center mb-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={scrollUp}
+                  className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all shadow-md"
+                >
+                  <ChevronUp className="h-5 w-5" />
+                </Button>
+              </div>
 
+              <div ref={scrollContainerRef}>
                 <ScrollArea className="h-80">
-                  <div className="space-y-3 pt-12 pb-12">
+                  <div className="space-y-3">
                   {filteredReceipts.map((receipt) => (
                     <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
                       {receipt.image_url ? (
@@ -855,18 +855,18 @@ const AddReceipt = () => {
                   )}
                   </div>
                 </ScrollArea>
+              </div>
 
-                {/* Scroll Down Button */}
-                <div className="absolute bottom-2 left-0 right-0 z-10 flex justify-center pointer-events-none">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={scrollDown}
-                    className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all pointer-events-auto shadow-md"
-                  >
-                    <ChevronDown className="h-5 w-5" />
-                  </Button>
-                </div>
+              {/* Scroll Down Button */}
+              <div className="flex justify-center mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={scrollDown}
+                  className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all shadow-md"
+                >
+                  <ChevronDown className="h-5 w-5" />
+                </Button>
               </div>
               <div className="mt-4 pt-4 border-t space-y-1">
                 <div className="text-sm text-muted-foreground">
