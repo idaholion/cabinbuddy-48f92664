@@ -3,6 +3,14 @@ import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, Che
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { useCheckinSessions, useSurveyResponses } from "@/hooks/useChecklistData";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
@@ -1131,41 +1139,93 @@ const CheckoutFinal = () => {
               {/* Cost Breakdown - Multi-user when split mode active */}
               {splitMode && splitUsers.length > 0 ? (
                 <div className="space-y-4 mb-6">
-                  {/* Source User's Breakdown */}
-                  {sourceUserBreakdown && (
-                    <Card className="border-blue-200 dark:border-blue-800">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                          <DollarSign className="h-5 w-5" />
-                          Your Cost Breakdown
-                        </CardTitle>
-                        <CardDescription>
-                          Based on your {Object.values(sourceUserBreakdown.dailyGuests).reduce((sum, g) => sum + g, 0)} guest nights
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {renderCostBreakdown(sourceUserBreakdown.costBreakdown, true)}
-                      </CardContent>
-                    </Card>
-                  )}
+                  {/* Daily Guest Distribution Table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        Daily Guest Distribution
+                      </CardTitle>
+                      <CardDescription>
+                        Guest counts per person per day
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-lg overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="sticky left-0 bg-muted z-10">Date</TableHead>
+                              <TableHead className="text-right">You</TableHead>
+                              {splitUsers.map(user => (
+                                <TableHead key={user.userId} className="text-right min-w-[120px]">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span className="truncate max-w-[100px]" title={user.displayName}>
+                                      {user.displayName}
+                                    </span>
+                                  </div>
+                                </TableHead>
+                              ))}
+                              <TableHead className="text-right font-bold">Total</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {dailyBreakdown.map(day => {
+                              const sourceGuests = sourceUserBreakdown?.dailyGuests[day.date] || 0;
+                              const otherGuests = splitUsers.reduce((sum, u) => 
+                                sum + (u.dailyGuests[day.date] || 0), 0);
+                              const dayTotal = sourceGuests + otherGuests;
+                              const isValid = Math.abs(dayTotal - day.guests) < 0.01;
+                              
+                              return (
+                                <TableRow key={day.date}>
+                                  <TableCell className="sticky left-0 bg-background z-10">
+                                    {parseDateOnly(day.date).toLocaleDateString()}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {sourceGuests}
+                                  </TableCell>
+                                  {splitUsers.map(user => (
+                                    <TableCell key={user.userId} className="text-right">
+                                      {user.dailyGuests[day.date] || 0}
+                                    </TableCell>
+                                  ))}
+                                  <TableCell className={`text-right font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
+                                    {dayTotal} / {day.guests}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
 
-                  {/* Each Split User's Breakdown */}
-                  {splitUsers.map((splitUser, index) => (
-                    <Card key={splitUser.userId} className="border-purple-200 dark:border-purple-800">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                          <Users className="h-5 w-5" />
-                          {splitUser.displayName}'s Cost Breakdown
-                        </CardTitle>
-                        <CardDescription>
-                          Based on their {Object.values(splitUser.dailyGuests).reduce((sum, g) => sum + g, 0)} guest nights
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {renderCostBreakdown(splitUser.costBreakdown)}
-                      </CardContent>
-                    </Card>
-                  ))}
+                      {/* Cost Summary Grid */}
+                      <div 
+                        className="grid gap-4 p-4 bg-muted rounded-lg mt-4" 
+                        style={{ 
+                          gridTemplateColumns: `repeat(${splitUsers.length + 1}, minmax(0, 1fr))` 
+                        }}
+                      >
+                        <div>
+                          <div className="text-sm text-muted-foreground mb-1">Your Portion</div>
+                          <div className="text-xl font-bold text-primary">
+                            {BillingCalculator.formatCurrency(sourceUserBreakdown?.costBreakdown.total || 0)}
+                          </div>
+                        </div>
+                        {splitUsers.map(user => (
+                          <div key={user.userId}>
+                            <div className="text-sm text-muted-foreground mb-1 truncate" title={user.displayName}>
+                              {user.displayName}
+                            </div>
+                            <div className="text-xl font-bold text-green-600">
+                              {BillingCalculator.formatCurrency(user.costBreakdown.total)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   {/* Total Verification Card */}
                   <Card className="border-green-200 dark:border-green-800">
