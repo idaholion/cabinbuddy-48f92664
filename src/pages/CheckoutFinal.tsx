@@ -212,9 +212,20 @@ const CheckoutFinal = () => {
     });
     
     // Sort by end date descending (most recently ended first)
-    return pastReservations.sort((a, b) => 
+    const mostRecentPast = pastReservations.sort((a, b) => 
       parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime()
     )[0];
+    
+    // If the most recent past reservation ended more than 7 days ago, show sample data instead
+    if (mostRecentPast) {
+      const endDate = parseDateOnly(mostRecentPast.end_date);
+      const daysSinceCheckout = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceCheckout > 7) {
+        return undefined; // Show sample data
+      }
+    }
+    
+    return mostRecentPast;
   };
 
   const currentReservation = getCurrentUserReservation();
@@ -359,7 +370,8 @@ const CheckoutFinal = () => {
   }, [currentReservation?.id, currentReservation?.family_group, currentReservation?.start_date, currentReservation?.end_date]);
 
   // Calculate stay dates from the current reservation, or use sample data
-  const sampleData = !currentReservation ? generateSampleData() : null;
+  const isSampleMode = !currentReservation;
+  const sampleData = isSampleMode ? generateSampleData() : null;
   const checkInDate = currentReservation ? parseDateOnly(currentReservation.start_date) : (sampleData?.checkInDate || null);
   const checkOutDate = currentReservation ? parseDateOnly(currentReservation.end_date) : (sampleData?.checkOutDate || null);
   
@@ -484,7 +496,7 @@ const CheckoutFinal = () => {
       name: financialSettings?.check_payable_to || '',
       address: financialSettings?.check_mailing_address || ''
     },
-    isSample: sampleData?.isSample || false
+    isSample: isSampleMode
   };
 
   const calculateBilling = () => {
