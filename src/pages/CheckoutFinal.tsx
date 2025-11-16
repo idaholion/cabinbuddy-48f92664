@@ -962,23 +962,6 @@ const CheckoutFinal = () => {
           </Card>
         ) : (
           <>
-            {/* Sample Data Banner - shown when using demo data */}
-            {checkoutData.isSample && (
-              <div className="mb-6">
-                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
-                      Sample Checkout Preview
-                    </h3>
-                  </div>
-                  <p className="text-blue-700 dark:text-blue-300">
-                    This is a preview showing what a typical checkout would look like. The dates and guest counts shown are examples.
-                  </p>
-                </div>
-              </div>
-            )}
-            
             {/* Compact Side-by-Side Reminders */}
             {(!checkoutData.isSample || canEarlyCheckout) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -1099,6 +1082,23 @@ const CheckoutFinal = () => {
                     </CollapsibleContent>
                   </Collapsible>
                 )}
+              </div>
+            )}
+
+            {/* Sample Data Banner - shown when using demo data */}
+            {checkoutData.isSample && (
+              <div className="mb-6">
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200">
+                      Sample Checkout Preview
+                    </h3>
+                  </div>
+                  <p className="text-blue-700 dark:text-blue-300">
+                    This is a preview showing what a typical checkout would look like. The dates and guest counts shown are examples.
+                  </p>
+                </div>
               </div>
             )}
 
