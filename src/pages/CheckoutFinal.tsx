@@ -115,10 +115,13 @@ const CheckoutFinal = () => {
         if (r.family_group !== claimedProfile.family_group_name) return false;
         
         // Check if user is the host of this reservation
-        // For host assignments, check if user's claimed name matches the primary host
+        // For host assignments, check if user's claimed name matches OR email matches
         if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
-          const primaryHost = r.host_assignments[0];
-          return primaryHost.host_name === claimedProfile.member_name;
+          const userIsHost = r.host_assignments.some(host => 
+            host.host_name === claimedProfile.member_name || 
+            host.host_email?.toLowerCase() === user.email?.toLowerCase()
+          );
+          if (userIsHost) return true;
         }
         
         // Fallback: if no host assignments, user must be group lead and reservation must be for their group
