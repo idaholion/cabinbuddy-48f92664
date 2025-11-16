@@ -1074,7 +1074,7 @@ const CheckoutFinal = () => {
               )}
 
               {/* Split Mode Toggle Card */}
-              {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && currentReservation && isUserReservationOwner(currentReservation) && (
+              {totalDays > 0 && dailyBreakdown.length > 0 && !hasOccupancyChanges && (checkoutData.isSample || (currentReservation && isUserReservationOwner(currentReservation))) && (
                 <Card className="mb-6 border-purple-200 dark:border-purple-800">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
