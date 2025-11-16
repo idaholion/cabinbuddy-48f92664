@@ -9,6 +9,7 @@ import { Trash2, Database, AlertTriangle, Loader2, CheckCircle, XCircle, Users, 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { UserManagement } from "./UserManagement";
+import { BackfillSplitOccupancy } from "./BackfillSplitOccupancy";
 
 interface Organization {
   id: string;
@@ -377,6 +378,11 @@ export const DataManagementControls = ({ organizations, onDataChanged }: DataMan
           {/* User Management */}
           <div className="space-y-3">
             <UserManagement />
+          </div>
+
+          {/* Split Occupancy Backfill */}
+          <div className="space-y-3">
+            <BackfillSplitOccupancy />
           </div>
         </CardContent>
       </Card>

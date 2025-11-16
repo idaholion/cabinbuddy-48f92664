@@ -84,21 +84,41 @@ serve(async (req) => {
       throw new Error('Cannot edit split after recipient has made payments');
     }
 
-    // Build new daily occupancy split
+    // Build new daily occupancy split AND formatted arrays for payments
     const dates = Object.keys(sourceOccupancy).sort();
-    const newDailyOccupancySplit = dates.map(date => {
+    const newDailyOccupancySplit = [];
+    const newRecipientDailyOccupancy = [];
+    const newSourceDailyOccupancy = [];
+
+    for (const date of dates) {
       const sourceGuests = sourceOccupancy[date] || 0;
       const recipientGuests = recipientOccupancy[date] || 0;
+      const sourceCost = sourceGuests * perDiem;
       const recipientCost = recipientGuests * perDiem;
 
-      return {
+      // For payment_splits table (keeps both source and recipient info)
+      newDailyOccupancySplit.push({
         date,
         sourceGuests,
         recipientGuests,
         perDiem,
         recipientCost,
-      };
-    });
+      });
+
+      // For recipient's payment.daily_occupancy
+      newRecipientDailyOccupancy.push({
+        date,
+        guests: recipientGuests,
+        cost: recipientCost,
+      });
+
+      // For source's payment.daily_occupancy
+      newSourceDailyOccupancy.push({
+        date,
+        guests: sourceGuests,
+        cost: sourceCost,
+      });
+    }
 
     // Calculate new totals
     const newSplitAmount = newDailyOccupancySplit.reduce((sum, day) => sum + day.recipientCost, 0);
@@ -123,6 +143,7 @@ serve(async (req) => {
       .update({
         amount: newSplitAmount,
         balance_due: newSplitAmount,
+        daily_occupancy: newRecipientDailyOccupancy,
         updated_at: new Date().toISOString(),
       })
       .eq('id', split.split_payment_id);
@@ -135,6 +156,7 @@ serve(async (req) => {
       .update({
         amount: newSourceAmount,
         balance_due: newSourceAmount,
+        daily_occupancy: newSourceDailyOccupancy,
         updated_at: new Date().toISOString(),
       })
       .eq('id', split.source_payment_id);
