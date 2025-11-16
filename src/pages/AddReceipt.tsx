@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -62,6 +62,21 @@ const AddReceipt = () => {
     }
     return receipts.filter(receipt => receipt.family_group === selectedFamilyGroup);
   }, [receipts, selectedFamilyGroup]);
+
+  // Scroll control for receipts list
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollUp = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ top: -100, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ top: 100, behavior: 'smooth' });
+    }
+  };
 
   // Image compression/resizing function
   const compressImage = (file: File, maxWidth = 1920, maxHeight = 1080, quality = 0.8): Promise<File> => {
@@ -739,7 +754,20 @@ const AddReceipt = () => {
               </div>
               
               <ScrollArea className="h-80">
-                <div className="space-y-3">
+                <div ref={scrollRef} className="h-full">
+                  {/* Scroll Up Button */}
+                  <div className="sticky top-0 z-10 flex justify-center py-1 bg-gradient-to-b from-background to-transparent">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={scrollUp}
+                      className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all"
+                    >
+                      <ChevronUp className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3 px-1">
                   {filteredReceipts.map((receipt) => (
                     <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
                       {receipt.image_url ? (
@@ -823,6 +851,19 @@ const AddReceipt = () => {
                       No receipts added yet
                     </div>
                   )}
+                  </div>
+                  
+                  {/* Scroll Down Button */}
+                  <div className="sticky bottom-0 z-10 flex justify-center py-1 bg-gradient-to-t from-background to-transparent">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={scrollDown}
+                      className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all"
+                    >
+                      <ChevronDown className="h-5 w-5" />
+                    </Button>
+                  </div>
                 </div>
               </ScrollArea>
               <div className="mt-4 pt-4 border-t space-y-1">
