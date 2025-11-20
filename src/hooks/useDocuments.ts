@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface Document {
   id: string;
@@ -33,10 +34,8 @@ export const useDocuments = () => {
     }
     
     try {
-      const { data, error } = await supabase
-        .from('documents')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('documents', orgContext)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -79,16 +78,14 @@ export const useDocuments = () => {
       console.log('Upload successful, storing file path:', fileName);
 
       // Insert document record with file path only
-      const { data, error } = await supabase
-        .from('documents')
-        .insert({
-          organization_id: organization.id,
-          uploaded_by_user_id: user.id,
-          file_url: fileName, // Store only file path for private bucket
-          file_size: file.size,
-          file_type: file.type,
-          ...documentData
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('documents', {
+        uploaded_by_user_id: user.id,
+        file_url: fileName, // Store only file path for private bucket
+        file_size: file.size,
+        file_type: file.type,
+        ...documentData
+      }, orgContext)
         .select()
         .single();
 
@@ -126,13 +123,11 @@ export const useDocuments = () => {
     if (!user || !organization?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('documents')
-        .insert({
-          organization_id: organization.id,
-          uploaded_by_user_id: user.id,
-          ...documentData
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('documents', {
+        uploaded_by_user_id: user.id,
+        ...documentData
+      }, orgContext)
         .select()
         .single();
 
@@ -275,9 +270,8 @@ export const useDocuments = () => {
         const filePath = doc.file_url!.split('/storage/v1/object/public/documents/')[1];
         
         // Update the document in the database
-        const { error } = await supabase
-          .from('documents')
-          .update({ file_url: filePath })
+        const orgContext = createOrganizationContext(organization?.id);
+        const { error } = await secureUpdate('documents', { file_url: filePath }, orgContext)
           .eq('id', doc.id);
 
         if (!error) {
@@ -314,9 +308,8 @@ export const useDocuments = () => {
       }
 
       // Delete from database
-      const { error } = await supabase
-        .from('documents')
-        .delete()
+      const orgContext = createOrganizationContext(organization?.id);
+      const { error } = await secureDelete('documents', orgContext)
         .eq('id', documentId);
 
       if (error) throw error;
@@ -338,9 +331,8 @@ export const useDocuments = () => {
 
   const updateDocument = async (documentId: string, updates: Partial<Document>) => {
     try {
-      const { data, error } = await supabase
-        .from('documents')
-        .update(updates)
+      const orgContext = createOrganizationContext(organization?.id);
+      const { data, error } = await secureUpdate('documents', updates, orgContext)
         .eq('id', documentId)
         .select()
         .single();
