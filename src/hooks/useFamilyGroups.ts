@@ -2,36 +2,47 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useMultiOrganization } from '@/hooks/useMultiOrganization';
+import { useOrganizationContext } from './useOrganizationContext';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { GroupMember, FamilyGroupData } from '@/types/group-member';
 import { parseFullName } from '@/lib/name-utils';
+import { secureSelect, secureInsert, secureUpdate, secureRpc, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export const useFamilyGroups = () => {
   const { user } = useAuth();
-  const { activeOrganization: organization } = useMultiOrganization();
+  const { activeOrganization, getOrganizationId, isTestOrganization, getAllocationModel } = useOrganizationContext();
   const { toast } = useToast();
   const { isSupervisor } = useSupervisor();
   const [loading, setLoading] = useState(false);
   const [familyGroups, setFamilyGroups] = useState<any[]>([]);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchFamilyGroups = async () => {
-    if (!user || !organization?.organization_id) {
-      console.warn('fetchFamilyGroups called without user or organization:', { user: !!user, organization: !!organization });
+    if (!user || !orgContext) {
+      console.warn('fetchFamilyGroups called without user or organization:', { user: !!user, organization: !!orgContext });
       return;
     }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('family_groups')
+      const { data, error } = await secureSelect('family_groups', orgContext)
         .select('*')
-        .eq('organization_id', organization.organization_id)
         .order('name');
 
       if (error) {
         console.error('Error fetching family groups:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       // Parse the JSONB host_members field and deduplicate by name
@@ -62,8 +73,8 @@ export const useFamilyGroups = () => {
   };
 
   const createFamilyGroup = async (groupData: FamilyGroupData) => {
-    if (!user || !organization?.organization_id) {
-      console.warn('createFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
+    if (!user || !orgContext) {
+      console.warn('createFamilyGroup called without user or organization:', { user: !!user, organization: !!orgContext });
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to create a family group.",
@@ -109,15 +120,14 @@ export const useFamilyGroups = () => {
 
     setLoading(true);
     try {
-      const { data: newGroup, error } = await supabase
-        .from('family_groups')
-        .insert({
+      const { data: newGroup, error } = await secureInsert(
+        'family_groups',
+        {
           ...groupData,
-          organization_id: organization.organization_id,
           host_members: groupMembers as any // Cast to any for JSONB
-        })
-        .select()
-        .single();
+        },
+        orgContext
+      ).select().single();
 
       if (error) {
         console.error('Error creating family group:', error);
@@ -166,8 +176,8 @@ export const useFamilyGroups = () => {
   };
 
   const updateFamilyGroup = async (groupId: string, updates: Partial<FamilyGroupData>) => {
-    if (!user || !organization?.organization_id) {
-      console.warn('updateFamilyGroup called without user or organization:', { user: !!user, organization: !!organization });
+    if (!user || !orgContext) {
+      console.warn('updateFamilyGroup called without user or organization:', { user: !!user, organization: !!orgContext });
       toast({
         title: "Error",
         description: "No organization found.",
@@ -208,11 +218,12 @@ export const useFamilyGroups = () => {
         host_members: groupMembers as any
       };
 
-      const { data: updatedGroup, error } = await supabase
-        .from('family_groups')
-        .update(updatesWithJsonb)
+      const { data: updatedGroup, error } = await secureUpdate(
+        'family_groups',
+        updatesWithJsonb,
+        orgContext
+      )
         .eq('id', groupId)
-        .eq('organization_id', organization.organization_id)
         .select()
         .single();
 
@@ -253,13 +264,13 @@ export const useFamilyGroups = () => {
   };
 
   useEffect(() => {
-    if (organization?.organization_id) {
+    if (orgContext) {
       fetchFamilyGroups();
     }
-  }, [organization?.organization_id]);
+  }, [activeOrganization?.organization_id]);
 
   const renameFamilyGroup = async (oldName: string, newName: string) => {
-    if (!user || !organization?.organization_id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "No organization found.",
@@ -274,11 +285,15 @@ export const useFamilyGroups = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('rename_family_group', {
-        p_organization_id: organization.organization_id,
-        p_old_name: oldName,
-        p_new_name: newName
-      });
+      const { data, error } = await secureRpc(
+        'rename_family_group',
+        {
+          p_organization_id: getOrganizationId(),
+          p_old_name: oldName,
+          p_new_name: newName
+        },
+        orgContext
+      );
 
       if (error) {
         console.error('Error renaming family group:', error);
@@ -311,13 +326,17 @@ export const useFamilyGroups = () => {
   };
 
   const getAvailableColors = async (currentGroupId?: string) => {
-    if (!organization?.organization_id) return [];
+    if (!orgContext) return [];
     
     try {
-      const { data, error } = await supabase.rpc('get_available_colors', {
-        p_organization_id: organization.organization_id,
-        p_current_group_id: currentGroupId || null
-      });
+      const { data, error } = await secureRpc(
+        'get_available_colors',
+        {
+          p_organization_id: getOrganizationId(),
+          p_current_group_id: currentGroupId || null
+        },
+        orgContext
+      );
       
       if (error) {
         console.error('Error getting available colors:', error);
@@ -332,7 +351,7 @@ export const useFamilyGroups = () => {
   };
 
   const updateFamilyGroupColor = async (groupId: string, color: string) => {
-    if (!user || !organization?.organization_id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "No organization found.",
@@ -343,11 +362,12 @@ export const useFamilyGroups = () => {
 
     setLoading(true);
     try {
-      const { data: updatedGroup, error } = await supabase
-        .from('family_groups')
-        .update({ color })
+      const { data: updatedGroup, error } = await secureUpdate(
+        'family_groups',
+        { color },
+        orgContext
+      )
         .eq('id', groupId)
-        .eq('organization_id', organization.organization_id)
         .select()
         .single();
 
@@ -400,7 +420,7 @@ export const useFamilyGroups = () => {
       return false;
     }
 
-    if (!organization?.organization_id) {
+    if (!orgContext) {
       toast({
         title: "Error",
         description: "No organization found.",
