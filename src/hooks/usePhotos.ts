@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface Photo {
   id: string;
@@ -35,10 +36,8 @@ export const usePhotos = () => {
     if (!organization?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('photos', orgContext)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -75,14 +74,12 @@ export const usePhotos = () => {
         .getPublicUrl(fileName);
 
       // Insert photo record
-      const { data, error } = await supabase
-        .from('photos')
-        .insert({
-          user_id: user.id,
-          organization_id: organization.id,
-          image_url: publicUrl,
-          caption
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('photos', {
+        user_id: user.id,
+        image_url: publicUrl,
+        caption
+      }, orgContext)
         .select()
         .single();
 
@@ -118,12 +115,11 @@ export const usePhotos = () => {
         ? photo.liked_by_users.filter(id => id !== user.id)
         : [...photo.liked_by_users, user.id];
 
-      const { error } = await supabase
-        .from('photos')
-        .update({
-          likes_count: newLikedBy.length,
-          liked_by_users: newLikedBy
-        })
+      const orgContext = createOrganizationContext(organization?.id);
+      const { error } = await secureUpdate('photos', {
+        likes_count: newLikedBy.length,
+        liked_by_users: newLikedBy
+      }, orgContext)
         .eq('id', photoId);
 
       if (error) throw error;
@@ -159,9 +155,8 @@ export const usePhotos = () => {
       }
 
       // Delete from database
-      const { error } = await supabase
-        .from('photos')
-        .delete()
+      const orgContext = createOrganizationContext(organization?.id);
+      const { error } = await secureDelete('photos', orgContext)
         .eq('id', photoId);
 
       if (error) throw error;
