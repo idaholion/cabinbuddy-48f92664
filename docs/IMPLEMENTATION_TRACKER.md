@@ -328,6 +328,12 @@ CREATE TABLE organization_safety_audit (
   - `assertOrganizationOwnership()` - Type guard for data validation
 
 #### Tasks In Progress
+- [x] **Migrate `usePayments.ts` to secure query wrapper** ✅
+  - Replaced all direct Supabase queries with secure wrappers
+  - Added organization context validation
+  - Implemented ownership assertion for fetched data
+  - All CRUD operations now organization-scoped
+  
 - [ ] Audit all data-fetching hooks for `organization_id` scoping
   - Create checklist of all hooks that query database
   - Verify each includes proper organization filtering
@@ -359,6 +365,9 @@ CREATE TABLE organization_safety_audit (
 
 #### Files Created
 - ✅ `src/lib/secure-queries.ts` - Secure query wrapper with organization context validation
+
+#### Files Migrated
+- ✅ `src/hooks/usePayments.ts` - Fully migrated to secure query wrapper (2025-11-20)
 
 #### Files to Modify (Next Steps)
 - `src/hooks/useFinancialData.ts`
