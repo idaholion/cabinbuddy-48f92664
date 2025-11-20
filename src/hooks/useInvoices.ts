@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizationContext } from './useOrganizationContext';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, secureRpc, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export type InvoiceStatus = 'draft' | 'sent' | 'partial' | 'paid' | 'overdue' | 'cancelled';
 
@@ -32,23 +33,34 @@ export interface Invoice {
 
 export const useInvoices = () => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization, getOrganizationId } = useOrganizationContext();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchInvoices = async () => {
-    if (!organization?.id) return;
+    if (!orgContext) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('invoices')
+      const { data, error } = await secureSelect('invoices', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       setInvoices((data || []) as Invoice[]);
     } catch (error) {
       console.error('Error fetching invoices:', error);
@@ -63,11 +75,14 @@ export const useInvoices = () => {
   };
 
   const generateInvoiceNumber = async () => {
-    if (!organization?.id) return null;
+    if (!orgContext) return null;
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_next_invoice_number', { org_id: organization.id });
+      const { data, error } = await secureRpc(
+        'get_next_invoice_number',
+        { org_id: getOrganizationId() },
+        orgContext
+      );
 
       if (error) throw error;
       return data;
@@ -79,22 +94,21 @@ export const useInvoices = () => {
   };
 
   const createInvoice = async (invoiceData: Omit<Invoice, 'id' | 'created_at' | 'updated_at' | 'organization_id' | 'created_by_user_id' | 'invoice_number'>) => {
-    if (!organization?.id || !user?.id) return null;
+    if (!orgContext || !user?.id) return null;
 
     try {
       const invoiceNumber = await generateInvoiceNumber();
       if (!invoiceNumber) throw new Error('Failed to generate invoice number');
 
-      const { data, error } = await supabase
-        .from('invoices')
-        .insert({
+      const { data, error } = await secureInsert(
+        'invoices',
+        {
           ...invoiceData,
           invoice_number: invoiceNumber,
-          organization_id: organization.id,
           created_by_user_id: user.id,
-        })
-        .select()
-        .single();
+        },
+        orgContext
+      ).select().single();
 
       if (error) throw error;
 
@@ -117,6 +131,8 @@ export const useInvoices = () => {
   };
 
   const recordPayment = async (invoiceId: string, amount: number, paymentMethod: string, reference?: string) => {
+    if (!orgContext) return false;
+
     try {
       const invoice = invoices.find(inv => inv.id === invoiceId);
       if (!invoice) throw new Error('Invoice not found');
@@ -131,15 +147,16 @@ export const useInvoices = () => {
         newStatus = 'partial';
       }
 
-      const { error } = await supabase
-        .from('invoices')
-        .update({
+      const { error } = await secureUpdate(
+        'invoices',
+        {
           amount_paid: newAmountPaid,
           balance_due: newBalanceDue,
           status: newStatus,
           paid_at: newBalanceDue <= 0 ? new Date().toISOString() : null,
-        })
-        .eq('id', invoiceId);
+        },
+        orgContext
+      ).eq('id', invoiceId);
 
       if (error) throw error;
 
@@ -162,11 +179,14 @@ export const useInvoices = () => {
   };
 
   const updateInvoice = async (id: string, updates: Partial<Invoice>) => {
+    if (!orgContext) return false;
+
     try {
-      const { error } = await supabase
-        .from('invoices')
-        .update(updates)
-        .eq('id', id);
+      const { error } = await secureUpdate(
+        'invoices',
+        updates,
+        orgContext
+      ).eq('id', id);
 
       if (error) throw error;
 
@@ -189,10 +209,10 @@ export const useInvoices = () => {
   };
 
   const deleteInvoice = async (id: string) => {
+    if (!orgContext) return false;
+
     try {
-      const { error } = await supabase
-        .from('invoices')
-        .delete()
+      const { error } = await secureDelete('invoices', orgContext)
         .eq('id', id);
 
       if (error) throw error;
@@ -216,13 +236,13 @@ export const useInvoices = () => {
   };
 
   const sendInvoice = async (invoiceId: string) => {
-    if (!organization?.id) return false;
+    if (!orgContext) return false;
 
     try {
       const { data, error } = await supabase.functions.invoke('send-invoice', {
         body: {
           invoice_id: invoiceId,
-          organization_id: organization.id,
+          organization_id: getOrganizationId(),
         },
       });
 
@@ -247,7 +267,7 @@ export const useInvoices = () => {
   };
 
   const sendBatchInvoices = async (invoiceIds: string[]) => {
-    if (!organization?.id || invoiceIds.length === 0) return { success: 0, failed: 0 };
+    if (!orgContext || invoiceIds.length === 0) return { success: 0, failed: 0 };
 
     let successCount = 0;
     let failedCount = 0;
@@ -257,7 +277,7 @@ export const useInvoices = () => {
         const { error } = await supabase.functions.invoke('send-invoice', {
           body: {
             invoice_id: invoiceId,
-            organization_id: organization.id,
+            organization_id: getOrganizationId(),
           },
         });
 
@@ -280,8 +300,10 @@ export const useInvoices = () => {
   };
 
   useEffect(() => {
-    fetchInvoices();
-  }, [organization?.id]);
+    if (orgContext) {
+      fetchInvoices();
+    }
+  }, [activeOrganization?.organization_id]);
 
   return {
     invoices,
