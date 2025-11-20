@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { secureSelect, secureInsert, secureDelete, createOrganizationContext } from '@/lib/secure-queries';
 
 interface ReceiptData {
   description: string;
@@ -25,10 +26,8 @@ export const useReceipts = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('receipts')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('receipts', orgContext)
         .order('date', { ascending: false });
 
       if (error) {
@@ -87,11 +86,11 @@ export const useReceipts = () => {
       let familyGroup = receiptData.family_group;
       
       if (email) {
+        const orgContext = createOrganizationContext(organization.id);
+        
         // Check if user is a lead
-        const { data: leadGroup, error: leadError } = await supabase
-          .from('family_groups')
+        const { data: leadGroup, error: leadError } = await secureSelect('family_groups', orgContext)
           .select('name')
-          .eq('organization_id', organization.id)
           .eq('lead_email', email)
           .maybeSingle();
         
@@ -103,10 +102,8 @@ export const useReceipts = () => {
           familyGroup = leadGroup.name;
         } else {
           // Check if user is a host member
-          const { data: allGroups, error: groupsError } = await supabase
-            .from('family_groups')
-            .select('name, host_members')
-            .eq('organization_id', organization.id);
+          const { data: allGroups, error: groupsError } = await secureSelect('family_groups', orgContext)
+            .select('name, host_members');
           
           if (groupsError) {
             console.error('Error fetching all groups:', groupsError);
@@ -134,17 +131,15 @@ export const useReceipts = () => {
         return null;
       }
 
-      const { data: newReceipt, error } = await supabase
-        .from('receipts')
-        .insert({
-          description: receiptData.description,
-          amount: receiptData.amount,
-          date: receiptData.date,
-          family_group: familyGroup,
-          image_url: imageUrl,
-          organization_id: organization.id,
-          user_id: user.id
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data: newReceipt, error } = await secureInsert('receipts', {
+        description: receiptData.description,
+        amount: receiptData.amount,
+        date: receiptData.date,
+        family_group: familyGroup,
+        image_url: imageUrl,
+        user_id: user.id
+      }, orgContext)
         .select()
         .single();
 
@@ -203,11 +198,9 @@ export const useReceipts = () => {
         }
       }
 
-      const { error } = await supabase
-        .from('receipts')
-        .delete()
-        .eq('id', receiptId)
-        .eq('organization_id', organization.id);
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureDelete('receipts', orgContext)
+        .eq('id', receiptId);
 
       if (error) {
         console.error('Error deleting receipt:', error);
