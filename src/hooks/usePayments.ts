@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganization } from './useOrganization';
+import { useOrganizationContext } from './useOrganizationContext';
 import { useToast } from '@/hooks/use-toast';
+import {
+  secureSelect,
+  secureInsert,
+  secureUpdate,
+  createOrganizationContext,
+  assertOrganizationOwnership,
+  OrganizationContext
+} from '@/lib/secure-queries';
 
 export type PaymentStatus = 'pending' | 'paid' | 'partial' | 'overdue' | 'cancelled' | 'refunded' | 'deferred';
 export type PaymentType = 'reservation_deposit' | 'reservation_balance' | 'full_payment' | 'cleaning_fee' | 'damage_deposit' | 'pet_fee' | 'late_fee' | 'refund' | 'other' | 'use_fee';
@@ -45,45 +53,41 @@ export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0 });
-  const { organization } = useOrganization();
+  const { organizationId, isTestOrganization, getAllocationModel } = useOrganizationContext();
   const { toast } = useToast();
 
+  // Create organization context for secure queries
+  const orgContext = createOrganizationContext(
+    organizationId,
+    isTestOrganization(),
+    getAllocationModel()
+  );
+
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
-    if (!organization?.id) return;
+    if (!orgContext) return;
 
     try {
       setLoading(true);
-      
-      // Build query with optional year filter
-      let countQuery = supabase
-        .from('payments')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', organization.id);
-      
-      let dataQuery = supabase
-        .from('payments')
-        .select(`
-          *,
-          reservation:reservations(start_date, end_date)
-        `)
-        .eq('organization_id', organization.id);
 
       // Apply year filter if provided - filter by reservation dates when available
       if (year) {
         const startDate = `${year}-01-01`;
         const endDate = `${year}-12-31`;
         
-        // Fetch ALL payments with reservation data
-        const { data: allPayments, error: allError } = await supabase
-          .from('payments')
+        // Fetch ALL payments with reservation data using secure query
+        const { data: allPayments, error: allError } = await secureSelect('payments', orgContext)
           .select(`
             *,
             reservation:reservations(start_date, end_date)
           `)
-          .eq('organization_id', organization.id)
           .order('created_at', { ascending: false });
         
         if (allError) throw allError;
+        
+        // Validate organization ownership
+        if (allPayments) {
+          assertOrganizationOwnership(allPayments, orgContext);
+        }
         
         // Filter payments by year - prioritize reservation dates over creation dates
         const filteredPayments = (allPayments || []).filter(payment => {
@@ -114,17 +118,20 @@ export const usePayments = () => {
         return;
       }
 
-      // When no year filter, fetch ALL payments (not just first 50)
-      const { data, error } = await supabase
-        .from('payments')
+      // When no year filter, fetch ALL payments using secure query
+      const { data, error } = await secureSelect('payments', orgContext)
         .select(`
           *,
           reservation:reservations(start_date, end_date)
         `)
-        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Validate organization ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
       
       setPayments(data || []);
       setPagination({ page: 1, limit: 50, total: data?.length || 0 });
@@ -138,7 +145,7 @@ export const usePayments = () => {
     } finally {
       setLoading(false);
     }
-  }, [organization?.id, toast]);
+  }, [orgContext, toast]);
 
   const validatePaymentData = (paymentData: CreatePaymentData): string | null => {
     if (!paymentData.family_group.trim()) {
@@ -154,7 +161,7 @@ export const usePayments = () => {
   };
 
   const createPayment = async (paymentData: CreatePaymentData) => {
-    if (!organization?.id) return null;
+    if (!orgContext) return null;
 
     // Validate input
     const validationError = validatePaymentData(paymentData);
@@ -168,12 +175,10 @@ export const usePayments = () => {
     }
 
     try {
-      // Check for duplicate payments if reservation_id is provided
+      // Check for duplicate payments if reservation_id is provided using secure query
       if (paymentData.reservation_id) {
-        const { data: existingPayments } = await supabase
-          .from('payments')
+        const { data: existingPayments } = await secureSelect('payments', orgContext)
           .select('id, payment_type, amount')
-          .eq('organization_id', organization.id)
           .eq('reservation_id', paymentData.reservation_id)
           .eq('payment_type', paymentData.payment_type);
 
@@ -187,12 +192,8 @@ export const usePayments = () => {
         }
       }
 
-      const { data, error } = await supabase
-        .from('payments')
-        .insert({
-          ...paymentData,
-          organization_id: organization.id,
-        })
+      // Use secure insert - organization_id automatically added
+      const { data, error } = await secureInsert('payments', paymentData, orgContext)
         .select()
         .single();
 
@@ -217,10 +218,11 @@ export const usePayments = () => {
   };
 
   const updatePayment = async (id: string, updates: Partial<Omit<Payment, 'id' | 'organization_id' | 'created_at' | 'balance_due'>>) => {
+    if (!orgContext) return null;
+
     try {
-      // Get current payment for optimistic locking
-      const { data: currentPayment } = await supabase
-        .from('payments')
+      // Get current payment for optimistic locking using secure query
+      const { data: currentPayment } = await secureSelect('payments', orgContext)
         .select('updated_at')
         .eq('id', id)
         .single();
@@ -229,12 +231,11 @@ export const usePayments = () => {
         throw new Error('Payment not found');
       }
 
-      const { data, error } = await supabase
-        .from('payments')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+      // Use secure update - organization_id filter automatically applied
+      const { data, error } = await secureUpdate('payments', {
+        ...updates,
+        updated_at: new Date().toISOString()
+      }, orgContext)
         .eq('id', id)
         .eq('updated_at', currentPayment.updated_at) // Optimistic locking
         .select()
@@ -266,6 +267,8 @@ export const usePayments = () => {
   };
 
   const recordPayment = async (id: string, amountPaid: number, paymentMethod?: PaymentMethod, paymentReference?: string) => {
+    if (!orgContext) return null;
+
     try {
       const payment = payments.find(p => p.id === id);
       if (!payment) throw new Error('Payment not found');
@@ -280,9 +283,8 @@ export const usePayments = () => {
         throw new Error(`Payment amount ($${amountPaid.toFixed(2)}) would exceed total due ($${payment.balance_due.toFixed(2)})`);
       }
 
-      // Get current payment for optimistic locking
-      const { data: currentPayment } = await supabase
-        .from('payments')
+      // Get current payment for optimistic locking using secure query
+      const { data: currentPayment } = await secureSelect('payments', orgContext)
         .select('updated_at, amount_paid')
         .eq('id', id)
         .single();
@@ -296,15 +298,14 @@ export const usePayments = () => {
         throw new Error('Payment was modified by another user. Please refresh and try again.');
       }
       
-      const { data, error } = await supabase
-        .from('payments')
-        .update({
-          amount_paid: newAmountPaid,
-          payment_method: paymentMethod || payment.payment_method,
-          payment_reference: paymentReference || payment.payment_reference,
-          paid_date: newAmountPaid >= payment.amount ? new Date().toISOString().split('T')[0] : payment.paid_date,
-          updated_at: new Date().toISOString()
-        })
+      // Use secure update - organization_id filter automatically applied
+      const { data, error } = await secureUpdate('payments', {
+        amount_paid: newAmountPaid,
+        payment_method: paymentMethod || payment.payment_method,
+        payment_reference: paymentReference || payment.payment_reference,
+        paid_date: newAmountPaid >= payment.amount ? new Date().toISOString().split('T')[0] : payment.paid_date,
+        updated_at: new Date().toISOString()
+      }, orgContext)
         .eq('id', id)
         .eq('updated_at', currentPayment.updated_at) // Optimistic locking
         .select()
@@ -407,10 +408,11 @@ export const usePayments = () => {
     paymentReference?: string,
     notes?: string
   ) => {
+    if (!orgContext) return;
+
     try {
-      // Get current payment
-      const { data: payment, error: fetchError } = await supabase
-        .from('payments')
+      // Get current payment using secure query
+      const { data: payment, error: fetchError } = await secureSelect('payments', orgContext)
         .select('*')
         .eq('id', paymentId)
         .single();
@@ -420,17 +422,16 @@ export const usePayments = () => {
       const newAmountPaid = (payment.amount_paid || 0) + amount;
       const newStatus = newAmountPaid >= payment.amount ? 'paid' : 'partial';
 
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          amount_paid: newAmountPaid,
-          status: newStatus,
-          paid_date: paidDate,
-          payment_method: paymentMethod as any,
-          payment_reference: paymentReference,
-          notes: notes ? `${payment.notes || ''}\n${notes}`.trim() : payment.notes,
-          updated_at: new Date().toISOString(),
-        })
+      // Use secure update - organization_id filter automatically applied
+      const { error } = await secureUpdate('payments', {
+        amount_paid: newAmountPaid,
+        status: newStatus,
+        paid_date: paidDate,
+        payment_method: paymentMethod as any,
+        payment_reference: paymentReference,
+        notes: notes ? `${payment.notes || ''}\n${notes}`.trim() : payment.notes,
+        updated_at: new Date().toISOString(),
+      }, orgContext)
         .eq('id', paymentId);
 
       if (error) throw error;
