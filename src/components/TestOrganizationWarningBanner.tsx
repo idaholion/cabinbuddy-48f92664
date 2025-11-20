@@ -7,8 +7,14 @@ interface TestOrganizationWarningBannerProps {
 }
 
 export function TestOrganizationWarningBanner({ className = "" }: TestOrganizationWarningBannerProps) {
-  const { isTestOrganization } = useOrganizationContext();
+  const { activeOrganization, isTestOrganization } = useOrganizationContext();
   
+  // Don't render if no organization is loaded yet
+  if (!activeOrganization) {
+    return null;
+  }
+
+  // Don't render if not a test organization
   if (!isTestOrganization()) {
     return null;
   }
