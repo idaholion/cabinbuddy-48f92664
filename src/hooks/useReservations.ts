@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizationContext } from './useOrganizationContext';
 import { useReservationConflicts } from '@/hooks/useReservationConflicts';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface ReservationData {
   start_date: string;
@@ -28,7 +29,7 @@ interface ReservationData {
 
 export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?: string } = { enabled: false }) => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization, getOrganizationId } = useOrganizationContext();
   const { toast } = useToast();
   const { validateReservationDates } = useReservationConflicts();
   const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper } = useUserRole();
@@ -36,16 +37,21 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchReservations = async () => {
-    if (!user || !organization?.id) return;
+    if (!user || !orgContext) return;
 
     console.log('Fetching reservations from database...');
     setLoading(true);
     try {
-      let query = supabase
-        .from('reservations')
-        .select('*')
-        .eq('organization_id', organization.id);
+      let query = secureSelect('reservations', orgContext)
+        .select('*');
 
       // If admin view mode is enabled and a specific family group is selected
       if (adminViewMode.enabled && adminViewMode.familyGroup && adminViewMode.familyGroup !== 'all') {
@@ -59,6 +65,11 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
         return;
       }
 
+      // Validate data ownership
+      if (data && orgContext) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       console.log('Fetched reservations from DB:', data);
       setReservations(data || []);
       console.log('Set reservations state to:', data?.length || 0, 'items');
@@ -70,7 +81,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   };
 
   const createReservation = async (reservationData: ReservationData, testOverrideMode: boolean = false) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to create a reservation.",
@@ -78,6 +89,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       });
       return null;
     }
+
+    const organizationId = getOrganizationId();
 
     // Skip permission checks in test override mode
     if (!testOverrideMode) {
@@ -137,18 +150,17 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       
       const dataToSave = {
         ...reservationData,
-        organization_id: organization.id,
         user_id: user.id,
         status: reservationData.status || 'confirmed'
       };
 
       console.log('Inserting into database:', dataToSave);
 
-      const { data: newReservation, error } = await supabase
-        .from('reservations')
-        .insert(dataToSave)
-        .select()
-        .single();
+      const { data: newReservation, error } = await secureInsert(
+        'reservations',
+        dataToSave,
+        orgContext
+      ).select().single();
 
       if (error) {
         console.error('Database error creating reservation:', error);
@@ -190,15 +202,13 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
     }
 
     const primaryHost = hostAssignments[0];
-    if (!primaryHost?.host_email || !organization?.id) {
+    if (!primaryHost?.host_email || !orgContext) {
       return null;
     }
 
     // Find the family group that contains this host
-    const { data: familyGroups, error } = await supabase
-      .from('family_groups')
-      .select('name, lead_email, host_members')
-      .eq('organization_id', organization.id);
+    const { data: familyGroups, error } = await secureSelect('family_groups', orgContext)
+      .select('name, lead_email, host_members');
 
     if (error || !familyGroups) {
       return null;
@@ -225,7 +235,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   };
 
   const updateReservation = async (reservationId: string, updates: Partial<ReservationData>, testOverrideMode: boolean = false) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to update a reservation.",
@@ -233,6 +243,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       });
       return null;
     }
+
+    const organizationId = getOrganizationId();
 
     // Skip permission checks in test override mode OR if user is calendar keeper
     if (!testOverrideMode && !isCalendarKeeper) {
@@ -305,11 +317,12 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
         }
       }
 
-      const { data: updatedReservation, error } = await supabase
-        .from('reservations')
-        .update(finalUpdates)
+      const { data: updatedReservation, error } = await secureUpdate(
+        'reservations',
+        finalUpdates,
+        orgContext
+      )
         .eq('id', reservationId)
-        .eq('organization_id', organization.id)
         .select()
         .single();
 
@@ -348,7 +361,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   };
 
   const deleteReservation = async (reservationId: string, testOverrideMode: boolean = false) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to delete a reservation.",
@@ -356,6 +369,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       });
       return false;
     }
+
+    const organizationId = getOrganizationId();
 
     // Skip permission checks in test override mode OR if user is calendar keeper
     if (!testOverrideMode && !isCalendarKeeper) {
@@ -387,11 +402,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       // Get the reservation to determine which year to reconcile
       const reservationToDelete = reservations.find(r => r.id === reservationId);
       
-      const { error } = await supabase
-        .from('reservations')
-        .delete()
-        .eq('id', reservationId)
-        .eq('organization_id', organization.id);
+      const { error } = await secureDelete('reservations', orgContext)
+        .eq('id', reservationId);
 
       if (error) {
         console.error('Error deleting reservation:', error);
@@ -438,14 +450,14 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   };
 
   useEffect(() => {
-    if (organization?.id) {
+    if (activeOrganization) {
       fetchReservations();
     }
-  }, [organization?.id, adminViewMode.enabled, adminViewMode.familyGroup]);
+  }, [activeOrganization?.organization_id, adminViewMode.enabled, adminViewMode.familyGroup]);
 
   // Add real-time subscription for reservations
   useEffect(() => {
-    if (!organization?.id) return;
+    if (!activeOrganization) return;
 
     const channel = supabase
       .channel('reservations-changes')
@@ -455,7 +467,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
           event: '*',
           schema: 'public',
           table: 'reservations',
-          filter: `organization_id=eq.${organization.id}`
+          filter: `organization_id=eq.${activeOrganization.organization_id}`
         },
         (payload) => {
           console.log('Real-time reservation change:', payload);
@@ -468,7 +480,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [organization?.id]);
+  }, [activeOrganization?.organization_id]);
 
   return {
     reservations,
