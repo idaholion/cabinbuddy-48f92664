@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
+import { secureSelect, secureInsert, secureUpdate, createOrganizationContext } from '@/lib/secure-queries';
 
 interface TimePeriodWindow {
   startDate: Date;
@@ -355,10 +356,8 @@ export const useTimePeriods = (rotationYear?: number) => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('time_period_usage')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('time_period_usage', orgContext)
         .eq('rotation_year', currentYear);
 
       if (error) {
@@ -404,10 +403,9 @@ export const useTimePeriods = (rotationYear?: number) => {
     if (!organization?.id || !rotationData) return;
 
     try {
-      const existingUsage = await supabase
-        .from('time_period_usage')
+      const orgContext = createOrganizationContext(organization.id);
+      const existingUsage = await secureSelect('time_period_usage', orgContext)
         .select('family_group')
-        .eq('organization_id', organization.id)
         .eq('rotation_year', year);
 
       const existingGroups = existingUsage.data?.map(u => u.family_group) || [];
@@ -422,9 +420,7 @@ export const useTimePeriods = (rotationYear?: number) => {
           time_periods_allowed: rotationData.max_time_slots || 2
         }));
 
-        const { error } = await supabase
-          .from('time_period_usage')
-          .insert(insertData);
+        const { error } = await secureInsert('time_period_usage', insertData, orgContext);
 
         if (error) {
           console.error('Error initializing time period usage:', error);
@@ -442,10 +438,8 @@ export const useTimePeriods = (rotationYear?: number) => {
     if (!organization?.id) return;
 
     try {
-      const { data: currentUsage, error: fetchError } = await supabase
-        .from('time_period_usage')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data: currentUsage, error: fetchError } = await secureSelect('time_period_usage', orgContext)
         .eq('family_group', familyGroup)
         .eq('rotation_year', year)
         .maybeSingle(); // Use maybeSingle instead of single
@@ -457,16 +451,13 @@ export const useTimePeriods = (rotationYear?: number) => {
 
       // If no usage record exists, create one
       if (!currentUsage) {
-        const { error: insertError } = await supabase
-          .from('time_period_usage')
-          .insert({
-            organization_id: organization.id,
+        const { error: insertError } = await secureInsert('time_period_usage', {
             family_group: familyGroup,
             rotation_year: year,
             time_periods_used: 1,
             time_periods_allowed: rotationData?.max_time_slots || 2,
             last_selection_date: new Date().toISOString()
-          });
+          }, orgContext);
 
         if (insertError) {
           console.error('Error creating time period usage:', insertError);
@@ -477,12 +468,10 @@ export const useTimePeriods = (rotationYear?: number) => {
           });
         }
       } else {
-        const { error: updateError } = await supabase
-          .from('time_period_usage')
-          .update({
-            time_periods_used: currentUsage.time_periods_used + 1,
-            last_selection_date: new Date().toISOString()
-          })
+        const { error: updateError } = await secureUpdate('time_period_usage', {
+          time_periods_used: currentUsage.time_periods_used + 1,
+          last_selection_date: new Date().toISOString()
+        }, orgContext)
           .eq('id', currentUsage.id);
 
         if (updateError) {

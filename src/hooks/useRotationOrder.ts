@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "./useOrganization";
+import { secureSelect, createOrganizationContext } from "@/lib/secure-queries";
 
 interface RotationOrderData {
   id: string;
@@ -107,10 +108,8 @@ export const useRotationOrder = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('rotation_orders')
-        .select('*')
-        .eq('organization_id', organization.id)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('rotation_orders', orgContext)
         .eq('rotation_year', year || new Date().getFullYear())
         .single();
       
@@ -121,10 +120,7 @@ export const useRotationOrder = () => {
       
       // If no data for the requested year, try to find the base rotation data
       if (!data && year && year !== new Date().getFullYear()) {
-        const { data: baseData, error: baseError } = await supabase
-          .from('rotation_orders')
-          .select('*')
-          .eq('organization_id', organization.id)
+        const { data: baseData, error: baseError } = await secureSelect('rotation_orders', orgContext)
           .order('rotation_year', { ascending: false })
           .limit(1)
           .single();
