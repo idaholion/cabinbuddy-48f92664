@@ -53,8 +53,13 @@ export function AllocationModelBadge({
   showDescription = false,
   className = "" 
 }: AllocationModelBadgeProps) {
-  const { getAllocationModel } = useOrganizationContext();
+  const { activeOrganization, getAllocationModel } = useOrganizationContext();
   
+  // Don't render if no organization is loaded yet
+  if (!activeOrganization) {
+    return null;
+  }
+
   const allocationModel = getAllocationModel();
   const config = ALLOCATION_MODELS[allocationModel];
   
