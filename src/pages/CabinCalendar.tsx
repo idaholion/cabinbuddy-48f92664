@@ -33,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/contexts/RoleContext";
 import { Eye, EyeOff } from "lucide-react";
 import { SelectionTurnNotificationButton } from "@/components/SelectionTurnNotificationButton";
+import { AllocationModelBadge } from "@/components/AllocationModelBadge";
+import { TestOrganizationWarningBanner } from "@/components/TestOrganizationWarningBanner";
 
 const CabinCalendar = () => {
   const { user } = useAuth();
@@ -238,11 +240,17 @@ const CabinCalendar = () => {
       <div className="max-w-7xl mx-auto">
         <Card className="bg-card/95 mb-8 min-h-screen">
           <CardHeader className="pb-2 pt-2">
+            {/* Test Organization Warning Banner */}
+            <TestOrganizationWarningBanner className="mb-4" />
+            
             <div className="text-center mb-2">
-              <h1 className="text-2xl md:text-4xl mb-1 font-kaushan text-primary drop-shadow-lg flex items-center justify-center">
-                <Calendar className="h-5 w-5 md:h-6 md:w-6 mr-2" />
-                Cabin Calendar
-              </h1>
+              <div className="flex items-center justify-center gap-3 mb-1">
+                <h1 className="text-2xl md:text-4xl font-kaushan text-primary drop-shadow-lg flex items-center">
+                  <Calendar className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                  Cabin Calendar
+                </h1>
+                <AllocationModelBadge showIcon={true} />
+              </div>
               <div className="relative flex items-center justify-center">
                 <p className="text-sm md:text-lg text-primary font-medium">View and manage cabin reservations and availability</p>
                 <div className="absolute left-0">
