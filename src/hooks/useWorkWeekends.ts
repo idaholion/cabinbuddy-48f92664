@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
+import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface WorkWeekendData {
   title: string;
@@ -20,26 +21,36 @@ interface WorkWeekendData {
 
 export const useWorkWeekends = () => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization, getOrganizationId } = useOrganizationContext();
   const { familyGroups } = useFamilyGroups();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [workWeekends, setWorkWeekends] = useState<any[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchWorkWeekends = async () => {
-    if (!organization?.id) return;
+    if (!orgContext) return;
 
     try {
-      const { data, error } = await supabase
-        .from('work_weekends' as any)
+      const { data, error } = await secureSelect('work_weekends' as any, orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('start_date', { ascending: true });
 
       if (error) {
         console.error('Error fetching work weekends:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       setWorkWeekends(data || []);
@@ -49,7 +60,7 @@ export const useWorkWeekends = () => {
   };
 
   const fetchPendingApprovals = async () => {
-    if (!organization?.id || !user?.email) return;
+    if (!orgContext || !user?.email) return;
 
     try {
       // Get family group for current user
@@ -60,10 +71,8 @@ export const useWorkWeekends = () => {
 
       if (!userFamilyGroup) return;
 
-      const { data, error } = await supabase
-        .from('work_weekend_approvals' as any)
+      const { data, error } = await secureSelect('work_weekend_approvals' as any, orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .eq('family_group', userFamilyGroup.name)
         .eq('status', 'pending');
 
@@ -79,13 +88,11 @@ export const useWorkWeekends = () => {
   };
 
   const detectConflictingReservations = async (startDate: string, endDate: string) => {
-    if (!organization?.id) return [];
+    if (!orgContext) return [];
 
     try {
-      const { data, error } = await supabase
-        .from('reservations')
+      const { data, error } = await secureSelect('reservations', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .or(`and(start_date.lte.${endDate},end_date.gte.${startDate})`);
 
       if (error) {
@@ -101,7 +108,7 @@ export const useWorkWeekends = () => {
   };
 
   const proposeWorkWeekend = async (workWeekendData: WorkWeekendData) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in to propose a work weekend.",
@@ -123,18 +130,17 @@ export const useWorkWeekends = () => {
       
       const dataToSave = {
         ...workWeekendData,
-        organization_id: organization.id,
         proposer_user_id: user.id,
         conflict_reservations: conflicts,
         status: initialStatus,
         ...(initialStatus === 'fully_approved' && { fully_approved_at: new Date().toISOString() })
       };
 
-      const { data: newWorkWeekend, error } = await supabase
-        .from('work_weekends' as any)
-        .insert(dataToSave)
-        .select()
-        .single();
+      const { data: newWorkWeekend, error } = await secureInsert(
+        'work_weekends' as any,
+        dataToSave,
+        orgContext
+      ).select().single();
 
       if (error) {
         console.error('Error proposing work weekend:', error);
@@ -152,7 +158,6 @@ export const useWorkWeekends = () => {
           if (!acc.find(a => a.family_group === reservation.family_group)) {
             acc.push({
               work_weekend_id: (newWorkWeekend as any).id,
-              organization_id: organization.id,
               family_group: reservation.family_group,
               approval_type: 'group_lead',
             });
@@ -161,9 +166,7 @@ export const useWorkWeekends = () => {
         }, []);
 
         if (approvalRecords.length > 0) {
-          await supabase
-            .from('work_weekend_approvals' as any)
-            .insert(approvalRecords);
+          await secureInsert('work_weekend_approvals' as any, approvalRecords, orgContext);
         }
       }
 
@@ -199,18 +202,20 @@ export const useWorkWeekends = () => {
 
 
   const approveAsGroupLead = async (approvalId: string) => {
-    if (!user) return null;
+    if (!user || !orgContext) return null;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('work_weekend_approvals' as any)
-        .update({
+      const { data, error } = await secureUpdate(
+        'work_weekend_approvals' as any,
+        {
           status: 'approved',
           approved_by_email: user.email,
           approved_by_name: user.user_metadata?.first_name || user.email,
           approved_at: new Date().toISOString(),
-        })
+        },
+        orgContext
+      )
         .eq('id', approvalId)
         .select()
         .single();
@@ -247,10 +252,11 @@ export const useWorkWeekends = () => {
   };
 
   const checkForFullApproval = async (workWeekendId: string) => {
+    if (!orgContext) return;
+
     try {
       // Check if all required approvals are complete
-      const { data: approvals, error } = await supabase
-        .from('work_weekend_approvals' as any)
+      const { data: approvals, error } = await secureSelect('work_weekend_approvals' as any, orgContext)
         .select('*')
         .eq('work_weekend_id', workWeekendId);
 
@@ -260,13 +266,14 @@ export const useWorkWeekends = () => {
       
       if (allApproved && approvals.length > 0) {
         // Mark work weekend as fully approved
-        await supabase
-          .from('work_weekends' as any)
-          .update({
+        await secureUpdate(
+          'work_weekends' as any,
+          {
             status: 'fully_approved',
             fully_approved_at: new Date().toISOString(),
-          })
-          .eq('id', workWeekendId);
+          },
+          orgContext
+        ).eq('id', workWeekendId);
 
         // Send notifications to all family groups and hosts
         await sendWorkWeekendNotifications(workWeekendId, 'work_weekend_approved');
@@ -281,12 +288,13 @@ export const useWorkWeekends = () => {
     notificationType: 'work_weekend_proposed' | 'work_weekend_invitation' | 'work_weekend_approved',
     targetFamilyGroups?: string[]
   ) => {
+    if (!orgContext) return;
+
     try {
-      if (!organization?.id) return;
+      const organizationId = getOrganizationId();
 
       // Get the work weekend details
-      const { data: workWeekend, error: weekendError } = await supabase
-        .from('work_weekends')
+      const { data: workWeekend, error: weekendError } = await secureSelect('work_weekends', orgContext)
         .select('*')
         .eq('id', workWeekendId)
         .single();
@@ -304,27 +312,21 @@ export const useWorkWeekends = () => {
         familyGroupsToNotify = targetFamilyGroups;
       } else if (workWeekend.invited_all_members) {
         // All family groups
-        const { data: allGroups } = await supabase
-          .from('family_groups')
-          .select('name')
-          .eq('organization_id', organization.id);
+        const { data: allGroups } = await secureSelect('family_groups', orgContext)
+          .select('name');
         familyGroupsToNotify = allGroups?.map(g => g.name) || [];
       } else if (workWeekend.invited_family_leads || notificationType === 'work_weekend_approved') {
         // Just family leads
-        const { data: leadGroups } = await supabase
-          .from('family_groups')
+        const { data: leadGroups } = await secureSelect('family_groups', orgContext)
           .select('name')
-          .eq('organization_id', organization.id)
           .not('lead_email', 'is', null);
         familyGroupsToNotify = leadGroups?.map(g => g.name) || [];
       }
 
       // Send notifications to each family group
       for (const familyGroupName of familyGroupsToNotify) {
-        const { data: familyGroup } = await supabase
-          .from('family_groups')
+        const { data: familyGroup } = await secureSelect('family_groups', orgContext)
           .select('lead_name, lead_email, lead_phone')
-          .eq('organization_id', organization.id)
           .eq('name', familyGroupName)
           .single();
 
@@ -332,7 +334,7 @@ export const useWorkWeekends = () => {
           await supabase.functions.invoke('send-notification', {
             body: {
               type: notificationType,
-              organization_id: organization.id,
+              organization_id: organizationId,
               work_weekend_data: {
                 id: workWeekend.id,
                 title: workWeekend.title,
@@ -358,11 +360,11 @@ export const useWorkWeekends = () => {
   };
 
   useEffect(() => {
-    if (organization?.id) {
+    if (activeOrganization?.organization_id) {
       fetchWorkWeekends();
       fetchPendingApprovals();
     }
-  }, [organization?.id, user?.email, familyGroups]);
+  }, [activeOrganization?.organization_id, user?.email, familyGroups]);
 
   return {
     workWeekends,
