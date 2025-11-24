@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface SecondarySelectionData {
   id: string;
@@ -99,16 +100,20 @@ export const useSecondarySelection = (rotationYear: number) => {
     if (!organization?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('secondary_selection_status')
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('secondary_selection_status', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching secondary selection status:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       setSecondaryStatus(data);
@@ -174,16 +179,14 @@ export const useSecondarySelection = (rotationYear: number) => {
 
       if (!firstEligibleFamily) return;
 
-      const { error } = await supabase
-        .from('secondary_selection_status')
-        .insert({
-          organization_id: organization.id,
-          rotation_year: rotationYear,
-          current_family_group: firstEligibleFamily,
-          current_group_index: reverseOrder.indexOf(firstEligibleFamily),
-          turn_completed: false, // Start with turn not completed
-          started_at: new Date().toISOString()
-        });
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureInsert('secondary_selection_status', {
+        rotation_year: rotationYear,
+        current_family_group: firstEligibleFamily,
+        current_group_index: reverseOrder.indexOf(firstEligibleFamily),
+        turn_completed: false, // Start with turn not completed
+        started_at: new Date().toISOString()
+      }, orgContext);
 
       if (error) {
         console.error('Error starting secondary selection:', error);
@@ -207,10 +210,12 @@ export const useSecondarySelection = (rotationYear: number) => {
     if (!organization?.id || !secondaryStatus || !rotationData) return;
 
     try {
+      const orgContext = createOrganizationContext(organization.id);
+      
       // CRITICAL: Mark current family's turn as completed in secondary_selection_status
-      const { error: updateError } = await supabase
-        .from('secondary_selection_status')
-        .update({ turn_completed: true })
+      const { error: updateError } = await secureUpdate('secondary_selection_status', {
+        turn_completed: true
+      }, orgContext)
         .eq('id', secondaryStatus.id);
 
       if (updateError) {
@@ -246,15 +251,13 @@ export const useSecondarySelection = (rotationYear: number) => {
       }
 
       // Create new secondary selection status for next family (with turn_completed = false)
-      const { error } = await supabase
-        .from('secondary_selection_status')
-        .update({
-          current_family_group: nextFamily,
-          current_group_index: nextIndex,
-          turn_completed: false, // Reset for new family
-          started_at: new Date().toISOString(), // Reset start time for new family
-          updated_at: new Date().toISOString()
-        })
+      const { error } = await secureUpdate('secondary_selection_status', {
+        current_family_group: nextFamily,
+        current_group_index: nextIndex,
+        turn_completed: false, // Reset for new family
+        started_at: new Date().toISOString(), // Reset start time for new family
+        updated_at: new Date().toISOString()
+      }, orgContext)
         .eq('id', secondaryStatus.id);
 
       if (error) {
@@ -300,12 +303,11 @@ export const useSecondarySelection = (rotationYear: number) => {
   const endSecondarySelection = async () => {
     if (!organization?.id || !secondaryStatus) return;
 
-    const { error } = await supabase
-      .from('secondary_selection_status')
-      .update({
-        current_family_group: null,
-        updated_at: new Date().toISOString()
-      })
+    const orgContext = createOrganizationContext(organization.id);
+    const { error } = await secureUpdate('secondary_selection_status', {
+      current_family_group: null,
+      updated_at: new Date().toISOString()
+    }, orgContext)
       .eq('id', secondaryStatus.id);
 
     if (error) {
