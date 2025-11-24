@@ -13,6 +13,8 @@ import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { supabase } from "@/integrations/supabase/client";
+import { AllocationModelBadge } from "@/components/AllocationModelBadge";
+import { AllocationModelChangeDialog, type AllocationModel } from "@/components/AllocationModelChangeDialog";
 
 export default function ReservationSetup() {
   const navigate = useNavigate();
@@ -38,6 +40,9 @@ export default function ReservationSetup() {
   
   // Setup method selection
   const [setupMethod, setSetupMethod] = useState("rotation");
+  const [pendingSetupMethod, setPendingSetupMethod] = useState<string | null>(null);
+  const [showAllocationChangeDialog, setShowAllocationChangeDialog] = useState(false);
+  const [originalSetupMethod, setOriginalSetupMethod] = useState("rotation");
   
   // Static Weeks configuration
   const [staticWeeksStartDay, setStaticWeeksStartDay] = useState("Friday");
@@ -169,8 +174,10 @@ export default function ReservationSetup() {
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
           if (savedOrder.length === 1 && savedOrder[0] === 'manual_mode') {
             setSetupMethod('manual');
+            setOriginalSetupMethod('manual');
           } else if (savedOrder.length === 1 && savedOrder[0] === 'static_weeks_mode') {
             setSetupMethod('static-weeks');
+            setOriginalSetupMethod('static-weeks');
             
             // Load static weeks settings
             setStaticWeeksStartDay(data.start_day || "Friday");
@@ -178,6 +185,7 @@ export default function ReservationSetup() {
             setStaticWeeksRotationDirection(data.first_last_option || "first");
           } else {
             setSetupMethod('rotation');
+            setOriginalSetupMethod('rotation');
             
             // Load all the saved settings for rotation mode
             setMaxTimeSlots(data.max_time_slots?.toString() || "2");
@@ -224,6 +232,72 @@ export default function ReservationSetup() {
     const newOrder = [...rotationOrder];
     newOrder[index] = value;
     setRotationOrder(newOrder);
+  };
+
+  const handleSetupMethodChange = (newMethod: string) => {
+    // If changing from the original setup method, show confirmation
+    if (originalSetupMethod !== newMethod && originalSetupMethod) {
+      setPendingSetupMethod(newMethod);
+      setShowAllocationChangeDialog(true);
+    } else {
+      setSetupMethod(newMethod);
+    }
+  };
+
+  const handleConfirmAllocationModelChange = async (reason: string) => {
+    if (!pendingSetupMethod || !organization?.id) return;
+
+    try {
+      // Convert setupMethod to allocation_model format
+      const allocationModelMap: Record<string, AllocationModel> = {
+        rotation: "rotating_selection",
+        manual: "manual_booking",
+        "static-weeks": "static_weeks",
+      };
+
+      const newAllocationModel = allocationModelMap[pendingSetupMethod];
+      const oldAllocationModel = allocationModelMap[originalSetupMethod];
+
+      // Update the organization's allocation_model field
+      const { error: orgError } = await supabase
+        .from("organizations")
+        .update({ allocation_model: newAllocationModel })
+        .eq("id", organization.id);
+
+      if (orgError) throw orgError;
+
+      // Log the change to audit trail
+      const { error: auditError } = await supabase.from("allocation_model_audit").insert({
+        organization_id: organization.id,
+        old_model: oldAllocationModel,
+        new_model: newAllocationModel,
+        change_reason: reason,
+        changed_by_user_id: (await supabase.auth.getUser()).data.user?.id,
+      });
+
+      if (auditError) {
+        console.error("Failed to log audit trail:", auditError);
+        // Don't fail the operation if audit logging fails
+      }
+
+      // Update the setup method
+      setSetupMethod(pendingSetupMethod);
+      setOriginalSetupMethod(pendingSetupMethod);
+      setShowAllocationChangeDialog(false);
+      setPendingSetupMethod(null);
+
+      toast({
+        title: "Allocation Model Changed",
+        description: "The allocation model has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error changing allocation model:", error);
+      toast({
+        title: "Error",
+        description: "Failed to change allocation model",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveRotationOrder = async () => {
@@ -461,6 +535,9 @@ export default function ReservationSetup() {
         <div className="text-center space-y-2">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Reservation Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Configure rotation and time block preferences</p>
+          <div className="flex justify-center mt-4">
+            <AllocationModelBadge showIcon showDescription />
+          </div>
         </div>
 
         {/* Setup Method Selection */}
@@ -469,7 +546,7 @@ export default function ReservationSetup() {
             <CardTitle>Calendar Setup Method</CardTitle>
           </CardHeader>
           <CardContent>
-            <RadioGroup value={setupMethod} onValueChange={setSetupMethod} className="flex items-center gap-6">
+            <RadioGroup value={setupMethod} onValueChange={handleSetupMethodChange} className="flex items-center gap-6">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="rotation" id="rotation-method" />
                 <Label htmlFor="rotation-method" className="text-base font-medium">Rotation</Label>
@@ -1372,6 +1449,30 @@ export default function ReservationSetup() {
           </div>
         </div>
       </div>
+
+      <AllocationModelChangeDialog
+        open={showAllocationChangeDialog}
+        onOpenChange={(open) => {
+          setShowAllocationChangeDialog(open);
+          if (!open) setPendingSetupMethod(null);
+        }}
+        currentModel={
+          originalSetupMethod === "rotation"
+            ? "rotating_selection"
+            : originalSetupMethod === "manual"
+            ? "manual_booking"
+            : "static_weeks"
+        }
+        newModel={
+          pendingSetupMethod === "rotation"
+            ? "rotating_selection"
+            : pendingSetupMethod === "manual"
+            ? "manual_booking"
+            : "static_weeks"
+        }
+        isTestOrganization={organization?.is_test_organization || false}
+        onConfirm={handleConfirmAllocationModelChange}
+      />
     </div>
   );
 }
