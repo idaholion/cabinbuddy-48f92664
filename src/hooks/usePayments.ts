@@ -64,7 +64,10 @@ export const usePayments = () => {
   ) : null;
 
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
-    if (!orgContext) return;
+    if (!orgContext) {
+      console.log('[usePayments] Skipping fetch - no orgContext');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -82,11 +85,19 @@ export const usePayments = () => {
           `)
           .order('created_at', { ascending: false });
         
-        if (allError) throw allError;
+        if (allError) {
+          console.error('[usePayments] Supabase error:', allError);
+          throw allError;
+        }
         
         // Validate organization ownership
         if (allPayments) {
-          assertOrganizationOwnership(allPayments, orgContext);
+          try {
+            assertOrganizationOwnership(allPayments, orgContext);
+          } catch (ownershipError) {
+            console.error('[usePayments] Ownership validation failed:', ownershipError);
+            throw ownershipError;
+          }
         }
         
         // Filter payments by year - prioritize reservation dates over creation dates
@@ -126,11 +137,19 @@ export const usePayments = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[usePayments] Supabase error (no year filter):', error);
+        throw error;
+      }
       
       // Validate organization ownership
       if (data) {
-        assertOrganizationOwnership(data, orgContext);
+        try {
+          assertOrganizationOwnership(data, orgContext);
+        } catch (ownershipError) {
+          console.error('[usePayments] Ownership validation failed (no year filter):', ownershipError);
+          throw ownershipError;
+        }
       }
       
       setPayments(data || []);
