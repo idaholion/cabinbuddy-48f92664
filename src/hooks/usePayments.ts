@@ -56,12 +56,12 @@ export const usePayments = () => {
   const { organizationId, isTestOrganization, getAllocationModel } = useOrganizationContext();
   const { toast } = useToast();
 
-  // Create organization context for secure queries
-  const orgContext = createOrganizationContext(
+  // Create organization context for secure queries - only when org is loaded
+  const orgContext = organizationId ? createOrganizationContext(
     organizationId,
     isTestOrganization(),
-    getAllocationModel()
-  );
+    getAllocationModel() || 'rotating_selection'
+  ) : null;
 
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!orgContext) return;

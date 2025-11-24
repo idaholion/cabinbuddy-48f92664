@@ -16,14 +16,15 @@ export const useOrganizationContext = () => {
     return activeOrganization;
   };
 
-  const getAllocationModel = (): AllocationModel => {
-    const org = requireOrganization();
+  const getAllocationModel = (): AllocationModel | null => {
+    if (!activeOrganization) return null;
+    
     // Use new allocation_model column if available
-    if (org.allocation_model) {
-      return org.allocation_model as AllocationModel;
+    if (activeOrganization.allocation_model) {
+      return activeOrganization.allocation_model as AllocationModel;
     }
     // Fallback to legacy use_virtual_weeks_system for backwards compatibility
-    return org.use_virtual_weeks_system ? 'static_weeks' : 'rotating_selection';
+    return activeOrganization.use_virtual_weeks_system ? 'static_weeks' : 'rotating_selection';
   };
 
   const isRotatingSelection = (): boolean => {
