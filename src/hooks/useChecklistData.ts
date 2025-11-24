@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
+import { useOrganizationContext } from './useOrganizationContext';
 
 // Database types
 type DbCustomChecklist = Database['public']['Tables']['custom_checklists']['Row'];
@@ -75,19 +77,34 @@ const mapDbResponseToSurveyResponse = (dbResponse: DbSurveyResponse): SurveyResp
 export const useCustomChecklists = () => {
   const [checklists, setChecklists] = useState<CustomChecklist[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeOrganization } = useOrganizationContext();
+
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization
+  ) : null;
 
   useEffect(() => {
-    fetchChecklists();
-  }, []);
+    if (orgContext) {
+      fetchChecklists();
+    }
+  }, [activeOrganization?.organization_id]);
 
   const fetchChecklists = async () => {
+    if (!orgContext) return;
+
     try {
-      const { data, error } = await supabase
-        .from('custom_checklists')
+      const { data, error } = await secureSelect('custom_checklists', orgContext)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
       
       const checklistsArray = (data || []).map(dbChecklist => 
         mapDbChecklistToCustomChecklist(dbChecklist)
@@ -102,13 +119,9 @@ export const useCustomChecklists = () => {
   };
 
   const saveChecklist = async (type: string, items: any[], images?: any[]) => {
+    if (!orgContext) return;
+
     try {
-      const { data: organizationId, error: orgError } = await supabase
-        .rpc('get_user_primary_organization_id');
-
-      if (orgError) throw orgError;
-      if (!organizationId) throw new Error('No organization found');
-
       const existingChecklist = checklists.find(c => c.checklist_type === type);
 
       if (existingChecklist) {
@@ -118,9 +131,7 @@ export const useCustomChecklists = () => {
           updateData.images = images;
         }
         
-        const { data, error } = await supabase
-          .from('custom_checklists')
-          .update(updateData)
+        const { data, error } = await secureUpdate('custom_checklists', updateData, orgContext)
           .eq('id', existingChecklist.id)
           .select()
           .single();
@@ -133,7 +144,6 @@ export const useCustomChecklists = () => {
       } else {
         // Create new
         const insertData: any = {
-          organization_id: organizationId,
           checklist_type: type,
           items
         };
@@ -141,9 +151,7 @@ export const useCustomChecklists = () => {
           insertData.images = images;
         }
         
-        const { data, error } = await supabase
-          .from('custom_checklists')
-          .insert(insertData)
+        const { data, error } = await secureInsert('custom_checklists', insertData, orgContext)
           .select()
           .single();
 
@@ -162,10 +170,10 @@ export const useCustomChecklists = () => {
   };
 
   const deleteChecklist = async (id: string) => {
+    if (!orgContext) return;
+
     try {
-      const { error } = await supabase
-        .from('custom_checklists')
-        .delete()
+      const { error } = await secureDelete('custom_checklists', orgContext)
         .eq('id', id);
 
       if (error) throw error;
@@ -192,19 +200,35 @@ export const useCustomChecklists = () => {
 export const useCheckinSessions = () => {
   const [sessions, setSessions] = useState<CheckinSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeOrganization } = useOrganizationContext();
+
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization
+  ) : null;
 
   useEffect(() => {
-    fetchSessions();
-  }, []);
+    if (orgContext) {
+      fetchSessions();
+    }
+  }, [activeOrganization?.organization_id]);
 
   const fetchSessions = async () => {
+    if (!orgContext) return;
+
     try {
-      const { data, error } = await supabase
-        .from('checkin_sessions')
+      const { data, error } = await secureSelect('checkin_sessions', orgContext)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       const mappedSessions = (data || []).map(mapDbSessionToCheckinSession);
       setSessions(mappedSessions);
     } catch (error) {
@@ -215,20 +239,15 @@ export const useCheckinSessions = () => {
   };
 
   const createSession = async (sessionData: Omit<CheckinSession, 'id' | 'organization_id'>) => {
+    if (!orgContext) return;
+
     try {
-      const { data: organizationId, error: orgError } = await supabase
-        .rpc('get_user_primary_organization_id');
+      const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      if (orgError) throw orgError;
-      if (!organizationId) throw new Error('No organization found');
-
-      const { data, error } = await supabase
-        .from('checkin_sessions')
-        .insert({
-          ...sessionData,
-          organization_id: organizationId,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        })
+      const { data, error } = await secureInsert('checkin_sessions', {
+        ...sessionData,
+        user_id: userId
+      }, orgContext)
         .select()
         .single();
 
@@ -246,10 +265,10 @@ export const useCheckinSessions = () => {
   };
 
   const updateSession = async (id: string, updates: Partial<CheckinSession>) => {
+    if (!orgContext) return;
+
     try {
-      const { data, error } = await supabase
-        .from('checkin_sessions')
-        .update(updates)
+      const { data, error } = await secureUpdate('checkin_sessions', updates, orgContext)
         .eq('id', id)
         .select()
         .single();
@@ -279,19 +298,35 @@ export const useCheckinSessions = () => {
 export const useSurveyResponses = () => {
   const [responses, setResponses] = useState<SurveyResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const { activeOrganization } = useOrganizationContext();
+
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization
+  ) : null;
 
   useEffect(() => {
-    fetchResponses();
-  }, []);
+    if (orgContext) {
+      fetchResponses();
+    }
+  }, [activeOrganization?.organization_id]);
 
   const fetchResponses = async () => {
+    if (!orgContext) return;
+
     try {
-      const { data, error } = await supabase
-        .from('survey_responses')
+      const { data, error } = await secureSelect('survey_responses', orgContext)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       const mappedResponses = (data || []).map(mapDbResponseToSurveyResponse);
       setResponses(mappedResponses);
     } catch (error) {
@@ -302,20 +337,15 @@ export const useSurveyResponses = () => {
   };
 
   const createResponse = async (responseData: Omit<SurveyResponse, 'id' | 'organization_id'>) => {
+    if (!orgContext) return;
+
     try {
-      const { data: organizationId, error: orgError } = await supabase
-        .rpc('get_user_primary_organization_id');
+      const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      if (orgError) throw orgError;
-      if (!organizationId) throw new Error('No organization found');
-
-      const { data, error } = await supabase
-        .from('survey_responses')
-        .insert({
-          ...responseData,
-          organization_id: organizationId,
-          user_id: (await supabase.auth.getUser()).data.user?.id
-        })
+      const { data, error } = await secureInsert('survey_responses', {
+        ...responseData,
+        user_id: userId
+      }, orgContext)
         .select()
         .single();
 
