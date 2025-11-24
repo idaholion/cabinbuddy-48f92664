@@ -42,11 +42,11 @@ export const useOrganizationContext = () => {
   };
 
   const isTestOrganization = (): boolean => {
-    return requireOrganization().is_test_organization === true;
+    return activeOrganization?.is_test_organization === true;
   };
 
-  const getOrganizationId = (): string => {
-    return requireOrganization().organization_id;
+  const getOrganizationId = (): string | undefined => {
+    return activeOrganization?.organization_id;
   };
 
   return {
