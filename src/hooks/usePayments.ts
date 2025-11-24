@@ -136,10 +136,15 @@ export const usePayments = () => {
       setPayments(data || []);
       setPagination({ page: 1, limit: 50, total: data?.length || 0 });
     } catch (error) {
-      console.error('Error fetching payments:', error);
+      console.error('[usePayments] Error fetching payments:', error);
+      console.error('[usePayments] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        orgContext: orgContext ? 'present' : 'missing',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast({
         title: "Error",
-        description: "Failed to fetch payments",
+        description: `Failed to fetch payments: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -400,7 +405,8 @@ export const usePayments = () => {
     if (orgContext) {
       fetchPayments();
     }
-  }, [fetchPayments, orgContext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgContext]); // Only depend on orgContext to avoid re-render loops
 
   const recordPartialPayment = async (
     paymentId: string,
