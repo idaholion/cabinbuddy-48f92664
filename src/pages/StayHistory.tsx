@@ -42,18 +42,18 @@ export default function StayHistory() {
 
   const { user } = useAuth();
   const { claimedProfile } = useProfileClaiming();
+  const { organization, loading: orgLoading } = useOrganization();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
   const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
   const canDeleteStays = isAdmin || isCalendarKeeper;
-  const { organization } = useOrganization();
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
   const { syncing, syncPayments } = usePaymentSync();
 
-  const loading = reservationsLoading || receiptsLoading || settingsLoading;
+  const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
   console.log('[StayHistory] Component state:', {
     organizationId: organization?.id,
