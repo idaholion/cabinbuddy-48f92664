@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "./useOrganization";
+import { secureSelect, assertOrganizationOwnership, createOrganizationContext } from "@/lib/secure-queries";
 
 export interface NotificationLog {
   id: string;
@@ -32,10 +33,11 @@ export const useNotificationLogs = (filters?: {
     queryFn: async () => {
       if (!organization?.id) return [];
 
-      let query = supabase
-        .from("notification_log")
+      const orgContext = createOrganizationContext(organization.id);
+      if (!orgContext) return [];
+
+      let query = secureSelect("notification_log", orgContext)
         .select("*")
-        .eq("organization_id", organization.id)
         .order("sent_at", { ascending: false })
         .limit(100);
 
@@ -55,6 +57,12 @@ export const useNotificationLogs = (filters?: {
       const { data, error } = await query;
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       return data || [];
     },
     enabled: !!organization?.id,
