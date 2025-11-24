@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
+import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface TradeRequestData {
   target_family_group: string;
@@ -32,25 +33,35 @@ interface TradeRequest {
 
 export const useTradeRequests = () => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization } = useOrganizationContext();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([]);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchTradeRequests = async () => {
-    if (!user || !organization?.id) return;
+    if (!user || !orgContext) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('trade_requests')
+      const { data, error } = await secureSelect('trade_requests', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching trade requests:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       setTradeRequests(data || []);
@@ -62,7 +73,7 @@ export const useTradeRequests = () => {
   };
 
   const createTradeRequest = async (tradeData: TradeRequestData, requesterFamilyGroup: string) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to create a trade request.",
@@ -75,16 +86,15 @@ export const useTradeRequests = () => {
     try {
       const dataToSave = {
         ...tradeData,
-        organization_id: organization.id,
         requester_family_group: requesterFamilyGroup,
         requester_user_id: user.id,
       };
 
-      const { data: newTradeRequest, error } = await supabase
-        .from('trade_requests')
-        .insert(dataToSave)
-        .select()
-        .single();
+      const { data: newTradeRequest, error } = await secureInsert(
+        'trade_requests',
+        dataToSave,
+        orgContext
+      ).select().single();
 
       if (error) {
         console.error('Error creating trade request:', error);
@@ -117,7 +127,7 @@ export const useTradeRequests = () => {
   };
 
   const updateTradeRequest = async (requestId: string, updates: { status: string; approver_message?: string }) => {
-    if (!user || !organization?.id) {
+    if (!user || !orgContext) {
       toast({
         title: "Error",
         description: "You must be logged in and have an organization to update a trade request.",
@@ -135,11 +145,12 @@ export const useTradeRequests = () => {
         updated_at: new Date().toISOString()
       };
 
-      const { data: updatedRequest, error } = await supabase
-        .from('trade_requests')
-        .update(updateData)
+      const { data: updatedRequest, error } = await secureUpdate(
+        'trade_requests',
+        updateData,
+        orgContext
+      )
         .eq('id', requestId)
-        .eq('organization_id', organization.id)
         .select()
         .single();
 
@@ -177,10 +188,10 @@ export const useTradeRequests = () => {
   };
 
   useEffect(() => {
-    if (organization?.id) {
+    if (activeOrganization?.organization_id) {
       fetchTradeRequests();
     }
-  }, [organization?.id]);
+  }, [activeOrganization?.organization_id]);
 
   return {
     tradeRequests,

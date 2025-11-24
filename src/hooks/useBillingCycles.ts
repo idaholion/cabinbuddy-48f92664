@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrganization } from '@/hooks/useOrganization';
+import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export type BillingCycleType = 'monthly' | 'end_of_season' | 'end_of_year' | 'custom';
 export type BillingCycleStatus = 'draft' | 'active' | 'completed' | 'cancelled';
@@ -24,23 +25,34 @@ export interface BillingCycle {
 
 export const useBillingCycles = () => {
   const { user } = useAuth();
-  const { organization } = useOrganization();
+  const { activeOrganization } = useOrganizationContext();
   const { toast } = useToast();
   const [cycles, setCycles] = useState<BillingCycle[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization,
+    activeOrganization.allocation_model
+  ) : null;
+
   const fetchCycles = async () => {
-    if (!organization?.id) return;
+    if (!orgContext) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('billing_cycles')
+      const { data, error } = await secureSelect('billing_cycles', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       setCycles(data || []);
     } catch (error) {
       console.error('Error fetching billing cycles:', error);
@@ -55,18 +67,17 @@ export const useBillingCycles = () => {
   };
 
   const createCycle = async (cycleData: Omit<BillingCycle, 'id' | 'created_at' | 'updated_at' | 'organization_id' | 'created_by_user_id'>) => {
-    if (!organization?.id || !user?.id) return null;
+    if (!orgContext || !user?.id) return null;
 
     try {
-      const { data, error } = await supabase
-        .from('billing_cycles')
-        .insert({
+      const { data, error } = await secureInsert(
+        'billing_cycles',
+        {
           ...cycleData,
-          organization_id: organization.id,
           created_by_user_id: user.id,
-        })
-        .select()
-        .single();
+        },
+        orgContext
+      ).select().single();
 
       if (error) throw error;
 
@@ -89,10 +100,10 @@ export const useBillingCycles = () => {
   };
 
   const updateCycle = async (id: string, updates: Partial<BillingCycle>) => {
+    if (!orgContext) return false;
+
     try {
-      const { error } = await supabase
-        .from('billing_cycles')
-        .update(updates)
+      const { error } = await secureUpdate('billing_cycles', updates, orgContext)
         .eq('id', id);
 
       if (error) throw error;
@@ -116,10 +127,10 @@ export const useBillingCycles = () => {
   };
 
   const deleteCycle = async (id: string) => {
+    if (!orgContext) return false;
+
     try {
-      const { error } = await supabase
-        .from('billing_cycles')
-        .delete()
+      const { error } = await secureDelete('billing_cycles', orgContext)
         .eq('id', id);
 
       if (error) throw error;
@@ -144,7 +155,7 @@ export const useBillingCycles = () => {
 
   useEffect(() => {
     fetchCycles();
-  }, [organization?.id]);
+  }, [activeOrganization?.organization_id]);
 
   return {
     cycles,
