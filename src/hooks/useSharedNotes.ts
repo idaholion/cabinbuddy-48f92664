@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
+import { useOrganizationContext } from './useOrganizationContext';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface SharedNote {
   id: string;
@@ -22,20 +23,30 @@ export const useSharedNotes = () => {
   const [notes, setNotes] = useState<SharedNote[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { activeOrganization } = useRobustMultiOrganization();
+  const { activeOrganization } = useOrganizationContext();
+
+  // Create organization context for secure queries
+  const orgContext = activeOrganization ? createOrganizationContext(
+    activeOrganization.organization_id,
+    activeOrganization.is_test_organization
+  ) : null;
 
   const fetchNotes = async () => {
-    if (!activeOrganization?.organization_id) return;
+    if (!orgContext) return;
 
     try {
       setLoading(true);
-  const { data, error } = await supabase
-        .from('shared_notes')
+      const { data, error } = await secureSelect('shared_notes', orgContext)
         .select('*')
-        .eq('organization_id', activeOrganization.organization_id)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+
       setNotes((data || []) as SharedNote[]);
     } catch (error) {
       console.error('Error fetching notes:', error);
@@ -50,17 +61,14 @@ export const useSharedNotes = () => {
   };
 
   const createNote = async (noteData: Omit<SharedNote, 'id' | 'organization_id' | 'created_by_user_id' | 'created_at' | 'updated_at' | 'updated_by_user_id'>) => {
-    if (!activeOrganization?.organization_id) return null;
+    if (!orgContext) return null;
 
     try {
-      const { data, error } = await supabase
-        .from('shared_notes')
-        .insert({
-          ...noteData,
-          organization_id: activeOrganization.organization_id
-        })
-        .select()
-        .single();
+      const { data, error } = await secureInsert(
+        'shared_notes',
+        noteData,
+        orgContext
+      ).select().single();
 
       if (error) throw error;
 
@@ -82,10 +90,14 @@ export const useSharedNotes = () => {
   };
 
   const updateNote = async (id: string, updates: Partial<SharedNote>) => {
+    if (!orgContext) return null;
+
     try {
-      const { data, error } = await supabase
-        .from('shared_notes')
-        .update(updates)
+      const { data, error } = await secureUpdate(
+        'shared_notes',
+        updates,
+        orgContext
+      )
         .eq('id', id)
         .select()
         .single();
@@ -110,10 +122,10 @@ export const useSharedNotes = () => {
   };
 
   const deleteNote = async (id: string) => {
+    if (!orgContext) return false;
+
     try {
-      const { error } = await supabase
-        .from('shared_notes')
-        .delete()
+      const { error } = await secureDelete('shared_notes', orgContext)
         .eq('id', id);
 
       if (error) throw error;
