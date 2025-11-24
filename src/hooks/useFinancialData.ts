@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useUserRole } from '@/hooks/useUserRole';
+import { secureSelect, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface FinancialRecord {
   id: string;
@@ -37,8 +38,9 @@ export const useFinancialData = () => {
   // Get user's family group and role
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!user?.id) return;
+      if (!user?.id || !organization?.id) return;
 
+      const orgContext = createOrganizationContext(organization.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, display_name, first_name, last_name, family_role')
@@ -51,7 +53,7 @@ export const useFinancialData = () => {
     };
 
     fetchUserProfile();
-  }, [user?.id]);
+  }, [user?.id, organization?.id]);
 
   // Determine user's family group
   const getUserFamilyGroup = () => {
@@ -95,13 +97,12 @@ export const useFinancialData = () => {
 
     setLoading(true);
     try {
+      const orgContext = createOrganizationContext(organization.id);
       const accessLevel = getAccessLevel();
       const userFamilyGroup = getUserFamilyGroup();
       
-      let query = supabase
-        .from('receipts')
+      let query = secureSelect('receipts', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .gte('date', `${selectedYear}-01-01`)
         .lte('date', `${selectedYear}-12-31`)
         .order('date', { ascending: false });
@@ -127,6 +128,11 @@ export const useFinancialData = () => {
       if (error) {
         console.error('Error fetching financial data:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       setRecords(data || []);
