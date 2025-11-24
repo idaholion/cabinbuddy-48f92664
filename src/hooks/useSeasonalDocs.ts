@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface SeasonalDocument {
   id: string;
@@ -28,13 +29,18 @@ export const useSeasonalDocs = () => {
     if (!organization?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('seasonal_documents')
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('seasonal_documents', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('season', { ascending: true });
 
       if (error) throw error;
+      
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+      
       setSeasonalDocs(data || []);
     } catch (error) {
       console.error('Error fetching seasonal documents:', error);
@@ -96,14 +102,12 @@ export const useSeasonalDocs = () => {
         file_url = await uploadFile(docData.file, docData.season);
       }
 
-      const { data, error } = await supabase
-        .from('seasonal_documents')
-        .insert({
-          organization_id: organization.id,
-          document_type: 'guide',
-          ...docData,
-          file_url
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('seasonal_documents', {
+        document_type: 'guide',
+        ...docData,
+        file_url
+      }, orgContext)
         .select()
         .single();
 
@@ -128,10 +132,11 @@ export const useSeasonalDocs = () => {
   };
 
   const updateSeasonalDoc = async (docId: string, updates: Partial<SeasonalDocument>) => {
+    if (!organization?.id) return;
+
     try {
-      const { data, error } = await supabase
-        .from('seasonal_documents')
-        .update(updates)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureUpdate('seasonal_documents', updates, orgContext)
         .eq('id', docId)
         .select()
         .single();
@@ -157,10 +162,11 @@ export const useSeasonalDocs = () => {
   };
 
   const deleteSeasonalDoc = async (docId: string) => {
+    if (!organization?.id) return;
+
     try {
-      const { error } = await supabase
-        .from('seasonal_documents')
-        .delete()
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureDelete('seasonal_documents', orgContext)
         .eq('id', docId);
 
       if (error) throw error;

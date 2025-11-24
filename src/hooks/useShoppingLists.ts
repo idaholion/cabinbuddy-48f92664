@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface ShoppingList {
   id: string;
@@ -38,13 +39,18 @@ export const useShoppingLists = () => {
     if (!organization?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('shopping_lists')
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('shopping_lists', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+      
       setShoppingLists(data || []);
     } catch (error) {
       console.error('Error fetching shopping lists:', error);
@@ -60,10 +66,9 @@ export const useShoppingLists = () => {
     if (!organization?.id) return;
     
     try {
-      let query = supabase
-        .from('shopping_list_items')
-        .select('*')
-        .eq('organization_id', organization.id);
+      const orgContext = createOrganizationContext(organization.id);
+      let query = secureSelect('shopping_list_items', orgContext)
+        .select('*');
 
       if (shoppingListId) {
         query = query.eq('shopping_list_id', shoppingListId);
@@ -72,6 +77,12 @@ export const useShoppingLists = () => {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
+      }
+      
       setItems(data || []);
     } catch (error) {
       console.error('Error fetching shopping list items:', error);
@@ -89,13 +100,11 @@ export const useShoppingLists = () => {
     if (!user || !organization?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('shopping_lists')
-        .insert({
-          user_id: user.id,
-          organization_id: organization.id,
-          title
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('shopping_lists', {
+        user_id: user.id,
+        title
+      }, orgContext)
         .select()
         .single();
 
@@ -127,14 +136,12 @@ export const useShoppingLists = () => {
     if (!user || !organization?.id) return;
 
     try {
-      const { data, error } = await supabase
-        .from('shopping_list_items')
-        .insert({
-          shopping_list_id: shoppingListId,
-          organization_id: organization.id,
-          added_by_user_id: user.id,
-          ...itemData
-        })
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureInsert('shopping_list_items', {
+        shopping_list_id: shoppingListId,
+        added_by_user_id: user.id,
+        ...itemData
+      }, orgContext)
         .select()
         .single();
 
@@ -159,13 +166,16 @@ export const useShoppingLists = () => {
   };
 
   const toggleItemComplete = async (itemId: string) => {
+    if (!organization?.id) return;
+
     try {
       const item = items.find(i => i.id === itemId);
       if (!item) return;
 
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .update({ is_completed: !item.is_completed })
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureUpdate('shopping_list_items', {
+        is_completed: !item.is_completed
+      }, orgContext)
         .eq('id', itemId);
 
       if (error) throw error;
@@ -186,10 +196,11 @@ export const useShoppingLists = () => {
   };
 
   const deleteItem = async (itemId: string) => {
+    if (!organization?.id) return;
+
     try {
-      const { error } = await supabase
-        .from('shopping_list_items')
-        .delete()
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureDelete('shopping_list_items', orgContext)
         .eq('id', itemId);
 
       if (error) throw error;
@@ -210,10 +221,11 @@ export const useShoppingLists = () => {
   };
 
   const deleteShoppingList = async (listId: string) => {
+    if (!organization?.id) return;
+
     try {
-      const { error } = await supabase
-        .from('shopping_lists')
-        .delete()
+      const orgContext = createOrganizationContext(organization.id);
+      const { error } = await secureDelete('shopping_lists', orgContext)
         .eq('id', listId);
 
       if (error) throw error;
