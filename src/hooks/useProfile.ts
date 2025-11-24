@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
 import { useToast } from '@/hooks/use-toast';
 import { parseFullName, sanitizeName } from '@/lib/name-utils';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface Profile {
   id: string;
@@ -48,6 +49,9 @@ export const useProfile = () => {
 
     try {
       setLoading(true);
+      const orgContext = createOrganizationContext(activeOrganization?.organization_id);
+      
+      // Profiles are per-user, not per-organization, so we filter by user_id
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -103,6 +107,7 @@ export const useProfile = () => {
       };
 
       // Use upsert to create or update the profile
+      // Note: Profiles don't use secureInsert because they're user-specific, not org-specific
       const { data, error } = await supabase
         .from('profiles')
         .upsert(profileData, {
@@ -152,6 +157,7 @@ export const useProfile = () => {
         ...profileData,
       };
 
+      // Note: Profiles don't use secureInsert because they're user-specific, not org-specific
       const { data, error } = await supabase
         .from('profiles')
         .insert(newProfile)
@@ -192,6 +198,7 @@ export const useProfile = () => {
     try {
       setUpdating(true);
 
+      // Note: Profiles don't use secureDelete because they're user-specific, not org-specific
       const { error } = await supabase
         .from('profiles')
         .delete()

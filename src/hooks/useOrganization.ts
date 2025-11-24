@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { apiCache, cacheKeys } from '@/lib/cache';
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
+import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface OrganizationData {
   name: string;
@@ -107,6 +108,8 @@ export const useOrganization = () => {
       }
 
       // Fetch the organization details
+      // Note: We use direct query here because we already validated access via user_organizations
+      // and this is fetching the org details, not org-specific data
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
@@ -163,7 +166,8 @@ export const useOrganization = () => {
 
     setLoading(true);
     try {
-      // Create the organization
+      // Note: We use direct insert for organizations because this creates a NEW organization
+      // The secureInsert would require an existing organization context
       const { data: newOrg, error: orgError } = await supabase
         .from('organizations')
         .insert(orgData)
@@ -180,7 +184,8 @@ export const useOrganization = () => {
         return null;
       }
 
-      // SECURITY FIX: Validate organization creator gets admin role only for their own organization  
+      // SECURITY FIX: Validate organization creator gets admin role only for their own organization
+      // Note: We use direct insert for user_organizations because it's a membership table
       const { error: membershipError } = await supabase
         .from('user_organizations')
         .insert({
@@ -234,9 +239,12 @@ export const useOrganization = () => {
 
     setLoading(true);
     try {
-      const { data: updatedOrg, error } = await supabase
-        .from('organizations')
-        .update(updates)
+      const orgContext = createOrganizationContext(organization.id);
+      const { data: updatedOrg, error } = await secureUpdate(
+        'organizations',
+        updates,
+        orgContext
+      )
         .eq('id', organization.id)
         .select()
         .single();
