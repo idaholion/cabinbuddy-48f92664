@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { useNavigate } from 'react-router-dom';
 import { useSidebar } from '@/components/ui/sidebar';
+import { TestOrganizationBadge } from './TestOrganizationBadge';
+import { useOrganization } from '@/hooks/useOrganization';
 
 interface OrganizationSwitcherProps {
   compact?: boolean;
@@ -12,6 +14,7 @@ interface OrganizationSwitcherProps {
 
 export const OrganizationSwitcher = ({ compact = false }: OrganizationSwitcherProps) => {
   const { organizations, activeOrganization, switchToOrganization, joinOrganization } = useMultiOrganization();
+  const { organization: fullOrganization } = useOrganization();
   const navigate = useNavigate();
   const { state } = useSidebar();
 
@@ -78,8 +81,17 @@ export const OrganizationSwitcher = ({ compact = false }: OrganizationSwitcherPr
             
             {!isCollapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <div className="font-medium text-sm truncate">
-                  {activeOrganization.organization_name}
+                <div className="flex items-center gap-2">
+                  <div className="font-medium text-sm truncate">
+                    {activeOrganization.organization_name}
+                  </div>
+                  {fullOrganization && (
+                    <TestOrganizationBadge
+                      isTestOrganization={fullOrganization.is_test_organization || false}
+                      variant="compact"
+                      showIcon={false}
+                    />
+                  )}
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="truncate">{activeOrganization.organization_code}</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Building, Plus, Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { useNavigate } from 'react-router-dom';
+import { TestOrganizationBadge } from './TestOrganizationBadge';
+import { useOrganization } from '@/hooks/useOrganization';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrganizationSelectorProps {
   onOrganizationSelected?: () => void;
@@ -36,6 +39,7 @@ export const OrganizationSelector = ({
   const [joinCode, setJoinCode] = useState('');
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [joiningLoading, setJoiningLoading] = useState(false);
+  const [orgDetails, setOrgDetails] = useState<Record<string, { is_test_organization: boolean }>>({});
 
   const handleCreateOrganization = () => {
     console.log('handleCreateOrganization called, navigating to /setup');
@@ -65,6 +69,31 @@ export const OrganizationSelector = ({
       await leaveOrganization(orgId);
     }
   };
+
+  // Fetch organization details to get test status
+  useEffect(() => {
+    const fetchOrgDetails = async () => {
+      const details: Record<string, { is_test_organization: boolean }> = {};
+      
+      for (const org of organizations) {
+        const { data } = await supabase
+          .from('organizations')
+          .select('is_test_organization')
+          .eq('id', org.organization_id)
+          .single();
+        
+        if (data) {
+          details[org.organization_id] = { is_test_organization: data.is_test_organization || false };
+        }
+      }
+      
+      setOrgDetails(details);
+    };
+    
+    if (organizations.length > 0) {
+      fetchOrgDetails();
+    }
+  }, [organizations]);
 
   if (loading) {
     return (
@@ -158,7 +187,16 @@ export const OrganizationSelector = ({
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{org.organization_name}</CardTitle>
+                      <div className="flex items-center gap-2 mb-1">
+                        <CardTitle className="text-lg">{org.organization_name}</CardTitle>
+                        {orgDetails[org.organization_id] && (
+                          <TestOrganizationBadge
+                            isTestOrganization={orgDetails[org.organization_id].is_test_organization}
+                            variant="compact"
+                            showIcon={false}
+                          />
+                        )}
+                      </div>
                       <CardDescription>Member since {new Date(org.joined_at).toLocaleDateString()}</CardDescription>
                     </div>
                     <div className="flex flex-col gap-2">
