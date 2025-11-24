@@ -397,8 +397,10 @@ export const usePayments = () => {
   };
 
   useEffect(() => {
-    fetchPayments();
-  }, [fetchPayments]);
+    if (orgContext) {
+      fetchPayments();
+    }
+  }, [fetchPayments, orgContext]);
 
   const recordPartialPayment = async (
     paymentId: string,
