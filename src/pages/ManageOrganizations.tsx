@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Building, Eye, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
+import { TestOrganizationBadge } from '@/components/TestOrganizationBadge';
 import { useEffect } from 'react';
 
 export const ManageOrganizations = () => {

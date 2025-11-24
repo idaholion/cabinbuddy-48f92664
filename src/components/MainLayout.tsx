@@ -2,10 +2,10 @@ import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-
 import { ContextualHelp } from '@/components/ContextualHelp';
 import { AiHelpAssistant } from '@/components/AiHelpAssistant';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
+import { TestOrganizationBanner } from '@/components/TestOrganizationBanner';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -26,6 +26,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <AppSidebar />
           <main className="flex-1">
             <GuestAccessBanner />
+            <TestOrganizationBanner />
             {/* Mobile sidebar trigger - only visible on mobile screens */}
             {isMobile === true && (
               <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
