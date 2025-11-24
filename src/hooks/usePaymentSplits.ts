@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { secureSelect, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from "@/lib/secure-queries";
 
 export interface PaymentSplit {
   id: string;
@@ -64,9 +65,10 @@ export const usePaymentSplits = () => {
 
       const isAdmin = userOrgs?.role === 'admin' || userOrgs?.role === 'treasurer';
 
+      const orgContext = createOrganizationContext(organization.id);
+      
       // Build query based on admin status
-      let query = supabase
-        .from('payment_splits')
+      let query = secureSelect('payment_splits', orgContext)
         .select(`
           *,
           source_payment:payments!payment_splits_source_payment_id_fkey(
@@ -87,8 +89,7 @@ export const usePaymentSplits = () => {
             payment_reference,
             paid_date
           )
-        `)
-        .eq('organization_id', organization.id);
+        `);
 
       // If not admin, only show splits where user is recipient or source
       if (!isAdmin) {
@@ -99,6 +100,11 @@ export const usePaymentSplits = () => {
         .order('created_at', { ascending: false });
 
       if (splitsError) throw splitsError;
+
+      // Validate data ownership
+      if (splitsData) {
+        assertOrganizationOwnership(splitsData, orgContext);
+      }
 
       setSplits(splitsData || []);
     } catch (error: any) {
@@ -136,9 +142,10 @@ export const usePaymentSplits = () => {
 
       console.log('[PAYMENT-SPLIT] User authenticated:', user.id);
 
+      const orgContext = createOrganizationContext(organization?.id);
+      
       // Get the current payment details
-      const { data: payment, error: fetchError } = await supabase
-        .from('payments')
+      const { data: payment, error: fetchError } = await secureSelect('payments', orgContext)
         .select('*')
         .eq('id', splitPaymentId)
         .single();
@@ -178,9 +185,7 @@ export const usePaymentSplits = () => {
 
       console.log('[PAYMENT-SPLIT] Update data:', updateData);
 
-      const { data: updatedPayment, error: updateError } = await supabase
-        .from('payments')
-        .update(updateData)
+      const { data: updatedPayment, error: updateError } = await secureUpdate('payments', updateData, orgContext)
         .eq('id', splitPaymentId)
         .select();
 

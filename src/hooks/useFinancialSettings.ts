@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface FinancialSettings {
   billing_method: string;
@@ -63,15 +64,19 @@ export const useFinancialSettings = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('reservation_settings')
+      const orgContext = createOrganizationContext(organization.id);
+      const { data, error } = await secureSelect('reservation_settings', orgContext)
         .select('*')
-        .eq('organization_id', organization.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching financial settings:', error);
         return;
+      }
+
+      // Validate data ownership
+      if (data) {
+        assertOrganizationOwnership(data, orgContext);
       }
 
       if (data) {
@@ -185,19 +190,15 @@ export const useFinancialSettings = () => {
         invoice_approval_required: settingsData.invoice_approval_required,
       };
 
-      const { data: existingSettings } = await supabase
-        .from('reservation_settings')
+      const orgContext = createOrganizationContext(organization.id);
+      const { data: existingSettings } = await secureSelect('reservation_settings', orgContext)
         .select('id')
-        .eq('organization_id', organization.id)
         .single();
 
       if (existingSettings?.id) {
         // Update existing settings
-        const { data: updatedSettings, error } = await supabase
-          .from('reservation_settings')
-          .update(dataToSave)
+        const { data: updatedSettings, error } = await secureUpdate('reservation_settings', dataToSave, orgContext)
           .eq('id', existingSettings.id)
-          .eq('organization_id', organization.id)
           .select()
           .single();
 
@@ -214,9 +215,7 @@ export const useFinancialSettings = () => {
         setSettings(prev => ({ ...prev, ...settingsData } as FinancialSettings));
       } else {
         // Create new settings
-        const { data: newSettings, error } = await supabase
-          .from('reservation_settings')
-          .insert(dataToSave)
+        const { data: newSettings, error } = await secureInsert('reservation_settings', dataToSave, orgContext)
           .select()
           .single();
 

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useReservationConflicts } from '@/hooks/useReservationConflicts';
+import { secureSelect, secureInsert, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface MultiPeriodReservationData {
   periods: {
@@ -144,6 +145,7 @@ export const useMultiPeriodReservations = () => {
       }
 
       const reservations = [];
+      const orgContext = createOrganizationContext(organization.id);
       
       // Create individual reservations for each period
       for (const period of reservationData.periods) {
@@ -160,15 +162,12 @@ export const useMultiPeriodReservations = () => {
           nights_used: period.nights,
           allocated_start_date: period.startDate.toISOString().split('T')[0],
           allocated_end_date: period.endDate.toISOString().split('T')[0],
-          organization_id: organization.id,
           user_id: user.id,
           status: 'confirmed',
           host_assignments: period.hostAssignments || []
         };
 
-        const { data: newReservation, error } = await supabase
-          .from('reservations')
-          .insert(reservationToCreate)
+        const { data: newReservation, error } = await secureInsert('reservations', reservationToCreate, orgContext)
           .select()
           .single();
 
@@ -217,24 +216,26 @@ export const useMultiPeriodReservations = () => {
 
     setLoading(true);
     try {
+      const orgContext = createOrganizationContext(organization.id);
+      
       // Get original reservation
-      const { data: originalReservation, error: fetchError } = await supabase
-        .from('reservations')
+      const { data: originalReservation, error: fetchError } = await secureSelect('reservations', orgContext)
         .select('*')
         .eq('id', originalReservationId)
-        .eq('organization_id', organization.id)
         .single();
 
       if (fetchError || !originalReservation) {
         throw new Error('Original reservation not found');
       }
 
+      // Validate data ownership
+      if (originalReservation) {
+        assertOrganizationOwnership(originalReservation, orgContext);
+      }
+
       // Delete original reservation
-      const { error: deleteError } = await supabase
-        .from('reservations')
-        .delete()
-        .eq('id', originalReservationId)
-        .eq('organization_id', organization.id);
+      const { error: deleteError } = await secureDelete('reservations', orgContext)
+        .eq('id', originalReservationId);
 
       if (deleteError) {
         throw deleteError;
@@ -260,14 +261,11 @@ export const useMultiPeriodReservations = () => {
           nights_used: period.nights,
           allocated_start_date: period.startDate.toISOString().split('T')[0],
           allocated_end_date: period.endDate.toISOString().split('T')[0],
-          organization_id: organization.id,
           user_id: user.id,
           status: originalReservation.status
         };
 
-        const { data: createdReservation, error: createError } = await supabase
-          .from('reservations')
-          .insert(newReservation)
+        const { data: createdReservation, error: createError } = await secureInsert('reservations', newReservation, orgContext)
           .select()
           .single();
 
