@@ -65,6 +65,10 @@ export const usePaymentSplitDetails = (splitId: string | null) => {
 
       if (splitError) throw splitError;
 
+      console.log('[usePaymentSplitDetails] Raw split data:', split);
+      console.log('[usePaymentSplitDetails] daily_occupancy_split:', split.daily_occupancy_split);
+      console.log('[usePaymentSplitDetails] is array:', Array.isArray(split.daily_occupancy_split));
+
       // Fetch user emails from auth metadata
       const userIds = [
         split.source_user_id,
