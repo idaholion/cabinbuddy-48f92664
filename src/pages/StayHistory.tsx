@@ -13,7 +13,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { usePayments } from "@/hooks/usePayments";
 import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -330,7 +330,10 @@ export default function StayHistory() {
       .map(split => {
         const rawDays = split.daily_occupancy_split;
         const startDate = rawDays[0]?.date;
-        const endDate = rawDays[rawDays.length - 1]?.date;
+        // CRITICAL: endDate from daily_occupancy_split is the LAST NIGHT, not checkout date
+        // Add 1 day to make it consistent with regular reservations (checkout = day after last night)
+        const lastNightDate = rawDays[rawDays.length - 1]?.date;
+        const endDate = lastNightDate ? format(addDays(parseDateOnly(lastNightDate), 1), 'yyyy-MM-dd') : lastNightDate;
         
         // Transform daily_occupancy_split to expected format with 'guests' property
         // The new format has sourceGuests/recipientGuests, old format has guests/cost
