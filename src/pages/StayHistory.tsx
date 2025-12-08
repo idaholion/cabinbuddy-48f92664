@@ -822,7 +822,12 @@ export default function StayHistory() {
           // The "effective" amount paid for THIS stay is the billing amount, rest went to older stays
           newestRes.stayData.effectiveAmountPaid = newestRes.stayData.billingAmount;
           newestRes.stayData.totalPaymentAmount = newestRes.stayData.amountPaid;
-          console.log(`[BACKWARD CASCADE] Newest stay distributed $${totalCreditDistributed} to older stays`);
+          
+          // CRITICAL: Adjust the newest stay's currentBalance - the credit was used for older stays
+          // currentBalance was negative (overpayment), add back the distributed amount
+          newestRes.stayData.currentBalance += totalCreditDistributed;
+          
+          console.log(`[BACKWARD CASCADE] Newest stay distributed $${totalCreditDistributed} to older stays, adjusted currentBalance to ${newestRes.stayData.currentBalance}`);
         }
       }
       
