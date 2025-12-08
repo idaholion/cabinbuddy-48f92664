@@ -420,9 +420,9 @@ export const useDailyOccupancySync = (organizationId: string) => {
       };
 
       // Only update amount if not locked
+      // Note: balance_due is a generated column, so we don't update it directly
       if (!sourceLocked) {
         paymentUpdates.amount = newAmount;
-        paymentUpdates.balance_due = newBalanceDue;
         paymentUpdates.status = newBalanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
       }
 
