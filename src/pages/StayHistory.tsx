@@ -792,15 +792,20 @@ export default function StayHistory() {
       
       if (availableCredit > 0) {
         // Sort older stays by date (most recent first, so we pay those first)
+        // Check currentBalance > 0 (the billing for THAT stay), not amountDue which includes running balance
         const olderStays = hostReservations
-          .filter(r => r.reservation.id !== newestResId && r.stayData.amountDue > 0)
+          .filter(r => r.reservation.id !== newestResId && r.stayData.currentBalance > 0)
           .sort((a, b) => parseDateOnly(b.reservation.start_date).getTime() - parseDateOnly(a.reservation.start_date).getTime());
+        
+        console.log(`[BACKWARD CASCADE] Found ${olderStays.length} older stays with currentBalance > 0`);
         
         for (const res of olderStays) {
           if (availableCredit <= 0) break;
           
-          const amountToApply = Math.min(availableCredit, res.stayData.amountDue);
-          res.stayData.originalAmountDue = res.stayData.amountDue;
+          // Apply credit to this stay's currentBalance (its individual charge)
+          const amountToApply = Math.min(availableCredit, res.stayData.currentBalance);
+          res.stayData.originalAmountDue = res.stayData.currentBalance;
+          res.stayData.currentBalance -= amountToApply;
           res.stayData.amountDue -= amountToApply;
           res.stayData.paidViaLaterStay = true;
           availableCredit -= amountToApply;
