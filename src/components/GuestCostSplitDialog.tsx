@@ -261,6 +261,18 @@ export const GuestCostSplitDialog = ({
       return false;
     }
 
+    // CRITICAL FIX: Warn if source user has 0 guests remaining
+    // This prevents creating zeroed-out payment records
+    const sourceHasNoGuests = Object.values(sourceDailyGuests).every(guests => guests === 0);
+    if (sourceHasNoGuests) {
+      toast({
+        title: 'Invalid Split',
+        description: 'You must keep at least some guest nights for yourself. You cannot assign all guests to others.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
     // Verify totals match (allow for small floating point differences)
     for (const day of dailyBreakdown) {
       const sourceGuests = sourceDailyGuests[day.date] || 0;
