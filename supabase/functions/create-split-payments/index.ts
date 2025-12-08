@@ -78,7 +78,10 @@ Deno.serve(async (req) => {
       user_id: user.id,
       user_email: user.email,
       organization_id: requestData.organizationId,
-      split_users_count: requestData.splitUsers.length
+      reservation_id: requestData.reservationId,
+      split_users_count: requestData.splitUsers.length,
+      source_amount: requestData.sourceAmount,
+      source_daily_occupancy_count: requestData.sourceDailyOccupancy?.length
     });
 
     // Verify user belongs to organization
@@ -102,33 +105,92 @@ Deno.serve(async (req) => {
 
     const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
 
-    // Create source payment (Person A - reduced amount)
-    console.log('📝 [SPLIT-FUNCTION] Creating source payment...');
-    const { data: sourcePayment, error: sourcePaymentError } = await supabaseAdmin
-      .from('payments')
-      .insert({
-        organization_id: requestData.organizationId,
-        reservation_id: requestData.reservationId || null,
-        family_group: requestData.sourceFamilyGroup,
-        payment_type: 'use_fee',
-        amount: requestData.sourceAmount,
-        amount_paid: 0,
-        status: 'deferred',
-        due_date: seasonEnd.toISOString().split('T')[0],
-        description: requestData.description,
-        notes: `Cost split with: ${requestData.splitUsers.map(u => u.displayName).join(', ')}`,
-        daily_occupancy: requestData.sourceDailyOccupancy,
-        created_by_user_id: user.id,
-      })
-      .select()
-      .single();
-
-    if (sourcePaymentError) {
-      console.error('❌ [SPLIT-FUNCTION] Source payment creation failed:', sourcePaymentError);
-      throw sourcePaymentError;
+    // ============================================
+    // CRITICAL FIX: Check for existing source payment and UPDATE instead of INSERT
+    // This prevents creating duplicate payments with zeroed-out data
+    // ============================================
+    let sourcePayment;
+    
+    if (requestData.reservationId) {
+      console.log('🔍 [SPLIT-FUNCTION] Checking for existing source payment...');
+      
+      const { data: existingPayment, error: existingPaymentError } = await supabaseAdmin
+        .from('payments')
+        .select('*')
+        .eq('reservation_id', requestData.reservationId)
+        .eq('family_group', requestData.sourceFamilyGroup)
+        .eq('organization_id', requestData.organizationId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (existingPaymentError) {
+        console.error('❌ [SPLIT-FUNCTION] Error checking for existing payment:', existingPaymentError);
+      }
+      
+      if (existingPayment) {
+        console.log('📝 [SPLIT-FUNCTION] Found existing payment, UPDATING instead of creating:', {
+          paymentId: existingPayment.id,
+          oldAmount: existingPayment.amount,
+          newAmount: requestData.sourceAmount,
+          oldDailyOccupancy: existingPayment.daily_occupancy?.length || 0,
+          newDailyOccupancy: requestData.sourceDailyOccupancy?.length || 0
+        });
+        
+        // UPDATE the existing payment with the new split amounts
+        const { data: updatedPayment, error: updateError } = await supabaseAdmin
+          .from('payments')
+          .update({
+            amount: requestData.sourceAmount,
+            daily_occupancy: requestData.sourceDailyOccupancy,
+            notes: `Cost split with: ${requestData.splitUsers.map(u => u.displayName).join(', ')}`,
+            updated_at: new Date().toISOString(),
+            updated_by_user_id: user.id
+          })
+          .eq('id', existingPayment.id)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('❌ [SPLIT-FUNCTION] Failed to update existing payment:', updateError);
+          throw updateError;
+        }
+        
+        sourcePayment = updatedPayment;
+        console.log('✅ [SPLIT-FUNCTION] Existing source payment UPDATED:', sourcePayment.id);
+      }
     }
+    
+    // If no existing payment was found/updated, create a new one
+    if (!sourcePayment) {
+      console.log('📝 [SPLIT-FUNCTION] No existing payment found, creating new source payment...');
+      const { data: newSourcePayment, error: sourcePaymentError } = await supabaseAdmin
+        .from('payments')
+        .insert({
+          organization_id: requestData.organizationId,
+          reservation_id: requestData.reservationId || null,
+          family_group: requestData.sourceFamilyGroup,
+          payment_type: 'use_fee',
+          amount: requestData.sourceAmount,
+          amount_paid: 0,
+          status: 'deferred',
+          due_date: seasonEnd.toISOString().split('T')[0],
+          description: requestData.description,
+          notes: `Cost split with: ${requestData.splitUsers.map(u => u.displayName).join(', ')}`,
+          daily_occupancy: requestData.sourceDailyOccupancy,
+          created_by_user_id: user.id,
+        })
+        .select()
+        .single();
 
-    console.log('✅ [SPLIT-FUNCTION] Source payment created:', sourcePayment.id);
+      if (sourcePaymentError) {
+        console.error('❌ [SPLIT-FUNCTION] Source payment creation failed:', sourcePaymentError);
+        throw sourcePaymentError;
+      }
+      
+      sourcePayment = newSourcePayment;
+      console.log('✅ [SPLIT-FUNCTION] New source payment created:', sourcePayment.id);
+    }
 
     // Create payments for each guest user
     const splitResults = [];
@@ -216,7 +278,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         sourcePayment,
-        splits: splitResults
+        splits: splitResults,
+        wasUpdated: !!requestData.reservationId // Indicate if we updated vs created
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

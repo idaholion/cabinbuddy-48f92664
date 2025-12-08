@@ -417,17 +417,38 @@ export default function StayHistory() {
     });
     
     // Match payment by both reservation_id AND family_group for split reservations
-    let payment = payments.find(p => 
+    // CRITICAL FIX: Find ALL matching payments and prioritize ones with actual occupancy data
+    // This handles the case where duplicate payments were created (one with data, one zeroed out)
+    const matchingPayments = payments.filter(p => 
       p.reservation_id === reservation.id && 
       p.family_group === reservation.family_group
     );
     
-    if (payment) {
-      console.log(`[StayHistory] ✓ Found payment by reservation_id:`, {
+    let payment;
+    if (matchingPayments.length > 1) {
+      // Multiple payments exist - prioritize ones with actual guest data
+      console.log(`[StayHistory] ⚠️ Found ${matchingPayments.length} payments for reservation, prioritizing one with actual data`);
+      
+      payment = matchingPayments.find(p => {
+        const daily = (p as any).daily_occupancy;
+        return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
+      }) || matchingPayments[0]; // Fallback to first if none have data
+      
+      console.log(`[StayHistory] ✓ Selected payment with actual occupancy data:`, {
         paymentId: payment.id,
         amount: payment.amount,
-        hasDailyOccupancy: !!(payment as any).daily_occupancy
+        hasValidOccupancy: hasValidOccupancyData((payment as any).daily_occupancy || [])
       });
+    } else {
+      payment = matchingPayments[0];
+      
+      if (payment) {
+        console.log(`[StayHistory] ✓ Found payment by reservation_id:`, {
+          paymentId: payment.id,
+          amount: payment.amount,
+          hasDailyOccupancy: !!(payment as any).daily_occupancy
+        });
+      }
     }
     
     // If no payment found by reservation_id, try to find orphaned payments (null reservation_id)
