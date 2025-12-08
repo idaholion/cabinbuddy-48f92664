@@ -114,30 +114,48 @@ Deno.serve(async (req) => {
     if (requestData.reservationId) {
       console.log('🔍 [SPLIT-FUNCTION] Checking for existing source payment...');
       
-      const { data: existingPayment, error: existingPaymentError } = await supabaseAdmin
+      // CRITICAL: Find ALL payments for this reservation, not just one
+      const { data: existingPayments, error: existingPaymentError } = await supabaseAdmin
         .from('payments')
         .select('*')
         .eq('reservation_id', requestData.reservationId)
         .eq('family_group', requestData.sourceFamilyGroup)
-        .eq('organization_id', requestData.organizationId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('organization_id', requestData.organizationId);
       
       if (existingPaymentError) {
-        console.error('❌ [SPLIT-FUNCTION] Error checking for existing payment:', existingPaymentError);
+        console.error('❌ [SPLIT-FUNCTION] Error checking for existing payments:', existingPaymentError);
       }
       
-      if (existingPayment) {
-        console.log('📝 [SPLIT-FUNCTION] Found existing payment, UPDATING instead of creating:', {
-          paymentId: existingPayment.id,
-          oldAmount: existingPayment.amount,
-          newAmount: requestData.sourceAmount,
-          oldDailyOccupancy: existingPayment.daily_occupancy?.length || 0,
-          newDailyOccupancy: requestData.sourceDailyOccupancy?.length || 0
+      if (existingPayments && existingPayments.length > 0) {
+        console.log(`📝 [SPLIT-FUNCTION] Found ${existingPayments.length} existing payment(s) for reservation`);
+        
+        // PRIORITY: Find the payment with amount_paid > 0 (the one with actual money)
+        // Then fall back to one with valid daily_occupancy, then any with amount > 0
+        let targetPayment = existingPayments.find(p => (p.amount_paid || 0) > 0);
+        
+        if (!targetPayment) {
+          targetPayment = existingPayments.find(p => {
+            const daily = p.daily_occupancy;
+            return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
+          });
+        }
+        
+        if (!targetPayment) {
+          targetPayment = existingPayments.find(p => (p.amount || 0) > 0);
+        }
+        
+        if (!targetPayment) {
+          targetPayment = existingPayments[0];
+        }
+        
+        console.log('📝 [SPLIT-FUNCTION] Selected payment to update:', {
+          paymentId: targetPayment.id,
+          amount_paid: targetPayment.amount_paid,
+          oldAmount: targetPayment.amount,
+          newAmount: requestData.sourceAmount
         });
         
-        // UPDATE the existing payment with the new split amounts
+        // UPDATE the target payment with the new split amounts, preserving amount_paid
         const { data: updatedPayment, error: updateError } = await supabaseAdmin
           .from('payments')
           .update({
@@ -147,7 +165,7 @@ Deno.serve(async (req) => {
             updated_at: new Date().toISOString(),
             updated_by_user_id: user.id
           })
-          .eq('id', existingPayment.id)
+          .eq('id', targetPayment.id)
           .select()
           .single();
         
@@ -157,7 +175,29 @@ Deno.serve(async (req) => {
         }
         
         sourcePayment = updatedPayment;
-        console.log('✅ [SPLIT-FUNCTION] Existing source payment UPDATED:', sourcePayment.id);
+        console.log('✅ [SPLIT-FUNCTION] Source payment UPDATED:', sourcePayment.id);
+        
+        // CLEANUP: Delete duplicate payments that don't have amount_paid
+        const duplicatesToDelete = existingPayments.filter(p => 
+          p.id !== targetPayment.id && (p.amount_paid || 0) === 0
+        );
+        
+        if (duplicatesToDelete.length > 0) {
+          console.log(`🧹 [SPLIT-FUNCTION] Cleaning up ${duplicatesToDelete.length} duplicate payment(s)...`);
+          
+          for (const dup of duplicatesToDelete) {
+            const { error: deleteError } = await supabaseAdmin
+              .from('payments')
+              .delete()
+              .eq('id', dup.id);
+            
+            if (deleteError) {
+              console.warn(`⚠️ [SPLIT-FUNCTION] Failed to delete duplicate payment ${dup.id}:`, deleteError);
+            } else {
+              console.log(`✅ [SPLIT-FUNCTION] Deleted duplicate payment: ${dup.id}`);
+            }
+          }
+        }
       }
     }
     
