@@ -763,7 +763,7 @@ export default function StayHistory() {
     return sum + stayData.amountPaid;
   }, 0);
   
-  // Apply backward payment cascade: if newest stay is paid, zero out older stays
+  // Apply backward payment cascade: excess payment on newest stay covers older unpaid stays
   const applyBackwardPaymentCascade = (reservations: typeof displayReservations) => {
     // Group by primary host
     const hostGroups = new Map<string, typeof displayReservations>();
@@ -775,22 +775,41 @@ export default function StayHistory() {
       hostGroups.get(hostKey)!.push(res);
     });
 
-    // For each host group, check if newest stay is paid
+    // For each host group, apply excess credit from newest stay to older stays
     hostGroups.forEach((hostReservations, hostKey) => {
       const newestResId = lastReservationByHost.get(hostKey);
       const newestRes = hostReservations.find(r => r.reservation.id === newestResId);
       
-      if (newestRes && newestRes.stayData.amountDue <= 0) {
-        // Newest is paid/overpaid, zero out all older stays
-        hostReservations.forEach(res => {
-          if (res.reservation.id !== newestResId && res.stayData.amountDue > 0) {
-            res.stayData.originalAmountDue = res.stayData.amountDue;
-            res.stayData.paidViaLaterStay = true;
-            res.stayData.amountDue = 0;
-          } else if (res.reservation.id !== newestResId) {
-            res.stayData.amountDue = 0;
-          }
-        });
+      if (!newestRes) return;
+      
+      // Calculate excess credit on newest stay (negative amountDue means overpayment)
+      let availableCredit = newestRes.stayData.amountDue < 0 ? Math.abs(newestRes.stayData.amountDue) : 0;
+      
+      console.log(`[BACKWARD CASCADE] Host ${hostKey}: newest stay has amountDue=${newestRes.stayData.amountDue}, availableCredit=${availableCredit}`);
+      
+      if (availableCredit > 0) {
+        // Sort older stays by date (most recent first, so we pay those first)
+        const olderStays = hostReservations
+          .filter(r => r.reservation.id !== newestResId && r.stayData.amountDue > 0)
+          .sort((a, b) => parseDateOnly(b.reservation.start_date).getTime() - parseDateOnly(a.reservation.start_date).getTime());
+        
+        for (const res of olderStays) {
+          if (availableCredit <= 0) break;
+          
+          const amountToApply = Math.min(availableCredit, res.stayData.amountDue);
+          res.stayData.originalAmountDue = res.stayData.amountDue;
+          res.stayData.amountDue -= amountToApply;
+          res.stayData.paidViaLaterStay = true;
+          availableCredit -= amountToApply;
+          
+          console.log(`[BACKWARD CASCADE] Applied $${amountToApply} to stay ${res.reservation.start_date}, remaining credit=${availableCredit}`);
+        }
+        
+        // Update newest stay's amountDue to reflect credit used
+        const creditUsed = (newestRes.stayData.amountDue < 0 ? Math.abs(newestRes.stayData.amountDue) : 0) - availableCredit;
+        if (creditUsed > 0) {
+          newestRes.stayData.amountDue += creditUsed; // Move from negative toward 0
+        }
       }
     });
 
