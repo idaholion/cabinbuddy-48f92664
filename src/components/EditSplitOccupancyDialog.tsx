@@ -49,14 +49,41 @@ export const EditSplitOccupancyDialog = ({
       const sourceOcc: { [date: string]: number } = {};
       const recipientOcc: { [date: string]: number } = {};
       
+      // Check if data is in new format (has sourceGuests/recipientGuests) or old format (has guests/cost)
+      const isNewFormat = dailySplit[0]?.sourceGuests !== undefined || dailySplit[0]?.recipientGuests !== undefined;
+      
       dailySplit.forEach(day => {
-        sourceOcc[day.date] = day.sourceGuests || 0;
-        recipientOcc[day.date] = day.recipientGuests || 0;
+        if (isNewFormat) {
+          // New format: { date, sourceGuests, recipientGuests, perDiem, recipientCost }
+          sourceOcc[day.date] = day.sourceGuests || 0;
+          recipientOcc[day.date] = day.recipientGuests || 0;
+        } else {
+          // Old format: { date, guests, cost } - this is the recipient's data from the corrupted split
+          // In old format, the daily_occupancy_split only has recipient data, source is unknown
+          // Default source to 0, recipient to the guests count
+          sourceOcc[day.date] = 0;
+          recipientOcc[day.date] = day.guests || 0;
+        }
       });
 
       setSourceOccupancy(sourceOcc);
       setRecipientOccupancy(recipientOcc);
-      setPerDiem(dailySplit[0]?.perDiem || 0);
+      
+      // Calculate perDiem from existing data
+      if (isNewFormat) {
+        setPerDiem(dailySplit[0]?.perDiem || 0);
+      } else {
+        // Old format: derive perDiem from cost/guests if available
+        const firstWithGuests = dailySplit.find(d => d.guests > 0 && d.cost > 0);
+        if (firstWithGuests) {
+          setPerDiem(firstWithGuests.cost / firstWithGuests.guests);
+        } else {
+          // Fallback: try to get from split_payment amount / total guest nights
+          const totalGuests = dailySplit.reduce((sum, d) => sum + (d.guests || 0), 0);
+          const totalAmount = splitDetails.split_payment?.amount || 0;
+          setPerDiem(totalGuests > 0 ? totalAmount / totalGuests : 10); // Default to $10 if can't calculate
+        }
+      }
     }
   }, [splitDetails, open]);
 
