@@ -337,7 +337,7 @@ export const useDailyOccupancySync = (organizationId: string) => {
   ) => {
     setSyncing(true);
     try {
-      // 1. Get the split record and associated data
+      // 1. Get the split record and associated data (including original split format)
       const { data: split, error: splitError } = await supabase
         .from('payment_splits')
         .select('*, source_payment:payments!payment_splits_source_payment_id_fkey(*)')
@@ -357,46 +357,47 @@ export const useDailyOccupancySync = (organizationId: string) => {
         .limit(1);
 
       const settings = settingsArray?.[0];
+      const perDiem = (settings as any)?.nightly_rate || 10;
 
-      // 4. Calculate new billing amount
-      let newAmount = 0;
-      if (settings && !sourceLocked) {
-        const billingConfig = {
-          method: (settings as any).financial_method || 'per_person_per_night',
-          amount: (settings as any).nightly_rate || 0,
-          taxRate: settings.tax_rate || 0,
+      // 4. Get original split data to preserve source guest counts
+      const originalSplitData = split.daily_occupancy_split as any[] || [];
+
+      // 5. Build updated daily_occupancy_split in correct format
+      // Preserve sourceGuests from original, update recipientGuests from new data
+      const updatedSplitData = occupancyData.map(day => {
+        // Find original data for this date to get sourceGuests
+        const originalDay = originalSplitData.find((d: any) => d.date === day.date);
+        const sourceGuests = originalDay?.sourceGuests ?? 0;
+        const recipientGuests = day.guests;
+        const recipientCost = recipientGuests * perDiem;
+
+        return {
+          date: day.date,
+          sourceGuests,
+          recipientGuests,
+          perDiem,
+          recipientCost,
         };
+      });
 
-        const dailyOccupancyRecord: Record<string, number> = {};
-        occupancyData.forEach(day => {
-          dailyOccupancyRecord[day.date] = day.guests;
-        });
-
-        // Calculate billing for the split period
-        const dates = occupancyData.map(d => d.date).sort();
-        const startDate = parseDateOnly(dates[0]);
-        const endDate = parseDateOnly(dates[dates.length - 1]);
-
-        const billing = BillingCalculator.calculateFromDailyOccupancy(
-          billingConfig as any,
-          dailyOccupancyRecord,
-          { startDate, endDate }
-        );
-        newAmount = billing.total;
+      // 6. Calculate new billing amount from updated recipient guests
+      let newAmount = 0;
+      if (!sourceLocked) {
+        newAmount = updatedSplitData.reduce((sum, day) => sum + day.recipientCost, 0);
       }
 
-      // 5. Update payment_splits.daily_occupancy_split
+      // 7. Update payment_splits.daily_occupancy_split with correct format
       const { error: splitUpdateError } = await supabase
         .from('payment_splits')
         .update({
-          daily_occupancy_split: occupancyData as any,
+          daily_occupancy_split: updatedSplitData as any,
           updated_at: new Date().toISOString(),
         })
         .eq('id', splitId);
 
       if (splitUpdateError) throw splitUpdateError;
 
-      // 6. Update the split payment record
+      // 8. Update the split payment record
       const { data: splitPayment } = await supabase
         .from('payments')
         .select('amount_paid')
@@ -406,14 +407,22 @@ export const useDailyOccupancySync = (organizationId: string) => {
       const amountPaid = splitPayment?.amount_paid || 0;
       const newBalanceDue = newAmount - amountPaid;
 
+      // Convert to simple format for payment.daily_occupancy
+      const paymentDailyOccupancy = occupancyData.map(day => ({
+        date: day.date,
+        guests: day.guests,
+        cost: day.guests * perDiem,
+      }));
+
       const paymentUpdates: any = {
-        daily_occupancy: occupancyData,
+        daily_occupancy: paymentDailyOccupancy,
         updated_at: new Date().toISOString(),
       };
 
-      // Only update amount if not locked (balance_due is auto-calculated by database)
+      // Only update amount if not locked
       if (!sourceLocked) {
         paymentUpdates.amount = newAmount;
+        paymentUpdates.balance_due = newBalanceDue;
         paymentUpdates.status = newBalanceDue <= 0 ? 'paid' : amountPaid > 0 ? 'partial' : 'pending';
       }
 
@@ -430,7 +439,7 @@ export const useDailyOccupancySync = (organizationId: string) => {
           : "Guest counts and billing updated",
         description: sourceLocked
           ? "Source billing is locked - costs remain unchanged"
-          : "Split charges have been recalculated",
+          : `Split charges updated to $${newAmount}`,
       });
 
       return { success: true };
