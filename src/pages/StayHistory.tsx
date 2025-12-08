@@ -426,13 +426,29 @@ export default function StayHistory() {
     
     let payment;
     if (matchingPayments.length > 1) {
-      // Multiple payments exist - prioritize ones with actual guest data
+      // Multiple payments exist - prioritize ones with actual payment or occupancy data
       console.log(`[StayHistory] ⚠️ Found ${matchingPayments.length} payments for reservation, prioritizing one with actual data`);
       
-      payment = matchingPayments.find(p => {
-        const daily = (p as any).daily_occupancy;
-        return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
-      }) || matchingPayments[0]; // Fallback to first if none have data
+      // First priority: payment with amount_paid > 0
+      payment = matchingPayments.find(p => (p.amount_paid || 0) > 0);
+      
+      // Second priority: payment with valid daily_occupancy data
+      if (!payment) {
+        payment = matchingPayments.find(p => {
+          const daily = (p as any).daily_occupancy;
+          return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
+        });
+      }
+      
+      // Third priority: payment with amount > 0
+      if (!payment) {
+        payment = matchingPayments.find(p => (p.amount || 0) > 0);
+      }
+      
+      // Fallback to first
+      if (!payment) {
+        payment = matchingPayments[0];
+      }
       
       console.log(`[StayHistory] ✓ Selected payment with actual occupancy data:`, {
         paymentId: payment.id,
