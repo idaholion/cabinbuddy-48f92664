@@ -25,6 +25,8 @@ interface BackupData {
     survey_responses: any[];
     notification_log: any[];
     profiles: any[];
+    payments: any[];
+    payment_splits: any[];
   };
 }
 
@@ -87,7 +89,9 @@ Deno.serve(async (req) => {
           recurring_bills: backupData.data.recurring_bills?.length || 0,
           checkin_sessions: backupData.data.checkin_sessions?.length || 0,
           survey_responses: backupData.data.survey_responses?.length || 0,
-          profiles: backupData.data.profiles?.length || 0
+          profiles: backupData.data.profiles?.length || 0,
+          payments: backupData.data.payments?.length || 0,
+          payment_splits: backupData.data.payment_splits?.length || 0
         }
       };
 
@@ -125,15 +129,18 @@ Deno.serve(async (req) => {
         checkin_sessions: [],
         survey_responses: [],
         notification_log: [],
-        profiles: []
+        profiles: [],
+        payments: [],
+        payment_splits: []
       }
     };
 
-    // Fetch current data
+    // Fetch current data - include payments and payment_splits
     const tables = [
       'family_groups', 'reservations', 'receipts', 'rotation_orders',
       'time_period_usage', 'reservation_settings', 'recurring_bills',
-      'checkin_sessions', 'survey_responses', 'notification_log'
+      'checkin_sessions', 'survey_responses', 'notification_log',
+      'payments', 'payment_splits'
     ];
 
     for (const table of tables) {
@@ -156,7 +163,9 @@ Deno.serve(async (req) => {
     console.log('Starting data restoration...');
 
     // Delete current data (in reverse order of dependencies)
+    // payment_splits depends on payments, payments depends on reservations
     const deleteOrder = [
+      'payment_splits', 'payments',
       'survey_responses', 'checkin_sessions', 'notification_log',
       'time_period_usage', 'receipts', 'reservations', 'recurring_bills',
       'reservation_settings', 'rotation_orders', 'family_groups'
@@ -173,10 +182,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Restore data from backup
+    // Restore data from backup (in correct order for dependencies)
+    const restoreOrder = [
+      'family_groups', 'rotation_orders', 'reservation_settings',
+      'recurring_bills', 'reservations', 'receipts', 'time_period_usage',
+      'notification_log', 'checkin_sessions', 'survey_responses',
+      'payments', 'payment_splits'
+    ];
+    
     let restoredCounts: Record<string, number> = {};
 
-    for (const table of tables) {
+    for (const table of restoreOrder) {
       const tableData = backupData.data[table as keyof typeof backupData.data];
       if (tableData && Array.isArray(tableData) && tableData.length > 0) {
         const { error } = await supabase

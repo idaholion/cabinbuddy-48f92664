@@ -29,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { usePaymentSync } from "@/hooks/usePaymentSync";
 import { BillingCalculator } from "@/lib/billing-calculator";
+import { StayHistorySnapshotManager } from "@/components/StayHistorySnapshotManager";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
@@ -1050,6 +1051,10 @@ export default function StayHistory() {
         </div>
       </div>
 
+      {/* Stay History Snapshot Manager - Admin/Calendar Keeper only */}
+      {(isAdmin || isCalendarKeeper) && (
+        <StayHistorySnapshotManager currentYear={selectedYear || new Date().getFullYear()} />
+      )}
 
       {/* Summary Stats */}
       <div className="grid gap-4 md:grid-cols-4">

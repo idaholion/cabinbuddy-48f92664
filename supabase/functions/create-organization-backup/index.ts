@@ -25,6 +25,8 @@ interface BackupData {
     survey_responses: any[];
     notification_log: any[];
     profiles: any[];
+    payments: any[];
+    payment_splits: any[];
   };
 }
 
@@ -105,7 +107,9 @@ Deno.serve(async (req) => {
             checkin_sessions: [],
             survey_responses: [],
             notification_log: [],
-            profiles: []
+            profiles: [],
+            payments: [],
+            payment_splits: []
           }
         };
 
@@ -120,7 +124,9 @@ Deno.serve(async (req) => {
           'recurring_bills',
           'checkin_sessions',
           'survey_responses',
-          'notification_log'
+          'notification_log',
+          'payments',
+          'payment_splits'
         ];
 
         for (const table of tables) {
@@ -217,7 +223,15 @@ Deno.serve(async (req) => {
           organization_name: org.name,
           status: 'success',
           file_path: fileName,
-          file_size: fileSize
+          file_size: fileSize,
+          data_counts: {
+            family_groups: backupData.data.family_groups.length,
+            reservations: backupData.data.reservations.length,
+            payments: backupData.data.payments.length,
+            payment_splits: backupData.data.payment_splits.length,
+            receipts: backupData.data.receipts.length,
+            checkin_sessions: backupData.data.checkin_sessions.length
+          }
         });
 
         console.log(`Backup completed for ${org.name}: ${fileName}`);
