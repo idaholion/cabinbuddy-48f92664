@@ -41,3 +41,9 @@ verify_jwt = true
 
 [functions.create-split-payments]
 verify_jwt = true
+
+[functions.create-stay-history-snapshot]
+verify_jwt = true
+
+[functions.restore-stay-history-snapshot]
+verify_jwt = true
