@@ -33,7 +33,8 @@ import {
   Bell,
   AlertCircle,
   BookOpen,
-  ListChecks
+  ListChecks,
+  Camera
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -201,6 +202,11 @@ const adminItems = [
     title: "Data Backup",
     url: "/data-backup",
     icon: Database,
+  },
+  {
+    title: "Stay History Snapshots",
+    url: "/stay-history-snapshots",
+    icon: Camera,
   },
   {
     title: "Checklist Creator",
