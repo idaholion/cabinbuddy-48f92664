@@ -46,8 +46,12 @@ export const EditSplitOccupancyDialog = ({
     console.log('EditSplitOccupancyDialog: dailySplit array', dailySplit);
     
     if (dailySplit.length > 0) {
-      // Extract dates
-      const splitDates = dailySplit.map(day => parseISO(day.date));
+      // Extract dates - keep as strings to avoid timezone issues
+      const splitDates = dailySplit.map(day => {
+        console.log('EditSplitOccupancyDialog: raw date string:', day.date);
+        return parseISO(day.date);
+      });
+      console.log('EditSplitOccupancyDialog: parsed dates:', splitDates.map(d => format(d, 'yyyy-MM-dd')));
       setDates(splitDates);
 
       // Initialize occupancy from existing split data
