@@ -820,6 +820,20 @@ export default function StayHistory() {
           console.log(`[BACKWARD CASCADE] After cascade, newest stay still has ${newestRes.stayData.amountDue} due`);
         }
       }
+      
+      // RECALCULATE running balances for this host after backward cascade
+      hostReservations.sort((a, b) => 
+        parseDateOnly(a.reservation.start_date).getTime() - parseDateOnly(b.reservation.start_date).getTime()
+      );
+      
+      let runningBalance = 0;
+      for (const item of hostReservations) {
+        item.stayData.previousBalance = runningBalance;
+        item.stayData.amountDue = item.stayData.currentBalance + runningBalance;
+        runningBalance += item.stayData.currentBalance;
+        
+        console.log(`[BACKWARD RECALC] ${item.reservation.start_date}: previousBalance=$${item.stayData.previousBalance.toFixed(2)}, currentBalance=$${item.stayData.currentBalance.toFixed(2)}, amountDue=$${item.stayData.amountDue.toFixed(2)}`);
+      }
     });
 
     return reservations;
