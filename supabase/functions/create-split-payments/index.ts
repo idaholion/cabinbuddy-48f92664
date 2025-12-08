@@ -74,6 +74,71 @@ Deno.serve(async (req) => {
     );
 
     const requestData: SplitPaymentRequest = await req.json();
+    
+    // ============================================
+    // VALIDATION: Ensure all data is correct before processing
+    // ============================================
+    console.log('🔍 [SPLIT-FUNCTION] Validating request data...');
+    
+    // Validate splitUsers exists and has data
+    if (!requestData.splitUsers || !Array.isArray(requestData.splitUsers) || requestData.splitUsers.length === 0) {
+      throw new Error('Invalid request: splitUsers array is required and must not be empty');
+    }
+    
+    // Validate each split user has required data
+    for (const splitUser of requestData.splitUsers) {
+      if (!splitUser.dailyOccupancy || !Array.isArray(splitUser.dailyOccupancy)) {
+        throw new Error(`Invalid request: splitUser ${splitUser.displayName} is missing dailyOccupancy array`);
+      }
+      
+      // Calculate expected amount from daily occupancy
+      const calculatedAmount = splitUser.dailyOccupancy.reduce((sum, day) => sum + (day.cost || 0), 0);
+      
+      // Log detailed info for each split user
+      console.log(`📊 [SPLIT-FUNCTION] Split user ${splitUser.displayName}:`, {
+        familyGroup: splitUser.familyGroup,
+        providedAmount: splitUser.amount,
+        calculatedAmount,
+        daysCount: splitUser.dailyOccupancy.length,
+        dailyOccupancy: splitUser.dailyOccupancy.map(d => ({ date: d.date, guests: d.guests, cost: d.cost }))
+      });
+      
+      // CRITICAL VALIDATION: Ensure the amount matches the daily occupancy total
+      // Allow small floating point differences
+      if (Math.abs(splitUser.amount - calculatedAmount) > 0.01) {
+        console.warn(`⚠️ [SPLIT-FUNCTION] Amount mismatch for ${splitUser.displayName}: provided=${splitUser.amount}, calculated=${calculatedAmount}`);
+        // Use the calculated amount to ensure consistency
+        splitUser.amount = calculatedAmount;
+      }
+      
+      // Validate that daily occupancy has actual guest data
+      const totalGuests = splitUser.dailyOccupancy.reduce((sum, day) => sum + (day.guests || 0), 0);
+      if (totalGuests === 0) {
+        throw new Error(`Invalid request: splitUser ${splitUser.displayName} has no guests in dailyOccupancy`);
+      }
+    }
+    
+    // Validate source daily occupancy
+    if (!requestData.sourceDailyOccupancy || !Array.isArray(requestData.sourceDailyOccupancy)) {
+      throw new Error('Invalid request: sourceDailyOccupancy array is required');
+    }
+    
+    const sourceCalculatedAmount = requestData.sourceDailyOccupancy.reduce((sum, day) => sum + (day.cost || 0), 0);
+    console.log('📊 [SPLIT-FUNCTION] Source payment data:', {
+      familyGroup: requestData.sourceFamilyGroup,
+      providedAmount: requestData.sourceAmount,
+      calculatedAmount: sourceCalculatedAmount,
+      daysCount: requestData.sourceDailyOccupancy.length,
+      dailyOccupancy: requestData.sourceDailyOccupancy.map(d => ({ date: d.date, guests: d.guests, cost: d.cost }))
+    });
+    
+    // CRITICAL VALIDATION: Ensure source amount matches daily occupancy
+    if (Math.abs(requestData.sourceAmount - sourceCalculatedAmount) > 0.01) {
+      console.warn(`⚠️ [SPLIT-FUNCTION] Source amount mismatch: provided=${requestData.sourceAmount}, calculated=${sourceCalculatedAmount}`);
+      // Use calculated amount to ensure consistency
+      requestData.sourceAmount = sourceCalculatedAmount;
+    }
+    
     console.log('🔄 [SPLIT-FUNCTION] Processing split payment request:', {
       user_id: user.id,
       user_email: user.email,
@@ -81,7 +146,8 @@ Deno.serve(async (req) => {
       reservation_id: requestData.reservationId,
       split_users_count: requestData.splitUsers.length,
       source_amount: requestData.sourceAmount,
-      source_daily_occupancy_count: requestData.sourceDailyOccupancy?.length
+      source_daily_occupancy_count: requestData.sourceDailyOccupancy?.length,
+      total_split_amount: requestData.splitUsers.reduce((sum, u) => sum + u.amount, 0)
     });
 
     // Verify user belongs to organization
@@ -152,7 +218,9 @@ Deno.serve(async (req) => {
           paymentId: targetPayment.id,
           amount_paid: targetPayment.amount_paid,
           oldAmount: targetPayment.amount,
-          newAmount: requestData.sourceAmount
+          newAmount: requestData.sourceAmount,
+          oldDailyOccupancy: targetPayment.daily_occupancy,
+          newDailyOccupancy: requestData.sourceDailyOccupancy
         });
         
         // UPDATE the target payment with the new split amounts, preserving amount_paid
@@ -175,7 +243,10 @@ Deno.serve(async (req) => {
         }
         
         sourcePayment = updatedPayment;
-        console.log('✅ [SPLIT-FUNCTION] Source payment UPDATED:', sourcePayment.id);
+        console.log('✅ [SPLIT-FUNCTION] Source payment UPDATED:', sourcePayment.id, {
+          amount: sourcePayment.amount,
+          daily_occupancy: sourcePayment.daily_occupancy
+        });
         
         // CLEANUP: Delete duplicate payments that don't have amount_paid
         const duplicatesToDelete = existingPayments.filter(p => 
@@ -236,6 +307,14 @@ Deno.serve(async (req) => {
     const splitResults = [];
     for (const splitUser of requestData.splitUsers) {
       console.log(`📝 [SPLIT-FUNCTION] Creating payment for ${splitUser.displayName}...`);
+      
+      // CRITICAL: Log exactly what we're about to insert for debugging
+      console.log(`📊 [SPLIT-FUNCTION] Split payment data for ${splitUser.displayName}:`, {
+        amount: splitUser.amount,
+        dailyOccupancyCount: splitUser.dailyOccupancy?.length,
+        dailyOccupancy: splitUser.dailyOccupancy,
+        familyGroup: splitUser.familyGroup
+      });
 
       // Create guest payment using service role
       const { data: guestPayment, error: guestPaymentError } = await supabaseAdmin
@@ -262,7 +341,17 @@ Deno.serve(async (req) => {
         throw guestPaymentError;
       }
 
-      console.log(`✅ [SPLIT-FUNCTION] Guest payment created for ${splitUser.displayName}:`, guestPayment.id);
+      // CRITICAL: Verify the created payment has correct data
+      console.log(`✅ [SPLIT-FUNCTION] Guest payment created for ${splitUser.displayName}:`, {
+        paymentId: guestPayment.id,
+        amount: guestPayment.amount,
+        dailyOccupancy: guestPayment.daily_occupancy
+      });
+      
+      // VALIDATION: Check if the created payment has correct data
+      if (guestPayment.amount !== splitUser.amount) {
+        console.error(`❌ [SPLIT-FUNCTION] CRITICAL: Created payment amount (${guestPayment.amount}) doesn't match expected (${splitUser.amount})`);
+      }
 
       // Create split tracking record
       console.log(`📝 [SPLIT-FUNCTION] Creating split tracking record for ${splitUser.displayName}...`);
