@@ -84,19 +84,18 @@ serve(async (req) => {
       throw new Error('Cannot edit split after recipient has made payments');
     }
 
-    // Build new daily occupancy split AND formatted arrays for payments
+    // Build new daily occupancy split for the split record and recipient payment
+    // NOTE: This only updates the recipient's payment, NOT the source payment (Option A behavior)
     const dates = Object.keys(sourceOccupancy).sort();
     const newDailyOccupancySplit = [];
     const newRecipientDailyOccupancy = [];
-    const newSourceDailyOccupancy = [];
 
     for (const date of dates) {
       const sourceGuests = sourceOccupancy[date] || 0;
       const recipientGuests = recipientOccupancy[date] || 0;
-      const sourceCost = sourceGuests * perDiem;
       const recipientCost = recipientGuests * perDiem;
 
-      // For payment_splits table (keeps both source and recipient info)
+      // For payment_splits table (keeps both source and recipient info for reference)
       newDailyOccupancySplit.push({
         date,
         sourceGuests,
@@ -111,20 +110,12 @@ serve(async (req) => {
         guests: recipientGuests,
         cost: recipientCost,
       });
-
-      // For source's payment.daily_occupancy
-      newSourceDailyOccupancy.push({
-        date,
-        guests: sourceGuests,
-        cost: sourceCost,
-      });
     }
 
-    // Calculate new totals
+    // Calculate new recipient total only
     const newSplitAmount = newDailyOccupancySplit.reduce((sum, day) => sum + day.recipientCost, 0);
-    const newSourceAmount = dates.reduce((sum, date) => sum + (sourceOccupancy[date] || 0) * perDiem, 0);
 
-    console.log('[UPDATE-SPLIT] Calculated amounts:', { newSplitAmount, newSourceAmount });
+    console.log('[UPDATE-SPLIT] Calculated recipient amount:', { newSplitAmount });
 
     // Update the split record
     const { error: updateSplitError } = await supabaseClient
@@ -137,7 +128,7 @@ serve(async (req) => {
 
     if (updateSplitError) throw updateSplitError;
 
-    // Update the split payment
+    // Update the split (recipient) payment ONLY - source payment remains unchanged
     const { error: updateSplitPaymentError } = await supabaseClient
       .from('payments')
       .update({
@@ -150,27 +141,13 @@ serve(async (req) => {
 
     if (updateSplitPaymentError) throw updateSplitPaymentError;
 
-    // Update the source payment
-    const { error: updateSourcePaymentError } = await supabaseClient
-      .from('payments')
-      .update({
-        amount: newSourceAmount,
-        balance_due: newSourceAmount,
-        daily_occupancy: newSourceDailyOccupancy,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', split.source_payment_id);
-
-    if (updateSourcePaymentError) throw updateSourcePaymentError;
-
     console.log('[UPDATE-SPLIT] Successfully updated all records');
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Split occupancy updated successfully',
+        message: 'Split occupancy updated successfully (recipient only)',
         newSplitAmount,
-        newSourceAmount,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
