@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from './useOrganizationContext';
 import { useToast } from '@/hooks/use-toast';
@@ -56,12 +56,20 @@ export const usePayments = () => {
   const { organizationId, isTestOrganization, getAllocationModel } = useOrganizationContext();
   const { toast } = useToast();
 
+  // Memoize context values to prevent unnecessary re-renders
+  const isTest = isTestOrganization();
+  const allocationModel = getAllocationModel() || 'rotating_selection';
+
   // Create organization context for secure queries - only when org is loaded
-  const orgContext = organizationId ? createOrganizationContext(
-    organizationId,
-    isTestOrganization(),
-    getAllocationModel() || 'rotating_selection'
-  ) : null;
+  // Use useMemo to prevent recreation on every render
+  const orgContext = useMemo(() => 
+    organizationId ? createOrganizationContext(
+      organizationId,
+      isTest,
+      allocationModel
+    ) : null,
+    [organizationId, isTest, allocationModel]
+  );
 
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!orgContext) {
