@@ -426,33 +426,48 @@ export default function StayHistory() {
     
     let payment;
     if (matchingPayments.length > 1) {
-      // Multiple payments exist - prioritize ones with actual payment or occupancy data
-      console.log(`[StayHistory] ⚠️ Found ${matchingPayments.length} payments for reservation, prioritizing one with actual data`);
+      // Multiple duplicate payments exist - we need to MERGE data from them
+      // One may have amount_paid, another may have daily_occupancy with actual data
+      console.log(`[StayHistory] ⚠️ Found ${matchingPayments.length} duplicate payments for reservation, merging data`);
       
-      // First priority: payment with amount_paid > 0
-      payment = matchingPayments.find(p => (p.amount_paid || 0) > 0);
+      // Find the payment with actual amount_paid
+      const paymentWithAmountPaid = matchingPayments.find(p => (p.amount_paid || 0) > 0);
       
-      // Second priority: payment with valid daily_occupancy data
-      if (!payment) {
-        payment = matchingPayments.find(p => {
-          const daily = (p as any).daily_occupancy;
-          return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
-        });
+      // Find the payment with valid daily_occupancy
+      const paymentWithOccupancy = matchingPayments.find(p => {
+        const daily = (p as any).daily_occupancy;
+        return daily && Array.isArray(daily) && daily.some((d: any) => (d.guests || 0) > 0);
+      });
+      
+      // Find payment with amount > 0
+      const paymentWithAmount = matchingPayments.find(p => (p.amount || 0) > 0);
+      
+      // Start with the payment that has amount_paid, or fallback
+      payment = paymentWithAmountPaid || paymentWithOccupancy || paymentWithAmount || matchingPayments[0];
+      
+      // MERGE: If selected payment doesn't have good occupancy but another does, merge it
+      if (payment && paymentWithOccupancy && payment.id !== paymentWithOccupancy.id) {
+        const goodOccupancy = (paymentWithOccupancy as any).daily_occupancy;
+        const currentOccupancy = (payment as any).daily_occupancy;
+        const currentHasGoodData = currentOccupancy && Array.isArray(currentOccupancy) && 
+          currentOccupancy.some((d: any) => (d.guests || 0) > 0);
+        
+        if (!currentHasGoodData && goodOccupancy) {
+          console.log(`[StayHistory] Merging occupancy data from another payment`);
+          (payment as any).daily_occupancy = goodOccupancy;
+        }
       }
       
-      // Third priority: payment with amount > 0
-      if (!payment) {
-        payment = matchingPayments.find(p => (p.amount || 0) > 0);
+      // MERGE: If selected payment has 0 amount but another has amount, use it
+      if (payment && paymentWithAmount && (payment.amount || 0) === 0) {
+        console.log(`[StayHistory] Merging amount from another payment`);
+        payment.amount = paymentWithAmount.amount;
       }
       
-      // Fallback to first
-      if (!payment) {
-        payment = matchingPayments[0];
-      }
-      
-      console.log(`[StayHistory] ✓ Selected payment with actual occupancy data:`, {
+      console.log(`[StayHistory] ✓ Merged payment data:`, {
         paymentId: payment.id,
         amount: payment.amount,
+        amountPaid: payment.amount_paid,
         hasValidOccupancy: hasValidOccupancyData((payment as any).daily_occupancy || [])
       });
     } else {
