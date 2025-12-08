@@ -782,10 +782,13 @@ export default function StayHistory() {
       
       if (!newestRes) return;
       
-      // Calculate excess credit on newest stay (negative amountDue means overpayment)
-      let availableCredit = newestRes.stayData.amountDue < 0 ? Math.abs(newestRes.stayData.amountDue) : 0;
+      // Calculate excess credit on newest stay using currentBalance (not amountDue)
+      // currentBalance = billingAmount - amountPaid, negative means overpayment on THIS stay
+      // The running balance already applies this credit, but we want to SHOW it on older stays
+      const currentBalance = newestRes.stayData.currentBalance;
+      let availableCredit = currentBalance < 0 ? Math.abs(currentBalance) : 0;
       
-      console.log(`[BACKWARD CASCADE] Host ${hostKey}: newest stay has amountDue=${newestRes.stayData.amountDue}, availableCredit=${availableCredit}`);
+      console.log(`[BACKWARD CASCADE] Host ${hostKey}: newest stay currentBalance=${currentBalance}, availableCredit=${availableCredit}`);
       
       if (availableCredit > 0) {
         // Sort older stays by date (most recent first, so we pay those first)
@@ -805,10 +808,11 @@ export default function StayHistory() {
           console.log(`[BACKWARD CASCADE] Applied $${amountToApply} to stay ${res.reservation.start_date}, remaining credit=${availableCredit}`);
         }
         
-        // Update newest stay's amountDue to reflect credit used
-        const creditUsed = (newestRes.stayData.amountDue < 0 ? Math.abs(newestRes.stayData.amountDue) : 0) - availableCredit;
-        if (creditUsed > 0) {
-          newestRes.stayData.amountDue += creditUsed; // Move from negative toward 0
+        // The newest stay's amountDue should reflect remaining balance after applying credit to older stays
+        // Since running balance already incorporated this, just update display
+        if (newestRes.stayData.amountDue > 0) {
+          // There's still a balance due after applying credit to older stays
+          console.log(`[BACKWARD CASCADE] After cascade, newest stay still has ${newestRes.stayData.amountDue} due`);
         }
       }
     });
