@@ -328,9 +328,26 @@ export default function StayHistory() {
         split.split_payment
       )
       .map(split => {
-        const days = split.daily_occupancy_split;
-        const startDate = days[0]?.date;
-        const endDate = days[days.length - 1]?.date;
+        const rawDays = split.daily_occupancy_split;
+        const startDate = rawDays[0]?.date;
+        const endDate = rawDays[rawDays.length - 1]?.date;
+        
+        // Transform daily_occupancy_split to expected format with 'guests' property
+        // The new format has sourceGuests/recipientGuests, old format has guests/cost
+        const transformedDays = rawDays.map((day: any) => {
+          // Check if it's new format (has recipientGuests) or old format (has guests)
+          const isNewFormat = day.recipientGuests !== undefined || day.sourceGuests !== undefined;
+          
+          return {
+            date: day.date,
+            guests: isNewFormat ? (day.recipientGuests || 0) : (day.guests || 0),
+            cost: isNewFormat ? (day.recipientCost || 0) : (day.cost || 0),
+            // Keep original data for reference
+            sourceGuests: day.sourceGuests,
+            recipientGuests: day.recipientGuests,
+            perDiem: day.perDiem
+          };
+        });
         
         return {
           id: `split-${split.id}`,
@@ -345,7 +362,7 @@ export default function StayHistory() {
             splitId: split.id,
             sourceFamily: split.source_family_group,
             payment: split.split_payment,
-            dailyOccupancy: days
+            dailyOccupancy: transformedDays
           }
         };
       })
