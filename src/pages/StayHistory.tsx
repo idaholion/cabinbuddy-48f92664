@@ -799,6 +799,8 @@ export default function StayHistory() {
         
         console.log(`[BACKWARD CASCADE] Found ${olderStays.length} older stays with currentBalance > 0`);
         
+        let totalCreditDistributed = 0;
+        
         for (const res of olderStays) {
           if (availableCredit <= 0) break;
           
@@ -809,15 +811,18 @@ export default function StayHistory() {
           res.stayData.amountDue -= amountToApply;
           res.stayData.paidViaLaterStay = true;
           availableCredit -= amountToApply;
+          totalCreditDistributed += amountToApply;
           
           console.log(`[BACKWARD CASCADE] Applied $${amountToApply} to stay ${res.reservation.start_date}, remaining credit=${availableCredit}`);
         }
         
-        // The newest stay's amountDue should reflect remaining balance after applying credit to older stays
-        // Since running balance already incorporated this, just update display
-        if (newestRes.stayData.amountDue > 0) {
-          // There's still a balance due after applying credit to older stays
-          console.log(`[BACKWARD CASCADE] After cascade, newest stay still has ${newestRes.stayData.amountDue} due`);
+        // Track how much credit was distributed FROM the newest stay TO older stays
+        if (totalCreditDistributed > 0) {
+          newestRes.stayData.creditDistributedToOlders = totalCreditDistributed;
+          // The "effective" amount paid for THIS stay is the billing amount, rest went to older stays
+          newestRes.stayData.effectiveAmountPaid = newestRes.stayData.billingAmount;
+          newestRes.stayData.totalPaymentAmount = newestRes.stayData.amountPaid;
+          console.log(`[BACKWARD CASCADE] Newest stay distributed $${totalCreditDistributed} to older stays`);
         }
       }
       
@@ -1207,13 +1212,14 @@ export default function StayHistory() {
                     )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Amount Paid:</span>
-                      <span className="font-medium">
-                        ${(stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 
-                          ? stayData.effectiveAmountPaid || stayData.billingAmount 
-                          : stayData.amountPaid
-                        ).toFixed(2)}
-                      </span>
+                      <span className="font-medium">${stayData.amountPaid.toFixed(2)}</span>
                     </div>
+                    {stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Applied to Earlier Stays:</span>
+                        <span className="font-medium text-green-600">-${stayData.creditDistributedToOlders.toFixed(2)}</span>
+                      </div>
+                    )}
                     {stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 && (
                       <>
                         <div className="flex justify-between text-sm">
