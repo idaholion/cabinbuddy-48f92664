@@ -37,8 +37,13 @@ export const EditSplitOccupancyDialog = ({
   useEffect(() => {
     if (!splitDetails || !open) return;
 
+    console.log('EditSplitOccupancyDialog: splitDetails loaded', splitDetails);
+    console.log('EditSplitOccupancyDialog: daily_occupancy_split', splitDetails.daily_occupancy_split);
+
     // Parse dates from daily_occupancy_split
     const dailySplit = splitDetails.daily_occupancy_split || [];
+    
+    console.log('EditSplitOccupancyDialog: dailySplit array', dailySplit);
     
     if (dailySplit.length > 0) {
       // Extract dates
@@ -51,6 +56,8 @@ export const EditSplitOccupancyDialog = ({
       
       // Check if data is in new format (has sourceGuests/recipientGuests) or old format (has guests/cost)
       const isNewFormat = dailySplit[0]?.sourceGuests !== undefined || dailySplit[0]?.recipientGuests !== undefined;
+      
+      console.log('EditSplitOccupancyDialog: isNewFormat', isNewFormat, 'first day:', dailySplit[0]);
       
       dailySplit.forEach(day => {
         if (isNewFormat) {
@@ -65,6 +72,9 @@ export const EditSplitOccupancyDialog = ({
           recipientOcc[day.date] = day.guests || 0;
         }
       });
+
+      console.log('EditSplitOccupancyDialog: sourceOcc', sourceOcc);
+      console.log('EditSplitOccupancyDialog: recipientOcc', recipientOcc);
 
       setSourceOccupancy(sourceOcc);
       setRecipientOccupancy(recipientOcc);
