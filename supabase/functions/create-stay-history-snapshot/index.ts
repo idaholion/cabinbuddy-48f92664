@@ -12,6 +12,7 @@ interface StayHistorySnapshot {
     season_year: number;
     snapshot_date: string;
     snapshot_type: string;
+    snapshot_source: 'manual' | 'auto';
     created_by_user_id?: string;
   };
   data: {
@@ -44,7 +45,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { organization_id, season_year, snapshot_type = 'manual', created_by_user_id } = await req.json();
+    const { 
+      organization_id, 
+      season_year, 
+      snapshot_type = 'manual', 
+      snapshot_source = 'manual',
+      created_by_user_id 
+    } = await req.json();
     
     if (!organization_id) {
       return new Response(
@@ -60,7 +67,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Creating stay history snapshot for org ${organization_id}, year ${season_year}`);
+    console.log(`Creating stay history snapshot for org ${organization_id}, year ${season_year}, source: ${snapshot_source}`);
 
     // Get organization info
     const { data: org, error: orgError } = await supabase
@@ -185,6 +192,7 @@ Deno.serve(async (req) => {
         season_year,
         snapshot_date: new Date().toISOString(),
         snapshot_type,
+        snapshot_source,
         created_by_user_id
       },
       data: {
@@ -205,9 +213,10 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Create filename
+    // Create filename with source prefix for easier identification
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileName = `${organization_id}/stay_history_${season_year}_${timestamp}.json`;
+    const sourcePrefix = snapshot_source === 'auto' ? 'auto_' : '';
+    const fileName = `${organization_id}/${sourcePrefix}stay_history_${season_year}_${timestamp}.json`;
 
     // Convert to JSON
     const snapshotJson = JSON.stringify(snapshotData, null, 2);
@@ -229,7 +238,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create metadata record
+    // Create metadata record with snapshot_source and season_year
     const { error: metadataError } = await supabase
       .from('backup_metadata')
       .insert({
@@ -238,20 +247,23 @@ Deno.serve(async (req) => {
         file_path: fileName,
         file_size: fileSize,
         status: 'completed',
-        created_by_user_id
+        created_by_user_id,
+        snapshot_source,
+        season_year
       });
 
     if (metadataError) {
       console.error('Failed to create metadata:', metadataError);
     }
 
-    console.log(`Stay history snapshot created: ${fileName}`);
+    console.log(`Stay history snapshot created: ${fileName} (source: ${snapshot_source})`);
 
     return new Response(
       JSON.stringify({
         success: true,
         file_path: fileName,
         file_size: fileSize,
+        snapshot_source,
         summary: snapshotData.summary
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
