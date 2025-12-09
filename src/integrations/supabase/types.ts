@@ -64,6 +64,8 @@ export type Database = {
           file_size: number | null
           id: string
           organization_id: string
+          season_year: number | null
+          snapshot_source: string | null
           status: string
         }
         Insert: {
@@ -74,6 +76,8 @@ export type Database = {
           file_size?: number | null
           id?: string
           organization_id: string
+          season_year?: number | null
+          snapshot_source?: string | null
           status?: string
         }
         Update: {
@@ -84,6 +88,8 @@ export type Database = {
           file_size?: number | null
           id?: string
           organization_id?: string
+          season_year?: number | null
+          snapshot_source?: string | null
           status?: string
         }
         Relationships: []
@@ -1189,6 +1195,8 @@ export type Database = {
           id: string
           is_test_organization: boolean | null
           name: string
+          stay_history_snapshot_frequency: string | null
+          stay_history_snapshot_retention: number | null
           treasurer_email: string | null
           treasurer_name: string | null
           treasurer_phone: string | null
@@ -1235,6 +1243,8 @@ export type Database = {
           id?: string
           is_test_organization?: boolean | null
           name: string
+          stay_history_snapshot_frequency?: string | null
+          stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
           treasurer_name?: string | null
           treasurer_phone?: string | null
@@ -1281,6 +1291,8 @@ export type Database = {
           id?: string
           is_test_organization?: boolean | null
           name?: string
+          stay_history_snapshot_frequency?: string | null
+          stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
           treasurer_name?: string | null
           treasurer_phone?: string | null

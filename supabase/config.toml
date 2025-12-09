@@ -47,3 +47,6 @@ verify_jwt = true
 
 [functions.restore-stay-history-snapshot]
 verify_jwt = true
+
+[functions.auto-create-stay-history-snapshots]
+verify_jwt = false

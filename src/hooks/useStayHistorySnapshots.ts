@@ -3,7 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 
-interface SnapshotMetadata {
+export type SnapshotFrequency = 'off' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface SnapshotSettings {
+  frequency: SnapshotFrequency;
+  retention: number;
+}
+
+export interface SnapshotMetadata {
   id: string;
   organization_id: string;
   backup_type: string;
@@ -12,6 +19,7 @@ interface SnapshotMetadata {
   created_at: string;
   status: string;
   season_year?: number;
+  snapshot_source?: 'manual' | 'auto';
 }
 
 interface SnapshotSummary {
@@ -32,13 +40,78 @@ interface SnapshotPreview {
   summary: SnapshotSummary;
 }
 
+const DEFAULT_RETENTION: Record<SnapshotFrequency, number> = {
+  off: 4,
+  daily: 7,
+  weekly: 4,
+  biweekly: 4,
+  monthly: 6
+};
+
 export function useStayHistorySnapshots() {
   const [snapshots, setSnapshots] = useState<SnapshotMetadata[]>([]);
+  const [settings, setSettings] = useState<SnapshotSettings>({ frequency: 'off', retention: 4 });
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const { toast } = useToast();
   const { organization } = useOrganization();
+
+  const fetchSettings = useCallback(async () => {
+    if (!organization?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('stay_history_snapshot_frequency, stay_history_snapshot_retention')
+        .eq('id', organization.id)
+        .single();
+
+      if (error) throw error;
+
+      setSettings({
+        frequency: (data?.stay_history_snapshot_frequency as SnapshotFrequency) || 'off',
+        retention: data?.stay_history_snapshot_retention || 4
+      });
+    } catch (error) {
+      console.error('Error fetching snapshot settings:', error);
+    }
+  }, [organization?.id]);
+
+  const updateSettings = useCallback(async (newSettings: SnapshotSettings) => {
+    if (!organization?.id) return false;
+
+    setSavingSettings(true);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          stay_history_snapshot_frequency: newSettings.frequency,
+          stay_history_snapshot_retention: newSettings.retention
+        })
+        .eq('id', organization.id);
+
+      if (error) throw error;
+
+      setSettings(newSettings);
+      toast({
+        title: 'Settings Saved',
+        description: 'Automatic snapshot settings have been updated',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating snapshot settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save snapshot settings',
+        variant: 'destructive'
+      });
+      return false;
+    } finally {
+      setSavingSettings(false);
+    }
+  }, [organization?.id, toast]);
 
   const fetchSnapshots = useCallback(async (seasonYear?: number) => {
     if (!organization?.id) return;
@@ -60,10 +133,11 @@ export function useStayHistorySnapshots() {
 
       if (error) throw error;
 
-      // Parse season year from backup_type
+      // Parse season year from backup_type and include snapshot_source
       const enrichedData = (data || []).map(snapshot => ({
         ...snapshot,
-        season_year: parseInt(snapshot.backup_type.replace('stay_history_', ''), 10) || undefined
+        season_year: parseInt(snapshot.backup_type.replace('stay_history_', ''), 10) || undefined,
+        snapshot_source: (snapshot.snapshot_source as 'manual' | 'auto') || 'manual'
       }));
 
       setSnapshots(enrichedData);
@@ -91,6 +165,7 @@ export function useStayHistorySnapshots() {
           organization_id: organization.id,
           season_year: seasonYear,
           snapshot_type: 'manual',
+          snapshot_source: 'manual',
           created_by_user_id: user?.id
         }
       });
@@ -243,16 +318,25 @@ export function useStayHistorySnapshots() {
     }
   }, [fetchSnapshots, toast]);
 
+  const getDefaultRetention = (frequency: SnapshotFrequency): number => {
+    return DEFAULT_RETENTION[frequency];
+  };
+
   return {
     snapshots,
+    settings,
     loading,
     creating,
     restoring,
+    savingSettings,
     fetchSnapshots,
+    fetchSettings,
+    updateSettings,
     createSnapshot,
     previewRestore,
     restoreSnapshot,
     downloadSnapshot,
-    deleteSnapshot
+    deleteSnapshot,
+    getDefaultRetention
   };
 }
