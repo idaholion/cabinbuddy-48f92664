@@ -180,11 +180,19 @@ export const usePayments = () => {
       // Apply credit to unpaid balances, oldest first
       let remainingCredit = totalCredit;
       for (const p of sorted) {
+        // Correct status based on actual balance_due (fixes stale database status)
+        let correctedStatus = p.status;
+        if (p.balance_due <= 0 && p.status !== 'paid' && p.status !== 'cancelled' && p.status !== 'refunded') {
+          correctedStatus = 'paid';
+        } else if (p.balance_due > 0 && p.balance_due < p.amount && (p.amount_paid || 0) > 0 && p.status !== 'partial') {
+          correctedStatus = 'partial';
+        }
+
         if (p.balance_due > 0 && remainingCredit > 0) {
           const creditToApply = Math.min(remainingCredit, p.balance_due);
           // Create a modified payment with adjusted balance and status
           const newBalanceDue = p.balance_due - creditToApply;
-          const newStatus = newBalanceDue <= 0 ? 'paid' : (p.amount_paid || 0) > 0 ? 'partial' : p.status;
+          const newStatus = newBalanceDue <= 0 ? 'paid' : (p.amount_paid || 0) > 0 ? 'partial' : correctedStatus;
           
           result.push({
             ...p,
@@ -203,12 +211,17 @@ export const usePayments = () => {
           result.push({
             ...p,
             balance_due: newBalanceDue,
+            status: correctedStatus as PaymentStatus,
             notes: creditUsed > 0 
               ? `${p.notes || ''} [Credit of $${creditUsed.toFixed(2)} applied to other stays]`.trim()
               : p.notes
           });
         } else {
-          result.push(p);
+          // No credit cascade needed, but still apply status correction
+          result.push({
+            ...p,
+            status: correctedStatus as PaymentStatus
+          });
         }
       }
     }
