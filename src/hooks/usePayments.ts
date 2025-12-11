@@ -143,6 +143,79 @@ export const usePayments = () => {
     return deduplicated;
   };
 
+  /**
+   * Apply credit cascade: when a family has overpaid on one stay (negative balance),
+   * apply that credit to other unpaid stays for the same family.
+   * This mirrors the Stay History backward payment cascade logic.
+   */
+  const applyCreditCascade = (payments: Payment[]): Payment[] => {
+    // Group by family_group
+    const byFamily = new Map<string, Payment[]>();
+    for (const p of payments) {
+      const family = p.family_group;
+      if (!byFamily.has(family)) {
+        byFamily.set(family, []);
+      }
+      byFamily.get(family)!.push(p);
+    }
+
+    const result: Payment[] = [];
+
+    for (const [, familyPayments] of byFamily) {
+      // Sort by reservation date (oldest first) for consistent cascade
+      const sorted = [...familyPayments].sort((a, b) => {
+        const aDate = a.reservation?.start_date || a.created_at;
+        const bDate = b.reservation?.start_date || b.created_at;
+        return new Date(aDate).getTime() - new Date(bDate).getTime();
+      });
+
+      // Calculate total credit (sum of negative balances) and total debt (sum of positive balances)
+      let totalCredit = 0;
+      for (const p of sorted) {
+        if (p.balance_due < 0) {
+          totalCredit += Math.abs(p.balance_due);
+        }
+      }
+
+      // Apply credit to unpaid balances, oldest first
+      let remainingCredit = totalCredit;
+      for (const p of sorted) {
+        if (p.balance_due > 0 && remainingCredit > 0) {
+          const creditToApply = Math.min(remainingCredit, p.balance_due);
+          // Create a modified payment with adjusted balance and status
+          const newBalanceDue = p.balance_due - creditToApply;
+          const newStatus = newBalanceDue <= 0 ? 'paid' : (p.amount_paid || 0) > 0 ? 'partial' : p.status;
+          
+          result.push({
+            ...p,
+            balance_due: newBalanceDue,
+            status: newStatus as PaymentStatus,
+            // Add a note about credit applied (for display purposes)
+            notes: creditToApply > 0 
+              ? `${p.notes || ''} [Credit of $${creditToApply.toFixed(2)} applied from overpayment]`.trim()
+              : p.notes
+          });
+          remainingCredit -= creditToApply;
+        } else if (p.balance_due < 0 && totalCredit > 0) {
+          // This is a source of credit - zero out the negative balance since it was distributed
+          const creditUsed = Math.min(Math.abs(p.balance_due), totalCredit - remainingCredit + Math.abs(p.balance_due));
+          const newBalanceDue = p.balance_due + creditUsed;
+          result.push({
+            ...p,
+            balance_due: newBalanceDue,
+            notes: creditUsed > 0 
+              ? `${p.notes || ''} [Credit of $${creditUsed.toFixed(2)} applied to other stays]`.trim()
+              : p.notes
+          });
+        } else {
+          result.push(p);
+        }
+      }
+    }
+
+    return result;
+  };
+
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!orgContext) {
       console.log('[usePayments] Skipping fetch - no orgContext');
@@ -178,8 +251,11 @@ export const usePayments = () => {
       // Deduplicate payments to remove stale/duplicate records
       const deduplicatedPayments = deduplicatePayments(allPayments || []);
       
+      // Apply credit cascade to show accurate balances after overpayments are distributed
+      const paymentsWithCascade = applyCreditCascade(deduplicatedPayments);
+      
       // Apply year filter if provided
-      let filteredPayments = deduplicatedPayments;
+      let filteredPayments = paymentsWithCascade;
       if (year) {
         filteredPayments = deduplicatedPayments.filter(payment => {
           // If payment has a linked reservation, use reservation start_date
