@@ -304,13 +304,6 @@ const PaymentTracker = () => {
         </AlertDescription>
       </Alert>
 
-      {/* Data Accuracy Note */}
-      <Alert variant="default" className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20">
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-amber-800 dark:text-amber-200">
-          <strong>Note:</strong> This view shows individual payment records. For accurate family balances that include credit cascades between stays, please refer to <a href="/stay-history" className="underline font-medium">Stay History</a>.
-        </AlertDescription>
-      </Alert>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
