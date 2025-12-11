@@ -51,6 +51,7 @@ export interface CreatePaymentData {
 
 export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [receipts, setReceipts] = useState<{ family_group: string; amount: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0 });
   const { organizationId, isTestOrganization, getAllocationModel } = useOrganizationContext();
@@ -145,11 +146,18 @@ export const usePayments = () => {
 
   /**
    * Apply credit cascade: when a family has overpaid on one stay (negative balance),
-   * apply that credit to other unpaid stays for the same family.
+   * or has receipt credits, apply that credit to other unpaid stays for the same family.
    * This mirrors the Stay History backward payment cascade logic.
    */
-  const applyCreditCascade = (payments: Payment[]): Payment[] => {
-    // Group by family_group
+  const applyCreditCascade = (payments: Payment[], receiptData: { family_group: string; amount: number }[]): Payment[] => {
+    // Calculate total receipts per family
+    const receiptsByFamily = new Map<string, number>();
+    for (const r of receiptData) {
+      const current = receiptsByFamily.get(r.family_group) || 0;
+      receiptsByFamily.set(r.family_group, current + r.amount);
+    }
+
+    // Group payments by family_group
     const byFamily = new Map<string, Payment[]>();
     for (const p of payments) {
       const family = p.family_group;
@@ -161,7 +169,7 @@ export const usePayments = () => {
 
     const result: Payment[] = [];
 
-    for (const [, familyPayments] of byFamily) {
+    for (const [familyGroup, familyPayments] of byFamily) {
       // Sort by reservation date (oldest first) for consistent cascade
       const sorted = [...familyPayments].sort((a, b) => {
         const aDate = a.reservation?.start_date || a.created_at;
@@ -169,13 +177,17 @@ export const usePayments = () => {
         return new Date(aDate).getTime() - new Date(bDate).getTime();
       });
 
-      // Calculate total credit (sum of negative balances) and total debt (sum of positive balances)
+      // Calculate total credit from overpayments (negative balances)
       let totalCredit = 0;
       for (const p of sorted) {
         if (p.balance_due < 0) {
           totalCredit += Math.abs(p.balance_due);
         }
       }
+      
+      // Add receipt credits for this family
+      const receiptCredit = receiptsByFamily.get(familyGroup) || 0;
+      totalCredit += receiptCredit;
 
       // Apply credit to unpaid balances, oldest first
       let remainingCredit = totalCredit;
@@ -194,13 +206,16 @@ export const usePayments = () => {
           const newBalanceDue = p.balance_due - creditToApply;
           const newStatus = newBalanceDue <= 0 ? 'paid' : (p.amount_paid || 0) > 0 ? 'partial' : correctedStatus;
           
+          // Determine credit source for the note
+          const creditSource = receiptCredit > 0 ? 'receipts/overpayments' : 'overpayment';
+          
           result.push({
             ...p,
             balance_due: newBalanceDue,
             status: newStatus as PaymentStatus,
             // Add a note about credit applied (for display purposes)
             notes: creditToApply > 0 
-              ? `${p.notes || ''} [Credit of $${creditToApply.toFixed(2)} applied from overpayment]`.trim()
+              ? `${p.notes || ''} [Credit of $${creditToApply.toFixed(2)} applied from ${creditSource}]`.trim()
               : p.notes
           });
           remainingCredit -= creditToApply;
@@ -239,17 +254,27 @@ export const usePayments = () => {
       setLoading(true);
 
       // Fetch ALL payments with reservation data using secure query
-      const { data: allPayments, error } = await secureSelect('payments', orgContext)
-        .select(`
-          *,
-          reservation:reservations(start_date, end_date)
-        `)
-        .order('created_at', { ascending: false });
+      const [paymentsResult, receiptsResult] = await Promise.all([
+        secureSelect('payments', orgContext)
+          .select(`
+            *,
+            reservation:reservations(start_date, end_date)
+          `)
+          .order('created_at', { ascending: false }),
+        secureSelect('receipts', orgContext)
+          .select('family_group, amount')
+      ]);
       
-      if (error) {
-        console.error('[usePayments] Supabase error:', error);
-        throw error;
+      if (paymentsResult.error) {
+        console.error('[usePayments] Supabase error:', paymentsResult.error);
+        throw paymentsResult.error;
       }
+      
+      const allPayments = paymentsResult.data;
+      const receiptData = receiptsResult.data || [];
+      
+      // Store receipts for reference
+      setReceipts(receiptData);
       
       // Validate organization ownership
       if (allPayments) {
@@ -264,8 +289,8 @@ export const usePayments = () => {
       // Deduplicate payments to remove stale/duplicate records
       const deduplicatedPayments = deduplicatePayments(allPayments || []);
       
-      // Apply credit cascade to show accurate balances after overpayments are distributed
-      const paymentsWithCascade = applyCreditCascade(deduplicatedPayments);
+      // Apply credit cascade to show accurate balances after overpayments and receipt credits are distributed
+      const paymentsWithCascade = applyCreditCascade(deduplicatedPayments, receiptData);
       
       // Apply year filter if provided
       let filteredPayments = paymentsWithCascade;
