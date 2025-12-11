@@ -71,6 +71,78 @@ export const usePayments = () => {
     [organizationId, isTest, allocationModel]
   );
 
+  /**
+   * Deduplicate payments by reservation+family_group combination.
+   * When multiple payment records exist for the same reservation, prioritize:
+   * 1. Payment with amount_paid > 0 (actual transaction recorded)
+   * 2. Payment with valid daily_occupancy (has guest data)
+   * 3. Payment with amount > 0 (has a charge)
+   * 4. Most recently created as fallback
+   * 
+   * Payments without a reservation_id are kept as-is (orphaned/manual payments).
+   */
+  const deduplicatePayments = (allPayments: Payment[]): Payment[] => {
+    // Group payments by reservation_id + family_group
+    const grouped = new Map<string, Payment[]>();
+    const orphaned: Payment[] = [];
+    
+    for (const payment of allPayments) {
+      if (!payment.reservation_id) {
+        // Skip $0 orphaned payments - these are legacy sync artifacts
+        if (payment.amount === 0 && (payment.amount_paid || 0) === 0) {
+          continue;
+        }
+        orphaned.push(payment);
+        continue;
+      }
+      
+      const key = `${payment.reservation_id}::${payment.family_group}`;
+      const existing = grouped.get(key) || [];
+      existing.push(payment);
+      grouped.set(key, existing);
+    }
+    
+    // For each group, pick the best payment
+    const deduplicated: Payment[] = [...orphaned];
+    
+    for (const [, group] of grouped) {
+      if (group.length === 1) {
+        deduplicated.push(group[0]);
+        continue;
+      }
+      
+      // Sort by priority: amount_paid > 0, then valid occupancy, then amount > 0, then newest
+      const sorted = [...group].sort((a, b) => {
+        // Priority 1: Has actual payment recorded
+        const aHasPayment = (a.amount_paid || 0) > 0;
+        const bHasPayment = (b.amount_paid || 0) > 0;
+        if (aHasPayment && !bHasPayment) return -1;
+        if (!aHasPayment && bHasPayment) return 1;
+        
+        // Priority 2: Has valid daily_occupancy with guests
+        const aAny = a as any;
+        const bAny = b as any;
+        const aHasOccupancy = aAny.daily_occupancy && Array.isArray(aAny.daily_occupancy) && 
+          aAny.daily_occupancy.some((d: any) => d.guests > 0);
+        const bHasOccupancy = bAny.daily_occupancy && Array.isArray(bAny.daily_occupancy) && 
+          bAny.daily_occupancy.some((d: any) => d.guests > 0);
+        if (aHasOccupancy && !bHasOccupancy) return -1;
+        if (!aHasOccupancy && bHasOccupancy) return 1;
+        
+        // Priority 3: Has non-zero amount
+        if (a.amount > 0 && b.amount === 0) return -1;
+        if (a.amount === 0 && b.amount > 0) return 1;
+        
+        // Priority 4: Most recent
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      deduplicated.push(sorted[0]);
+    }
+    
+    return deduplicated;
+  };
+
   const fetchPayments = useCallback(async (page = 1, limit = 50, year?: number) => {
     if (!orgContext) {
       console.log('[usePayments] Skipping fetch - no orgContext');
@@ -80,36 +152,36 @@ export const usePayments = () => {
     try {
       setLoading(true);
 
-      // Apply year filter if provided - filter by reservation dates when available
+      // Fetch ALL payments with reservation data using secure query
+      const { data: allPayments, error } = await secureSelect('payments', orgContext)
+        .select(`
+          *,
+          reservation:reservations(start_date, end_date)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('[usePayments] Supabase error:', error);
+        throw error;
+      }
+      
+      // Validate organization ownership
+      if (allPayments) {
+        try {
+          assertOrganizationOwnership(allPayments, orgContext);
+        } catch (ownershipError) {
+          console.error('[usePayments] Ownership validation failed:', ownershipError);
+          throw ownershipError;
+        }
+      }
+      
+      // Deduplicate payments to remove stale/duplicate records
+      const deduplicatedPayments = deduplicatePayments(allPayments || []);
+      
+      // Apply year filter if provided
+      let filteredPayments = deduplicatedPayments;
       if (year) {
-        const startDate = `${year}-01-01`;
-        const endDate = `${year}-12-31`;
-        
-        // Fetch ALL payments with reservation data using secure query
-        const { data: allPayments, error: allError } = await secureSelect('payments', orgContext)
-          .select(`
-            *,
-            reservation:reservations(start_date, end_date)
-          `)
-          .order('created_at', { ascending: false });
-        
-        if (allError) {
-          console.error('[usePayments] Supabase error:', allError);
-          throw allError;
-        }
-        
-        // Validate organization ownership
-        if (allPayments) {
-          try {
-            assertOrganizationOwnership(allPayments, orgContext);
-          } catch (ownershipError) {
-            console.error('[usePayments] Ownership validation failed:', ownershipError);
-            throw ownershipError;
-          }
-        }
-        
-        // Filter payments by year - prioritize reservation dates over creation dates
-        const filteredPayments = (allPayments || []).filter(payment => {
+        filteredPayments = deduplicatedPayments.filter(payment => {
           // If payment has a linked reservation, use reservation start_date
           if (payment.reservation && payment.reservation.start_date) {
             const reservationYear = new Date(payment.reservation.start_date).getFullYear();
@@ -130,38 +202,10 @@ export const usePayments = () => {
           const paymentYear = new Date(payment.created_at).getFullYear();
           return paymentYear === year;
         });
-        
-        setPayments(filteredPayments);
-        setPagination({ page: 1, limit: 50, total: filteredPayments.length });
-        setLoading(false);
-        return;
-      }
-
-      // When no year filter, fetch ALL payments using secure query
-      const { data, error } = await secureSelect('payments', orgContext)
-        .select(`
-          *,
-          reservation:reservations(start_date, end_date)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[usePayments] Supabase error (no year filter):', error);
-        throw error;
       }
       
-      // Validate organization ownership
-      if (data) {
-        try {
-          assertOrganizationOwnership(data, orgContext);
-        } catch (ownershipError) {
-          console.error('[usePayments] Ownership validation failed (no year filter):', ownershipError);
-          throw ownershipError;
-        }
-      }
-      
-      setPayments(data || []);
-      setPagination({ page: 1, limit: 50, total: data?.length || 0 });
+      setPayments(filteredPayments);
+      setPagination({ page: 1, limit: 50, total: filteredPayments.length });
     } catch (error) {
       console.error('[usePayments] Error fetching payments:', error);
       console.error('[usePayments] Error details:', {
