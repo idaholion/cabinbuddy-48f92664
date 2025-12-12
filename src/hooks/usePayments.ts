@@ -382,8 +382,29 @@ export const usePayments = () => {
         }
       }
 
+      // Auto-calculate due_date if not provided
+      let finalPaymentData = { ...paymentData };
+      if (!finalPaymentData.due_date && orgContext?.organizationId) {
+        const { data: settings } = await supabase
+          .from('reservation_settings')
+          .select('season_end_month, season_end_day, season_payment_deadline_offset_days')
+          .eq('organization_id', orgContext.organizationId)
+          .maybeSingle();
+        
+        if (settings) {
+          const currentYear = new Date().getFullYear();
+          const seasonEndMonth = settings.season_end_month ?? 10;
+          const seasonEndDay = settings.season_end_day ?? 31;
+          const offsetDays = settings.season_payment_deadline_offset_days ?? 0;
+          
+          const dueDate = new Date(currentYear, seasonEndMonth - 1, seasonEndDay);
+          dueDate.setDate(dueDate.getDate() + offsetDays);
+          finalPaymentData.due_date = dueDate.toISOString().split('T')[0];
+        }
+      }
+
       // Use secure insert - organization_id automatically added
-      const { data, error } = await secureInsert('payments', paymentData, orgContext)
+      const { data, error } = await secureInsert('payments', finalPaymentData, orgContext)
         .select()
         .single();
 

@@ -208,6 +208,10 @@ Deno.serve(async (req) => {
           totalCost += dayCost;
         }
 
+        // Calculate due date from season end + offset
+        const dueDate = new Date(year, configData.season_end_month - 1, configData.season_end_day);
+        dueDate.setDate(dueDate.getDate() + (configData.season_payment_deadline_offset_days || 0));
+
         paymentRecords.push({
           organization_id: organizationId,
           reservation_id: reservation.id,
@@ -219,6 +223,7 @@ Deno.serve(async (req) => {
           description: `Use fee - ${reservation.start_date} to ${reservation.end_date}`,
           daily_occupancy: dailyOccupancy,
           created_by_user_id: user.id,
+          due_date: dueDate.toISOString().split('T')[0],
         });
 
         created++;

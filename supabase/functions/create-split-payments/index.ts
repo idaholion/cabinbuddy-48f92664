@@ -169,7 +169,22 @@ Deno.serve(async (req) => {
 
     console.log('✅ [SPLIT-FUNCTION] User verified in organization');
 
-    const seasonEnd = new Date(new Date().getFullYear(), 9, 31); // Oct 31
+    // Fetch organization's season settings to calculate due date properly
+    const { data: orgSettings } = await supabaseAdmin
+      .from('reservation_settings')
+      .select('season_end_month, season_end_day, season_payment_deadline_offset_days')
+      .eq('organization_id', requestData.organizationId)
+      .maybeSingle();
+    
+    // Calculate due date from season end + offset, fallback to Oct 31 if no settings
+    const currentYear = new Date().getFullYear();
+    const seasonEndMonth = orgSettings?.season_end_month ?? 10; // Default October
+    const seasonEndDay = orgSettings?.season_end_day ?? 31;
+    const offsetDays = orgSettings?.season_payment_deadline_offset_days ?? 0;
+    
+    const dueDate = new Date(currentYear, seasonEndMonth - 1, seasonEndDay);
+    dueDate.setDate(dueDate.getDate() + offsetDays);
+    const dueDateStr = dueDate.toISOString().split('T')[0];
 
     // ============================================
     // CRITICAL FIX: Check for existing source payment and UPDATE instead of INSERT
@@ -285,7 +300,7 @@ Deno.serve(async (req) => {
           amount: requestData.sourceAmount,
           amount_paid: 0,
           status: 'deferred',
-          due_date: seasonEnd.toISOString().split('T')[0],
+          due_date: dueDateStr,
           description: requestData.description,
           notes: `Cost split with: ${requestData.splitUsers.map(u => u.displayName).join(', ')}`,
           daily_occupancy: requestData.sourceDailyOccupancy,
@@ -327,7 +342,7 @@ Deno.serve(async (req) => {
           amount: splitUser.amount,
           amount_paid: 0,
           status: 'deferred',
-          due_date: seasonEnd.toISOString().split('T')[0],
+          due_date: dueDateStr,
           description: `Guest cost split - ${requestData.dateRange.start} to ${requestData.dateRange.end}`,
           daily_occupancy: splitUser.dailyOccupancy,
           created_by_user_id: user.id,
