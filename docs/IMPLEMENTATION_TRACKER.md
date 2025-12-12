@@ -350,14 +350,15 @@ CREATE TABLE organization_safety_audit (
 - [x] ✅ `usePaymentSplits.ts` - Fully migrated
 - [x] ✅ `usePhotos.ts` - Fully migrated
 - [x] ✅ `useReceipts.ts` - Fully migrated
+- [x] ✅ `useFinancialData.ts` - Fully migrated (2025-12-12)
+- [x] ✅ `useReservations.ts` - Fully migrated (2025-12-12)
+- [x] ✅ `useTimePeriods.ts` - Fully migrated (2025-12-12)
+- [x] ✅ `useRotationOrder.ts` - Fully migrated (2025-12-12)
+- [x] ✅ `useInvoices.ts` - Fully migrated (2025-12-12)
+- [x] ✅ `useDocuments.ts` - Fully migrated (2025-12-12)
 
-#### Remaining Hooks to Migrate
-- [ ] `useFinancialData.ts`
-- [ ] `useReservations.ts`
-- [ ] `useTimePeriods.ts`
-- [ ] `useRotationOrder.ts`
-- [ ] `useInvoices.ts`
-- [ ] `useDocuments.ts`
+#### All Core Hooks Migrated ✅
+All data-access hooks are now using secure query wrappers for organization-level isolation.
 
 #### Files Created
 - ✅ `src/lib/secure-queries.ts` - Secure query wrapper with organization context validation
