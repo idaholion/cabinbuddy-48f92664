@@ -295,7 +295,7 @@ export const usePayments = () => {
       // Apply year filter if provided
       let filteredPayments = paymentsWithCascade;
       if (year) {
-        filteredPayments = deduplicatedPayments.filter(payment => {
+        filteredPayments = paymentsWithCascade.filter(payment => {
           // If payment has a linked reservation, use reservation start_date
           if (payment.reservation && payment.reservation.start_date) {
             const reservationYear = new Date(payment.reservation.start_date).getFullYear();
