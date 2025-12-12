@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Download, RefreshCw } from 'lucide-react';
+import { FileText, Download, RefreshCw, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { AllocationModelAuditViewer } from '@/components/AllocationModelAuditViewer';
 
 interface DocFile {
   name: string;
@@ -219,13 +220,17 @@ export default function AdminDocumentation() {
       </div>
 
       <Tabs value={activeDoc} onValueChange={setActiveDoc} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           {DOC_FILES.map(doc => (
             <TabsTrigger key={doc.name} value={doc.name} className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               {doc.title}
             </TabsTrigger>
           ))}
+          <TabsTrigger value="audit-trail" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Audit Trail
+          </TabsTrigger>
         </TabsList>
 
         {DOC_FILES.map(doc => (
@@ -283,6 +288,10 @@ export default function AdminDocumentation() {
             </Card>
           </TabsContent>
         ))}
+
+        <TabsContent value="audit-trail" className="mt-6">
+          <AllocationModelAuditViewer />
+        </TabsContent>
       </Tabs>
     </div>
   );
