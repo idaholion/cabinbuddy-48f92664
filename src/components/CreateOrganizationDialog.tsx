@@ -6,7 +6,7 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSetupState } from '@/hooks/useSetupState';
-import { useTrialCodes } from '@/hooks/useTrialCodes';
+import { useAccessCodes } from '@/hooks/useAccessCodes';
 import { supabase } from '@/integrations/supabase/client';
 import { Building } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
@@ -39,7 +39,7 @@ export const CreateOrganizationDialog = ({
   const { toast } = useToast();
   const { user } = useAuth(); 
   const { clearSetupState } = useSetupState();
-  const { consumeTrialCode } = useTrialCodes();
+  const { consumeAccessCode } = useAccessCodes();
   const [internalOpen, setInternalOpen] = useState(false);
   
   // Use external open state if provided, otherwise use internal
@@ -128,22 +128,22 @@ export const CreateOrganizationDialog = ({
         }
       }
       
-      // If we have a trial code, consume it before creating organization
+      // If we have an access code, consume it before creating organization
       if (trialCode) {
-        console.log('🎫 [CREATE_ORG] Consuming trial code...');
-        const codeConsumed = await consumeTrialCode(trialCode, user.id);
+        console.log('🎫 [CREATE_ORG] Consuming access code...');
+        const codeConsumed = await consumeAccessCode(trialCode, user.id);
         
         if (!codeConsumed) {
-          logger.error('Trial code consumption failed', {
+          logger.error('Access code consumption failed', {
             component: 'CreateOrganizationDialog',
             action: 'handleSubmit',
             userId: user.id,
-            hasTrialCode: !!trialCode
+            hasAccessCode: !!trialCode
           });
-          throw new Error('Invalid or expired trial code. Please contact support.');
+          throw new Error('Invalid or expired access code. Please contact support.');
         }
         
-        console.log('✅ [CREATE_ORG] Trial code consumed successfully');
+        console.log('✅ [CREATE_ORG] Access code consumed successfully');
         // Clear signup data after successful consumption
         localStorage.removeItem('signupData');
       }

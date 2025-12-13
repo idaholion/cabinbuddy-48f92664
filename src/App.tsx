@@ -71,7 +71,7 @@ const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
-const TrialCodeManagement = React.lazy(() => import("./pages/TrialCodeManagement"));
+const AccessCodeManagement = React.lazy(() => import("./pages/AccessCodeManagement"));
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
 const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));
@@ -170,7 +170,7 @@ const AppContent = () => {
         <Route path="/faq" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQ /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/faq-management" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQManagement /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
-        <Route path="/supervisor/trial-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><TrialCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
+        <Route path="/supervisor/access-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AccessCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/family-group-health-check" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-documentation" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminTreasurerRoute>} />

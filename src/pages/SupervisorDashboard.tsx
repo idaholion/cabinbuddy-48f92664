@@ -171,7 +171,7 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="financial-records" className="text-base">Financial Records</TabsTrigger>
             <TabsTrigger value="features" className="text-base">Default Features</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
-            <TabsTrigger value="trial-codes" className="text-base">Trial Codes</TabsTrigger>
+            <TabsTrigger value="access-codes" className="text-base">Access Codes</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
           </TabsList>
 
@@ -348,17 +348,17 @@ export const SupervisorDashboard = () => {
             <SupervisorManagement supervisors={supervisors} />
           </TabsContent>
 
-          <TabsContent value="trial-codes">
+          <TabsContent value="access-codes">
             <Card>
               <CardHeader>
-                <CardTitle>Trial Code Management</CardTitle>
+                <CardTitle>Access Code Management</CardTitle>
                 <CardDescription>
-                  Manage beta access codes for new organization creation. Navigate to the dedicated page for full functionality.
+                  Manage access codes for new organization creation. Navigate to the dedicated page for full functionality.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild>
-                  <a href="/supervisor/trial-codes">Open Trial Code Manager</a>
+                  <a href="/supervisor/access-codes">Open Access Code Manager</a>
                 </Button>
               </CardContent>
             </Card>
