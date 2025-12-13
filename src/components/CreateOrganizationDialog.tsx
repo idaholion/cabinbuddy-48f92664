@@ -253,7 +253,7 @@ export const CreateOrganizationDialog = ({
         <DialogTrigger asChild>
           <Button className="hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
             <Building className="h-4 w-4 mr-2" />
-            Create Production Organization
+            Create Supervisor's Organization
           </Button>
         </DialogTrigger>
       )}
@@ -261,7 +261,7 @@ export const CreateOrganizationDialog = ({
         <DialogHeader>
           <DialogTitle>Create New Organization</DialogTitle>
           <DialogDescription>
-            Create a new production organization for real use. You will be linked as the administrator.
+            Create a new organization where you (the supervisor) will be linked as the administrator.
           </DialogDescription>
         </DialogHeader>
         
