@@ -231,44 +231,53 @@ Ensure test organizations are completely isolated from production data, preventi
 
 ---
 
-### ⏳ Phase 1A: Database Schema Enhancements
-**Status:** Pending  
+### ✅ Phase 1A: Database Schema Enhancements
+**Status:** Complete  
+**Completion Date:** 2025-12-13  
 **Priority:** High
 
-#### Tasks
-- [ ] Expand `selection_rules` JSONB column usage
-  - Define standard schema for different allocation models
-  - Add validation function for rules
-  
-- [ ] Add `financial_test_mode` column to `organizations`
+#### Tasks Completed
+- [x] Add `financial_test_mode` column to `organizations`
   - Boolean flag for test financial data
   - Separate from general `is_test_organization`
   
-- [ ] Create `organization_safety_audit` table
+- [x] Create `organization_safety_audit` table
   - Track cross-organization operations
   - Log suspicious queries
+  - Includes severity levels and table_name tracking
   
-- [ ] Add indexes for test organization queries
+- [x] Add indexes for test organization queries
   - Index on `is_test_organization`
-  - Composite indexes for common filters
+  - Index on `financial_test_mode`
+  - Indexes on `organization_safety_audit` for performance
+  
+- [x] Enable RLS on `organization_safety_audit`
+  - Supervisors can view/manage all logs
+  - Organization admins can view their own logs
+  - System can insert logs via service role
 
-#### Migration File
-- Create new migration: `add_test_isolation_schema.sql`
+#### Pending (moved to future phase)
+- [ ] Expand `selection_rules` JSONB column usage
+  - Define standard schema for different allocation models
+  - Add validation function for rules
 
-#### Schema Changes
+#### Schema Changes Applied
 ```sql
--- Add to organizations table
+-- Added to organizations table
 ALTER TABLE organizations 
 ADD COLUMN financial_test_mode BOOLEAN DEFAULT false;
 
--- Create safety audit table
+-- Created safety audit table with enhanced fields
 CREATE TABLE organization_safety_audit (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations,
   operation_type TEXT NOT NULL,
-  query_context JSONB,
-  user_id UUID REFERENCES auth.users,
+  query_context JSONB DEFAULT '{}'::jsonb,
+  user_id UUID,
   is_suspicious BOOLEAN DEFAULT false,
+  severity TEXT DEFAULT 'info',
+  table_name TEXT,
+  details TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```

@@ -1129,6 +1129,53 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_safety_audit: {
+        Row: {
+          created_at: string | null
+          details: string | null
+          id: string
+          is_suspicious: boolean | null
+          operation_type: string
+          organization_id: string | null
+          query_context: Json | null
+          severity: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          is_suspicious?: boolean | null
+          operation_type: string
+          organization_id?: string | null
+          query_context?: Json | null
+          severity?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string | null
+          id?: string
+          is_suspicious?: boolean | null
+          operation_type?: string
+          organization_id?: string | null
+          query_context?: Json | null
+          severity?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_safety_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_voting_settings: {
         Row: {
           created_at: string
@@ -1190,6 +1237,7 @@ export type Database = {
           ck_copy_work_weekend_reminder: boolean | null
           code: string
           created_at: string
+          financial_test_mode: boolean | null
           guest_access_token: string | null
           guest_token_expires_at: string | null
           id: string
@@ -1238,6 +1286,7 @@ export type Database = {
           ck_copy_work_weekend_reminder?: boolean | null
           code: string
           created_at?: string
+          financial_test_mode?: boolean | null
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
@@ -1286,6 +1335,7 @@ export type Database = {
           ck_copy_work_weekend_reminder?: boolean | null
           code?: string
           created_at?: string
+          financial_test_mode?: boolean | null
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
