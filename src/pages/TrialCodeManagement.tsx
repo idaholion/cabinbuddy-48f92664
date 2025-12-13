@@ -10,8 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useTrialCodes } from '@/hooks/useTrialCodes';
 import { useSupervisor } from '@/hooks/useSupervisor';
-import { Plus, Copy, CheckCircle, XCircle, Clock, Users } from 'lucide-react';
+import { Plus, Copy, CheckCircle, XCircle, Clock, Users, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 interface TrialCode {
   id: string;
@@ -156,6 +157,10 @@ const TrialCodeManagement = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          <Link to="/supervisor" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Supervisor Dashboard
+          </Link>
           <h1 className="text-3xl font-bold">Trial Code Management</h1>
           <p className="text-muted-foreground">
             Manage beta access codes for new organization creation
