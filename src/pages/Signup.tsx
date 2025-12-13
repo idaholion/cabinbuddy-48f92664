@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
-import { useTrialCodes } from "@/hooks/useTrialCodes";
+import { useAccessCodes } from "@/hooks/useAccessCodes";
 import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
@@ -23,11 +23,11 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [organizationType, setOrganizationType] = useState("");
   const [organizationCode, setOrganizationCode] = useState("");
-  const [trialCode, setTrialCode] = useState("");
+  const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
   const { signUp, user } = useAuth();
   const { joinOrganization, createOrganization } = useMultiOrganization();
-  const { validateTrialCode, consumeTrialCode } = useTrialCodes();
+  const { validateAccessCode, consumeAccessCode } = useAccessCodes();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -140,17 +140,17 @@ const Signup = () => {
       return;
     }
 
-    if (organizationType === "start" && !trialCode) {
-      setError("Please enter a trial access code to start a new organization.");
+    if (organizationType === "start" && !accessCode) {
+      setError("Please enter an access code to start a new organization.");
       setLoading(false);
       return;
     }
 
-    // Validate trial code if starting new organization
+    // Validate access code if starting new organization
     if (organizationType === "start") {
-      const isValidCode = await validateTrialCode(trialCode);
+      const isValidCode = await validateAccessCode(accessCode);
       if (!isValidCode) {
-        setError("Invalid or expired trial code. Please check your code and try again.");
+        setError("Invalid or expired access code. Please check your code and try again.");
         setLoading(false);
         return;
       }
@@ -307,7 +307,7 @@ const Signup = () => {
           firstName,
           lastName,
           email,
-          trialCode: trialCode.trim().toUpperCase(),
+          trialCode: accessCode.trim().toUpperCase(),
           timestamp: Date.now()
         }));
         navigate("/setup");
@@ -369,19 +369,19 @@ const Signup = () => {
 
             {mode === 'start' && (
               <div className="space-y-2">
-                <Label htmlFor="trialCode">Trial Access Code</Label>
+                <Label htmlFor="accessCode">Access Code</Label>
                 <Input
-                  id="trialCode"
+                  id="accessCode"
                   type="text"
-                  placeholder="Enter your trial code"
-                  value={trialCode}
-                  onChange={(e) => setTrialCode(e.target.value.toUpperCase())}
+                  placeholder="Enter your access code"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   maxLength={8}
                   className="uppercase"
                   required
                 />
                 <p className="text-sm text-muted-foreground">
-                  You need a trial access code to start a new organization
+                  You need an access code to start a new organization
                 </p>
               </div>
             )}
@@ -419,18 +419,18 @@ const Signup = () => {
 
             {!mode && organizationType === "start" && (
               <div className="space-y-2">
-                <Label htmlFor="trialCode">Trial Access Code</Label>
+                <Label htmlFor="accessCode">Access Code</Label>
                 <Input
-                  id="trialCode"
+                  id="accessCode"
                   type="text"
-                  placeholder="Enter your trial code"
-                  value={trialCode}
-                  onChange={(e) => setTrialCode(e.target.value.toUpperCase())}
+                  placeholder="Enter your access code"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                   maxLength={8}
                   className="uppercase"
                 />
                 <p className="text-sm text-muted-foreground">
-                  You need a trial access code to start a new organization
+                  You need an access code to start a new organization
                 </p>
               </div>
             )}

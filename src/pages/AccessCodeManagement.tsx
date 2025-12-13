@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useTrialCodes } from '@/hooks/useTrialCodes';
+import { useAccessCodes } from '@/hooks/useAccessCodes';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { Plus, Copy, CheckCircle, XCircle, Clock, Users, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 
-interface TrialCode {
+interface AccessCode {
   id: string;
   code: string;
   created_at: string;
@@ -27,12 +27,12 @@ interface TrialCode {
   updated_at: string;
 }
 
-const TrialCodeManagement = () => {
+const AccessCodeManagement = () => {
   const { toast } = useToast();
   const { isSupervisor, loading: supervisorLoading } = useSupervisor();
-  const { createTrialCode, fetchTrialCodes, loading } = useTrialCodes();
+  const { createAccessCode, fetchAccessCodes, loading } = useAccessCodes();
   
-  const [codes, setCodes] = useState<TrialCode[]>([]);
+  const [codes, setCodes] = useState<AccessCode[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newCodeNotes, setNewCodeNotes] = useState('');
   const [newCodeExpireDays, setNewCodeExpireDays] = useState<string>('');
@@ -40,22 +40,22 @@ const TrialCodeManagement = () => {
 
   useEffect(() => {
     if (isSupervisor) {
-      loadTrialCodes();
+      loadAccessCodes();
     }
   }, [isSupervisor]);
 
-  const loadTrialCodes = async () => {
-    const fetchedCodes = await fetchTrialCodes();
+  const loadAccessCodes = async () => {
+    const fetchedCodes = await fetchAccessCodes();
     setCodes(fetchedCodes);
   };
 
   const handleCreateCode = async () => {
     if (bulkCount === 1) {
       const expireDays = newCodeExpireDays ? parseInt(newCodeExpireDays) : undefined;
-      const code = await createTrialCode(newCodeNotes || undefined, expireDays);
+      const code = await createAccessCode(newCodeNotes || undefined, expireDays);
       
       if (code) {
-        await loadTrialCodes();
+        await loadAccessCodes();
         setShowCreateDialog(false);
         setNewCodeNotes('');
         setNewCodeExpireDays('');
@@ -64,7 +64,7 @@ const TrialCodeManagement = () => {
       // Bulk creation
       const expireDays = newCodeExpireDays ? parseInt(newCodeExpireDays) : undefined;
       const promises = Array.from({ length: bulkCount }, (_, i) => 
-        createTrialCode(
+        createAccessCode(
           newCodeNotes ? `${newCodeNotes} (${i + 1}/${bulkCount})` : undefined, 
           expireDays
         )
@@ -72,7 +72,7 @@ const TrialCodeManagement = () => {
       
       try {
         await Promise.all(promises);
-        await loadTrialCodes();
+        await loadAccessCodes();
         setShowCreateDialog(false);
         setNewCodeNotes('');
         setNewCodeExpireDays('');
@@ -80,7 +80,7 @@ const TrialCodeManagement = () => {
         
         toast({
           title: "Success",
-          description: `Created ${bulkCount} trial codes successfully!`,
+          description: `Created ${bulkCount} access codes successfully!`,
         });
       } catch (error) {
         toast({
@@ -97,7 +97,7 @@ const TrialCodeManagement = () => {
       await navigator.clipboard.writeText(code);
       toast({
         title: "Copied!",
-        description: `Trial code ${code} copied to clipboard`,
+        description: `Access code ${code} copied to clipboard`,
       });
     } catch (error) {
       toast({
@@ -108,7 +108,7 @@ const TrialCodeManagement = () => {
     }
   };
 
-  const getStatusBadge = (code: TrialCode) => {
+  const getStatusBadge = (code: AccessCode) => {
     if (code.used_at) {
       return <Badge variant="outline" className="text-green-600 border-green-600"><CheckCircle className="h-3 w-3 mr-1" />Used</Badge>;
     }
@@ -143,7 +143,7 @@ const TrialCodeManagement = () => {
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              Access denied. Only supervisors can manage trial codes.
+              Access denied. Only supervisors can manage access codes.
             </p>
           </CardContent>
         </Card>
@@ -163,9 +163,9 @@ const TrialCodeManagement = () => {
               Back to Supervisor Dashboard
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold">Trial Code Management</h1>
+          <h1 className="text-3xl font-bold">Access Code Management</h1>
           <p className="text-muted-foreground">
-            Manage beta access codes for new organization creation
+            Manage access codes for new organization creation
           </p>
         </div>
 
@@ -173,14 +173,14 @@ const TrialCodeManagement = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create Trial Code
+              Create Access Code
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Trial Code</DialogTitle>
+              <DialogTitle>Create New Access Code</DialogTitle>
               <DialogDescription>
-                Generate trial access codes for beta testers to create new organizations
+                Generate access codes for users to create new organizations
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -188,7 +188,7 @@ const TrialCodeManagement = () => {
                 <Label htmlFor="notes">Notes (Optional)</Label>
                 <Textarea
                   id="notes"
-                  placeholder="e.g., 'For John Smith - Beta tester'"
+                  placeholder="e.g., 'For John Smith - New customer'"
                   value={newCodeNotes}
                   onChange={(e) => setNewCodeNotes(e.target.value)}
                 />
@@ -276,9 +276,9 @@ const TrialCodeManagement = () => {
       {/* Codes Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Trial Codes</CardTitle>
+          <CardTitle>Access Codes</CardTitle>
           <CardDescription>
-            All generated trial access codes and their status
+            All generated access codes and their status
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -331,7 +331,7 @@ const TrialCodeManagement = () => {
           
           {codes.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              No trial codes created yet. Create your first code to get started.
+              No access codes created yet. Create your first code to get started.
             </div>
           )}
         </CardContent>
@@ -340,4 +340,4 @@ const TrialCodeManagement = () => {
   );
 };
 
-export default TrialCodeManagement;
+export default AccessCodeManagement;

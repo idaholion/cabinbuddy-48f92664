@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export const useTrialCodes = () => {
+export const useAccessCodes = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const validateTrialCode = async (code: string): Promise<boolean> => {
+  const validateAccessCode = async (code: string): Promise<boolean> => {
     if (!code || code.trim().length === 0) {
       return false;
     }
@@ -18,20 +18,20 @@ export const useTrialCodes = () => {
       });
 
       if (error) {
-        console.error('Error validating trial code:', error);
+        console.error('Error validating access code:', error);
         return false;
       }
 
       return data === true;
     } catch (error) {
-      console.error('Exception validating trial code:', error);
+      console.error('Exception validating access code:', error);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const consumeTrialCode = async (code: string, userId: string): Promise<boolean> => {
+  const consumeAccessCode = async (code: string, userId: string): Promise<boolean> => {
     if (!code || !userId) {
       return false;
     }
@@ -43,18 +43,18 @@ export const useTrialCodes = () => {
       });
 
       if (error) {
-        console.error('Error consuming trial code:', error);
+        console.error('Error consuming access code:', error);
         return false;
       }
 
       return data === true;
     } catch (error) {
-      console.error('Exception consuming trial code:', error);
+      console.error('Exception consuming access code:', error);
       return false;
     }
   };
 
-  const createTrialCode = async (notes?: string, expireDays?: number): Promise<string | null> => {
+  const createAccessCode = async (notes?: string, expireDays?: number): Promise<string | null> => {
     try {
       setLoading(true);
       const { data, error } = await supabase.rpc('create_trial_code', {
@@ -63,10 +63,10 @@ export const useTrialCodes = () => {
       });
 
       if (error) {
-        console.error('Error creating trial code:', error);
+        console.error('Error creating access code:', error);
         toast({
           title: "Error",
-          description: "Failed to create trial code. Please try again.",
+          description: "Failed to create access code. Please try again.",
           variant: "destructive",
         });
         return null;
@@ -74,15 +74,15 @@ export const useTrialCodes = () => {
 
       toast({
         title: "Success",
-        description: `Trial code ${data} created successfully!`,
+        description: `Access code ${data} created successfully!`,
       });
 
       return data;
     } catch (error) {
-      console.error('Exception creating trial code:', error);
+      console.error('Exception creating access code:', error);
       toast({
         title: "Error",
-        description: "Failed to create trial code. Please try again.",
+        description: "Failed to create access code. Please try again.",
         variant: "destructive",
       });
       return null;
@@ -91,7 +91,7 @@ export const useTrialCodes = () => {
     }
   };
 
-  const fetchTrialCodes = async () => {
+  const fetchAccessCodes = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
@@ -100,13 +100,13 @@ export const useTrialCodes = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching trial codes:', error);
+        console.error('Error fetching access codes:', error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Exception fetching trial codes:', error);
+      console.error('Exception fetching access codes:', error);
       return [];
     } finally {
       setLoading(false);
@@ -115,9 +115,9 @@ export const useTrialCodes = () => {
 
   return {
     loading,
-    validateTrialCode,
-    consumeTrialCode,
-    createTrialCode,
-    fetchTrialCodes
+    validateAccessCode,
+    consumeAccessCode,
+    createAccessCode,
+    fetchAccessCodes
   };
 };
