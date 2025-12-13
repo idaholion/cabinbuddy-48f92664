@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSetupState } from '@/hooks/useSetupState';
 import { useTrialCodes } from '@/hooks/useTrialCodes';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus } from 'lucide-react';
+import { Building } from 'lucide-react';
 import { unformatPhoneNumber } from '@/lib/phone-utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/lib/logger';
@@ -252,8 +252,8 @@ export const CreateOrganizationDialog = ({
       ) : (
         <DialogTrigger asChild>
           <Button className="hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Test Organization
+            <Building className="h-4 w-4 mr-2" />
+            Create Production Organization
           </Button>
         </DialogTrigger>
       )}
@@ -261,7 +261,7 @@ export const CreateOrganizationDialog = ({
         <DialogHeader>
           <DialogTitle>Create New Organization</DialogTitle>
           <DialogDescription>
-            Create a test organization for development and testing purposes.
+            Create a new production organization for real use. You will be linked as the administrator.
           </DialogDescription>
         </DialogHeader>
         
