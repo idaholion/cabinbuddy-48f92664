@@ -284,32 +284,33 @@ CREATE TABLE organization_safety_audit (
 
 ---
 
-### ⏳ Phase 2A: Enhanced Test Organization Creation
-**Status:** Pending  
+### ✅ Phase 2A: Enhanced Test Organization Creation
+**Status:** Complete  
+**Completion Date:** 2025-12-13  
 **Priority:** High  
-**Depends On:** Phase 1A
+**Depends On:** Phase 1A ✅
 
-#### Tasks
-- [ ] Update `CreateTestOrganizationDialog.tsx`
-  - Add dropdown to select allocation model type
-  - Add checkbox for including financial test data
-  - Add checkbox for including sample reservations
-  - Display what will be created
+#### Tasks Completed
+- [x] Update `CreateTestOrganizationDialog.tsx`
+  - Added dropdown to select allocation model type
+  - Added checkbox for including financial test data
+  - Added checkbox for including sample reservations
+  - Added checkbox for including family groups
+  - Displays summary of what will be created
+  - Sets `is_test_organization` and `financial_test_mode` flags
   
-- [ ] Create `src/lib/organization-utils.ts`
+- [x] Create `src/lib/organization-utils.ts`
   - `getDefaultRulesForType(allocationType)` - returns default selection_rules
-  - `createTestOrganizationData()` - generates sample data
+  - `getAllocationModelDescription()` - human-readable descriptions
+  - `getAllocationModelDisplayName()` - display names for UI
+  - `generateSampleReservations()` - creates sample reservation data
+  - `generateSamplePayments()` - creates sample payment data
   - `validateOrganizationIsolation()` - checks data isolation
-  
-- [ ] Implement `getDefaultRulesForType()` function
-  - rotating_selection: snake draft rules
-  - static_weeks: period assignment rules
-  - first_come_first_serve: queue rules
-  - lottery: random selection rules
+  - Exported sample data constants for reuse
 
-#### Files to Create/Modify
-- `src/components/CreateTestOrganizationDialog.tsx` (update)
-- `src/lib/organization-utils.ts` (create)
+#### Files Created/Modified
+- ✅ `src/components/CreateTestOrganizationDialog.tsx` (updated)
+- ✅ `src/lib/organization-utils.ts` (created)
 
 #### Default Rules Examples
 ```typescript
@@ -318,7 +319,9 @@ CREATE TABLE organization_safety_audit (
   type: 'rotating_selection',
   snake_draft: true,
   selection_period_days: 7,
-  rotation_order: 'alphabetical'
+  rotation_order: 'alphabetical',
+  allow_trades: true,
+  max_selections_per_turn: 2
 }
 
 // static_weeks
@@ -326,7 +329,26 @@ CREATE TABLE organization_safety_audit (
   type: 'static_weeks',
   periods_per_year: 26,
   period_duration_days: 14,
-  trade_allowed: true
+  trade_allowed: true,
+  assignment_method: 'fixed'
+}
+
+// first_come_first_serve
+{
+  type: 'first_come_first_serve',
+  max_days_per_booking: 14,
+  advance_booking_days: 365,
+  min_gap_between_bookings: 7,
+  priority_for_hosts: false
+}
+
+// lottery
+{
+  type: 'lottery',
+  lottery_frequency: 'annual',
+  weighted_by_shares: true,
+  max_selections_per_lottery: 3,
+  allow_preference_ranking: true
 }
 ```
 
