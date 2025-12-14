@@ -34,7 +34,14 @@ import {
   GripVertical,
   ExternalLink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  StickyNote,
+  History,
+  UserCheck,
+  HelpCircle,
+  Database,
+  Download,
+  Split,
 } from "lucide-react";
 import { useFeatures, type Feature } from "@/hooks/useFeatures";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -77,7 +84,25 @@ const iconMap: Record<string, React.ElementType> = {
   Home,
   CalendarPlus,
   BarChart3,
-  Shield
+  Shield,
+  StickyNote,
+  History,
+  UserCheck,
+  HelpCircle,
+  Database,
+  Download,
+  Split,
+  // Lowercase mappings for default_features table icons
+  shoppingcart: ShoppingCart,
+  stickynote: StickyNote,
+  history: History,
+  usercheck: UserCheck,
+  helpcircle: HelpCircle,
+  receipt: Receipt,
+  database: Database,
+  download: Download,
+  split: Split,
+  barchart: BarChart3,
 };
 
 interface SortableFeatureCardProps {

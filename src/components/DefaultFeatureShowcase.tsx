@@ -14,6 +14,16 @@ import {
   ClipboardCheck,
   BookOpen,
   Wrench,
+  ShoppingCart,
+  StickyNote,
+  History,
+  UserCheck,
+  HelpCircle,
+  Receipt,
+  Database,
+  Download,
+  Split,
+  BarChart3,
 } from "lucide-react";
 
 // Icon mapping for feature display
@@ -30,6 +40,16 @@ const iconMap = {
   clipboardcheck: ClipboardCheck,
   bookopen: BookOpen,
   wrench: Wrench,
+  shoppingcart: ShoppingCart,
+  stickynote: StickyNote,
+  history: History,
+  usercheck: UserCheck,
+  helpcircle: HelpCircle,
+  receipt: Receipt,
+  database: Database,
+  download: Download,
+  split: Split,
+  barchart: BarChart3,
 } as const;
 
 interface DefaultFeatureCardProps {
