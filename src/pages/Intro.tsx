@@ -42,11 +42,6 @@ const Intro = () => {
   }, [user, navigate, isDebugMode, location]);
 
 
-  const handleGetStarted = () => {
-    navigate("/demo");
-  };
-
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -88,14 +83,6 @@ const Intro = () => {
               className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
             >
               Sign In
-            </Button>
-            <Button 
-              onClick={handleGetStarted}
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
-            >
-              Demo
-              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
           
