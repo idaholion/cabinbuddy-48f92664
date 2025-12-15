@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, Globe } from 'lucide-react';
+import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, Globe, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +43,58 @@ interface OrganizationStats {
   checkinSessions: number;
   surveyResponses: number;
 }
+
+// Status badge component for collapsed guest access header
+const GuestAccessStatusBadge = ({ organizationId }: { organizationId: string }) => {
+  const [status, setStatus] = useState<'loading' | 'private' | 'active' | 'expired' | 'public'>('loading');
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('access_type, guest_access_token, guest_token_expires_at')
+          .eq('id', organizationId)
+          .single();
+
+        if (error) throw error;
+
+        if (data.access_type === 'private') {
+          setStatus('private');
+        } else if (data.guest_access_token) {
+          const isExpired = data.guest_token_expires_at 
+            ? new Date(data.guest_token_expires_at) < new Date() 
+            : false;
+          setStatus(isExpired ? 'expired' : 'active');
+        } else {
+          setStatus('public');
+        }
+      } catch (error) {
+        console.error('Error fetching guest access status:', error);
+        setStatus('private');
+      }
+    };
+
+    fetchStatus();
+  }, [organizationId]);
+
+  if (status === 'loading') return null;
+
+  const badgeConfig = {
+    private: { label: 'Private', className: 'bg-muted text-muted-foreground' },
+    active: { label: 'Active Token', className: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700' },
+    expired: { label: 'Expired Token', className: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-700' },
+    public: { label: 'Public', className: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700' },
+  };
+
+  const config = badgeConfig[status];
+  
+  return (
+    <Badge variant="outline" className={config.className}>
+      {config.label}
+    </Badge>
+  );
+};
 
 export const OrganizationDetail = ({ 
   organization, 
@@ -241,21 +294,33 @@ export const OrganizationDetail = ({
           </CardContent>
         </Card>
 
-        {/* Guest Access Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5" />
-              Guest Access Settings
-            </CardTitle>
-            <CardDescription className="text-base">
-              Configure public access and demo modes for this organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <GuestAccessSettings organizationId={organization.id} />
-          </CardContent>
-        </Card>
+        {/* Guest Access Settings - Collapsible */}
+        <Collapsible>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    <CardTitle>Guest Access</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <GuestAccessStatusBadge organizationId={organization.id} />
+                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                  </div>
+                </div>
+                <CardDescription className="text-base text-left">
+                  Configure public access and demo modes for this organization
+                </CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <GuestAccessSettings organizationId={organization.id} />
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
         {/* Organization Details */}
         <div className="grid gap-6 md:grid-cols-2">
