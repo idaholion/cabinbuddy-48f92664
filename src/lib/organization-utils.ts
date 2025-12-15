@@ -106,7 +106,7 @@ export function getAllocationModelDescription(allocationType: AllocationModel): 
     case 'rotating_selection':
       return 'Family groups take turns selecting dates in a rotating order (snake draft style). Fair and transparent.';
     case 'static_weeks':
-      return 'Each family group is assigned specific weeks/periods that remain the same each year. Predictable scheduling.';
+      return 'Numbered weeks/periods rotate annually among family groups (e.g., Family A has Week 1 this year, Week 2 next year). Predictable and fair.';
     case 'first_come_first_serve':
       return 'Dates are available to book on a first-come, first-served basis. Flexible but competitive.';
     case 'lottery':
@@ -124,7 +124,7 @@ export function getAllocationModelDisplayName(allocationType: AllocationModel): 
     case 'rotating_selection':
       return 'Rotating Selection (Snake Draft)';
     case 'static_weeks':
-      return 'Static Weeks/Periods';
+      return 'Rotating Week Assignments';
     case 'first_come_first_serve':
       return 'First Come, First Served';
     case 'lottery':
