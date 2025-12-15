@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,21 +95,11 @@ export const GuestAccessSettings = ({ organizationId }: GuestAccessSettingsProps
   const hasValidToken = guestToken && !isTokenExpired;
 
   if (loading) {
-    return <Card><CardContent className="p-6">Loading guest access settings...</CardContent></Card>;
+    return <div className="py-4 text-muted-foreground">Loading guest access settings...</div>;
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Eye className="h-5 w-5" />
-          Guest Access Settings
-        </CardTitle>
-        <CardDescription>
-          Control how external users can access your organization's data for preview purposes.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
         {/* Access Type Selection */}
         <div className="space-y-2">
           <Label htmlFor="access-type">Organization Access Type</Label>
@@ -254,7 +243,6 @@ export const GuestAccessSettings = ({ organizationId }: GuestAccessSettingsProps
             <li>• All guest activity is logged for security</li>
           </ul>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
