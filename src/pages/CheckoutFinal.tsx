@@ -1980,6 +1980,7 @@ const CheckoutFinal = () => {
           onOpenChange={setEarlyCheckoutOpen}
           reservation={currentReservation || sampleReservation}
           onComplete={currentReservation ? handleEarlyCheckoutComplete : () => setEarlyCheckoutOpen(false)}
+          isPreviewMode={!currentReservation}
         />
 
         {/* Guest Cost Split Dialog */}
