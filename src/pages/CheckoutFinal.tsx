@@ -1023,10 +1023,10 @@ const CheckoutFinal = () => {
                           <Button 
                             variant="outline"
                             size="sm"
-                            disabled
+                            onClick={() => navigate("/checkout-list")}
                             className="w-full"
                           >
-                            View Checklist (Preview Only)
+                            Preview Checklist
                           </Button>
                         </div>
                       ) : checklistStatus?.isComplete ? (
@@ -1095,11 +1095,11 @@ const CheckoutFinal = () => {
                               </p>
                               <Button
                                 variant="outline"
-                                disabled
-                                className="w-full"
+                                onClick={() => setEarlyCheckoutOpen(true)}
+                                className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-300 dark:hover:bg-orange-950/20"
                               >
                                 <Clock className="h-4 w-4 mr-2" />
-                                Early Checkout (Preview Only)
+                                Preview Early Checkout
                               </Button>
                             </>
                           ) : (
