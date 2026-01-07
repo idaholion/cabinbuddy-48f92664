@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2, ChevronUp, ChevronDown, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -927,11 +927,10 @@ const CheckoutFinal = () => {
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2"
+            onClick={() => navigate("/home")}
+            className="hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back
+            <Home className="h-4 w-4" />
           </Button>
           
           {/* Center title */}
