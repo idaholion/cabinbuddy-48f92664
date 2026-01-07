@@ -277,6 +277,25 @@ const CheckoutFinal = () => {
     };
   };
 
+  // Generate a sample reservation for preview mode
+  const generateSampleReservation = () => {
+    const today = new Date();
+    const sampleStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 2);
+    const sampleEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3);
+    
+    return {
+      id: 'sample-reservation',
+      start_date: sampleStart.toISOString().split('T')[0],
+      end_date: sampleEnd.toISOString().split('T')[0],
+      family_group: 'Sample Family',
+      guest_count: 4,
+      total_cost: 450,
+      property_name: 'Sample Cabin'
+    };
+  };
+
+  const sampleReservation = generateSampleReservation();
+
   // Load checkout completion status from database and localStorage
   useEffect(() => {
     const loadCheckoutStatus = async () => {
@@ -1956,14 +1975,12 @@ const CheckoutFinal = () => {
         )}
 
         {/* Early Checkout Dialog */}
-        {currentReservation && (
-          <EarlyCheckoutDialog
-            open={earlyCheckoutOpen}
-            onOpenChange={setEarlyCheckoutOpen}
-            reservation={currentReservation}
-            onComplete={handleEarlyCheckoutComplete}
-          />
-        )}
+        <EarlyCheckoutDialog
+          open={earlyCheckoutOpen}
+          onOpenChange={setEarlyCheckoutOpen}
+          reservation={currentReservation || sampleReservation}
+          onComplete={currentReservation ? handleEarlyCheckoutComplete : () => setEarlyCheckoutOpen(false)}
+        />
 
         {/* Guest Cost Split Dialog */}
         {currentReservation && organization && user && (
