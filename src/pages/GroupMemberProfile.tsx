@@ -603,8 +603,11 @@ const GroupMemberProfile = () => {
       return;
     }
 
-    // CRITICAL: Require organization_id before saving to prevent silent claim failures
-    if (!organization?.organization_id) {
+    // Get organization ID - useOrganization returns .id, not .organization_id
+    const organizationId = organization?.id;
+    
+    // CRITICAL: Require organization ID before saving to prevent silent claim failures
+    if (!organizationId) {
       toast({
         title: "Loading...",
         description: "Organization data is still loading. Please wait a moment and try again.",
@@ -617,11 +620,11 @@ const GroupMemberProfile = () => {
       const phoneFormatted = data.phone ? unformatPhoneNumber(data.phone) : "";
       
       // Check if profile is claimed, if not claim it first
-      if (!hasClaimedProfile && organization?.organization_id) {
+      if (!hasClaimedProfile) {
         console.log('🔍 [PROFILE-SAVE] Profile not claimed, claiming now...');
         
         const { data: claimResult, error: claimError } = await supabase.rpc('claim_family_member_profile', {
-          p_organization_id: organization.organization_id,
+          p_organization_id: organizationId,
           p_family_group_name: selectedGroup.name,
           p_member_name: selectedGroupMember.name,
           p_member_type: selectedGroupMember.isLead ? 'group_lead' : 'host_member'
