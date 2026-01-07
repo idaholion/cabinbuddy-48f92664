@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AlertCircle, CheckCircle, Mail, UserX, Users, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, Mail, UserX, Users, RefreshCw, ListChecks } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface MismatchedMember {
   familyGroup: string;
@@ -24,6 +26,16 @@ interface UnlinkedUser {
   hasClaimedProfile: boolean;
 }
 
+interface AllMember {
+  familyGroup: string;
+  memberName: string;
+  memberEmail: string;
+  memberType: 'group_lead' | 'host_member';
+  hasUserAccount: boolean;
+  hasClaimed: boolean;
+  claimedByEmail?: string;
+}
+
 /**
  * FamilyGroupHealthCheck - Admin tool to identify and fix email mismatches
  * Phase 4: Future Enhancement
@@ -35,6 +47,8 @@ export default function FamilyGroupHealthCheck() {
   const [mismatchedMembers, setMismatchedMembers] = useState<MismatchedMember[]>([]);
   const [unlinkedUsers, setUnlinkedUsers] = useState<UnlinkedUser[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [allMembers, setAllMembers] = useState<AllMember[]>([]);
+  const [showAllMembers, setShowAllMembers] = useState(false);
 
   const loadHealthCheck = async () => {
     if (!activeOrganization?.organization_id) return;
@@ -57,7 +71,7 @@ export default function FamilyGroupHealthCheck() {
 
       if (ouError) throw ouError;
 
-      // Get all profile claims
+      // Get all profile claims with user emails
       const { data: profileLinks, error: plError } = await supabase
         .from('member_profile_links')
         .select('member_name, family_group_name, claimed_by_user_id')
@@ -70,9 +84,22 @@ export default function FamilyGroupHealthCheck() {
         (orgUsers || []).map((u: any) => [u.email.toLowerCase().trim(), u])
       );
 
+      // Create user_id -> email mapping for claimed profiles
+      const userIdToEmail = new Map(
+        (orgUsers || []).map((u: any) => [u.user_id, u.email])
+      );
+
       // Create user_id -> claim mapping
       const claimedProfiles = new Set(
         (profileLinks || []).map(link => link.claimed_by_user_id)
+      );
+
+      // Create member name -> claimed user email mapping
+      const memberClaimMap = new Map(
+        (profileLinks || []).map(link => [
+          `${link.family_group_name}:${link.member_name.trim()}`,
+          userIdToEmail.get(link.claimed_by_user_id) || null
+        ])
       );
 
       // Check for mismatched members
@@ -123,6 +150,62 @@ export default function FamilyGroupHealthCheck() {
       });
 
       setMismatchedMembers(mismatches);
+
+      // Build ALL members list (for complete overview)
+      const allMembersList: AllMember[] = [];
+      
+      familyGroups?.forEach(group => {
+        // Add group lead
+        if (group.lead_name) {
+          const normalizedEmail = group.lead_email?.toLowerCase().trim() || '';
+          const hasAccount = normalizedEmail ? userEmailMap.has(normalizedEmail) : false;
+          const user = normalizedEmail ? userEmailMap.get(normalizedEmail) : null;
+          const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
+          const claimedByEmail = memberClaimMap.get(`${group.name}:${group.lead_name.trim()}`);
+          
+          allMembersList.push({
+            familyGroup: group.name,
+            memberName: group.lead_name,
+            memberEmail: group.lead_email || '',
+            memberType: 'group_lead',
+            hasUserAccount: hasAccount,
+            hasClaimed: hasClaimed || !!claimedByEmail,
+            claimedByEmail: claimedByEmail || undefined,
+          });
+        }
+
+        // Add host members
+        if (group.host_members && Array.isArray(group.host_members)) {
+          group.host_members.forEach((member: any) => {
+            if (member.name) {
+              const normalizedEmail = member.email?.toLowerCase().trim() || '';
+              const hasAccount = normalizedEmail ? userEmailMap.has(normalizedEmail) : false;
+              const user = normalizedEmail ? userEmailMap.get(normalizedEmail) : null;
+              const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
+              const claimedByEmail = memberClaimMap.get(`${group.name}:${member.name.trim()}`);
+              
+              allMembersList.push({
+                familyGroup: group.name,
+                memberName: member.name,
+                memberEmail: member.email || '',
+                memberType: 'host_member',
+                hasUserAccount: hasAccount,
+                hasClaimed: hasClaimed || !!claimedByEmail,
+                claimedByEmail: claimedByEmail || undefined,
+              });
+            }
+          });
+        }
+      });
+
+      // Sort by family group, then by type (leads first), then by name
+      allMembersList.sort((a, b) => {
+        if (a.familyGroup !== b.familyGroup) return a.familyGroup.localeCompare(b.familyGroup);
+        if (a.memberType !== b.memberType) return a.memberType === 'group_lead' ? -1 : 1;
+        return a.memberName.localeCompare(b.memberName);
+      });
+
+      setAllMembers(allMembersList);
 
       // Check for unlinked users
       const unlinked: UnlinkedUser[] = [];
@@ -326,6 +409,96 @@ export default function FamilyGroupHealthCheck() {
           </Alert>
         </>
       )}
+
+      {/* All Members Overview - Collapsible */}
+      <Collapsible open={showAllMembers} onOpenChange={setShowAllMembers}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ListChecks className="h-5 w-5" />
+                  <div>
+                    <CardTitle className="text-lg">All Organization Members ({allMembers.length})</CardTitle>
+                    <CardDescription className="mt-1">
+                      Complete list of all family group members and their status
+                    </CardDescription>
+                  </div>
+                </div>
+                {showAllMembers ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <div className="space-y-4">
+                {/* Group members by family */}
+                {Array.from(new Set(allMembers.map(m => m.familyGroup))).map(familyGroup => (
+                  <div key={familyGroup} className="space-y-2">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                      {familyGroup}
+                    </h3>
+                    <div className="space-y-2">
+                      {allMembers
+                        .filter(m => m.familyGroup === familyGroup)
+                        .map((member, idx) => (
+                          <div 
+                            key={idx} 
+                            className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{member.memberName}</span>
+                                  <Badge 
+                                    variant={member.memberType === 'group_lead' ? 'default' : 'outline'}
+                                    className="text-xs"
+                                  >
+                                    {member.memberType === 'group_lead' ? 'Lead' : 'Member'}
+                                  </Badge>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {member.memberEmail || 'No email on file'}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {member.hasClaimed ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Claimed
+                                  {member.claimedByEmail && member.claimedByEmail !== member.memberEmail && (
+                                    <span className="ml-1 opacity-75">({member.claimedByEmail})</span>
+                                  )}
+                                </Badge>
+                              ) : member.hasUserAccount ? (
+                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                  Has Account
+                                </Badge>
+                              ) : member.memberEmail ? (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  No Account
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  No Email
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
