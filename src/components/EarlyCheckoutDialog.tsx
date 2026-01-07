@@ -32,6 +32,7 @@ interface EarlyCheckoutDialogProps {
     property_name?: string;
   } | null;
   onComplete?: () => void;
+  isPreviewMode?: boolean;
 }
 
 interface FormData {
@@ -46,7 +47,8 @@ export function EarlyCheckoutDialog({
   open, 
   onOpenChange, 
   reservation, 
-  onComplete 
+  onComplete,
+  isPreviewMode = false
 }: EarlyCheckoutDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -243,7 +245,10 @@ export function EarlyCheckoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Early Checkout</DialogTitle>
+          <DialogTitle>
+            Early Checkout
+            {isPreviewMode && <span className="text-muted-foreground font-normal text-sm ml-2">(Sample Only)</span>}
+          </DialogTitle>
           <p className="text-sm text-muted-foreground">
             Leave early and manage your remaining reservation time
           </p>
@@ -497,9 +502,9 @@ export function EarlyCheckoutDialog({
                   </Button>
                   <Button 
                     type="submit" 
-                    disabled={submitting || reservationLoading || tradeLoading}
+                    disabled={submitting || reservationLoading || tradeLoading || isPreviewMode}
                   >
-                    {submitting ? "Processing..." : "Confirm Early Checkout"}
+                    {isPreviewMode ? "Preview Only" : submitting ? "Processing..." : "Confirm Early Checkout"}
                   </Button>
                 </div>
               </form>
