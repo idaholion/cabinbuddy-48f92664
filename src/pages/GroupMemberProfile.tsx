@@ -603,6 +603,16 @@ const GroupMemberProfile = () => {
       return;
     }
 
+    // CRITICAL: Require organization_id before saving to prevent silent claim failures
+    if (!organization?.organization_id) {
+      toast({
+        title: "Loading...",
+        description: "Organization data is still loading. Please wait a moment and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const phoneFormatted = data.phone ? unformatPhoneNumber(data.phone) : "";
       
