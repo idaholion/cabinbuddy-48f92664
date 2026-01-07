@@ -56,6 +56,7 @@ import { useRole } from "@/contexts/RoleContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSetupState } from "@/hooks/useSetupState";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useOrganization } from "@/hooks/useOrganization";
 import { JoinOrganizationDialog } from "@/components/JoinOrganizationDialog";
 import { SupervisorModeToggle } from "@/components/SupervisorModeToggle";
 import { VersionIndicator } from "@/components/VersionIndicator";
@@ -234,6 +235,10 @@ export function AppSidebar() {
   const { isGroupLead, isNameMatchedGroupLead, isNameMatchedMember, isAdmin, loading: roleLoading } = useUserRole();
   const { setupState } = useSetupState();
   const { familyGroups } = useFamilyGroups();
+  const { organization } = useOrganization();
+  
+  // Check if members have financial access
+  const allowMemberFinancialAccess = organization?.allow_member_financial_access === true;
   
   // Direct check for group leadership as fallback
   const isDirectGroupLead = user?.email ? familyGroups.some(group => 
@@ -452,13 +457,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Tools */}
-        {(isAdmin || canAccessSupervisorFeatures) && (
+        {/* Admin Tools - show all items for admins/supervisors, or just Financial Dashboard for members with access */}
+        {(isAdmin || canAccessSupervisorFeatures || allowMemberFinancialAccess) && (
           <SidebarGroup>
-            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupLabel>{isAdmin || canAccessSupervisorFeatures ? 'Admin' : 'Financial'}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => (
+                {adminItems
+                  .filter(item => {
+                    // Admins/supervisors see all items
+                    if (isAdmin || canAccessSupervisorFeatures) return true;
+                    // Members with financial access only see Financial Dashboard
+                    if (allowMemberFinancialAccess && item.url === '/finance-reports') return true;
+                    return false;
+                  })
+                  .map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild tooltip={item.title}>
                       <NavLink 
