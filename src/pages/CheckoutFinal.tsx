@@ -927,7 +927,7 @@ const CheckoutFinal = () => {
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate("/checkout-list")}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -992,7 +992,7 @@ const CheckoutFinal = () => {
                             <p className="font-medium text-sm">Checkout Checklist</p>
                             {checkoutData.isSample ? (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                3/10 done
+                                Sample data - no active stay
                               </p>
                             ) : checklistStatus?.isComplete ? (
                               <Badge variant="secondary" className="mt-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
