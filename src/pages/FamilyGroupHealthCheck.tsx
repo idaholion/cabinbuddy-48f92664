@@ -388,12 +388,6 @@ export default function FamilyGroupHealthCheck() {
                               No Email
                             </Badge>
                           )}
-                          {/* Account status */}
-                          {member.memberEmail && !member.hasUserAccount && (
-                            <Badge variant="destructive" className="text-xs">
-                              Account Not Created
-                            </Badge>
-                          )}
                           {/* Claim status */}
                           {!member.hasClaimed && (
                             <Badge variant="destructive" className="text-xs">
