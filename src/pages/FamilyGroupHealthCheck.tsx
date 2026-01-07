@@ -102,25 +102,40 @@ export default function FamilyGroupHealthCheck() {
         ])
       );
 
-      // Check for mismatched members
+      // Check for mismatched members (includes members without emails)
       const mismatches: MismatchedMember[] = [];
       
       familyGroups?.forEach(group => {
         // Check group lead
-        if (group.lead_email) {
-          const normalizedEmail = group.lead_email.toLowerCase().trim();
-          const hasAccount = userEmailMap.has(normalizedEmail);
-          const user = userEmailMap.get(normalizedEmail);
-          const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
+        if (group.lead_name) {
+          const claimKey = `${group.name}:${group.lead_name.trim()}`;
+          const claimedByEmail = memberClaimMap.get(claimKey);
+          
+          if (group.lead_email) {
+            const normalizedEmail = group.lead_email.toLowerCase().trim();
+            const hasAccount = userEmailMap.has(normalizedEmail);
+            const user = userEmailMap.get(normalizedEmail);
+            const hasClaimed = user ? claimedProfiles.has(user.user_id) : !!claimedByEmail;
 
-          if (!hasAccount || !hasClaimed) {
+            if (!hasAccount || !hasClaimed) {
+              mismatches.push({
+                familyGroup: group.name,
+                memberName: group.lead_name,
+                memberEmail: group.lead_email,
+                memberType: 'group_lead',
+                hasUserAccount: hasAccount,
+                hasClaimed: hasClaimed,
+              });
+            }
+          } else if (!claimedByEmail) {
+            // Lead has no email and hasn't been claimed
             mismatches.push({
               familyGroup: group.name,
-              memberName: group.lead_name || 'Unknown',
-              memberEmail: group.lead_email,
+              memberName: group.lead_name,
+              memberEmail: '',
               memberType: 'group_lead',
-              hasUserAccount: hasAccount,
-              hasClaimed: hasClaimed,
+              hasUserAccount: false,
+              hasClaimed: false,
             });
           }
         }
@@ -128,22 +143,37 @@ export default function FamilyGroupHealthCheck() {
         // Check host members
         if (group.host_members && Array.isArray(group.host_members)) {
           group.host_members.forEach((member: any) => {
+            if (!member.name) return;
+            
+            const claimKey = `${group.name}:${member.name.trim()}`;
+            const claimedByEmail = memberClaimMap.get(claimKey);
+            
             if (member.email) {
               const normalizedEmail = member.email.toLowerCase().trim();
               const hasAccount = userEmailMap.has(normalizedEmail);
               const user = userEmailMap.get(normalizedEmail);
-              const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
+              const hasClaimed = user ? claimedProfiles.has(user.user_id) : !!claimedByEmail;
 
               if (!hasAccount || !hasClaimed) {
                 mismatches.push({
                   familyGroup: group.name,
-                  memberName: member.name || 'Unknown',
+                  memberName: member.name,
                   memberEmail: member.email,
                   memberType: 'host_member',
                   hasUserAccount: hasAccount,
                   hasClaimed: hasClaimed,
                 });
               }
+            } else if (!claimedByEmail) {
+              // Member has no email and hasn't been claimed
+              mismatches.push({
+                familyGroup: group.name,
+                memberName: member.name,
+                memberEmail: '',
+                memberType: 'host_member',
+                hasUserAccount: false,
+                hasClaimed: false,
+              });
             }
           });
         }
@@ -258,7 +288,8 @@ export default function FamilyGroupHealthCheck() {
   }
 
   const totalIssues = mismatchedMembers.length + unlinkedUsers.length;
-  const membersWithoutAccounts = mismatchedMembers.filter(m => !m.hasUserAccount).length;
+  const membersWithoutEmails = mismatchedMembers.filter(m => !m.memberEmail).length;
+  const membersWithoutAccounts = mismatchedMembers.filter(m => m.memberEmail && !m.hasUserAccount).length;
   const membersWithoutClaims = mismatchedMembers.filter(m => m.hasUserAccount && !m.hasClaimed).length;
 
   return (
@@ -277,7 +308,7 @@ export default function FamilyGroupHealthCheck() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Issues</CardDescription>
@@ -286,7 +317,13 @@ export default function FamilyGroupHealthCheck() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Members Without Accounts</CardDescription>
+            <CardDescription>No Email Listed</CardDescription>
+            <CardTitle className="text-3xl">{membersWithoutEmails}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>No Account</CardDescription>
             <CardTitle className="text-3xl">{membersWithoutAccounts}</CardTitle>
           </CardHeader>
         </Card>
@@ -337,10 +374,15 @@ export default function FamilyGroupHealthCheck() {
                           </Badge>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {member.familyGroup} • {member.memberEmail}
+                          {member.familyGroup} • {member.memberEmail || <span className="italic">No email on file</span>}
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                          {!member.hasUserAccount && (
+                          {!member.memberEmail && (
+                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 dark:text-orange-400">
+                              No Email
+                            </Badge>
+                          )}
+                          {member.memberEmail && !member.hasUserAccount && (
                             <Badge variant="destructive" className="text-xs">
                               No Account
                             </Badge>
@@ -353,7 +395,7 @@ export default function FamilyGroupHealthCheck() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        {!member.hasUserAccount && (
+                        {member.memberEmail && !member.hasUserAccount && (
                           <Button size="sm" variant="outline">
                             <Mail className="h-4 w-4 mr-1" />
                             Send Invite
