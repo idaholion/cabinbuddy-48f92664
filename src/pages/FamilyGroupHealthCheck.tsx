@@ -290,7 +290,8 @@ export default function FamilyGroupHealthCheck() {
   const totalIssues = mismatchedMembers.length + unlinkedUsers.length;
   const membersWithoutEmails = mismatchedMembers.filter(m => !m.memberEmail).length;
   const membersWithoutAccounts = mismatchedMembers.filter(m => m.memberEmail && !m.hasUserAccount).length;
-  const membersWithoutClaims = mismatchedMembers.filter(m => m.hasUserAccount && !m.hasClaimed).length;
+  // Unclaimed profiles = members who haven't claimed (regardless of account status)
+  const membersWithoutClaims = mismatchedMembers.filter(m => !m.hasClaimed).length;
 
   return (
     <div className="space-y-6">
@@ -323,19 +324,19 @@ export default function FamilyGroupHealthCheck() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>No Account</CardDescription>
+            <CardDescription>Need to Create Account</CardDescription>
             <CardTitle className="text-3xl">{membersWithoutAccounts}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Unclaimed Profiles</CardDescription>
+            <CardDescription>Profile Not Claimed</CardDescription>
             <CardTitle className="text-3xl">{membersWithoutClaims}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Unlinked Users</CardDescription>
+            <CardDescription>Users Without Profile</CardDescription>
             <CardTitle className="text-3xl">{unlinkedUsers.length}</CardTitle>
           </CardHeader>
         </Card>
@@ -376,20 +377,27 @@ export default function FamilyGroupHealthCheck() {
                         <div className="text-sm text-muted-foreground">
                           {member.familyGroup} • {member.memberEmail || <span className="italic">No email on file</span>}
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          {!member.memberEmail && (
-                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 dark:text-orange-400">
+                        <div className="flex items-center gap-2 text-sm flex-wrap">
+                          {/* Email status */}
+                          {member.memberEmail ? (
+                            <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
+                              Email Listed
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="text-xs">
                               No Email
                             </Badge>
                           )}
+                          {/* Account status */}
                           {member.memberEmail && !member.hasUserAccount && (
                             <Badge variant="destructive" className="text-xs">
-                              No Account
+                              Account Not Created
                             </Badge>
                           )}
-                          {member.hasUserAccount && !member.hasClaimed && (
-                            <Badge variant="secondary" className="text-xs">
-                              Not Claimed
+                          {/* Claim status */}
+                          {!member.hasClaimed && (
+                            <Badge variant="destructive" className="text-xs">
+                              Profile Not Claimed
                             </Badge>
                           )}
                         </div>
@@ -508,26 +516,29 @@ export default function FamilyGroupHealthCheck() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Email status */}
+                              {member.memberEmail ? (
+                                <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
+                                  Email Listed
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive" className="text-xs">
+                                  No Email
+                                </Badge>
+                              )}
+                              {/* Claim status */}
                               {member.hasClaimed ? (
-                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
                                   <CheckCircle className="h-3 w-3 mr-1" />
-                                  Claimed
+                                  Profile Claimed
                                   {member.claimedByEmail && member.claimedByEmail !== member.memberEmail && (
                                     <span className="ml-1 opacity-75">({member.claimedByEmail})</span>
                                   )}
                                 </Badge>
-                              ) : member.hasUserAccount ? (
-                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                  Has Account
-                                </Badge>
-                              ) : member.memberEmail ? (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  No Account
-                                </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  No Email
+                                <Badge variant="destructive" className="text-xs">
+                                  Profile Not Claimed
                                 </Badge>
                               )}
                             </div>
