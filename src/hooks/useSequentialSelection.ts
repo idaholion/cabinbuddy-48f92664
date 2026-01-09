@@ -49,7 +49,23 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const [loading, setLoading] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<SelectionPhase>('primary');
   const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
+  
+  // Helper to check if any family has secondary usage (meaning secondary selection happened)
+  const checkForSecondaryUsage = async (rotationOrder: string[]): Promise<boolean> => {
+    if (!organization?.id) return false;
+    
+    const { data } = await supabase
+      .from('time_period_usage')
+      .select('secondary_periods_used')
+      .eq('organization_id', organization.id)
+      .eq('rotation_year', rotationYear)
+      .gt('secondary_periods_used', 0)
+      .limit(1);
+    
+    return (data?.length || 0) > 0;
+  };
 
+  
   useEffect(() => {
     if (!rotationData || !organization?.id) {
       setLoading(false);
@@ -108,9 +124,20 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         completionChecks
       });
 
-      // If secondary selection status has an active family, we're in secondary phase
-      if (rotationData.enable_secondary_selection && isSecondaryActive) {
+      // If secondary selection status has an active family OR all secondary periods are used,
+      // we're in secondary phase. The secondary_selection_status record is the source of truth.
+      // Don't require enable_secondary_selection flag since secondary clearly happened if records exist.
+      if (isSecondaryActive) {
         setCurrentPhase('secondary');
+      } else if (allCompletedPrimary) {
+        // All primary completed but no secondary active - check if secondary usage exists
+        // This handles the case where secondary selection completed (all used their periods)
+        const hasSecondaryUsage = await checkForSecondaryUsage(rotationOrder);
+        if (hasSecondaryUsage) {
+          setCurrentPhase('secondary');
+        } else {
+          setCurrentPhase('primary');
+        }
       } else {
         setCurrentPhase('primary');
         // Determine current family for primary phase
@@ -211,10 +238,17 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       });
     } else {
       // Primary phase logic
+      // First check if ALL families have completed their primary turns
+      const allPrimaryCompleted = rotationOrder.every((familyGroup) => {
+        const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+        return usage?.turn_completed === true;
+      });
+
       return rotationOrder.map((familyGroup, index) => {
         const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
         const usedPrimary = usage?.time_periods_used || 0;
         const allowedPrimary = rotationData.max_time_slots || 2;
+        const turnCompleted = usage?.turn_completed === true;
         
         // Check for active extension
         const extension = getExtensionForFamily(familyGroup);
@@ -224,9 +258,13 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         let status: SelectionStatus = 'waiting';
         
         // Set status based on current turn and completion
-        if (isCurrentTurn) {
+        // A family is completed if: turn_completed is true, OR they've used all slots
+        if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
+          status = 'completed';
+        } else if (isCurrentTurn) {
           status = 'active';
-        } else if (usedPrimary >= allowedPrimary && !hasActiveExtension) {
+        } else if (allPrimaryCompleted) {
+          // If all primaries are done but we're still in primary phase, mark as completed
           status = 'completed';
         }
 
