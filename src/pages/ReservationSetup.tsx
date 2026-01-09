@@ -150,6 +150,28 @@ export default function ReservationSetup() {
     }
   }, [organization?.id]);
 
+  // Helper function to calculate rotated order for a target year
+  const calculateRotationForYear = (baseOrder: string[], baseYear: number, targetYear: number, rotationDirection: string): string[] => {
+    if (!baseOrder.length || targetYear <= baseYear) return baseOrder;
+    
+    const yearsDiff = targetYear - baseYear;
+    let currentOrder = [...baseOrder];
+    
+    for (let i = 0; i < yearsDiff; i++) {
+      if (rotationDirection === "first") {
+        // Move first person to last position (1,2,3,4,5 → 2,3,4,5,1)
+        const first = currentOrder.shift();
+        if (first) currentOrder.push(first);
+      } else {
+        // Move last person to first position (1,2,3,4,5 → 5,1,2,3,4)
+        const last = currentOrder.pop();
+        if (last) currentOrder.unshift(last);
+      }
+    }
+    
+    return currentOrder;
+  };
+
   // Load existing rotation order from database
   useEffect(() => {
     const loadExistingRotationOrder = async () => {
@@ -170,71 +192,119 @@ export default function ReservationSetup() {
         
         console.log('📊 Detected allocation model from organization:', { orgAllocationModel, detectedMethod });
         
-        const { data, error } = await supabase
-          .from('rotation_orders')
-          .select('*')
-          .eq('organization_id', organization.id)
-          .eq('rotation_year', parseInt(rotationYear))
-          .single();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading rotation order:', error);
-          // Still set the method based on organization's allocation_model
-          setSetupMethod(detectedMethod);
-          setOriginalSetupMethod(detectedMethod);
-          return;
-        }
-        
         // Set the method based on organization's allocation_model (not legacy detection)
         setSetupMethod(detectedMethod);
         setOriginalSetupMethod(detectedMethod);
         
-        if (data) {
-          const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
+        const targetYear = parseInt(rotationYear);
+        
+        // First try to load the specific year's data
+        const { data, error } = await supabase
+          .from('rotation_orders')
+          .select('*')
+          .eq('organization_id', organization.id)
+          .eq('rotation_year', targetYear)
+          .single();
+        
+        // Check if we have valid data for this year (not mode markers)
+        const hasValidData = data && Array.isArray(data.rotation_order) && 
+          data.rotation_order.length > 0 &&
+          !data.rotation_order.includes('static_weeks_mode') && 
+          !data.rotation_order.includes('manual_mode');
+        
+        if (hasValidData) {
+          // Load from the specific year's data
+          loadDataFromRecord(data, detectedMethod);
+        } else {
+          // No valid data for this year - try to calculate from the most recent valid base year
+          console.log('📊 No valid data for year', targetYear, '- looking for base year data');
           
-          if (detectedMethod === 'static-weeks') {
-            // Load static weeks settings
-            setStaticWeeksStartDay(data.start_day || "Friday");
-            setStaticWeeksPeriodLength(data.max_nights?.toString() || "7");
-            setStaticWeeksRotationDirection(data.first_last_option || "first");
-          } else if (detectedMethod === 'rotation') {
-            // Load all the saved settings for rotation mode
-            setMaxTimeSlots(data.max_time_slots?.toString() || "2");
-            setMaxNights(data.max_nights?.toString() || "7");
-            setStartDay(data.start_day || "Friday");
-            setStartTime(data.start_time || "12:00 PM");
-            setFirstLastOption(data.first_last_option || "first");
-            setStartMonth(data.start_month || "January");
-            setSelectionDays(data.selection_days?.toString() || "14");
-            setEnableSecondarySelection(data.enable_secondary_selection || false);
-            setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
-            setSecondarySelectionDays(data.secondary_selection_days?.toString() || "7");
-            setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
-            
-            // Load virtual weeks configuration
-            setUseVirtualWeeksSystem((data as any).use_virtual_weeks_system || false);
-            setTotalNightsAllowedPrimary((data as any).total_nights_allowed_primary?.toString() || "14");
-            setTotalWeeksAllowedPrimary((data as any).total_weeks_allowed_primary?.toString() || "2");
-            setTotalWeeksAllowedSecondary((data as any).total_weeks_allowed_secondary?.toString() || "1");
-            setMinNightsPerBooking((data as any).min_nights_per_booking?.toString() || "2");
-            setMaxConsecutiveNightsPrimary((data as any).max_consecutive_nights_primary?.toString() || "14");
-            setMaxConsecutiveNightsSecondary((data as any).max_consecutive_nights_secondary?.toString() || "7");
-            setPostRotationMinNights((data as any).post_rotation_min_nights?.toString() || "2");
-            setPostRotationMaxConsecutiveNights((data as any).post_rotation_max_consecutive_nights?.toString() || "");
-            setPostRotationMaxWeeks((data as any).post_rotation_max_weeks?.toString() || "");
-            
-            // Load the rotation order - use saved order directly (exclude mode markers)
-            const actualOrder = savedOrder.filter((item: string) => 
-              item !== 'manual_mode' && item !== 'static_weeks_mode'
-            );
-            if (actualOrder.length > 0) {
-              setRotationOrder(actualOrder.map(String));
-            }
+          const { data: allYears, error: allYearsError } = await supabase
+            .from('rotation_orders')
+            .select('*')
+            .eq('organization_id', organization.id)
+            .order('rotation_year', { ascending: false });
+          
+          if (allYearsError) {
+            console.error('Error fetching rotation orders:', allYearsError);
+            return;
           }
-          // For manual mode, no additional settings to load
+          
+          // Find the most recent year with valid rotation data
+          const validBaseData = allYears?.find(row => {
+            const order = Array.isArray(row.rotation_order) ? row.rotation_order : [];
+            return order.length > 0 && 
+              !order.includes('static_weeks_mode') && 
+              !order.includes('manual_mode');
+          });
+          
+          if (validBaseData) {
+            console.log('📊 Found base year data:', validBaseData.rotation_year);
+            
+            // Load settings from the base year
+            loadDataFromRecord(validBaseData, detectedMethod);
+            
+            // Calculate the rotated order for the target year
+            if (detectedMethod === 'rotation' && targetYear > validBaseData.rotation_year) {
+              const baseOrder = validBaseData.rotation_order as string[];
+              const calculatedOrder = calculateRotationForYear(
+                baseOrder,
+                validBaseData.rotation_year,
+                targetYear,
+                validBaseData.first_last_option || 'first'
+              );
+              console.log('📊 Calculated rotation for', targetYear, ':', calculatedOrder);
+              setRotationOrder(calculatedOrder);
+            }
+          } else {
+            console.log('📊 No valid base year data found');
+          }
         }
       } catch (error) {
         console.error('Error loading rotation order:', error);
+      }
+    };
+    
+    const loadDataFromRecord = (data: any, detectedMethod: string) => {
+      if (detectedMethod === 'static-weeks') {
+        // Load static weeks settings
+        setStaticWeeksStartDay(data.start_day || "Friday");
+        setStaticWeeksPeriodLength(data.max_nights?.toString() || "7");
+        setStaticWeeksRotationDirection(data.first_last_option || "first");
+      } else if (detectedMethod === 'rotation') {
+        // Load all the saved settings for rotation mode
+        setMaxTimeSlots(data.max_time_slots?.toString() || "2");
+        setMaxNights(data.max_nights?.toString() || "7");
+        setStartDay(data.start_day || "Friday");
+        setStartTime(data.start_time || "12:00 PM");
+        setFirstLastOption(data.first_last_option || "first");
+        setStartMonth(data.start_month || "October");
+        setSelectionDays(data.selection_days?.toString() || "14");
+        setEnableSecondarySelection(data.enable_secondary_selection || false);
+        setSecondaryMaxPeriods(data.secondary_max_periods?.toString() || "1");
+        setSecondarySelectionDays(data.secondary_selection_days?.toString() || "7");
+        setEnablePostRotationSelection((data as any).enable_post_rotation_selection || false);
+        
+        // Load virtual weeks configuration
+        setUseVirtualWeeksSystem((data as any).use_virtual_weeks_system || false);
+        setTotalNightsAllowedPrimary((data as any).total_nights_allowed_primary?.toString() || "14");
+        setTotalWeeksAllowedPrimary((data as any).total_weeks_allowed_primary?.toString() || "2");
+        setTotalWeeksAllowedSecondary((data as any).total_weeks_allowed_secondary?.toString() || "1");
+        setMinNightsPerBooking((data as any).min_nights_per_booking?.toString() || "2");
+        setMaxConsecutiveNightsPrimary((data as any).max_consecutive_nights_primary?.toString() || "14");
+        setMaxConsecutiveNightsSecondary((data as any).max_consecutive_nights_secondary?.toString() || "7");
+        setPostRotationMinNights((data as any).post_rotation_min_nights?.toString() || "2");
+        setPostRotationMaxConsecutiveNights((data as any).post_rotation_max_consecutive_nights?.toString() || "");
+        setPostRotationMaxWeeks((data as any).post_rotation_max_weeks?.toString() || "");
+        
+        // Load the rotation order - use saved order directly (exclude mode markers)
+        const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
+        const actualOrder = savedOrder.filter((item: string) => 
+          item !== 'manual_mode' && item !== 'static_weeks_mode'
+        );
+        if (actualOrder.length > 0) {
+          setRotationOrder(actualOrder.map(String));
+        }
       }
     };
     
