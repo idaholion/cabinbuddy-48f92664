@@ -65,11 +65,12 @@ export const useRobustMultiOrganization = () => {
     };
   }, []);
 
-  const fetchUserOrganizations = useCallback(async () => {
+  const fetchUserOrganizations = useCallback(async (retryCount = 0) => {
     console.log('🔍 fetchUserOrganizations called:', { 
       userId: user?.id, 
       hasUser: !!user,
-      isRequestInProgress 
+      isRequestInProgress,
+      retryCount
     });
     
     if (!user?.id) {
@@ -89,12 +90,13 @@ export const useRobustMultiOrganization = () => {
 
     try {
       await executeRobust(async () => {
-        // Check cache first
-        const cachedData = apiCache.get<UserOrganization[]>(
+        // Check cache first - but skip cache on fresh login (first retry)
+        const cachedData = retryCount === 0 ? null : apiCache.get<UserOrganization[]>(
           cacheKeys.userOrganizations(user.id)
         );
         
-        if (cachedData) {
+        if (cachedData && cachedData.length > 0) {
+          console.log('📦 Using cached organization data:', cachedData.length, 'orgs');
           setOrganizations(cachedData);
           // Auto-select primary organization or first one if only one exists
           const primaryOrg = cachedData.find(org => org.is_primary);
@@ -113,7 +115,10 @@ export const useRobustMultiOrganization = () => {
           throw new Error('You are currently offline. Please check your connection.');
         }
 
+        console.log('🌐 Calling get_user_organizations RPC...');
         const { data, error: fetchError } = await supabase.rpc('get_user_organizations');
+        
+        console.log('📥 RPC response:', { data, fetchError, dataLength: data?.length });
         
         if (fetchError) {
           throw new Error(`Failed to fetch organizations: ${fetchError.message}`);
@@ -133,12 +138,19 @@ export const useRobustMultiOrganization = () => {
           userId: user.id,
           dataLength: transformedData.length,
           hasAuth: !!user,
-          fetchError: !!fetchError
+          fetchError: !!fetchError,
+          rawData: data
         });
         
-        // If we get no organizations and auth is working, this could be a new user
-        if (transformedData.length === 0 && user) {
-          console.log('⚠️ No organizations found for authenticated user');
+        // If we get no organizations and auth is working, retry after a short delay
+        // This handles the case where the auth token isn't fully ready yet
+        if (transformedData.length === 0 && user && retryCount < 3) {
+          console.log('⚠️ No organizations found, will retry after delay...', { retryCount });
+          setIsRequestInProgress(false);
+          setTimeout(() => {
+            fetchUserOrganizations(retryCount + 1);
+          }, 500 * (retryCount + 1)); // 500ms, 1s, 1.5s delays
+          return [];
         }
 
         setOrganizations(transformedData);
@@ -392,7 +404,7 @@ export const useRobustMultiOrganization = () => {
       apiCache.invalidate(cacheKeys.userOrganizations(user.id));
       
       lastFetchedUserIdRef.current = user.id;
-      fetchUserOrganizations();
+      fetchUserOrganizations(0);
     } else {
       // User logged out - reset everything
       lastFetchedUserIdRef.current = null;
@@ -408,7 +420,7 @@ export const useRobustMultiOrganization = () => {
     if (!offline && error && isNetworkError) {
       const timer = setTimeout(() => {
         reset();
-        fetchUserOrganizations();
+        fetchUserOrganizations(0);
       }, 1000);
       
       return () => clearTimeout(timer);
