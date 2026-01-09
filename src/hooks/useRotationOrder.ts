@@ -103,44 +103,78 @@ export const useRotationOrder = () => {
     return today >= rotationStartThisYear ? currentYear + 1 : currentYear;
   };
 
+  const isValidRotationOrder = (order: any): boolean => {
+    if (!Array.isArray(order) || order.length === 0) return false;
+    // Filter out mode markers
+    const filtered = order.filter((item: string) => 
+      item !== 'static_weeks_mode' && item !== 'manual_mode'
+    );
+    return filtered.length > 0;
+  };
+
   const fetchRotationOrder = async (year?: number) => {
     if (!organization?.id) return;
     
     setLoading(true);
     try {
       const orgContext = createOrganizationContext(organization.id);
-      const { data, error } = await secureSelect('rotation_orders', orgContext)
-        .eq('rotation_year', year || new Date().getFullYear())
-        .single();
+      const targetYear = year || new Date().getFullYear();
       
-      if (error && error.code !== 'PGRST116') {
+      const { data, error } = await secureSelect('rotation_orders', orgContext)
+        .eq('rotation_year', targetYear)
+        .maybeSingle();
+      
+      if (error) {
         console.error('Error fetching rotation order:', error);
         return;
       }
       
-      // If no data for the requested year, try to find the base rotation data
-      if (!data && year && year !== new Date().getFullYear()) {
-        const { data: baseData, error: baseError } = await secureSelect('rotation_orders', orgContext)
-          .order('rotation_year', { ascending: false })
-          .limit(1)
-          .single();
+      // Check if data has valid rotation order (not mode markers)
+      const hasValidData = data && isValidRotationOrder(data.rotation_order);
+      
+      if (hasValidData) {
+        const filteredOrder = (data.rotation_order as string[]).filter(
+          (item: string) => item !== 'static_weeks_mode' && item !== 'manual_mode'
+        );
+        setRotationData({
+          ...data,
+          rotation_order: filteredOrder.map(String)
+        });
+      } else {
+        // No valid data - find most recent year with valid rotation data
+        const { data: allYears, error: allError } = await secureSelect('rotation_orders', orgContext)
+          .order('rotation_year', { ascending: false });
         
-        if (baseError && baseError.code !== 'PGRST116') {
-          console.error('Error fetching base rotation order:', baseError);
+        if (allError) {
+          console.error('Error fetching all rotation orders:', allError);
           return;
         }
         
-        if (baseData) {
+        // Find the most recent year with valid rotation data
+        const validBaseData = allYears?.find(row => isValidRotationOrder(row.rotation_order));
+        
+        if (validBaseData) {
+          const baseOrder = (validBaseData.rotation_order as string[]).filter(
+            (item: string) => item !== 'static_weeks_mode' && item !== 'manual_mode'
+          );
+          
+          // Calculate rotated order for target year if it's after base year
+          let finalOrder = baseOrder;
+          if (targetYear > validBaseData.rotation_year) {
+            finalOrder = calculateRotationForYear(
+              baseOrder,
+              validBaseData.rotation_year,
+              targetYear,
+              validBaseData.first_last_option || 'first'
+            );
+          }
+          
           setRotationData({
-            ...baseData,
-            rotation_order: Array.isArray(baseData.rotation_order) ? baseData.rotation_order.map(String) : []
+            ...validBaseData,
+            rotation_year: targetYear,
+            rotation_order: finalOrder.map(String)
           });
         }
-      } else if (data) {
-        setRotationData({
-          ...data,
-          rotation_order: Array.isArray(data.rotation_order) ? data.rotation_order.map(String) : []
-        });
       }
     } catch (error) {
       console.error('Error fetching rotation order:', error);
