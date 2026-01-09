@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
 import { PropertyCalendar, PropertyCalendarRef } from "@/components/PropertyCalendar";
+import { TradeRequestForm } from "@/components/TradeRequestForm";
 import { SecondarySelectionManager } from "@/components/SecondarySelectionManager";
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
@@ -687,7 +688,7 @@ const CabinCalendar = () => {
                                <DropdownMenuItem>
                                  Edit my bookings
                                </DropdownMenuItem>
-                               <DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => setTradeRequestOpen(true)}>
                                  Request trade with another group
                                </DropdownMenuItem>
                                <DropdownMenuItem>
@@ -775,6 +776,12 @@ const CabinCalendar = () => {
                 }}
               />
             )}
+            
+            {/* Trade Request Form */}
+            <TradeRequestForm
+              open={tradeRequestOpen}
+              onOpenChange={setTradeRequestOpen}
+            />
           </CardContent>
         </Card>
       </div>
