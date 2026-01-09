@@ -329,6 +329,7 @@ export function SecondarySelectionBookingForm({
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) => date < new Date()}
+                            defaultMonth={field.value}
                             initialFocus
                           />
                         </PopoverContent>
@@ -369,6 +370,7 @@ export function SecondarySelectionBookingForm({
                             selected={field.value}
                             onSelect={field.onChange}
                             disabled={(date) => date < new Date()}
+                            defaultMonth={field.value}
                             initialFocus
                           />
                         </PopoverContent>
