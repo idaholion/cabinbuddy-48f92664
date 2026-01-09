@@ -8,7 +8,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, User, Info } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarIcon, User, Info, Calendar as CalendarListIcon, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +43,14 @@ interface HostInfo {
   email: string;
 }
 
+interface ReservationOption {
+  id: string;
+  start_date: string;
+  end_date: string;
+  host_name: string;
+  host_email: string;
+}
+
 export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeRequestFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -49,7 +60,10 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
   
   const [submitting, setSubmitting] = useState(false);
   const [hostInfo, setHostInfo] = useState<HostInfo | null>(null);
-  const [lookingUpHost, setLookingUpHost] = useState(false);
+  const [selectionMode, setSelectionMode] = useState<'browse' | 'manual'>('browse');
+  const [availableReservations, setAvailableReservations] = useState<ReservationOption[]>([]);
+  const [loadingReservations, setLoadingReservations] = useState(false);
+  const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null);
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
@@ -73,76 +87,79 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
 
   const watchedIsTradeOffer = form.watch('isTradeOffer');
   const watchedRequestedStartDate = form.watch('requestedStartDate');
-  const watchedRequestedEndDate = form.watch('requestedEndDate');
   const watchedTargetFamilyGroup = form.watch('targetFamilyGroup');
   const watchedOfferedStartDate = form.watch('offeredStartDate');
 
-  // Look up the host for the selected dates and family group
+  // Fetch available reservations when target family group changes
   useEffect(() => {
-    const lookupHost = async () => {
-      if (!watchedTargetFamilyGroup || !watchedRequestedStartDate || !watchedRequestedEndDate || !activeOrganization) {
-        setHostInfo(null);
+    const fetchReservations = async () => {
+      if (!watchedTargetFamilyGroup || !activeOrganization) {
+        setAvailableReservations([]);
         return;
       }
 
-      setLookingUpHost(true);
+      setLoadingReservations(true);
       try {
-        const startDate = watchedRequestedStartDate.toISOString().split('T')[0];
-        const endDate = watchedRequestedEndDate.toISOString().split('T')[0];
-
-        // Find reservations that overlap with the requested dates
+        const today = new Date().toISOString().split('T')[0];
+        
         const { data: reservations, error } = await supabase
           .from('reservations')
-          .select('host_assignments, family_group')
+          .select('id, start_date, end_date, host_assignments, family_group')
           .eq('organization_id', activeOrganization.organization_id)
           .eq('family_group', watchedTargetFamilyGroup)
-          .lte('start_date', endDate)
-          .gte('end_date', startDate)
-          .order('start_date', { ascending: true })
-          .limit(1);
+          .gte('end_date', today)
+          .order('start_date', { ascending: true });
 
         if (error) {
-          console.error('Error looking up reservation:', error);
-          setHostInfo(null);
+          console.error('Error fetching reservations:', error);
+          setAvailableReservations([]);
           return;
         }
 
-        if (reservations && reservations.length > 0) {
-          const reservation = reservations[0];
-          const hostAssignments = reservation.host_assignments as any[];
+        const options: ReservationOption[] = (reservations || []).map(res => {
+          const hostAssignments = res.host_assignments as any[];
+          const primaryHost = hostAssignments?.[0];
           
-          if (hostAssignments && hostAssignments.length > 0) {
-            const primaryHost = hostAssignments[0];
-            setHostInfo({
-              name: primaryHost.name || reservation.family_group,
-              email: primaryHost.email || ''
-            });
-          } else {
-            // Fall back to family group lead
-            const targetGroup = familyGroups.find(fg => fg.name === watchedTargetFamilyGroup);
-            if (targetGroup?.lead_email) {
-              setHostInfo({
-                name: targetGroup.name,
-                email: targetGroup.lead_email
-              });
-            } else {
-              setHostInfo(null);
-            }
-          }
-        } else {
-          // No reservation found - will notify group lead
-          setHostInfo(null);
-        }
+          // Get group lead as fallback
+          const targetGroup = familyGroups.find(fg => fg.name === watchedTargetFamilyGroup);
+          
+          return {
+            id: res.id,
+            start_date: res.start_date,
+            end_date: res.end_date,
+            host_name: primaryHost?.name || res.family_group,
+            host_email: primaryHost?.email || targetGroup?.lead_email || ''
+          };
+        });
+
+        setAvailableReservations(options);
       } catch (error) {
-        console.error('Error in host lookup:', error);
-        setHostInfo(null);
+        console.error('Error in fetchReservations:', error);
+        setAvailableReservations([]);
       } finally {
-        setLookingUpHost(false);
+        setLoadingReservations(false);
       }
     };
 
-    lookupHost();
-  }, [watchedTargetFamilyGroup, watchedRequestedStartDate, watchedRequestedEndDate, activeOrganization, familyGroups]);
+    fetchReservations();
+    setSelectedReservationId(null);
+    setHostInfo(null);
+  }, [watchedTargetFamilyGroup, activeOrganization, familyGroups]);
+
+  // Update form and host info when a reservation is selected
+  useEffect(() => {
+    if (selectedReservationId && selectionMode === 'browse') {
+      const selectedRes = availableReservations.find(r => r.id === selectedReservationId);
+      if (selectedRes) {
+        form.setValue('requestedStartDate', new Date(selectedRes.start_date));
+        form.setValue('requestedEndDate', new Date(selectedRes.end_date));
+        setHostInfo({
+          name: selectedRes.host_name,
+          email: selectedRes.host_email
+        });
+      }
+    }
+  }, [selectedReservationId, selectionMode, availableReservations, form]);
 
   const onSubmit = async (data: TradeFormData) => {
     if (!userFamilyGroup) {
@@ -238,118 +255,184 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
               )}
             />
 
-            {/* Requested Time Period */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Time Period You Want</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="requestedStartDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Start Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            {/* Time Period Selection */}
+            {watchedTargetFamilyGroup && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Time Period You Want</h4>
+                  <Tabs value={selectionMode} onValueChange={(v) => {
+                    setSelectionMode(v as 'browse' | 'manual');
+                    setSelectedReservationId(null);
+                    setHostInfo(null);
+                  }} className="w-auto">
+                    <TabsList className="h-8">
+                      <TabsTrigger value="browse" className="text-xs px-2 h-6">
+                        <CalendarListIcon className="h-3 w-3 mr-1" />
+                        Browse
+                      </TabsTrigger>
+                      <TabsTrigger value="manual" className="text-xs px-2 h-6">
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Manual
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="requestedEndDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date <= watchedRequestedStartDate}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              {/* Host Info Display */}
-              {watchedTargetFamilyGroup && watchedRequestedStartDate && watchedRequestedEndDate && (
-                <div className="mt-4">
-                  {lookingUpHost ? (
-                    <p className="text-sm text-muted-foreground">Looking up reservation holder...</p>
-                  ) : hostInfo ? (
-                    <Alert className="bg-primary/10 border-primary/20">
-                      <User className="h-4 w-4" />
-                      <AlertDescription>
-                        This time is reserved by <strong>{hostInfo.name}</strong>. 
-                        They will receive the trade request directly.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
+                {selectionMode === 'browse' ? (
+                  <div className="space-y-3">
+                    {loadingReservations ? (
+                      <p className="text-sm text-muted-foreground">Loading reservations...</p>
+                    ) : availableReservations.length === 0 ? (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          No upcoming reservations found for {watchedTargetFamilyGroup}. 
+                          Use manual date entry instead.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <RadioGroup 
+                        value={selectedReservationId || ''} 
+                        onValueChange={setSelectedReservationId}
+                        className="space-y-2"
+                      >
+                        {availableReservations.map((res) => (
+                          <div 
+                            key={res.id} 
+                            className={cn(
+                              "flex items-center space-x-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                              selectedReservationId === res.id 
+                                ? "border-primary bg-primary/5" 
+                                : "hover:bg-muted/50"
+                            )}
+                            onClick={() => setSelectedReservationId(res.id)}
+                          >
+                            <RadioGroupItem value={res.id} id={res.id} />
+                            <Label htmlFor={res.id} className="flex-1 cursor-pointer">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">
+                                    {format(new Date(res.start_date), "MMM d")} - {format(new Date(res.end_date), "MMM d, yyyy")}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground flex items-center mt-1">
+                                    <User className="h-3 w-3 mr-1" />
+                                    Reserved by {res.host_name}
+                                  </p>
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+                    
+                    {/* Show selected host info */}
+                    {selectedReservationId && hostInfo && (
+                      <Alert className="bg-primary/10 border-primary/20 mt-3">
+                        <User className="h-4 w-4" />
+                        <AlertDescription>
+                          Trade request will be sent to <strong>{hostInfo.name}</strong>.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                ) : (
+                  /* Manual Date Selection */
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="requestedStartDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Start Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) => date < new Date()}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="requestedEndDate"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>End Date</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) => date <= watchedRequestedStartDate}
+                                  initialFocus
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        No specific reservation found for these dates. 
-                        The request will be sent to the {watchedTargetFamilyGroup} group lead.
+                        Manual dates will be sent to the {watchedTargetFamilyGroup} group lead.
                       </AlertDescription>
                     </Alert>
-                  )}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Trade Offer Toggle */}
             <FormField
