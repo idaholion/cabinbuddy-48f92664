@@ -37,7 +37,7 @@ export const useRobustMultiOrganization = () => {
   const [initialLoad, setInitialLoad] = useState(true);
   const [isRequestInProgress, setIsRequestInProgress] = useState(false);
   const { trackAsyncError } = useEnhancedErrorTracking();
-  const lastFetchRef = useRef<string>('');
+  const lastFetchedUserIdRef = useRef<string | null>(null);
   
   const { 
     loading, 
@@ -370,10 +370,36 @@ export const useRobustMultiOrganization = () => {
     }
   }, [user?.id, organizations, activeOrganization, executeRobust, trackAsyncError]);
 
-  // Fetch organizations when user changes
+  // Fetch organizations when user changes - with proper cleanup for user switches
   useEffect(() => {
     if (user?.id) {
+      // If user changed, clear previous user's data and cache
+      if (lastFetchedUserIdRef.current && lastFetchedUserIdRef.current !== user.id) {
+        console.log('🔄 User changed, clearing previous user data:', {
+          from: lastFetchedUserIdRef.current,
+          to: user.id
+        });
+        // Clear the previous user's cache
+        apiCache.invalidate(cacheKeys.userOrganizations(lastFetchedUserIdRef.current));
+        // Reset state
+        setOrganizations([]);
+        setActiveOrganization(null);
+        setIsRequestInProgress(false);
+        setInitialLoad(true);
+      }
+      
+      // Always clear current user's cache on login to ensure fresh data
+      apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+      
+      lastFetchedUserIdRef.current = user.id;
       fetchUserOrganizations();
+    } else {
+      // User logged out - reset everything
+      lastFetchedUserIdRef.current = null;
+      setOrganizations([]);
+      setActiveOrganization(null);
+      setIsRequestInProgress(false);
+      setInitialLoad(true);
     }
   }, [user?.id]); // Only depend on user.id, not the fetchUserOrganizations function
 

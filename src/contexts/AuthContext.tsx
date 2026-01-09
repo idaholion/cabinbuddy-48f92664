@@ -205,6 +205,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log('🔐 Signing in user:', email.trim().toLowerCase());
       
+      // Clear all caches before signing in to prevent stale data from previous sessions
+      const { apiCache } = await import('@/lib/cache');
+      apiCache.clear();
+      console.log('🔐 Cleared cache before sign in');
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
