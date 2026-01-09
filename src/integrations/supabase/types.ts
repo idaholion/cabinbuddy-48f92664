@@ -2763,6 +2763,9 @@ export type Database = {
           approver_message: string | null
           approver_user_id: string | null
           created_at: string
+          executed_at: string | null
+          execution_notes: string | null
+          execution_status: string | null
           id: string
           offered_end_date: string | null
           offered_start_date: string | null
@@ -2784,6 +2787,9 @@ export type Database = {
           approver_message?: string | null
           approver_user_id?: string | null
           created_at?: string
+          executed_at?: string | null
+          execution_notes?: string | null
+          execution_status?: string | null
           id?: string
           offered_end_date?: string | null
           offered_start_date?: string | null
@@ -2805,6 +2811,9 @@ export type Database = {
           approver_message?: string | null
           approver_user_id?: string | null
           created_at?: string
+          executed_at?: string | null
+          execution_notes?: string | null
+          execution_status?: string | null
           id?: string
           offered_end_date?: string | null
           offered_start_date?: string | null

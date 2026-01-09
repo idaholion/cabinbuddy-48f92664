@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.auto-create-stay-history-snapshots]
 verify_jwt = false
+
+[functions.execute-trade]
+verify_jwt = false
