@@ -454,9 +454,15 @@ const getBookingsForDate = (date: Date) => {
     });
   };
 
+  // Check if organization uses manual allocation mode
+  const isManualMode = organization?.allocation_model === 'manual';
+  
   // Date selection handlers
   // Validate if a date is selectable based on time period constraints
   const isDateSelectable = (date: Date): { selectable: boolean; reason?: string } => {
+    // In manual mode, all dates are selectable
+    if (isManualMode) return { selectable: true };
+    
     if (!rotationData) return { selectable: true };
     
     const monthYear = date.getFullYear();
@@ -529,7 +535,8 @@ const getBookingsForDate = (date: Date) => {
       currentMonthYear: currentMonth.getFullYear(),
       currentMonthMonth: currentMonth.getMonth(),
       isDragging,
-      reservationsCount: reservations.length
+      reservationsCount: reservations.length,
+      isManualMode
     });
     
     if (isDragging) return;
@@ -547,7 +554,42 @@ const getBookingsForDate = (date: Date) => {
       return;
     }
     
-    // Find the time period window that contains this date
+    // In manual mode, just select the clicked date and open booking form
+    if (isManualMode) {
+      const dateAtNoon = new Date(date);
+      dateAtNoon.setHours(12, 0, 0, 0);
+      
+      // Check if date is already booked
+      const isBooked = reservations.some(reservation => {
+        const startDate = parseLocalDate(reservation.start_date);
+        const endDate = parseLocalDate(reservation.end_date);
+        const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        
+        return checkDate >= reservationStart && checkDate <= reservationEnd;
+      });
+      
+      if (isBooked && !isDateAvailableForBooking(date)) {
+        toast({
+          title: "Date Unavailable",
+          description: "This date already has a booking. Please select a different date.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Select just this date for manual mode - user can extend with drag or in the form
+      setSelectedDates([dateAtNoon]);
+      toast({
+        title: "Date Selected",
+        description: `Selected ${date.toLocaleDateString()}. Drag to select a range or click "Create Reservation" to proceed.`,
+        variant: "default",
+      });
+      return;
+    }
+    
+    // For rotation-based modes, find the time period window that contains this date
     const monthYear = date.getFullYear();
     const timePeriodWindows = calculateTimePeriodWindows(monthYear, date);
     
@@ -564,7 +606,7 @@ const getBookingsForDate = (date: Date) => {
     if (!containingWindow) {
       toast({
         title: "Invalid Date Selection",
-        description: `This date is not within a valid ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} booking period. Please select a date within an available time period.`,
+        description: `This date is not within a valid ${rotationData?.start_day || 'Friday'}-to-${rotationData?.start_day || 'Friday'} booking period. Please select a date within an available time period.`,
         variant: "destructive",
       });
       return;
@@ -579,7 +621,7 @@ const getBookingsForDate = (date: Date) => {
     if (!isCalendarKeeperRole && !allPhasesActive && userFamilyGroup && containingWindow.familyGroup !== userFamilyGroup) {
       toast({
         title: "Period Not Available",
-        description: `This ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} period is assigned to ${containingWindow.familyGroup}. You can only select periods assigned to your family group (${userFamilyGroup}).`,
+        description: `This ${rotationData?.start_day || 'Friday'}-to-${rotationData?.start_day || 'Friday'} period is assigned to ${containingWindow.familyGroup}. You can only select periods assigned to your family group (${userFamilyGroup}).`,
         variant: "destructive",
       });
       return;
@@ -629,7 +671,7 @@ const getBookingsForDate = (date: Date) => {
     if (hasConflicts) {
       toast({
         title: "Period Unavailable",
-        description: `This ${rotationData.start_day || 'Friday'}-to-${rotationData.start_day || 'Friday'} period has existing bookings. Please select a different period.`,
+        description: `This ${rotationData?.start_day || 'Friday'}-to-${rotationData?.start_day || 'Friday'} period has existing bookings. Please select a different period.`,
         variant: "destructive",
       });
       return;
