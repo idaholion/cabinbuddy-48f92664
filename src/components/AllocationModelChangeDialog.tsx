@@ -44,7 +44,7 @@ export function AllocationModelChangeDialog({
   const [confirmText, setConfirmText] = useState("");
   
   const requiresConfirmText = !isTestOrganization;
-  const isConfirmTextValid = !requiresConfirmText || confirmText === "CHANGE MODEL";
+  const isConfirmTextValid = !requiresConfirmText || confirmText.toUpperCase() === "CHANGE MODEL";
 
   const handleConfirm = () => {
     if (!isConfirmTextValid) return;
@@ -102,31 +102,32 @@ export function AllocationModelChangeDialog({
 
             <div className="space-y-2">
               <Label htmlFor="reason">
-                Reason for Change {!isTestOrganization && <span className="text-destructive">*</span>}
+                Reason for Change (optional)
               </Label>
               <Textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Explain why you're changing the allocation model..."
-                className="min-h-[100px]"
-                required={!isTestOrganization}
+                className="min-h-[80px]"
               />
             </div>
 
             {requiresConfirmText && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmText">
-                  Type <code className="text-xs bg-muted px-1 py-0.5 rounded">CHANGE MODEL</code> to confirm
-                  <span className="text-destructive ml-1">*</span>
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg border-2 border-dashed border-primary/30">
+                <Label htmlFor="confirmText" className="text-base font-semibold">
+                  To proceed, type <code className="text-sm bg-primary/20 text-primary px-2 py-1 rounded font-bold">CHANGE MODEL</code> below:
                 </Label>
                 <Input
                   id="confirmText"
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="CHANGE MODEL"
-                  className={confirmText && !isConfirmTextValid ? "border-destructive" : ""}
+                  placeholder="Type CHANGE MODEL here"
+                  className={`text-center font-mono text-lg ${confirmText && !isConfirmTextValid ? "border-destructive" : isConfirmTextValid && confirmText ? "border-green-500 bg-green-50" : ""}`}
                 />
+                {isConfirmTextValid && confirmText && (
+                  <p className="text-sm text-green-600 font-medium text-center">✓ Confirmed - you can now proceed</p>
+                )}
               </div>
             )}
 
@@ -146,7 +147,7 @@ export function AllocationModelChangeDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            disabled={!isConfirmTextValid || (!isTestOrganization && !reason)}
+            disabled={!isConfirmTextValid}
             className="bg-primary hover:bg-primary/90"
           >
             Change Allocation Model
