@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export type AllocationModel = "rotating_selection" | "manual_booking" | "static_weeks";
+export type AllocationModel = "rotating_selection" | "manual" | "static_weeks";
 
 interface AllocationModelChangeDialogProps {
   open: boolean;
@@ -28,7 +28,7 @@ interface AllocationModelChangeDialogProps {
 
 const MODEL_LABELS: Record<AllocationModel, string> = {
   rotating_selection: "Rotating Selection",
-  manual_booking: "Manual Booking",
+  manual: "Manual Booking",
   static_weeks: "Static Weeks Assignment",
 };
 

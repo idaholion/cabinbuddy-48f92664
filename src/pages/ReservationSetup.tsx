@@ -251,7 +251,7 @@ export default function ReservationSetup() {
       // Convert setupMethod to allocation_model format
       const allocationModelMap: Record<string, AllocationModel> = {
         rotation: "rotating_selection",
-        manual: "manual_booking",
+        manual: "manual",
         "static-weeks": "static_weeks",
       };
 
@@ -1460,14 +1460,14 @@ export default function ReservationSetup() {
           originalSetupMethod === "rotation"
             ? "rotating_selection"
             : originalSetupMethod === "manual"
-            ? "manual_booking"
+            ? "manual"
             : "static_weeks"
         }
         newModel={
           pendingSetupMethod === "rotation"
             ? "rotating_selection"
             : pendingSetupMethod === "manual"
-            ? "manual_booking"
+            ? "manual"
             : "static_weeks"
         }
         isTestOrganization={organization?.is_test_organization || false}
