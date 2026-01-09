@@ -84,24 +84,9 @@ export default function ReservationSetup() {
   const [postRotationMaxConsecutiveNights, setPostRotationMaxConsecutiveNights] = useState("");
   const [postRotationMaxWeeks, setPostRotationMaxWeeks] = useState("");
 
-  // Load family groups and initialize rotation order
-  useEffect(() => {
-    if (familyGroups.length > 0) {
-      setRotationOrder(new Array(familyGroups.length).fill(''));
-    }
-    
-    // Also load from localStorage for backward compatibility
-    const savedData = localStorage.getItem('familySetupData');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      const groups = data.familyGroups?.filter((group: any) => 
-        typeof group === 'string' && group.trim() !== ''
-      ) || [];
-      if (groups.length > 0 && familyGroups.length === 0) {
-        setRotationOrder(new Array(groups.length).fill(''));
-      }
-    }
-  }, [familyGroups]);
+  // Note: We do NOT initialize rotationOrder from familyGroups here
+  // because the database loading effect handles setting the rotation order.
+  // Initializing here would overwrite the loaded data due to race conditions.
 
   // Load existing reservation settings including season data
   useEffect(() => {
