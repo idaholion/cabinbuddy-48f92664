@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon, ArrowRight, Hammer } from "lucide-react";
+import { Calendar, RotateCcw, CheckCircle, Clock, Users, ChevronDown, MapPin, Plus, Edit2, User, CalendarIcon, ArrowRight, Hammer, ArrowRightLeft, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { NavigationHeader } from "@/components/ui/navigation-header";
@@ -671,31 +671,26 @@ const CabinCalendar = () => {
                               Work Weekend
                             </DropdownMenuItem>
                            <DropdownMenuSeparator />
-                           <DropdownMenuSub>
-                             <DropdownMenuSubTrigger className="relative">
-                               <Edit2 className="h-4 w-4 mr-2" />
-                               Edit Booking
-                               {pendingTradeRequests > 0 && (
-                                 <Badge 
-                                   variant="destructive" 
-                                   className="ml-auto h-5 w-5 p-0 text-xs animate-pulse"
-                                 >
-                                   {pendingTradeRequests}
-                                 </Badge>
-                               )}
-                             </DropdownMenuSubTrigger>
-                             <DropdownMenuSubContent>
-                               <DropdownMenuItem>
-                                 Edit my bookings
-                               </DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => setTradeRequestOpen(true)}>
-                                 Request trade with another group
-                               </DropdownMenuItem>
-                               <DropdownMenuItem>
-                                 Request Calendar Keeper assistance
-                               </DropdownMenuItem>
-                             </DropdownMenuSubContent>
-                           </DropdownMenuSub>
+                           <DropdownMenuItem>
+                             <Edit2 className="h-4 w-4 mr-2" />
+                             Edit my bookings
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={() => setTradeRequestOpen(true)} className="relative">
+                             <ArrowRightLeft className="h-4 w-4 mr-2" />
+                             Request trade with another group
+                             {pendingTradeRequests > 0 && (
+                               <Badge 
+                                 variant="destructive" 
+                                 className="ml-auto h-5 w-5 p-0 text-xs animate-pulse"
+                               >
+                                 {pendingTradeRequests}
+                               </Badge>
+                             )}
+                           </DropdownMenuItem>
+                           <DropdownMenuItem>
+                             <HelpCircle className="h-4 w-4 mr-2" />
+                             Request Calendar Keeper assistance
+                           </DropdownMenuItem>
                          </DropdownMenuContent>
                        </DropdownMenu>
 
