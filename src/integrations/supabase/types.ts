@@ -2775,6 +2775,8 @@ export type Database = {
           requester_user_id: string | null
           status: string
           target_family_group: string
+          target_host_email: string | null
+          target_host_name: string | null
           updated_at: string
         }
         Insert: {
@@ -2794,6 +2796,8 @@ export type Database = {
           requester_user_id?: string | null
           status?: string
           target_family_group: string
+          target_host_email?: string | null
+          target_host_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -2813,6 +2817,8 @@ export type Database = {
           requester_user_id?: string | null
           status?: string
           target_family_group?: string
+          target_host_email?: string | null
+          target_host_name?: string | null
           updated_at?: string
         }
         Relationships: [
