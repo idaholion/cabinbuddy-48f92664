@@ -55,7 +55,7 @@ export function AllocationModelChangeDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-2xl">
+      <AlertDialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <AlertDialogHeader>
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
@@ -63,7 +63,7 @@ export function AllocationModelChangeDialog({
               {isTestOrganization ? "Change Allocation Model?" : "⚠️ Critical: Change Allocation Model?"}
             </AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="space-y-4 text-left">
+          <AlertDialogDescription className="space-y-4 text-left overflow-y-auto max-h-[60vh] pr-2">
             {!isTestOrganization && (
               <Alert variant="destructive" className="my-4">
                 <AlertTriangle className="h-4 w-4" />
