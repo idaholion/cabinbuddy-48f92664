@@ -520,12 +520,51 @@ const CabinCalendar = () => {
                              </div>
               <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                 <p className="font-medium">Selection begins October 1st</p>
-                {currentRotationYearCurrentFamily && (() => {
-                  // Secondary selection phase: show actual selection dates
+                {(() => {
+                  // Check if all families have completed both primary and secondary
+                  const allPrimaryCompleted = currentRotationYearStatuses.every(s => s.status === 'completed');
+                  const allSecondaryCompleted = currentPhase === 'secondary' && allPrimaryCompleted;
+                  
+                  if (allSecondaryCompleted) {
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
+                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Secondary Selection Completed</p>
+                      </div>
+                    );
+                  }
+                  
+                  if (currentPhase === 'secondary' && allPrimaryCompleted && !allSecondaryCompleted) {
+                    // In secondary phase, primary is done
+                    return (
+                      <div className="space-y-1 mt-2">
+                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
+                        {currentRotationYearCurrentFamily ? (
+                          <>
+                            <p className="font-semibold text-primary">Secondary Selection Active</p>
+                            {secondarySelectionStartDate && rotationData && (
+                              <p className="text-xs">
+                                Selection period: {format(secondarySelectionStartDate, 'MMM d')} - {format(addDays(secondarySelectionStartDate, rotationData.secondary_selection_days || 7), 'MMM d')}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-xs">Secondary selection in progress</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  
+                  if (!currentRotationYearCurrentFamily) {
+                    return null;
+                  }
+                  
+                  // Primary selection phase: show actual selection dates
                   if (currentPhase === 'secondary') {
                     if (!secondarySelectionStartDate || !rotationData) {
                       return (
                         <div className="space-y-1 mt-2">
+                          <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
                           <p className="font-semibold text-primary">Secondary Selection Active</p>
                           <p className="text-xs">7-day rolling selection period</p>
                         </div>
@@ -538,6 +577,7 @@ const CabinCalendar = () => {
                     
                     return (
                       <div className="space-y-1 mt-2">
+                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
                         <p className="font-semibold text-primary">Secondary Selection Active</p>
                         <p className="text-xs">Selection period: {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}</p>
                       </div>
