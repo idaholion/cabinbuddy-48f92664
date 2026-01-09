@@ -636,6 +636,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) => !watchedAdminOverride && !testOverrideMode && date < new Date()}
+                          defaultMonth={field.value}
                           initialFocus
                         />
                       </PopoverContent>
@@ -676,6 +677,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) => date <= watchedStartDate}
+                          defaultMonth={field.value}
                           initialFocus
                         />
                       </PopoverContent>

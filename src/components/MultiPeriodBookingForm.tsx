@@ -337,6 +337,7 @@ export function MultiPeriodBookingForm({
                                   selected={field.value}
                                   onSelect={field.onChange}
                                   disabled={(date) => date < new Date()}
+                                  defaultMonth={field.value}
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -377,6 +378,7 @@ export function MultiPeriodBookingForm({
                                   selected={field.value}
                                   onSelect={field.onChange}
                                   disabled={(date) => date <= watchedPeriods[index]?.startDate}
+                                  defaultMonth={field.value}
                                   initialFocus
                                 />
                               </PopoverContent>
