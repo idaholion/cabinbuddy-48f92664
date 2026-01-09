@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useSupervisor } from '@/hooks/useSupervisor';
 import { useRole } from '@/contexts/RoleContext';
+import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign, UserCheck } from 'lucide-react';
+import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign, UserCheck, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { OrganizationDetail } from '@/components/OrganizationDetail';
 import { SupervisorManagement } from '@/components/SupervisorManagement';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
@@ -32,11 +35,38 @@ export const SupervisorDashboard = () => {
     refetchSupervisors
   } = useSupervisor();
   const { canAccessSupervisorFeatures, activeRole } = useRole();
+  const { organizations: userOrgs, joinOrganization, switchToOrganization } = useMultiOrganization();
+  const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
   const [selectedOrgForTabs, setSelectedOrgForTabs] = useState<string>('');
   const [activeTab, setActiveTab] = useState('organizations');
+
+  // Check if user is already a member of an organization
+  const isUserMemberOf = (orgId: string) => {
+    return userOrgs.some(uo => uo.organization_id === orgId);
+  };
+
+  // Handle switching to an organization (join first if needed)
+  const handleSwitchToOrg = async (org: { id: string; code: string; name: string }) => {
+    try {
+      if (isUserMemberOf(org.id)) {
+        await switchToOrganization(org.id);
+        toast.success(`Switched to ${org.name}`);
+        navigate('/');
+      } else {
+        // Join the org first
+        await joinOrganization(org.code);
+        await switchToOrganization(org.id);
+        toast.success(`Joined and switched to ${org.name}`);
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Failed to switch organization:', error);
+      toast.error('Failed to switch organization');
+    }
+  };
 
   // Check URL parameters for tab selection
   useEffect(() => {
@@ -219,21 +249,32 @@ export const SupervisorDashboard = () => {
                         {org.admin_email}
                       </div>
                     )}
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex flex-col gap-2 pt-2">
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => setSelectedOrganization(org.id)}
+                          className="flex-1 text-base hover:scale-105 hover:shadow-md transition-all duration-200"
+                        >
+                          View Details
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => deleteOrganizationData(org.id)}
+                          className="text-base hover:scale-110 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button 
                         size="sm" 
-                        onClick={() => setSelectedOrganization(org.id)}
-                        className="flex-1 text-base hover:scale-105 hover:shadow-md transition-all duration-200"
+                        variant="secondary"
+                        onClick={() => handleSwitchToOrg(org)}
+                        className="w-full text-base hover:scale-105 hover:shadow-md transition-all duration-200"
                       >
-                        View Details
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="destructive"
-                        onClick={() => deleteOrganizationData(org.id)}
-                        className="text-base hover:scale-110 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
+                        <LogIn className="h-4 w-4 mr-2" />
+                        {isUserMemberOf(org.id) ? 'Switch to Org' : 'Join & Switch'}
                       </Button>
                     </div>
                   </CardContent>
