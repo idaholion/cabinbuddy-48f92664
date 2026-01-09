@@ -13,6 +13,8 @@ interface TradeRequestData {
   offered_end_date?: string;
   request_type: 'request_only' | 'trade_offer';
   requester_message?: string;
+  target_host_email?: string;
+  target_host_name?: string;
 }
 
 interface TradeRequest {

@@ -116,14 +116,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     switch (notificationType) {
       case 'request_created':
+        // Smart routing: Primary notification goes to specific host if available
+        const hasSpecificHost = tradeRequest.target_host_email;
+        const hostName = tradeRequest.target_host_name || tradeRequest.target_family_group;
+        
         emailSubject = `Time Trade Request from ${tradeRequest.requester_family_group}`;
         smsMessage = `New trade request from ${tradeRequest.requester_family_group} for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()}-${new Date(tradeRequest.requested_end_date).toLocaleDateString()}. Check your email or login to respond. - ${tradeRequest.organization.name}`;
+        
+        // Primary email content for the host
         emailContent = `
           <h2>New Time Trade Request</h2>
-          <p><strong>${tradeRequest.requester_family_group}</strong> has requested time from your group.</p>
-          
-          <h3>Requested Time:</h3>
-          <p>${new Date(tradeRequest.requested_start_date).toLocaleDateString()} to ${new Date(tradeRequest.requested_end_date).toLocaleDateString()}</p>
+          <p><strong>${tradeRequest.requester_family_group}</strong> has requested to trade for your ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()} reservation.</p>
           
           ${tradeRequest.request_type === 'trade_offer' && tradeRequest.offered_start_date ? `
             <h3>Offered in Return:</h3>
@@ -141,15 +144,63 @@ const handler = async (req: Request): Promise<Response> => {
           ${tradeRequest.organization.name} Management</p>
         `;
         
-        // Send to target group host members and organization admin
-        if (targetGroup?.host_members) {
-          const hostMembers = Array.isArray(targetGroup.host_members) ? targetGroup.host_members : JSON.parse(targetGroup.host_members as string);
-          recipients = hostMembers.map((member: any) => ({
-            email: member.email,
-            phone: member.phone,
-            name: member.name
-          })).filter((r: any) => r.email || r.phone);
+        // Build recipient list with smart routing
+        if (hasSpecificHost) {
+          // Primary: Send to the specific host
+          recipients.push({
+            email: tradeRequest.target_host_email,
+            name: hostName
+          });
+          
+          // CC: Send FYI to group lead (if different from host)
+          if (targetGroup?.lead_email && targetGroup.lead_email !== tradeRequest.target_host_email) {
+            // We'll send a separate FYI email to the group lead
+            const ccEmailContent = `
+              <h2>FYI: Trade Request for ${hostName}</h2>
+              <p><strong>${tradeRequest.requester_family_group}</strong> has requested to trade with <strong>${hostName}</strong> for their ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()} reservation.</p>
+              
+              <p><em>This is an informational copy. ${hostName} has been notified directly.</em></p>
+              
+              ${tradeRequest.request_type === 'trade_offer' && tradeRequest.offered_start_date ? `
+                <h3>Offered in Return:</h3>
+                <p>${new Date(tradeRequest.offered_start_date).toLocaleDateString()} to ${new Date(tradeRequest.offered_end_date).toLocaleDateString()}</p>
+              ` : ''}
+              
+              ${tradeRequest.requester_message ? `
+                <h3>Message:</h3>
+                <p>${tradeRequest.requester_message}</p>
+              ` : ''}
+              
+              <p>Best regards,<br>
+              ${tradeRequest.organization.name} Management</p>
+            `;
+            
+            // Send CC email to group lead
+            try {
+              await resend.emails.send({
+                from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
+                to: [targetGroup.lead_email],
+                subject: `FYI: ${emailSubject}`,
+                html: ccEmailContent,
+              });
+              console.log(`Sent CC email to group lead: ${targetGroup.lead_email}`);
+            } catch (ccError) {
+              console.error('Error sending CC email to group lead:', ccError);
+            }
+          }
+        } else {
+          // Fallback: No specific host, send to all host members
+          if (targetGroup?.host_members) {
+            const hostMembers = Array.isArray(targetGroup.host_members) ? targetGroup.host_members : JSON.parse(targetGroup.host_members as string);
+            recipients = hostMembers.map((member: any) => ({
+              email: member.email,
+              phone: member.phone,
+              name: member.name
+            })).filter((r: any) => r.email || r.phone);
+          }
         }
+        
+        // Always CC organization admin
         if (tradeRequest.organization.admin_email) {
           recipients.push({
             email: tradeRequest.organization.admin_email,
