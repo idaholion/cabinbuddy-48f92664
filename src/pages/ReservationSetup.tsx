@@ -156,6 +156,20 @@ export default function ReservationSetup() {
       if (!organization?.id) return;
       
       try {
+        // First, determine setup method from organization's allocation_model (source of truth)
+        const orgAllocationModel = (organization as any).allocation_model;
+        let detectedMethod = 'rotation'; // default
+        
+        if (orgAllocationModel === 'static_weeks') {
+          detectedMethod = 'static-weeks';
+        } else if (orgAllocationModel === 'manual') {
+          detectedMethod = 'manual';
+        } else if (orgAllocationModel === 'rotating_selection' || orgAllocationModel === 'first_come_first_serve' || orgAllocationModel === 'lottery') {
+          detectedMethod = 'rotation';
+        }
+        
+        console.log('📊 Detected allocation model from organization:', { orgAllocationModel, detectedMethod });
+        
         const { data, error } = await supabase
           .from('rotation_orders')
           .select('*')
@@ -165,28 +179,25 @@ export default function ReservationSetup() {
         
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading rotation order:', error);
+          // Still set the method based on organization's allocation_model
+          setSetupMethod(detectedMethod);
+          setOriginalSetupMethod(detectedMethod);
           return;
         }
         
+        // Set the method based on organization's allocation_model (not legacy detection)
+        setSetupMethod(detectedMethod);
+        setOriginalSetupMethod(detectedMethod);
+        
         if (data) {
-          // Check if this is a manual setup (indicated by 'manual_mode' in rotation_order)
-          // or static weeks setup (indicated by 'static_weeks_mode' in rotation_order)
           const savedOrder = Array.isArray(data.rotation_order) ? data.rotation_order : [];
-          if (savedOrder.length === 1 && savedOrder[0] === 'manual_mode') {
-            setSetupMethod('manual');
-            setOriginalSetupMethod('manual');
-          } else if (savedOrder.length === 1 && savedOrder[0] === 'static_weeks_mode') {
-            setSetupMethod('static-weeks');
-            setOriginalSetupMethod('static-weeks');
-            
+          
+          if (detectedMethod === 'static-weeks') {
             // Load static weeks settings
             setStaticWeeksStartDay(data.start_day || "Friday");
             setStaticWeeksPeriodLength(data.max_nights?.toString() || "7");
             setStaticWeeksRotationDirection(data.first_last_option || "first");
-          } else {
-            setSetupMethod('rotation');
-            setOriginalSetupMethod('rotation');
-            
+          } else if (detectedMethod === 'rotation') {
             // Load all the saved settings for rotation mode
             setMaxTimeSlots(data.max_time_slots?.toString() || "2");
             setMaxNights(data.max_nights?.toString() || "7");
@@ -212,11 +223,15 @@ export default function ReservationSetup() {
             setPostRotationMaxConsecutiveNights((data as any).post_rotation_max_consecutive_nights?.toString() || "");
             setPostRotationMaxWeeks((data as any).post_rotation_max_weeks?.toString() || "");
             
-            // Load the rotation order - use saved order directly
-            if (savedOrder.length > 0) {
-              setRotationOrder(savedOrder.map(String));
+            // Load the rotation order - use saved order directly (exclude mode markers)
+            const actualOrder = savedOrder.filter((item: string) => 
+              item !== 'manual_mode' && item !== 'static_weeks_mode'
+            );
+            if (actualOrder.length > 0) {
+              setRotationOrder(actualOrder.map(String));
             }
           }
+          // For manual mode, no additional settings to load
         }
       } catch (error) {
         console.error('Error loading rotation order:', error);
