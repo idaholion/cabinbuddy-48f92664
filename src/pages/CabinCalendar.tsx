@@ -39,7 +39,7 @@ import { TestOrganizationWarningBanner } from "@/components/TestOrganizationWarn
 const CabinCalendar = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
-  const { familyGroups, assignDefaultColorsWithProtection } = useFamilyGroups();
+  const { familyGroups, assignDefaultColorsWithProtection, isSupervisor } = useFamilyGroups();
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
@@ -156,13 +156,13 @@ const CabinCalendar = () => {
     }
   };
   
-  // Assign default colors to family groups if they don't have colors
+  // Assign default colors to family groups if they don't have colors (supervisors only)
   useEffect(() => {
     const hasUncoloredGroups = familyGroups.some(fg => !fg.color);
-    if (hasUncoloredGroups && familyGroups.length > 0) {
+    if (isSupervisor && hasUncoloredGroups && familyGroups.length > 0) {
       assignDefaultColorsWithProtection();
     }
-  }, [familyGroups, assignDefaultColorsWithProtection]);
+  }, [familyGroups, assignDefaultColorsWithProtection, isSupervisor]);
   
   // Calculate the active rotation year based on current date and rotation start date
   const getRotationYear = () => {
