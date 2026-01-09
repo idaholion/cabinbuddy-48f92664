@@ -164,7 +164,9 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const [testOverrideMode, setTestOverrideMode] = useState(false);
 
   // Get user's family group and pending trade requests
+  // Check both lead_email and host_members for user's family group
   const userFamilyGroup = familyGroups.find(fg => 
+    fg.lead_email?.toLowerCase() === user?.email?.toLowerCase() ||
     fg.host_members?.some((member: any) => member.email?.toLowerCase() === user?.email?.toLowerCase())
   )?.name;
 
