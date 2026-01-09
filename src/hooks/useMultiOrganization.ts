@@ -86,11 +86,19 @@ export const useMultiOrganization = () => {
       // Cache the results
       apiCache.set(cacheKeys.userOrganizations(user.id), transformedData);
       
-      // Auto-select if user has exactly one organization
-      if (transformedData.length === 1) {
+      // Auto-select: find primary org first, then fallback to first org if only one
+      const primaryOrg = transformedData.find(o => o.is_primary);
+      if (primaryOrg) {
+        console.log('📍 Setting active organization to primary:', primaryOrg.organization_name);
+        setActiveOrganization(primaryOrg);
+      } else if (transformedData.length === 1) {
+        console.log('📍 Setting active organization to only org:', transformedData[0].organization_name);
+        setActiveOrganization(transformedData[0]);
+      } else if (transformedData.length > 1) {
+        // For 2+ orgs with no primary, select the first one as active
+        console.log('📍 Setting active organization to first of multiple:', transformedData[0].organization_name);
         setActiveOrganization(transformedData[0]);
       } else {
-        // For 0 or 2+ orgs, don't auto-select - let user choose or create
         setActiveOrganization(null);
       }
       
