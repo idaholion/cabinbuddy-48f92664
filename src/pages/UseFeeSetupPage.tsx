@@ -153,6 +153,10 @@ const UseFeeSetupPage = () => {
                   <Label className="text-base">Use Fee</Label>
                   <RadioGroup value={useFeeMethod} onValueChange={setUseFeeMethod} className="mt-3">
                     <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no-fee" id="no-fee" />
+                      <Label htmlFor="no-fee" className="text-base">No Use Fee (funded separately)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <RadioGroupItem value="per-person-per-day" id="per-person-per-day" />
                       <Label htmlFor="per-person-per-day" className="text-base">Per Person Per Day</Label>
                     </div>
@@ -170,21 +174,24 @@ const UseFeeSetupPage = () => {
                     </div>
                   </RadioGroup>
                 </div>
-                <div>
-                  <Label htmlFor="fee-amount" className="text-base">Use Fee Amount</Label>
-                  <div className="relative mt-3">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                    <Input 
-                      id="fee-amount" 
-                      placeholder="0.00" 
-                      value={feeAmount}
-                      onChange={(e) => setFeeAmount(e.target.value)}
-                      type="number"
-                      step="0.01"
-                      className="pl-8 text-lg placeholder:text-lg"
-                    />
+                {useFeeMethod && useFeeMethod !== 'no-fee' && (
+                  <div>
+                    <Label htmlFor="fee-amount" className="text-base">Use Fee Amount</Label>
+                    <div className="relative mt-3">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input 
+                        id="fee-amount" 
+                        placeholder="0.00" 
+                        value={feeAmount}
+                        onChange={(e) => setFeeAmount(e.target.value)}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="pl-8 text-lg placeholder:text-lg"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               
               {/* Additional Fee Settings */}

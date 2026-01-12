@@ -111,12 +111,13 @@ export class BillingCalculator {
   static validateBillingConfig(config: BillingConfig): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
     
-    if (!config.method) {
-      errors.push('Billing method is required');
-    }
-    
-    if (!config.amount || config.amount <= 0) {
-      errors.push('Billing amount must be greater than 0');
+    // Method is not required if amount is 0 (no-fee arrangement)
+    // But if a method is specified, amount validation applies
+    if (config.method && config.method !== 'no-fee') {
+      // If a billing method is selected (other than no-fee), amount can be 0 or positive
+      if (config.amount < 0) {
+        errors.push('Billing amount cannot be negative');
+      }
     }
     
     if (config.taxRate && (config.taxRate < 0 || config.taxRate > 100)) {
