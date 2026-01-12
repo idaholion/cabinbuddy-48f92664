@@ -56,7 +56,7 @@ const STEPS: StepContent[] = [
     title: "Step 2: Use Fee Setup",
     description: "Next, we'll configure how much it costs to use the cabin and how families can pay.",
     bullets: [
-      "Nightly use fee rate",
+      "Different use fee rate options",
       "Preferred payment method",
       "Payment instructions",
       "Billing preferences",
