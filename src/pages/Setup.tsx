@@ -26,7 +26,7 @@ const Setup = () => {
   const { isAdmin } = useOrgAdmin();
   
   // CB Onboarding Guide
-  const { shouldShowGuide, completeGuide, skipGuide } = useCBOnboarding();
+  const { shouldShowGuide, completeGuide, skipGuide, resetGuide } = useCBOnboarding();
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -305,12 +305,25 @@ const Setup = () => {
         </div>
 
         <div className="mb-4">
-          <Button variant="outline" asChild className="mb-2">
-            <Link to="/home">
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Link>
-          </Button>
+          <div className="flex items-center justify-between mb-2">
+            <Button variant="outline" asChild>
+              <Link to="/home">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Link>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                resetGuide();
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              Preview CB Guide
+            </Button>
+          </div>
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Cabin Account Setup</h1>
           <p className="text-2xl text-primary text-center font-medium">Follow these steps to configure your cabin management system</p>
         </div>
