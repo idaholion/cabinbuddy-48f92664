@@ -127,11 +127,11 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg bg-card/98 shadow-2xl animate-scale-in">
+      <Card className="w-full max-w-lg bg-white dark:bg-slate-800 shadow-2xl animate-scale-in border-0">
         {/* Progress bar */}
         <div className="px-6 pt-6">
           <Progress value={progress} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
             {currentStep + 1} of {totalSteps}
           </p>
         </div>
@@ -156,7 +156,7 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
           </div>
 
           <CardTitle className={cn(
-            "text-2xl transition-all duration-300",
+            "text-2xl transition-all duration-300 text-slate-900 dark:text-white",
             isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
           )}>
             {step.title}
@@ -164,7 +164,7 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
           
           {step.subtitle && (
             <p className={cn(
-              "text-lg text-primary font-medium mt-1 transition-all duration-300",
+              "text-lg text-emerald-700 dark:text-emerald-400 font-medium mt-1 transition-all duration-300",
               isAnimating ? "opacity-0" : "opacity-100"
             )}>
               {step.subtitle}
@@ -175,7 +175,7 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
         <CardContent className="space-y-6">
           {/* Description */}
           <CardDescription className={cn(
-            "text-center text-base transition-all duration-300",
+            "text-center text-base transition-all duration-300 text-slate-600 dark:text-slate-300",
             isAnimating ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
           )}>
             {step.description}
@@ -184,14 +184,14 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
           {/* Bullet points for setup steps */}
           {step.bullets && (
             <div className={cn(
-              "bg-muted/50 rounded-lg p-4 space-y-2 transition-all duration-300",
+              "bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4 space-y-2 transition-all duration-300",
               isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"
             )}>
-              <p className="text-sm font-medium text-muted-foreground mb-3">What you'll configure:</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">What you'll configure:</p>
               {step.bullets.map((bullet, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="text-sm">{bullet}</span>
+                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <span className="text-sm text-slate-700 dark:text-slate-200">{bullet}</span>
                 </div>
               ))}
             </div>
@@ -261,7 +261,7 @@ export const CBOnboardingGuide = ({ onComplete, onSkip }: CBOnboardingGuideProps
           <div className="text-center">
             <button
               onClick={onSkip}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+              className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors underline-offset-4 hover:underline"
             >
               Skip tour
             </button>
