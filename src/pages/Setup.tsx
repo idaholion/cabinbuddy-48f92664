@@ -13,6 +13,8 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useSetupState } from "@/hooks/useSetupState";
 import { OrganizationFinancialSettings } from "@/components/OrganizationFinancialSettings";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { CBOnboardingGuide } from "@/components/CBOnboardingGuide";
+import { useCBOnboarding } from "@/hooks/useCBOnboarding";
 
 const Setup = () => {
   const { enterSetupFlow, updateSetupStep, clearSetupState } = useSetupState();
@@ -22,6 +24,9 @@ const Setup = () => {
   const { reservationSettings } = useReservationSettings();
   const { rotationData } = useRotationOrder();
   const { isAdmin } = useOrgAdmin();
+  
+  // CB Onboarding Guide
+  const { shouldShowGuide, completeGuide, skipGuide } = useCBOnboarding();
   
   // Animation state
   const [showCelebration, setShowCelebration] = useState(false);
@@ -241,6 +246,15 @@ const Setup = () => {
   };
 
   return (
+    <>
+      {/* CB Onboarding Guide for new organization creators */}
+      {shouldShowGuide && (
+        <CBOnboardingGuide 
+          onComplete={completeGuide}
+          onSkip={skipGuide}
+        />
+      )}
+      
     <div className="min-h-screen bg-cover bg-center bg-no-repeat px-4 pt-1 pb-4" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <div className="max-w-4xl mx-auto relative">
         {/* Circular Progress Dial - Upper Right Corner */}
@@ -484,6 +498,7 @@ const Setup = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
