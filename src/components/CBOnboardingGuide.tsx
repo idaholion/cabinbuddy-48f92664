@@ -41,12 +41,13 @@ const STEPS: StepContent[] = [
     icon: Users,
     iconColor: "text-blue-600",
     title: "Step 1: Organization Details",
-    description: "First, we'll set up the basics about your organization and the key people who will help manage it.",
+    description: "First, we'll set up the basics about your organization, the key people who manage it, and the family groups that share the cabin.",
     bullets: [
       "Organization & property name",
       "Administrator contact info",
       "Treasurer contact info",
       "Calendar Keeper contact info",
+      "Family groups (names and group leads)",
     ],
   },
   {
