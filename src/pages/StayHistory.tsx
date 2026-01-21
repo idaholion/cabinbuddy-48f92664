@@ -1120,10 +1120,11 @@ export default function StayHistory() {
                       )}
                       {stayData.paymentId && (() => {
                         // Determine if this stay should show as paid based on cascade logic
-                        const effectivelyPaid = stayData.amountDue <= 0 || stayData.paidViaLaterStay || 
-                          (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0);
-                        
-                        console.log(`[BADGE DEBUG] ${reservation.start_date}: amountDue=${stayData.amountDue}, amountPaid=${stayData.amountPaid}, paidViaLaterStay=${stayData.paidViaLaterStay}, creditDistributed=${stayData.creditDistributedToLaters}, effectivelyPaid=${effectivelyPaid}`);
+                        // Check both forward cascade (creditDistributedToLaters) and backward cascade (creditDistributedToOlders)
+                        const effectivelyPaid = stayData.amountDue <= 0 || 
+                          stayData.paidViaLaterStay || 
+                          (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ||
+                          (stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0);
                         
                         return (
                           <Badge variant={
