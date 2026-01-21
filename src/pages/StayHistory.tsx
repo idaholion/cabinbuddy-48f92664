@@ -1326,7 +1326,7 @@ export default function StayHistory() {
                             className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
                             onClick={() => {
                               const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=charge&amount=${Math.abs(stayData.amountDue)}&note=${encodeURIComponent('Cabin stay refund request')}`;
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=charge&amount=${Math.abs(stayData.amountDue).toFixed(2)}&note=${encodeURIComponent('Cabin stay refund request')}`;
                               window.open(venmoUrl, '_blank');
                             }}
                           >
@@ -1348,7 +1348,7 @@ export default function StayHistory() {
                             size="sm"
                             onClick={() => {
                               const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue}&note=${encodeURIComponent('Cabin stay payment')}`;
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue.toFixed(2)}&note=${encodeURIComponent('Cabin stay payment')}`;
                               window.open(venmoUrl, '_blank');
                               setVenmoConfirmStay({
                                 ...reservation,
