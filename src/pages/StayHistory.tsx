@@ -1216,15 +1216,20 @@ export default function StayHistory() {
                       <span className="text-muted-foreground">Calculated Amount:</span>
                       <span className="font-medium">${stayData.billingAmount.toFixed(2)}</span>
                     </div>
-                    {stayData.manualAdjustment !== 0 && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Manual Adjustment:</span>
-                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                            {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                            {stayData.manualAdjustment !== 0 && (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">Manual Adjustment:</span>
+                                  <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                                    {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
+                                  </span>
+                                </div>
+                                {stayData.adjustmentNotes && (
+                                  <div className="text-sm text-muted-foreground italic pl-2 border-l-2 border-muted">
+                                    {stayData.adjustmentNotes}
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-sm font-semibold border-t pt-2">
                           <span className="text-muted-foreground">Total Amount:</span>
                           <span>${(stayData.billingAmount + stayData.manualAdjustment).toFixed(2)}</span>
                         </div>
