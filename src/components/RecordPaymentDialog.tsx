@@ -32,7 +32,7 @@ export const RecordPaymentDialog = ({
   onSave,
 }: RecordPaymentDialogProps) => {
   const { toast } = useToast();
-  const [amount, setAmount] = useState(stay.balanceDue);
+  const [amount, setAmount] = useState(Math.round(stay.balanceDue * 100) / 100);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [checkNumber, setCheckNumber] = useState('');
@@ -112,21 +112,21 @@ export const RecordPaymentDialog = ({
               type="number"
               step="0.01"
               value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setAmount(Math.round((parseFloat(e.target.value) || 0) * 100) / 100)}
               className="mt-1"
             />
             <div className="flex gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setAmount(stay.balanceDue)}
+                onClick={() => setAmount(Math.round(stay.balanceDue * 100) / 100)}
               >
                 Full Balance
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setAmount(stay.balanceDue / 2)}
+                onClick={() => setAmount(Math.round((stay.balanceDue / 2) * 100) / 100)}
               >
                 Half Balance
               </Button>
