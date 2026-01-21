@@ -509,12 +509,17 @@ export const usePayments = () => {
         throw new Error('Payment was modified by another user. Please refresh and try again.');
       }
       
+      // Calculate new balance and status
+      const newBalanceDue = payment.amount - newAmountPaid;
+      const newStatus = newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending';
+      
       // Use secure update - organization_id filter automatically applied
       const { data, error } = await secureUpdate('payments', {
         amount_paid: newAmountPaid,
+        status: newStatus,
         payment_method: paymentMethod || payment.payment_method,
         payment_reference: paymentReference || payment.payment_reference,
-        paid_date: newAmountPaid >= payment.amount ? new Date().toISOString().split('T')[0] : payment.paid_date,
+        paid_date: newBalanceDue <= 0 ? new Date().toISOString().split('T')[0] : payment.paid_date,
         updated_at: new Date().toISOString()
       }, orgContext)
         .eq('id', id)
