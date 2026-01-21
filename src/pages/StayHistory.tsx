@@ -1118,19 +1118,27 @@ export default function StayHistory() {
                           Guest Split
                         </Badge>
                       )}
-                      {stayData.paymentId && (
-                        <Badge variant={
-                          stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'secondary' :
-                          stayData.amountDue <= 0 ? 'default' : 
-                          stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
-                          'destructive'
-                        }>
-                          {stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'pending' :
-                           stayData.amountDue <= 0 ? 'paid' : 
-                           stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'partial' : 
-                           'pending'}
-                        </Badge>
-                      )}
+                      {stayData.paymentId && (() => {
+                        // Determine if this stay should show as paid based on cascade logic
+                        const effectivelyPaid = stayData.amountDue <= 0 || stayData.paidViaLaterStay || 
+                          (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0);
+                        
+                        console.log(`[BADGE DEBUG] ${reservation.start_date}: amountDue=${stayData.amountDue}, amountPaid=${stayData.amountPaid}, paidViaLaterStay=${stayData.paidViaLaterStay}, creditDistributed=${stayData.creditDistributedToLaters}, effectivelyPaid=${effectivelyPaid}`);
+                        
+                        return (
+                          <Badge variant={
+                            stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'secondary' :
+                            effectivelyPaid ? 'default' : 
+                            stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
+                            'destructive'
+                          }>
+                            {stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'pending' :
+                             effectivelyPaid ? 'paid' : 
+                             stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'partial' : 
+                             'pending'}
+                          </Badge>
+                        );
+                      })()}
                       {!reservation.isVirtualSplit && paymentSplits.some(split => split.source_payment_id === stayData.paymentId) && (
                         <Badge variant="outline" className="gap-1 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                           <Users className="h-3 w-3" />
