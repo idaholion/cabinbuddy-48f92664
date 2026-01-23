@@ -953,7 +953,7 @@ const AddReceipt = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-body font-medium line-clamp-3 mb-1">{receipt.description}</p>
+                        <p className="text-sm font-medium break-words" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{receipt.description}</p>
                         <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
                         <p className="text-body-small text-muted-foreground">
                           {new Date(receipt.created_at).toLocaleDateString()}
