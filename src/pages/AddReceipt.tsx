@@ -42,6 +42,8 @@ const AddReceipt = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [editingReceipt, setEditingReceipt] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [editingDescription, setEditingDescription] = useState<string | null>(null);
+  const [editDescriptionValue, setEditDescriptionValue] = useState("");
   const [showQualityDialog, setShowQualityDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -502,6 +504,53 @@ const AddReceipt = () => {
     setEditAmount("");
   };
 
+  const handleEditDescription = (id: string, currentDescription: string) => {
+    setEditingDescription(id);
+    setEditDescriptionValue(currentDescription);
+  };
+
+  const handleSaveDescription = async (id: string) => {
+    if (!editDescriptionValue.trim()) {
+      toast({
+        title: "Invalid description",
+        description: "Description cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('receipts')
+        .update({ description: editDescriptionValue.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await refetchReceipts();
+      
+      toast({
+        title: "Description updated",
+        description: "Receipt description has been updated successfully.",
+      });
+
+      setEditingDescription(null);
+      setEditDescriptionValue("");
+    } catch (error) {
+      console.error('Error updating description:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update receipt description.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelDescriptionEdit = () => {
+    setEditingDescription(null);
+    setEditDescriptionValue("");
+  };
+
   const handleUploadWithAmount = async () => {
     if (currentFile && uploadAmount) {
       setUploadingFile(true);
@@ -829,7 +878,46 @@ const AddReceipt = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-body font-medium truncate">{receipt.description}</p>
+                        {editingDescription === receipt.id ? (
+                          <div className="flex items-start gap-1 mb-1">
+                            <Textarea
+                              value={editDescriptionValue}
+                              onChange={(e) => setEditDescriptionValue(e.target.value)}
+                              className="min-h-[50px] text-sm flex-1"
+                              autoFocus
+                            />
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSaveDescription(receipt.id)}
+                                className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelDescriptionEdit}
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start gap-1 group mb-1">
+                            <p className="text-body font-medium line-clamp-3">{receipt.description}</p>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditDescription(receipt.id, receipt.description)}
+                              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary flex-shrink-0"
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           {editingReceipt === receipt.id ? (
                             <div className="flex items-center gap-1">
