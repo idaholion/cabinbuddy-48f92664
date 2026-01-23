@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,8 +44,20 @@ const AddReceipt = () => {
   const [editAmount, setEditAmount] = useState("");
   const [showQualityDialog, setShowQualityDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { toast } = useToast();
+
+  // Generate preview URL when currentFile changes
+  useEffect(() => {
+    if (currentFile) {
+      const url = URL.createObjectURL(currentFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [currentFile]);
   const [uploadDescription, setUploadDescription] = useState("");
 
   // Quality options
@@ -656,27 +668,56 @@ const AddReceipt = () => {
                   </div>
                   {fileInfo && (
                     <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm border">
-                      <p className="font-medium text-foreground">{fileInfo.name}</p>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-muted-foreground">Size: {formatFileSize(fileInfo.size)}</span>
-                        {fileInfo.dimensions && (
-                          <span className="text-muted-foreground">
-                            {fileInfo.dimensions.width} × {fileInfo.dimensions.height}px
-                          </span>
+                      <div className="flex items-start gap-3">
+                        {/* Image preview thumbnail */}
+                        {previewUrl && (
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={previewUrl} 
+                              alt="Receipt preview"
+                              className="w-20 h-20 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity border border-border"
+                              onClick={() => setViewingImage(previewUrl)}
+                            />
+                            <p className="text-xs text-muted-foreground text-center mt-1">Click to view</p>
+                          </div>
                         )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-medium text-foreground truncate">{fileInfo.name}</p>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="h-6 w-6 p-0 flex-shrink-0"
+                              onClick={() => {
+                                setCurrentFile(null);
+                                setFileInfo(null);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                            <span className="text-muted-foreground">Size: {formatFileSize(fileInfo.size)}</span>
+                            {fileInfo.dimensions && (
+                              <span className="text-muted-foreground">
+                                {fileInfo.dimensions.width} × {fileInfo.dimensions.height}px
+                              </span>
+                            )}
+                          </div>
+                          {fileInfo.size > 5 * 1024 * 1024 && (
+                            <div className="flex items-center gap-1 mt-2 text-amber-600">
+                              <span className="text-xs">⚠️</span>
+                              <span className="text-xs">Large file - consider resizing</span>
+                            </div>
+                          )}
+                          {fileInfo.originalSize && fileInfo.size < fileInfo.originalSize && (
+                            <div className="flex items-center gap-1 mt-1 text-green-600">
+                              <span className="text-xs">✓</span>
+                              <span className="text-xs">Compressed from {formatFileSize(fileInfo.originalSize)}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {fileInfo.size > 5 * 1024 * 1024 && (
-                        <div className="flex items-center gap-1 mt-2 text-amber-600">
-                          <span className="text-xs">⚠️</span>
-                          <span className="text-xs">Large file - consider resizing</span>
-                        </div>
-                      )}
-                      {fileInfo.originalSize && fileInfo.size < fileInfo.originalSize && (
-                        <div className="flex items-center gap-1 mt-1 text-green-600">
-                          <span className="text-xs">✓</span>
-                          <span className="text-xs">Compressed from {formatFileSize(fileInfo.originalSize)}</span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
