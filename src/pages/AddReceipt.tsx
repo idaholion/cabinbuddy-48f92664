@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Upload, Camera, DollarSign, Trash2, Home, Receipt, Image as ImageIcon, Smartphone, Loader2, ZoomIn, ZoomOut, RotateCcw, Edit2, Check, X, ChevronUp, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -40,10 +40,17 @@ const AddReceipt = () => {
   const [imagePan, setImagePan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [editingReceipt, setEditingReceipt] = useState<string | null>(null);
-  const [editAmount, setEditAmount] = useState("");
-  const [editingDescription, setEditingDescription] = useState<string | null>(null);
-  const [editDescriptionValue, setEditDescriptionValue] = useState("");
+  // Edit Receipt Dialog state
+  const [editingReceiptFull, setEditingReceiptFull] = useState<any | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    description: '',
+    amount: '',
+    newImage: null as File | null,
+    newImagePreview: null as string | null,
+  });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const editImageInputRef = useRef<HTMLInputElement>(null);
   const [showQualityDialog, setShowQualityDialog] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -456,61 +463,68 @@ const AddReceipt = () => {
     deleteReceipt(id);
   };
 
-  const handleEditReceipt = (id: string, currentAmount: number) => {
-    setEditingReceipt(id);
-    setEditAmount(currentAmount.toString());
+  // Edit Receipt Dialog handlers
+  const openEditDialog = (receipt: any) => {
+    setEditingReceiptFull(receipt);
+    setEditFormData({
+      description: receipt.description,
+      amount: receipt.amount.toString(),
+      newImage: null,
+      newImagePreview: null,
+    });
+    setShowDeleteConfirm(false);
   };
 
-  const handleSaveAmount = async (id: string) => {
-    if (!editAmount || parseFloat(editAmount) <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Please enter a valid amount.",
-        variant: "destructive",
-      });
-      return;
+  const closeEditDialog = () => {
+    // Cleanup preview URL if it exists
+    if (editFormData.newImagePreview) {
+      URL.revokeObjectURL(editFormData.newImagePreview);
     }
+    setEditingReceiptFull(null);
+    setEditFormData({
+      description: '',
+      amount: '',
+      newImage: null,
+      newImagePreview: null,
+    });
+    setShowDeleteConfirm(false);
+  };
 
-    try {
-      const { error } = await supabase
-        .from('receipts')
-        .update({ amount: parseFloat(editAmount) })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      // Update local state by refetching receipts to ensure consistency
-      await refetchReceipts();
-      
-      toast({
-        title: "Amount updated",
-        description: "Receipt amount has been updated successfully.",
-      });
-
-      setEditingReceipt(null);
-      setEditAmount("");
-    } catch (error) {
-      console.error('Error updating receipt:', error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update receipt amount.",
-        variant: "destructive",
-      });
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Cleanup old preview URL
+      if (editFormData.newImagePreview) {
+        URL.revokeObjectURL(editFormData.newImagePreview);
+      }
+      const previewUrl = URL.createObjectURL(file);
+      setEditFormData(prev => ({
+        ...prev,
+        newImage: file,
+        newImagePreview: previewUrl,
+      }));
+    }
+    // Reset input so same file can be selected again
+    if (e.target) {
+      e.target.value = '';
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditingReceipt(null);
-    setEditAmount("");
+  const clearNewImage = () => {
+    if (editFormData.newImagePreview) {
+      URL.revokeObjectURL(editFormData.newImagePreview);
+    }
+    setEditFormData(prev => ({
+      ...prev,
+      newImage: null,
+      newImagePreview: null,
+    }));
   };
 
-  const handleEditDescription = (id: string, currentDescription: string) => {
-    setEditingDescription(id);
-    setEditDescriptionValue(currentDescription);
-  };
-
-  const handleSaveDescription = async (id: string) => {
-    if (!editDescriptionValue.trim()) {
+  const handleSaveReceipt = async () => {
+    if (!editingReceiptFull) return;
+    
+    if (!editFormData.description.trim()) {
       toast({
         title: "Invalid description",
         description: "Description cannot be empty.",
@@ -518,37 +532,98 @@ const AddReceipt = () => {
       });
       return;
     }
+    
+    const parsedAmount = parseFloat(editFormData.amount);
+    if (!editFormData.amount || parsedAmount <= 0 || isNaN(parsedAmount)) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid amount greater than 0.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setSavingEdit(true);
+    
     try {
+      let imageUrl = editingReceiptFull.image_url;
+      
+      // If new image selected, upload it
+      if (editFormData.newImage) {
+        // Get user ID for storage path
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("User not authenticated");
+        
+        // Upload new image
+        const fileExt = editFormData.newImage.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('receipt-images')
+          .upload(filePath, editFormData.newImage);
+          
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('receipt-images')
+          .getPublicUrl(filePath);
+          
+        imageUrl = publicUrl;
+        
+        // Delete old image if it existed
+        if (editingReceiptFull.image_url) {
+          try {
+            // Extract path from URL
+            const oldUrl = new URL(editingReceiptFull.image_url);
+            const pathMatch = oldUrl.pathname.match(/receipt-images\/(.+)$/);
+            if (pathMatch) {
+              await supabase.storage.from('receipt-images').remove([pathMatch[1]]);
+            }
+          } catch (e) {
+            // Ignore errors when deleting old image
+            console.warn('Could not delete old image:', e);
+          }
+        }
+      }
+      
+      // Update receipt in database
       const { error } = await supabase
         .from('receipts')
-        .update({ description: editDescriptionValue.trim() })
-        .eq('id', id);
-
+        .update({
+          description: editFormData.description.trim(),
+          amount: parsedAmount,
+          image_url: imageUrl,
+        })
+        .eq('id', editingReceiptFull.id);
+        
       if (error) throw error;
-
+      
       await refetchReceipts();
       
       toast({
-        title: "Description updated",
-        description: "Receipt description has been updated successfully.",
+        title: "Receipt updated",
+        description: "Receipt has been updated successfully.",
       });
-
-      setEditingDescription(null);
-      setEditDescriptionValue("");
+      
+      closeEditDialog();
     } catch (error) {
-      console.error('Error updating description:', error);
+      console.error('Error updating receipt:', error);
       toast({
         title: "Update failed",
-        description: "Failed to update receipt description.",
+        description: "Failed to update receipt.",
         variant: "destructive",
       });
+    } finally {
+      setSavingEdit(false);
     }
   };
 
-  const handleCancelDescriptionEdit = () => {
-    setEditingDescription(null);
-    setEditDescriptionValue("");
+  const handleDeleteFromDialog = async () => {
+    if (!editingReceiptFull) return;
+    await handleDeleteReceipt(editingReceiptFull.id);
+    closeEditDialog();
   };
 
   const handleUploadWithAmount = async () => {
@@ -618,7 +693,7 @@ const AddReceipt = () => {
                       onClick={() => handleNativePhotoSelection(CameraSource.Photos)}
                       className="flex flex-col items-center space-y-2 h-auto py-4 hover:scale-105 hover:shadow-md hover:border-primary/50 transition-all duration-200"
                     >
-                      <Image className="h-6 w-6" />
+                      <ImageIcon className="h-6 w-6" />
                       <span className="text-body">Photo Library</span>
                     </Button>
                     <Button
@@ -878,89 +953,8 @@ const AddReceipt = () => {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        {editingDescription === receipt.id ? (
-                          <div className="flex items-start gap-1 mb-1">
-                            <Textarea
-                              value={editDescriptionValue}
-                              onChange={(e) => setEditDescriptionValue(e.target.value)}
-                              className="min-h-[50px] text-sm flex-1"
-                              autoFocus
-                            />
-                            <div className="flex flex-col gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSaveDescription(receipt.id)}
-                                className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-                              >
-                                <Check className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelDescriptionEdit}
-                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-start gap-1 group mb-1">
-                            <p className="text-body font-medium line-clamp-3">{receipt.description}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditDescription(receipt.id, receipt.description)}
-                              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary flex-shrink-0"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          {editingReceipt === receipt.id ? (
-                            <div className="flex items-center gap-1">
-                              <span className="text-body">$</span>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                value={editAmount}
-                                onChange={(e) => setEditAmount(e.target.value)}
-                                className="w-20 h-6 text-sm"
-                                autoFocus
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSaveAmount(receipt.id)}
-                                className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
-                              >
-                                <Check className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelEdit}
-                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditReceipt(receipt.id, receipt.amount)}
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-primary"
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
+                        <p className="text-body font-medium line-clamp-3 mb-1">{receipt.description}</p>
+                        <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
                         <p className="text-body-small text-muted-foreground">
                           {new Date(receipt.created_at).toLocaleDateString()}
                         </p>
@@ -968,10 +962,10 @@ const AddReceipt = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteReceipt(receipt.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:scale-110 hover:shadow-md hover:shadow-destructive/20 transition-all duration-200"
+                        onClick={() => openEditDialog(receipt)}
+                        className="text-muted-foreground hover:text-primary"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -1124,6 +1118,153 @@ const AddReceipt = () => {
               })}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Receipt Dialog */}
+      <Dialog open={!!editingReceiptFull} onOpenChange={(open) => !open && closeEditDialog()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Receipt</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Image Preview */}
+            <div className="space-y-2">
+              <Label>Receipt Image</Label>
+              <div className="relative">
+                {(editFormData.newImagePreview || editingReceiptFull?.image_url) ? (
+                  <img 
+                    src={editFormData.newImagePreview || editingReceiptFull?.image_url}
+                    alt="Receipt"
+                    className="w-full h-48 object-contain rounded border cursor-pointer bg-muted/20"
+                    onClick={() => setViewingImage(editFormData.newImagePreview || editingReceiptFull?.image_url)}
+                  />
+                ) : (
+                  <div className="w-full h-48 bg-muted rounded flex items-center justify-center border">
+                    <Receipt className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+              
+              {/* Replace Image Button */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => editImageInputRef.current?.click()}
+                  type="button"
+                >
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  {editFormData.newImage ? 'Choose Different' : 'Replace Image'}
+                </Button>
+                {editFormData.newImage && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearNewImage}
+                    type="button"
+                  >
+                    <X className="h-4 w-4 mr-1" /> 
+                    Undo
+                  </Button>
+                )}
+              </div>
+              <input 
+                type="file" 
+                ref={editImageInputRef} 
+                accept="image/*" 
+                className="hidden" 
+                onChange={handleEditImageSelect} 
+              />
+            </div>
+            
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea 
+                id="edit-description"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData(prev => ({...prev, description: e.target.value}))}
+                className="min-h-[80px]"
+              />
+            </div>
+            
+            {/* Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-amount">Amount</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-semibold">$</span>
+                <Input 
+                  id="edit-amount"
+                  type="number" 
+                  step="0.01"
+                  min="0"
+                  value={editFormData.amount}
+                  onChange={(e) => setEditFormData(prev => ({...prev, amount: e.target.value}))}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col gap-3 sm:flex-row">
+            {/* Delete with Confirmation */}
+            {!showDeleteConfirm ? (
+              <Button 
+                variant="destructive" 
+                onClick={() => setShowDeleteConfirm(true)} 
+                className="sm:mr-auto"
+                disabled={savingEdit}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Receipt
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 sm:mr-auto">
+                <span className="text-sm text-destructive font-medium">Delete this receipt?</span>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={handleDeleteFromDialog}
+                  disabled={savingEdit}
+                >
+                  Yes
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={savingEdit}
+                >
+                  No
+                </Button>
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={closeEditDialog}
+                disabled={savingEdit}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveReceipt}
+                disabled={savingEdit}
+              >
+                {savingEdit ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
