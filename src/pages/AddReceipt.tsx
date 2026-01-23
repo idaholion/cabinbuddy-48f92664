@@ -651,21 +651,24 @@ const AddReceipt = () => {
                       onChange={(e) => setUploadAmount(e.target.value)}
                       className="flex-1 text-body placeholder:text-body"
                     />
-                    {currentFile && uploadAmount && (
+                    {currentFile && (
                       <Button 
                         onClick={handleUploadWithAmount}
-                        disabled={uploadingFile}
-                        className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none"
+                        disabled={uploadingFile || !uploadAmount}
+                        className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200 disabled:hover:scale-100 disabled:hover:shadow-none disabled:opacity-50"
                       >
                         {uploadingFile ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Upload className="h-4 w-4" />
                         )}
-                        <span>{uploadingFile ? 'Uploading...' : 'Upload'}</span>
+                        <span>{uploadingFile ? 'Saving...' : 'Save Receipt'}</span>
                       </Button>
                     )}
                   </div>
+                  {currentFile && !uploadAmount && (
+                    <p className="text-xs text-muted-foreground mt-1">Enter receipt amount to save</p>
+                  )}
                   {fileInfo && (
                     <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm border">
                       <div className="flex items-start gap-3">
