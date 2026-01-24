@@ -219,11 +219,6 @@ const adminItems = [
     url: "/faq-management",
     icon: HelpCircle,
   },
-  {
-    title: "Admin Documentation",
-    url: "/admin-documentation",
-    icon: BookOpen,
-  },
 ];
 
 
@@ -633,6 +628,19 @@ export function AppSidebar() {
                     >
                       <Settings className="h-4 w-4" />
                       <span>Dashboard</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Admin Documentation">
+                    <NavLink 
+                      to="/admin-documentation" 
+                      onClick={handleMobileNavClick}
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Admin Documentation</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
