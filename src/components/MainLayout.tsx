@@ -2,8 +2,7 @@ import { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
-import { ContextualHelp } from '@/components/ContextualHelp';
-import { AiHelpAssistant } from '@/components/AiHelpAssistant';
+import { CBHelpButton } from '@/components/CBHelpButton';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
 import { TestOrganizationBanner } from '@/components/TestOrganizationBanner';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
@@ -37,19 +36,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 <div className="w-8" /> {/* Spacer for balance */}
               </div>
             )}
-            {/* Only show header with contextual help on non-home and non-FAQ pages */}
-            {!isHomePage && !isFAQPage && (
-              <div className="p-6 pb-0">
-                <div className="flex items-center justify-end mb-4">
-                  <ContextualHelp />
-                </div>
-              </div>
-            )}
-            <div className={isHomePage ? "p-0" : "p-6 pt-0"}>
+            <div className={isHomePage ? "p-0" : "p-6"}>
               {children}
             </div>
           </main>
-          {/* AI Help Assistant temporarily disabled - requires OpenAI API setup */}
+          {/* CB Help Button - Unified help system */}
+          <CBHelpButton />
         </div>
       </SidebarProvider>
     </ReadOnlyModeProvider>
