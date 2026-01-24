@@ -534,18 +534,6 @@ export function AppSidebar() {
                 </JoinOrganizationDialog>
               </SidebarMenuItem>
               
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Create Organization">
-                  <NavLink 
-                    to="/family-setup?mode=create" 
-                    onClick={handleMobileNavClick}
-                    className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Create Organization</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               
               {/* Calendar Keeper and Demo moved to Organizations */}
               <SidebarMenuItem>
