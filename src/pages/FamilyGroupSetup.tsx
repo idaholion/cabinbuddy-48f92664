@@ -405,62 +405,53 @@ const FamilyGroupSetup = () => {
     }
   }, [selectedFamilyGroup, setValue, form, getValues, user?.email, setShowAllMembers, parseFullName]);
 
-  // Auto-update ONLY Group Member 1 when Group Lead info changes - DISABLED to prevent contamination
-  // This was causing data bleed between family groups
-  /*
+  // Auto-update Group Member 1 when Group Lead info changes
+  // Only sync if Member 1 is empty OR matches the previous lead info (to avoid overwriting user edits)
   useEffect(() => {
     const currentGroupMembers = getValues("groupMembers");
     const currentSelectedGroup = getValues("selectedGroup");
     
-    console.log('🔍 [AUTO_UPDATE_CHECK] Effect triggered:', {
-      hasGroupMembers: !!currentGroupMembers?.length,
-      leadName: watchedData.leadName,
-      leadEmail: watchedData.leadEmail,
-      hasLoadedAutoSave: hasLoadedAutoSave.current,
-      selectedGroup: currentSelectedGroup
-    });
-    
-    // DEFENSIVE CHECK: Don't update if no group is selected or if data doesn't match
+    // DEFENSIVE CHECK: Don't update if no group is selected
     if (!currentSelectedGroup || currentSelectedGroup === "") {
-      console.log('⏸️ [AUTO_UPDATE_CHECK] Skipping - no group selected');
       return;
     }
     
     // Only update if we have group members and any lead info
-    // Allow updates for both new groups and existing groups when lead info changes
     if (currentGroupMembers && currentGroupMembers.length > 0 && 
         (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail)) {
       
-      // Create a copy to avoid mutations
-      const updatedGroupMembers = [...currentGroupMembers];
+      const firstMember = currentGroupMembers[0];
       
-      // ONLY update the first group member (index 0) with Group Lead info
-      const { firstName, lastName } = parseFullName(watchedData.leadName || "");
-      updatedGroupMembers[0] = {
-        name: watchedData.leadName || "",
-        firstName,
-        lastName,
-        phone: watchedData.leadPhone || "",
-        email: watchedData.leadEmail || "",
-        canHost: true // Group leads can always host
-      };
+      // Check if first member is empty (new group) or matches lead (should sync)
+      const isFirstMemberEmpty = !firstMember.name?.trim() && !firstMember.email?.trim() && !firstMember.phone?.trim();
+      const firstMemberMatchesLead = firstMember.name === watchedData.leadName || 
+                                      firstMember.email === watchedData.leadEmail;
       
-      // Keep all other members exactly as they were
-      setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
-      
-      // Trigger form validation to ensure the changes are recognized
-      trigger("groupMembers");
-      
-      console.log('✅ [AUTO_UPDATE] Updated ONLY first group member with lead info for group:', {
-        groupName: currentSelectedGroup,
-        leadName: watchedData.leadName,
-        leadEmail: watchedData.leadEmail,
-        memberIndex: 0,
-        totalMembers: updatedGroupMembers.length
-      });
+      // Only auto-sync if member 1 is empty OR already matches the lead
+      // This prevents overwriting if user has manually edited Member 1 to be different
+      if (isFirstMemberEmpty || firstMemberMatchesLead) {
+        const updatedGroupMembers = [...currentGroupMembers];
+        const { firstName, lastName } = parseFullName(watchedData.leadName || "");
+        
+        updatedGroupMembers[0] = {
+          name: watchedData.leadName || "",
+          firstName,
+          lastName,
+          phone: watchedData.leadPhone || "",
+          email: watchedData.leadEmail || "",
+          canHost: true
+        };
+        
+        setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
+        
+        console.log('✅ [AUTO_SYNC] Synced Group Lead info to Member 1:', {
+          groupName: currentSelectedGroup,
+          leadName: watchedData.leadName,
+          leadEmail: watchedData.leadEmail
+        });
+      }
     }
-  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, hasLoadedAutoSave, trigger]);
-  */
+  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, parseFullName]);
 
   const onSubmit = async (data: FamilyGroupSetupFormData): Promise<boolean> => {
     if (!data.selectedGroup) {
