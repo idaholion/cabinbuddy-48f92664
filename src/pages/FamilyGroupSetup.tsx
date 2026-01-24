@@ -262,13 +262,20 @@ const FamilyGroupSetup = () => {
     // Only run if user is authenticated and no auto-save data was loaded
     if (!user || hasLoadedAutoSave.current) return;
 
-    // Auto-populate family group for non-admin users who have one
-    if (!isAdmin && !isSupervisor && userFamilyGroup && !getValues("selectedGroup")) {
-      console.log('🔧 [FAMILY_GROUP_SETUP] Auto-populating family group for non-admin user:', userFamilyGroup.name);
+    // Auto-populate family group for ALL users who have one (including admins)
+    if (userFamilyGroup && !getValues("selectedGroup")) {
+      console.log('🔧 [FAMILY_GROUP_SETUP] Auto-populating family group for user:', userFamilyGroup.name);
       setValue("selectedGroup", userFamilyGroup.name, { shouldDirty: false });
     }
 
-    // Only pre-populate if form is empty (no group selected and lead fields are empty)
+    // Skip pre-population if no group is selected (prevents partial data showing)
+    const selectedGroup = getValues("selectedGroup");
+    if (!selectedGroup) {
+      console.log('⏭️ [FAMILY_GROUP_SETUP] Skipping pre-populate - no group selected');
+      return;
+    }
+
+    // Only pre-populate if form is empty
     const currentValues = getValues();
     if (currentValues.leadName || currentValues.leadEmail) return;
 
@@ -852,6 +859,13 @@ const FamilyGroupSetup = () => {
                               className="w-full text-lg bg-muted/50 cursor-not-allowed"
                               placeholder="Your family group"
                             />
+                          )}
+
+                          {/* Admin hint - show when admin has a group selected */}
+                          {(isAdmin || isSupervisor) && field.value && field.value !== "no-groups" && allGroups.length > 1 && (
+                            <p className="text-sm text-muted-foreground text-center mt-2">
+                              💡 As an admin, you can use the dropdown above to view and manage other family groups.
+                            </p>
                           )}
                           
                           {/* Rename Group Section */}
