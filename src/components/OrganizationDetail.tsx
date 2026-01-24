@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, Globe, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Users, Receipt, Calendar, Settings, Trash2, UserPlus, Mail, Phone, FileText, Globe, ChevronDown, Database } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +27,7 @@ interface Organization {
   calendar_keeper_email?: string;
   calendar_keeper_phone?: string;
   alternate_supervisor_email?: string;
+  automated_backups_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +115,9 @@ export const OrganizationDetail = ({
   const [newAlternateSupervisor, setNewAlternateSupervisor] = useState(
     organization.alternate_supervisor_email || ''
   );
+  const [automatedBackupsEnabled, setAutomatedBackupsEnabled] = useState(
+    organization.automated_backups_enabled !== false // Default to true
+  );
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -158,6 +163,32 @@ export const OrganizationDetail = ({
     const result = await onUpdateAlternateSupervisor(organization.id, newAlternateSupervisor);
     if (!result.error) {
       // Success toast is handled in the hook
+    }
+  };
+
+  const handleToggleBackups = async (enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ automated_backups_enabled: enabled })
+        .eq('id', organization.id);
+
+      if (error) throw error;
+
+      setAutomatedBackupsEnabled(enabled);
+      toast({
+        title: enabled ? "Backups Enabled" : "Backups Disabled",
+        description: enabled 
+          ? "Automatic daily backups are now enabled for this organization."
+          : "Automatic daily backups are now disabled for this organization.",
+      });
+    } catch (error) {
+      console.error('Error updating backup setting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update backup setting",
+        variant: "destructive",
+      });
     }
   };
 
@@ -385,6 +416,32 @@ export const OrganizationDetail = ({
                     <UserPlus className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+
+              <Separator />
+
+              {/* Automated Backups Toggle */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-base font-medium flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Automated Backups
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable or disable automatic daily backups for this organization
+                    </p>
+                  </div>
+                  <Switch
+                    checked={automatedBackupsEnabled}
+                    onCheckedChange={handleToggleBackups}
+                  />
+                </div>
+                {!automatedBackupsEnabled && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    ⚠️ Backups are disabled. No automatic backups will be created for this organization.
+                  </p>
+                )}
               </div>
 
               <Separator />

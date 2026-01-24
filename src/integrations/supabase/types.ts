@@ -1209,6 +1209,7 @@ export type Database = {
           allocation_model: string | null
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
+          automated_backups_enabled: boolean | null
           automated_reminders_1_day_enabled: boolean | null
           automated_reminders_3_day_enabled: boolean | null
           automated_reminders_7_day_enabled: boolean | null
@@ -1258,6 +1259,7 @@ export type Database = {
           allocation_model?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          automated_backups_enabled?: boolean | null
           automated_reminders_1_day_enabled?: boolean | null
           automated_reminders_3_day_enabled?: boolean | null
           automated_reminders_7_day_enabled?: boolean | null
@@ -1307,6 +1309,7 @@ export type Database = {
           allocation_model?: string | null
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          automated_backups_enabled?: boolean | null
           automated_reminders_1_day_enabled?: boolean | null
           automated_reminders_3_day_enabled?: boolean | null
           automated_reminders_7_day_enabled?: boolean | null

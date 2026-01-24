@@ -67,9 +67,11 @@ Deno.serve(async (req) => {
       organizationsToBackup = [org];
     } else {
       // Backup all organizations (for scheduled backups)
+      // Only include organizations with automated_backups_enabled = true (or null for backwards compatibility)
       const { data: orgs, error: orgsError } = await supabase
         .from('organizations')
-        .select('*');
+        .select('*')
+        .or('automated_backups_enabled.eq.true,automated_backups_enabled.is.null');
       
       if (orgsError) {
         console.error('Error fetching organizations:', orgsError);
@@ -79,6 +81,7 @@ Deno.serve(async (req) => {
         );
       }
       organizationsToBackup = orgs || [];
+      console.log(`Found ${organizationsToBackup.length} organizations with backups enabled`);
     }
 
     const backupResults = [];
