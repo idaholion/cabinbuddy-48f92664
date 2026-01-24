@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings, Copy, X, DollarSign } from "lucide-react";
+import { Users, Plus, Settings, Copy, X, DollarSign, Link2 } from "lucide-react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { AdminProfileClaimingStep } from "@/components/AdminProfileClaimingStep";
@@ -691,6 +691,15 @@ const FamilySetup = () => {
     });
   };
 
+  const copyInviteLink = () => {
+    const inviteUrl = `${window.location.origin}/join?code=${organizationCode}`;
+    navigator.clipboard.writeText(inviteUrl);
+    toast({
+      title: "Invite link copied!",
+      description: "Share this link with new members to invite them to join.",
+    });
+  };
+
   // Copy admin data to treasurer
   const copyAdminToTreasurer = () => {
     setTreasurerName(adminName);
@@ -803,7 +812,16 @@ const FamilySetup = () => {
                     className="flex items-center gap-1"
                   >
                     <Copy className="h-4 w-4" />
-                    Copy
+                    Copy Code
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={copyInviteLink}
+                    className="flex items-center gap-1"
+                  >
+                    <Link2 className="h-4 w-4" />
+                    Copy Invite Link
                   </Button>
                    {(isCreatingNew || isAdmin) && (
                     <Button

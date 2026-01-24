@@ -69,7 +69,7 @@ const Intro = () => {
               Start a New Organization
             </Button>
             <Button 
-              onClick={() => navigate("/signup?mode=join")}
+              onClick={() => navigate("/join")}
               size="lg" 
               variant="outline"
               className="bg-white text-black border-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold"

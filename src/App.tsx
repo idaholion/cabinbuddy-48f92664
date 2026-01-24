@@ -25,6 +25,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Join from "./pages/Join";
 import Setup from "./pages/Setup";
 
 import CabinCalendar from "./pages/CabinCalendar";
@@ -118,6 +119,7 @@ const AppContent = () => {
         <Route path="/auth" element={<Auth />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/join" element={<Join />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-phone-reset" element={<VerifyPhoneReset />} />
         <Route path="/guest" element={<Suspense fallback={<LoadingSpinner />}><GuestAccess /></Suspense>} />
