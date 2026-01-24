@@ -465,6 +465,12 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems
                   .filter(item => {
+                    // Hide Google Calendar Setup for all orgs except Andrew Family Cabin
+                    if (item.url === '/google-calendar-setup') {
+                      if (organization?.name !== 'Andrew Family Cabin') {
+                        return false;
+                      }
+                    }
                     // Admins/supervisors see all items
                     if (isAdmin || canAccessSupervisorFeatures) return true;
                     // Members with financial access only see Financial Dashboard
