@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Users, Edit2, Check, X } from "lucide-react";
+import { Plus, Trash2, Users, Edit2, Check, X, Copy, UserPlus, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
@@ -1053,6 +1053,48 @@ const FamilyGroupSetup = () => {
               <p>Ready to proceed to the next step? Make sure you've selected an alternate group lead.</p>
             </div>
             
+            {/* Invite New Members Section - visible to group leads and admins */}
+            {(isGroupLead || isAdmin || isSupervisor) && organization?.organization_code && (
+              <Card className="bg-muted/30 border-dashed">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                    Invite New Members
+                  </CardTitle>
+                  <CardDescription>
+                    Share this link to invite people to join your organization
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="bg-background px-3 py-2 rounded-md text-sm flex-1 min-w-0 border">
+                      <span className="truncate block text-muted-foreground">
+                        {window.location.origin}/join?code={organization.organization_code}
+                      </span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        const inviteUrl = `${window.location.origin}/join?code=${organization.organization_code}`;
+                        navigator.clipboard.writeText(inviteUrl);
+                        toast({
+                          title: "Invite link copied!",
+                          description: "Share this link with new members to invite them.",
+                        });
+                      }}
+                    >
+                      <Link2 className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Organization Code: <span className="font-mono font-bold text-primary">{organization.organization_code}</span>
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Save and Continue Button */}
             <div className="flex justify-center">
               <Button 

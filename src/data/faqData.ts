@@ -18,7 +18,7 @@ export const faqData: FAQCategory[] = [
       },
       {
         question: "How do I join my family's organization?",
-        answer: "Ask your group admin for an invitation link or organization code. Navigate to **Manage Organizations** from the sidebar and enter the code to join."
+        answer: "Your group admin or family lead can share an **invitation link** that takes you directly to join, or they can give you the **organization code** to enter manually. Click the invitation link, or navigate to **Join an Existing Organization** from the home page and enter the code."
       },
       {
         question: "What are the different user roles?",

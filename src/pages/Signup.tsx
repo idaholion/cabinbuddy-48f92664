@@ -31,8 +31,9 @@ const Signup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Get mode from URL parameter
+  // Get mode and code from URL parameters
   const mode = searchParams.get('mode'); // 'start' or 'join'
+  const codeFromUrl = searchParams.get('code')?.toUpperCase() || "";
 
   // Function to determine user role and navigate accordingly
   const determineUserRoleAndNavigate = async (userEmail: string) => {
@@ -120,7 +121,12 @@ const Signup = () => {
     } else if (mode === 'join') {
       setOrganizationType('join');
     }
-  }, [searchParams, mode]);
+    
+    // Pre-fill organization code if provided via URL (from invite link)
+    if (codeFromUrl && mode === 'join') {
+      setOrganizationCode(codeFromUrl);
+    }
+  }, [searchParams, mode, codeFromUrl]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
