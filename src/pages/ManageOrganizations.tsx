@@ -1,10 +1,9 @@
 import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building, Eye, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
-import { TestOrganizationBadge } from '@/components/TestOrganizationBadge';
 import { useEffect } from 'react';
+import { MainLayout } from '@/components/MainLayout';
 
 export const ManageOrganizations = () => {
   const navigate = useNavigate();
@@ -126,20 +125,7 @@ export const ManageOrganizations = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Temporary Design Review Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button 
-          onClick={() => navigate('/')} 
-          variant="outline"
-          size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          <Eye className="h-4 w-4 mr-2" />
-          View Landing Page
-        </Button>
-      </div>
-      
+    <MainLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto text-center mb-8">
           <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Choose Your Organization</h1>
@@ -162,6 +148,6 @@ export const ManageOrganizations = () => {
           mode="selection"
         />
       </div>
-    </div>
+    </MainLayout>
   );
 };
