@@ -644,6 +644,53 @@ const FamilyGroupSetup = () => {
     }
   };
 
+  // Save without navigation (for top button)
+  const saveOnly = async () => {
+    // First trigger validation to check for errors
+    const isFormValid = await trigger();
+    
+    if (!isFormValid) {
+      // Show validation errors to user
+      const errorMessages: string[] = [];
+      if (errors.leadName) {
+        errorMessages.push(errors.leadName.message || "Group lead name is invalid");
+      }
+      if (errors.groupMembers) {
+        // Handle array-level errors
+        if (typeof errors.groupMembers === 'object' && 'message' in errors.groupMembers) {
+          errorMessages.push(errors.groupMembers.message as string);
+        }
+      }
+      if (errors.selectedGroup) {
+        errorMessages.push(errors.selectedGroup.message || "Please select a family group");
+      }
+      
+      toast({
+        title: "Please fix the following issues",
+        description: errorMessages.length > 0 
+          ? errorMessages.join(". ") 
+          : "Please check the form for errors",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Form is valid, proceed with save (no navigation)
+    try {
+      await handleSubmit(async (data) => {
+        await onSubmit(data);
+        // Don't navigate - just stay on page after save
+      })();
+    } catch (error) {
+      console.error('[SAVE_ONLY] Form submission error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleContinueWithoutAlternateLead = async () => {
     // First trigger validation
     const isFormValid = await trigger();
@@ -748,8 +795,8 @@ const FamilyGroupSetup = () => {
             </div>
             <div className="absolute top-6 right-6 flex flex-col gap-2">
               <Button 
-                onClick={handleSubmit(onSubmit)}
-                disabled={isSaving || familyGroupsLoading || !isValid}
+                onClick={saveOnly}
+                disabled={isSaving || familyGroupsLoading}
                 className="flex items-center gap-2"
               >
                 {isSaving ? "Saving..." : "Save Family Group Setup"}
