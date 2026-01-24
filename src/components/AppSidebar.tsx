@@ -236,6 +236,14 @@ export function AppSidebar() {
   const { setupState } = useSetupState();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
+  const { isMobile, setOpenMobile } = useSidebar();
+  
+  // Helper function to close sidebar on mobile after navigation
+  const handleMobileNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
   
   // Check if members have financial access
   const allowMemberFinancialAccess = organization?.allow_member_financial_access === true;
@@ -308,6 +316,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Home">
                   <NavLink 
                     to="/home" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Home className="h-4 w-4" />
@@ -327,6 +336,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Profile Settings">
                   <NavLink 
                     to="/group-member-profile" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Shield className="h-4 w-4" />
@@ -363,6 +373,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
+                      onClick={handleMobileNavClick}
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -385,6 +396,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
+                      onClick={handleMobileNavClick}
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -399,6 +411,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Shared Notes">
                   <NavLink 
                     to="/shared-notes" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <StickyNote className="h-4 w-4" />
@@ -411,6 +424,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Messaging">
                   <NavLink 
                     to="/messaging" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <MessageSquare className="h-4 w-4" />
@@ -423,6 +437,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Family Voting">
                   <NavLink 
                     to="/family-voting" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Vote className="h-4 w-4" />
@@ -445,6 +460,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink 
                       to={item.url} 
+                      onClick={handleMobileNavClick}
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                     >
                       <item.icon className="h-4 w-4" />
@@ -482,6 +498,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild tooltip={item.title}>
                       <NavLink 
                         to={item.url} 
+                        onClick={handleMobileNavClick}
                         className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -504,6 +521,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Manage Organizations">
                   <NavLink 
                     to="/manage-organizations" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Settings className="h-4 w-4" />
@@ -525,6 +543,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Create Organization">
                   <NavLink 
                     to="/family-setup?mode=create" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Plus className="h-4 w-4" />
@@ -538,6 +557,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Calendar Keeper">
                   <NavLink 
                     to="/calendar-keeper-management" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <HeadphonesIcon className="h-4 w-4" />
@@ -550,6 +570,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip="Demo">
                   <NavLink 
                     to="/demo" 
+                    onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <Monitor className="h-4 w-4" />
@@ -583,6 +604,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild tooltip={item.title}>
                         <NavLink 
                           to={item.url} 
+                          onClick={handleMobileNavClick}
                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                         >
                           <item.icon className="h-4 w-4" />
@@ -606,6 +628,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild tooltip="Supervisor Dashboard">
                     <NavLink 
                       to="/supervisor" 
+                      onClick={handleMobileNavClick}
                       className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                     >
                       <Settings className="h-4 w-4" />
@@ -621,6 +644,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild tooltip="Family Groups">
                         <NavLink 
                           to={`/supervisor/organization/${organizationId}/family-groups`}
+                          onClick={handleMobileNavClick}
                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                         >
                           <Users className="h-4 w-4" />
@@ -633,6 +657,7 @@ export function AppSidebar() {
                        <SidebarMenuButton asChild tooltip="Use Fee Setup">
                          <NavLink 
                            to={`/supervisor/organization/${organizationId}/financial`}
+                           onClick={handleMobileNavClick}
                            className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                          >
                            <DollarSign className="h-4 w-4" />
@@ -645,6 +670,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild tooltip="Reservation Setup">
                         <NavLink 
                           to={`/supervisor/organization/${organizationId}/reservation`}
+                          onClick={handleMobileNavClick}
                           className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                         >
                           <Calendar className="h-4 w-4" />
