@@ -56,26 +56,43 @@ export const familyGroupSetupSchema = z.object({
     return z.string().email().safeParse(val).success;
   }, "Please enter a valid email address"),
   groupMembers: z.array(z.object({
-    firstName: requiredStringSchema.min(1, "First name is required"),
-    lastName: requiredStringSchema.min(1, "Last name is required"),
+    // firstName and lastName are optional - empty member slots are allowed
+    // But if any data is provided, we validate in the refine below
+    firstName: z.string().optional().default(""),
+    lastName: z.string().optional().default(""),
     name: z.string().optional(), // Computed field, will be auto-generated
     phone: z.string().optional(),
     email: z.string().optional(),
     canHost: z.boolean().optional().default(false),
   }))
+    // Validate that members with data have both first and last name
     .refine((members) => {
-      // Check for duplicate names (non-empty only)  
-      const names = members.map(m => `${m.firstName} ${m.lastName}`.toLowerCase().trim()).filter(Boolean);
+      for (const member of members) {
+        const hasAnyData = member.firstName?.trim() || member.lastName?.trim() || 
+                          member.email?.trim() || member.phone?.trim();
+        if (hasAnyData) {
+          // If member has any data, they must have both first and last name
+          if (!member.firstName?.trim() || !member.lastName?.trim()) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }, "Members with contact info must have both first and last name")
+    .refine((members) => {
+      // Check for duplicate names (non-empty only)
+      const filledMembers = members.filter(m => m.firstName?.trim() || m.lastName?.trim());
+      const names = filledMembers.map(m => `${m.firstName} ${m.lastName}`.toLowerCase().trim()).filter(Boolean);
       return new Set(names).size === names.length;
     }, "Group member names must be unique")
     .refine((members) => {
       // Check for duplicate emails (non-empty only)
-      const emails = members.map(m => m.email.toLowerCase().trim()).filter(Boolean);
+      const emails = members.map(m => m.email?.toLowerCase().trim()).filter(Boolean);
       return new Set(emails).size === emails.length;
     }, "Group member emails must be unique")
     .refine((members) => {
       // Check for duplicate phone numbers (non-empty only)
-      const phones = members.map(m => m.phone.replace(/\D/g, '')).filter(Boolean);
+      const phones = members.map(m => m.phone?.replace(/\D/g, '')).filter(Boolean);
       return new Set(phones).size === phones.length;
     }, "Group member phone numbers must be unique"),
   
