@@ -35,6 +35,7 @@ import { faqData, FAQItem } from '@/data/faqData';
 const routeToFaqCategories: Record<string, string[]> = {
   '/': ['Getting Started', 'Reservations & Calendar'],
   '/home': ['Getting Started', 'Reservations & Calendar'],
+  '/calendar': ['Reservations & Calendar'],
   '/cabin-calendar': ['Reservations & Calendar'],
   '/stay-history': ['Financial Management', 'Reservations & Calendar'],
   '/checkout': ['Check-In & Check-Out', 'Financial Management'],
@@ -89,6 +90,21 @@ const helpContexts: Record<string, {
       'The dashboard updates in real-time as reservations change',
       'Use quick action cards for common tasks',
       'Check the notification area for time-sensitive updates'
+    ]
+  },
+  '/calendar': {
+    title: 'Reservation Calendar',
+    description: 'View and manage all cabin reservations. Create new bookings or modify existing ones.',
+    steps: [
+      'Click on any date to create a new reservation',
+      'Click on existing reservations to view details',
+      'Use the month/year picker to navigate dates',
+      'Filter by family group to see specific bookings'
+    ],
+    tips: [
+      'Book during off-peak times for longer stays',
+      'Coordinate with other families to avoid conflicts',
+      'Use the rotation order to see who picks next'
     ]
   },
   '/cabin-calendar': {
