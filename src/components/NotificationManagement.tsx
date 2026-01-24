@@ -323,7 +323,9 @@ export const NotificationManagement = () => {
         .maybeSingle();
       
       const isSecondaryPhase = secondaryData?.started_at != null;
-      const secondaryCurrentFamily = secondaryData?.current_family_group;
+      // Only treat as active if the turn is NOT completed
+      const isSecondaryTurnCompleted = secondaryData?.turn_completed === true;
+      const secondaryCurrentFamily = isSecondaryTurnCompleted ? null : secondaryData?.current_family_group;
       
       // Create usage map
       const usageMap = new Map(
