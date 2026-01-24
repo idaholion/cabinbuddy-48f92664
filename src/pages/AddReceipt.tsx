@@ -30,6 +30,7 @@ const AddReceipt = () => {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const [fileInfo, setFileInfo] = useState<{
     name: string;
     size: number;
@@ -76,13 +77,33 @@ const AddReceipt = () => {
     small: { maxWidth: 1280, maxHeight: 720, quality: 0.6, label: "Small File", description: "Lower quality, smallest file size" }
   };
 
-  // Filter receipts by selected family group
+  // Get available years from receipts
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    receipts.forEach(receipt => {
+      const year = new Date(receipt.created_at).getFullYear();
+      years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
+  }, [receipts]);
+
+  // Filter receipts by selected family group and year
   const filteredReceipts = useMemo(() => {
-    if (selectedFamilyGroup === "all") {
-      return receipts;
+    let filtered = receipts;
+    
+    if (selectedFamilyGroup !== "all") {
+      filtered = filtered.filter(receipt => receipt.family_group === selectedFamilyGroup);
     }
-    return receipts.filter(receipt => receipt.family_group === selectedFamilyGroup);
-  }, [receipts, selectedFamilyGroup]);
+    
+    if (selectedYear !== "all") {
+      filtered = filtered.filter(receipt => {
+        const year = new Date(receipt.created_at).getFullYear();
+        return year === parseInt(selectedYear);
+      });
+    }
+    
+    return filtered;
+  }, [receipts, selectedFamilyGroup, selectedYear]);
 
   // Scroll control for receipts list
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -905,15 +926,32 @@ const AddReceipt = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Family Group Filter */}
-              <div className="flex items-center gap-2">
-                <Label htmlFor="family-filter" className="whitespace-nowrap text-sm">Filter:</Label>
-                <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                  <SelectTrigger id="family-filter" className="w-[200px]">
-                    <SelectValue placeholder="Select family group" />
+              {/* Filters Row */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Label className="whitespace-nowrap text-sm">Filter:</Label>
+                
+                {/* Year Filter */}
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Family Groups</SelectItem>
+                    <SelectItem value="all">All Years</SelectItem>
+                    {availableYears.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Family Group Filter */}
+                <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Family Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Groups</SelectItem>
                     {familyGroups.map((group) => (
                       <SelectItem key={group.id} value={group.name}>
                         {group.name}
