@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/search-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable } from "@/components/ui/data-table";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -14,7 +15,21 @@ import { getHostFirstName } from "@/lib/reservation-utils";
 
 export const ReservationLookup = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
   const { reservations, loading } = useReservations();
+
+  // Extract unique years from reservations
+  const availableYears = useMemo(() => {
+    if (!reservations) return [];
+    const years = new Set<number>();
+    reservations.forEach((reservation) => {
+      if (reservation.start_date) {
+        const year = parseInt(reservation.start_date.split('-')[0]);
+        if (!isNaN(year)) years.add(year);
+      }
+    });
+    return Array.from(years).sort((a, b) => b - a); // Sort descending (newest first)
+  }, [reservations]);
   const navigate = useNavigate();
 
   const parseLocalDate = (dateStr: string): Date => {
@@ -30,7 +45,16 @@ export const ReservationLookup = () => {
     if (!reservations) return [];
 
     return reservations.filter((reservation) => {
+      // Year filter
+      if (selectedYear !== "all" && reservation.start_date) {
+        const reservationYear = reservation.start_date.split('-')[0];
+        if (reservationYear !== selectedYear) return false;
+      }
+
+      // Search filter
       const searchLower = searchQuery.toLowerCase();
+      if (!searchLower) return true;
+      
       const displayName = getHostFirstName(reservation);
       return (
         reservation.family_group?.toLowerCase().includes(searchLower) ||
@@ -40,7 +64,7 @@ export const ReservationLookup = () => {
         reservation.status?.toLowerCase().includes(searchLower)
       );
     });
-  }, [reservations, searchQuery]);
+  }, [reservations, searchQuery, selectedYear]);
 
   const formatDate = (date: string) => {
     try {
@@ -163,11 +187,26 @@ export const ReservationLookup = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <SearchInput
-          placeholder="Search by family group, reservation ID, property, or status..."
-          onSearch={setSearchQuery}
-          className="max-w-md"
-        />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <SearchInput
+            placeholder="Search by family group, reservation ID, property, or status..."
+            onSearch={setSearchQuery}
+            className="flex-1 max-w-md"
+          />
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Filter by year" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover">
+              <SelectItem value="all">All Years</SelectItem>
+              {availableYears.map((year) => (
+                <SelectItem key={year} value={year.toString()}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <DataTable
           data={filteredReservations}
