@@ -1027,19 +1027,37 @@ const FamilyGroupSetup = () => {
                       Family Group: {watch("selectedGroup")} ({filledMembersCount})
                     </h3>
                     
-                    {/* Tip about email/phone */}
+                    {/* Tip and instructions */}
                     <div className="mt-2 mb-3">
                       <p className="text-lg font-medium text-foreground">
                         💡 Tip: You can just add names for now
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Family members can add their own email and phone when they log in and claim their profile. This lets them choose how they want to be contacted.
+                        Family members can add their own email and phone when they log in and claim their profile. Check the boxes to indicate who can host and make reservations.
                       </p>
                     </div>
-                    
-                    <p className="text-lg text-muted-foreground mt-1">
-                      Additional family members who can use the property. If you want, just add the names and have them fill in their desired email and phone information in the Group Member Profile page. Check the boxes to indicate who can host and make reservations.
-                    </p>
+
+                    {/* Copy Invite Link Button - visible to group leads and admins */}
+                    {(isGroupLead || isAdmin || isSupervisor) && organization?.organization_code && (
+                      <div className="flex justify-center mt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            const inviteUrl = `${window.location.origin}/join?code=${organization.organization_code}`;
+                            navigator.clipboard.writeText(inviteUrl);
+                            toast({
+                              title: "Invite link copied!",
+                              description: "Share this link with family members to invite them to join.",
+                            });
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Link2 className="h-4 w-4" />
+                          Copy Invite Link
+                        </Button>
+                      </div>
+                    )}
                   </div>
                    </div>
 
@@ -1158,26 +1176,6 @@ const FamilyGroupSetup = () => {
               <p>Ready to proceed to the next step? Make sure you've selected an alternate group lead.</p>
             </div>
             
-            {/* Copy Invite Link Button - visible to group leads and admins */}
-            {(isGroupLead || isAdmin || isSupervisor) && organization?.organization_code && (
-              <div className="flex justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const inviteUrl = `${window.location.origin}/join?code=${organization.organization_code}`;
-                    navigator.clipboard.writeText(inviteUrl);
-                    toast({
-                      title: "Invite link copied!",
-                      description: "Share this link with family members to invite them to join.",
-                    });
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Link2 className="h-4 w-4" />
-                  Copy Invite Link
-                </Button>
-              </div>
-            )}
 
             {/* Save and Continue Button */}
             <div className="flex justify-center">
