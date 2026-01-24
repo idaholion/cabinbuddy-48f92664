@@ -593,8 +593,36 @@ const FamilyGroupSetup = () => {
   ).length || 0;
 
   const saveAndContinue = async () => {
-    // Save the form and wait for completion before navigating
-    // Alternate lead is optional - no prompt required
+    // First trigger validation to check for errors
+    const isFormValid = await trigger();
+    
+    if (!isFormValid) {
+      // Show validation errors to user
+      const errorMessages: string[] = [];
+      if (errors.leadName) {
+        errorMessages.push(errors.leadName.message || "Group lead name is invalid");
+      }
+      if (errors.groupMembers) {
+        // Handle array-level errors
+        if (typeof errors.groupMembers === 'object' && 'message' in errors.groupMembers) {
+          errorMessages.push(errors.groupMembers.message as string);
+        }
+      }
+      if (errors.selectedGroup) {
+        errorMessages.push(errors.selectedGroup.message || "Please select a family group");
+      }
+      
+      toast({
+        title: "Please fix the following issues",
+        description: errorMessages.length > 0 
+          ? errorMessages.join(". ") 
+          : "Please check the form for errors",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Form is valid, proceed with save
     try {
       await handleSubmit(async (data) => {
         const result = await onSubmit(data);
@@ -608,10 +636,27 @@ const FamilyGroupSetup = () => {
     } catch (error) {
       // Form validation failed or save failed - stay on page
       console.error('[SAVE_AND_CONTINUE] Form submission error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleContinueWithoutAlternateLead = async () => {
+    // First trigger validation
+    const isFormValid = await trigger();
+    
+    if (!isFormValid) {
+      toast({
+        title: "Please fix form errors",
+        description: "Please check the form for errors before saving",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await handleSubmit(async (data) => {
         const result = await onSubmit(data);
