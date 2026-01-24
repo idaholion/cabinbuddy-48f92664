@@ -161,6 +161,8 @@ const FamilyGroupSetup = () => {
   }, [organization?.organization_id, selectedFamilyGroup]);
 
   // Load auto-saved data on mount (only once) with validation
+  // IMPORTANT: Auto-save should ONLY restore data if user has unsaved changes that weren't saved to DB
+  // Database data always takes precedence after a successful save
   useEffect(() => {
     if (hasLoadedAutoSave.current) return;
     
@@ -170,9 +172,29 @@ const FamilyGroupSetup = () => {
     if (savedData && savedData.selectedGroup) {
       // Verify that the saved data belongs to an existing family group
       const groupExists = familyGroups.some(g => g.name === savedData.selectedGroup);
+      const dbGroup = familyGroups.find(g => g.name === savedData.selectedGroup);
       
       if (!groupExists) {
         console.warn('⚠️ [AUTO_SAVE_LOAD] Saved data references non-existent group, clearing:', savedData.selectedGroup);
+        clearSavedData();
+        // Don't set hasLoadedAutoSave to true - let database load take over
+        return;
+      }
+      
+      // Compare auto-save member count with database member count
+      // If database has been saved with different data, prefer database
+      const autoSaveFilledMembers = savedData.groupMembers?.filter((m: any) => 
+        m.name?.trim() || m.email?.trim() || m.phone?.trim()
+      ).length || 0;
+      const dbMemberCount = dbGroup?.host_members?.length || 0;
+      
+      // If auto-save has MORE members than DB, user may have added members but not saved
+      // If auto-save has SAME or FEWER members as DB, DB data is more current - clear auto-save
+      if (autoSaveFilledMembers <= dbMemberCount && dbMemberCount > 0) {
+        console.log('🔄 [AUTO_SAVE_LOAD] DB has current data, clearing stale auto-save:', {
+          autoSaveMembers: autoSaveFilledMembers,
+          dbMembers: dbMemberCount
+        });
         clearSavedData();
         // Don't set hasLoadedAutoSave to true - let database load take over
         return;
