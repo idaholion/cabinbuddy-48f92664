@@ -76,8 +76,8 @@ export const useSecondarySelection = (rotationYear: number) => {
 
             console.log('[Secondary Selection] Real-time fetch result:', data);
             setSecondaryStatus(data);
-            // Only treat as active if turn is NOT completed AND there's a current family
-            setIsSecondaryRoundActive(!!data?.current_family_group && data?.turn_completed !== true);
+            // Round is active if there's a current family with an incomplete turn, OR if the round has started (for phase detection)
+            setIsSecondaryRoundActive(!!data?.started_at);
             
             if (data?.started_at) {
               setSelectionStartTime(new Date(data.started_at));
@@ -118,8 +118,8 @@ export const useSecondarySelection = (rotationYear: number) => {
       }
 
       setSecondaryStatus(data);
-      // Only treat as active if turn is NOT completed AND there's a current family
-      setIsSecondaryRoundActive(!!data?.current_family_group && data?.turn_completed !== true);
+      // Round is active if started_at is set (for phase detection purposes)
+      setIsSecondaryRoundActive(!!data?.started_at);
       
       // Track when current family started their selection
       if (data?.started_at) {
