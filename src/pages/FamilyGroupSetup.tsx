@@ -453,14 +453,15 @@ const FamilyGroupSetup = () => {
     }
   }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, parseFullName]);
 
-  const onSubmit = async (data: FamilyGroupSetupFormData): Promise<boolean> => {
+  // Returns: 'success' = saved and can navigate, 'profile-claim' = saved but show dialog, 'error' = failed
+  const onSubmit = async (data: FamilyGroupSetupFormData): Promise<'success' | 'profile-claim' | 'error'> => {
     if (!data.selectedGroup) {
       toast({
         title: "Error",
         description: "Please select a family group.",
         variant: "destructive",
       });
-      return false;
+      return 'error';
     }
 
     setIsSaving(true);
@@ -529,18 +530,18 @@ const FamilyGroupSetup = () => {
         hasUserMadeChanges.current = false;
         setIsSaving(false);
         setShowProfileClaimDialog(true);
-        return true;
+        return 'profile-claim'; // Don't navigate - dialog will handle it
       }
       
       // Profile already claimed - show success and clear
       clearSavedData();
       hasUserMadeChanges.current = false;
       setIsSaving(false);
-      return true;
+      return 'success';
     } catch (error) {
       setIsSaving(false);
       // Error is handled by the hook
-      return false;
+      return 'error';
     }
   };
 
@@ -594,31 +595,35 @@ const FamilyGroupSetup = () => {
   const saveAndContinue = async () => {
     // Save the form and wait for completion before navigating
     // Alternate lead is optional - no prompt required
-    
-    // Save the form and wait for completion before navigating
     try {
       await handleSubmit(async (data) => {
-        const success = await onSubmit(data);
-        if (success) {
+        const result = await onSubmit(data);
+        // Only navigate if save was successful AND profile claim dialog is not shown
+        if (result === 'success') {
           navigate("/");
         }
+        // If result is 'profile-claim', the dialog will handle navigation after claiming
+        // If result is 'error', stay on page
       })();
     } catch (error) {
       // Form validation failed or save failed - stay on page
+      console.error('[SAVE_AND_CONTINUE] Form submission error:', error);
     }
   };
 
   const handleContinueWithoutAlternateLead = async () => {
     try {
       await handleSubmit(async (data) => {
-        const success = await onSubmit(data);
-        if (success) {
+        const result = await onSubmit(data);
+        if (result === 'success') {
           setShowAlternateLeadDialog(false);
           navigate("/");
         }
+        // If result is 'profile-claim', dialog handles navigation
       })();
     } catch (error) {
       // Form validation failed or save failed - stay on page
+      console.error('[SAVE_WITHOUT_ALTERNATE] Form submission error:', error);
     }
   };
 
