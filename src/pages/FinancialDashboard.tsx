@@ -15,8 +15,6 @@ import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, R
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
-import { useConversationReminders } from "@/hooks/useConversationReminders";
-import { useEffect } from "react";
 
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState("manage");
@@ -31,14 +29,6 @@ const FinancialDashboard = () => {
     userFamilyGroup,
   } = useFinancialData();
   
-  const { addReminder } = useConversationReminders();
-
-  // Add Wave access token reminder on component mount
-  useEffect(() => {
-    const reminderText = "Get Wave access token: Visit Wave Accounting settings, create API credentials, and add the access token to integrate financial data export/import functionality.";
-    addReminder(reminderText, '/finance-reports');
-  }, [addReminder]);
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
