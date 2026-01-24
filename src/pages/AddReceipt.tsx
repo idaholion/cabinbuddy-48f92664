@@ -939,34 +939,39 @@ const AddReceipt = () => {
                 <ScrollArea className="h-80">
                   <div className="space-y-3">
                   {filteredReceipts.map((receipt) => (
-                    <div key={receipt.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 relative">
-                      {receipt.image_url ? (
-                        <img 
-                          src={receipt.image_url} 
-                          alt="Receipt thumbnail"
-                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setViewingImage(receipt.image_url)}
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                          <Receipt className="h-6 w-6 text-muted-foreground" />
+                    <div key={receipt.id} className="p-3 border rounded-lg hover:bg-muted/50 space-y-2">
+                      {/* Description - full width at top */}
+                      <p className="text-sm font-medium break-words whitespace-pre-wrap">{receipt.description}</p>
+                      
+                      {/* Bottom row: thumbnail, amount/date, edit button */}
+                      <div className="flex items-center gap-3">
+                        {receipt.image_url ? (
+                          <img 
+                            src={receipt.image_url} 
+                            alt="Receipt thumbnail"
+                            className="w-10 h-10 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                            onClick={() => setViewingImage(receipt.image_url)}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                            <Receipt className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(receipt.created_at).toLocaleDateString()}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium break-words" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{receipt.description}</p>
-                        <p className="text-body-large font-bold text-primary">${receipt.amount.toFixed(2)}</p>
-                        <p className="text-body-small text-muted-foreground">
-                          {new Date(receipt.created_at).toLocaleDateString()}
-                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openEditDialog(receipt)}
+                          className="text-muted-foreground hover:text-primary flex-shrink-0"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(receipt)}
-                        className="text-muted-foreground hover:text-primary"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   ))}
                   {filteredReceipts.length === 0 && receipts.length > 0 && (
