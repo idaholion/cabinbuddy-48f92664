@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useRole } from "@/contexts/RoleContext";
+import { useOrganization } from "@/hooks/useOrganization";
 
 interface BackupMetadata {
   id: string;
@@ -45,6 +46,7 @@ export default function DataBackup() {
   const [organizations, setOrganizations] = useState<{id: string, name: string}[]>([]);
   const { toast } = useToast();
   const { canAccessSupervisorFeatures } = useRole();
+  const { organization } = useOrganization();
 
   const checkAdminStatus = async () => {
     try {
@@ -109,7 +111,17 @@ export default function DataBackup() {
           })
         );
 
-        setBackups(enrichedBackups);
+        // Filter to only user's organization if not in supervisor mode
+        if (!canAccessSupervisorFeatures && organization?.id) {
+          const filteredBackups = enrichedBackups.filter(
+            backup => backup.organization_id === organization.id
+          );
+          setBackups(filteredBackups);
+          // Also filter organizations dropdown
+          setOrganizations(orgsData?.filter(o => o.id === organization.id) || []);
+        } else {
+          setBackups(enrichedBackups);
+        }
       } else {
         setBackups([]);
       }
@@ -133,7 +145,7 @@ export default function DataBackup() {
     if (isAdmin) {
       fetchBackups();
     }
-  }, [isAdmin]);
+  }, [isAdmin, canAccessSupervisorFeatures, organization?.id]);
 
   const createManualBackup = async () => {
     setCreating(true);
