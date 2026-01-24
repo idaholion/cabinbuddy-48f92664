@@ -100,34 +100,38 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       const allCompletedPrimary = completionChecks.every(completed => completed);
 
       // Check if secondary selection is active by looking at secondary_selection_status table
+      // IMPORTANT: Include started_at to detect secondary phase even when all turns are completed
       const { data: secondaryStatus } = await supabase
         .from('secondary_selection_status')
-        .select('id, current_family_group')
+        .select('id, current_family_group, started_at')
         .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
         .maybeSingle();
 
       if (!isMounted) return;
 
-      // CRITICAL FIX: If secondary_selection_status has an active current_family_group,
-      // we ARE in secondary phase regardless of primary completion status.
-      // The secondary_selection_status record is the source of truth.
-      const isSecondaryActive = secondaryStatus && secondaryStatus.current_family_group;
+      // CRITICAL FIX: Detect secondary phase using started_at OR current_family_group
+      // - If started_at exists, the secondary round was initiated (even if completed)
+      // - If current_family_group exists, a family is actively selecting
+      // This ensures phase detection works even after all families complete their turns
+      const isSecondaryPhase = secondaryStatus && (
+        secondaryStatus.current_family_group ||   // Active turn
+        secondaryStatus.started_at                 // Round started (even if completed)
+      );
 
       console.log('=== USE SEQUENTIAL SELECTION PHASE CHECK ===', {
         rotationYear,
         allCompletedPrimary,
         enableSecondarySelection: rotationData.enable_secondary_selection,
         secondaryStatus,
-        isSecondaryActive,
-        willBeSecondary: rotationData.enable_secondary_selection && isSecondaryActive,
+        isSecondaryPhase,
+        willBeSecondary: isSecondaryPhase,
         completionChecks
       });
 
-      // If secondary selection status has an active family OR all secondary periods are used,
+      // If secondary selection started (started_at exists) or has active family,
       // we're in secondary phase. The secondary_selection_status record is the source of truth.
-      // Don't require enable_secondary_selection flag since secondary clearly happened if records exist.
-      if (isSecondaryActive) {
+      if (isSecondaryPhase) {
         setCurrentPhase('secondary');
       } else if (allCompletedPrimary) {
         // All primary completed but no secondary active - check if secondary usage exists
