@@ -5,6 +5,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   MessageCircle, 
   Send, 
@@ -21,8 +27,32 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useConversationReminders } from '@/hooks/useConversationReminders';
+import { faqData, FAQItem } from '@/data/faqData';
+
+// Route to FAQ category mapping
+const routeToFaqCategories: Record<string, string[]> = {
+  '/': ['Getting Started', 'Reservations & Calendar'],
+  '/home': ['Getting Started', 'Reservations & Calendar'],
+  '/cabin-calendar': ['Reservations & Calendar'],
+  '/stay-history': ['Financial Management', 'Reservations & Calendar'],
+  '/checkout': ['Check-In & Check-Out', 'Financial Management'],
+  '/check-in': ['Check-In & Check-Out'],
+  '/calendar-keeper': ['Admin & Group Lead', 'Reservations & Calendar'],
+  '/work-weekends': ['Features & Resources'],
+  '/documents': ['Features & Resources'],
+  '/photos': ['Features & Resources'],
+  '/shared-notes': ['Features & Resources'],
+  '/faq': ['Getting Started', 'Troubleshooting'],
+  '/financial-review': ['Financial Management'],
+  '/family-group-setup': ['Admin & Group Lead', 'Getting Started'],
+  '/reservation-setup': ['Admin & Group Lead', 'Reservations & Calendar'],
+  '/shopping-list': ['Features & Resources'],
+  '/cabin-rules': ['Features & Resources'],
+  '/family-voting': ['Features & Resources'],
+  '/seasonal-checklists': ['Check-In & Check-Out'],
+};
 
 // Extended help contexts for all major pages
 const helpContexts: Record<string, {
@@ -285,7 +315,23 @@ export const CBHelpButton = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { reminders, addReminder, removeReminder, removeMostRecent, clearReminders } = useConversationReminders();
+
+  // Get relevant FAQs for current page
+  const getRelevantFaqs = (): FAQItem[] => {
+    const categories = routeToFaqCategories[currentPath] || ['Getting Started'];
+    const relevantFaqs: FAQItem[] = [];
+    
+    faqData.forEach(category => {
+      if (categories.includes(category.title)) {
+        relevantFaqs.push(...category.items);
+      }
+    });
+    
+    // Return first 4 most relevant FAQs
+    return relevantFaqs.slice(0, 4);
+  };
 
   // Get help content for current page
   const currentPath = location.pathname;
@@ -491,6 +537,50 @@ export const CBHelpButton = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Common Questions - FAQ Section */}
+              {(() => {
+                const relevantFaqs = getRelevantFaqs();
+                return relevantFaqs.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <HelpCircle className="h-4 w-4 text-primary" />
+                        Common Questions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <Accordion type="single" collapsible className="space-y-1">
+                        {relevantFaqs.map((faq, index) => (
+                          <AccordionItem 
+                            key={index} 
+                            value={`faq-${index}`}
+                            className="border-b last:border-b-0"
+                          >
+                            <AccordionTrigger className="text-sm text-left py-2 hover:no-underline">
+                              {faq.question}
+                            </AccordionTrigger>
+                            <AccordionContent className="text-sm text-muted-foreground pb-3">
+                              {faq.answer}
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          navigate('/faq');
+                          setIsOpen(false);
+                        }}
+                      >
+                        See all FAQs <ChevronRight className="h-3 w-3 ml-1" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : null;
+              })()}
 
               {/* Tips */}
               {helpContent.tips && helpContent.tips.length > 0 && (
