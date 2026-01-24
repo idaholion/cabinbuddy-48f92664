@@ -76,7 +76,8 @@ export const useSecondarySelection = (rotationYear: number) => {
 
             console.log('[Secondary Selection] Real-time fetch result:', data);
             setSecondaryStatus(data);
-            setIsSecondaryRoundActive(!!data?.current_family_group);
+            // Only treat as active if turn is NOT completed AND there's a current family
+            setIsSecondaryRoundActive(!!data?.current_family_group && data?.turn_completed !== true);
             
             if (data?.started_at) {
               setSelectionStartTime(new Date(data.started_at));
@@ -117,7 +118,8 @@ export const useSecondarySelection = (rotationYear: number) => {
       }
 
       setSecondaryStatus(data);
-      setIsSecondaryRoundActive(!!data?.current_family_group);
+      // Only treat as active if turn is NOT completed AND there's a current family
+      setIsSecondaryRoundActive(!!data?.current_family_group && data?.turn_completed !== true);
       
       // Track when current family started their selection
       if (data?.started_at) {
@@ -211,59 +213,65 @@ export const useSecondarySelection = (rotationYear: number) => {
 
     try {
       const orgContext = createOrganizationContext(organization.id);
-      
-      // CRITICAL: Mark current family's turn as completed in secondary_selection_status
-      const { error: updateError } = await secureUpdate('secondary_selection_status', {
-        turn_completed: true
-      }, orgContext)
-        .eq('id', secondaryStatus.id);
-
-      if (updateError) {
-        console.error('[useSecondarySelection] Error marking turn as completed:', updateError);
-        throw updateError;
-      }
-
       const rotationOrder = getRotationForYear(rotationYear);
       const reverseOrder = [...rotationOrder].reverse();
       
+      // First check if any other family has remaining secondary periods
       let nextIndex = (secondaryStatus.current_group_index + 1) % reverseOrder.length;
-      let nextFamily = reverseOrder[nextIndex];
-      
-      // Find next family with remaining secondary periods
+      let nextFamily: string | null = null;
       let attempts = 0;
+      
       while (attempts < reverseOrder.length) {
-        const usage = timePeriodUsage.find(u => u.family_group === nextFamily);
+        const candidateFamily = reverseOrder[nextIndex];
+        const usage = timePeriodUsage.find(u => u.family_group === candidateFamily);
         const remainingSecondary = (rotationData.secondary_max_periods || 1) - (usage?.secondary_periods_used || 0);
         
         if (remainingSecondary > 0) {
+          nextFamily = candidateFamily;
           break;
         }
         
         nextIndex = (nextIndex + 1) % reverseOrder.length;
-        nextFamily = reverseOrder[nextIndex];
         attempts++;
       }
 
-      // If no one has remaining secondary periods, end secondary selection
-      if (attempts >= reverseOrder.length) {
-        await endSecondarySelection();
+      // If no one has remaining secondary periods, end the round with atomic update
+      if (!nextFamily || attempts >= reverseOrder.length) {
+        console.log('[useSecondarySelection] All families completed secondary selection, ending round');
+        // ATOMIC: Mark turn completed AND clear current_family_group in one update
+        const { error: endError } = await secureUpdate('secondary_selection_status', {
+          turn_completed: true,
+          current_family_group: null,
+          updated_at: new Date().toISOString()
+        }, orgContext)
+          .eq('id', secondaryStatus.id);
+
+        if (endError) {
+          console.error('[useSecondarySelection] Error ending secondary selection:', endError);
+          throw endError;
+        }
+        
+        setIsSecondaryRoundActive(false);
+        fetchSecondarySelectionStatus();
         return;
       }
 
-      // Create new secondary selection status for next family (with turn_completed = false)
-      const { error } = await secureUpdate('secondary_selection_status', {
+      // ATOMIC UPDATE: Mark current turn completed AND set next family in one call
+      const { error: advanceError } = await secureUpdate('secondary_selection_status', {
+        turn_completed: false, // Reset for new family
         current_family_group: nextFamily,
         current_group_index: nextIndex,
-        turn_completed: false, // Reset for new family
-        started_at: new Date().toISOString(), // Reset start time for new family
+        started_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, orgContext)
         .eq('id', secondaryStatus.id);
 
-      if (error) {
-        console.error('Error advancing secondary selection:', error);
-        return;
+      if (advanceError) {
+        console.error('[useSecondarySelection] Error advancing secondary selection:', advanceError);
+        throw advanceError;
       }
+
+      console.log(`[useSecondarySelection] Advanced to ${nextFamily} for secondary selection`);
 
       // Send notification to the next family
       try {

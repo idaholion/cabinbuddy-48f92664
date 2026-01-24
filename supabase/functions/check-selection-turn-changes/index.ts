@@ -18,6 +18,25 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('Checking for selection turn changes...');
 
+    // CLEANUP: Fix stuck secondary selection turns where turn_completed is true but current_family_group is still set
+    const { data: stuckTurns, error: stuckError } = await supabase
+      .from('secondary_selection_status')
+      .select('id, organization_id, rotation_year, current_family_group')
+      .eq('turn_completed', true)
+      .not('current_family_group', 'is', null);
+
+    if (!stuckError && stuckTurns && stuckTurns.length > 0) {
+      console.log(`Found ${stuckTurns.length} stuck secondary selection turns, auto-fixing...`);
+      for (const stuck of stuckTurns) {
+        console.log(`Clearing stuck current_family_group for org ${stuck.organization_id}, year ${stuck.rotation_year}`);
+        await supabase
+          .from('secondary_selection_status')
+          .update({ current_family_group: null, updated_at: new Date().toISOString() })
+          .eq('id', stuck.id);
+      }
+      console.log('Stuck turns cleanup completed');
+    }
+
     // Get organizations with automated selection turn notifications enabled
     const { data: turnOrgs, error: turnOrgError } = await supabase
       .from('organizations')
