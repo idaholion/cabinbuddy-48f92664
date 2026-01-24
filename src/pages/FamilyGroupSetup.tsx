@@ -594,8 +594,14 @@ const FamilyGroupSetup = () => {
   const saveAndContinue = async () => {
     const currentData = getValues();
     
-    // Check if alternate lead is selected
-    if (!currentData.alternateLeadId || currentData.alternateLeadId === "none") {
+    // Count filled members to determine if alternate lead prompt is needed
+    const filledMembers = currentData.groupMembers?.filter(member => 
+      member.name?.trim() || member.email?.trim() || member.phone?.trim()
+    ) || [];
+    
+    // Only prompt for alternate lead if there's more than 1 member
+    // (can't have an alternate if you're the only member)
+    if (filledMembers.length > 1 && (!currentData.alternateLeadId || currentData.alternateLeadId === "none")) {
       setShowAlternateLeadDialog(true);
       return;
     }
