@@ -938,23 +938,26 @@ const FamilyGroupSetup = () => {
                   )}
                 />
 
-                {/* Color Picker Section - Only visible to group leads */}
-                {selectedFamilyGroup && isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name && (
-                  <div className="p-4 bg-muted/10 rounded-lg border">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-medium mb-1">Group Color</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Choose a unique color for your family group's reservations
-                        </p>
+                {/* Color Picker Section - Visible to group leads for their own group, and admins/supervisors for any group */}
+                {selectedFamilyGroup && organization?.organization_id && (
+                  (isAdmin || isSupervisor || (isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name)) && (
+                    <div className="p-4 bg-muted/10 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Group Color</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Choose a unique color for this family group's reservations
+                          </p>
+                        </div>
+                        <FamilyGroupColorPicker
+                          familyGroup={selectedFamilyGroup}
+                          organizationId={organization.organization_id}
+                          onColorUpdate={refetchFamilyGroups}
+                          canEdit={isAdmin || isSupervisor || (isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name)}
+                        />
                       </div>
-                      <FamilyGroupColorPicker
-                        familyGroup={selectedFamilyGroup}
-                        onColorUpdate={refetchFamilyGroups}
-                        isGroupLead={isGroupLead && userFamilyGroup?.name === selectedFamilyGroup.name}
-                      />
                     </div>
-                  </div>
+                  )
                 )}
 
                 {/* Family Group Lead Section */}
