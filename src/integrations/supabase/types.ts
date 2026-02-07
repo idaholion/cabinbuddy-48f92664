@@ -280,6 +280,39 @@ export type Database = {
           },
         ]
       }
+      cb_faq_items: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          is_active: boolean
+          question: string
+          route_path: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          question: string
+          route_path: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          question?: string
+          route_path?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checkin_sessions: {
         Row: {
           check_date: string

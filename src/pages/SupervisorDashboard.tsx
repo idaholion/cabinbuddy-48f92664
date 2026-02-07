@@ -17,6 +17,7 @@ import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog'
 import { CreateTestOrganizationDialog } from '@/components/CreateTestOrganizationDialog';
 import { DataManagementControls } from '@/components/DataManagementControls';
 import { DefaultFeatureManagement } from '@/components/DefaultFeatureManagement';
+import { CBFaqManagement } from '@/components/CBFaqManagement';
 import { SupervisorFamilyGroupsTab } from '@/components/SupervisorFamilyGroupsTab';
 import { SupervisorFinancialTab } from '@/components/SupervisorFinancialTab';
 import { ProtectedSupervisorRoute } from '@/components/ProtectedSupervisorRoute';
@@ -195,11 +196,12 @@ export const SupervisorDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="organizations" className="text-base">Organizations</TabsTrigger>
             <TabsTrigger value="family-groups" className="text-base">Family Groups</TabsTrigger>
             <TabsTrigger value="financial-records" className="text-base">Financial Records</TabsTrigger>
             <TabsTrigger value="features" className="text-base">Default Features</TabsTrigger>
+            <TabsTrigger value="cb-faq" className="text-base">CB Help</TabsTrigger>
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="access-codes" className="text-base">Access Codes</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
@@ -383,6 +385,10 @@ export const SupervisorDashboard = () => {
 
           <TabsContent value="features">
             <DefaultFeatureManagement />
+          </TabsContent>
+
+          <TabsContent value="cb-faq">
+            <CBFaqManagement />
           </TabsContent>
 
           <TabsContent value="supervisors">

@@ -34,7 +34,8 @@ import {
   AlertCircle,
   BookOpen,
   ListChecks,
-  Camera
+  Camera,
+  MessageCircle as MessageCircleIcon
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -629,6 +630,19 @@ export function AppSidebar() {
                     >
                       <BookOpen className="h-4 w-4" />
                       <span>Admin Documentation</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="CB Help Management">
+                    <NavLink 
+                      to="/supervisor/cb-faq" 
+                      onClick={handleMobileNavClick}
+                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                    >
+                      <MessageCircleIcon className="h-4 w-4" />
+                      <span>CB Help</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

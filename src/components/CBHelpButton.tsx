@@ -30,6 +30,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useConversationReminders } from '@/hooks/useConversationReminders';
 import { faqData, FAQItem } from '@/data/faqData';
+import { useCBFaqItemsByRoute } from '@/hooks/useCBFaqItems';
 
 // Route to FAQ category mapping
 const routeToFaqCategories: Record<string, string[]> = {
@@ -334,8 +335,23 @@ export const CBHelpButton = () => {
   const navigate = useNavigate();
   const { reminders, addReminder, removeReminder, removeMostRecent, clearReminders } = useConversationReminders();
 
-  // Get relevant FAQs for current page
+  // Get current path first so we can use it in the hook
+  const currentPath = location.pathname;
+
+  // Fetch dynamic FAQs from database for current route
+  const { data: dbFaqItems } = useCBFaqItemsByRoute(currentPath);
+
+  // Get relevant FAQs - prefer database items, fallback to hardcoded
   const getRelevantFaqs = (): FAQItem[] => {
+    // If we have database FAQ items for this route, use those
+    if (dbFaqItems && dbFaqItems.length > 0) {
+      return dbFaqItems.map(item => ({
+        question: item.question,
+        answer: item.answer,
+      }));
+    }
+    
+    // Fallback to hardcoded FAQ data based on category mapping
     const categories = routeToFaqCategories[currentPath] || ['Getting Started'];
     const relevantFaqs: FAQItem[] = [];
     
@@ -350,7 +366,6 @@ export const CBHelpButton = () => {
   };
 
   // Get help content for current page
-  const currentPath = location.pathname;
   const helpContent = helpContexts[currentPath] || {
     title: 'CabinBuddy Help',
     description: 'General help for using CabinBuddy to manage your shared cabin.',
