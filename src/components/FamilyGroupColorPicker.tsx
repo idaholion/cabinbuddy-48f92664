@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Palette, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganization } from '@/hooks/useOrganization';
 
 // Limited color palette for family groups (10 colors)
 const FAMILY_GROUP_COLORS = [
@@ -26,25 +25,25 @@ interface FamilyGroupColorPickerProps {
     name: string;
     color?: string;
   };
+  organizationId: string; // Now required from parent
   onColorUpdate: () => void;
-  isGroupLead: boolean;
+  canEdit: boolean; // Simplified - parent determines if user can edit
 }
 
-export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead }: FamilyGroupColorPickerProps) {
+export function FamilyGroupColorPicker({ familyGroup, organizationId, onColorUpdate, canEdit }: FamilyGroupColorPickerProps) {
   const [open, setOpen] = useState(false);
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
-  const { organization } = useOrganization();
 
   const fetchAvailableColors = async () => {
-    if (!organization?.id) return;
+    if (!organizationId) return;
     
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc('get_available_colors', {
-        p_organization_id: organization.id,
+        p_organization_id: organizationId,
         p_current_group_id: familyGroup.id
       });
 
@@ -52,7 +51,7 @@ export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead
         console.error('Error fetching available colors:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch available colors",
+          description: "Failed to fetch available colors. Please try refreshing the page.",
           variant: "destructive"
         });
         return;
@@ -63,7 +62,7 @@ export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead
       console.error('Error in fetchAvailableColors:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch available colors",
+        description: "Failed to fetch available colors. Please try refreshing the page.",
         variant: "destructive"
       });
     } finally {
@@ -72,13 +71,13 @@ export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead
   };
 
   useEffect(() => {
-    if (open) {
+    if (open && organizationId) {
       fetchAvailableColors();
     }
-  }, [open, organization?.id, familyGroup.id]);
+  }, [open, organizationId, familyGroup.id]);
 
   const updateFamilyGroupColor = async (color: string) => {
-    if (!organization?.id) return;
+    if (!organizationId) return;
     
     setUpdating(true);
     try {
@@ -86,7 +85,7 @@ export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead
         .from('family_groups')
         .update({ color, updated_at: new Date().toISOString() })
         .eq('id', familyGroup.id)
-        .eq('organization_id', organization.id);
+        .eq('organization_id', organizationId);
 
       if (error) {
         console.error('Error updating family group color:', error);
@@ -117,8 +116,8 @@ export function FamilyGroupColorPicker({ familyGroup, onColorUpdate, isGroupLead
     }
   };
 
-  // Don't render if user is not a group lead
-  if (!isGroupLead) {
+  // Don't render if user cannot edit
+  if (!canEdit) {
     return null;
   }
 
