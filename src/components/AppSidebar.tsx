@@ -633,19 +633,6 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip="CB FAQ Management">
-                    <NavLink 
-                      to="/supervisor/cb-faq" 
-                      onClick={handleMobileNavClick}
-                      className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      <span>CB FAQ Management</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
                 {/* Organization-specific supervisor links */}
                 {organizationId && (
                   <>

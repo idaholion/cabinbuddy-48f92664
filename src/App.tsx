@@ -77,7 +77,6 @@ const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/Supe
 const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));
 const FamilyGroupHealthCheck = React.lazy(() => import("./pages/FamilyGroupHealthCheck"));
-const CBFaqManagement = React.lazy(() => import("./pages/CBFaqManagement"));
 const AdminDocumentation = React.lazy(() => import("./pages/AdminDocumentation"));
 const NotificationMonitoring = React.lazy(() => import("./pages/NotificationMonitoring"));
 const StayHistorySnapshots = React.lazy(() => import("./pages/StayHistorySnapshots"));
@@ -175,7 +174,6 @@ const AppContent = () => {
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/access-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AccessCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
-        <Route path="/supervisor/cb-faq" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CBFaqManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/family-group-health-check" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-documentation" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/notification-monitoring" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><NotificationMonitoring /></Suspense></MainLayout></AdminTreasurerRoute>} />
