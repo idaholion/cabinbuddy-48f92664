@@ -1430,7 +1430,7 @@ const getBookingsForDate = (date: Date) => {
                   const daysInMonth = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth() + 1, 0).getDate();
                   const firstDayOfWeek = new Date(quarterMonth.getFullYear(), quarterMonth.getMonth(), 1).getDay();
                   
-                  // Get reservations for this month
+                  // Get reservations for this month with same filtering as main calendar
                   const monthReservations = reservations.filter(reservation => {
                     const startDate = parseLocalDate(reservation.start_date);
                     const endDate = parseLocalDate(reservation.end_date);
@@ -1441,9 +1441,33 @@ const getBookingsForDate = (date: Date) => {
                     // 1. Start in this month
                     // 2. End in this month  
                     // 3. Span across this month (start before and end after)
-                    return (startDate.getMonth() === quarterMonth.getMonth() && startDate.getFullYear() === quarterMonth.getFullYear()) ||
+                    const isInMonth = (startDate.getMonth() === quarterMonth.getMonth() && startDate.getFullYear() === quarterMonth.getFullYear()) ||
                            (endDate.getMonth() === quarterMonth.getMonth() && endDate.getFullYear() === quarterMonth.getFullYear()) ||
                            (startDate <= monthEnd && endDate >= monthStart);
+                    
+                    if (!isInMonth) return false;
+                    
+                    // Apply the same filters as the main calendar view
+                    // External family group filter from parent component
+                    if (selectedFamilyGroupFilter && selectedFamilyGroupFilter !== '' && reservation.family_group !== selectedFamilyGroupFilter) {
+                      return false;
+                    }
+                    
+                    // Internal filter options
+                    if (filterOptions.familyGroupFilter !== 'all' && reservation.family_group !== filterOptions.familyGroupFilter) {
+                      return false;
+                    }
+                    
+                    // My bookings vs other bookings visibility
+                    const isMyBooking = reservation.family_group === userFamilyGroup;
+                    if (isMyBooking && !filterOptions.showMyBookings) {
+                      return false;
+                    }
+                    if (!isMyBooking && !filterOptions.showOtherBookings) {
+                      return false;
+                    }
+                    
+                    return true;
                   });
 
                   // Create calendar grid
