@@ -24,6 +24,7 @@ interface GroupMemberCardProps {
   hasUserAccount?: boolean;
   hasClaimed?: boolean;
   showStatusIndicators?: boolean;
+  isGroupLead?: boolean;
 }
 
 export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
@@ -36,6 +37,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   hasUserAccount = false,
   hasClaimed = false,
   showStatusIndicators = false,
+  isGroupLead = false,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
   const groupMembers = watch('groupMembers');
@@ -87,6 +89,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
             <h4 className="font-medium text-lg">
               Group Member {index + 1}
             </h4>
+            {isGroupLead && (
+              <Badge variant="default" className="text-xs font-semibold">
+                GROUP LEAD
+              </Badge>
+            )}
             
             {/* Phase 3: Status Indicators */}
             {showStatusIndicators && currentMember?.email && (
@@ -207,7 +214,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                 <FormItem>
                    <FormLabel className="text-xl">
                      Email
-                     {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group lead only)</span>}
+                     {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group Lead - required for notifications)</span>}
                      {index > 0 && <span className="text-muted-foreground text-sm ml-2">(Optional - can add later)</span>}
                    </FormLabel>
                    <FormControl>
@@ -239,7 +246,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                 <FormItem>
                   <FormLabel className="text-xl">
                     Phone
-                    {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group lead only)</span>}
+                    {index === 0 && <span className="text-muted-foreground text-sm ml-2">(Group Lead)</span>}
                     {index > 0 && <span className="text-muted-foreground text-sm ml-2">(Optional - can add later)</span>}
                   </FormLabel>
                   <FormControl>

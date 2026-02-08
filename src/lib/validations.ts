@@ -42,19 +42,11 @@ export const familyGroupSchema = z.object({
 // Enhanced family group setup validation schema
 export const familyGroupSetupSchema = z.object({
   selectedGroup: requiredStringSchema.min(1, "Please select or create a family group"),
-  leadName: requiredStringSchema.min(2, "Lead name must contain at least 2 characters").refine((val) => {
-    return validateFullName(val);
-  }, "Please enter both first and last name"),
-  leadPhone: z.string().optional().refine((val) => {
-    if (!val || val === "") return true;
-    // Remove all non-digit characters and check if it's a valid phone number
-    const cleaned = val.replace(/\D/g, '');
-    return cleaned.length >= 10 && cleaned.length <= 15;
-  }, "Please enter a valid phone number"),
-  leadEmail: z.string().optional().refine((val) => {
-    if (!val || val === "") return true;
-    return z.string().email().safeParse(val).success;
-  }, "Please enter a valid email address"),
+  // Legacy fields - kept for backwards compatibility but no longer required
+  // Lead info is now derived from groupMembers[0]
+  leadName: z.string().optional(),
+  leadPhone: z.string().optional(),
+  leadEmail: z.string().optional(),
   groupMembers: z.array(z.object({
     // firstName and lastName are optional - empty member slots are allowed
     // But if any data is provided, we validate in the refine below
@@ -65,9 +57,16 @@ export const familyGroupSetupSchema = z.object({
     email: z.string().optional(),
     canHost: z.boolean().optional().default(false),
   }))
+    // Validate that Member 1 (Group Lead) has both first and last name
+    .refine((members) => {
+      const firstMember = members[0];
+      if (!firstMember) return false;
+      return firstMember.firstName?.trim() && firstMember.lastName?.trim();
+    }, "Group Lead (Member 1) must have both first and last name")
     // Validate that members with data have both first and last name
     .refine((members) => {
-      for (const member of members) {
+      for (let i = 1; i < members.length; i++) {
+        const member = members[i];
         const hasAnyData = member.firstName?.trim() || member.lastName?.trim() || 
                           member.email?.trim() || member.phone?.trim();
         if (hasAnyData) {
