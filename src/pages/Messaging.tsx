@@ -13,8 +13,9 @@ import { useAsyncOperation } from '@/hooks/useAsyncOperation';
 import { supabase } from '@/integrations/supabase/client';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
 import { useToast } from '@/hooks/use-toast';
+import { MemberPicker, SelectedMember } from '@/components/messaging/MemberPicker';
 
-type RecipientGroup = 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users';
+type RecipientGroup = 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users' | 'individual_member';
 type MessageType = 'email' | 'sms' | 'both';
 
 const Messaging = () => {
@@ -23,6 +24,7 @@ const Messaging = () => {
   const [recipientGroup, setRecipientGroup] = useState<RecipientGroup>('administrator');
   const [messageType, setMessageType] = useState<MessageType>('email');
   const [urgent, setUrgent] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<SelectedMember | null>(null);
   
   const { activeOrganization } = useMultiOrganization();
   const { toast } = useToast();
@@ -44,6 +46,26 @@ const Messaging = () => {
       return;
     }
 
+    // Validate individual member selection
+    if (recipientGroup === 'individual_member') {
+      if (!selectedMember) {
+        toast({
+          title: "Error",
+          description: "Please select a member to message",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!selectedMember.memberEmail && !selectedMember.memberPhone) {
+        toast({
+          title: "Error",
+          description: "Selected member has no contact information",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     await execute(async () => {
       const { error } = await supabase.functions.invoke('send-message', {
         body: {
@@ -52,7 +74,16 @@ const Messaging = () => {
           message,
           recipientGroup,
           messageType,
-          urgent
+          urgent,
+          // Include individual member details when applicable
+          ...(recipientGroup === 'individual_member' && selectedMember && {
+            individualRecipient: {
+              name: selectedMember.memberName,
+              email: selectedMember.memberEmail,
+              phone: selectedMember.memberPhone,
+              familyGroup: selectedMember.familyGroupName,
+            }
+          })
         }
       });
 
@@ -62,6 +93,7 @@ const Messaging = () => {
       setSubject('');
       setMessage('');
       setUrgent(false);
+      setSelectedMember(null);
     });
   };
 
@@ -75,6 +107,8 @@ const Messaging = () => {
         return <User className="h-4 w-4" />;
       case 'all_users':
         return <Users className="h-4 w-4" />;
+      case 'individual_member':
+        return <User className="h-4 w-4" />;
     }
   };
 
@@ -88,6 +122,10 @@ const Messaging = () => {
         return 'Send message to all family group leads';
       case 'all_users':
         return 'Send message to all users in the organization';
+      case 'individual_member':
+        return selectedMember 
+          ? `Send message to ${selectedMember.memberName}` 
+          : 'Select a specific member to message';
     }
   };
 
@@ -118,7 +156,13 @@ const Messaging = () => {
             {/* Recipient Group Selection */}
             <div className="space-y-3">
               <Label htmlFor="recipient-group" className="text-base">Send to</Label>
-              <Select value={recipientGroup} onValueChange={(value: RecipientGroup) => setRecipientGroup(value)}>
+              <Select value={recipientGroup} onValueChange={(value: RecipientGroup) => {
+                setRecipientGroup(value);
+                // Clear selected member when switching away from individual
+                if (value !== 'individual_member') {
+                  setSelectedMember(null);
+                }
+              }}>
                 <SelectTrigger className="text-base">
                   <SelectValue placeholder="Select recipient group" />
                 </SelectTrigger>
@@ -147,6 +191,12 @@ const Messaging = () => {
                       All Users
                     </div>
                   </SelectItem>
+                  <SelectItem value="individual_member" className="text-base">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Individual Member
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-base text-muted-foreground flex items-center gap-2">
@@ -154,6 +204,33 @@ const Messaging = () => {
                 {getRecipientDescription(recipientGroup)}
               </p>
             </div>
+
+            {/* Individual Member Picker - shown when individual_member is selected */}
+            {recipientGroup === 'individual_member' && (
+              <div className="space-y-3">
+                <Label className="text-base">Select Member</Label>
+                <MemberPicker
+                  value={selectedMember}
+                  onChange={setSelectedMember}
+                  placeholder="Search for a member..."
+                />
+                {selectedMember && (
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Family:</strong> {selectedMember.familyGroupName}</p>
+                    {selectedMember.memberEmail && (
+                      <p className="flex items-center gap-1">
+                        <Mail className="h-3.5 w-3.5" /> {selectedMember.memberEmail}
+                      </p>
+                    )}
+                    {selectedMember.memberPhone && (
+                      <p className="flex items-center gap-1">
+                        <MessageSquare className="h-3.5 w-3.5" /> {selectedMember.memberPhone}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Message Type Selection */}
             <div className="space-y-3">
