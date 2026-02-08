@@ -7,15 +7,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface IndividualRecipient {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  familyGroup: string;
+}
+
 interface SendMessageRequest {
   organizationId: string;
   subject: string;
   message: string;
-  recipientGroup: 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users' | 'test';
+  recipientGroup: 'administrator' | 'calendar_keeper' | 'group_leads' | 'all_users' | 'individual_member' | 'test';
   messageType: 'email' | 'sms' | 'both';
   urgent: boolean;
   testEmail?: string;
   testPhone?: string;
+  individualRecipient?: IndividualRecipient;
 }
 
 const supabase = createClient(
@@ -39,7 +47,8 @@ const handler = async (req: Request): Promise<Response> => {
       messageType,
       urgent,
       testEmail,
-      testPhone
+      testPhone,
+      individualRecipient
     }: SendMessageRequest = await req.json();
 
     console.log('Sending message:', { organizationId, recipientGroup, messageType, urgent });
@@ -81,6 +90,16 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       // Determine recipients based on group
       switch (recipientGroup) {
+        case 'individual_member':
+          if (individualRecipient) {
+            recipients.push({
+              email: individualRecipient.email || undefined,
+              phone: individualRecipient.phone || undefined,
+              name: individualRecipient.name
+            });
+          }
+          break;
+
         case 'administrator':
           if (organization.admin_email) {
             recipients.push({
