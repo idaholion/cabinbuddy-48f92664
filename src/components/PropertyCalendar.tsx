@@ -127,9 +127,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   
   // Phase 4: Enhanced filtering and view options
   const [filterOptions, setFilterOptions] = useState({
-    showMyBookings: true,
-    showOtherBookings: true, // Make sure other bookings are shown by default
-    showTimePeriods: false, // Hidden by default to avoid confusion with actual reservations
+    showOnlyMyFamily: false,  // New consolidated option - shows all reservations by default
     showTradeRequests: true,
     showWorkWeekends: true,
     familyGroupFilter: 'all'
@@ -397,11 +395,8 @@ const getBookingsForDate = (date: Date) => {
         return false;
       }
       
-      const isMyBooking = booking.family_group === userFamilyGroup;
-      if (isMyBooking && !filterOptions.showMyBookings) {
-        return false;
-      }
-      if (!isMyBooking && !filterOptions.showOtherBookings) {
+      // Apply "show only my family" filter
+      if (filterOptions.showOnlyMyFamily && booking.family_group !== userFamilyGroup) {
         return false;
       }
       
@@ -949,36 +944,18 @@ const getBookingsForDate = (date: Date) => {
                     />
                   </div>
                   
-                  {/* Filter Section */}
+                  {/* View Options Section */}
                   <div className="pt-3 border-t">
-                    <div className="text-sm font-medium mb-2">Show Bookings</div>
+                    <div className="text-sm font-medium mb-2">View Options</div>
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 text-sm">
                         <input 
                           type="checkbox" 
-                          checked={filterOptions.showMyBookings}
-                          onChange={(e) => setFilterOptions(prev => ({...prev, showMyBookings: e.target.checked}))}
+                          checked={filterOptions.showOnlyMyFamily}
+                          onChange={(e) => setFilterOptions(prev => ({...prev, showOnlyMyFamily: e.target.checked}))}
                           className="rounded border-border"
                         />
-                        <span>My bookings</span>
-                      </label>
-                      <label className="flex items-center space-x-2 text-sm">
-                        <input 
-                          type="checkbox" 
-                          checked={filterOptions.showOtherBookings}
-                          onChange={(e) => setFilterOptions(prev => ({...prev, showOtherBookings: e.target.checked}))}
-                          className="rounded border-border"
-                        />
-                        <span>Other bookings</span>
-                      </label>
-                      <label className="flex items-center space-x-2 text-sm">
-                        <input 
-                          type="checkbox" 
-                          checked={filterOptions.showTimePeriods}
-                          onChange={(e) => setFilterOptions(prev => ({...prev, showTimePeriods: e.target.checked}))}
-                          className="rounded border-border"
-                        />
-                        <span>Time periods</span>
+                        <span>Show only my family</span>
                       </label>
                       <label className="flex items-center space-x-2 text-sm">
                         <input 
@@ -1161,8 +1138,6 @@ const getBookingsForDate = (date: Date) => {
                     className={`min-h-16 sm:min-h-20 md:min-h-24 p-1 border border-border relative transition-all duration-200 select-none ${
                       !isCurrentMonth ? 'bg-muted/50' : 'bg-background'
                     } ${isToday ? 'ring-2 ring-primary shadow-warm' : ''} ${
-                      timePeriod && filterOptions.showTimePeriods ? 'border-l-4 border-l-accent' : ''
-                    } ${
                       hasMyBooking ? 'bg-primary/5 border-primary/20' : ''
                     } ${
                       hasPendingTrade ? 'bg-destructive/5 border-destructive/20' : ''
@@ -1207,12 +1182,6 @@ const getBookingsForDate = (date: Date) => {
                     
                     {/* Enhanced indicators row */}
                     <div className="flex items-center justify-between mb-1">
-                      {/* Time period indicator */}
-                      {timePeriod && isCurrentMonth && filterOptions.showTimePeriods && (
-                        <div className="text-xs text-accent-foreground bg-accent/20 px-1 rounded truncate flex-1 mr-1">
-                          {timePeriod.familyGroup}
-                        </div>
-                      )}
                       
                       {/* Status indicators */}
                       <div className="flex items-center space-x-1">
@@ -1288,15 +1257,6 @@ const getBookingsForDate = (date: Date) => {
                         );
                       })}
                       
-                      {/* Show time period info only when no actual bookings exist for this date */}
-                      {dayBookings.length === 0 && timePeriod && isCurrentMonth && filterOptions.showTimePeriods && (
-                        <div className="text-xs px-1 py-0.5 bg-accent/10 text-accent-foreground border border-accent/20 rounded truncate">
-                          <div className="flex items-center justify-between">
-                            <span className="truncate">Available: {timePeriod.familyGroup}</span>
-                            <span className="ml-1 text-xs opacity-70">P{timePeriod.periodNumber}</span>
-                          </div>
-                        </div>
-                      )}
                       
                       {/* Trade requests indicator */}
                       {hasPendingTrade && (
@@ -1458,12 +1418,8 @@ const getBookingsForDate = (date: Date) => {
                       return false;
                     }
                     
-                    // My bookings vs other bookings visibility
-                    const isMyBooking = reservation.family_group === userFamilyGroup;
-                    if (isMyBooking && !filterOptions.showMyBookings) {
-                      return false;
-                    }
-                    if (!isMyBooking && !filterOptions.showOtherBookings) {
+                    // Apply "show only my family" filter
+                    if (filterOptions.showOnlyMyFamily && reservation.family_group !== userFamilyGroup) {
                       return false;
                     }
                     
