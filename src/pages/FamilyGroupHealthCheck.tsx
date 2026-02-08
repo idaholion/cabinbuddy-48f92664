@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { AlertCircle, CheckCircle, Mail, UserX, Users, RefreshCw, ListChecks } from 'lucide-react';
+import { AlertCircle, CheckCircle, Mail, UserX, Users, RefreshCw, ListChecks, Printer, Phone } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -30,6 +30,7 @@ interface AllMember {
   familyGroup: string;
   memberName: string;
   memberEmail: string;
+  memberPhone: string;
   memberType: 'group_lead' | 'host_member';
   hasUserAccount: boolean;
   hasClaimed: boolean;
@@ -169,6 +170,7 @@ export default function FamilyGroupHealthCheck() {
                 familyGroup: group.name,
                 memberName: member.name,
                 memberEmail: member.email || '',
+                memberPhone: member.phone || '',
                 memberType: isGroupLead ? 'group_lead' : 'host_member',
                 hasUserAccount: hasAccount,
                 hasClaimed: hasClaimed || !!claimedByEmail,
@@ -226,7 +228,7 @@ export default function FamilyGroupHealthCheck() {
     setStatsLoading(false);
     toast({
       title: "Refreshed",
-      description: "Health check data has been updated.",
+      description: "Data has been updated.",
     });
   };
 
@@ -244,13 +246,21 @@ export default function FamilyGroupHealthCheck() {
   // Unclaimed profiles = members who haven't claimed (regardless of account status)
   const membersWithoutClaims = mismatchedMembers.filter(m => !m.hasClaimed).length;
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2 mb-4">
-        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Overview</h1>
-        <p className="text-2xl text-primary text-center font-medium">Identify and resolve email mismatches and unclaimed profiles</p>
+      <div className="text-center space-y-2 mb-4 print:mb-2">
+        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center print:text-4xl print:mb-2">Family Group Overview</h1>
+        <p className="text-2xl text-primary text-center font-medium print:text-lg">Organization Member Directory</p>
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2 print:hidden">
+        <Button onClick={handlePrint} variant="outline">
+          <Printer className="h-4 w-4 mr-2" />
+          Print List
+        </Button>
         <Button onClick={handleRefresh} disabled={statsLoading} variant="outline">
           <RefreshCw className={`h-4 w-4 mr-2 ${statsLoading ? 'animate-spin' : ''}`} />
           Refresh
@@ -258,7 +268,7 @@ export default function FamilyGroupHealthCheck() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 print:hidden">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Issues</CardDescription>
@@ -301,51 +311,60 @@ export default function FamilyGroupHealthCheck() {
       )}
 
       {/* All Organization Members - Primary Section */}
-      <Card>
-        <CardHeader>
+      <Card className="print:shadow-none print:border-0">
+        <CardHeader className="print:pb-2">
           <div className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5" />
+            <ListChecks className="h-5 w-5 print:hidden" />
             <div>
-              <CardTitle className="text-lg">All Organization Members ({allMembers.length})</CardTitle>
-              <CardDescription className="mt-1">
+              <CardTitle className="text-lg print:text-xl print:font-bold">All Organization Members ({allMembers.length})</CardTitle>
+              <CardDescription className="mt-1 print:hidden">
                 Complete list of all family group members and their status
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="print:pt-0">
+          <div className="space-y-4 print:space-y-3">
             {/* Group members by family */}
             {Array.from(new Set(allMembers.map(m => m.familyGroup))).map(familyGroup => (
-              <div key={familyGroup} className="space-y-2">
-                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+              <div key={familyGroup} className="space-y-2 print:space-y-1 print:break-inside-avoid">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide print:text-base print:text-black print:border-b print:pb-1">
                   {familyGroup}
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-2 print:space-y-1">
                   {allMembers
                     .filter(m => m.familyGroup === familyGroup)
                     .map((member, idx) => (
                       <div 
                         key={idx} 
-                        className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                        className="flex items-center justify-between p-3 border rounded-lg bg-card print:p-2 print:border-0 print:border-b print:rounded-none print:bg-transparent"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{member.memberName}</span>
+                        <div className="flex items-center gap-3 print:gap-2 flex-1 min-w-0">
+                          <div className="space-y-1 print:space-y-0 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 print:gap-1">
+                              <span className="font-medium print:font-semibold">{member.memberName}</span>
                               <Badge 
                                 variant={member.memberType === 'group_lead' ? 'default' : 'outline'}
-                                className="text-xs"
+                                className="text-xs print:text-[10px] print:px-1 print:py-0"
                               >
                                 {member.memberType === 'group_lead' ? 'Lead' : 'Member'}
                               </Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {member.memberEmail || 'No email on file'}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-muted-foreground print:text-xs print:text-black print:flex-row print:gap-4">
+                              <span className="flex items-center gap-1">
+                                <Mail className="h-3 w-3 print:h-2.5 print:w-2.5" />
+                                {member.memberEmail || 'No email'}
+                              </span>
+                              {member.memberPhone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3 print:h-2.5 print:w-2.5" />
+                                  {member.memberPhone}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap print:hidden">
                           {/* Email status */}
                           {member.memberEmail ? (
                             <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
@@ -382,7 +401,7 @@ export default function FamilyGroupHealthCheck() {
 
       {/* Users Without Profiles */}
       {unlinkedUsers.length > 0 && (
-        <Card>
+        <Card className="print:hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -410,6 +429,7 @@ export default function FamilyGroupHealthCheck() {
 
       {/* Recommended Actions - Collapsible */}
       {totalIssues > 0 && (
+        <div className="print:hidden">
         <Collapsible open={showRecommendations} onOpenChange={setShowRecommendations}>
           <CollapsibleTrigger asChild>
             <Alert className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -438,6 +458,7 @@ export default function FamilyGroupHealthCheck() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+        </div>
       )}
     </div>
   );
