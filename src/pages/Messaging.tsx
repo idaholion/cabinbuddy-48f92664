@@ -134,7 +134,7 @@ const Messaging = () => {
       <div className="container mx-auto py-8 max-w-4xl">
         <PageHeader 
           title="Messaging Center"
-          subtitle="Send messages to administrators, calendar keepers, group leads, all users, or individuals"
+          subtitle="Send messages to administrator, calendar keeper, group leads, all users, or individuals"
           icon={MessageSquare}
           backgroundImage={true}
         >
