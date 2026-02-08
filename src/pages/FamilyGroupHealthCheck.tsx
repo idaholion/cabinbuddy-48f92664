@@ -48,7 +48,7 @@ export default function FamilyGroupHealthCheck() {
   const [unlinkedUsers, setUnlinkedUsers] = useState<UnlinkedUser[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
   const [allMembers, setAllMembers] = useState<AllMember[]>([]);
-  const [showAllMembers, setShowAllMembers] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   const loadHealthCheck = async () => {
     if (!activeOrganization?.organization_id) return;
@@ -293,42 +293,61 @@ export default function FamilyGroupHealthCheck() {
         </Card>
       </div>
 
-      {totalIssues === 0 ? (
+      {totalIssues === 0 && (
         <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800 dark:text-green-200">
             <strong>All Good!</strong> No email mismatches or unclaimed profiles found.
           </AlertDescription>
         </Alert>
-      ) : (
-        <>
-          {/* Mismatched Members */}
-          {mismatchedMembers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserX className="h-5 w-5" />
-                  Members with Issues ({mismatchedMembers.length})
-                </CardTitle>
-                <CardDescription>
-                  Family members with email addresses that don't match any user accounts or haven't claimed their profiles
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mismatchedMembers.map((member, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{member.memberName}</span>
-                          <Badge variant={member.memberType === 'group_lead' ? 'default' : 'secondary'}>
-                            {member.memberType === 'group_lead' ? 'Lead' : 'Member'}
-                          </Badge>
+      )}
+
+      {/* All Organization Members - Primary Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5" />
+            <div>
+              <CardTitle className="text-lg">All Organization Members ({allMembers.length})</CardTitle>
+              <CardDescription className="mt-1">
+                Complete list of all family group members and their status
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Group members by family */}
+            {Array.from(new Set(allMembers.map(m => m.familyGroup))).map(familyGroup => (
+              <div key={familyGroup} className="space-y-2">
+                <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                  {familyGroup}
+                </h3>
+                <div className="space-y-2">
+                  {allMembers
+                    .filter(m => m.familyGroup === familyGroup)
+                    .map((member, idx) => (
+                      <div 
+                        key={idx} 
+                        className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{member.memberName}</span>
+                              <Badge 
+                                variant={member.memberType === 'group_lead' ? 'default' : 'outline'}
+                                className="text-xs"
+                              >
+                                {member.memberType === 'group_lead' ? 'Lead' : 'Member'}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {member.memberEmail || 'No email on file'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {member.familyGroup} • {member.memberEmail || <span className="italic">No email on file</span>}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {/* Email status */}
                           {member.memberEmail ? (
                             <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
@@ -340,163 +359,88 @@ export default function FamilyGroupHealthCheck() {
                             </Badge>
                           )}
                           {/* Claim status */}
-                          {!member.hasClaimed && (
+                          {member.hasClaimed ? (
+                            <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Profile Claimed
+                              {member.claimedByEmail && member.claimedByEmail !== member.memberEmail && (
+                                <span className="ml-1 opacity-75">({member.claimedByEmail})</span>
+                              )}
+                            </Badge>
+                          ) : (
                             <Badge variant="destructive" className="text-xs">
                               Profile Not Claimed
                             </Badge>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        {member.memberEmail && !member.hasUserAccount && (
-                          <Button size="sm" variant="outline">
-                            <Mail className="h-4 w-4 mr-1" />
-                            Send Invite
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* Unlinked Users */}
-          {unlinkedUsers.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Users Without Profiles ({unlinkedUsers.length})
-                </CardTitle>
-                <CardDescription>
-                  Users who have accounts but haven't claimed a family member profile
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {unlinkedUsers.map((user, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="font-medium">{user.displayName}</div>
-                        <div className="text-sm text-muted-foreground">{user.email}</div>
-                      </div>
-                      <Badge variant="secondary">No Profile Claimed</Badge>
-                    </div>
-                  ))}
+      {/* Users Without Profiles */}
+      {unlinkedUsers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Users Without Profiles ({unlinkedUsers.length})
+            </CardTitle>
+            <CardDescription>
+              Users who have accounts but haven't claimed a family member profile
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {unlinkedUsers.map((user, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="space-y-1">
+                    <div className="font-medium">{user.displayName}</div>
+                    <div className="text-sm text-muted-foreground">{user.email}</div>
+                  </div>
+                  <Badge variant="secondary">No Profile Claimed</Badge>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Recommended Actions:</strong>
-              <ul className="list-disc list-inside mt-2 space-y-1">
+      {/* Recommended Actions - Collapsible */}
+      {totalIssues > 0 && (
+        <Collapsible open={showRecommendations} onOpenChange={setShowRecommendations}>
+          <CollapsibleTrigger asChild>
+            <Alert className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Recommended Actions</span>
+                  <Badge variant="secondary" className="text-xs">{totalIssues} issues</Badge>
+                </div>
+                {showRecommendations ? (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </Alert>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-2 p-4 border rounded-lg bg-muted/30">
+              <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>Members without accounts should sign up at your organization's login page</li>
                 <li>Members with accounts should log in and claim their profile when prompted</li>
                 <li>Contact unlinked users and ask them to search for and claim their profiles</li>
                 <li>Verify that email addresses in family groups match the user's actual email</li>
               </ul>
-            </AlertDescription>
-          </Alert>
-        </>
-      )}
-
-      {/* All Members Overview - Collapsible */}
-      <Collapsible open={showAllMembers} onOpenChange={setShowAllMembers}>
-        <Card>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ListChecks className="h-5 w-5" />
-                  <div>
-                    <CardTitle className="text-lg">All Organization Members ({allMembers.length})</CardTitle>
-                    <CardDescription className="mt-1">
-                      Complete list of all family group members and their status
-                    </CardDescription>
-                  </div>
-                </div>
-                {showAllMembers ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="space-y-4">
-                {/* Group members by family */}
-                {Array.from(new Set(allMembers.map(m => m.familyGroup))).map(familyGroup => (
-                  <div key={familyGroup} className="space-y-2">
-                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-                      {familyGroup}
-                    </h3>
-                    <div className="space-y-2">
-                      {allMembers
-                        .filter(m => m.familyGroup === familyGroup)
-                        .map((member, idx) => (
-                          <div 
-                            key={idx} 
-                            className="flex items-center justify-between p-3 border rounded-lg bg-card"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{member.memberName}</span>
-                                  <Badge 
-                                    variant={member.memberType === 'group_lead' ? 'default' : 'outline'}
-                                    className="text-xs"
-                                  >
-                                    {member.memberType === 'group_lead' ? 'Lead' : 'Member'}
-                                  </Badge>
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {member.memberEmail || 'No email on file'}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {/* Email status */}
-                              {member.memberEmail ? (
-                                <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
-                                  Email Listed
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive" className="text-xs">
-                                  No Email
-                                </Badge>
-                              )}
-                              {/* Claim status */}
-                              {member.hasClaimed ? (
-                                <Badge className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300">
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Profile Claimed
-                                  {member.claimedByEmail && member.claimedByEmail !== member.memberEmail && (
-                                    <span className="ml-1 opacity-75">({member.claimedByEmail})</span>
-                                  )}
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive" className="text-xs">
-                                  Profile Not Claimed
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
+            </div>
           </CollapsibleContent>
-        </Card>
-      </Collapsible>
+        </Collapsible>
+      )}
     </div>
   );
 }
