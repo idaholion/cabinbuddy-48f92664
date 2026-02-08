@@ -1,43 +1,41 @@
 
-# Simplify Calendar Filter Options
+
+# Remove Trade Requests and Work Weekends Filter Options
 
 ## Overview
 
-This plan removes confusing filter options and replaces them with a single, intuitive toggle for viewing only your family's reservations.
+This plan removes the last two unnecessary filter checkboxes from the calendar, leaving only the useful "Show only my family" toggle and the family group dropdown. Trade requests and work weekends will always be visible when they exist.
 
 ## Changes Summary
 
 | Current State | New State |
 |---------------|-----------|
-| "My bookings" checkbox | Removed |
-| "Other bookings" checkbox | Removed |
-| "Time periods" checkbox | Removed |
-| (none) | New "Show only my family" toggle |
+| "Trade requests" checkbox (default: checked) | Removed - always shown |
+| "Work weekends" checkbox (default: checked) | Removed - always shown |
 
 ## User Experience
 
 ```text
 Before:
 ┌─────────────────────────────┐
-│ Show Bookings               │
-│ ☑ My bookings               │
-│ ☑ Other bookings            │
-│ ☐ Time periods              │
+│ View Options                │
+│ ☐ Show only my family       │
 │ ☑ Trade requests            │
 │ ☑ Work weekends             │
+├─────────────────────────────┤
+│ Family Group                │
+│ [All Groups          ▼]     │
 └─────────────────────────────┘
 
 After:
 ┌─────────────────────────────┐
 │ View Options                │
 │ ☐ Show only my family       │
-│ ☑ Trade requests            │
-│ ☑ Work weekends             │
+├─────────────────────────────┤
+│ Family Group                │
+│ [All Groups          ▼]     │
 └─────────────────────────────┘
 ```
-
-- **Default (unchecked)**: Shows all reservations from all family groups
-- **Checked**: Filters calendar to only show user's family group reservations
 
 ---
 
@@ -45,16 +43,14 @@ After:
 
 ### File: `src/components/PropertyCalendar.tsx`
 
-**1. Update Filter State (lines 129-136)**
+**1. Simplify Filter State (lines 129-134)**
 
-Replace three filter options with one:
+Remove the two filter options from state:
 
 ```typescript
 // Before
 const [filterOptions, setFilterOptions] = useState({
-  showMyBookings: true,
-  showOtherBookings: true,
-  showTimePeriods: false,
+  showOnlyMyFamily: false,
   showTradeRequests: true,
   showWorkWeekends: true,
   familyGroupFilter: 'all'
@@ -62,76 +58,54 @@ const [filterOptions, setFilterOptions] = useState({
 
 // After
 const [filterOptions, setFilterOptions] = useState({
-  showOnlyMyFamily: false,  // New consolidated option
-  showTradeRequests: true,
-  showWorkWeekends: true,
+  showOnlyMyFamily: false,
   familyGroupFilter: 'all'
 });
 ```
 
-**2. Update Main Calendar Filtering (lines 389-408)**
+**2. Update getWorkWeekendsForDate Function (lines 186-188)**
 
-Simplify filtering logic:
+Remove the filter check - always return work weekends:
 
 ```typescript
 // Before
-const isMyBooking = booking.family_group === userFamilyGroup;
-if (isMyBooking && !filterOptions.showMyBookings) {
-  return false;
-}
-if (!isMyBooking && !filterOptions.showOtherBookings) {
-  return false;
-}
+const getWorkWeekendsForDate = (date: Date) => {
+  if (!filterOptions.showWorkWeekends) return [];
+  // ...rest of logic
+};
 
 // After
-if (filterOptions.showOnlyMyFamily && booking.family_group !== userFamilyGroup) {
-  return false;
-}
+const getWorkWeekendsForDate = (date: Date) => {
+  // Remove the filter check, always show work weekends
+  return workWeekends.filter(ww => {
+    // ...rest of logic unchanged
+  });
+};
 ```
 
-**3. Update Mini Calendar Filtering (lines 1461-1468)**
+**3. Update Trade Request Display Logic (line 1129)**
 
-Apply same simplified logic to mini calendar view.
-
-**4. Remove Time Period Display Code**
-
-- Remove time period border styling (line 1164)
-- Remove time period header indicator (lines 1211-1213)
-- Remove time period info display when no bookings (lines 1291-1299)
-
-**5. Update Filter UI (lines 952-1001)**
-
-Replace three checkboxes with single toggle:
+Remove the filter check from the pending trade indicator:
 
 ```typescript
-{/* Before: 3 separate checkboxes */}
-{/* After: Single toggle */}
-<div className="pt-3 border-t">
-  <div className="text-sm font-medium mb-2">View Options</div>
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm">
-      <input 
-        type="checkbox" 
-        checked={filterOptions.showOnlyMyFamily}
-        onChange={(e) => setFilterOptions(prev => ({
-          ...prev, 
-          showOnlyMyFamily: e.target.checked
-        }))}
-        className="rounded border-border"
-      />
-      <span>Show only my family</span>
-    </label>
-    {/* Trade requests and Work weekends remain */}
-  </div>
-</div>
+// Before
+const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
+
+// After
+const hasPendingTrade = tradeRequests.length > 0;
 ```
+
+**4. Remove Filter UI Checkboxes (lines 960-977)**
+
+Delete the two checkbox labels for Trade requests and Work weekends, keeping only the "Show only my family" toggle.
 
 ---
 
 ## Impact Summary
 
-- Users see a cleaner, less confusing filter menu
-- One toggle replaces three confusing options
-- Theoretical "time period" windows no longer clutter the calendar
-- Both main calendar and mini calendar views respect the filter
-- The family group dropdown in the filter menu remains available for admins/calendar keepers who want to view a specific family's bookings
+- Cleaner filter menu with only two options (toggle + dropdown)
+- Trade request indicators (red pulsing dots) always visible when pending trades exist
+- Work weekend indicators (green background) always visible for approved work weekends
+- No loss of functionality - these were always checked by default anyway
+- Simpler state management with fewer filter options to track
+
