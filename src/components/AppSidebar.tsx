@@ -191,7 +191,7 @@ const adminItems = [
     icon: Calendar,
   },
   {
-    title: "Family Group Health Check",
+    title: "Family Group Overview",
     url: "/family-group-health-check",
     icon: AlertCircle,
   },
