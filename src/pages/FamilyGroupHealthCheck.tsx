@@ -246,13 +246,11 @@ export default function FamilyGroupHealthCheck() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Family Group Health Check</h1>
-          <p className="text-muted-foreground mt-1">
-            Identify and resolve email mismatches and unclaimed profiles
-          </p>
-        </div>
+      <div className="text-center space-y-2 mb-4">
+        <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Family Group Overview</h1>
+        <p className="text-2xl text-primary text-center font-medium">Identify and resolve email mismatches and unclaimed profiles</p>
+      </div>
+      <div className="flex justify-end">
         <Button onClick={handleRefresh} disabled={statsLoading} variant="outline">
           <RefreshCw className={`h-4 w-4 mr-2 ${statsLoading ? 'animate-spin' : ''}`} />
           Refresh
