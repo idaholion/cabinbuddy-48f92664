@@ -1,138 +1,76 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRobustMultiOrganization } from '@/hooks/useRobustMultiOrganization';
-import { useEnhancedProfileClaim } from '@/hooks/useEnhancedProfileClaim';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { useProfileClaimState } from '@/hooks/useProfileClaimState';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, CheckCircle, User, Users } from 'lucide-react';
+import { UserPlus, User, Users, Search, CheckCircle, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ProfileClaimBanner } from '@/components/ProfileClaimBanner';
 
 /**
- * ProfileClaimingPrompt - Automatically prompts users to claim their family member profile
- * when their email doesn't match any existing family group records.
+ * ProfileClaimingPrompt - Modal + Banner hybrid for profile claiming
  * 
- * Phase 1: Immediate - Catches email mismatches on login
+ * - Shows modal on first visit with browsable list of unclaimed members
+ * - If dismissed, shows persistent banner until profile is claimed
+ * - Uses useProfileClaimState for centralized state management
  */
 export const ProfileClaimingPrompt = () => {
-  const { user } = useAuth();
-  const { activeOrganization } = useRobustMultiOrganization();
-  const { claimedProfile, searchForMatches, availableMatches, claimProfile } = useEnhancedProfileClaim(activeOrganization?.organization_id);
   const { toast } = useToast();
+  const {
+    unclaimedMembers,
+    loading,
+    showModal,
+    showBanner,
+    openModal,
+    closeModal,
+    dismissModal,
+    claimProfile
+  } = useProfileClaimState();
   
-  const [showDialog, setShowDialog] = useState(false);
-  const [searchName, setSearchName] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
-  const [hasChecked, setHasChecked] = useState(false);
-  const [dismissedForSession, setDismissedForSession] = useState(false);
 
-  // Check if user's email matches any family group records
-  useEffect(() => {
-    const checkEmailMatch = async () => {
-      if (!user?.email || !activeOrganization?.organization_id || hasChecked || dismissedForSession || claimedProfile) {
-        return;
-      }
+  // Filter members by search query
+  const filteredMembers = unclaimedMembers.filter(member => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+    return (
+      member.memberName.toLowerCase().includes(query) ||
+      member.familyGroupName.toLowerCase().includes(query)
+    );
+  });
 
-      setHasChecked(true);
-
-      try {
-        // Check if user's email matches any lead_email or host_members email
-        const { data: familyGroups, error } = await supabase
-          .from('family_groups')
-          .select('name, lead_email, host_members')
-          .eq('organization_id', activeOrganization.organization_id);
-
-        if (error) throw error;
-
-        // Check for email match
-        const normalizedUserEmail = user.email.toLowerCase().trim();
-        const hasMatch = familyGroups?.some(group => {
-          // Check lead email
-          if (group.lead_email?.toLowerCase().trim() === normalizedUserEmail) {
-            return true;
-          }
-          
-          // Check host members
-          if (group.host_members && Array.isArray(group.host_members)) {
-            return group.host_members.some((member: any) => 
-              member.email?.toLowerCase().trim() === normalizedUserEmail
-            );
-          }
-          
-          return false;
-        });
-
-        // If no match found, suggest profile claiming
-        if (!hasMatch && familyGroups && familyGroups.length > 0) {
-          // Try to auto-search by user's name
-          const userDisplayName = user.user_metadata?.display_name || 
-                                 `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim();
-          
-          if (userDisplayName) {
-            setSearchName(userDisplayName);
-            const matches = await searchForMatches(userDisplayName);
-            
-            // Only show dialog if we found potential matches
-            if (matches && matches.length > 0) {
-              setShowDialog(true);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error checking email match:', error);
-      }
-    };
-
-    checkEmailMatch();
-  }, [user, activeOrganization, hasChecked, dismissedForSession, claimedProfile, searchForMatches]);
-
-  const handleSearch = async () => {
-    if (!searchName.trim()) {
-      toast({
-        title: "Enter a name",
-        description: "Please enter your name to search for your profile.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      await searchForMatches(searchName);
-    } catch (error) {
-      console.error('Search error:', error);
-      toast({
-        title: "Search failed",
-        description: "Unable to search for profiles. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleClaimProfile = async (familyGroup: string, memberName: string, memberType: 'group_lead' | 'host_member') => {
+  const handleClaimProfile = async (
+    familyGroupName: string,
+    memberName: string,
+    memberType: 'group_lead' | 'host_member'
+  ) => {
     setIsClaiming(true);
     try {
-      await claimProfile(familyGroup, memberName, memberType);
+      const success = await claimProfile(familyGroupName, memberName, memberType);
       
-      toast({
-        title: "✅ Profile Claimed",
-        description: `You've successfully claimed your profile in ${familyGroup}!`,
-      });
-      
-      setShowDialog(false);
+      if (success) {
+        toast({
+          title: "✅ Profile Claimed",
+          description: `You've successfully linked your account to ${memberName} in ${familyGroupName}!`,
+        });
+      } else {
+        toast({
+          title: "Claim failed",
+          description: "Unable to claim profile. It may already be claimed by another user.",
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       console.error('Claim error:', error);
       toast({
         title: "Claim failed",
-        description: error.message || "Unable to claim profile. Please try again or contact support.",
+        description: error.message || "Unable to claim profile. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -140,110 +78,145 @@ export const ProfileClaimingPrompt = () => {
     }
   };
 
-  const handleDismiss = () => {
-    setDismissedForSession(true);
-    setShowDialog(false);
-  };
+  // Render banner when modal was dismissed
+  if (showBanner) {
+    return <ProfileClaimBanner onClaimClick={openModal} />;
+  }
 
-  if (!showDialog) return null;
+  // Don't render modal if not needed
+  if (!showModal) return null;
 
   return (
-    <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={showModal} onOpenChange={(open) => !open && closeModal()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-warning" />
-            Claim Your Family Member Profile
+            <UserPlus className="h-5 w-5 text-primary" />
+            Which Family Member Are You?
           </DialogTitle>
           <DialogDescription>
-            We couldn't find a family member profile that matches your email address ({user?.email}).
-            Please claim your profile to link your account.
+            Link your account to your family member profile to access all features like making reservations and managing your group.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              This step links your login account to your family member profile. Once claimed, you'll have access to all family group features.
+              Select your name from the list below to link your login account to your family profile.
             </AlertDescription>
           </Alert>
 
+          {/* Search filter */}
           <div className="space-y-2">
-            <Label htmlFor="search-name">Search by your name</Label>
-            <div className="flex gap-2">
+            <Label htmlFor="search-member" className="sr-only">Search by name</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                id="search-name"
-                placeholder="Enter your full name"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                id="search-member"
+                placeholder="Search by name or family group..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
               />
-              <Button onClick={handleSearch} disabled={isSearching}>
-                {isSearching ? 'Searching...' : 'Search'}
-              </Button>
             </div>
           </div>
 
-          {availableMatches.length > 0 && (
-            <div className="space-y-2">
-              <Label>Potential Matches</Label>
-              <div className="space-y-2">
-                {availableMatches.map((match, idx) => (
-                  <Card key={idx} className="p-4 hover:border-primary transition-colors">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {match.memberType === 'group_lead' ? (
-                            <User className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <h3 className="font-semibold">{match.memberName}</h3>
-                          <Badge variant={match.exactMatch ? "default" : "secondary"}>
-                            {match.matchScore}% match
-                          </Badge>
-                        </div>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <p><strong>Family Group:</strong> {match.familyGroup}</p>
-                          <p><strong>Role:</strong> {match.memberType === 'group_lead' ? 'Group Lead' : 'Family Member'}</p>
-                          {match.exactMatch && (
-                            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 mt-2">
-                              <CheckCircle className="h-4 w-4" />
-                              <span className="font-medium">Exact name match</span>
+          {/* Members list */}
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Loading available profiles...
+            </div>
+          ) : filteredMembers.length > 0 ? (
+            <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="space-y-2 pb-4">
+                {filteredMembers.map((member, idx) => (
+                  <Card 
+                    key={`${member.familyGroupName}-${member.memberName}-${idx}`}
+                    className="hover:border-primary transition-colors cursor-pointer group"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="shrink-0">
+                            {member.memberType === 'group_lead' ? (
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-5 w-5 text-primary" />
+                              </div>
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                <Users className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-medium truncate">{member.memberName}</h4>
+                              <Badge 
+                                variant={member.memberType === 'group_lead' ? 'default' : 'secondary'}
+                                className="shrink-0"
+                              >
+                                {member.memberType === 'group_lead' ? 'Group Lead' : 'Member'}
+                              </Badge>
                             </div>
-                          )}
+                            <p className="text-sm text-muted-foreground truncate">
+                              {member.familyGroupName}
+                            </p>
+                          </div>
                         </div>
+                        <Button
+                          size="sm"
+                          onClick={() => handleClaimProfile(
+                            member.familyGroupName,
+                            member.memberName,
+                            member.memberType
+                          )}
+                          disabled={isClaiming}
+                          className="shrink-0"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          This is Me
+                        </Button>
                       </div>
-                      <Button
-                        onClick={() => handleClaimProfile(match.familyGroup, match.memberName, match.memberType)}
-                        disabled={isClaiming}
-                      >
-                        {isClaiming ? 'Claiming...' : 'Claim This Profile'}
-                      </Button>
-                    </div>
+                    </CardContent>
                   </Card>
                 ))}
               </div>
+            </ScrollArea>
+          ) : searchQuery ? (
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                No profiles found matching "{searchQuery}"
+              </p>
+              <Button 
+                variant="link" 
+                onClick={() => setSearchQuery('')}
+                className="mt-2"
+              >
+                Clear search
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground mb-2">
+                No unclaimed profiles available
+              </p>
+              <p className="text-sm text-muted-foreground">
+                All family members have already claimed their profiles, or no members have been added yet.
+              </p>
             </div>
           )}
 
-          {availableMatches.length === 0 && searchName && !isSearching && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No matching profiles found. Try a different name spelling, or contact your organization administrator to add you to a family group.
-              </AlertDescription>
-            </Alert>
-          )}
-
+          {/* Footer actions */}
           <div className="flex justify-between pt-4 border-t">
-            <Button variant="outline" onClick={handleDismiss}>
-              I'll Do This Later
+            <Button variant="ghost" onClick={dismissModal}>
+              Skip for Now
             </Button>
-            <Button variant="ghost" onClick={() => setShowDialog(false)}>
-              Close
-            </Button>
+            <p className="text-xs text-muted-foreground self-center">
+              You can claim your profile later from Settings
+            </p>
           </div>
         </div>
       </DialogContent>
