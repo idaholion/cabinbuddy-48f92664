@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Trash2, Users, Edit2, Check, X, Copy, Link2 } from "lucide-react";
+import { Plus, Trash2, Users, Edit2, Check, X, Copy, Link2, Send } from "lucide-react";
+import { SendInviteDialog } from "@/components/SendInviteDialog";
 import { Link } from "react-router-dom";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
@@ -55,6 +56,7 @@ const FamilyGroupSetup = () => {
   const hasUserMadeChanges = useRef(false);
   const [memberClaimStatus, setMemberClaimStatus] = useState<Map<string, { hasAccount: boolean; hasClaimed: boolean }>>(new Map());
   const [showProfileClaimDialog, setShowProfileClaimDialog] = useState(false);
+  const [showSendInviteDialog, setShowSendInviteDialog] = useState(false);
 
   const form = useForm<FamilyGroupSetupFormData>({
     resolver: zodResolver(familyGroupSetupSchema),
@@ -922,7 +924,7 @@ const FamilyGroupSetup = () => {
 
                     {/* Copy Invite Link Button - visible to group leads and admins */}
                     {(isGroupLead || isAdmin || isSupervisor) && organization?.organization_code && (
-                      <div className="flex justify-center mt-4">
+                      <div className="flex justify-center gap-2 mt-4">
                         <Button
                           type="button"
                           variant="outline"
@@ -939,6 +941,17 @@ const FamilyGroupSetup = () => {
                           <Link2 className="h-4 w-4" />
                           Copy Invite Link
                         </Button>
+                        {selectedFamilyGroup && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowSendInviteDialog(true)}
+                            className="flex items-center gap-2"
+                          >
+                            <Send className="h-4 w-4" />
+                            Send Invite to All
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1116,6 +1129,24 @@ const FamilyGroupSetup = () => {
             navigate("/home");
           }}
         />
+
+        {/* Send Invite Dialog */}
+        {organization && selectedFamilyGroup && (
+          <SendInviteDialog
+            open={showSendInviteDialog}
+            onOpenChange={setShowSendInviteDialog}
+            organizationId={organization.organization_id}
+            organizationName={organization.organization_name}
+            organizationCode={organization.organization_code || ''}
+            members={(selectedFamilyGroup.host_members || []).map(member => ({
+              name: member.name || '',
+              email: member.email || '',
+              phone: member.phone || '',
+            }))}
+            scope="group"
+            groupName={selectedFamilyGroup.name}
+          />
+        )}
       </div>
     </div>
   );
