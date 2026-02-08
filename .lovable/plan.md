@@ -1,31 +1,23 @@
-# Family Group Lead/Member Merge Plan - COMPLETED ✅
+
+# Plan: Remove "Need to Create Account" Statistic
 
 ## Overview
-Merged the separate "Family Group Lead" section into the "Group Members" list, making Member 1 the designated Group Lead. This eliminates duplication and simplifies the data model.
+Remove the redundant "Need to Create Account" statistic card from the Family Group Overview page since it's confusing and already covered by the "Profile Not Claimed" category.
 
-## Changes Made
+## Changes
 
-### FamilyGroupSetup.tsx
-- ✅ Removed separate "Family Group Lead" section (lead name, email, phone fields)
-- ✅ Added "GROUP LEAD" badge to Member 1 card
-- ✅ Updated save logic to derive `lead_*` fields from `host_members[0]`
-- ✅ Member 1 cannot be deleted (require at least 1 member)
-- ✅ Removed auto-sync effect (no longer needed - single source of truth)
-- ✅ Alternate Lead selector now excludes Member 1 by index
+### 1. Remove the statistic card
+**File: `src/pages/FamilyGroupHealthCheck.tsx`**
 
-### GroupMemberCard.tsx
-- ✅ Added `isGroupLead` prop to show GROUP LEAD badge
-- ✅ Updated email/phone labels for Group Lead
+Remove the "Need to Create Account" card from the summary stats grid (lines 283-289), reducing from 5 cards to 4.
 
-### FamilyGroupHealthCheck.tsx
-- ✅ Removed duplicate lead entries (now uses only host_members)
-- ✅ First member marked as 'group_lead' type
+### 2. Remove the unused variable
+Remove the `membersWithoutAccounts` calculation on line 245 since it will no longer be used.
 
-### validations.ts
-- ✅ Made `leadName`, `leadPhone`, `leadEmail` optional (backwards compatible)
-- ✅ Added validation for Member 1 to require first/last name
+### 3. Update the grid layout
+Change the grid from `md:grid-cols-5` to `md:grid-cols-4` to properly distribute the remaining 4 cards.
 
-## Data Model
-- **On save**: `lead_*` fields derived from `host_members[0]`
-- **Backwards compatible**: Legacy data with only lead_* fields still works
-- **Single source of truth**: `host_members` array is the primary data source
+## Summary
+- **Lines to modify**: 245, 271, 283-289
+- **Net effect**: Cleaner, less confusing dashboard with 4 statistics instead of 5
+- **Stats remaining**: Total Issues, No Email Listed, Profile Not Claimed, Users Without Profile
