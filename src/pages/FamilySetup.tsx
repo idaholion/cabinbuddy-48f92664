@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Settings, Copy, X, DollarSign, Link2 } from "lucide-react";
+import { Users, Plus, Settings, Copy, X, DollarSign, Link2, Send } from "lucide-react";
+import { SendInviteDialog } from "@/components/SendInviteDialog";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { FamilyGroups } from "@/components/FamilyGroups";
 import { AdminProfileClaimingStep } from "@/components/AdminProfileClaimingStep";
@@ -105,6 +106,7 @@ const FamilySetup = () => {
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
   const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
   const [showProfileClaimingStep, setShowProfileClaimingStep] = useState(false);
+  const [showSendInviteDialog, setShowSendInviteDialog] = useState(false);
   const hasShownToastRef = useRef(false);
 
   // Auto-save all form data
@@ -823,6 +825,17 @@ const FamilySetup = () => {
                     <Link2 className="h-4 w-4" />
                     Copy Invite Link
                   </Button>
+                  {isAdmin && existingFamilyGroups.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSendInviteDialog(true)}
+                      className="flex items-center gap-1"
+                    >
+                      <Send className="h-4 w-4" />
+                      Send Invite to All
+                    </Button>
+                  )}
                    {(isCreatingNew || isAdmin) && (
                     <Button
                       variant="outline"
@@ -1183,6 +1196,25 @@ const FamilySetup = () => {
         </div>
 
       </div>
+
+      {/* Send Invite Dialog */}
+      {organization && (
+        <SendInviteDialog
+          open={showSendInviteDialog}
+          onOpenChange={setShowSendInviteDialog}
+          organizationId={organization.id}
+          organizationName={organization.name}
+          organizationCode={organizationCode}
+          members={existingFamilyGroups.flatMap(group => 
+            (group.host_members || []).map(member => ({
+              name: member.name || '',
+              email: member.email || '',
+              phone: member.phone || '',
+            }))
+          )}
+          scope="organization"
+        />
+      )}
     </div>
   );
 };
