@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { CBHelpButton } from '@/components/CBHelpButton';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
 import { TestOrganizationBanner } from '@/components/TestOrganizationBanner';
+import { ProfileClaimingPrompt } from '@/components/ProfileClaimingPrompt';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -26,6 +27,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <main className="flex-1">
             <GuestAccessBanner />
             <TestOrganizationBanner />
+            <ProfileClaimingPrompt />
             {/* Mobile sidebar trigger - only visible on mobile screens */}
             {isMobile === true && (
               <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
