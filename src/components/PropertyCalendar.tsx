@@ -127,9 +127,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   
   // Phase 4: Enhanced filtering and view options
   const [filterOptions, setFilterOptions] = useState({
-    showOnlyMyFamily: false,  // New consolidated option - shows all reservations by default
-    showTradeRequests: true,
-    showWorkWeekends: true,
+    showOnlyMyFamily: false,  // Shows all reservations by default
     familyGroupFilter: 'all'
   });
   const [viewMode, setViewMode] = useState<'calendar' | 'mini'>('calendar');
@@ -184,7 +182,6 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
 
   // Get work weekends for a specific date
   const getWorkWeekendsForDate = (date: Date) => {
-    if (!filterOptions.showWorkWeekends) return [];
     
     return workWeekends.filter(ww => {
       if (ww.status !== 'fully_approved') return false;
@@ -957,24 +954,6 @@ const getBookingsForDate = (date: Date) => {
                         />
                         <span>Show only my family</span>
                       </label>
-                      <label className="flex items-center space-x-2 text-sm">
-                        <input 
-                          type="checkbox" 
-                          checked={filterOptions.showTradeRequests}
-                          onChange={(e) => setFilterOptions(prev => ({...prev, showTradeRequests: e.target.checked}))}
-                          className="rounded border-border"
-                        />
-                        <span>Trade requests</span>
-                      </label>
-                      <label className="flex items-center space-x-2 text-sm">
-                        <input 
-                          type="checkbox" 
-                          checked={filterOptions.showWorkWeekends}
-                          onChange={(e) => setFilterOptions(prev => ({...prev, showWorkWeekends: e.target.checked}))}
-                          className="rounded border-border"
-                        />
-                        <span>Work weekends</span>
-                      </label>
                     </div>
                   </div>
                   
@@ -1126,7 +1105,7 @@ const getBookingsForDate = (date: Date) => {
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
                 const isToday = day.toDateString() === new Date().toDateString();
                 const hasMyBooking = dayBookings.some(b => b.family_group === userFamilyGroup);
-                const hasPendingTrade = tradeRequests.length > 0 && filterOptions.showTradeRequests;
+                const hasPendingTrade = tradeRequests.length > 0;
                 const hasWorkWeekend = dayWorkWeekends.length > 0;
                 const isSelected = isDateSelected(day);
                 const isAvailableForDrag = isDateAvailableForBooking(day);
