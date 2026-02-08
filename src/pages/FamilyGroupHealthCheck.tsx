@@ -242,7 +242,7 @@ export default function FamilyGroupHealthCheck() {
 
   const totalIssues = mismatchedMembers.length + unlinkedUsers.length;
   const membersWithoutEmails = mismatchedMembers.filter(m => !m.memberEmail).length;
-  const membersWithoutAccounts = mismatchedMembers.filter(m => m.memberEmail && !m.hasUserAccount).length;
+  
   // Unclaimed profiles = members who haven't claimed (regardless of account status)
   const membersWithoutClaims = mismatchedMembers.filter(m => !m.hasClaimed).length;
 
@@ -268,7 +268,7 @@ export default function FamilyGroupHealthCheck() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 print:hidden">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 print:hidden">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Issues</CardDescription>
@@ -279,12 +279,6 @@ export default function FamilyGroupHealthCheck() {
           <CardHeader className="pb-2">
             <CardDescription>No Email Listed</CardDescription>
             <CardTitle className="text-3xl">{membersWithoutEmails}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Need to Create Account</CardDescription>
-            <CardTitle className="text-3xl">{membersWithoutAccounts}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
