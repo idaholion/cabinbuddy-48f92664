@@ -103,50 +103,18 @@ export default function FamilyGroupHealthCheck() {
       );
 
       // Check for mismatched members (includes members without emails)
+      // NOTE: We only check host_members now since lead info is derived from host_members[0]
       const mismatches: MismatchedMember[] = [];
       
       familyGroups?.forEach(group => {
-        // Check group lead
-        if (group.lead_name) {
-          const claimKey = `${group.name}:${group.lead_name.trim()}`;
-          const claimedByEmail = memberClaimMap.get(claimKey);
-          
-          if (group.lead_email) {
-            const normalizedEmail = group.lead_email.toLowerCase().trim();
-            const hasAccount = userEmailMap.has(normalizedEmail);
-            const user = userEmailMap.get(normalizedEmail);
-            const hasClaimed = user ? claimedProfiles.has(user.user_id) : !!claimedByEmail;
-
-            if (!hasAccount || !hasClaimed) {
-              mismatches.push({
-                familyGroup: group.name,
-                memberName: group.lead_name,
-                memberEmail: group.lead_email,
-                memberType: 'group_lead',
-                hasUserAccount: hasAccount,
-                hasClaimed: hasClaimed,
-              });
-            }
-          } else if (!claimedByEmail) {
-            // Lead has no email and hasn't been claimed
-            mismatches.push({
-              familyGroup: group.name,
-              memberName: group.lead_name,
-              memberEmail: '',
-              memberType: 'group_lead',
-              hasUserAccount: false,
-              hasClaimed: false,
-            });
-          }
-        }
-
-        // Check host members
+        // Check host members (first member is the Group Lead)
         if (group.host_members && Array.isArray(group.host_members)) {
-          group.host_members.forEach((member: any) => {
+          group.host_members.forEach((member: any, memberIndex: number) => {
             if (!member.name) return;
             
             const claimKey = `${group.name}:${member.name.trim()}`;
             const claimedByEmail = memberClaimMap.get(claimKey);
+            const isGroupLead = memberIndex === 0;
             
             if (member.email) {
               const normalizedEmail = member.email.toLowerCase().trim();
@@ -159,7 +127,7 @@ export default function FamilyGroupHealthCheck() {
                   familyGroup: group.name,
                   memberName: member.name,
                   memberEmail: member.email,
-                  memberType: 'host_member',
+                  memberType: isGroupLead ? 'group_lead' : 'host_member',
                   hasUserAccount: hasAccount,
                   hasClaimed: hasClaimed,
                 });
@@ -170,7 +138,7 @@ export default function FamilyGroupHealthCheck() {
                 familyGroup: group.name,
                 memberName: member.name,
                 memberEmail: '',
-                memberType: 'host_member',
+                memberType: isGroupLead ? 'group_lead' : 'host_member',
                 hasUserAccount: false,
                 hasClaimed: false,
               });
@@ -182,43 +150,26 @@ export default function FamilyGroupHealthCheck() {
       setMismatchedMembers(mismatches);
 
       // Build ALL members list (for complete overview)
+      // NOTE: We only use host_members now since lead info is derived from host_members[0]
       const allMembersList: AllMember[] = [];
       
       familyGroups?.forEach(group => {
-        // Add group lead
-        if (group.lead_name) {
-          const normalizedEmail = group.lead_email?.toLowerCase().trim() || '';
-          const hasAccount = normalizedEmail ? userEmailMap.has(normalizedEmail) : false;
-          const user = normalizedEmail ? userEmailMap.get(normalizedEmail) : null;
-          const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
-          const claimedByEmail = memberClaimMap.get(`${group.name}:${group.lead_name.trim()}`);
-          
-          allMembersList.push({
-            familyGroup: group.name,
-            memberName: group.lead_name,
-            memberEmail: group.lead_email || '',
-            memberType: 'group_lead',
-            hasUserAccount: hasAccount,
-            hasClaimed: hasClaimed || !!claimedByEmail,
-            claimedByEmail: claimedByEmail || undefined,
-          });
-        }
-
-        // Add host members
+        // Add host members (first member is the Group Lead)
         if (group.host_members && Array.isArray(group.host_members)) {
-          group.host_members.forEach((member: any) => {
+          group.host_members.forEach((member: any, memberIndex: number) => {
             if (member.name) {
               const normalizedEmail = member.email?.toLowerCase().trim() || '';
               const hasAccount = normalizedEmail ? userEmailMap.has(normalizedEmail) : false;
               const user = normalizedEmail ? userEmailMap.get(normalizedEmail) : null;
               const hasClaimed = user ? claimedProfiles.has(user.user_id) : false;
               const claimedByEmail = memberClaimMap.get(`${group.name}:${member.name.trim()}`);
+              const isGroupLead = memberIndex === 0;
               
               allMembersList.push({
                 familyGroup: group.name,
                 memberName: member.name,
                 memberEmail: member.email || '',
-                memberType: 'host_member',
+                memberType: isGroupLead ? 'group_lead' : 'host_member',
                 hasUserAccount: hasAccount,
                 hasClaimed: hasClaimed || !!claimedByEmail,
                 claimedByEmail: claimedByEmail || undefined,

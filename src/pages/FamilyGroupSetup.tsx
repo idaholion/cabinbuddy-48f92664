@@ -275,9 +275,10 @@ const FamilyGroupSetup = () => {
       return;
     }
 
-    // Only pre-populate if form is empty
+    // Only pre-populate if form is empty (no members filled in)
     const currentValues = getValues();
-    if (currentValues.leadName || currentValues.leadEmail) return;
+    const hasFilledMembers = currentValues.groupMembers?.some(m => m.firstName?.trim() || m.lastName?.trim());
+    if (hasFilledMembers) return;
 
     console.log('🔧 [FAMILY_GROUP_SETUP] Pre-populating user information for new signup');
 
@@ -289,17 +290,10 @@ const FamilyGroupSetup = () => {
     const userPhone = user.phone || user.user_metadata?.phone || '';
 
     if (fullName || userEmail) {
-      // Pre-populate Group Lead fields
-      if (fullName) setValue("leadName", fullName, { shouldDirty: false });
-      if (userEmail) setValue("leadEmail", userEmail, { shouldDirty: false });
-      if (userPhone) setValue("leadPhone", userPhone, { shouldDirty: false });
-
-      // Also pre-populate ONLY Group Member 1 with same info (group lead is typically first member)
+      // Pre-populate Group Member 1 (the Group Lead) with user info
       const currentGroupMembers = getValues("groupMembers");
       if (currentGroupMembers && currentGroupMembers.length > 0) {
         const updatedGroupMembers = [...currentGroupMembers];
-        // Only update the first member (index 0), leave others unchanged
-        const { firstName, lastName } = parseFullName(fullName);
         updatedGroupMembers[0] = {
           name: fullName,
           firstName,
@@ -308,11 +302,10 @@ const FamilyGroupSetup = () => {
           email: userEmail,
           canHost: true // Group leads can always host
         };
-        // Keep other members as they are (empty by default)
         setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
       }
 
-      console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information for first member only:', {
+      console.log('✅ [FAMILY_GROUP_SETUP] Pre-populated user information for first member (Group Lead):', {
         fullName,
         userEmail,
         memberIndex: 0
@@ -326,19 +319,9 @@ const FamilyGroupSetup = () => {
       console.log('📝 [FORM_LOAD] Loading data for family group:', {
         groupName: selectedFamilyGroup.name,
         groupId: selectedFamilyGroup.id,
-        leadName: selectedFamilyGroup.lead_name,
-        leadEmail: selectedFamilyGroup.lead_email,
         hostMembersCount: selectedFamilyGroup.host_members?.length || 0,
         hostMembers: selectedFamilyGroup.host_members
       });
-      
-      setValue("leadName", selectedFamilyGroup.lead_name || "", { shouldDirty: false });
-      setValue("leadPhone", selectedFamilyGroup.lead_phone || "", { shouldDirty: false });
-      
-      // Preserve user's email if family group doesn't have lead email set
-      const currentEmail = getValues("leadEmail");
-      const shouldUseUserEmail = !selectedFamilyGroup.lead_email && currentEmail && user?.email === currentEmail;
-      setValue("leadEmail", selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : ""), { shouldDirty: false });
       
       // Force override alternate lead from database (don't let auto-save interfere)
       setValue("alternateLeadId", selectedFamilyGroup.alternate_lead_id || "none", { 
@@ -363,7 +346,7 @@ const FamilyGroupSetup = () => {
             name: member.name || "",
             phone: member.phone || "",
             email: member.email || "",
-            canHost: member.canHost || false,
+            canHost: idx === 0 ? true : (member.canHost || false), // Group Lead always can host
           };
           console.log(`📋 [FORM_LOAD] Member ${idx}:`, newMember);
           return newMember;
@@ -372,19 +355,19 @@ const FamilyGroupSetup = () => {
         setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
-        // Automatically copy Group Lead info to Group Member 1
-        const leadEmail = selectedFamilyGroup.lead_email || (shouldUseUserEmail ? currentEmail : "");
+        // No host members - create default empty list
+        // If there's legacy lead_* data, use it for Member 1
         const { firstName, lastName } = parseFullName(selectedFamilyGroup.lead_name || "");
         const leadAsHostMember = {
           firstName: firstName || "",
           lastName: lastName || "",
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
-          email: leadEmail,
+          email: selectedFamilyGroup.lead_email || "",
           canHost: true // Group leads can always host
         };
         
-        console.log('📋 [FORM_LOAD] Creating default member list with lead:', leadAsHostMember);
+        console.log('📋 [FORM_LOAD] Creating default member list with legacy lead data:', leadAsHostMember);
         setValue("groupMembers", [
           leadAsHostMember,
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
@@ -412,54 +395,6 @@ const FamilyGroupSetup = () => {
     }
   }, [selectedFamilyGroup, setValue, form, getValues, user?.email, setShowAllMembers, parseFullName]);
 
-  // Auto-update Group Member 1 when Group Lead info changes
-  // Only sync if Member 1 is empty OR matches the previous lead info (to avoid overwriting user edits)
-  useEffect(() => {
-    const currentGroupMembers = getValues("groupMembers");
-    const currentSelectedGroup = getValues("selectedGroup");
-    
-    // DEFENSIVE CHECK: Don't update if no group is selected
-    if (!currentSelectedGroup || currentSelectedGroup === "") {
-      return;
-    }
-    
-    // Only update if we have group members and any lead info
-    if (currentGroupMembers && currentGroupMembers.length > 0 && 
-        (watchedData.leadName || watchedData.leadPhone || watchedData.leadEmail)) {
-      
-      const firstMember = currentGroupMembers[0];
-      
-      // Check if first member is empty (new group) or matches lead (should sync)
-      const isFirstMemberEmpty = !firstMember.name?.trim() && !firstMember.email?.trim() && !firstMember.phone?.trim();
-      const firstMemberMatchesLead = firstMember.name === watchedData.leadName || 
-                                      firstMember.email === watchedData.leadEmail;
-      
-      // Only auto-sync if member 1 is empty OR already matches the lead
-      // This prevents overwriting if user has manually edited Member 1 to be different
-      if (isFirstMemberEmpty || firstMemberMatchesLead) {
-        const updatedGroupMembers = [...currentGroupMembers];
-        const { firstName, lastName } = parseFullName(watchedData.leadName || "");
-        
-        updatedGroupMembers[0] = {
-          name: watchedData.leadName || "",
-          firstName,
-          lastName,
-          phone: watchedData.leadPhone || "",
-          email: watchedData.leadEmail || "",
-          canHost: true
-        };
-        
-        setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
-        
-        console.log('✅ [AUTO_SYNC] Synced Group Lead info to Member 1:', {
-          groupName: currentSelectedGroup,
-          leadName: watchedData.leadName,
-          leadEmail: watchedData.leadEmail
-        });
-      }
-    }
-  }, [watchedData.leadName, watchedData.leadPhone, watchedData.leadEmail, setValue, getValues, parseFullName]);
-
   // Returns: 'success' = saved and can navigate, 'profile-claim' = saved but show dialog, 'error' = failed
   const onSubmit = async (data: FamilyGroupSetupFormData): Promise<'success' | 'profile-claim' | 'error'> => {
     if (!data.selectedGroup) {
@@ -486,11 +421,17 @@ const FamilyGroupSetup = () => {
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
     
     try {
+      // Derive lead_* fields from host_members[0] (the Group Lead)
+      const firstMember = groupMembersList[0];
+      const derivedLeadName = firstMember?.name || undefined;
+      const derivedLeadEmail = firstMember?.email || undefined;
+      const derivedLeadPhone = firstMember?.phone ? unformatPhoneNumber(firstMember.phone) : undefined;
+      
       if (existingGroup) {
         await updateFamilyGroup(existingGroup.id, {
-          lead_name: data.leadName || undefined,
-          lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
-          lead_email: data.leadEmail || undefined,
+          lead_name: derivedLeadName,
+          lead_phone: derivedLeadPhone,
+          lead_email: derivedLeadEmail,
           host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
         });
@@ -505,9 +446,9 @@ const FamilyGroupSetup = () => {
       } else {
         await createFamilyGroup({
           name: data.selectedGroup,
-          lead_name: data.leadName || undefined,
-          lead_phone: data.leadPhone ? unformatPhoneNumber(data.leadPhone) : undefined,
-          lead_email: data.leadEmail || undefined,
+          lead_name: derivedLeadName,
+          lead_phone: derivedLeadPhone,
+          lead_email: derivedLeadEmail,
           host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
           
           alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
@@ -960,81 +901,6 @@ const FamilyGroupSetup = () => {
                   )
                 )}
 
-                {/* Family Group Lead Section */}
-                <div className="space-y-4">
-                  <h3 className="text-3xl font-semibold text-center">Family Group Lead</h3>
-                  
-                  <FormField
-                    control={control}
-                    name="leadName"
-                    render={({ field }) => (
-                      <FormItem>
-                          <FormLabel className="text-xl">
-                            Lead Name <span className="text-destructive">*</span>
-                          </FormLabel>
-                        <FormControl>
-                           <Input 
-                             placeholder="Family Group Lead's full name"
-                             className="text-lg placeholder:text-lg"
-                             {...field}
-                             onChange={(e) => {
-                               hasUserMadeChanges.current = true;
-                               field.onChange(e);
-                             }}
-                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={control}
-                      name="leadPhone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xl">Phone Number</FormLabel>
-                          <FormControl>
-                              <PhoneInput 
-                                value={field.value}
-                                onChange={(value) => {
-                                  hasUserMadeChanges.current = true;
-                                  field.onChange(value);
-                                }}
-                                className="text-lg placeholder:text-lg"
-                              />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={control}
-                      name="leadEmail"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xl">Email Address</FormLabel>
-                          <FormControl>
-                             <Input 
-                               type="email" 
-                               placeholder="lead@example.com"
-                               className="text-lg placeholder:text-lg"
-                               {...field}
-                               onChange={(e) => {
-                                 hasUserMadeChanges.current = true;
-                                 field.onChange(e);
-                               }}
-                             />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
                 {/* Group Members Section */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -1107,11 +973,12 @@ const FamilyGroupSetup = () => {
                               index={index}
                               control={control}
                               onRemove={removeGroupMember}
-                              canRemove={fields.length > 1}
+                              canRemove={fields.length > 1 && index !== 0}
                               onFieldChange={() => hasUserMadeChanges.current = true}
                               hasUserAccount={status?.hasAccount || false}
                               hasClaimed={status?.hasClaimed || false}
                               showStatusIndicators={isAdmin || isSupervisor}
+                              isGroupLead={index === 0}
                             />
                           );
                         })}
@@ -1167,8 +1034,7 @@ const FamilyGroupSetup = () => {
                             <SelectContent className="bg-background z-50 text-lg">
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
                                {watchedData.groupMembers
-                                ?.filter(member => member.name && member.name.trim() !== '')
-                                .filter(member => member.name !== watchedData.leadName) // Exclude Group Lead
+                                ?.filter((member, idx) => member.name && member.name.trim() !== '' && idx !== 0) // Exclude Member 1 (Group Lead)
                                 .map((member, index) => (
                                   <SelectItem key={index} value={member.name || ""} className="text-lg">
                                     {member.name}
