@@ -920,6 +920,9 @@ const FamilyGroupSetup = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Family members can add their own email and phone when they log in and claim their profile. Check the boxes to indicate who can host and make reservations.
                       </p>
+                      <p className="text-xs text-primary/80 mt-2">
+                        📧 Adding email addresses enables the "Send Invite to All" button below, making it easy to email everyone a sign-up link.
+                      </p>
                     </div>
 
                     {/* Copy Invite Link Button - visible to group leads and admins */}

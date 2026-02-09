@@ -102,7 +102,7 @@ const FamilySetup = () => {
   const [calendarKeeperName, setCalendarKeeperName] = useState("");
   const [calendarKeeperPhone, setCalendarKeeperPhone] = useState("");
   const [calendarKeeperEmail, setCalendarKeeperEmail] = useState("");
-  const [familyGroups, setFamilyGroups] = useState<{name: string, leadFirstName: string, leadLastName: string, id?: string, isExisting?: boolean}[]>([{name: "", leadFirstName: "", leadLastName: ""}]);
+  const [familyGroups, setFamilyGroups] = useState<{name: string, leadFirstName: string, leadLastName: string, leadEmail: string, id?: string, isExisting?: boolean}[]>([{name: "", leadFirstName: "", leadLastName: "", leadEmail: ""}]);
   const [organizationCode, setOrganizationCode] = useState(generateOrgCode);
   const [adminFamilyGroup, setAdminFamilyGroup] = useState("");
   const [showProfileClaimingStep, setShowProfileClaimingStep] = useState(false);
@@ -206,6 +206,7 @@ const FamilySetup = () => {
           name: group.name,
           leadFirstName: nameParts[0] || '',
           leadLastName: nameParts.slice(1).join(' ') || '',
+          leadEmail: group.lead_email || '',
           isExisting: true
         };
       });
@@ -213,7 +214,7 @@ const FamilySetup = () => {
       // Only admins can add new groups
       const newGroups = [...editableGroups];
       if (isAdmin && newGroups.every(g => g.isExisting)) {
-        newGroups.push({name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false});
+        newGroups.push({name: "", leadFirstName: "", leadLastName: "", leadEmail: "", id: undefined, isExisting: false});
       }
       
       setFamilyGroups(newGroups);
@@ -261,7 +262,7 @@ const FamilySetup = () => {
         if (savedData.familyGroups && savedData.familyGroups.length > 0) {
           // Handle both old string[] format and new object format
           const groups = savedData.familyGroups.map((g: any) => 
-            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
+            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: "", leadEmail: ""} : { ...g, leadEmail: g.leadEmail || "" }
           );
           setFamilyGroups(groups);
         }
@@ -330,8 +331,8 @@ const FamilySetup = () => {
         setCalendarKeeperEmail(savedData.calendarKeeperEmail || "");
         const groups = savedData.familyGroups && savedData.familyGroups.length > 0 ? 
           savedData.familyGroups.map((g: any) => 
-            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
-          ) : [{name: "", leadFirstName: "", leadLastName: ""}];
+            typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: "", leadEmail: ""} : { ...g, leadEmail: g.leadEmail || "" }
+          ) : [{name: "", leadFirstName: "", leadLastName: "", leadEmail: ""}];
         setFamilyGroups(groups);
         if (savedData.organizationCode) setOrganizationCode(savedData.organizationCode);
         if (savedData.adminFamilyGroup) setAdminFamilyGroup(savedData.adminFamilyGroup);
@@ -360,8 +361,8 @@ const FamilySetup = () => {
           setCalendarKeeperEmail(data.calendarKeeperEmail || "");
           const groups = data.familyGroups && data.familyGroups.length > 0 ? 
             data.familyGroups.map((g: any) => 
-              typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: ""} : g
-            ) : [{name: "", leadFirstName: "", leadLastName: ""}];
+              typeof g === 'string' ? {name: g, leadFirstName: "", leadLastName: "", leadEmail: ""} : { ...g, leadEmail: g.leadEmail || "" }
+            ) : [{name: "", leadFirstName: "", leadLastName: "", leadEmail: ""}];
           setFamilyGroups(groups);
         }
       }
@@ -479,6 +480,7 @@ const FamilySetup = () => {
               .update({
                 name: group.name.trim(),
                 lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
+                lead_email: group.leadEmail?.trim() || null,
                 updated_at: new Date().toISOString()
               })
               .eq('id', group.id);
@@ -496,7 +498,7 @@ const FamilySetup = () => {
               name: group.name.trim(),
               lead_name: `${group.leadFirstName.trim()} ${group.leadLastName.trim()}`,
               lead_phone: null,
-              lead_email: null,
+              lead_email: group.leadEmail?.trim() || null,
               host_members: [],
               color: null,
               alternate_lead_id: null,
@@ -656,7 +658,7 @@ const FamilySetup = () => {
   };
 
   // Handle family group input changes
-  const handleFamilyGroupChange = (index: number, field: 'name' | 'leadFirstName' | 'leadLastName', value: string) => {
+  const handleFamilyGroupChange = (index: number, field: 'name' | 'leadFirstName' | 'leadLastName' | 'leadEmail', value: string) => {
     const newFamilyGroups = [...familyGroups];
     newFamilyGroups[index][field] = value;
     setFamilyGroups(newFamilyGroups);
@@ -665,7 +667,7 @@ const FamilySetup = () => {
   // Add a new family group field (only for admins)
   const addFamilyGroup = () => {
     if (isAdmin || isCreatingNew) {
-      setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: "", id: undefined, isExisting: false}]);
+      setFamilyGroups(prev => [...prev, {name: "", leadFirstName: "", leadLastName: "", leadEmail: "", id: undefined, isExisting: false}]);
     }
   };
 
@@ -1012,6 +1014,9 @@ const FamilySetup = () => {
                       'Set up your family groups:'
                     }
                   </p>
+                  <p className="mt-2 text-xs text-primary/80">
+                    💡 Adding group lead email addresses enables the "Send Invite to All" feature, making it easier for leads to sign up and manage their groups.
+                  </p>
                 </div>
                 {familyGroups.map((group, index) => (
                   <div key={group.id || index} className="border rounded-lg p-4 space-y-3 bg-muted/20">
@@ -1042,7 +1047,7 @@ const FamilySetup = () => {
                       />
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="space-y-2">
                         <Label htmlFor={`leadFirstName${index}`} className="text-sm font-medium">Lead First Name *</Label>
                         <Input
@@ -1059,6 +1064,16 @@ const FamilySetup = () => {
                           placeholder="Last name"
                           value={group.leadLastName}
                           onChange={(e) => handleFamilyGroupChange(index, 'leadLastName', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`leadEmail${index}`} className="text-sm font-medium">Lead Email</Label>
+                        <Input
+                          id={`leadEmail${index}`}
+                          type="email"
+                          placeholder="lead@example.com"
+                          value={group.leadEmail}
+                          onChange={(e) => handleFamilyGroupChange(index, 'leadEmail', e.target.value)}
                         />
                       </div>
                     </div>

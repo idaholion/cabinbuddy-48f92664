@@ -204,6 +204,9 @@ ${organizationName} Team`;
                   ))}
                 </ul>
               </ScrollArea>
+              <p className="text-xs text-muted-foreground">
+                💡 Add email addresses on the {scope === "group" ? "Family Group Setup" : "Family Organization Setup"} page to include these members in future invitations.
+              </p>
             </div>
           )}
         </div>
