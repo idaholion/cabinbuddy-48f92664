@@ -187,22 +187,10 @@ export function SecondarySelectionManager({
 
   if (allSecondaryComplete) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            Secondary Selection Complete
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert>
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
-              All family groups have completed their secondary selections for {rotationYear}.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium bg-green-50 dark:bg-green-950/30 px-3 py-1.5 rounded-md border border-green-200 dark:border-green-800">
+        <CheckCircle className="h-4 w-4 flex-shrink-0" />
+        <span>All groups completed {rotationYear} secondary selections</span>
+      </div>
     );
   }
 

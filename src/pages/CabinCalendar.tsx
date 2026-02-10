@@ -389,14 +389,12 @@ const CabinCalendar = () => {
               </div>
             )}
             
-            {/* Secondary Selection Manager */}
+            {/* Secondary Selection Manager - active states */}
             {currentPhase === 'secondary' && (
-              <div className="mb-4">
-                <SecondarySelectionManager 
-                  currentMonth={currentCalendarMonth}
-                  userFamilyGroup={userGroup?.name}
-                />
-              </div>
+              <SecondarySelectionManager 
+                currentMonth={currentCalendarMonth}
+                userFamilyGroup={userGroup?.name}
+              />
             )}
             
             {/* Admin Manual Notification Control */}
