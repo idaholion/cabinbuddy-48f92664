@@ -258,10 +258,6 @@ const CabinCalendar = () => {
                   <NavigationHeader 
                     backLabel="Home" 
                     className="mb-0"
-                    familyGroups={familyGroups}
-                    selectedFamilyGroup={selectedFamilyGroup}
-                    onFamilyGroupChange={handleFamilyGroupChange}
-                    showFamilyGroupSelector={isCalendarKeeper || isAdmin}
                   />
                 </div>
               </div>
