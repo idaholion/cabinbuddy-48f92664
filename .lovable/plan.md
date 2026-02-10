@@ -1,27 +1,34 @@
 
 
-## Bug Fix: "Failed to fetch available colors" for non-supervisor admins
+## Bug Fix: Family Group Selector Not Visible for Paul (Org Admin)
 
 ### Root Cause
 
-The `get_available_colors` database function is declared as `STABLE`, which tells PostgreSQL it performs no writes. However, for non-supervisor users, it calls `validate_organization_access()`, which performs an INSERT into the `organization_access_audit` table. PostgreSQL rejects this INSERT because it violates the `STABLE` contract, producing the error: **"cannot execute INSERT in a read-only transaction"**.
+The family group selector on the calendar page uses this visibility check (line 264):
 
-Supervisors are unaffected because they pass the `is_supervisor()` check and skip the `validate_organization_access()` call entirely -- which is why this only shows up for Paul (a non-supervisor admin).
+```
+isCalendarKeeper || (organization?.admin_email === user?.email)
+```
+
+This only checks the `admin_email` field on the organization record. However, Paul is likely an admin through the `user_organizations` table (where `role = 'admin'`), not through the `admin_email` field. The `isAdmin` variable from `useUserRole()` already handles **both** admin paths, but it's not being used here.
 
 ### Fix
 
-Create a new migration that re-declares `get_available_colors` without the `STABLE` keyword, changing it to `VOLATILE` (the default). This allows the audit INSERT inside `validate_organization_access` to succeed.
+**File: `src/pages/CabinCalendar.tsx` (line 264)**
 
-The single change is on line 5 of the function definition:
-- **Before**: `STABLE SECURITY DEFINER`
-- **After**: `SECURITY DEFINER`
+Change the `showFamilyGroupSelector` prop from:
+```
+showFamilyGroupSelector={isCalendarKeeper || (organization?.admin_email?.toLowerCase() === user?.email?.toLowerCase())}
+```
+to:
+```
+showFamilyGroupSelector={isCalendarKeeper || isAdmin}
+```
 
-Everything else in the function remains identical.
+`isAdmin` is already available -- it's destructured from `useUserRole()` on line 66. This is a one-line change with no risk, as it simply broadens the visibility check to include all recognized admin paths.
 
-### Technical Details
-
-- **File to create**: A new SQL migration file
-- **Change**: Remove `STABLE` from the `get_available_colors` function declaration so it becomes `VOLATILE` (the PostgreSQL default), allowing the audit INSERT to execute
-- **Risk**: Minimal. Removing `STABLE` means PostgreSQL won't cache/optimize repeated calls within a single query, but this function is only called once per user interaction so there is no performance impact
-- **No frontend changes needed** -- the existing `FamilyGroupColorPicker.tsx` and other callers will work as-is once the database function is fixed
+### No other changes needed
+- No database or migration changes
+- No new components or hooks
+- The `isAdmin` variable already accounts for both `organization.admin_email` match and `user_organizations.role === 'admin'`
 
