@@ -330,14 +330,14 @@ const Documents = () => {
             </CardContent>
           </Card>
 
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Upload Document</DialogTitle>
               <DialogDescription className="text-base">
                 Upload a file or add a link to an external document
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto flex-1">
               <div>
                 <Label htmlFor="title" className="text-base">Document Title</Label>
                 <Input
