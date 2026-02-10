@@ -1,13 +1,25 @@
-import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { WorkWeekendCommentsSection } from './WorkWeekendCommentsSection';
-import { Hammer, CheckCircle, Clock, AlertTriangle, User, Calendar, MapPin } from 'lucide-react';
+import { useWorkWeekends } from '@/hooks/useWorkWeekends';
+import { useAuth } from '@/contexts/AuthContext';
+import { Hammer, CheckCircle, Clock, AlertTriangle, User, Calendar, MapPin, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { parseDateOnly } from '@/lib/date-utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface WorkWeekendDetailDialogProps {
   workWeekend: any;
@@ -16,7 +28,19 @@ interface WorkWeekendDetailDialogProps {
 }
 
 export const WorkWeekendDetailDialog = ({ workWeekend, open, onOpenChange }: WorkWeekendDetailDialogProps) => {
+  const { user } = useAuth();
+  const { deleteWorkWeekend, loading } = useWorkWeekends();
+
   if (!workWeekend) return null;
+
+  const canDelete = workWeekend.proposer_user_id === user?.id;
+
+  const handleDelete = async () => {
+    const success = await deleteWorkWeekend(workWeekend.id);
+    if (success) {
+      onOpenChange(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -133,6 +157,38 @@ export const WorkWeekendDetailDialog = ({ workWeekend, open, onOpenChange }: Wor
 
           {/* Comments Section */}
           <WorkWeekendCommentsSection workWeekendId={workWeekend.id} />
+
+          {/* Delete */}
+          {canDelete && (
+            <div className="pt-2 border-t">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="flex items-center gap-2">
+                    <Trash2 className="h-4 w-4" />
+                    Delete Work Weekend
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Work Weekend</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{workWeekend.title}"? This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={loading}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
