@@ -171,11 +171,6 @@ const adminItems = [
     icon: DollarSign,
   },
   {
-    title: "Financial Admin Tools",
-    url: "/financial-admin-tools",
-    icon: Settings,
-  },
-  {
     title: "Family Group Overview",
     url: "/family-group-health-check",
     icon: AlertCircle,
@@ -202,6 +197,11 @@ const betaItems = [
     title: "Invoice Settings",
     url: "/invoice-settings",
     icon: FileText,
+  },
+  {
+    title: "Financial Admin Tools",
+    url: "/financial-admin-tools",
+    icon: Settings,
   },
   {
     title: "Google Calendar Setup",
