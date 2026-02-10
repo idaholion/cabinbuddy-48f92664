@@ -128,8 +128,11 @@ export const useWorkWeekends = () => {
       // Determine initial status based on conflicts
       const initialStatus = conflicts.length === 0 ? 'fully_approved' : 'proposed';
       
+      const { invite_family_leads, invite_all_members, ...restData } = workWeekendData;
       const dataToSave = {
-        ...workWeekendData,
+        ...restData,
+        invited_family_leads: invite_family_leads ?? true,
+        invited_all_members: invite_all_members ?? false,
         proposer_user_id: user.id,
         conflict_reservations: conflicts,
         status: initialStatus,
