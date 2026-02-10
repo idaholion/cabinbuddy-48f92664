@@ -1,34 +1,23 @@
 
 
-## Bug Fix: Family Group Selector Not Visible for Paul (Org Admin)
+## Shrink "Secondary Selection Complete" Status Box
 
-### Root Cause
+### What Changes
+The large "Secondary Selection Complete" card that currently takes up significant space on the calendar page will be condensed into a small inline indicator placed next to the "Booking" button in the toolbar.
 
-The family group selector on the calendar page uses this visibility check (line 264):
+### Visual Result
+Instead of a full card with title and alert box, you'll see a compact green status badge reading:
+**"All groups completed 2026 secondary selections"** -- right next to the Booking dropdown button in the toolbar row.
 
-```
-isCalendarKeeper || (organization?.admin_email === user?.email)
-```
+### Technical Details
 
-This only checks the `admin_email` field on the organization record. However, Paul is likely an admin through the `user_organizations` table (where `role = 'admin'`), not through the `admin_email` field. The `isAdmin` variable from `useUserRole()` already handles **both** admin paths, but it's not being used here.
+**File: `src/components/SecondarySelectionManager.tsx`**
+- Change the `allSecondaryComplete` return block (lines 188-206) from a full `Card` with `CardHeader`, `CardTitle`, `CardContent`, and `Alert` to a simple inline `div` with smaller text and a compact green checkmark icon
+- Use `text-sm` sizing and `flex items-center gap-2` layout so it fits inline
+- Abbreviated text: "All groups completed {rotationYear} secondary selections"
 
-### Fix
-
-**File: `src/pages/CabinCalendar.tsx` (line 264)**
-
-Change the `showFamilyGroupSelector` prop from:
-```
-showFamilyGroupSelector={isCalendarKeeper || (organization?.admin_email?.toLowerCase() === user?.email?.toLowerCase())}
-```
-to:
-```
-showFamilyGroupSelector={isCalendarKeeper || isAdmin}
-```
-
-`isAdmin` is already available -- it's destructured from `useUserRole()` on line 66. This is a one-line change with no risk, as it simply broadens the visibility check to include all recognized admin paths.
-
-### No other changes needed
-- No database or migration changes
-- No new components or hooks
-- The `isAdmin` variable already accounts for both `organization.admin_email` match and `user_organizations.role === 'admin'`
+**File: `src/pages/CabinCalendar.tsx`**
+- Move the `SecondarySelectionManager` rendering (lines 392-400) from its current position (a standalone block above the toolbar) into the toolbar row, placing it next to the "Booking" button around line 643
+- Remove the `mb-4` wrapper div and instead render it inline within the toolbar's flex layout
+- This ensures the compact status text sits alongside the Booking controls rather than taking a full row
 
