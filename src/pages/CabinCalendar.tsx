@@ -261,7 +261,7 @@ const CabinCalendar = () => {
                     familyGroups={familyGroups}
                     selectedFamilyGroup={selectedFamilyGroup}
                     onFamilyGroupChange={handleFamilyGroupChange}
-                    showFamilyGroupSelector={isCalendarKeeper || (organization?.admin_email?.toLowerCase() === user?.email?.toLowerCase())}
+                    showFamilyGroupSelector={isCalendarKeeper || isAdmin}
                   />
                 </div>
               </div>
