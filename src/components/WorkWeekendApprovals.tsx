@@ -1,14 +1,28 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WorkWeekendCommentsSection } from './WorkWeekendCommentsSection';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
-import { CheckCircle, Clock, AlertTriangle, Calendar, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { CheckCircle, Clock, AlertTriangle, Calendar, Users, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { parseDateOnly } from '@/lib/date-utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const WorkWeekendApprovals = () => {
-  const { workWeekends, pendingApprovals, loading, approveAsGroupLead } = useWorkWeekends();
+  const { user } = useAuth();
+  const { workWeekends, pendingApprovals, loading, approveAsGroupLead, deleteWorkWeekend } = useWorkWeekends();
 
   const handleGroupLeadApproval = async (approvalId: string) => {
     await approveAsGroupLead(approvalId);
@@ -110,7 +124,35 @@ export const WorkWeekendApprovals = () => {
                       Proposed by: {workWeekend.proposer_name} ({workWeekend.proposer_family_group || 'No group'})
                     </p>
                   </div>
-                  {getStatusBadge(workWeekend.status)}
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(workWeekend.status)}
+                    {(workWeekend.proposer_user_id === user?.id) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Work Weekend</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{workWeekend.title}"? This cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteWorkWeekend(workWeekend.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">

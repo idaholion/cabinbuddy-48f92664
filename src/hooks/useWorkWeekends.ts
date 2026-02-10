@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
+import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface WorkWeekendData {
   title: string;
@@ -369,12 +369,50 @@ export const useWorkWeekends = () => {
     }
   }, [activeOrganization?.organization_id, user?.email, familyGroups]);
 
+  const deleteWorkWeekend = async (workWeekendId: string) => {
+    if (!user || !orgContext) return false;
+
+    setLoading(true);
+    try {
+      // Delete related approvals first
+      await secureDelete('work_weekend_approvals' as any, orgContext)
+        .eq('work_weekend_id', workWeekendId);
+
+      // Delete the work weekend
+      const { error } = await secureDelete('work_weekends' as any, orgContext)
+        .eq('id', workWeekendId);
+
+      if (error) {
+        console.error('Error deleting work weekend:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete work weekend.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      setWorkWeekends(prev => prev.filter(ww => ww.id !== workWeekendId));
+      toast({
+        title: "Success",
+        description: "Work weekend deleted.",
+      });
+      return true;
+    } catch (error) {
+      console.error('Error in deleteWorkWeekend:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     workWeekends,
     pendingApprovals,
     loading,
     proposeWorkWeekend,
     approveAsGroupLead,
+    deleteWorkWeekend,
     refetchWorkWeekends: fetchWorkWeekends,
     refetchPendingApprovals: fetchPendingApprovals,
   };
