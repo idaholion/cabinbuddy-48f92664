@@ -171,6 +171,29 @@ const adminItems = [
     icon: DollarSign,
   },
   {
+    title: "Financial Admin Tools",
+    url: "/financial-admin-tools",
+    icon: Settings,
+  },
+  {
+    title: "Family Group Overview",
+    url: "/family-group-health-check",
+    icon: AlertCircle,
+  },
+  {
+    title: "Stay History Snapshots",
+    url: "/stay-history-snapshots",
+    icon: Camera,
+  },
+  {
+    title: "FAQ Management",
+    url: "/faq-management",
+    icon: HelpCircle,
+  },
+];
+
+const betaItems = [
+  {
     title: "Billing & Invoices",
     url: "/billing",
     icon: Receipt,
@@ -181,19 +204,9 @@ const adminItems = [
     icon: FileText,
   },
   {
-    title: "Financial Admin Tools",
-    url: "/financial-admin-tools",
-    icon: Settings,
-  },
-  {
     title: "Google Calendar Setup",
     url: "/google-calendar-setup",
     icon: Calendar,
-  },
-  {
-    title: "Family Group Overview",
-    url: "/family-group-health-check",
-    icon: AlertCircle,
   },
   {
     title: "Notification Monitoring",
@@ -206,19 +219,9 @@ const adminItems = [
     icon: Database,
   },
   {
-    title: "Stay History Snapshots",
-    url: "/stay-history-snapshots",
-    icon: Camera,
-  },
-  {
     title: "Checklist Creator",
     url: "/checklist-creator",
     icon: ListChecks,
-  },
-  {
-    title: "FAQ Management",
-    url: "/faq-management",
-    icon: HelpCircle,
   },
 ];
 
@@ -477,12 +480,6 @@ export function AppSidebar() {
               <SidebarMenu>
                 {adminItems
                   .filter(item => {
-                    // Hide Google Calendar Setup for all orgs except Andrew Family Cabin
-                    if (item.url === '/google-calendar-setup') {
-                      if (organization?.name !== 'Andrew Family Cabin') {
-                        return false;
-                      }
-                    }
                     // Admins/supervisors see all items
                     if (isAdmin || canAccessSupervisorFeatures) return true;
                     // Members with financial access only see Financial Dashboard
@@ -597,6 +594,39 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Beta Pages - below Setup, visible to admins/supervisors */}
+        {(isAdmin || canAccessSupervisorFeatures) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Beta Pages</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {betaItems
+                  .filter(item => {
+                    // Hide Google Calendar Setup for all orgs except Andrew Family Cabin
+                    if (item.url === '/google-calendar-setup') {
+                      return organization?.name === 'Andrew Family Cabin';
+                    }
+                    return true;
+                  })
+                  .map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink 
+                        to={item.url} 
+                        onClick={handleMobileNavClick}
+                        className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
