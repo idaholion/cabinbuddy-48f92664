@@ -1,0 +1,1 @@
+DELETE FROM faq_items WHERE question ILIKE '%Can guests make reservations%';
