@@ -432,9 +432,9 @@ export function EarlyCheckoutDialog({
                             Checkout Responsibility Transfer
                           </h4>
                           <p className="text-sm text-blue-700 dark:text-blue-300">
-                            The selected family member will be responsible for completing the checkout checklist 
-                            and final checkout process when they leave. They can access the checkout checklist 
-                            from the cabin menu.
+                             The selected family member will be responsible for completing the departure checklist 
+                             and final checkout process when they leave. They can access the departure checklist 
+                             from the cabin menu.
                           </p>
                         </div>
                       </div>

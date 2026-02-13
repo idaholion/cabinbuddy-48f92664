@@ -994,7 +994,7 @@ const CheckoutFinal = () => {
           <>
             {/* Compact Side-by-Side Reminders */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {/* Checkout Checklist Collapsible */}
+              {/* Departure Checklist Collapsible */}
               <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
                   <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-primary">
@@ -1007,7 +1007,7 @@ const CheckoutFinal = () => {
                             <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
                           )}
                           <div>
-                            <p className="font-medium text-sm">Checkout Checklist</p>
+                            <p className="font-medium text-sm">Departure Checklist</p>
                             {checkoutData.isSample ? (
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 Sample data - no active stay
@@ -1037,7 +1037,7 @@ const CheckoutFinal = () => {
                       {checkoutData.isSample ? (
                         <div className="space-y-3">
                           <p className="text-sm text-muted-foreground">
-                            Your checkout checklist will appear here with tasks to complete before you leave
+                            Your departure checklist will appear here with tasks to complete before you leave
                           </p>
                           <Button 
                             variant="outline"
@@ -1065,7 +1065,7 @@ const CheckoutFinal = () => {
                       ) : (
                         <div className="space-y-3">
                           <p className="text-sm text-muted-foreground">
-                            Don't forget to finish the checkout checklist before you go
+                            Don't forget to finish the departure checklist before you go
                           </p>
                           <Button 
                             variant="outline"
