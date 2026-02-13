@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign, UserCheck, LogIn, MessageSquare } from 'lucide-react';
+import { Search, Users, Building, Shield, Trash2, UserPlus, DollarSign, UserCheck, LogIn, MessageSquare, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { OrganizationDetail } from '@/components/OrganizationDetail';
@@ -24,6 +24,7 @@ import { ProtectedSupervisorRoute } from '@/components/ProtectedSupervisorRoute'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BackfillProfileClaims } from '@/components/BackfillProfileClaims';
 import { SupervisorFeedbackInbox } from '@/components/SupervisorFeedbackInbox';
+import { SupervisorUserTools } from '@/components/SupervisorUserTools';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -206,6 +207,10 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="supervisors" className="text-base">Supervisors</TabsTrigger>
             <TabsTrigger value="access-codes" className="text-base">Access Codes</TabsTrigger>
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
+            <TabsTrigger value="user-tools" className="text-base flex items-center gap-1">
+              <KeyRound className="h-4 w-4" />
+              User Tools
+            </TabsTrigger>
             <TabsTrigger value="feedback-inbox" className="text-base flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
               Feedback Inbox
@@ -427,6 +432,10 @@ export const SupervisorDashboard = () => {
 
           <TabsContent value="feedback-inbox" className="space-y-6">
             <SupervisorFeedbackInbox />
+          </TabsContent>
+
+          <TabsContent value="user-tools" className="space-y-6">
+            <SupervisorUserTools />
           </TabsContent>
 
         </Tabs>
