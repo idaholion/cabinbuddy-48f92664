@@ -21,6 +21,7 @@ import { ChecklistImageKey } from '@/lib/checklist-image-library';
 import { WhatCanItDoDialog, StepsToMakeDialog } from '@/components/checklist/ChecklistHelpDialogs';
 import { ChecklistPathwayCards } from '@/components/checklist/ChecklistPathwayCards';
 import { QuickChecklistCreator } from '@/components/checklist/QuickChecklistCreator';
+import { PhotoRepositoryPanel } from '@/components/checklist/PhotoRepositoryPanel';
 
 export default function ChecklistCreator() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ export default function ChecklistCreator() {
   const [manualItems, setManualItems] = useState<Array<{id: string, text: string, imageUrls?: string[]}>>([]);
   const [newItemText, setNewItemText] = useState('');
   const [pasteContent, setPasteContent] = useState('');
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const { checklists, loading, refetch, deleteChecklist, saveChecklist } = useCustomChecklists();
 
   const handleChecklistCreated = (checklistId: string) => {
@@ -297,6 +299,20 @@ export default function ChecklistCreator() {
 
   // Illustrated path
   if (viewMode === 'illustrated') {
+    const handleAttachPhoto = (imageUrl: string, description?: string) => {
+      if (!selectedItemId) return;
+      setManualItems(prev =>
+        prev.map(item =>
+          item.id === selectedItemId
+            ? { ...item, imageUrls: [...(item.imageUrls || []), imageUrl] }
+            : item
+        )
+      );
+      toast({ title: 'Photo attached', description: description || 'Photo added to item' });
+    };
+
+    const selectedItem = manualItems.find(i => i.id === selectedItemId);
+
     return (
       <ErrorBoundary fallback={DefaultErrorFallback}>
         <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -337,23 +353,10 @@ export default function ChecklistCreator() {
                   placeholder="Paste your checklist content here (one item per line)..."
                   className="min-h-[120px]"
                 />
-                <div className="flex gap-2">
-                  <Button onClick={parseContentToItems} disabled={!pasteContent.trim()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Parse to Items
-                  </Button>
-                  <ExistingImagesBrowser
-                    onImageSelect={addItemWithExistingImage}
-                    currentImages={manualItems.flatMap(item => item.imageUrls || [])}
-                    sourceChecklistType="closing"
-                    trigger={
-                      <Button variant="outline">
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Browse Closing Photos
-                      </Button>
-                    }
-                  />
-                </div>
+                <Button onClick={parseContentToItems} disabled={!pasteContent.trim()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Parse to Items
+                </Button>
               </CardContent>
             </Card>
 
@@ -367,28 +370,7 @@ export default function ChecklistCreator() {
                     value={newItemText}
                     onChange={(e) => setNewItemText(e.target.value)}
                     placeholder="Enter checklist item..."
-                    onKeyPress={(e) => e.key === 'Enter' && addManualItem()}
-                  />
-                  <ChecklistImageSelector
-                    onImageSelect={addItemWithImage}
-                    currentImages={[]}
-                    trigger={
-                      <Button variant="outline">
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        New Image
-                      </Button>
-                    }
-                  />
-                  <ExistingImagesBrowser
-                    onImageSelect={addItemWithExistingImage}
-                    currentImages={manualItems.flatMap(item => item.imageUrls || [])}
-                    sourceChecklistType="closing"
-                    trigger={
-                      <Button variant="outline">
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Existing Photo
-                      </Button>
-                    }
+                    onKeyDown={(e) => e.key === 'Enter' && addManualItem()}
                   />
                   <Button onClick={addManualItem} disabled={!newItemText.trim()}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -398,14 +380,27 @@ export default function ChecklistCreator() {
                 
                 {manualItems.length > 0 && (
                   <div className="space-y-3">
-                    <h4 className="font-medium">Items ({manualItems.length})</h4>
+                    <h4 className="font-medium">
+                      Items ({manualItems.length})
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        — click an item, then attach photos below
+                      </span>
+                    </h4>
                     <div className="space-y-2">
                       {manualItems.map((item) => (
-                        <div key={item.id} className="flex items-start justify-between p-3 border rounded-lg">
+                        <div
+                          key={item.id}
+                          onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
+                          className={`flex items-start justify-between p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                            selectedItemId === item.id
+                              ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                              : 'border-border hover:border-muted-foreground/30'
+                          }`}
+                        >
                           <div className="space-y-2 flex-1">
                             <p className="text-sm">{item.text}</p>
                             {item.imageUrls && item.imageUrls.length > 0 && (
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 flex-wrap">
                                 {item.imageUrls.map((url, idx) => (
                                   <div key={idx} className="w-12 h-12 rounded border overflow-hidden">
                                     <img src={url} alt={`Item image ${idx + 1}`} className="w-full h-full object-cover" />
@@ -417,7 +412,7 @@ export default function ChecklistCreator() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => removeManualItem(item.id)}
+                            onClick={(e) => { e.stopPropagation(); removeManualItem(item.id); }}
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -434,6 +429,14 @@ export default function ChecklistCreator() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Photo Repository Panel */}
+            <PhotoRepositoryPanel
+              selectedItemId={selectedItemId}
+              selectedItemLabel={selectedItem?.text}
+              onAttachPhoto={handleAttachPhoto}
+              attachedPhotos={selectedItem?.imageUrls || []}
+            />
           </div>
         </div>
       </ErrorBoundary>
