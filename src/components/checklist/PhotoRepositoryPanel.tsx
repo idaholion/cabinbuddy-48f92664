@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-// ScrollArea replaced with native scroll div for reliable scrolling
-import { Image as ImageIcon, Search, ChevronDown, ChevronUp, Plus, Check, Upload } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Image as ImageIcon, Search, ChevronDown, ChevronUp, Plus, Check, Upload, X } from 'lucide-react';
 import { useImageLibrary } from '@/hooks/useImageLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -34,6 +34,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ url: string; name: string } | null>(null);
   const { images, loading, fetchImages } = useImageLibrary();
   const { organization } = useOrganization();
 
@@ -134,7 +135,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 </span>
               ) : browseOnly ? (
                 <span className="text-muted-foreground">
-                  Browse and manage your photo repository
+                  Browse and manage your photo repository. Double-click a photo to see a larger image.
                 </span>
               ) : (
                 <span className="text-muted-foreground">
@@ -180,7 +181,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 </p>
               </div>
             ) : (
-              <div className="max-h-[480px] overflow-y-auto rounded-md border border-border p-2">
+              <div className="max-h-[240px] overflow-y-auto rounded-md border border-border p-2">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
                   {filtered.map((img) => {
                     const isAttached = attachedPhotos.includes(img.image_url);
@@ -188,6 +189,10 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                       <button
                         key={img.id}
                         onClick={() => !browseOnly && handleClickPhoto(img.image_url, img.marker_name || img.original_filename)}
+                        onDoubleClick={(e) => {
+                          e.preventDefault();
+                          setPreviewImage({ url: img.image_url, name: img.marker_name || img.original_filename });
+                        }}
                         className={`relative group rounded-md border-2 overflow-hidden aspect-square transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
                           isAttached
                             ? 'border-primary ring-1 ring-primary/30'
@@ -197,8 +202,8 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                                 ? 'border-border hover:border-primary/60 cursor-pointer'
                                 : 'border-border opacity-70 cursor-not-allowed'
                         }`}
-                        disabled={!browseOnly && !selectedItemId}
-                        title={img.marker_name || img.original_filename}
+                        disabled={false}
+                        title={`${img.marker_name || img.original_filename} — double-click to enlarge`}
                       >
                         <img
                           src={img.image_url}
@@ -227,6 +232,22 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Lightbox dialog */}
+            <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+              <DialogContent className="max-w-2xl p-2">
+                {previewImage && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-center">{previewImage.name}</p>
+                    <img
+                      src={previewImage.url}
+                      alt={previewImage.name}
+                      className="w-full max-h-[70vh] object-contain rounded-md"
+                    />
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </CollapsibleContent>
       </Card>
