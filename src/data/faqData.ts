@@ -68,10 +68,6 @@ export const faqData: FAQCategory[] = [
       {
         question: "What is a trade request?",
         answer: "A trade request allows you to swap reservation periods with another family. Navigate to **Cabin Calendar** and use the trade feature to propose a swap."
-      },
-      {
-        question: "Can guests make reservations?",
-        answer: "If your organization has guest access enabled, guests can view the calendar and request reservations, which require admin approval."
       }
     ]
   },
