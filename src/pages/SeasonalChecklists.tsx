@@ -17,8 +17,15 @@ const SeasonalChecklists = () => {
 
   const predefinedTypes = [
     { 
+      key: 'checkout', 
+      label: 'Checkout (Post-Stay)', 
+      icon: CheckSquare, 
+      description: 'Post-stay cleanup tasks completed after each visit',
+      color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+    },
+    { 
       key: 'closing', 
-      label: 'Cabin Closing', 
+      label: 'Closing (End of Season)', 
       icon: Calendar, 
       description: 'End-of-season cabin winterization tasks',
       color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'

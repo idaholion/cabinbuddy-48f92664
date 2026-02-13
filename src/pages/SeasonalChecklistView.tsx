@@ -55,7 +55,7 @@ const SeasonalChecklistView = () => {
         
         {/* Center title */}
         <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg capitalize">
-          {checklist.checklist_type.replace('_', ' ')} Checklist
+          {checklist.checklist_type === 'checkout' ? 'Checkout' : checklist.checklist_type.replace('_', ' ')} Checklist
         </h1>
         
         {/* Right side buttons */}

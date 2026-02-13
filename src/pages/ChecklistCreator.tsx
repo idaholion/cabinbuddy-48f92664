@@ -183,7 +183,8 @@ export default function ChecklistCreator() {
                         <SelectValue placeholder="Select checklist type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="closing">Cabin Closing</SelectItem>
+                        <SelectItem value="checkout">Checkout (Post-Stay Cleanup)</SelectItem>
+                        <SelectItem value="closing">Closing (End of Season)</SelectItem>
                         <SelectItem value="opening">Cabin Opening</SelectItem>
                         <SelectItem value="seasonal">Seasonal Tasks</SelectItem>
                         <SelectItem value="maintenance">Maintenance</SelectItem>

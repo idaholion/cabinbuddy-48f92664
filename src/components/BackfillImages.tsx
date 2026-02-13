@@ -19,7 +19,7 @@ export const BackfillImages: React.FC = () => {
       const { data: checklistData, error: fetchError } = await supabase
         .from('custom_checklists')
         .select('id, organization_id, items')
-        .eq('checklist_type', 'closing');
+        .eq('checklist_type', 'checkout');
         
       if (fetchError || !checklistData?.length) {
         throw new Error('Could not fetch checklist data');
