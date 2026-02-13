@@ -185,6 +185,16 @@ const adminItems = [
     url: "/faq-management",
     icon: HelpCircle,
   },
+  {
+    title: "Data Backup",
+    url: "/data-backup",
+    icon: Database,
+  },
+  {
+    title: "Checklist Creator",
+    url: "/checklist-creator",
+    icon: ListChecks,
+  },
 ];
 
 const betaItems = [
@@ -212,16 +222,6 @@ const betaItems = [
     title: "Notification Monitoring",
     url: "/notification-monitoring",
     icon: Bell,
-  },
-  {
-    title: "Data Backup",
-    url: "/data-backup",
-    icon: Database,
-  },
-  {
-    title: "Checklist Creator",
-    url: "/checklist-creator",
-    icon: ListChecks,
   },
 ];
 
