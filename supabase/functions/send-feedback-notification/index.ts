@@ -1,8 +1,6 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "npm:@supabase/supabase-js@2.39.3";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -31,7 +29,7 @@ const typeLabels: Record<string, string> = {
   supervisor_request: '📋 Supervisor Request',
 };
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -106,12 +104,21 @@ serve(async (req: Request) => {
     const supervisorEmails = supervisors.map(s => s.email).filter(Boolean);
     console.log(`Sending feedback notification to ${supervisorEmails.length} supervisor(s)`);
 
-    const emailResult = await resend.emails.send({
-      from: "CabinBuddy <onboarding@resend.dev>",
-      to: supervisorEmails,
-      subject,
-      html: htmlContent,
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "CabinBuddy <onboarding@resend.dev>",
+        to: supervisorEmails,
+        subject,
+        html: htmlContent,
+      }),
     });
+
+    const emailResult = await emailResponse.json();
 
     console.log("Email result:", JSON.stringify(emailResult));
 
