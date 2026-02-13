@@ -180,22 +180,24 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 </p>
               </div>
             ) : (
-              <ScrollArea className="max-h-[280px]">
+              <ScrollArea className="max-h-[480px]">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
                   {filtered.map((img) => {
                     const isAttached = attachedPhotos.includes(img.image_url);
                     return (
                       <button
                         key={img.id}
-                        onClick={() => handleClickPhoto(img.image_url, img.marker_name || img.original_filename)}
+                        onClick={() => !browseOnly && handleClickPhoto(img.image_url, img.marker_name || img.original_filename)}
                         className={`relative group rounded-md border-2 overflow-hidden aspect-square transition-all focus:outline-none focus:ring-2 focus:ring-primary ${
                           isAttached
                             ? 'border-primary ring-1 ring-primary/30'
-                            : selectedItemId
-                              ? 'border-border hover:border-primary/60 cursor-pointer'
-                              : 'border-border opacity-70 cursor-not-allowed'
+                            : browseOnly
+                              ? 'border-border cursor-default'
+                              : selectedItemId
+                                ? 'border-border hover:border-primary/60 cursor-pointer'
+                                : 'border-border opacity-70 cursor-not-allowed'
                         }`}
-                        disabled={!selectedItemId}
+                        disabled={!browseOnly && !selectedItemId}
                         title={img.marker_name || img.original_filename}
                       >
                         <img
@@ -209,7 +211,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                             <Check className="h-4 w-4 text-primary-foreground bg-primary rounded-full p-0.5" />
                           </div>
                         )}
-                        {selectedItemId && !isAttached && (
+                        {selectedItemId && !isAttached && !browseOnly && (
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                             <Plus className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
@@ -221,6 +223,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 {/* Labels below thumbnails */}
                 <div className="mt-2 text-xs text-muted-foreground text-center">
                   {filtered.length} photo{filtered.length !== 1 ? 's' : ''} available
+                  {filtered.length < images.length && ` (filtered from ${images.length})`}
                 </div>
               </ScrollArea>
             )}
