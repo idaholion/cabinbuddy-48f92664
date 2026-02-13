@@ -20,6 +20,8 @@ interface PhotoRepositoryPanelProps {
   onAttachPhoto: (imageUrl: string, description?: string) => void;
   /** URLs already attached to the selected item — shown with a check */
   attachedPhotos?: string[];
+  /** If true, panel is browse/upload only — no attach functionality */
+  browseOnly?: boolean;
 }
 
 export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
@@ -27,6 +29,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
   selectedItemLabel,
   onAttachPhoto,
   attachedPhotos = [],
+  browseOnly = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,6 +132,10 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                   <Check className="h-3 w-3" />
                   Attaching to: <span className="italic truncate max-w-[200px]">{selectedItemLabel || 'selected item'}</span>
                 </span>
+              ) : browseOnly ? (
+                <span className="text-muted-foreground">
+                  Browse and manage your photo repository
+                </span>
               ) : (
                 <span className="text-muted-foreground">
                   Select a checklist item first, then click a photo to attach it
@@ -137,7 +144,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
               <label className="cursor-pointer">
                 <Button variant="outline" size="sm" className="gap-1 pointer-events-none" tabIndex={-1}>
                   <Upload className="h-3 w-3" />
-                  Upload
+                  Add Photo to Repository
                 </Button>
                 <input
                   type="file"

@@ -515,6 +515,14 @@ export default function ChecklistCreator() {
               </CardContent>
             </Card>
           )}
+
+          {/* Photo Repository — always visible on landing */}
+          <PhotoRepositoryPanel
+            selectedItemId={null}
+            onAttachPhoto={() => {}}
+            attachedPhotos={[]}
+            browseOnly
+          />
         </div>
       </div>
     </ErrorBoundary>
