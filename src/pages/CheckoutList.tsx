@@ -367,7 +367,7 @@ const CheckoutList = () => {
 
       console.log('✅ Checkout save successful!');
       toast({
-        title: "Checkout Checklist Saved",
+        title: "Departure Checklist Saved",
         description: "Changes saved successfully.",
       });
     } catch (error: any) {
@@ -700,7 +700,7 @@ const CheckoutList = () => {
           </Button>
           
           {/* Center title */}
-          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Checkout Checklist</h1>
+          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Departure Checklist</h1>
           
           {/* Right side - progress display */}
           <div className="text-right">

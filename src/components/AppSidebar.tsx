@@ -112,7 +112,7 @@ const cabinItems = [
     icon: Receipt,
   },
   {
-    title: "Check out Checklist",
+    title: "Departure Checklist",
     url: "/checkout-list",
     icon: CheckSquare,
   },

@@ -142,7 +142,7 @@ const helpContexts: Record<string, {
     title: 'Checkout Process',
     description: 'Complete your departure checklist and review billing before leaving.',
     steps: [
-      'Complete all checkout checklist items',
+      'Complete all departure checklist items',
       'Review your stay billing and occupancy',
       'Report any issues or maintenance needs',
       'Submit your checkout when complete'
