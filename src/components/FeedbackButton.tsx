@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { FormInput, FormTextarea, FormSelect } from "@/components/ui/form-fields";
 import { MessageSquare } from "lucide-react";
@@ -8,9 +8,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useFeedback } from "@/hooks/useFeedback";
+import { useOrganizationContext } from "@/hooks/useOrganizationContext";
 
 const feedbackSchema = z.object({
-  type: z.enum(['bug', 'feature', 'improvement', 'general']),
+  type: z.enum(['bug', 'feature', 'improvement', 'general', 'supervisor_request']),
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   email: z.string().email().optional().or(z.literal("")),
@@ -21,6 +22,7 @@ type FeedbackFormData = z.infer<typeof feedbackSchema>;
 export const FeedbackButton = () => {
   const [open, setOpen] = useState(false);
   const { submitFeedback, isSubmitting } = useFeedback();
+  const { organizationId } = useOrganizationContext();
   
   const form = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
@@ -38,6 +40,7 @@ export const FeedbackButton = () => {
       title: data.title,
       description: data.description,
       email: data.email,
+      organizationId: organizationId || undefined,
     };
     const success = await submitFeedback(feedbackData);
     if (success) {
@@ -51,6 +54,7 @@ export const FeedbackButton = () => {
     { value: 'feature', label: 'Feature Request' },
     { value: 'improvement', label: 'Improvement Suggestion' },
     { value: 'general', label: 'General Feedback' },
+    { value: 'supervisor_request', label: 'Supervisor Request' },
   ];
 
   return (
@@ -68,6 +72,9 @@ export const FeedbackButton = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Send Feedback</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Your feedback will be sent to the supervisor for review. Use "Supervisor Request" for login email changes, complaints, or other requests.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

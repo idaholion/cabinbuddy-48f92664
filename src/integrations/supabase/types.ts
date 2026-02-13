@@ -803,6 +803,59 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          created_at: string
+          description: string
+          email: string | null
+          id: string
+          organization_id: string | null
+          page: string | null
+          status: string
+          supervisor_notes: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          email?: string | null
+          id?: string
+          organization_id?: string | null
+          page?: string | null
+          status?: string
+          supervisor_notes?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          email?: string | null
+          id?: string
+          organization_id?: string | null
+          page?: string | null
+          status?: string
+          supervisor_notes?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_reminders_log: {
         Row: {
           email_status: Database["public"]["Enums"]["email_status"]

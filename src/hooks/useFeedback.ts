@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface FeedbackData {
-  type: 'bug' | 'feature' | 'improvement' | 'general';
+  type: 'bug' | 'feature' | 'improvement' | 'general' | 'supervisor_request';
   title: string;
   description: string;
   page: string;
@@ -10,6 +11,7 @@ export interface FeedbackData {
   timestamp: Date;
   userId?: string;
   email?: string;
+  organizationId?: string;
 }
 
 export const useFeedback = () => {
@@ -20,26 +22,32 @@ export const useFeedback = () => {
     setIsSubmitting(true);
     
     try {
-      const feedbackData: FeedbackData = {
-        ...feedback,
-        timestamp: new Date(),
-        userAgent: navigator.userAgent,
-        page: window.location.pathname,
-      };
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
 
-      // In a real application, you would send this to your backend
-      console.log('Feedback submitted:', feedbackData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('feedback' as any)
+        .insert({
+          type: feedback.type,
+          title: feedback.title,
+          description: feedback.description,
+          email: feedback.email || null,
+          page: window.location.pathname,
+          user_id: user?.id || null,
+          organization_id: feedback.organizationId || null,
+          status: 'new',
+        } as any);
+
+      if (error) throw error;
       
       toast({
         title: "Feedback submitted",
-        description: "Thank you for your feedback! We'll review it soon.",
+        description: "Thank you for your feedback! The supervisor will review it soon.",
       });
       
       return true;
     } catch (error) {
+      console.error('Failed to submit feedback:', error);
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",
