@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// ScrollArea replaced with native scroll div for reliable scrolling
 import { Image as ImageIcon, Search, ChevronDown, ChevronUp, Plus, Check, Upload } from 'lucide-react';
 import { useImageLibrary } from '@/hooks/useImageLibrary';
 import { supabase } from '@/integrations/supabase/client';
@@ -180,7 +180,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                 </p>
               </div>
             ) : (
-              <ScrollArea className="max-h-[480px]">
+              <div className="max-h-[480px] overflow-y-auto rounded-md border border-border p-2">
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
                   {filtered.map((img) => {
                     const isAttached = attachedPhotos.includes(img.image_url);
@@ -225,7 +225,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
                   {filtered.length} photo{filtered.length !== 1 ? 's' : ''} available
                   {filtered.length < images.length && ` (filtered from ${images.length})`}
                 </div>
-              </ScrollArea>
+              </div>
             )}
           </CardContent>
         </CollapsibleContent>
