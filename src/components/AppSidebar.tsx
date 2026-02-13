@@ -117,7 +117,7 @@ const cabinItems = [
     icon: CheckSquare,
   },
   {
-    title: "Daily & Final Check",
+    title: "Daily & Final Input",
     url: "/checkout-final",
     icon: CreditCard,
   },
