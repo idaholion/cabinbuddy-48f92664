@@ -463,6 +463,14 @@ export default function ChecklistCreator() {
           {/* Three pathway cards */}
           <ChecklistPathwayCards onSelectPath={(path) => setViewMode(path)} />
 
+          {/* Photo Repository — always visible on landing */}
+          <PhotoRepositoryPanel
+            selectedItemId={null}
+            onAttachPhoto={() => {}}
+            attachedPhotos={[]}
+            browseOnly
+          />
+
           {/* Existing checklists */}
           {!loading && checklists && checklists.length > 0 && (
             <Card>
@@ -515,14 +523,6 @@ export default function ChecklistCreator() {
               </CardContent>
             </Card>
           )}
-
-          {/* Photo Repository — always visible on landing */}
-          <PhotoRepositoryPanel
-            selectedItemId={null}
-            onAttachPhoto={() => {}}
-            attachedPhotos={[]}
-            browseOnly
-          />
         </div>
       </div>
     </ErrorBoundary>
