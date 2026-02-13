@@ -925,8 +925,8 @@ const getBookingsForDate = (date: Date) => {
               <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Search className="h-4 w-4 mr-1" />
-                  Filter & Search
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filter
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-80 p-4">
