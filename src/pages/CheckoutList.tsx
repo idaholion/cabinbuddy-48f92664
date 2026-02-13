@@ -164,7 +164,7 @@ const CheckoutList = () => {
           .from('custom_checklists')
           .select('*')
           .eq('organization_id', organization.id)
-          .eq('checklist_type', 'closing')
+          .eq('checklist_type', 'checkout')
           .maybeSingle();
 
         console.log('🟢 [CHECKOUT-LOAD] Query result:', { 
@@ -333,7 +333,7 @@ const CheckoutList = () => {
         .from('custom_checklists')
         .select('id')
         .eq('organization_id', organization.id)
-        .eq('checklist_type', 'closing')
+        .eq('checklist_type', 'checkout')
         .maybeSingle();
 
       console.log('🔵 Existing checkout check:', { existing, existingError });
@@ -352,7 +352,7 @@ const CheckoutList = () => {
           .from('custom_checklists')
           .insert({
             organization_id: organization.id,
-            checklist_type: 'closing',
+            checklist_type: 'checkout',
             items: sectionsToSave
           })
           .select();
@@ -714,6 +714,14 @@ const CheckoutList = () => {
         {/* Subtitle */}
         <div className="text-center mb-4 -mt-2">
           <p className="text-xl font-kaushan text-primary">Complete all tasks before leaving the cabin</p>
+          {isAdmin && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Want to add photos to this checklist? Use the{' '}
+              <Link to="/checklist-creator" className="text-primary underline hover:text-primary/80">
+                Checklist Creator
+              </Link>
+            </p>
+          )}
         </div>
       </div>
 

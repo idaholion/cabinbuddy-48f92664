@@ -164,7 +164,8 @@ export const QuickChecklistCreator: React.FC<QuickChecklistCreatorProps> = ({ on
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="opening">Opening Checklist</SelectItem>
-                <SelectItem value="closing">Closing Checklist</SelectItem>
+                <SelectItem value="checkout">Checkout (Post-Stay Cleanup)</SelectItem>
+                <SelectItem value="closing">Closing (End of Season)</SelectItem>
                 <SelectItem value="seasonal">Seasonal Tasks</SelectItem>
                 <SelectItem value="maintenance">Maintenance</SelectItem>
                 <SelectItem value="arrival">Arrival Checklist</SelectItem>
