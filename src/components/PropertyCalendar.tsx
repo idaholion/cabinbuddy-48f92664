@@ -931,18 +931,8 @@ const getBookingsForDate = (date: Date) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-80 p-4">
                 <div className="space-y-4">
-                  {/* Search Section */}
-                  <div>
-                    <div className="text-sm font-medium mb-2">Search</div>
-                    <SearchInput
-                      placeholder="Search reservations, family groups..."
-                      onSearch={setSearchQuery}
-                      className="w-full"
-                    />
-                  </div>
-                  
                   {/* View Options Section */}
-                  <div className="pt-3 border-t">
+                  <div>
                     <div className="text-sm font-medium mb-2">View Options</div>
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 text-sm">
