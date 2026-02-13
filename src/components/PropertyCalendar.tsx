@@ -958,7 +958,7 @@ const getBookingsForDate = (date: Date) => {
                   </div>
                   
                   <div className="pt-3 border-t">
-                    <div className="text-sm font-medium mb-2">Family Group</div>
+                    <div className="text-sm font-medium mb-2">Select Family Group</div>
                     <Select 
                       value={filterOptions.familyGroupFilter} 
                       onValueChange={(value) => setFilterOptions(prev => ({...prev, familyGroupFilter: value}))}
