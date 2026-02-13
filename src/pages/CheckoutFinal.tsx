@@ -953,7 +953,7 @@ const CheckoutFinal = () => {
           </Button>
           
           {/* Center title */}
-          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Daily & Final Check</h1>
+          <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Daily & Final Input</h1>
           
           {/* Right side spacer for balance */}
           <div className="w-20"></div>
