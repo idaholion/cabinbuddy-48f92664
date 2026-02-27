@@ -36,8 +36,8 @@ export const EnhancedMonthPicker = ({
   const pickerYear = pickerDate.getFullYear();
   const pickerMonth = pickerDate.getMonth();
 
-  // Generate year range (current year + 10 years forward)
-  const years = Array.from({ length: 11 }, (_, i) => currentYear + i);
+  // Generate year range (10 years back, 2 years forward)
+  const years = Array.from({ length: 13 }, (_, i) => (new Date().getFullYear() - 10) + i);
 
   const handleMonthChange = (monthIndex: string) => {
     const newDate = new Date(pickerDate);

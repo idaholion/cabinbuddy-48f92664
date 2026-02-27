@@ -17,8 +17,8 @@ export const MonthYearPicker = ({ currentDate, onDateChange }: MonthYearPickerPr
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
 
-  // Generate year range (e.g., 2020 to 2050)
-  const years = Array.from({ length: 31 }, (_, i) => 2020 + i);
+  // Generate year range (10 years back, 2 years forward)
+  const years = Array.from({ length: 13 }, (_, i) => (new Date().getFullYear() - 10) + i);
 
   const handleMonthChange = (monthIndex: string) => {
     const newDate = new Date(currentDate);
