@@ -416,7 +416,7 @@ export const RecurringBills = () => {
               Add Bill
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="text-base">
                 {editingBill ? 'Edit Recurring Bill' : 'Add New Recurring Bill'}
