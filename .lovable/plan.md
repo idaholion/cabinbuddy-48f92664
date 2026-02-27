@@ -1,12 +1,18 @@
 
 
-## Rename "Daily & Final Check" to "Daily & Final Input"
+## Fix Year Picker to Include Past Years
 
-Two simple text changes:
+Two file changes to set year range to 10 years back and 2 years forward from current year:
 
-1. **Sidebar menu item** (`src/components/AppSidebar.tsx`, line 120): Change `"Daily & Final Check"` to `"Daily & Final Input"`
+1. **`src/components/EnhancedMonthPicker.tsx`** (line 42): Replace year generation:
+   ```
+   const years = Array.from({ length: 13 }, (_, i) => (new Date().getFullYear() - 10) + i);
+   ```
 
-2. **Page heading** (`src/pages/CheckoutFinal.tsx`, line 956): Change `"Daily & Final Check"` to `"Daily & Final Input"`
+2. **`src/components/MonthYearPicker.tsx`** (line 22): Replace year generation:
+   ```
+   const years = Array.from({ length: 13 }, (_, i) => (new Date().getFullYear() - 10) + i);
+   ```
 
-No route, database, or logic changes needed.
+This gives a range of ~2016–2028 (adjusts automatically each year).
 
