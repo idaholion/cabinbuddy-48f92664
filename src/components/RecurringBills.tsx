@@ -655,13 +655,12 @@ export const RecurringBills = () => {
                         </div>
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={addHistoricalEntry}
                           disabled={!newHistoricalEntry.date || !newHistoricalEntry.amount}
-                          className="mt-3"
+                          className="mt-3 bg-green-600 hover:bg-green-700 text-white font-semibold"
                         >
-                          Add Entry
+                          + Add Entry
                         </Button>
                       </div>
 
