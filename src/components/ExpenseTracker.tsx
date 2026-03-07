@@ -94,6 +94,99 @@ export const ExpenseTracker = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with filters */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Member Expenses</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-muted-foreground text-base">Expenses reported by group members</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+                    <SlidersHorizontal className="h-3 w-3" />
+                    Filters
+                    {(selectedFamilyGroup !== "all" || searchTerm) && (
+                      <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center text-[10px]">
+                        {(selectedFamilyGroup !== "all" ? 1 : 0) + (searchTerm ? 1 : 0)}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="start">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="family-filter">Family Group</Label>
+                      <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
+                        <SelectTrigger id="family-filter">
+                          <SelectValue placeholder="All Groups" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Groups</SelectItem>
+                          {familyGroups.map((group) => (
+                            <SelectItem key={group.id} value={group.name}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sort-by">Sort By</Label>
+                      <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
+                        <SelectTrigger id="sort-by">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="date">Date</SelectItem>
+                          <SelectItem value="amount">Amount</SelectItem>
+                          <SelectItem value="family_group">Family Group</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sort-order">Order</Label>
+                      <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as any)}>
+                        <SelectTrigger id="sort-order">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="desc">Newest First</SelectItem>
+                          <SelectItem value="asc">Oldest First</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="search">Search</Label>
+                      <Input
+                        id="search"
+                        placeholder="Search descriptions..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    {(selectedFamilyGroup !== "all" || searchTerm) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedFamilyGroup("all");
+                          setSearchTerm("");
+                        }}
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear All Filters
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -218,101 +311,15 @@ export const ExpenseTracker = () => {
         </Card>
       )}
 
-      {/* Expenses List */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <div>
-                <CardTitle className="text-heading-4 flex items-center">
-                  <Receipt className="h-5 w-5 mr-2 text-primary" />
-                  Member-Reported Expenses
-                </CardTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <CardDescription>Expenses submitted by individual group members</CardDescription>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
-                        <SlidersHorizontal className="h-3 w-3" />
-                        Filters
-                        {(selectedFamilyGroup !== "all" || searchTerm) && (
-                          <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center text-[10px]">
-                            {(selectedFamilyGroup !== "all" ? 1 : 0) + (searchTerm ? 1 : 0)}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80" align="start">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="family-filter">Family Group</Label>
-                          <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
-                            <SelectTrigger id="family-filter">
-                              <SelectValue placeholder="All Groups" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Groups</SelectItem>
-                              {familyGroups.map((group) => (
-                                <SelectItem key={group.id} value={group.name}>
-                                  {group.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="sort-by">Sort By</Label>
-                          <Select value={sortBy} onValueChange={(val) => setSortBy(val as any)}>
-                            <SelectTrigger id="sort-by">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="date">Date</SelectItem>
-                              <SelectItem value="amount">Amount</SelectItem>
-                              <SelectItem value="family_group">Family Group</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="sort-order">Order</Label>
-                          <Select value={sortOrder} onValueChange={(val) => setSortOrder(val as any)}>
-                            <SelectTrigger id="sort-order">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="desc">Newest First</SelectItem>
-                              <SelectItem value="asc">Oldest First</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="search">Search</Label>
-                          <Input
-                            id="search"
-                            placeholder="Search descriptions..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                        </div>
-                        {(selectedFamilyGroup !== "all" || searchTerm) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                              setSelectedFamilyGroup("all");
-                              setSearchTerm("");
-                            }}
-                          >
-                            <X className="h-3 w-3 mr-1" />
-                            Clear All Filters
-                          </Button>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
+            <div>
+              <CardTitle className="text-heading-4 flex items-center">
+                <Receipt className="h-5 w-5 mr-2 text-primary" />
+                Recent Expenses
+              </CardTitle>
+              <CardDescription>Expenses submitted by individual group members</CardDescription>
             </div>
             <Button onClick={() => setShowAddExpense(true)}>
               <Plus className="h-4 w-4 mr-2" />
