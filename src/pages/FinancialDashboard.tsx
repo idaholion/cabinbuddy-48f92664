@@ -156,15 +156,20 @@ const FinancialDashboard = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Manage Expenses Tab */}
+              {/* Member Expenses Tab */}
               <TabsContent value="manage" className="p-6 pt-4">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold mb-2">Expense Management</h2>
-                    <p className="text-muted-foreground text-base">Add and manage cabin-related expenses</p>
+                    <h2 className="text-xl font-semibold mb-2">Member Expenses</h2>
+                    <p className="text-muted-foreground text-base">Expenses reported by group members</p>
                   </div>
                   <ExpenseTracker />
                 </div>
+              </TabsContent>
+
+              {/* Cabin Fund Tab */}
+              <TabsContent value="cabin-fund" className="p-6 pt-4">
+                <CabinFundExpenses />
               </TabsContent>
 
               {/* Recurring Bills Tab */}

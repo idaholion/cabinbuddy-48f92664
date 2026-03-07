@@ -336,9 +336,9 @@ export const ExpenseTracker = () => {
             <div>
               <CardTitle className="text-heading-4 flex items-center">
                 <Receipt className="h-5 w-5 mr-2 text-primary" />
-                Recent Expenses
+                Member-Reported Expenses
               </CardTitle>
-              <CardDescription>Track and split property expenses</CardDescription>
+              <CardDescription>Expenses submitted by individual group members</CardDescription>
             </div>
             <Button onClick={() => setShowAddExpense(true)}>
               <Plus className="h-4 w-4 mr-2" />
