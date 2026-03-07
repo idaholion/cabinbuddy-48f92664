@@ -167,7 +167,7 @@ const FinancialDashboard = () => {
                 </div>
               </TabsContent>
 
-              {/* Cabin Fund Tab */}
+              {/* General Expenses Tab */}
               <TabsContent value="cabin-fund" className="p-6 pt-4">
                 <CabinFundExpenses />
               </TabsContent>

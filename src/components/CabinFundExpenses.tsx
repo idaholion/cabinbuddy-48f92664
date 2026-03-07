@@ -343,11 +343,11 @@ export const CabinFundExpenses = () => {
           {filteredReceipts.length === 0 ? (
             <EmptyState
               icon={<DollarSign className="h-12 w-12" />}
-              title="No cabin fund expenses"
+              title="No general expenses"
               description={
                 selectedCategory !== "all" || searchTerm
                   ? "No expenses match your current filters"
-                  : `No cabin fund expenses recorded for ${selectedYear}`
+                  : `No general expenses recorded for ${selectedYear}`
               }
             />
           ) : (
