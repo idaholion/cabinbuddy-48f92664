@@ -148,11 +148,6 @@ const FinancialDashboard = () => {
                   <span className="sm:hidden">Reports</span>
                   <span className="hidden sm:inline">Financial Reports</span>
                 </TabsTrigger>
-                <TabsTrigger value="survey" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
-                  <FileBarChart className="h-4 w-4 hidden sm:inline" />
-                  <span className="sm:hidden">Survey</span>
-                  <span className="hidden sm:inline">Survey Data</span>
-                </TabsTrigger>
               </TabsList>
 
               {/* Manage Expenses Tab */}
