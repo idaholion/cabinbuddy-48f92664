@@ -16,6 +16,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 const Documents = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'economic-survey' ? 'economic-survey' : 'documents';
   const { documents, loading, uploadDocument, addDocumentLink, deleteDocument, viewDocument } = useDocuments();
   const { user } = useAuth();
   const { activeOrganization, loading: orgLoading } = useMultiOrganization();
