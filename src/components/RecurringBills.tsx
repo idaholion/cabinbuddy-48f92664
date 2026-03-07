@@ -717,6 +717,7 @@ export const RecurringBills = () => {
             </Tabs>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Summary Card */}
