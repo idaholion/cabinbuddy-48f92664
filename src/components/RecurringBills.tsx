@@ -980,6 +980,14 @@ export const RecurringBills = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      <BulkHistoricalImport
+        open={bulkImportOpen}
+        onOpenChange={setBulkImportOpen}
+        existingBills={bills}
+        organizationId={organization?.id || ""}
+        onImportComplete={fetchBills}
+      />
     </div>
   );
 };
