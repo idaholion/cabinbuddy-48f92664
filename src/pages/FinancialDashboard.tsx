@@ -128,11 +128,16 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <Settings className="h-4 w-4 hidden sm:inline" />
-                  <span className="sm:hidden">Expenses</span>
-                  <span className="hidden sm:inline">Manage Expenses</span>
+                  <span className="sm:hidden">Member</span>
+                  <span className="hidden sm:inline">Member Expenses</span>
+                </TabsTrigger>
+                <TabsTrigger value="cabin-fund" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+                  <Landmark className="h-4 w-4 hidden sm:inline" />
+                  <span className="sm:hidden">Cabin Fund</span>
+                  <span className="hidden sm:inline">Cabin Fund</span>
                 </TabsTrigger>
                 <TabsTrigger value="recurring" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <RotateCcw className="h-4 w-4 hidden sm:inline" />
