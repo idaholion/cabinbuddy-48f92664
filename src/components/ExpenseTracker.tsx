@@ -30,10 +30,22 @@ export const ExpenseTracker = () => {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "family_group">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+
+  // Extract available years from receipts
+  const availableYears = useMemo(() => {
+    const years = new Set(receipts.map(r => new Date(r.date).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [receipts]);
 
   // Filtered and sorted receipts
   const filteredAndSortedReceipts = useMemo(() => {
     let filtered = receipts;
+
+    // Year filter
+    if (selectedYear !== "all") {
+      filtered = filtered.filter(r => new Date(r.date).getFullYear().toString() === selectedYear);
+    }
 
     // Family group filter
     if (selectedFamilyGroup !== "all") {
@@ -67,7 +79,7 @@ export const ExpenseTracker = () => {
     });
 
     return sorted;
-  }, [receipts, selectedFamilyGroup, searchTerm, sortBy, sortOrder]);
+  }, [receipts, selectedYear, selectedFamilyGroup, searchTerm, sortBy, sortOrder]);
 
   const totalExpenses = filteredAndSortedReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
   const receiptCount = filteredAndSortedReceipts.length;
@@ -182,6 +194,20 @@ export const ExpenseTracker = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="h-7 w-auto gap-1 text-xs">
+                  <Calendar className="h-3 w-3" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
