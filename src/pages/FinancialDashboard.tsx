@@ -159,7 +159,6 @@ const FinancialDashboard = () => {
               {/* Member Expenses Tab */}
               <TabsContent value="manage" className="p-6 pt-4">
                 <ExpenseTracker />
-                </div>
               </TabsContent>
 
               {/* General Expenses Tab */}
