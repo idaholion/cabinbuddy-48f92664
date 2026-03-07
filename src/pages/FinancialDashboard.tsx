@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { RecurringBills } from "@/components/RecurringBills";
 import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History, FileBarChart } from "lucide-react";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
@@ -147,11 +147,6 @@ const FinancialDashboard = () => {
                   <TrendingUp className="h-4 w-4 hidden sm:inline" />
                   <span className="sm:hidden">Reports</span>
                   <span className="hidden sm:inline">Financial Reports</span>
-                </TabsTrigger>
-                <TabsTrigger value="survey" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
-                  <FileBarChart className="h-4 w-4 hidden sm:inline" />
-                  <span className="sm:hidden">Survey</span>
-                  <span className="hidden sm:inline">Survey Data</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -306,28 +301,6 @@ const FinancialDashboard = () => {
                 )}
               </TabsContent>
 
-              {/* Survey Data Tab */}
-              <TabsContent value="survey" className="p-6 pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Economic Survey Data</CardTitle>
-                    <CardDescription>
-                      View detailed survey responses on the dedicated page
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Survey data from checkout processes is available for review, showing economic impact in the local area.
-                    </p>
-                    <Button asChild>
-                      <Link to="/documents?tab=economic-survey">
-                        <FileBarChart className="h-4 w-4 mr-2" />
-                        View Survey Responses
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
