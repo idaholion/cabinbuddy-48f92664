@@ -209,6 +209,19 @@ const Documents = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
+        <Tabs defaultValue="documents" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="documents">
+              <FileText className="h-4 w-4 mr-2" />
+              Documents
+            </TabsTrigger>
+            <TabsTrigger value="economic-survey">
+              <FileBarChart className="h-4 w-4 mr-2" />
+              Economic Impact Survey
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="documents">
         {/* Quick Access Section - Only show when no documents exist */}
         {documents.length === 0 && (
           <Card className="mb-6">
