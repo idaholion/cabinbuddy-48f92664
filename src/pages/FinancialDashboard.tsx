@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { RecurringBills } from "@/components/RecurringBills";
 import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History, FileBarChart } from "lucide-react";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
