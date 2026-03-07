@@ -189,7 +189,7 @@ export const CabinFundExpenses = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Cabin Fund Expenses</p>
+                <p className="text-sm text-muted-foreground">Total General Expenses</p>
                 <p className="text-2xl font-bold">${totalForYear.toFixed(2)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-primary" />
