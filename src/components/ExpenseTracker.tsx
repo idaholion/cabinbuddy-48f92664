@@ -30,6 +30,13 @@ export const ExpenseTracker = () => {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "family_group">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+
+  // Extract available years from receipts
+  const availableYears = useMemo(() => {
+    const years = new Set(receipts.map(r => new Date(r.date).getFullYear()));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [receipts]);
 
   // Filtered and sorted receipts
   const filteredAndSortedReceipts = useMemo(() => {
