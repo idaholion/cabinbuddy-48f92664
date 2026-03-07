@@ -79,7 +79,7 @@ export const ExpenseTracker = () => {
     });
 
     return sorted;
-  }, [receipts, selectedFamilyGroup, searchTerm, sortBy, sortOrder]);
+  }, [receipts, selectedYear, selectedFamilyGroup, searchTerm, sortBy, sortOrder]);
 
   const totalExpenses = filteredAndSortedReceipts.reduce((sum, receipt) => sum + receipt.amount, 0);
   const receiptCount = filteredAndSortedReceipts.length;
