@@ -141,9 +141,9 @@ export const CabinFundExpenses = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Cabin Fund Expenses</h2>
+          <h2 className="text-xl font-semibold">General Expenses</h2>
           <p className="text-muted-foreground text-base">
-            Expenses paid from the shared cabin fund that offset cabin fees
+            Organization-level expenses that offset cabin fees
           </p>
         </div>
         <div className="flex gap-2">
@@ -189,7 +189,7 @@ export const CabinFundExpenses = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Cabin Fund Expenses</p>
+                <p className="text-sm text-muted-foreground">Total General Expenses</p>
                 <p className="text-2xl font-bold">${totalForYear.toFixed(2)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-primary" />
@@ -213,7 +213,7 @@ export const CabinFundExpenses = () => {
       {showAddForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Add Cabin Fund Expense</CardTitle>
+            <CardTitle className="text-lg">Add General Expense</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -334,20 +334,20 @@ export const CabinFundExpenses = () => {
       {/* Expenses List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Cabin Fund Expenses — {selectedYear}</CardTitle>
+          <CardTitle className="text-lg">General Expenses — {selectedYear}</CardTitle>
           <CardDescription>
-            Organization-level expenses paid from the shared cabin fund
+            Organization-level expenses that offset cabin fees
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredReceipts.length === 0 ? (
             <EmptyState
               icon={<DollarSign className="h-12 w-12" />}
-              title="No cabin fund expenses"
+              title="No general expenses"
               description={
                 selectedCategory !== "all" || searchTerm
                   ? "No expenses match your current filters"
-                  : `No cabin fund expenses recorded for ${selectedYear}`
+                  : `No general expenses recorded for ${selectedYear}`
               }
             />
           ) : (

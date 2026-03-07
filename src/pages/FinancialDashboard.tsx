@@ -136,8 +136,8 @@ const FinancialDashboard = () => {
                 </TabsTrigger>
                 <TabsTrigger value="cabin-fund" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <Landmark className="h-4 w-4 hidden sm:inline" />
-                  <span className="sm:hidden">Cabin Fund</span>
-                  <span className="hidden sm:inline">Cabin Fund</span>
+                   <span className="sm:hidden">General</span>
+                   <span className="hidden sm:inline">General Expenses</span>
                 </TabsTrigger>
                 <TabsTrigger value="recurring" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <RotateCcw className="h-4 w-4 hidden sm:inline" />
@@ -167,7 +167,7 @@ const FinancialDashboard = () => {
                 </div>
               </TabsContent>
 
-              {/* Cabin Fund Tab */}
+              {/* General Expenses Tab */}
               <TabsContent value="cabin-fund" className="p-6 pt-4">
                 <CabinFundExpenses />
               </TabsContent>
