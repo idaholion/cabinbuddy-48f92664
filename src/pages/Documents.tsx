@@ -465,6 +465,12 @@ const Documents = () => {
             </div>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+
+          <TabsContent value="economic-survey">
+            <EconomicSurveyTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
