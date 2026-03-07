@@ -11,7 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseTracker } from "@/components/ExpenseTracker";
 import { RecurringBills } from "@/components/RecurringBills";
 import { RecurringBillsHistoricalReports } from "@/components/RecurringBillsHistoricalReports";
-import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History } from "lucide-react";
+import { CabinFundExpenses } from "@/components/CabinFundExpenses";
+import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, RotateCcw, History, Landmark } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
@@ -127,11 +128,16 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1 m-4 mb-0">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1 m-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <Settings className="h-4 w-4 hidden sm:inline" />
-                  <span className="sm:hidden">Expenses</span>
-                  <span className="hidden sm:inline">Manage Expenses</span>
+                  <span className="sm:hidden">Member</span>
+                  <span className="hidden sm:inline">Member Expenses</span>
+                </TabsTrigger>
+                <TabsTrigger value="cabin-fund" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+                  <Landmark className="h-4 w-4 hidden sm:inline" />
+                  <span className="sm:hidden">Cabin Fund</span>
+                  <span className="hidden sm:inline">Cabin Fund</span>
                 </TabsTrigger>
                 <TabsTrigger value="recurring" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <RotateCcw className="h-4 w-4 hidden sm:inline" />
@@ -150,15 +156,20 @@ const FinancialDashboard = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Manage Expenses Tab */}
+              {/* Member Expenses Tab */}
               <TabsContent value="manage" className="p-6 pt-4">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-semibold mb-2">Expense Management</h2>
-                    <p className="text-muted-foreground text-base">Add and manage cabin-related expenses</p>
+                    <h2 className="text-xl font-semibold mb-2">Member Expenses</h2>
+                    <p className="text-muted-foreground text-base">Expenses reported by group members</p>
                   </div>
                   <ExpenseTracker />
                 </div>
+              </TabsContent>
+
+              {/* Cabin Fund Tab */}
+              <TabsContent value="cabin-fund" className="p-6 pt-4">
+                <CabinFundExpenses />
               </TabsContent>
 
               {/* Recurring Bills Tab */}
