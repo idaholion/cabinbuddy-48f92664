@@ -213,7 +213,7 @@ export const CabinFundExpenses = () => {
       {showAddForm && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Add Cabin Fund Expense</CardTitle>
+            <CardTitle className="text-lg">Add General Expense</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
