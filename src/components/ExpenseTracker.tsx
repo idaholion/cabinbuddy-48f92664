@@ -194,6 +194,20 @@ export const ExpenseTracker = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="h-7 w-auto gap-1 text-xs">
+                  <Calendar className="h-3 w-3" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
