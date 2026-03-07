@@ -141,9 +141,9 @@ export const CabinFundExpenses = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Cabin Fund Expenses</h2>
+          <h2 className="text-xl font-semibold">General Expenses</h2>
           <p className="text-muted-foreground text-base">
-            Expenses paid from the shared cabin fund that offset cabin fees
+            Organization-level expenses that offset cabin fees
           </p>
         </div>
         <div className="flex gap-2">
