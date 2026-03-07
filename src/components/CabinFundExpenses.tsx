@@ -334,9 +334,9 @@ export const CabinFundExpenses = () => {
       {/* Expenses List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Cabin Fund Expenses — {selectedYear}</CardTitle>
+          <CardTitle className="text-lg">General Expenses — {selectedYear}</CardTitle>
           <CardDescription>
-            Organization-level expenses paid from the shared cabin fund
+            Organization-level expenses that offset cabin fees
           </CardDescription>
         </CardHeader>
         <CardContent>
