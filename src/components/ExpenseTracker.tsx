@@ -13,7 +13,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 
 export const ExpenseTracker = () => {
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const { receipts, createReceipt, deleteReceipt, loading } = useReceipts();
+  const { receipts: allReceipts, createReceipt, deleteReceipt, loading } = useReceipts();
+  
+  // Filter out Cabin Fund expenses — those appear in their own tab
+  const receipts = useMemo(() => allReceipts.filter(r => r.family_group !== "Cabin Fund"), [allReceipts]);
   const { familyGroups } = useFamilyGroups();
   
   const [description, setDescription] = useState("");
