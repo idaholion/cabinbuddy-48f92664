@@ -198,9 +198,9 @@ const Documents = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Documents</h1>
+              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Documents & Reports</h1>
               <p className="text-base text-muted-foreground">
-                Access important cabin documentation and files
+                Access important cabin documentation, files, and reports
               </p>
             </div>
           </div>
