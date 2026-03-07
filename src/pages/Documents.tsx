@@ -211,7 +211,7 @@ const Documents = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
-        <Tabs defaultValue="documents" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="documents">
               <FileText className="h-4 w-4 mr-2" />
