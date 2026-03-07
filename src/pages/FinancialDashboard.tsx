@@ -158,12 +158,7 @@ const FinancialDashboard = () => {
 
               {/* Member Expenses Tab */}
               <TabsContent value="manage" className="p-6 pt-4">
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-semibold mb-2">Member Expenses</h2>
-                    <p className="text-muted-foreground text-base">Expenses reported by group members</p>
-                  </div>
-                  <ExpenseTracker />
+                <ExpenseTracker />
                 </div>
               </TabsContent>
 
