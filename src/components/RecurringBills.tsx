@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
+import { BulkHistoricalImport } from "@/components/BulkHistoricalImport";
 
 interface HistoricalValue {
   date: string;
