@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { EmptyState } from "@/components/ui/empty-state";
