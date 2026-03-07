@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Edit, Trash2, Calendar, DollarSign, Phone, Globe, FileText, Building2, Snowflake, History, TrendingUp } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, DollarSign, Phone, Globe, FileText, Building2, Snowflake, History, TrendingUp, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
