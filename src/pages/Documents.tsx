@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Download, Eye, Calendar, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, Calendar, Upload, Loader2, FileBarChart } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EconomicSurveyTab from "@/components/EconomicSurveyTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
