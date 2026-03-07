@@ -222,14 +222,13 @@ export const ExpenseTracker = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <div>
-                <CardTitle className="text-heading-4 flex items-center">
-                  <Receipt className="h-5 w-5 mr-2 text-primary" />
-                  Member-Reported Expenses
-                </CardTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <CardDescription>Expenses submitted by individual group members</CardDescription>
+            <div>
+              <CardTitle className="text-heading-4 flex items-center">
+                <Receipt className="h-5 w-5 mr-2 text-primary" />
+                Member-Reported Expenses
+              </CardTitle>
+              <CardDescription>Expenses submitted by individual group members</CardDescription>
+            </div>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
