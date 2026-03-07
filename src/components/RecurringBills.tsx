@@ -832,15 +832,16 @@ export const RecurringBills = () => {
                           Website
                         </a>
                       )}
-                      {bill.notes && (
-                        <div className="mt-3 p-2 bg-muted/50 rounded text-sm">
-                          <div className="flex items-start gap-1.5 text-muted-foreground">
-                            <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                            <span className="whitespace-pre-wrap">{bill.notes}</span>
-                          </div>
-                        </div>
-                      )}
                     </div>
+
+                    {bill.notes && (
+                      <div className="mt-3 p-2 bg-muted/50 rounded text-sm">
+                        <div className="flex items-start gap-1.5 text-muted-foreground">
+                          <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                          <span className="whitespace-pre-wrap">{bill.notes}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2 ml-4">
