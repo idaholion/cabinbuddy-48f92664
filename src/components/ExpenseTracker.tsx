@@ -42,6 +42,11 @@ export const ExpenseTracker = () => {
   const filteredAndSortedReceipts = useMemo(() => {
     let filtered = receipts;
 
+    // Year filter
+    if (selectedYear !== "all") {
+      filtered = filtered.filter(r => new Date(r.date).getFullYear().toString() === selectedYear);
+    }
+
     // Family group filter
     if (selectedFamilyGroup !== "all") {
       filtered = filtered.filter(r => r.family_group === selectedFamilyGroup);
