@@ -301,28 +301,6 @@ const FinancialDashboard = () => {
                 )}
               </TabsContent>
 
-              {/* Survey Data Tab */}
-              <TabsContent value="survey" className="p-6 pt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Economic Survey Data</CardTitle>
-                    <CardDescription>
-                      View detailed survey responses on the dedicated page
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Survey data from checkout processes is available for review, showing economic impact in the local area.
-                    </p>
-                    <Button asChild>
-                      <Link to="/documents?tab=economic-survey">
-                        <FileBarChart className="h-4 w-4 mr-2" />
-                        View Survey Responses
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
