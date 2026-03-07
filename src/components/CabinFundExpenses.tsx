@@ -143,7 +143,7 @@ export const CabinFundExpenses = () => {
         <div>
           <h2 className="text-xl font-semibold">General Expenses</h2>
           <p className="text-muted-foreground text-base">
-            Organization-level expenses that offset cabin fees
+            Organization-level expenses
           </p>
         </div>
         <div className="flex gap-2">
