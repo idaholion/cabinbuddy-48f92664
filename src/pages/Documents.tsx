@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Download, Eye, Calendar, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Download, Eye, Calendar, Upload, Loader2, FileBarChart } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EconomicSurveyTab from "@/components/EconomicSurveyTab";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 const Documents = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'economic-survey' ? 'economic-survey' : 'documents';
   const { documents, loading, uploadDocument, addDocumentLink, deleteDocument, viewDocument } = useDocuments();
   const { user } = useAuth();
   const { activeOrganization, loading: orgLoading } = useMultiOrganization();
@@ -196,9 +200,9 @@ const Documents = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Documents</h1>
+              <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Documents & Reports</h1>
               <p className="text-base text-muted-foreground">
-                Access important cabin documentation and files
+                Access important cabin documentation, files, and reports
               </p>
             </div>
           </div>
@@ -207,6 +211,19 @@ const Documents = () => {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="documents">
+              <FileText className="h-4 w-4 mr-2" />
+              Documents
+            </TabsTrigger>
+            <TabsTrigger value="economic-survey">
+              <FileBarChart className="h-4 w-4 mr-2" />
+              Economic Impact Survey
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="documents">
         {/* Quick Access Section - Only show when no documents exist */}
         {documents.length === 0 && (
           <Card className="mb-6">
@@ -450,6 +467,12 @@ const Documents = () => {
             </div>
           </DialogContent>
         </Dialog>
+          </TabsContent>
+
+          <TabsContent value="economic-survey">
+            <EconomicSurveyTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

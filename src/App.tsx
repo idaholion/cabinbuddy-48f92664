@@ -155,7 +155,7 @@ const AppContent = () => {
         <Route path="/invoice-settings" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><InvoiceSettings /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/financial-admin-tools" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FinancialAdminTools /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-season-summary" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminSeasonSummary /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        <Route path="/survey-responses" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SurveyResponses /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/survey-responses" element={<Navigate to="/documents?tab=economic-survey" replace />} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/google-calendar-setup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/admin-treasurer" element={<Navigate to="/finance-reports" replace />} />

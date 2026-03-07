@@ -320,7 +320,7 @@ const FinancialDashboard = () => {
                       Survey data from checkout processes is available for review, showing economic impact in the local area.
                     </p>
                     <Button asChild>
-                      <Link to="/survey-responses">
+                      <Link to="/documents?tab=economic-survey">
                         <FileBarChart className="h-4 w-4 mr-2" />
                         View Survey Responses
                       </Link>
