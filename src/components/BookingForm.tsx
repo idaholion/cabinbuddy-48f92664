@@ -517,7 +517,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         {userFamilyGroupName && !testOverrideMode && (
               <div className="mt-2 p-3 bg-primary/10 rounded-lg">
                 <p className="text-sm font-medium">
-                  {userFamilyGroupName === currentTurnGroup ? (
+                  {isPostRotationPhase ? (
+                    <span className="text-green-600 dark:text-green-400">✓ Free selection is open — all families can book!</span>
+                  ) : userFamilyGroupName === currentTurnGroup ? (
                     <>
                       <span className="text-primary">✓ It's your family group's turn to book!</span>
                       <br />
