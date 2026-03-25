@@ -1302,6 +1302,24 @@ export default function StayHistory() {
                   </div>
                 </div>
 
+                {/* Credit Applied Confirmation */}
+                {stayData.amountDue < 0 && stayData.creditAppliedToFuture && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-5 w-5 text-green-600" />
+                      <h4 className="text-base font-medium">Credit Options</h4>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                          Credit of ${Math.abs(stayData.amountDue).toFixed(2)} applied to future reservations
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Venmo Payment Section - Only show on newest stay */}
                 {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
                   lastReservationByHost.get(getPrimaryHostKey(reservation)) === reservation.id && (
