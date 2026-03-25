@@ -87,6 +87,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
   const isSecondarySelectionActive = currentPhase === 'secondary';
+  const isPostRotationPhase = currentPhase === 'post_rotation';
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
@@ -309,7 +310,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive)
+        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive || isPostRotationPhase)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -324,7 +325,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Check if the family group can make a booking (considering admin override and all phases active)
   const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
-  const canMakeBooking = watchedAdminOverride || allPhasesActive || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+  const canMakeBooking = watchedAdminOverride || allPhasesActive || isPostRotationPhase || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
     // Check if no host is assigned and confirmation hasn't been given
@@ -516,7 +517,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         {userFamilyGroupName && !testOverrideMode && (
               <div className="mt-2 p-3 bg-primary/10 rounded-lg">
                 <p className="text-sm font-medium">
-                  {userFamilyGroupName === currentTurnGroup ? (
+                  {isPostRotationPhase ? (
+                    <span className="text-green-600 dark:text-green-400">✓ Free selection is open — all families can book!</span>
+                  ) : userFamilyGroupName === currentTurnGroup ? (
                     <>
                       <span className="text-primary">✓ It's your family group's turn to book!</span>
                       <br />
