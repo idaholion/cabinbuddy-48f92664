@@ -132,13 +132,36 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       // If secondary selection started (started_at exists) or has active family,
       // we're in secondary phase. The secondary_selection_status record is the source of truth.
       if (isSecondaryPhase) {
-        setCurrentPhase('secondary');
+        // Check if ALL families have used their secondary periods — if so, we're in post-rotation (free selection)
+        const secondaryMaxPeriods = rotationData.secondary_max_periods || 1;
+        const allSecondaryUsed = rotationOrder.every((familyGroup) => {
+          const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+          return (usage?.secondary_periods_used || 0) >= secondaryMaxPeriods;
+        });
+        
+        if (allSecondaryUsed && !secondaryStatus.current_family_group) {
+          // All families completed secondary selection and no active turn — free selection mode
+          console.log('[useSequentialSelection] All secondary periods used, entering post_rotation phase');
+          setCurrentPhase('post_rotation');
+        } else {
+          setCurrentPhase('secondary');
+        }
       } else if (allCompletedPrimary) {
         // All primary completed but no secondary active - check if secondary usage exists
         // This handles the case where secondary selection completed (all used their periods)
         const hasSecondaryUsage = await checkForSecondaryUsage(rotationOrder);
         if (hasSecondaryUsage) {
-          setCurrentPhase('secondary');
+          // Secondary happened — check if it's fully done
+          const secondaryMaxPeriods = rotationData.secondary_max_periods || 1;
+          const allSecondaryUsed = rotationOrder.every((familyGroup) => {
+            const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+            return (usage?.secondary_periods_used || 0) >= secondaryMaxPeriods;
+          });
+          if (allSecondaryUsed) {
+            setCurrentPhase('post_rotation');
+          } else {
+            setCurrentPhase('secondary');
+          }
         } else {
           setCurrentPhase('primary');
         }
