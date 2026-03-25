@@ -518,13 +518,15 @@ const CabinCalendar = () => {
                 {(() => {
                   // Check if all families have completed both primary and secondary
                   const allPrimaryCompleted = currentRotationYearStatuses.every(s => s.status === 'completed');
-                  const allSecondaryCompleted = currentPhase === 'secondary' && allPrimaryCompleted;
+                  const allSecondaryCompleted = (currentPhase === 'secondary' || currentPhase === 'post_rotation') && allPrimaryCompleted;
+                  const isPostRotation = currentPhase === 'post_rotation';
                   
-                  if (allSecondaryCompleted) {
+                  if (allSecondaryCompleted || isPostRotation) {
                     return (
                       <div className="space-y-1 mt-2">
                         <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
                         <p className="font-semibold text-green-600 dark:text-green-400">✅ Secondary Selection Completed</p>
+                        <p className="font-semibold text-blue-600 dark:text-blue-400">🏕️ Free Selection Open — Any family can book!</p>
                       </div>
                     );
                   }
