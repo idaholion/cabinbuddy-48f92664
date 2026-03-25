@@ -610,13 +610,16 @@ export const useTimePeriods = (rotationYear?: number) => {
             console.log(`[Reconciliation] Created usage record for ${familyGroup}: ${primaryCount} primary, ${secondaryCount} secondary periods`);
           }
         } else if (existing.time_periods_used !== primaryCount || (existing.secondary_periods_used || 0) !== secondaryCount) {
-          // Update existing record
+          // Update existing record - NEVER reset turn_completed
+          // If it was already true, keep it. If secondary usage increased, infer completion.
+          const preservedTurnCompleted = existing.turn_completed || secondaryCount > 0;
           const { error: updateError } = await supabase
             .from('time_period_usage')
             .update({
               time_periods_used: primaryCount,
               secondary_periods_used: secondaryCount,
-              last_selection_date: new Date().toISOString()
+              last_selection_date: new Date().toISOString(),
+              turn_completed: preservedTurnCompleted
             })
             .eq('id', existing.id);
 
