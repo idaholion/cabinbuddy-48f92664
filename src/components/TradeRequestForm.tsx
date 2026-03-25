@@ -528,90 +528,153 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
             {/* Offered Time Period (conditional) */}
             {watchedIsTradeOffer && (
               <div className="space-y-4">
-                <h4 className="font-medium">Time Period You're Offering</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="offeredStartDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Start Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date()}
-                              initialFocus
-                              className="pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="offeredEndDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>End Date</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => !watchedOfferedStartDate || date <= watchedOfferedStartDate}
-                              initialFocus
-                              className="pointer-events-auto"
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Time Period You're Offering</h4>
+                  <Tabs value={offerSelectionMode} onValueChange={(v) => {
+                    setOfferSelectionMode(v as 'browse' | 'manual');
+                    setSelectedOfferReservationId(null);
+                  }} className="w-auto">
+                    <TabsList className="h-8">
+                      <TabsTrigger value="browse" className="text-xs px-2 h-6">
+                        <CalendarListIcon className="h-3 w-3 mr-1" />
+                        My Weeks
+                      </TabsTrigger>
+                      <TabsTrigger value="manual" className="text-xs px-2 h-6">
+                        <Edit3 className="h-3 w-3 mr-1" />
+                        Manual
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
+
+                {offerSelectionMode === 'browse' ? (
+                  <div className="space-y-3">
+                    {loadingMyReservations ? (
+                      <p className="text-sm text-muted-foreground">Loading your reservations...</p>
+                    ) : myReservations.length === 0 ? (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          You have no upcoming reservations to offer. Use manual date entry instead.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <RadioGroup 
+                        value={selectedOfferReservationId || ''} 
+                        onValueChange={setSelectedOfferReservationId}
+                        className="space-y-2"
+                      >
+                        {myReservations.map((res) => (
+                          <div 
+                            key={res.id} 
+                            className={cn(
+                              "flex items-center space-x-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                              selectedOfferReservationId === res.id 
+                                ? "border-primary bg-primary/5" 
+                                : "hover:bg-muted/50"
+                            )}
+                            onClick={() => setSelectedOfferReservationId(res.id)}
+                          >
+                            <RadioGroupItem value={res.id} id={`offer-${res.id}`} />
+                            <Label htmlFor={`offer-${res.id}`} className="flex-1 cursor-pointer">
+                              <p className="font-medium">
+                                {format(new Date(res.start_date), "MMM d")} - {format(new Date(res.end_date), "MMM d, yyyy")}
+                              </p>
+                              <p className="text-sm text-muted-foreground flex items-center mt-1">
+                                <User className="h-3 w-3 mr-1" />
+                                {res.host_name}
+                              </p>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="offeredStartDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Start Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => date < new Date()}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="offeredEndDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>End Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP")
+                                  ) : (
+                                    <span>Pick a date</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) => !watchedOfferedStartDate || date <= watchedOfferedStartDate}
+                                initialFocus
+                                className="pointer-events-auto"
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
