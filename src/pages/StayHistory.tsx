@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -1301,6 +1301,24 @@ export default function StayHistory() {
                     )}
                   </div>
                 </div>
+
+                {/* Credit Applied Confirmation */}
+                {stayData.amountDue < 0 && stayData.creditAppliedToFuture && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CreditCard className="h-5 w-5 text-green-600" />
+                      <h4 className="text-base font-medium">Credit Options</h4>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-4">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                          Credit of ${Math.abs(stayData.amountDue).toFixed(2)} applied to future reservations
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Venmo Payment Section - Only show on newest stay */}
                 {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
