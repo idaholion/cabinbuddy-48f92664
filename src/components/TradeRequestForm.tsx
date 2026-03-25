@@ -64,6 +64,10 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
   const [availableReservations, setAvailableReservations] = useState<ReservationOption[]>([]);
   const [loadingReservations, setLoadingReservations] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState<string | null>(null);
+  const [offerSelectionMode, setOfferSelectionMode] = useState<'browse' | 'manual'>('browse');
+  const [myReservations, setMyReservations] = useState<ReservationOption[]>([]);
+  const [loadingMyReservations, setLoadingMyReservations] = useState(false);
+  const [selectedOfferReservationId, setSelectedOfferReservationId] = useState<string | null>(null);
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
