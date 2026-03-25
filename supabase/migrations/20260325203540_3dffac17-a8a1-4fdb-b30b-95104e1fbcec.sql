@@ -1,0 +1,1 @@
+UPDATE payments SET amount = 140.00 WHERE id = '1c8882fc-1c24-45fd-a6df-6277682a0aad' AND family_group = 'Grandy Family' AND amount = 530.00;
