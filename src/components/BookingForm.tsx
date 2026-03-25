@@ -325,7 +325,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Check if the family group can make a booking (considering admin override and all phases active)
   const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
-  const canMakeBooking = watchedAdminOverride || allPhasesActive || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+  const canMakeBooking = watchedAdminOverride || allPhasesActive || isPostRotationPhase || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
     // Check if no host is assigned and confirmation hasn't been given
