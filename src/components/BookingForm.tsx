@@ -87,6 +87,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
   const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
   const isSecondarySelectionActive = currentPhase === 'secondary';
+  const isPostRotationPhase = currentPhase === 'post_rotation';
 
   // Filter family groups based on user role
   const availableFamilyGroups = testOverrideMode 
