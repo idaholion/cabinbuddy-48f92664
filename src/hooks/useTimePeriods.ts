@@ -587,7 +587,9 @@ export const useTimePeriods = (rotationYear?: number) => {
         }
 
         if (!existing) {
-          // Create new record
+          // Create new record - preserve turn_completed if we can infer it
+          // If they have secondary usage, they must have completed their turns
+          const inferredTurnCompleted = secondaryCount > 0;
           const { error: insertError } = await supabase
             .from('time_period_usage')
             .insert({
@@ -598,7 +600,8 @@ export const useTimePeriods = (rotationYear?: number) => {
               secondary_periods_used: secondaryCount,
               time_periods_allowed: rotationData.max_time_slots || 2,
               secondary_periods_allowed: rotationData.secondary_max_periods || 1,
-              last_selection_date: new Date().toISOString()
+              last_selection_date: new Date().toISOString(),
+              turn_completed: inferredTurnCompleted
             });
 
           if (insertError) {
