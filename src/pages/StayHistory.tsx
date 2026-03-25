@@ -1303,7 +1303,7 @@ export default function StayHistory() {
                 </div>
 
                 {/* Credit Applied Confirmation */}
-                {stayData.amountDue < 0 && stayData.creditAppliedToFuture && (
+                {stayData.creditAppliedToFuture && (
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex items-center gap-2 mb-2">
                       <CreditCard className="h-5 w-5 text-green-600" />
@@ -1313,7 +1313,7 @@ export default function StayHistory() {
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                          Credit of ${Math.abs(stayData.amountDue).toFixed(2)} applied to future reservations
+                          Credit applied to future reservations
                         </p>
                       </div>
                     </div>
