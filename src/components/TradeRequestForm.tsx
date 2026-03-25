@@ -150,6 +150,69 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
     setHostInfo(null);
   }, [watchedTargetFamilyGroup, activeOrganization, familyGroups]);
 
+  // Fetch user's own reservations for offering
+  useEffect(() => {
+    const fetchMyReservations = async () => {
+      if (!userFamilyGroup || !activeOrganization) {
+        setMyReservations([]);
+        return;
+      }
+
+      setLoadingMyReservations(true);
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data: reservations, error } = await supabase
+          .from('reservations')
+          .select('id, start_date, end_date, host_assignments, family_group')
+          .eq('organization_id', activeOrganization.organization_id)
+          .eq('family_group', userFamilyGroup)
+          .gte('end_date', today)
+          .order('start_date', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching my reservations:', error);
+          setMyReservations([]);
+          return;
+        }
+
+        const options: ReservationOption[] = (reservations || []).map(res => {
+          const hostAssignments = res.host_assignments as any[];
+          const primaryHost = hostAssignments?.[0];
+          
+          return {
+            id: res.id,
+            start_date: res.start_date,
+            end_date: res.end_date,
+            host_name: primaryHost?.name || res.family_group,
+            host_email: primaryHost?.email || ''
+          };
+        });
+
+        setMyReservations(options);
+      } catch (error) {
+        console.error('Error in fetchMyReservations:', error);
+        setMyReservations([]);
+      } finally {
+        setLoadingMyReservations(false);
+      }
+    };
+
+    fetchMyReservations();
+    setSelectedOfferReservationId(null);
+  }, [userFamilyGroup, activeOrganization]);
+
+  // Update form when an offer reservation is selected
+  useEffect(() => {
+    if (selectedOfferReservationId && offerSelectionMode === 'browse') {
+      const selectedRes = myReservations.find(r => r.id === selectedOfferReservationId);
+      if (selectedRes) {
+        form.setValue('offeredStartDate', new Date(selectedRes.start_date));
+        form.setValue('offeredEndDate', new Date(selectedRes.end_date));
+      }
+    }
+  }, [selectedOfferReservationId, offerSelectionMode, myReservations, form]);
+
   // Update form and host info when a reservation is selected
   useEffect(() => {
     if (selectedReservationId && selectionMode === 'browse') {
