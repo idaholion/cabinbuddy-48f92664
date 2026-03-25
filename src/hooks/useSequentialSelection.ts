@@ -8,7 +8,7 @@ import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { getFirstNameFromFullName } from '@/lib/reservation-utils';
 
-export type SelectionPhase = 'primary' | 'secondary';
+export type SelectionPhase = 'primary' | 'secondary' | 'post_rotation';
 export type SelectionStatus = 'waiting' | 'active' | 'completed' | 'skipped';
 
 interface FamilySelectionStatus {
