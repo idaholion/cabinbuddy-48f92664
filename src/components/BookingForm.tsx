@@ -310,7 +310,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive)
+        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive || isPostRotationPhase)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
