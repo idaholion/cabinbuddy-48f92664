@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BackfillProfileClaims } from '@/components/BackfillProfileClaims';
 import { SupervisorFeedbackInbox } from '@/components/SupervisorFeedbackInbox';
 import { SupervisorUserTools } from '@/components/SupervisorUserTools';
+import { NewUserExperiencePreview } from '@/components/NewUserExperiencePreview';
 
 export const SupervisorDashboard = () => {
   const { 
@@ -150,6 +151,7 @@ export const SupervisorDashboard = () => {
         </div>
         <div className="flex justify-end items-center gap-2 mb-6">
           <div className="flex items-center gap-2">
+            <NewUserExperiencePreview />
             <CreateTestOrganizationDialog onOrganizationCreated={refetchOrganizations} />
             <CreateOrganizationDialog onOrganizationCreated={refetchOrganizations} />
             <Badge variant="secondary" className="text-base">
