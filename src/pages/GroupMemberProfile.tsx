@@ -727,6 +727,28 @@ const GroupMemberProfile = () => {
         </div>
       </PageHeader>
 
+      {/* Welcome Instructions for New Users */}
+      {!hasClaimedProfile && familyGroups.length > 0 && (
+        <Card className="mb-6 border-accent bg-accent/10">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              👋 Welcome! Let's Get You Set Up
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Your family group lead may have already entered some of your information. Here's what you need to do:
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
+              <li><strong>Claim your profile</strong> — select your family group and find your name to link your account.</li>
+              <li><strong>Verify your email</strong> — make sure your email address is correct. If it's missing, please add it.</li>
+              <li><strong>Check your phone number</strong> — add or update it if you'd like. <span className="italic">Phone numbers are optional</span> but helpful for reservation reminders.</li>
+              <li><strong>Save your changes</strong> — click "Save Profile Changes" when you're done.</li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Profile Claiming Section - One-time account linking */}
       {!hasClaimedProfile && familyGroups.length > 0 && (
         <Card className="mb-6 border-primary/50 bg-primary/5">
@@ -1016,7 +1038,7 @@ const GroupMemberProfile = () => {
                 <div className="border-b pb-2 mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Keep your email and phone number up to date
+                    Please verify your email is correct. Phone number is optional but useful for reservation reminders.
                   </p>
                 </div>
               )}
@@ -1062,6 +1084,9 @@ const GroupMemberProfile = () => {
                           placeholder="Enter your phone number"
                         />
                       </FormControl>
+                        <FormDescription className="text-xs">
+                          Optional — used for reservation reminders via SMS if enabled
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1069,7 +1094,7 @@ const GroupMemberProfile = () => {
                 </>
               )}
 
-              {/* Save Changes Section */}
+
               {selectedGroupMember && (
                 <div className="border-t pt-6 mt-6">
                   <div className="flex justify-center">
