@@ -280,7 +280,7 @@ const Signup = () => {
                 localStorage.removeItem('recent-signup');
                 
                 // Determine user role and navigate accordingly
-                await determineUserRoleAndNavigate(email);
+                await determineUserRoleAndNavigate(email, org.id);
                 return;
                 
               } catch (joinError: any) {
