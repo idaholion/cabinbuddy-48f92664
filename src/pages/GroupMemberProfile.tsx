@@ -1084,12 +1084,13 @@ const GroupMemberProfile = () => {
                           placeholder="Enter your phone number"
                         />
                       </FormControl>
+                        <FormDescription className="text-xs">
+                          Optional — used for reservation reminders via SMS if enabled
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                </>
-              )}
 
               {/* Save Changes Section */}
               {selectedGroupMember && (
