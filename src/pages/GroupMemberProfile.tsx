@@ -1038,7 +1038,7 @@ const GroupMemberProfile = () => {
                 <div className="border-b pb-2 mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Keep your email and phone number up to date
+                    Please verify your email is correct. Phone number is optional but useful for reservation reminders.
                   </p>
                 </div>
               )}
