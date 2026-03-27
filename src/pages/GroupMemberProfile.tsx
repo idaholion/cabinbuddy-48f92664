@@ -1091,8 +1091,10 @@ const GroupMemberProfile = () => {
                       </FormItem>
                     )}
                   />
+                </>
+              )}
 
-              {/* Save Changes Section */}
+
               {selectedGroupMember && (
                 <div className="border-t pt-6 mt-6">
                   <div className="flex justify-center">
