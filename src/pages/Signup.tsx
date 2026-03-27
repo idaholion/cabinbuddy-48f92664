@@ -36,61 +36,68 @@ const Signup = () => {
   const codeFromUrl = searchParams.get('code')?.toUpperCase() || "";
 
   // Function to determine user role and navigate accordingly
-  const determineUserRoleAndNavigate = async (userEmail: string) => {
+  const determineUserRoleAndNavigate = async (userEmail: string, organizationId: string) => {
     try {
-      console.log('🔍 [SIGNUP] Determining user role for navigation...');
+      console.log('🔍 [SIGNUP] Determining user role for navigation...', { userEmail, organizationId });
       
-      // Fetch family groups to determine user role
+      // Fetch family groups using the actual organization UUID
       const { data: familyGroups, error } = await supabase
         .from('family_groups')
-        .select('*')
-        .eq('organization_id', organizationCode === 'GLOBAL' ? 
-          '123e4567-e89b-12d3-a456-426614174000' : 
-          organizationCode);
+        .select('id, name, lead_email, host_members')
+        .eq('organization_id', organizationId);
 
       if (error) {
         console.error('❌ [SIGNUP] Error fetching family groups:', error);
-        // Fallback to family-group-setup on error
         toast({
           title: "Welcome!",
-          description: "Successfully joined organization. Redirecting to setup...",
+          description: "Successfully joined organization. Redirecting to your profile...",
         });
-        setTimeout(() => navigate("/family-group-setup"), 1500);
+        setTimeout(() => navigate("/group-member-profile"), 1500);
         return;
       }
 
       console.log('📋 [SIGNUP] Family groups found:', familyGroups?.length || 0);
 
       if (!familyGroups || familyGroups.length === 0) {
-        // No family groups yet, user likely needs to set up
+        // No family groups yet - go to home page
         toast({
           title: "Welcome!",
-          description: "Successfully joined organization. Redirecting to family group setup...",
+          description: "Successfully joined organization.",
         });
-        setTimeout(() => navigate("/family-group-setup"), 1500);
+        setTimeout(() => navigate("/home"), 1500);
         return;
       }
 
-      // Only group leads should go to setup page
-      const userGroup = familyGroups.find(group => 
-        group.lead_email && group.lead_email.toLowerCase() === userEmail.toLowerCase()
+      const normalizedEmail = userEmail.toLowerCase().trim();
+
+      // Check if user is a group lead
+      const isGroupLead = familyGroups.some(group => 
+        group.lead_email && group.lead_email.toLowerCase().trim() === normalizedEmail
       );
 
-      const shouldGoToSetup = !!userGroup;
-
-      console.log('🎯 [SIGNUP] Role determination result:', {
-        userEmail,
-        shouldGoToSetup,
-        destination: shouldGoToSetup ? "/family-group-setup" : "/group-member-profile"
+      // Check if user is a host member (not lead)
+      const isHostMember = !isGroupLead && familyGroups.some(group => {
+        if (!Array.isArray(group.host_members)) return false;
+        return (group.host_members as any[]).some((member: any) => 
+          member?.email && member.email.toLowerCase().trim() === normalizedEmail
+        );
       });
 
-      if (shouldGoToSetup) {
+      console.log('🎯 [SIGNUP] Role determination result:', {
+        userEmail: normalizedEmail,
+        isGroupLead,
+        isHostMember,
+        destination: isGroupLead ? "/family-group-setup" : "/group-member-profile"
+      });
+
+      if (isGroupLead) {
         toast({
           title: "Welcome!",
           description: "Successfully joined organization. Redirecting to family group setup...",
         });
         setTimeout(() => navigate("/family-group-setup"), 1500);
       } else {
+        // Both host members and unrecognized users go to profile page
         toast({
           title: "Welcome!",
           description: "Successfully joined organization. Redirecting to your profile...",
@@ -100,12 +107,12 @@ const Signup = () => {
 
     } catch (error) {
       console.error('❌ [SIGNUP] Error in role determination:', error);
-      // Fallback to family-group-setup on error
+      // Fallback to profile page (safer default than setup page)
       toast({
         title: "Welcome!",
-        description: "Successfully joined organization. Redirecting to setup...",
+        description: "Successfully joined organization. Redirecting to your profile...",
       });
-      setTimeout(() => navigate("/family-group-setup"), 1500);
+      setTimeout(() => navigate("/group-member-profile"), 1500);
     }
   };
 
