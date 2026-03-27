@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BackfillProfileClaims } from '@/components/BackfillProfileClaims';
 import { SupervisorFeedbackInbox } from '@/components/SupervisorFeedbackInbox';
 import { SupervisorUserTools } from '@/components/SupervisorUserTools';
+import { NewUserExperiencePreview } from '@/components/NewUserExperiencePreview';
 
 export const SupervisorDashboard = () => {
   const { 
