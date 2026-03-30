@@ -682,11 +682,11 @@ export const UnifiedOccupancyDialog = ({
               </Alert>
 
               {/* Mobile: Card layout, Desktop: Table layout */}
-              <ScrollArea className="h-[250px] sm:h-[300px]">
+              <ScrollArea className="h-[250px] sm:h-[380px]">
                 {isMobile ? (
                   /* Mobile card layout */
                   <div className="space-y-2">
-                    {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
+                    {fullStayOccupancy.map(day => {
                       const sourceGuests = sourceDailyGuests[day.date] || 0;
                       const otherGuests = selectedUsers.reduce((sum, u) => 
                         sum + (u.dailyGuests[day.date] || 0), 0);
@@ -747,7 +747,7 @@ export const UnifiedOccupancyDialog = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
+                        {fullStayOccupancy.map(day => {
                           const sourceGuests = sourceDailyGuests[day.date] || 0;
                           const otherGuests = selectedUsers.reduce((sum, u) => 
                             sum + (u.dailyGuests[day.date] || 0), 0);
