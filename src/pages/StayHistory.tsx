@@ -883,11 +883,13 @@ export default function StayHistory() {
   }, 0);
 
   // Count orphaned payments (for admin debugging)
+  // Exclude intentional split payments (reservation_id is null by design)
   const orphanedPaymentsCount = payments.filter(p => 
     p.reservation_id === null && 
     (p as any).daily_occupancy && 
     Array.isArray((p as any).daily_occupancy) && 
-    (p as any).daily_occupancy.length > 0
+    (p as any).daily_occupancy.length > 0 &&
+    !(p.notes && p.notes.toLowerCase().includes('split from'))
   ).length;
   
   console.log(`[StayHistory] Summary:`, {
