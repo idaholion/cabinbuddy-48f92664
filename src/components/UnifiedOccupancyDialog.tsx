@@ -46,6 +46,7 @@ interface UnifiedOccupancyDialogProps {
   dailyBreakdown?: Array<{ date: string; guests: number; cost: number }>;
   totalAmount?: number;
   onSplitCreated?: () => void;
+  reservationHolderName?: string;
 }
 
 interface OrgUser {
@@ -78,6 +79,7 @@ export const UnifiedOccupancyDialog = ({
   dailyBreakdown,
   totalAmount = 0,
   onSplitCreated,
+  reservationHolderName,
 }: UnifiedOccupancyDialogProps) => {
   const { toast } = useToast();
   const { updateOccupancy, updateSplitOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
@@ -682,7 +684,7 @@ export const UnifiedOccupancyDialog = ({
               </Alert>
 
               {/* Mobile: Card layout, Desktop: Table layout */}
-              <ScrollArea className="h-[250px] sm:h-[380px]">
+              <div className="h-[250px] sm:h-[380px] overflow-y-auto">
                 {isMobile ? (
                   /* Mobile card layout */
                   <div className="space-y-2">
@@ -700,7 +702,7 @@ export const UnifiedOccupancyDialog = ({
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="flex items-center gap-1.5">
-                              <Label className="text-xs text-muted-foreground whitespace-nowrap">{stay.family_group.split(' ')[0]}:</Label>
+                              <Label className="text-xs text-muted-foreground whitespace-nowrap">{(reservationHolderName || stay.family_group).split(' ')[0]}:</Label>
                               <Input
                                 type="number"
                                 min="0"
@@ -735,7 +737,7 @@ export const UnifiedOccupancyDialog = ({
                       <thead className="bg-muted sticky top-0 z-20">
                         <tr>
                           <th className="text-left p-2.5 sticky left-0 bg-muted z-10 text-sm">Date</th>
-                          <th className="text-right p-2.5 text-sm">{stay.family_group}</th>
+                          <th className="text-right p-2.5 text-sm">{reservationHolderName || stay.family_group}</th>
                           {selectedUsers.map(user => (
                             <th key={user.userId} className="text-right p-2.5 min-w-[100px] text-sm">
                               <span className="truncate max-w-[90px] inline-block" title={user.displayName}>
@@ -788,14 +790,14 @@ export const UnifiedOccupancyDialog = ({
                     </table>
                   </div>
                 )}
-              </ScrollArea>
+              </div>
 
               {/* Cost Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-none gap-2 sm:gap-4 p-3 bg-muted rounded-lg" style={{ 
                 gridTemplateColumns: isMobile ? undefined : `repeat(${selectedUsers.length + 1}, minmax(0, 1fr))` 
               }}>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-0.5">{stay.family_group}</div>
+                  <div className="text-xs text-muted-foreground mb-0.5">{reservationHolderName || stay.family_group}</div>
                   <div className="text-base sm:text-xl font-bold text-primary">
                     {BillingCalculator.formatCurrency(sourceTotal)}
                   </div>
@@ -857,7 +859,7 @@ export const UnifiedOccupancyDialog = ({
         </Button>
       ) : (
         <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
-          {loading ? 'Creating...' : `Split (${selectedUsers.length})`}
+          {loading ? 'Creating...' : `Save Split (${selectedUsers.length + 1})`}
         </Button>
       )}
     </div>

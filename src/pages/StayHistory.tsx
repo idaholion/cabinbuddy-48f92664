@@ -15,7 +15,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays, addDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
-import { getHostFirstName } from "@/lib/reservation-utils";
+import { getHostFirstName, getHostFullName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
@@ -1411,7 +1411,8 @@ export default function StayHistory() {
                         paymentId: stayData.paymentId,
                         billingAmount: stayData.billingAmount,
                         user_id: reservation.user_id,
-                        organization_id: reservation.organization_id
+                        organization_id: reservation.organization_id,
+                        reservationHolderName: getHostFullName(reservation)
                       })}
                     >
                       <Edit className="h-4 w-4 mr-2" />
@@ -1506,6 +1507,7 @@ export default function StayHistory() {
             cost: d.cost || 0
           }))}
           totalAmount={editOccupancyStay.billingAmount || 0}
+          reservationHolderName={editOccupancyStay.reservationHolderName}
           onSplitCreated={() => {
             const yearFilter = selectedYear === 0 ? undefined : selectedYear;
             fetchPayments(1, 50, yearFilter);

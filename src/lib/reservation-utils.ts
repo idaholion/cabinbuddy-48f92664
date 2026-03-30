@@ -15,6 +15,17 @@ export const getHostFirstName = (reservation: any): string => {
   return reservation.family_group || 'Unknown';
 };
 
+// Helper function to get the primary host's full name from a reservation
+export const getHostFullName = (reservation: any): string => {
+  if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+    const primaryHost = reservation.host_assignments[0];
+    if (primaryHost?.host_name) {
+      return primaryHost.host_name;
+    }
+  }
+  return reservation.family_group || 'Unknown';
+};
+
 // Get the family group name from host assignments or fallback to family_group field
 export const getEffectiveFamilyGroup = (reservation: any): string => {
   // If there are host assignments, try to determine family group from the host
