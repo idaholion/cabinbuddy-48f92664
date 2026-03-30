@@ -79,6 +79,7 @@ export const UnifiedOccupancyDialog = ({
   dailyBreakdown,
   totalAmount = 0,
   onSplitCreated,
+  reservationHolderName,
 }: UnifiedOccupancyDialogProps) => {
   const { toast } = useToast();
   const { updateOccupancy, updateSplitOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
