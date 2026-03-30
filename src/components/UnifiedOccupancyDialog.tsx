@@ -386,13 +386,27 @@ export const UnifiedOccupancyDialog = ({
         sourceUserId,
         sourceFamilyGroup: stay.family_group,
         sourceAmount: sourceTotal,
-        sourceDailyGuests: Object.entries(sourceDailyGuests).map(([date, guests]) => ({ date, guests })),
-        splits: calculatedUsers.map(u => ({
+        sourceDailyOccupancy: Object.entries(sourceDailyGuests).map(([date, guests]) => ({ 
+          date, 
+          guests, 
+          cost: guests * perDiem 
+        })),
+        splitUsers: calculatedUsers.map(u => ({
           userId: u.userId,
           familyGroup: u.familyGroup,
+          displayName: u.displayName,
           amount: u.totalAmount,
-          dailyGuests: Object.entries(u.dailyGuests).map(([date, guests]) => ({ date, guests }))
-        }))
+          dailyOccupancy: Object.entries(u.dailyGuests).map(([date, guests]) => ({ 
+            date, 
+            guests, 
+            cost: guests * perDiem 
+          }))
+        })),
+        description: `Cost split for ${stay.family_group} stay`,
+        dateRange: {
+          start: format(stay.startDate, 'yyyy-MM-dd'),
+          end: format(addDays(stay.endDate, -1), 'yyyy-MM-dd')
+        }
       };
 
       const { data: response, error: edgeFunctionError } = await supabase.functions.invoke('create-split-payments', {
