@@ -81,10 +81,12 @@ export const UnifiedOccupancyDialog = ({
 }: UnifiedOccupancyDialogProps) => {
   const { toast } = useToast();
   const { updateOccupancy, updateSplitOccupancy, getBillingLockStatus, syncing } = useDailyOccupancySync(organizationId);
+  const isMobile = useIsMobile();
   const [billingLocked, setBillingLocked] = useState(false);
   const isSplit = !!splitId && !!splitPaymentId;
   const [mode, setMode] = useState<"simple" | "split">("simple");
   const [pendingMode, setPendingMode] = useState<"simple" | "split" | null>(null);
+  const [userPickerOpen, setUserPickerOpen] = useState(true);
   
   // Simple mode state
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
