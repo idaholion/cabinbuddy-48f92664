@@ -601,25 +601,31 @@ export const UnifiedOccupancyDialog = ({
         <TabsContent value="split" className="space-y-3">
           {/* Collapsible User Picker */}
           <Collapsible open={userPickerOpen} onOpenChange={setUserPickerOpen}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <Label className="text-sm">Split costs with:</Label>
-              {selectedUsers.length > 0 && (
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : `Edit (${selectedUsers.length} selected)`}</span>
+              <div className="flex items-center gap-2">
+                {!userPickerOpen && (
+                  <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => setUserPickerOpen(true)}>
+                    Add people
                   </Button>
-                </CollapsibleTrigger>
-              )}
+                )}
+                {selectedUsers.length > 0 && (
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 px-2">
+                      {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : `Edit (${selectedUsers.length})`}</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                )}
+              </div>
             </div>
 
-            {/* Show selected users as badges when collapsed */}
             {!userPickerOpen && selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {selectedUsers.map(user => (
                   <Badge key={user.userId} variant="secondary" className="flex items-center gap-1 pr-1">
                     <span className="text-xs truncate max-w-[100px]">{user.displayName}</span>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         const orgUser = users.find(u => u.user_id === user.userId);
@@ -652,11 +658,10 @@ export const UnifiedOccupancyDialog = ({
                   </div>
                 ))}
               </div>
-              {/* Confirm selection button to collapse picker */}
               {selectedUsers.length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="mt-2 w-full"
                   onClick={() => setUserPickerOpen(false)}
                 >
