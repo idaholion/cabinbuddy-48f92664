@@ -1,0 +1,1 @@
+UPDATE payments SET reservation_id = NULL WHERE id = '4e635047-b210-4527-a16b-61c802308aa5'

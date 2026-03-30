@@ -1148,9 +1148,12 @@ export default function StayHistory() {
                       )}
                     </CardTitle>
                     <CardDescription>
-                      {stayData.nights} {stayData.nights === 1 ? "night" : "nights"} • {reservation.family_group}
+                      {stayData.nights} {stayData.nights === 1 ? "night" : "nights"}
                       {reservation.isVirtualSplit && (
-                        <> • Split from: {stayData.sourceFamily}</>
+                        <> • {reservation.splitData?.payment?.notes || `Split from ${stayData.sourceFamily}`}</>
+                      )}
+                      {!reservation.isVirtualSplit && (
+                        <> • {reservation.family_group}</>
                       )}
                       {reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0 && (
                         <> • Reserved by: {getHostFirstName(reservation)}</>
@@ -1511,6 +1514,8 @@ export default function StayHistory() {
           onSplitCreated={() => {
             const yearFilter = selectedYear === 0 ? undefined : selectedYear;
             fetchPayments(1, 50, yearFilter);
+            fetchPaymentSplits();
+            refetchReservations();
             setEditOccupancyStay(null);
           }}
         />

@@ -332,21 +332,23 @@ Deno.serve(async (req) => {
       });
 
       // Create guest payment using service role
+      // CRITICAL: Do NOT set reservation_id on split payments - they are tracked via payment_splits table
+      // Setting the same reservation_id causes the stay history to confuse split payments with source payments
       const { data: guestPayment, error: guestPaymentError } = await supabaseAdmin
         .from('payments')
         .insert({
           organization_id: requestData.organizationId,
-          reservation_id: requestData.reservationId || null,
+          reservation_id: null,
           family_group: splitUser.familyGroup,
           payment_type: 'use_fee',
           amount: splitUser.amount,
           amount_paid: 0,
           status: 'deferred',
           due_date: dueDateStr,
-          description: `Guest cost split - ${requestData.dateRange.start} to ${requestData.dateRange.end}`,
+          description: `Guest cost split: ${splitUser.displayName} - ${requestData.dateRange.start} to ${requestData.dateRange.end}`,
           daily_occupancy: splitUser.dailyOccupancy,
           created_by_user_id: user.id,
-          notes: `Split from ${requestData.sourceFamilyGroup}`
+          notes: `${splitUser.displayName}, split from ${requestData.sourceFamilyGroup}`
         })
         .select()
         .single();
