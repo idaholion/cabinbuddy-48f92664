@@ -90,9 +90,14 @@ export const UnifiedOccupancyDialog = ({
   
   // Simple mode state
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
+  const fullStayOccupancy = days.map(day => {
+    const date = format(day, 'yyyy-MM-dd');
+    const existing = currentOccupancy.find(occ => occ.date === date);
+    return existing ?? { date, guests: 0 };
+  });
   const validDateStrings = days.map(d => format(d, 'yyyy-MM-dd'));
   const filteredOccupancy = currentOccupancy.filter(occ => validDateStrings.includes(occ.date));
-  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(filteredOccupancy);
+  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(fullStayOccupancy);
   const [fillValue, setFillValue] = useState<string>("0");
   
   // Calculate total guest count across all days
