@@ -1412,7 +1412,7 @@ export default function StayHistory() {
                         billingAmount: stayData.billingAmount,
                         user_id: reservation.user_id,
                         organization_id: reservation.organization_id,
-                        reservationHolderName: getHostFirstName(reservation)
+                        reservationHolderName: getHostFullName(reservation)
                       })}
                     >
                       <Edit className="h-4 w-4 mr-2" />
