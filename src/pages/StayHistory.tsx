@@ -1514,6 +1514,8 @@ export default function StayHistory() {
           onSplitCreated={() => {
             const yearFilter = selectedYear === 0 ? undefined : selectedYear;
             fetchPayments(1, 50, yearFilter);
+            fetchPaymentSplits();
+            refetchReservations();
             setEditOccupancyStay(null);
           }}
         />
