@@ -604,12 +604,14 @@ export const UnifiedOccupancyDialog = ({
           <Collapsible open={userPickerOpen} onOpenChange={setUserPickerOpen}>
             <div className="flex items-center justify-between">
               <Label className="text-sm">Split costs with:</Label>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 px-2">
-                  {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : "Select People"}</span>
-                </Button>
-              </CollapsibleTrigger>
+              {selectedUsers.length > 0 && (
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-7 px-2">
+                    {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : `Edit (${selectedUsers.length} selected)`}</span>
+                  </Button>
+                </CollapsibleTrigger>
+              )}
             </div>
 
             {/* Show selected users as badges when collapsed */}
@@ -651,6 +653,18 @@ export const UnifiedOccupancyDialog = ({
                   </div>
                 ))}
               </div>
+              {/* Confirm selection button to collapse picker */}
+              {selectedUsers.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 w-full"
+                  onClick={() => setUserPickerOpen(false)}
+                >
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Continue with {selectedUsers.length} {selectedUsers.length === 1 ? 'person' : 'people'} selected
+                </Button>
+              )}
             </CollapsibleContent>
           </Collapsible>
 
