@@ -90,9 +90,14 @@ export const UnifiedOccupancyDialog = ({
   
   // Simple mode state
   const days = eachDayOfInterval({ start: stay.startDate, end: addDays(stay.endDate, -1) });
+  const fullStayOccupancy = days.map(day => {
+    const date = format(day, 'yyyy-MM-dd');
+    const existing = currentOccupancy.find(occ => occ.date === date);
+    return existing ?? { date, guests: 0 };
+  });
   const validDateStrings = days.map(d => format(d, 'yyyy-MM-dd'));
   const filteredOccupancy = currentOccupancy.filter(occ => validDateStrings.includes(occ.date));
-  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(filteredOccupancy);
+  const [occupancy, setOccupancy] = useState<DailyOccupancy[]>(fullStayOccupancy);
   const [fillValue, setFillValue] = useState<string>("0");
   
   // Calculate total guest count across all days
@@ -234,18 +239,12 @@ export const UnifiedOccupancyDialog = ({
   const initializeSourceGuests = () => {
     const initial: Record<string, number> = {};
     
-    // If we have existing occupancy data, use it; otherwise initialize to 0
-    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
-    
-    dataSource.forEach(occ => {
-      initial[occ.date] = occ.guests || 0; // Pre-populate with existing guest counts
+    fullStayOccupancy.forEach(occ => {
+      initial[occ.date] = occ.guests || 0;
     });
-    setSourceDailyGuests(initial);
     
-    // If no occupancy data exists, initialize occupancy with empty data
-    if (occupancy.length === 0) {
-      setOccupancy(generateEmptyOccupancy());
-    }
+    setSourceDailyGuests(initial);
+    setOccupancy(fullStayOccupancy);
   };
 
   // Simple mode handlers
@@ -458,7 +457,7 @@ export const UnifiedOccupancyDialog = ({
       return { sourceTotal: 0, users: [] };
     }
 
-    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
+    const dataSource = fullStayOccupancy;
 
     const sourceTotal = dataSource.reduce((sum, day) => {
       return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
@@ -472,7 +471,7 @@ export const UnifiedOccupancyDialog = ({
     });
 
     return { sourceTotal, users: updatedUsers };
-  }, [mode, perDiem, sourceDailyGuests, selectedUsers, occupancy]);
+  }, [mode, perDiem, sourceDailyGuests, selectedUsers, fullStayOccupancy]);
 
   const canSplit = sourceUserId && stay.reservationId && !isSplit;
   
@@ -602,25 +601,31 @@ export const UnifiedOccupancyDialog = ({
         <TabsContent value="split" className="space-y-3">
           {/* Collapsible User Picker */}
           <Collapsible open={userPickerOpen} onOpenChange={setUserPickerOpen}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <Label className="text-sm">Split costs with:</Label>
-              {selectedUsers.length > 0 && (
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
-                    {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : `Edit (${selectedUsers.length} selected)`}</span>
+              <div className="flex items-center gap-2">
+                {!userPickerOpen && (
+                  <Button variant="outline" size="sm" className="h-7 px-2" onClick={() => setUserPickerOpen(true)}>
+                    Add people
                   </Button>
-                </CollapsibleTrigger>
-              )}
+                )}
+                {selectedUsers.length > 0 && (
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 px-2">
+                      {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : `Edit (${selectedUsers.length})`}</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                )}
+              </div>
             </div>
 
-            {/* Show selected users as badges when collapsed */}
             {!userPickerOpen && selectedUsers.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {selectedUsers.map(user => (
                   <Badge key={user.userId} variant="secondary" className="flex items-center gap-1 pr-1">
                     <span className="text-xs truncate max-w-[100px]">{user.displayName}</span>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         const orgUser = users.find(u => u.user_id === user.userId);
@@ -653,11 +658,10 @@ export const UnifiedOccupancyDialog = ({
                   </div>
                 ))}
               </div>
-              {/* Confirm selection button to collapse picker */}
               {selectedUsers.length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="mt-2 w-full"
                   onClick={() => setUserPickerOpen(false)}
                 >
@@ -678,11 +682,11 @@ export const UnifiedOccupancyDialog = ({
               </Alert>
 
               {/* Mobile: Card layout, Desktop: Table layout */}
-              <ScrollArea className="h-[250px] sm:h-[300px]">
+              <ScrollArea className="h-[250px] sm:h-[380px]">
                 {isMobile ? (
                   /* Mobile card layout */
                   <div className="space-y-2">
-                    {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
+                    {fullStayOccupancy.map(day => {
                       const sourceGuests = sourceDailyGuests[day.date] || 0;
                       const otherGuests = selectedUsers.reduce((sum, u) => 
                         sum + (u.dailyGuests[day.date] || 0), 0);
@@ -743,7 +747,7 @@ export const UnifiedOccupancyDialog = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
+                        {fullStayOccupancy.map(day => {
                           const sourceGuests = sourceDailyGuests[day.date] || 0;
                           const otherGuests = selectedUsers.reduce((sum, u) => 
                             sum + (u.dailyGuests[day.date] || 0), 0);
