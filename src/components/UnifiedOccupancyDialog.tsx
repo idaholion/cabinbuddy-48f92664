@@ -520,8 +520,6 @@ export const UnifiedOccupancyDialog = ({
     setPendingMode(null);
   };
 
-  const isMobile = useIsMobile();
-  const [userPickerOpen, setUserPickerOpen] = useState(true);
 
   const dialogContent = (
     <>
