@@ -457,7 +457,7 @@ export const UnifiedOccupancyDialog = ({
       return { sourceTotal: 0, users: [] };
     }
 
-    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
+    const dataSource = fullStayOccupancy;
 
     const sourceTotal = dataSource.reduce((sum, day) => {
       return sum + (sourceDailyGuests[day.date] || 0) * perDiem;
@@ -471,7 +471,7 @@ export const UnifiedOccupancyDialog = ({
     });
 
     return { sourceTotal, users: updatedUsers };
-  }, [mode, perDiem, sourceDailyGuests, selectedUsers, occupancy]);
+  }, [mode, perDiem, sourceDailyGuests, selectedUsers, fullStayOccupancy]);
 
   const canSplit = sourceUserId && stay.reservationId && !isSplit;
   
