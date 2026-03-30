@@ -239,18 +239,12 @@ export const UnifiedOccupancyDialog = ({
   const initializeSourceGuests = () => {
     const initial: Record<string, number> = {};
     
-    // If we have existing occupancy data, use it; otherwise initialize to 0
-    const dataSource = occupancy.length > 0 ? occupancy : generateEmptyOccupancy();
-    
-    dataSource.forEach(occ => {
-      initial[occ.date] = occ.guests || 0; // Pre-populate with existing guest counts
+    fullStayOccupancy.forEach(occ => {
+      initial[occ.date] = occ.guests || 0;
     });
-    setSourceDailyGuests(initial);
     
-    // If no occupancy data exists, initialize occupancy with empty data
-    if (occupancy.length === 0) {
-      setOccupancy(generateEmptyOccupancy());
-    }
+    setSourceDailyGuests(initial);
+    setOccupancy(fullStayOccupancy);
   };
 
   // Simple mode handlers
