@@ -518,156 +518,214 @@ export const UnifiedOccupancyDialog = ({
     setPendingMode(null);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Edit Occupancy - {stay.family_group}
-            {billingLocked && (
-              <Badge variant="secondary" className="ml-2">
-                <Lock className="h-3 w-3 mr-1" />
-                Billing Locked
-              </Badge>
-            )}
-          </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {format(stay.startDate, 'MMM d')} - {format(stay.endDate, 'MMM d, yyyy')}
-            {billingLocked && (
-              <span className="block mt-1 text-amber-600 dark:text-amber-400">
-                ⚠️ Guest counts will update but charges will not recalculate
-              </span>
-            )}
-          </p>
-        </DialogHeader>
+  const isMobile = useIsMobile();
+  const [userPickerOpen, setUserPickerOpen] = useState(true);
 
-        <Tabs value={mode} onValueChange={(v) => handleModeChange(v as "simple" | "split")}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="simple">Simple Entry</TabsTrigger>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex-1">
-                    <TabsTrigger value="split" disabled={!canSplit} className="w-full">
-                      Split Costs
-                      {!canSplit && <span className="ml-1 text-xs opacity-50">(N/A)</span>}
-                    </TabsTrigger>
-                  </div>
-                </TooltipTrigger>
-                {!canSplit && (
-                  <TooltipContent>
-                    <p>{getSplitDisabledReason()}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </TabsList>
+  const dialogContent = (
+    <>
+      <Tabs value={mode} onValueChange={(v) => handleModeChange(v as "simple" | "split")}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="simple">Simple Entry</TabsTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex-1">
+                  <TabsTrigger value="split" disabled={!canSplit} className="w-full">
+                    Split Costs
+                    {!canSplit && <span className="ml-1 text-xs opacity-50">(N/A)</span>}
+                  </TabsTrigger>
+                </div>
+              </TooltipTrigger>
+              {!canSplit && (
+                <TooltipContent>
+                  <p>{getSplitDisabledReason()}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </TabsList>
 
-          <TabsContent value="simple" className="space-y-4">
-            <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-              <span className="text-sm font-medium">Quick Fill:</span>
-              <Input
-                type="number"
-                min="0"
-                value={fillValue}
-                onChange={(e) => setFillValue(e.target.value)}
-                className="w-20"
-                placeholder="0"
-              />
-              <Button variant="outline" size="sm" onClick={handleFillAll}>
-                Fill All Days
-              </Button>
-            </div>
+        <TabsContent value="simple" className="space-y-3">
+          <div className="flex items-center gap-2 p-2 sm:p-3 bg-muted/50 rounded-lg">
+            <span className="text-sm font-medium whitespace-nowrap">Quick Fill:</span>
+            <Input
+              type="number"
+              min="0"
+              value={fillValue}
+              onChange={(e) => setFillValue(e.target.value)}
+              className="w-16 sm:w-20"
+              placeholder="0"
+            />
+            <Button variant="outline" size="sm" onClick={handleFillAll}>
+              Fill All
+            </Button>
+          </div>
 
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 gap-y-1 items-center text-sm">
-                <div className="font-medium text-muted-foreground pb-2">Date</div>
-                <div className="font-medium text-muted-foreground pb-2">Day</div>
-                <div className="font-medium text-muted-foreground text-right pb-2">Guests</div>
+          <ScrollArea className="h-[300px] sm:h-[400px] pr-2 sm:pr-4">
+            <div className="grid grid-cols-[auto_1fr_auto] gap-x-3 sm:gap-x-4 gap-y-1 items-center text-sm">
+              <div className="font-medium text-muted-foreground pb-2">Date</div>
+              <div className="font-medium text-muted-foreground pb-2">Day</div>
+              <div className="font-medium text-muted-foreground text-right pb-2">Guests</div>
+              
+              {days.map(day => {
+                const dateStr = format(day, 'yyyy-MM-dd');
+                const dayOccupancy = getOccupancyForDate(dateStr);
                 
-                {days.map(day => {
-                  const dateStr = format(day, 'yyyy-MM-dd');
-                  const dayOccupancy = getOccupancyForDate(dateStr);
-                  
-                  return (
-                    <div key={dateStr} className="contents">
-                      <div className="text-foreground">{format(day, 'M/d')}</div>
-                      <div className="text-muted-foreground text-xs">{format(day, 'EEE')}</div>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={dayOccupancy?.guests || 0}
-                        onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
-                        className="w-16 h-8 text-right text-sm"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
-
-            {/* Total Guest Count */}
-            <div className="flex items-center justify-between p-3 border-t bg-muted/30 rounded-lg">
-              <div className="flex flex-col">
-                <span className="font-semibold text-sm">Total Guest Count:</span>
-                <span className="text-xs text-muted-foreground">
-                  {days.length} nights × average {(totalGuests / days.length).toFixed(1)} guests/night
-                </span>
-              </div>
-              <span className="text-lg font-bold">{totalGuests}</span>
+                return (
+                  <div key={dateStr} className="contents">
+                    <div className="text-foreground">{format(day, 'M/d')}</div>
+                    <div className="text-muted-foreground text-xs">{format(day, 'EEE')}</div>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={dayOccupancy?.guests || 0}
+                      onChange={(e) => handleGuestCountChange(dateStr, parseInt(e.target.value) || 0)}
+                      className="w-14 sm:w-16 h-8 text-right text-sm"
+                    />
+                  </div>
+                );
+              })}
             </div>
-          </TabsContent>
+          </ScrollArea>
 
-          <TabsContent value="split" className="space-y-4">
-            <div>
-              <Label>Select people to split costs with:</Label>
-              <div className="mt-3 space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+          <div className="flex items-center justify-between p-2 sm:p-3 border-t bg-muted/30 rounded-lg">
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm">Total Guest Count:</span>
+              <span className="text-xs text-muted-foreground">
+                {days.length} nights × avg {(totalGuests / Math.max(days.length, 1)).toFixed(1)}/night
+              </span>
+            </div>
+            <span className="text-lg font-bold">{totalGuests}</span>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="split" className="space-y-3">
+          {/* Collapsible User Picker */}
+          <Collapsible open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Split costs with:</Label>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 px-2">
+                  {userPickerOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <span className="ml-1 text-xs">{userPickerOpen ? "Collapse" : "Select People"}</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+
+            {/* Show selected users as badges when collapsed */}
+            {!userPickerOpen && selectedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {selectedUsers.map(user => (
+                  <Badge key={user.userId} variant="secondary" className="flex items-center gap-1 pr-1">
+                    <span className="text-xs truncate max-w-[100px]">{user.displayName}</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const orgUser = users.find(u => u.user_id === user.userId);
+                        if (orgUser) handleUserToggle(orgUser, false);
+                      }}
+                      className="ml-0.5 rounded-full hover:bg-muted p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <CollapsibleContent>
+              <div className="mt-2 space-y-1.5 max-h-36 sm:max-h-48 overflow-y-auto border rounded-lg p-2 sm:p-3">
                 {users.map(user => (
-                  <div key={user.user_id} className="flex items-center gap-3 py-2">
+                  <div key={user.user_id} className="flex items-center gap-2 py-1.5">
                     <Checkbox
                       checked={selectedUsers.some(u => u.userId === user.user_id)}
                       onCheckedChange={(checked) => handleUserToggle(user, !!checked)}
                       disabled={!user.actual_family_group}
                     />
-                    <Label className={`flex-1 ${user.actual_family_group ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
-                      {user.display_name || `${user.first_name} ${user.last_name}`}
-                      <span className="text-sm text-muted-foreground ml-2">
-                        ({user.email})
-                        {!user.actual_family_group && <span className="text-destructive ml-1">- No family group</span>}
-                        {user.actual_family_group && <span className="ml-1">- {user.actual_family_group}</span>}
+                    <Label className={`flex-1 text-sm ${user.actual_family_group ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+                      <span className="block sm:inline">{user.display_name || `${user.first_name} ${user.last_name}`}</span>
+                      <span className="text-xs text-muted-foreground block sm:inline sm:ml-1">
+                        {user.actual_family_group ? `(${user.actual_family_group})` : <span className="text-destructive">No group</span>}
                       </span>
                     </Label>
                   </div>
                 ))}
               </div>
-            </div>
+            </CollapsibleContent>
+          </Collapsible>
 
-            {selectedUsers.length > 0 && (
-              <>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Enter guest counts for each person for each day. The system will calculate costs based on ${perDiem.toFixed(2)} per guest per night.
-                  </AlertDescription>
-                </Alert>
+          {selectedUsers.length > 0 && (
+            <>
+              <Alert className="py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs sm:text-sm">
+                  Enter guest counts per day. Cost: ${perDiem.toFixed(2)}/guest/night.
+                </AlertDescription>
+              </Alert>
 
-                <ScrollArea className="h-[300px]">
+              {/* Mobile: Card layout, Desktop: Table layout */}
+              <ScrollArea className="h-[250px] sm:h-[300px]">
+                {isMobile ? (
+                  /* Mobile card layout */
+                  <div className="space-y-2">
+                    {(occupancy.length > 0 ? occupancy : generateEmptyOccupancy()).map(day => {
+                      const sourceGuests = sourceDailyGuests[day.date] || 0;
+                      const otherGuests = selectedUsers.reduce((sum, u) => 
+                        sum + (u.dailyGuests[day.date] || 0), 0);
+                      const dayTotal = sourceGuests + otherGuests;
+                      
+                      return (
+                        <div key={day.date} className="border rounded-lg p-2.5 space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{format(parseDateOnly(day.date), 'EEE M/d')}</span>
+                            <span className="text-xs text-muted-foreground">{dayTotal} total</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center gap-1.5">
+                              <Label className="text-xs text-muted-foreground whitespace-nowrap">You:</Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={sourceGuests}
+                                onChange={(e) => handleSplitGuestCountChange(day.date, 'source', e.target.value)}
+                                className="w-14 h-7 text-sm text-right"
+                              />
+                            </div>
+                            {selectedUsers.map(user => (
+                              <div key={user.userId} className="flex items-center gap-1.5">
+                                <Label className="text-xs text-muted-foreground truncate max-w-[60px]" title={user.displayName}>
+                                  {user.displayName.split(' ')[0]}:
+                                </Label>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  value={user.dailyGuests[day.date] || 0}
+                                  onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
+                                  className="w-14 h-7 text-sm text-right"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Desktop table layout */
                   <div className="border rounded-lg overflow-x-auto">
                     <table className="w-full min-w-max">
                       <thead className="bg-muted">
                         <tr>
-                          <th className="text-left p-3 sticky left-0 bg-muted z-10">Date</th>
-                          <th className="text-right p-3">You</th>
+                          <th className="text-left p-2.5 sticky left-0 bg-muted z-10 text-sm">Date</th>
+                          <th className="text-right p-2.5 text-sm">You</th>
                           {selectedUsers.map(user => (
-                            <th key={user.userId} className="text-right p-3 min-w-[120px]">
-                              <div className="flex items-center justify-end gap-1">
-                                <span className="truncate max-w-[100px]" title={user.displayName}>
-                                  {user.displayName}
-                                </span>
-                              </div>
+                            <th key={user.userId} className="text-right p-2.5 min-w-[100px] text-sm">
+                              <span className="truncate max-w-[90px] inline-block" title={user.displayName}>
+                                {user.displayName}
+                              </span>
                             </th>
                           ))}
-                          <th className="text-right p-3 font-bold">Total Guests</th>
+                          <th className="text-right p-2.5 font-bold text-sm">Total</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -679,31 +737,31 @@ export const UnifiedOccupancyDialog = ({
                           
                           return (
                             <tr key={day.date} className="border-t">
-                              <td className="p-3 sticky left-0 bg-background z-10">
-                                {parseDateOnly(day.date).toLocaleDateString()}
+                              <td className="p-2.5 sticky left-0 bg-background z-10 text-sm">
+                                {format(parseDateOnly(day.date), 'M/d EEE')}
                               </td>
-                              <td className="p-3">
+                              <td className="p-2.5">
                                 <Input
                                   type="number"
                                   min="0"
                                   value={sourceGuests}
                                   onChange={(e) => handleSplitGuestCountChange(day.date, 'source', e.target.value)}
-                                  className="w-20 ml-auto"
+                                  className="w-16 h-8 ml-auto text-sm"
                                 />
                               </td>
                               {selectedUsers.map(user => (
-                                <td key={user.userId} className="p-3">
+                                <td key={user.userId} className="p-2.5">
                                   <Input
                                     type="number"
                                     min="0"
                                     value={user.dailyGuests[day.date] || 0}
                                     onChange={(e) => handleSplitGuestCountChange(day.date, user.userId, e.target.value)}
-                                    className="w-20 ml-auto"
+                                    className="w-16 h-8 ml-auto text-sm"
                                   />
                                 </td>
                               ))}
-                              <td className="text-right p-3 font-semibold text-muted-foreground">
-                                {dayTotal} guests
+                              <td className="text-right p-2.5 font-semibold text-muted-foreground text-sm">
+                                {dayTotal}
                               </td>
                             </tr>
                           );
@@ -711,54 +769,132 @@ export const UnifiedOccupancyDialog = ({
                       </tbody>
                     </table>
                   </div>
-                </ScrollArea>
+                )}
+              </ScrollArea>
 
-                <div className={`grid gap-4 p-4 bg-muted rounded-lg`} style={{ 
-                  gridTemplateColumns: `repeat(${selectedUsers.length + 1}, minmax(0, 1fr))` 
-                }}>
-                  <div>
-                    <div className="text-sm text-muted-foreground mb-1">Your Portion</div>
-                    <div className="text-xl font-bold text-primary">
-                      {BillingCalculator.formatCurrency(sourceTotal)}
+              {/* Cost Summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-none gap-2 sm:gap-4 p-3 bg-muted rounded-lg" style={{ 
+                gridTemplateColumns: isMobile ? undefined : `repeat(${selectedUsers.length + 1}, minmax(0, 1fr))` 
+              }}>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">Your Portion</div>
+                  <div className="text-base sm:text-xl font-bold text-primary">
+                    {BillingCalculator.formatCurrency(sourceTotal)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {Object.values(sourceDailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
+                  </div>
+                </div>
+                {calculatedUsers.map(user => (
+                  <div key={user.userId}>
+                    <div className="text-xs text-muted-foreground mb-0.5 truncate" title={user.displayName}>
+                      {user.displayName}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {Object.values(sourceDailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
+                    <div className="text-base sm:text-xl font-bold text-green-600">
+                      {BillingCalculator.formatCurrency(user.totalAmount)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {Object.values(user.dailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
                     </div>
                   </div>
-                  {calculatedUsers.map(user => (
-                    <div key={user.userId}>
-                      <div className="text-sm text-muted-foreground mb-1 truncate" title={user.displayName}>
-                        {user.displayName}
-                      </div>
-                      <div className="text-xl font-bold text-green-600">
-                        {BillingCalculator.formatCurrency(user.totalAmount)}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {Object.values(user.dailyGuests).reduce((sum, g) => sum + g, 0)} guest-nights
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          {mode === "simple" ? (
-            <Button onClick={handleSaveSimple} disabled={syncing}>
-              {syncing ? "Saving..." : "Save Changes"}
-            </Button>
-          ) : (
-            <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0}>
-              {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
-            </Button>
+                ))}
+              </div>
+            </>
           )}
-        </DialogFooter>
-      </DialogContent>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+
+  const headerContent = (
+    <>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span>Edit Occupancy - {stay.family_group}</span>
+        {billingLocked && (
+          <Badge variant="secondary" className="text-xs">
+            <Lock className="h-3 w-3 mr-1" />
+            Locked
+          </Badge>
+        )}
+      </div>
+      <p className="text-sm text-muted-foreground">
+        {format(stay.startDate, 'MMM d')} - {format(stay.endDate, 'MMM d, yyyy')}
+        {billingLocked && (
+          <span className="block mt-1 text-amber-600 dark:text-amber-400 text-xs">
+            ⚠️ Charges will not recalculate
+          </span>
+        )}
+      </p>
+    </>
+  );
+
+  const footerContent = (
+    <div className="flex gap-2 w-full justify-end">
+      <Button variant="outline" onClick={() => onOpenChange(false)} size={isMobile ? "sm" : "default"}>
+        Cancel
+      </Button>
+      {mode === "simple" ? (
+        <Button onClick={handleSaveSimple} disabled={syncing} size={isMobile ? "sm" : "default"}>
+          {syncing ? "Saving..." : "Save Changes"}
+        </Button>
+      ) : (
+        <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
+          {loading ? 'Creating...' : `Split (${selectedUsers.length})`}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={onOpenChange}>
+          <DrawerContent className="max-h-[92vh]">
+            <DrawerHeader className="pb-2">
+              <DrawerTitle className="text-base">{headerContent}</DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 pb-2 overflow-y-auto flex-1">
+              {dialogContent}
+            </div>
+            <DrawerFooter className="pt-2">
+              {footerContent}
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+
+        <AlertDialog open={!!pendingMode} onOpenChange={(open) => !open && handleCancelModeSwitch()}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Switching tabs will discard your changes.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelModeSwitch}>Stay Here</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmModeSwitch} className="bg-destructive hover:bg-destructive/90">
+                Switch Tab
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{headerContent}</DialogTitle>
+          </DialogHeader>
+          {dialogContent}
+          <DialogFooter className="gap-2">
+            {footerContent}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!pendingMode} onOpenChange={(open) => !open && handleCancelModeSwitch()}>
         <AlertDialogContent>
@@ -776,6 +912,6 @@ export const UnifiedOccupancyDialog = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </>
   );
 };
