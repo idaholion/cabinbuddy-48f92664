@@ -859,7 +859,7 @@ export const UnifiedOccupancyDialog = ({
         </Button>
       ) : (
         <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
-          {loading ? 'Creating...' : `Split (${selectedUsers.length})`}
+          {loading ? 'Creating...' : `Save Split (${selectedUsers.length + 1})`}
         </Button>
       )}
     </div>
