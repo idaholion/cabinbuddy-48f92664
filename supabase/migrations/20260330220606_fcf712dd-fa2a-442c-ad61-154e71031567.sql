@@ -1,0 +1,1 @@
+UPDATE payments SET notes = 'Mallory Morrill, split from Comeau Family', description = 'Guest cost split: Mallory Morrill - 2025-07-11 to 2025-07-17' WHERE id = '4e635047-b210-4527-a16b-61c802308aa5'
