@@ -899,12 +899,14 @@ export const UnifiedOccupancyDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>{headerContent}</DialogTitle>
           </DialogHeader>
-          {dialogContent}
-          <DialogFooter className="gap-2">
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {dialogContent}
+          </div>
+          <DialogFooter className="gap-2 flex-shrink-0 border-t pt-3">
             {footerContent}
           </DialogFooter>
         </DialogContent>
