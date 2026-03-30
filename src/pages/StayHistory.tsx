@@ -1507,6 +1507,7 @@ export default function StayHistory() {
             cost: d.cost || 0
           }))}
           totalAmount={editOccupancyStay.billingAmount || 0}
+          reservationHolderName={editOccupancyStay.reservationHolderName}
           onSplitCreated={() => {
             const yearFilter = selectedYear === 0 ? undefined : selectedYear;
             fetchPayments(1, 50, yearFilter);
