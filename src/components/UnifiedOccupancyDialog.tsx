@@ -732,10 +732,10 @@ export const UnifiedOccupancyDialog = ({
                   /* Desktop table layout */
                   <div className="border rounded-lg overflow-x-auto">
                     <table className="w-full min-w-max">
-                      <thead className="bg-muted">
+                      <thead className="bg-muted sticky top-0 z-20">
                         <tr>
                           <th className="text-left p-2.5 sticky left-0 bg-muted z-10 text-sm">Date</th>
-                          <th className="text-right p-2.5 text-sm">You</th>
+                          <th className="text-right p-2.5 text-sm">{stay.family_group}</th>
                           {selectedUsers.map(user => (
                             <th key={user.userId} className="text-right p-2.5 min-w-[100px] text-sm">
                               <span className="truncate max-w-[90px] inline-block" title={user.displayName}>
