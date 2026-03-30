@@ -46,6 +46,7 @@ interface UnifiedOccupancyDialogProps {
   dailyBreakdown?: Array<{ date: string; guests: number; cost: number }>;
   totalAmount?: number;
   onSplitCreated?: () => void;
+  reservationHolderName?: string;
 }
 
 interface OrgUser {
