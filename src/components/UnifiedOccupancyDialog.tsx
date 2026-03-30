@@ -684,7 +684,7 @@ export const UnifiedOccupancyDialog = ({
               </Alert>
 
               {/* Mobile: Card layout, Desktop: Table layout */}
-              <ScrollArea className="h-[250px] sm:h-[380px]">
+              <div className="h-[250px] sm:h-[380px] overflow-y-auto">
                 {isMobile ? (
                   /* Mobile card layout */
                   <div className="space-y-2">
