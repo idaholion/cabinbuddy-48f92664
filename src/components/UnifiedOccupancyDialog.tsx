@@ -790,7 +790,7 @@ export const UnifiedOccupancyDialog = ({
                     </table>
                   </div>
                 )}
-              </ScrollArea>
+              </div>
 
               {/* Cost Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-none gap-2 sm:gap-4 p-3 bg-muted rounded-lg" style={{ 
