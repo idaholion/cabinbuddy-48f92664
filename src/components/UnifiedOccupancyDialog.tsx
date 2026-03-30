@@ -795,7 +795,7 @@ export const UnifiedOccupancyDialog = ({
                 gridTemplateColumns: isMobile ? undefined : `repeat(${selectedUsers.length + 1}, minmax(0, 1fr))` 
               }}>
                 <div>
-                  <div className="text-xs text-muted-foreground mb-0.5">Your Portion</div>
+                  <div className="text-xs text-muted-foreground mb-0.5">{stay.family_group}</div>
                   <div className="text-base sm:text-xl font-bold text-primary">
                     {BillingCalculator.formatCurrency(sourceTotal)}
                   </div>
