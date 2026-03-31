@@ -64,7 +64,7 @@ export const PendingTradeRequestBanner = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/calendar')}
+              onClick={() => { navigate('/calendar'); setTimeout(() => document.getElementById('trade-requests-section')?.scrollIntoView({ behavior: 'smooth' }), 500); }}
               className="h-8 px-3 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-900/30"
             >
               Review
