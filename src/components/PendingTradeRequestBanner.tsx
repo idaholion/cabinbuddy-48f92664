@@ -85,7 +85,7 @@ export const PendingTradeRequestBanner = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/calendar')}
+                onClick={() => { navigate('/calendar'); setTimeout(() => document.getElementById('trade-requests-section')?.scrollIntoView({ behavior: 'smooth' }), 500); }}
                 className="h-8 px-3 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
               >
                 Review
@@ -125,7 +125,7 @@ export const PendingTradeRequestBanner = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/calendar')}
+                onClick={() => { navigate('/calendar'); setTimeout(() => document.getElementById('trade-requests-section')?.scrollIntoView({ behavior: 'smooth' }), 500); }}
                 className="h-8 px-3 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/30"
               >
                 Review
