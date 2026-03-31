@@ -108,6 +108,25 @@ const handler = async (req: Request): Promise<Response> => {
     const requesterGroup = familyGroups.find(fg => fg.name === tradeRequest.requester_family_group);
     const targetGroup = familyGroups.find(fg => fg.name === tradeRequest.target_family_group);
 
+    // Helper: find phone number for a specific email from a family group's host_members
+    function findPhoneFromHostMembers(group: any, email: string): string | undefined {
+      if (!group?.host_members) return undefined;
+      const members = Array.isArray(group.host_members) ? group.host_members : JSON.parse(group.host_members as string);
+      const member = members.find((m: any) => m.email === email);
+      return member?.phone;
+    }
+
+    // Helper: get all host members with email and phone from a family group
+    function getHostMemberRecipients(group: any): { email?: string; phone?: string; name?: string }[] {
+      if (!group?.host_members) return [];
+      const members = Array.isArray(group.host_members) ? group.host_members : JSON.parse(group.host_members as string);
+      return members.map((member: any) => ({
+        email: member.email,
+        phone: member.phone,
+        name: member.name
+      })).filter((r: any) => r.email || r.phone);
+    }
+
     // Prepare email content and SMS messages based on notification type
     let emailSubject: string;
     let emailContent: string;
@@ -123,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
         emailSubject = `Time Trade Request from ${tradeRequest.requester_family_group}`;
         smsMessage = `New trade request from ${tradeRequest.requester_family_group} for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()}-${new Date(tradeRequest.requested_end_date).toLocaleDateString()}. Check your email or login to respond. - ${tradeRequest.organization.name}`;
         
-        // Primary email content for the host
+        // Primary email content for the target host
         emailContent = `
           <h2>New Time Trade Request</h2>
           <p><strong>${tradeRequest.requester_family_group}</strong> has requested to trade for your ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()} reservation.</p>
@@ -144,17 +163,18 @@ const handler = async (req: Request): Promise<Response> => {
           ${tradeRequest.organization.name} Management</p>
         `;
         
-        // Build recipient list with smart routing
+        // Build recipient list for TARGET
         if (hasSpecificHost) {
-          // Primary: Send to the specific host
+          // Find the host's phone from the target group's host_members
+          const hostPhone = findPhoneFromHostMembers(targetGroup, tradeRequest.target_host_email);
           recipients.push({
             email: tradeRequest.target_host_email,
+            phone: hostPhone,
             name: hostName
           });
           
           // CC: Send FYI to group lead (if different from host)
           if (targetGroup?.lead_email && targetGroup.lead_email !== tradeRequest.target_host_email) {
-            // We'll send a separate FYI email to the group lead
             const ccEmailContent = `
               <h2>FYI: Trade Request for ${hostName}</h2>
               <p><strong>${tradeRequest.requester_family_group}</strong> has requested to trade with <strong>${hostName}</strong> for their ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()} reservation.</p>
@@ -175,7 +195,6 @@ const handler = async (req: Request): Promise<Response> => {
               ${tradeRequest.organization.name} Management</p>
             `;
             
-            // Send CC email to group lead
             try {
               await resend.emails.send({
                 from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
@@ -189,23 +208,59 @@ const handler = async (req: Request): Promise<Response> => {
             }
           }
         } else {
-          // Fallback: No specific host, send to all host members
-          if (targetGroup?.host_members) {
-            const hostMembers = Array.isArray(targetGroup.host_members) ? targetGroup.host_members : JSON.parse(targetGroup.host_members as string);
-            recipients = hostMembers.map((member: any) => ({
-              email: member.email,
-              phone: member.phone,
-              name: member.name
-            })).filter((r: any) => r.email || r.phone);
+          // Fallback: No specific host, send to all target host members
+          recipients = getHostMemberRecipients(targetGroup);
+        }
+        
+        // Add REQUESTER confirmation (email + SMS)
+        const requesterConfirmationContent = `
+          <h2>Your Trade Request Has Been Submitted</h2>
+          <p>Your trade request to <strong>${tradeRequest.target_family_group}</strong> for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()} has been sent.</p>
+          
+          ${tradeRequest.request_type === 'trade_offer' && tradeRequest.offered_start_date ? `
+            <h3>You Offered:</h3>
+            <p>${new Date(tradeRequest.offered_start_date).toLocaleDateString()} to ${new Date(tradeRequest.offered_end_date).toLocaleDateString()}</p>
+          ` : ''}
+          
+          <p>You will be notified when they respond.</p>
+          
+          <p>Best regards,<br>
+          ${tradeRequest.organization.name} Management</p>
+        `;
+        const requesterSmsMessage = `Your trade request to ${tradeRequest.target_family_group} for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()}-${new Date(tradeRequest.requested_end_date).toLocaleDateString()} has been submitted. You'll be notified when they respond. - ${tradeRequest.organization.name}`;
+        
+        // Send requester confirmation emails and SMS
+        const requesterRecipients = getHostMemberRecipients(requesterGroup);
+        for (const requester of requesterRecipients) {
+          if (requester.email) {
+            try {
+              await resend.emails.send({
+                from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
+                to: [requester.email],
+                subject: `Your Trade Request to ${tradeRequest.target_family_group} Has Been Submitted`,
+                html: requesterConfirmationContent,
+              });
+              console.log(`Sent requester confirmation email to: ${requester.email}`);
+            } catch (reqError) {
+              console.error('Error sending requester confirmation email:', reqError);
+            }
+          }
+          if (requester.phone) {
+            await sendSMS(requester.phone, requesterSmsMessage);
           }
         }
         
-        // Always CC organization admin
+        // Always CC organization admin (with phone for SMS)
         if (tradeRequest.organization.admin_email) {
-          recipients.push({
-            email: tradeRequest.organization.admin_email,
-            name: tradeRequest.organization.admin_name
-          });
+          // Only add admin if not already a recipient
+          const adminAlreadyIncluded = recipients.some(r => r.email === tradeRequest.organization.admin_email);
+          if (!adminAlreadyIncluded) {
+            recipients.push({
+              email: tradeRequest.organization.admin_email,
+              phone: tradeRequest.organization.admin_phone || undefined,
+              name: tradeRequest.organization.admin_name
+            });
+          }
         }
         break;
 
