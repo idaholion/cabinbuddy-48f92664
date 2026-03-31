@@ -147,7 +147,7 @@ export function TradeRequestsManager() {
 
   return (
     <>
-      <Card>
+      <Card id="trade-requests-section">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <ArrowRightLeft className="h-5 w-5" />
