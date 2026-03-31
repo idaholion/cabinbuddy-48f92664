@@ -31,7 +31,7 @@ export function TradeRequestsManager() {
   );
 
   const outgoingRequests = tradeRequests.filter(tr => 
-    tr.requester_family_group === userFamilyGroup
+    tr.requester_family_group === userFamilyGroup && tr.status === 'pending'
   );
 
   const completedTrades = tradeRequests.filter(tr => 
