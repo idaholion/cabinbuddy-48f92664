@@ -70,7 +70,7 @@ export function TradeRequestsManager() {
     }
   };
 
-  const TradeRequestCard = ({ request, showActions = false }: { request: any; showActions?: boolean }) => (
+  const TradeRequestCard = ({ request, showActions = false, showCancel = false }: { request: any; showActions?: boolean; showCancel?: boolean }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
