@@ -1,0 +1,1 @@
+UPDATE reservations SET family_group = 'Woolf Family', transferred_from = 'Andrew Family', transferred_to = 'Woolf Family', transfer_type = 'trade', host_assignments = '[]'::jsonb, updated_at = now() WHERE id = '8bf1e905-2bac-424a-a375-acc63b90db5b';
