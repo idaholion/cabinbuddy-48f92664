@@ -6,6 +6,7 @@ import { CBHelpButton } from '@/components/CBHelpButton';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
 import { TestOrganizationBanner } from '@/components/TestOrganizationBanner';
 import { ProfileClaimingPrompt } from '@/components/ProfileClaimingPrompt';
+import { PendingTradeRequestBanner } from '@/components/PendingTradeRequestBanner';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
 import { useIsMobile } from '@/hooks/use-mobile';
 
