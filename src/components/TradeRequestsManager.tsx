@@ -145,6 +145,18 @@ export function TradeRequestsManager() {
             </Button>
           </div>
         )}
+        {showCancel && request.status === 'pending' && (
+          <div className="flex justify-end mt-3">
+            <Button 
+              size="sm" 
+              variant="destructive"
+              disabled={cancellingId === request.id}
+              onClick={() => handleCancelRequest(request.id)}
+            >
+              {cancellingId === request.id ? 'Cancelling...' : 'Cancel Request'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
