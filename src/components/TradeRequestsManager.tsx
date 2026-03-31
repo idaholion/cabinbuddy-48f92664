@@ -247,6 +247,7 @@ export function TradeRequestsManager() {
                     <TradeRequestCard 
                       key={request.id} 
                       request={request}
+                      showCancel={true}
                     />
                   ))}
                 </div>
