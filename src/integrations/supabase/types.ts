@@ -2864,6 +2864,7 @@ export type Database = {
           requested_start_date: string
           requester_family_group: string
           requester_message: string | null
+          requester_name: string | null
           requester_user_id: string | null
           status: string
           target_family_group: string
@@ -2888,6 +2889,7 @@ export type Database = {
           requested_start_date: string
           requester_family_group: string
           requester_message?: string | null
+          requester_name?: string | null
           requester_user_id?: string | null
           status?: string
           target_family_group: string
@@ -2912,6 +2914,7 @@ export type Database = {
           requested_start_date?: string
           requester_family_group?: string
           requester_message?: string | null
+          requester_name?: string | null
           requester_user_id?: string | null
           status?: string
           target_family_group?: string

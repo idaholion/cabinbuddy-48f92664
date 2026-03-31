@@ -67,11 +67,18 @@ export function TradeRequestsManager() {
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">
-              {request.requester_family_group} → {request.target_family_group}
-            </span>
+          <div className="flex flex-col">
+            <div className="flex items-center space-x-2">
+              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">
+                {request.requester_name || request.requester_family_group} → {request.target_host_name || request.target_family_group}
+              </span>
+            </div>
+            {(request.requester_name || request.target_host_name) && (
+              <span className="text-xs text-muted-foreground ml-6">
+                {request.requester_family_group} → {request.target_family_group}
+              </span>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             {getStatusBadge(request.status)}

@@ -1,0 +1,1 @@
+ALTER TABLE public.trade_requests ADD COLUMN IF NOT EXISTS requester_name text;
