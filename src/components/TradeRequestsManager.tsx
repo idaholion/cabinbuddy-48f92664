@@ -14,7 +14,7 @@ import { TradeApprovalDialog } from './TradeApprovalDialog';
 
 export function TradeRequestsManager() {
   const { user } = useAuth();
-  const { tradeRequests, loading, refetchTradeRequests } = useTradeRequests();
+  const { tradeRequests, loading, updateTradeRequest, refetchTradeRequests } = useTradeRequests();
   const { familyGroups } = useFamilyGroups();
   const [selectedTradeRequest, setSelectedTradeRequest] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
