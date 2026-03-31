@@ -489,7 +489,12 @@ const handler = async (req: Request): Promise<Response> => {
                   start_date: tradeRequest.offered_start_date,
                   end_date: tradeRequest.offered_end_date,
                   status: 'confirmed',
-                  host_assignments: [],
+                  host_assignments: [{
+                    host_name: targetName,
+                    host_email: targetEmail,
+                    start_date: tradeRequest.offered_start_date,
+                    end_date: tradeRequest.offered_end_date,
+                  }],
                   original_reservation_id: offeredReservation.id,
                   transfer_type: 'partial_trade',
                   transferred_from: tradeRequest.requester_family_group,
