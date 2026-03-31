@@ -19,6 +19,7 @@ export function TradeRequestsManager() {
   const [selectedTradeRequest, setSelectedTradeRequest] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
