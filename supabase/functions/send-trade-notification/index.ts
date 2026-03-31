@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('trade_requests')
       .select(`
         *,
-        organization:organizations(name, admin_email, admin_name)
+        organization:organizations(name, admin_email, admin_name, admin_phone)
       `)
       .eq('id', tradeRequestId)
       .single();
