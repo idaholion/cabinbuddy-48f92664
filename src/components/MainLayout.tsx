@@ -29,6 +29,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
             <GuestAccessBanner />
             <TestOrganizationBanner />
             <ProfileClaimingPrompt />
+            <PendingTradeRequestBanner />
             {/* Mobile sidebar trigger - only visible on mobile screens */}
             {isMobile === true && (
               <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
