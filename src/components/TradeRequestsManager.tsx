@@ -49,6 +49,12 @@ export function TradeRequestsManager() {
     refetchTradeRequests();
   };
 
+  const handleCancelRequest = async (requestId: string) => {
+    setCancellingId(requestId);
+    await updateTradeRequest(requestId, { status: 'cancelled' });
+    setCancellingId(null);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
