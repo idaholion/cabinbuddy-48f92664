@@ -107,6 +107,51 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Trade request must be approved before execution');
     }
 
+    // === Look up the actual user names for host_assignments ===
+    let requesterName = tradeRequest.requester_family_group;
+    let requesterEmail = '';
+    let targetName = tradeRequest.target_host_name || tradeRequest.target_family_group;
+    let targetEmail = tradeRequest.target_host_email || '';
+
+    // Get requester user info
+    if (tradeRequest.requester_user_id) {
+      const { data: requesterUser } = await supabaseClient
+        .from('auth.users')
+        .select('email, raw_user_meta_data')
+        .eq('id', tradeRequest.requester_user_id)
+        .single();
+
+      if (!requesterUser) {
+        // Fallback: query via RPC or direct SQL
+        const { data: userInfo } = await supabaseClient
+          .rpc('get_organization_user_emails', { org_id: tradeRequest.organization_id });
+        
+        const requesterInfo = userInfo?.find((u: any) => u.user_id === tradeRequest.requester_user_id);
+        if (requesterInfo) {
+          requesterName = requesterInfo.display_name || requesterInfo.first_name || requesterName;
+          requesterEmail = requesterInfo.email || '';
+        }
+      } else {
+        const meta = requesterUser.raw_user_meta_data || {};
+        requesterName = meta.display_name || meta.first_name || requesterName;
+        requesterEmail = requesterUser.email || '';
+      }
+    }
+
+    // Get target (approver) user info
+    if (tradeRequest.approver_user_id) {
+      const { data: userInfo } = await supabaseClient
+        .rpc('get_organization_user_emails', { org_id: tradeRequest.organization_id });
+      
+      const approverInfo = userInfo?.find((u: any) => u.user_id === tradeRequest.approver_user_id);
+      if (approverInfo) {
+        targetName = approverInfo.display_name || approverInfo.first_name || targetName;
+        targetEmail = approverInfo.email || targetEmail;
+      }
+    }
+
+    console.log('Trade participants:', { requesterName, requesterEmail, targetName, targetEmail });
+
     // Find the target's reservation that matches the requested dates
     const { data: targetReservation, error: targetResError } = await supabaseClient
       .from('reservations')
@@ -199,7 +244,12 @@ const handler = async (req: Request): Promise<Response> => {
         .from('reservations')
         .update({
           family_group: tradeRequest.requester_family_group,
-          host_assignments: [],
+          host_assignments: [{
+            host_name: requesterName,
+            host_email: requesterEmail,
+            start_date: tradeRequest.requested_start_date,
+            end_date: tradeRequest.requested_end_date,
+          }],
           transferred_from: tradeRequest.target_family_group,
           transferred_to: tradeRequest.requester_family_group,
           transfer_type: 'trade',
@@ -269,7 +319,12 @@ const handler = async (req: Request): Promise<Response> => {
           start_date: tradeRequest.requested_start_date,
           end_date: tradeRequest.requested_end_date,
           status: 'confirmed',
-          host_assignments: [],
+          host_assignments: [{
+            host_name: requesterName,
+            host_email: requesterEmail,
+            start_date: tradeRequest.requested_start_date,
+            end_date: tradeRequest.requested_end_date,
+          }],
           original_reservation_id: targetReservation.id,
           transfer_type: 'partial_trade',
           transferred_from: tradeRequest.target_family_group,
@@ -389,7 +444,12 @@ const handler = async (req: Request): Promise<Response> => {
               .from('reservations')
               .update({
                 family_group: tradeRequest.target_family_group,
-                host_assignments: [],
+                host_assignments: [{
+                  host_name: targetName,
+                  host_email: targetEmail,
+                  start_date: tradeRequest.offered_start_date,
+                  end_date: tradeRequest.offered_end_date,
+                }],
                 transferred_from: tradeRequest.requester_family_group,
                 transferred_to: tradeRequest.target_family_group,
                 transfer_type: 'trade',
@@ -429,7 +489,12 @@ const handler = async (req: Request): Promise<Response> => {
                   start_date: tradeRequest.offered_start_date,
                   end_date: tradeRequest.offered_end_date,
                   status: 'confirmed',
-                  host_assignments: [],
+                  host_assignments: [{
+                    host_name: targetName,
+                    host_email: targetEmail,
+                    start_date: tradeRequest.offered_start_date,
+                    end_date: tradeRequest.offered_end_date,
+                  }],
                   original_reservation_id: offeredReservation.id,
                   transfer_type: 'partial_trade',
                   transferred_from: tradeRequest.requester_family_group,
