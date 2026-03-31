@@ -1,0 +1,3 @@
+UPDATE reservations SET host_assignments = '[{"host_name": "Richard", "host_email": "rvandrew@outlook.com", "start_date": "2026-06-19", "end_date": "2026-06-26"}]'::jsonb WHERE id = 'a1bc43b3-f633-47f8-996e-77545046a944';
+
+UPDATE reservations SET host_assignments = '[{"host_name": "Barb Woolf", "host_email": "54bjwoolf@gmail.com", "start_date": "2026-06-12", "end_date": "2026-06-19"}]'::jsonb WHERE id = '8bf1e905-2bac-424a-a375-acc63b90db5b';
