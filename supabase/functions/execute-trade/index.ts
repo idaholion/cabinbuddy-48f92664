@@ -369,7 +369,7 @@ const handler = async (req: Request): Promise<Response> => {
                 transferred_from: tradeRequest.requester_family_group,
                 transferred_to: tradeRequest.target_family_group,
                 transfer_type: 'trade',
-                notes: `Traded from ${tradeRequest.requester_family_group} on ${new Date().toLocaleDateString()}`
+                updated_at: new Date().toISOString()
               })
               .eq('id', offeredReservation.id);
 
