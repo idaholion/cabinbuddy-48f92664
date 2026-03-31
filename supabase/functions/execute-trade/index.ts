@@ -315,14 +315,38 @@ const handler = async (req: Request): Promise<Response> => {
 
     // If this is a trade offer, also handle the offered reservation
     if (tradeRequest.request_type === 'trade_offer' && tradeRequest.offered_start_date) {
-      const { data: offeredReservation, error: offeredResError } = await supabaseClient
+      // Use exact date match first, then fall back to overlap query
+      // This avoids .single() failure when multiple reservations overlap (e.g. after leg 1 transfer)
+      let offeredReservation: any = null;
+      let offeredResError: any = null;
+
+      // Try exact match first
+      const { data: exactMatch, error: exactError } = await supabaseClient
         .from('reservations')
         .select('*')
         .eq('organization_id', tradeRequest.organization_id)
         .eq('family_group', tradeRequest.requester_family_group)
-        .lte('start_date', tradeRequest.offered_end_date)
-        .gte('end_date', tradeRequest.offered_start_date)
-        .single();
+        .eq('start_date', tradeRequest.offered_start_date)
+        .eq('end_date', tradeRequest.offered_end_date)
+        .maybeSingle();
+
+      if (exactMatch) {
+        offeredReservation = exactMatch;
+        offeredResError = exactError;
+      } else {
+        // Fall back to overlap query, but exclude the just-transferred reservation
+        const { data: overlapMatches, error: overlapError } = await supabaseClient
+          .from('reservations')
+          .select('*')
+          .eq('organization_id', tradeRequest.organization_id)
+          .eq('family_group', tradeRequest.requester_family_group)
+          .lte('start_date', tradeRequest.offered_end_date)
+          .gte('end_date', tradeRequest.offered_start_date)
+          .neq('id', targetReservation.id);
+
+        offeredResError = overlapError;
+        offeredReservation = overlapMatches && overlapMatches.length > 0 ? overlapMatches[0] : null;
+      }
 
       if (offeredReservation) {
         // Check for payment splits on offered reservation too
