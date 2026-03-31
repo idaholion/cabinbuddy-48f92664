@@ -14,11 +14,12 @@ import { TradeApprovalDialog } from './TradeApprovalDialog';
 
 export function TradeRequestsManager() {
   const { user } = useAuth();
-  const { tradeRequests, loading, refetchTradeRequests } = useTradeRequests();
+  const { tradeRequests, loading, updateTradeRequest, refetchTradeRequests } = useTradeRequests();
   const { familyGroups } = useFamilyGroups();
   const [selectedTradeRequest, setSelectedTradeRequest] = useState<any>(null);
   const [showApprovalDialog, setShowApprovalDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Get user's family group
   const userFamilyGroup = familyGroups.find(fg => 
@@ -31,7 +32,7 @@ export function TradeRequestsManager() {
   );
 
   const outgoingRequests = tradeRequests.filter(tr => 
-    tr.requester_family_group === userFamilyGroup
+    tr.requester_family_group === userFamilyGroup && tr.status === 'pending'
   );
 
   const completedTrades = tradeRequests.filter(tr => 
@@ -46,6 +47,12 @@ export function TradeRequestsManager() {
 
   const handleApprovalComplete = () => {
     refetchTradeRequests();
+  };
+
+  const handleCancelRequest = async (requestId: string) => {
+    setCancellingId(requestId);
+    await updateTradeRequest(requestId, { status: 'cancelled' });
+    setCancellingId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -63,7 +70,7 @@ export function TradeRequestsManager() {
     }
   };
 
-  const TradeRequestCard = ({ request, showActions = false }: { request: any; showActions?: boolean }) => (
+  const TradeRequestCard = ({ request, showActions = false, showCancel = false }: { request: any; showActions?: boolean; showCancel?: boolean }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
@@ -135,6 +142,18 @@ export function TradeRequestsManager() {
               onClick={() => handleApprovalClick(request)}
             >
               Review Request
+            </Button>
+          </div>
+        )}
+        {showCancel && request.status === 'pending' && (
+          <div className="flex justify-end mt-3">
+            <Button 
+              size="sm" 
+              variant="destructive"
+              disabled={cancellingId === request.id}
+              onClick={() => handleCancelRequest(request.id)}
+            >
+              {cancellingId === request.id ? 'Cancelling...' : 'Cancel Request'}
             </Button>
           </div>
         )}
@@ -228,6 +247,7 @@ export function TradeRequestsManager() {
                     <TradeRequestCard 
                       key={request.id} 
                       request={request}
+                      showCancel={true}
                     />
                   ))}
                 </div>
