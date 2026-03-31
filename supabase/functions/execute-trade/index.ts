@@ -444,7 +444,12 @@ const handler = async (req: Request): Promise<Response> => {
               .from('reservations')
               .update({
                 family_group: tradeRequest.target_family_group,
-                host_assignments: [],
+                host_assignments: [{
+                  host_name: targetName,
+                  host_email: targetEmail,
+                  start_date: tradeRequest.offered_start_date,
+                  end_date: tradeRequest.offered_end_date,
+                }],
                 transferred_from: tradeRequest.requester_family_group,
                 transferred_to: tradeRequest.target_family_group,
                 transfer_type: 'trade',
