@@ -1,0 +1,1 @@
+UPDATE trade_requests SET requester_name = 'Richard', target_host_name = 'Barb Woolf' WHERE id = 'a4f780fc-27ee-4563-b1e7-7776e4cc9c22';
