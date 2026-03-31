@@ -240,12 +240,22 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
 
     setSubmitting(true);
     try {
+      // Look up requester's individual name
+      const userFG = familyGroups.find(fg => fg.name === userFamilyGroup);
+      const userMember = userFG?.host_members?.find(
+        (member: any) => member.email?.toLowerCase() === user?.email?.toLowerCase()
+      );
+      const requesterName = userMember 
+        ? [userMember.firstName, userMember.lastName].filter(Boolean).join(' ') || userMember.name
+        : user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+
       const tradeData = {
         target_family_group: data.targetFamilyGroup,
         requested_start_date: data.requestedStartDate.toISOString().split('T')[0],
         requested_end_date: data.requestedEndDate.toISOString().split('T')[0],
         request_type: data.isTradeOffer ? 'trade_offer' as const : 'request_only' as const,
         requester_message: data.message,
+        ...(requesterName && { requester_name: requesterName }),
         // Include host info if available
         ...(hostInfo?.email && { target_host_email: hostInfo.email }),
         ...(hostInfo?.name && { target_host_name: hostInfo.name }),
