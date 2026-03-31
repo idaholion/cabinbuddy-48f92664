@@ -285,14 +285,30 @@ const handler = async (req: Request): Promise<Response> => {
           ${tradeRequest.organization.name} Management</p>
         `;
         
-        // Send to requester group host members
-        if (requesterGroup?.host_members) {
-          const hostMembers = Array.isArray(requesterGroup.host_members) ? requesterGroup.host_members : JSON.parse(requesterGroup.host_members as string);
-          recipients = hostMembers.map((member: any) => ({
-            email: member.email,
-            phone: member.phone,
-            name: member.name
-          })).filter((r: any) => r.email || r.phone);
+        // Send to requester group host members (email + SMS)
+        recipients = getHostMemberRecipients(requesterGroup);
+        
+        // Also notify target group that the trade was approved (confirmation)
+        const approvedTargetRecipients = getHostMemberRecipients(targetGroup);
+        const approvedTargetContent = `
+          <h2>You Approved a Trade Request</h2>
+          <p>You have approved the trade request from <strong>${tradeRequest.requester_family_group}</strong> for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()}.</p>
+          <p>Your calendar has been updated.</p>
+          <p>Best regards,<br>${tradeRequest.organization.name} Management</p>
+        `;
+        const approvedTargetSms = `You approved the trade request from ${tradeRequest.requester_family_group} for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()}-${new Date(tradeRequest.requested_end_date).toLocaleDateString()}. Calendar updated. - ${tradeRequest.organization.name}`;
+        for (const target of approvedTargetRecipients) {
+          if (target.email) {
+            try {
+              await resend.emails.send({
+                from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
+                to: [target.email],
+                subject: `Trade Request Approved - Confirmation`,
+                html: approvedTargetContent,
+              });
+            } catch (e) { console.error('Error sending approval confirmation to target:', e); }
+          }
+          if (target.phone) { await sendSMS(target.phone, approvedTargetSms); }
         }
         break;
 
@@ -317,14 +333,29 @@ const handler = async (req: Request): Promise<Response> => {
           ${tradeRequest.organization.name} Management</p>
         `;
         
-        // Send to requester group host members
-        if (requesterGroup?.host_members) {
-          const hostMembers = Array.isArray(requesterGroup.host_members) ? requesterGroup.host_members : JSON.parse(requesterGroup.host_members as string);
-          recipients = hostMembers.map((member: any) => ({
-            email: member.email,
-            phone: member.phone,
-            name: member.name
-          })).filter((r: any) => r.email || r.phone);
+        // Send to requester group host members (email + SMS)
+        recipients = getHostMemberRecipients(requesterGroup);
+        
+        // Also notify target group that they declined (confirmation)
+        const rejectedTargetRecipients = getHostMemberRecipients(targetGroup);
+        const rejectedTargetContent = `
+          <h2>Trade Request Declined - Confirmation</h2>
+          <p>You have declined the trade request from <strong>${tradeRequest.requester_family_group}</strong> for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()} - ${new Date(tradeRequest.requested_end_date).toLocaleDateString()}.</p>
+          <p>Best regards,<br>${tradeRequest.organization.name} Management</p>
+        `;
+        const rejectedTargetSms = `You declined the trade request from ${tradeRequest.requester_family_group} for ${new Date(tradeRequest.requested_start_date).toLocaleDateString()}-${new Date(tradeRequest.requested_end_date).toLocaleDateString()}. - ${tradeRequest.organization.name}`;
+        for (const target of rejectedTargetRecipients) {
+          if (target.email) {
+            try {
+              await resend.emails.send({
+                from: `${tradeRequest.organization.name} <notifications@cabinbuddy.org>`,
+                to: [target.email],
+                subject: `Trade Request Declined - Confirmation`,
+                html: rejectedTargetContent,
+              });
+            } catch (e) { console.error('Error sending rejection confirmation to target:', e); }
+          }
+          if (target.phone) { await sendSMS(target.phone, rejectedTargetSms); }
         }
         break;
 
