@@ -1,23 +1,24 @@
 
+# Fix Trade Notification Recipients
 
-# Move Completed Trades to History Only + Add Cancel Button
+## Problem
+Trade notifications are sent to ALL host_members of both family groups. They should only go to:
+1. The specific requester (individual who made the request)
+2. The specific target host (individual who owns the reservation)
+3. The organization admin
 
-## Changes
+## Changes (send-trade-notification/index.ts)
 
-**1. TradeRequestsManager.tsx: Filter outgoing to pending only**
-- Change `outgoingRequests` filter to include only `status === 'pending'`
-- History tab already correctly shows non-pending trades
+### request_created:
+- **Target**: Use `target_host_email`/`target_host_name` only (already done correctly when `hasSpecificHost` is true)
+- **Requester**: Instead of `getHostMemberRecipients(requesterGroup)` (all members), use `requester_email` from trade_requests table + find their phone from host_members
+- **Admin**: Already correct (CC'd once)
 
-**2. TradeRequestsManager.tsx: Add cancel button on outgoing pending requests**
-- Add a "Cancel Request" button to `TradeRequestCard` when the request is outgoing and pending
-- Wire it to `updateTradeRequest` with `status: 'cancelled'`
+### request_approved:
+- **Requester notification**: Use `requester_email` only (not all requester group members)
+- **Target confirmation**: Use `target_host_email` only (not all target group members)
+- **Admin**: Add admin CC
 
-**3. useTradeRequests.ts: No changes needed**
-- `updateTradeRequest` already supports setting status to `'cancelled'`
-
-## Technical details
-- Incoming tab already filters for `pending` only -- no change needed there
-- Outgoing filter changes from `requester_family_group === userFamilyGroup` to also require `status === 'pending'`
-- Cancel button calls existing `updateTradeRequest(id, { status: 'cancelled' })`
-- Once cancelled, the request moves to History automatically
-
+### request_rejected:
+- Same pattern as approved — use specific individuals only
+- **Admin**: Add admin CC

@@ -2862,6 +2862,7 @@ export type Database = {
           request_type: string
           requested_end_date: string
           requested_start_date: string
+          requester_email: string | null
           requester_family_group: string
           requester_message: string | null
           requester_name: string | null
@@ -2887,6 +2888,7 @@ export type Database = {
           request_type: string
           requested_end_date: string
           requested_start_date: string
+          requester_email?: string | null
           requester_family_group: string
           requester_message?: string | null
           requester_name?: string | null
@@ -2912,6 +2914,7 @@ export type Database = {
           request_type?: string
           requested_end_date?: string
           requested_start_date?: string
+          requester_email?: string | null
           requester_family_group?: string
           requester_message?: string | null
           requester_name?: string | null

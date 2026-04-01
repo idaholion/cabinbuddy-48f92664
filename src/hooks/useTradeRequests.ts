@@ -16,6 +16,7 @@ interface TradeRequestData {
   target_host_email?: string;
   target_host_name?: string;
   requester_name?: string;
+  requester_email?: string;
 }
 
 interface TradeRequest {

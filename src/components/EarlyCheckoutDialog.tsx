@@ -195,7 +195,8 @@ export function EarlyCheckoutDialog({
             requested_start_date: remainingStartDate.toISOString().split('T')[0],
             requested_end_date: reservation.end_date,
             request_type: 'request_only' as const,
-            requester_message: data.message || `Early checkout - offering remaining ${calculateRemainingNights()} nights`
+            requester_message: data.message || `Early checkout - offering remaining ${calculateRemainingNights()} nights`,
+            ...(user?.email && { requester_email: user.email }),
           };
 
           const tradeResult = await createTradeRequest(tradeData, reservation.family_group);
