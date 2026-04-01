@@ -256,6 +256,7 @@ export function TradeRequestForm({ open, onOpenChange, onTradeComplete }: TradeR
         request_type: data.isTradeOffer ? 'trade_offer' as const : 'request_only' as const,
         requester_message: data.message,
         ...(requesterName && { requester_name: requesterName }),
+        ...(user?.email && { requester_email: user.email }),
         // Include host info if available
         ...(hostInfo?.email && { target_host_email: hostInfo.email }),
         ...(hostInfo?.name && { target_host_name: hostInfo.name }),
