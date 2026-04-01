@@ -1,0 +1,1 @@
+ALTER TABLE public.trade_requests ADD COLUMN requester_email TEXT;
