@@ -46,12 +46,16 @@ export const SAMPLES: Record<AllocationModelKey, SampleSeason> = {
   static_weeks: {
     title: 'Static Weeks — Sample Season',
     subtitle:
-      'Each family owns the same weeks every year. Predictable and easy — no annual picking process needed.',
+      'Each family is assigned a set of weeks, and those weeks shift by one each year (e.g. week 6 this year, week 7 next year). Everyone can plan years ahead, and prime weeks rotate fairly over time. A true "same week every year" mode is also available for groups that prefer it.',
     families: [...FAMILY_NAMES],
     weeks: WEEK_LABELS.map((label, i) => {
-      // Each family gets 4 fixed weeks scattered across the season
+      // Each family gets 4 weeks; assignments shift by one each year.
       const owners = ['Anderson', 'Brooks', 'Chen', 'Diaz'];
-      return { label, family: owners[i % 4], note: 'Same week, every year' };
+      return {
+        label,
+        family: owners[i % 4],
+        note: 'This year — shifts +1 next year',
+      };
     }),
   },
   first_come_first_serve: {
@@ -97,12 +101,13 @@ export const MODEL_META: Record<
   },
   static_weeks: {
     friendlyName: 'Static Weeks',
-    tagline: 'Same week every year, forever',
-    bestFor: 'Families with predictable schedules and traditions',
+    tagline: 'Assigned weeks that shift by one each year',
+    bestFor: 'Families who want to plan years ahead with fair rotation of prime weeks',
     bullets: [
-      { label: 'How picks happen', value: 'Each family is permanently assigned specific weeks' },
-      { label: 'Year-to-year', value: 'Same assignments repeat — no annual selection needed' },
-      { label: 'Who manages it', value: 'Admin assigns weeks once; families just confirm their stays' },
+      { label: 'How picks happen', value: 'Each family is assigned a set of weeks for the season' },
+      { label: 'Year-to-year', value: 'Assignments shift by one week each year so prime weeks rotate fairly' },
+      { label: 'True static option', value: 'Groups can opt into "same week every year" instead if they prefer' },
+      { label: 'Who manages it', value: 'Admin sets the initial assignments; the system advances them yearly' },
     ],
   },
   first_come_first_serve: {
