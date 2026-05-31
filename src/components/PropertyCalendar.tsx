@@ -677,18 +677,38 @@ const getBookingsForDate = (date: Date) => {
           return;
         }
 
+        // Helper: is this day the START of an existing reservation?
+        // (noon-to-noon policy means a booking's start day is a valid checkout day)
+        const isBookingStartDay = (rangeDate: Date) => {
+          return reservations.some(r => {
+            const s = parseLocalDate(r.start_date);
+            return s.getFullYear() === rangeDate.getFullYear() &&
+                   s.getMonth() === rangeDate.getMonth() &&
+                   s.getDate() === rangeDate.getDate();
+          });
+        };
+
         // Build the longest conflict-free run starting at the clicked date,
-        // stopping the night before the next booked day (that day becomes checkout).
+        // stopping AT the next booking's start day (valid noon checkout) or
+        // BEFORE any other occupied day.
         const trimmed: Date[] = [];
         const cursor = new Date(dateAtNoon);
         while (cursor <= windowEnd) {
           const d = new Date(cursor);
           d.setHours(12, 0, 0, 0);
-          if (isDayBooked(d)) {
-            // Allow this day as the checkout day (noon-to-noon) only if it's
-            // truly the next booking's start; otherwise stop before it.
-            trimmed.push(d);
-            break;
+          const startDay = isBookingStartDay(d);
+          const occupied = isDayBooked(d);
+          // First iteration is guaranteed clear (we checked above).
+          if (trimmed.length > 0) {
+            if (startDay) {
+              // Valid checkout at noon on the next booking's start day
+              trimmed.push(d);
+              break;
+            }
+            if (occupied) {
+              // Mid-booking day — stop before it; previous day is checkout
+              break;
+            }
           }
           trimmed.push(d);
           cursor.setDate(cursor.getDate() + 1);
