@@ -705,9 +705,26 @@ export default function StayHistory() {
         currentItem.stayData.effectiveAmountPaid = currentItem.stayData.billingAmount;
         
         console.log(`[CREDIT CASCADE] ${familyGroup} reservation on ${currentItem.reservation.start_date} has overpayment of $${remainingCredit.toFixed(2)}`);
-        
-        // Distribute this credit forward to newer reservations
-        // Apply credit to currentBalance (not amountDue) so it cascades through previousBalance chain
+
+        // FIRST: Apply credit BACKWARD to older unpaid stays (most recent older stay first).
+        // This prevents the forward cascade from greedily consuming an overpayment that should
+        // settle an earlier outstanding balance before any leftover spills forward.
+        currentItem.stayData.creditDistributedToOlders = currentItem.stayData.creditDistributedToOlders || 0;
+        for (let k = i - 1; k >= 0 && remainingCredit > 0; k--) {
+          const olderItem = hostReservations[k];
+          if (olderItem.stayData.currentBalance > 0) {
+            const creditToApply = Math.min(remainingCredit, olderItem.stayData.currentBalance);
+            console.log(`[CREDIT CASCADE - BACKWARD] Applying $${creditToApply.toFixed(2)} to older stay ${olderItem.reservation.start_date}`);
+            olderItem.stayData.originalAmountDue = olderItem.stayData.originalAmountDue ?? olderItem.stayData.currentBalance;
+            olderItem.stayData.currentBalance -= creditToApply;
+            olderItem.stayData.amountDue -= creditToApply;
+            olderItem.stayData.paidViaLaterStay = true;
+            currentItem.stayData.creditDistributedToOlders! += creditToApply;
+            remainingCredit -= creditToApply;
+          }
+        }
+
+        // THEN: Distribute any remaining credit forward to newer reservations
         for (let j = i + 1; j < hostReservations.length && remainingCredit > 0; j++) {
           const newerItem = hostReservations[j];
           
