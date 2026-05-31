@@ -458,25 +458,36 @@ const CheckoutFinal = () => {
         });
 
         // For each prior reservation, calculate: billing - payments - receipts
+        // Mirrors StayHistory dedupe logic to handle duplicate payment rows,
+        // so credits from one stay correctly offset balances on others.
         let runningBalance = 0;
-        
+
         for (const reservation of priorReservations.sort((a, b) => 
           parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
         )) {
-          // Find payment for this reservation
-          const { data: payment } = await supabase
+          // Find ALL matching payments for this reservation + family group
+          const { data: matchingPayments } = await supabase
             .from('payments')
             .select('amount, amount_paid')
             .eq('reservation_id', reservation.id)
-            .eq('organization_id', organization.id)
-            .maybeSingle();
+            .eq('family_group', reservation.family_group)
+            .eq('organization_id', organization.id);
 
-      // Find receipts ONLY for this specific reservation's date range
-      const familyReceipts = receipts.filter(r => 
-        r.family_group === reservation.family_group &&
-        parseDateOnly(r.date) >= parseDateOnly(reservation.start_date) &&
-        parseDateOnly(r.date) <= parseDateOnly(reservation.end_date)
-      );
+          // Dedupe: prefer payment with amount_paid > 0, then amount > 0, else first
+          let payment: { amount: number | null; amount_paid: number | null } | null = null;
+          if (matchingPayments && matchingPayments.length > 0) {
+            payment =
+              matchingPayments.find(p => (Number(p.amount_paid) || 0) > 0) ||
+              matchingPayments.find(p => (Number(p.amount) || 0) > 0) ||
+              matchingPayments[0];
+          }
+
+          // Find receipts ONLY for this specific reservation's date range
+          const familyReceipts = receipts.filter(r => 
+            r.family_group === reservation.family_group &&
+            parseDateOnly(r.date) >= parseDateOnly(reservation.start_date) &&
+            parseDateOnly(r.date) <= parseDateOnly(reservation.end_date)
+          );
           const receiptsTotal = familyReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
 
           if (payment) {
