@@ -43,6 +43,7 @@ const FinancialDashboard = React.lazy(() => import("./pages/FinancialDashboard")
 const AdminSeasonSummary = React.lazy(() => import("./pages/AdminSeasonSummary"));
 const SurveyResponses = React.lazy(() => import("./pages/SurveyResponses"));
 const ReservationSetup = React.lazy(() => import("./pages/ReservationSetup"));
+const ReservationSetupPreview = React.lazy(() => import("./pages/ReservationSetupPreview"));
 const UseFeeSetupPage = React.lazy(() => import("./pages/UseFeeSetupPage"));
 const GoogleCalendarSetup = React.lazy(() => import("./pages/GoogleCalendarSetup"));
 const BillingDashboard = React.lazy(() => import("./pages/BillingDashboard"));
@@ -144,6 +145,7 @@ const AppContent = () => {
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/reservation-setup-preview" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetupPreview /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/data-backup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></AdminTreasurerRoute>} />
         
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />

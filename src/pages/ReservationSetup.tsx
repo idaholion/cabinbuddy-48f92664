@@ -622,7 +622,15 @@ export default function ReservationSetup() {
         {/* Setup Method Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Calendar Setup Method</CardTitle>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <CardTitle>Calendar Setup Method</CardTitle>
+              <a
+                href="/reservation-setup-preview"
+                className="text-xs text-primary underline-offset-2 hover:underline"
+              >
+                Preview new chooser UI →
+              </a>
+            </div>
           </CardHeader>
           <CardContent>
             <RadioGroup value={setupMethod} onValueChange={handleSetupMethodChange} className="flex items-center gap-6">
