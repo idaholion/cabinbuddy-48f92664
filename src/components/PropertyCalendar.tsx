@@ -647,22 +647,62 @@ const getBookingsForDate = (date: Date) => {
       lastDate: datesInRange[datesInRange.length - 1]?.toISOString()
     });
     
-    // Check if any dates in the range are already booked
-    const hasConflicts = datesInRange.some(rangeDate => {
+    // Helper: is this specific day already booked (ignoring same-day checkout)?
+    const isDayBooked = (rangeDate: Date) => {
       const bookingsOnDate = reservations.filter(reservation => {
         const startDate = parseLocalDate(reservation.start_date);
         const endDate = parseLocalDate(reservation.end_date);
         const checkDate = new Date(rangeDate.getFullYear(), rangeDate.getMonth(), rangeDate.getDate());
         const reservationStart = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         const reservationEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        
         return checkDate >= reservationStart && checkDate <= reservationEnd;
       });
-      
       return bookingsOnDate.length > 0 && !isDateAvailableForBooking(rangeDate);
-    });
-    
+    };
+
+    // Check if any dates in the range are already booked
+    const hasConflicts = datesInRange.some(isDayBooked);
+
     if (hasConflicts) {
+      // In free-for-all / post-rotation phase, auto-trim to the available portion
+      // starting at the clicked date instead of rejecting the whole week.
+      if (allPhasesActive) {
+        // If the clicked day itself is taken, we can't help.
+        if (isDayBooked(dateAtNoon)) {
+          toast({
+            title: "Date Unavailable",
+            description: "This day is already booked. Please pick a different date.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Build the longest conflict-free run starting at the clicked date,
+        // stopping the night before the next booked day (that day becomes checkout).
+        const trimmed: Date[] = [];
+        const cursor = new Date(dateAtNoon);
+        while (cursor <= windowEnd) {
+          const d = new Date(cursor);
+          d.setHours(12, 0, 0, 0);
+          if (isDayBooked(d)) {
+            // Allow this day as the checkout day (noon-to-noon) only if it's
+            // truly the next booking's start; otherwise stop before it.
+            trimmed.push(d);
+            break;
+          }
+          trimmed.push(d);
+          cursor.setDate(cursor.getDate() + 1);
+        }
+
+        setSelectedDates(trimmed);
+        const nights = Math.max(0, trimmed.length - 1);
+        toast({
+          title: "Partial week selected",
+          description: `Part of this week is already booked. Selected ${trimmed[0].toLocaleDateString()} to ${trimmed[trimmed.length - 1].toLocaleDateString()} (${nights} night${nights === 1 ? '' : 's'}). You can adjust the dates in the booking form.`,
+        });
+        return;
+      }
+
       toast({
         title: "Period Unavailable",
         description: `This ${rotationData?.start_day || 'Friday'}-to-${rotationData?.start_day || 'Friday'} period has existing bookings. Please select a different period.`,
@@ -670,10 +710,10 @@ const getBookingsForDate = (date: Date) => {
       });
       return;
     }
-    
+
     // Select the full Friday-to-Friday range
     setSelectedDates(datesInRange);
-    
+
     // Number of nights is dates minus 1 (checkout day doesn't count as a night)
     const nights = datesInRange.length - 1;
     toast({
@@ -681,6 +721,7 @@ const getBookingsForDate = (date: Date) => {
       description: `Selected ${windowStart.toLocaleDateString()} to ${windowEnd.toLocaleDateString()} (${nights} nights)`,
       variant: "default",
     });
+
   };
 
   const handleDateMouseDown = (date: Date, event: React.MouseEvent) => {
