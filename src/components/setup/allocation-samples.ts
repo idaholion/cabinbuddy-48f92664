@@ -22,9 +22,22 @@ export interface SampleSeason {
 export const FAMILY_NAMES = ['Anderson', 'Brooks', 'Chen', 'Diaz'] as const;
 
 const WEEK_LABELS = [
-  'May 22', 'May 29', 'Jun 5', 'Jun 12', 'Jun 19', 'Jun 26',
-  'Jul 3', 'Jul 10', 'Jul 17', 'Jul 24', 'Jul 31',
-  'Aug 7', 'Aug 14', 'Aug 21', 'Aug 28', 'Sep 4',
+  'May 22 – May 29',
+  'May 29 – Jun 5',
+  'Jun 5 – Jun 12',
+  'Jun 12 – Jun 19',
+  'Jun 19 – Jun 26',
+  'Jun 26 – Jul 3',
+  'Jul 3 – Jul 10',
+  'Jul 10 – Jul 17',
+  'Jul 17 – Jul 24',
+  'Jul 24 – Jul 31',
+  'Jul 31 – Aug 7',
+  'Aug 7 – Aug 14',
+  'Aug 14 – Aug 21',
+  'Aug 21 – Aug 28',
+  'Aug 28 – Sep 4',
+  'Sep 4 – Sep 11',
 ];
 
 export const SAMPLES: Record<AllocationModelKey, SampleSeason> = {
