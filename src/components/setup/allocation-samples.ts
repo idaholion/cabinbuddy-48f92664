@@ -21,7 +21,7 @@ export interface SampleSeason {
 
 export const FAMILY_NAMES = ['Anderson', 'Brooks', 'Chen', 'Diaz'] as const;
 
-const WEEK_LABELS = [
+export const WEEK_LABELS = [
   'May 22 – May 29',
   'May 29 – Jun 5',
   'Jun 5 – Jun 12',
