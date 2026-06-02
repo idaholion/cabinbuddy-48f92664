@@ -29,7 +29,7 @@ export function AllocationExampleDrawer({ model, open, onOpenChange }: Props) {
           </SheetDescription>
         </SheetHeader>
         <div className="mt-6">
-          <SampleSeasonGrid season={sample} />
+          <SampleSeasonGrid season={sample} modelKey={modelKey} />
         </div>
       </SheetContent>
     </Sheet>
