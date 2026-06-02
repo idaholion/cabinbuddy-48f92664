@@ -142,7 +142,7 @@ export const PREVIEW_FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'What if two families want the same week?',
-    a: 'In Rotating Selection, the pick order decides. In Static Weeks, only the assigned family can book that week. In First Come, First Served, whoever books first gets it.',
+    a: 'In Rotating Selection, the pick order decides. In Static Weeks, only the assigned family can book that week. In First Come, First Served, whoever books first gets it. If both families agree, they can also swap weeks.',
   },
   {
     q: 'How does the rotation order get decided?',
