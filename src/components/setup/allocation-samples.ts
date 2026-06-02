@@ -7,7 +7,7 @@ export type AllocationModelKey =
   | 'first_come_first_serve';
 
 export interface SampleWeek {
-  label: string;          // e.g. "May 22"
+  label: string;          // e.g. "May 22 – May 29"
   family?: string;        // family group name occupying that week (undefined = open)
   note?: string;          // e.g. "1st pick", "Static", "Open"
 }
