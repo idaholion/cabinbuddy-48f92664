@@ -150,7 +150,7 @@ export const PREVIEW_FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Do families have to take a full week?',
-    a: 'During the rotation selection period, yes — picks are full Friday-to-Friday weeks. After everyone has made their picks, the remaining calendar becomes first-come and partial-week stays are allowed.',
+    a: "Not exactly. Families pick full weeks during the selection period, but they can trim their own stay during that time if they know they won't need all seven days. Trimming the stay doesn't create extra vacation days for that family; it simply frees up the unused portion for others after primary and secondary selections wrap up.",
   },
   {
     q: 'What happens to weeks no one picks?',
