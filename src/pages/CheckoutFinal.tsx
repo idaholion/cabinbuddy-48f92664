@@ -28,6 +28,8 @@ import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +61,17 @@ const CheckoutFinal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { claimedProfile } = useProfileClaiming();
+  const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
+  const effective = useEffectiveUser();
+  const claimedProfile = effective.isImpersonated
+    ? {
+        ...(rawClaimedProfile ?? {}),
+        family_group_name: effective.familyGroup,
+        member_name: effective.displayName,
+        member_type: 'group_lead',
+      } as any
+    : rawClaimedProfile;
+  const effectiveUserId = effective.id ?? user?.id ?? '';
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
   const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
@@ -193,7 +205,7 @@ const CheckoutFinal = () => {
       }
       
       // Option 3: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
-      return r.user_id === user.id;
+      return r.user_id === effectiveUserId;
     });
     
     // First, try to find an active reservation (today is between start and end date)
@@ -258,7 +270,7 @@ const CheckoutFinal = () => {
     }
     
     // Option 3: Fallback to user_id match (legacy)
-    return reservation.user_id === user.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   // Generate sample data when no reservation exists (for preview/demo)
@@ -412,7 +424,7 @@ const CheckoutFinal = () => {
     return receipts
       .filter(receipt => {
         const receiptDate = parseDateOnly(receipt.date);
-        return receipt.user_id === user.id && 
+        return receipt.user_id === effectiveUserId && 
                receiptDate >= checkInDate && 
                receiptDate <= checkOutDate;
       })
@@ -454,7 +466,7 @@ const CheckoutFinal = () => {
             if (userIsHost) return true;
           }
           
-          return r.user_id === user.id;
+          return r.user_id === effectiveUserId;
         });
 
         // For each prior reservation, calculate: billing - payments - receipts
@@ -954,6 +966,7 @@ const CheckoutFinal = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       {/* Top Navigation Bar */}
       <div className="container mx-auto px-4 py-4">
+        <ViewAsUserPicker />
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"

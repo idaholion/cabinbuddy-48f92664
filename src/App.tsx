@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { GuestAccessProvider } from "@/contexts/GuestAccessContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -196,12 +197,14 @@ const App = () => (
       <NetworkStatusProvider>
         <AuthProvider>
           <RoleProvider>
-            <ErrorBoundary>
-              <Toaster />
-              <Sonner />
-              <ProfileClaimingPrompt />
-              <AppContent />
-            </ErrorBoundary>
+            <ImpersonationProvider>
+              <ErrorBoundary>
+                <Toaster />
+                <Sonner />
+                <ProfileClaimingPrompt />
+                <AppContent />
+              </ErrorBoundary>
+            </ImpersonationProvider>
           </RoleProvider>
         </AuthProvider>
       </NetworkStatusProvider>

@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
@@ -49,6 +49,7 @@ export default function StayHistory() {
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
   const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
+  const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
@@ -1440,6 +1441,28 @@ export default function StayHistory() {
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Occupancy
                     </Button>
+                  )}
+                  {isAdmin && reservation.user_id && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/checkout-list?viewAs=${reservation.user_id}`)}
+                        title="Open the Daily Checkout list as if you were this user"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Daily Checkout as user
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/checkout-final?viewAs=${reservation.user_id}`)}
+                        title="Open the Final Checkout page as if you were this user"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Final Checkout as user
+                      </Button>
+                    </>
                   )}
                   {stayData.paymentId && stayData.amountDue > 0 && (
                     <Button

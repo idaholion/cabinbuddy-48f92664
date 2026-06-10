@@ -14,6 +14,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { parseDateOnly } from "@/lib/date-utils";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
@@ -30,7 +32,20 @@ const CheckoutList = () => {
   const { createResponse } = useSurveyResponses();
   const { profile } = useProfile();
   const { user } = useAuth();
-  const { claimedProfile } = useProfileClaiming();
+  const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
+  const effective = useEffectiveUser();
+  // When an admin is viewing-as another user, swap in a synthetic claimed
+  // profile so the existing matching logic finds the impersonated person's
+  // reservations / data.
+  const claimedProfile = effective.isImpersonated
+    ? {
+        ...(rawClaimedProfile ?? {}),
+        family_group_name: effective.familyGroup,
+        member_name: effective.displayName,
+        member_type: 'group_lead',
+      }
+    : rawClaimedProfile;
+  const effectiveUserId = effective.id ?? user?.id ?? '';
   const { reservations } = useReservations();
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -134,7 +149,7 @@ const CheckoutList = () => {
       }
       
       // Fallback: match by user_id
-      return r.user_id === user.id;
+      return r.user_id === effectiveUserId;
     });
     
     // Sort by start date descending to get most recent
@@ -689,6 +704,7 @@ const CheckoutList = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       {/* Top Navigation Bar */}
       <div className="container mx-auto px-4 py-4">
+        <ViewAsUserPicker />
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"
