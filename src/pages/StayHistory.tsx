@@ -50,6 +50,7 @@ export default function StayHistory() {
   const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
   const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
+  const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
