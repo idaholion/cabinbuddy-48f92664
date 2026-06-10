@@ -183,8 +183,7 @@ export const SeasonalChecklistViewer: React.FC<SeasonalChecklistViewerProps> = (
         >
           <Checkbox 
             checked={completedItems[item.id] || false}
-            onCheckedChange={() => toggleItem(item.id)}
-            className="mt-0.5"
+            className="mt-0.5 pointer-events-none"
           />
           
           <div className="flex-1">
