@@ -30,7 +30,20 @@ const CheckoutList = () => {
   const { createResponse } = useSurveyResponses();
   const { profile } = useProfile();
   const { user } = useAuth();
-  const { claimedProfile } = useProfileClaiming();
+  const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
+  const effective = useEffectiveUser();
+  // When an admin is viewing-as another user, swap in a synthetic claimed
+  // profile so the existing matching logic finds the impersonated person's
+  // reservations / data.
+  const claimedProfile = effective.isImpersonated
+    ? {
+        ...(rawClaimedProfile ?? {}),
+        family_group_name: effective.familyGroup,
+        member_name: effective.displayName,
+        member_type: 'group_lead',
+      }
+    : rawClaimedProfile;
+  const effectiveUserId = effective.id ?? user?.id ?? '';
   const { reservations } = useReservations();
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
