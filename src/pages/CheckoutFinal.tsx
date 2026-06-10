@@ -469,15 +469,12 @@ const CheckoutFinal = () => {
           return r.user_id === effectiveUserId;
         });
 
-        // For each prior reservation, calculate: billing - payments - receipts
-        // Mirrors StayHistory dedupe logic to handle duplicate payment rows,
-        // so credits from one stay correctly offset balances on others.
-        let runningBalance = 0;
+        // Sum billing - payments across all prior reservations.
+        let priorBillingMinusPaid = 0;
 
         for (const reservation of priorReservations.sort((a, b) => 
           parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
         )) {
-          // Find ALL matching payments for this reservation + family group
           const { data: matchingPayments } = await supabase
             .from('payments')
             .select('amount, amount_paid')
@@ -494,20 +491,31 @@ const CheckoutFinal = () => {
               matchingPayments[0];
           }
 
-          // Find receipts ONLY for this specific reservation's date range
-          const familyReceipts = receipts.filter(r => 
-            r.family_group === reservation.family_group &&
-            parseDateOnly(r.date) >= parseDateOnly(reservation.start_date) &&
-            parseDateOnly(r.date) <= parseDateOnly(reservation.end_date)
-          );
-          const receiptsTotal = familyReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
-
           if (payment) {
             const billing = Number(payment.amount) || 0;
             const paid = Number(payment.amount_paid) || 0;
-            runningBalance += (billing - paid - receiptsTotal);
+            priorBillingMinusPaid += (billing - paid);
           }
         }
+
+        // Apply ALL family receipts as credit, EXCEPT those that fall within
+        // the current stay's date range (those are shown as "Less: Receipts
+        // submitted" on this same checkout summary and must not be counted twice).
+        const familyGroup = currentReservation.family_group;
+        const familyReceipts = receipts.filter(r => {
+          if (r.family_group !== familyGroup) return false;
+          const d = parseDateOnly(r.date);
+          const inCurrentStay =
+            d >= parseDateOnly(currentReservation.start_date) &&
+            d <= parseDateOnly(currentReservation.end_date);
+          return !inCurrentStay;
+        });
+        const priorReceiptsCredit = familyReceipts.reduce(
+          (sum, r) => sum + (r.amount || 0),
+          0
+        );
+
+        const runningBalance = priorBillingMinusPaid - priorReceiptsCredit;
 
         setPreviousBalance(runningBalance);
       } catch (error) {
