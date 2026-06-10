@@ -149,7 +149,7 @@ const CheckoutList = () => {
       }
       
       // Fallback: match by user_id
-      return r.user_id === user.id;
+      return r.user_id === effectiveUserId;
     });
     
     // Sort by start date descending to get most recent
