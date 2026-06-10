@@ -1441,6 +1441,28 @@ export default function StayHistory() {
                       Edit Occupancy
                     </Button>
                   )}
+                  {isAdmin && reservation.user_id && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/checkout-list?viewAs=${reservation.user_id}`)}
+                        title="Open the Daily Checkout list as if you were this user"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Daily Checkout as user
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/checkout-final?viewAs=${reservation.user_id}`)}
+                        title="Open the Final Checkout page as if you were this user"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Final Checkout as user
+                      </Button>
+                    </>
+                  )}
                   {stayData.paymentId && stayData.amountDue > 0 && (
                     <Button
                       variant="outline"
