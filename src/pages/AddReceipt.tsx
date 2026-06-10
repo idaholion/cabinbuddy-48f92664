@@ -1039,7 +1039,9 @@ const AddReceipt = () => {
               </div>
               <div className="mt-4 pt-4 border-t space-y-1">
                 <div className="text-sm text-muted-foreground">
-                  Showing {filteredReceipts.length} of {receipts.length} receipts
+                  {selectedFamilyGroup === "all" && selectedYear === "all"
+                    ? `Showing all ${receipts.length} receipts`
+                    : `Showing ${filteredReceipts.length} matching receipt${filteredReceipts.length === 1 ? "" : "s"} (${receipts.length} total in organization)`}
                 </div>
                 <div className="flex justify-between items-center font-bold text-body-large">
                   <span>Total:</span>
