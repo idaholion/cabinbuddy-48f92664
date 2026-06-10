@@ -14,6 +14,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { parseDateOnly } from "@/lib/date-utils";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
