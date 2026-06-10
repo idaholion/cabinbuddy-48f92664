@@ -1872,31 +1872,24 @@ const CheckoutFinal = () => {
                       <span className="text-muted-foreground">Less: Receipts submitted:</span>
                       <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
                     </div>
-                    
-                    {previousCredit > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Previous Credit Applied:</span>
-                        <span className="font-medium text-green-600">
-                          -{BillingCalculator.formatCurrency(previousCredit)}
-                        </span>
-                      </div>
-                    )}
-                    
+
                     {previousBalance !== 0 && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Previous Balance:</span>
+                        <span className="text-muted-foreground">
+                          {previousBalance > 0 ? 'Previous Balance:' : 'Previous Credit:'}
+                        </span>
                         <span className={`font-medium ${previousBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
                           {previousBalance > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(previousBalance))}
                         </span>
                       </div>
                     )}
-                    
+
                     <Separator />
-                    
+
                     <div className="flex justify-between text-lg font-semibold">
-                      <span>Total Amount Due:</span>
+                      <span>{totalAmount < 0 ? 'Credit Remaining:' : 'Balance Due:'}</span>
                       <span className={totalAmount < 0 ? 'text-green-600' : 'text-primary'}>
-                        {BillingCalculator.formatCurrency(totalAmount)}
+                        {BillingCalculator.formatCurrency(Math.abs(totalAmount))}
                       </span>
                     </div>
                     
