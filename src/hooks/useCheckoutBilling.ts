@@ -231,15 +231,38 @@ export const useCheckoutBilling = (
       }
 
       // Sum up all credits
-      const totalCredit = (credits || []).reduce((sum, payment) => {
+      const paymentCredits = (credits || []).reduce((sum, payment) => {
         const balanceDue = Number(payment.balance_due) || 0;
         return sum + Math.abs(balanceDue);
       }, 0);
 
+      // Also fetch receipts for this family group — Stay History applies these
+      // as credits against the family's balance, so the checkout pages must
+      // mirror that behavior or the totals diverge.
+      const { data: receipts, error: receiptsError } = await supabase
+        .from('receipts')
+        .select('amount')
+        .eq('organization_id', organization.id)
+        .eq('family_group', reservation.family_group);
+
+      if (receiptsError) {
+        console.error('Error fetching receipts for credit calc:', receiptsError);
+      }
+
+      const receiptsCredit = (receipts || []).reduce(
+        (sum, r: any) => sum + (Number(r.amount) || 0),
+        0
+      );
+
+      const totalCredit = paymentCredits + receiptsCredit;
+
       console.log('📊 [CHECKOUT-BILLING] Previous credits found:', {
         familyGroup: reservation.family_group,
-        creditCount: credits?.length || 0,
-        totalCredit
+        paymentCreditCount: credits?.length || 0,
+        paymentCredits,
+        receiptCount: receipts?.length || 0,
+        receiptsCredit,
+        totalCredit,
       });
 
       setPreviousCredit(totalCredit);
@@ -248,6 +271,7 @@ export const useCheckoutBilling = (
       setPreviousCredit(0);
     }
   };
+
 
   useEffect(() => {
     fetchDailyOccupancy();
