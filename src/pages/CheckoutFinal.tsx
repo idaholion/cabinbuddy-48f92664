@@ -28,6 +28,8 @@ import { GuestCostSplitDialog } from "@/components/GuestCostSplitDialog";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { getHostFirstName } from "@/lib/reservation-utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +61,17 @@ const CheckoutFinal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const { claimedProfile } = useProfileClaiming();
+  const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
+  const effective = useEffectiveUser();
+  const claimedProfile = effective.isImpersonated
+    ? {
+        ...(rawClaimedProfile ?? {}),
+        family_group_name: effective.familyGroup,
+        member_name: effective.displayName,
+        member_type: 'group_lead',
+      } as any
+    : rawClaimedProfile;
+  const effectiveUserId = effective.id ?? user?.id ?? '';
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
   const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
