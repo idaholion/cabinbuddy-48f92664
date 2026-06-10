@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
+import { useOrganization } from '@/hooks/useOrganization';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel,
   SelectTrigger, SelectValue,
@@ -12,34 +13,66 @@ import { Button } from '@/components/ui/button';
 import { Eye, X } from 'lucide-react';
 
 /**
- * Admin-only dropdown + banner shown on the Daily/Final Checkout pages.
- * Lets an admin pick any family-group member and view that page as if they
- * were logged in as them. Reads/writes `?viewAs=<user_id>` on the URL so the
- * choice can be deep-linked from Stay History.
+ * Admin-only "View as user" picker. Lists every claimed family-group member
+ * (resolved via member_profile_links → claimed_by_user_id) and lets the admin
+ * impersonate them on Daily/Final Checkout. Also hydrates from ?viewAs=<id>
+ * for deep links from Stay History.
  */
 export const ViewAsUserPicker = () => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
+  const { organization } = useOrganization();
   const { target, setTarget, clear, isImpersonating } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
+
+  // Load claim links for this org
+  useEffect(() => {
+    if (!isAdmin || !organization?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('member_profile_links')
+        .select('family_group_name, member_name, claimed_by_user_id')
+        .eq('organization_id', organization.id);
+      if (!cancelled && !error && data) setLinks(data as any);
+    })();
+    return () => { cancelled = true; };
+  }, [isAdmin, organization?.id]);
+
+  const linkByKey = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of links) {
+      if (!l.claimed_by_user_id) continue;
+      map.set(`${l.family_group_name}::${l.member_name}`.toLowerCase(), l.claimed_by_user_id);
+    }
+    return map;
+  }, [links]);
 
   const members = useMemo(() => {
     const list: Array<{ userId: string; displayName: string; familyGroup: string; email?: string | null }> = [];
+    const seen = new Set<string>();
     for (const fg of familyGroups || []) {
       const hosts: any[] = Array.isArray((fg as any).host_members) ? (fg as any).host_members : [];
       for (const m of hosts) {
-        if (!m?.user_id) continue;
-        const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.name || m.email || 'Member';
+        const name = m?.name || [m?.firstName, m?.lastName].filter(Boolean).join(' ') || m?.email;
+        if (!name) continue;
+        // Try explicit user_id first, then resolve via claim links
+        let userId: string | undefined = m?.user_id;
+        if (!userId) userId = linkByKey.get(`${fg.name}::${name}`.toLowerCase());
+        if (!userId) continue;
+        if (seen.has(userId)) continue;
+        seen.add(userId);
         list.push({
-          userId: m.user_id,
+          userId,
           displayName: name,
           familyGroup: fg.name,
-          email: m.email ?? null,
+          email: m?.email ?? null,
         });
       }
     }
     return list;
-  }, [familyGroups]);
+  }, [familyGroups, linkByKey]);
 
   // Hydrate from ?viewAs= deep link
   useEffect(() => {
@@ -113,6 +146,11 @@ export const ViewAsUserPicker = () => {
               ))}
           </SelectContent>
         </Select>
+        {members.length === 0 && (
+          <span className="text-xs text-muted-foreground">
+            No claimed members found in this organization.
+          </span>
+        )}
         {isImpersonating && target && (
           <Button variant="outline" size="sm" onClick={() => handleSelect('__self__')}>
             <X className="h-3.5 w-3.5 mr-1" /> Exit
