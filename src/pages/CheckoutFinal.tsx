@@ -205,7 +205,7 @@ const CheckoutFinal = () => {
       }
       
       // Option 3: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
-      return r.user_id === user.id;
+      return r.user_id === effectiveUserId;
     });
     
     // First, try to find an active reservation (today is between start and end date)
@@ -270,7 +270,7 @@ const CheckoutFinal = () => {
     }
     
     // Option 3: Fallback to user_id match (legacy)
-    return reservation.user_id === user.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   // Generate sample data when no reservation exists (for preview/demo)
@@ -424,7 +424,7 @@ const CheckoutFinal = () => {
     return receipts
       .filter(receipt => {
         const receiptDate = parseDateOnly(receipt.date);
-        return receipt.user_id === user.id && 
+        return receipt.user_id === effectiveUserId && 
                receiptDate >= checkInDate && 
                receiptDate <= checkOutDate;
       })
@@ -466,7 +466,7 @@ const CheckoutFinal = () => {
             if (userIsHost) return true;
           }
           
-          return r.user_id === user.id;
+          return r.user_id === effectiveUserId;
         });
 
         // For each prior reservation, calculate: billing - payments - receipts
