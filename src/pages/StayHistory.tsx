@@ -1301,17 +1301,23 @@ export default function StayHistory() {
                         <span className="font-medium text-green-600">-${stayData.creditFromEarlierPayment.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-sm border-t pt-2">
-                      <span className="font-semibold">Amount Due:</span>
-                      <span className={`font-bold ${((stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ? 0 : stayData.amountDue) > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                        ${(stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 ? 0 : stayData.amountDue).toFixed(2)}
-                        {stayData.paidViaLaterStay && stayData.originalAmountDue && (
-                          <span className="text-muted-foreground font-normal text-xs ml-2">
-                            (orig. ${stayData.originalAmountDue.toFixed(2)} paid at later stay)
+                    {(() => {
+                      const displayAmount = (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ? 0 : stayData.amountDue;
+                      const isCredit = displayAmount < 0;
+                      return (
+                        <div className="flex justify-between text-sm border-t pt-2">
+                          <span className="font-semibold">{isCredit ? 'Credit Remaining:' : 'Amount Due:'}</span>
+                          <span className={`font-bold ${displayAmount > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                            ${Math.abs(displayAmount).toFixed(2)}
+                            {stayData.paidViaLaterStay && stayData.originalAmountDue && (
+                              <span className="text-muted-foreground font-normal text-xs ml-2">
+                                (orig. ${stayData.originalAmountDue.toFixed(2)} paid at later stay)
+                              </span>
+                            )}
                           </span>
-                        )}
-                      </span>
-                    </div>
+                        </div>
+                      );
+                    })()}
                     {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.currentBalance === 0 && stayData.previousBalance < 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Covered by credit from earlier overpayment (included in previous balance)
