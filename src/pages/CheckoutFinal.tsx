@@ -823,24 +823,36 @@ const CheckoutFinal = () => {
           <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
         </div>
       )}
-      
-      {includeReceipts && previousCredit > 0 && (
+
+      {previousBalance !== 0 && (
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Previous Credit Applied:</span>
-          <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(previousCredit)}</span>
+          <span className="text-muted-foreground">
+            {previousBalance > 0 ? 'Previous Balance:' : 'Previous Credit:'}
+          </span>
+          <span className={`font-medium ${previousBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+            {previousBalance > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(previousBalance))}
+          </span>
         </div>
       )}
-      
+
       <Separator />
-      
-      <div className="flex justify-between text-lg font-semibold">
-        <span>Amount Due:</span>
-        <span className={breakdown.total < 0 ? 'text-green-600' : 'text-primary'}>
-          {BillingCalculator.formatCurrency(includeReceipts ? breakdown.total - checkoutData.receiptsTotal - previousCredit : breakdown.total)}
-        </span>
-      </div>
+
+      {(() => {
+        const final = includeReceipts
+          ? breakdown.total - checkoutData.receiptsTotal + previousBalance
+          : breakdown.total + previousBalance;
+        const isCredit = final < 0;
+        return (
+          <div className="flex justify-between text-lg font-semibold">
+            <span>{isCredit ? 'Credit Remaining:' : 'Balance Due:'}</span>
+            <span className={isCredit ? 'text-green-600' : 'text-primary'}>
+              {BillingCalculator.formatCurrency(Math.abs(final))}
+            </span>
+          </div>
+        );
+      })()}
     </div>
-  ), [checkoutData.receiptsTotal, previousCredit]);
+  ), [checkoutData.receiptsTotal, previousBalance]);
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
