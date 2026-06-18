@@ -80,18 +80,9 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   high: 'High',
 };
 
-const UNASSIGNED = '__unassigned__';
-
 const bgStyle = {
   backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
 };
-
-function memberName(member: any): string {
-  if (!member) return '';
-  if (typeof member === 'string') return member;
-  if (member.full_name) return member.full_name;
-  return [member.first_name, member.last_name].filter(Boolean).join(' ').trim();
-}
 
 const CabinMaintenance = () => {
   const { user } = useAuth();
