@@ -185,6 +185,119 @@ export type Database = {
           },
         ]
       }
+      cabin_maintenance_entries: {
+        Row: {
+          category: string | null
+          completed_at: string | null
+          cost: number | null
+          created_at: string
+          created_by: string
+          date_performed: string | null
+          description: string | null
+          entry_type: string
+          id: string
+          organization_id: string
+          performed_by_name: string | null
+          performed_by_user_id: string | null
+          priority: string | null
+          status: string
+          target_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          completed_at?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by: string
+          date_performed?: string | null
+          description?: string | null
+          entry_type: string
+          id?: string
+          organization_id: string
+          performed_by_name?: string | null
+          performed_by_user_id?: string | null
+          priority?: string | null
+          status?: string
+          target_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          completed_at?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string
+          date_performed?: string | null
+          description?: string | null
+          entry_type?: string
+          id?: string
+          organization_id?: string
+          performed_by_name?: string | null
+          performed_by_user_id?: string | null
+          priority?: string | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabin_maintenance_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cabin_maintenance_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          entry_id: string
+          id: string
+          organization_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          entry_id: string
+          id?: string
+          organization_id: string
+          storage_path: string
+          uploaded_by: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          entry_id?: string
+          id?: string
+          organization_id?: string
+          storage_path?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabin_maintenance_photos_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "cabin_maintenance_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cabin_maintenance_photos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cabin_rules: {
         Row: {
           content: Json
