@@ -53,7 +53,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { useEnhancedProfileClaim } from '@/hooks/useEnhancedProfileClaim';
-import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import {
   useCabinMaintenance,
   type EntryType,
