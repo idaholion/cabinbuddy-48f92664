@@ -507,6 +507,7 @@ function EntryDialog({
   const [category, setCategory] = useState<string>('');
   const [datePerformed, setDatePerformed] = useState(today);
   const [performedBy, setPerformedBy] = useState('');
+  const [performedByMode, setPerformedByMode] = useState<'select' | 'custom'>('select');
   const [cost, setCost] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [targetDate, setTargetDate] = useState('');
@@ -521,7 +522,11 @@ function EntryDialog({
       setDescription(editing.description || '');
       setCategory(editing.category || '');
       setDatePerformed(editing.date_performed || today);
-      setPerformedBy(editing.performed_by_name || '');
+      const name = editing.performed_by_name || '';
+      setPerformedBy(name);
+      setPerformedByMode(
+        name && name !== defaultPerformedBy && !memberOptions.includes(name) ? 'custom' : 'select'
+      );
       setCost(editing.cost != null ? String(editing.cost) : '');
       setPriority((editing.priority as Priority) || 'medium');
       setTargetDate(editing.target_date || '');
@@ -531,8 +536,9 @@ function EntryDialog({
       setDescription('');
       setCategory('');
       setDatePerformed(today);
-      // Work log defaults to current user; To-Do "Assigned to" defaults blank.
-      setPerformedBy(entryType === 'work_log' ? defaultPerformedBy : '');
+      // Performed by / Assigned to defaults to blank for all entry types.
+      setPerformedBy('');
+      setPerformedByMode('select');
       setCost('');
       setPriority('medium');
       setTargetDate('');
@@ -658,33 +664,41 @@ function EntryDialog({
           {effectiveType !== 'reference' && (
             <div className="space-y-2">
               <Label>{effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}</Label>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <Select
+                value={performedByMode === 'custom' ? 'custom' : performedBy || UNASSIGNED}
+                onValueChange={(v) => {
+                  if (v === 'custom') {
+                    setPerformedByMode('custom');
+                    setPerformedBy('');
+                  } else {
+                    setPerformedByMode('select');
+                    setPerformedBy(v === UNASSIGNED ? '' : v);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select or type a name…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                  {defaultPerformedBy && !memberOptions.includes(defaultPerformedBy) && (
+                    <SelectItem value={defaultPerformedBy}>{defaultPerformedBy} (me)</SelectItem>
+                  )}
+                  {memberOptions.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">Other (type a name)</SelectItem>
+                </SelectContent>
+              </Select>
+              {performedByMode === 'custom' && (
                 <Input
                   value={performedBy}
                   onChange={(e) => setPerformedBy(e.target.value)}
-                  placeholder={effectiveType === 'todo' ? 'Unassigned' : 'Name'}
-                  className="flex-1"
+                  placeholder={effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}
                 />
-                <Select
-                  value=""
-                  onValueChange={(v) => setPerformedBy(v === UNASSIGNED ? '' : v)}
-                >
-                  <SelectTrigger className="sm:w-48">
-                    <SelectValue placeholder="Pick member…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                    {defaultPerformedBy && !memberOptions.includes(defaultPerformedBy) && (
-                      <SelectItem value={defaultPerformedBy}>{defaultPerformedBy} (me)</SelectItem>
-                    )}
-                    {memberOptions.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              )}
             </div>
           )}
 
