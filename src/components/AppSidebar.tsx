@@ -135,6 +135,11 @@ const resourcesItems = [
     icon: Book,
   },
   {
+    title: "Cabin Maintenance",
+    url: "/cabin-maintenance",
+    icon: Wrench,
+  },
+  {
     title: "Seasonal Checklists",
     url: "/seasonal-checklists",
     icon: CheckSquare,
