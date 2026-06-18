@@ -96,7 +96,6 @@ function memberName(member: any): string {
 const CabinMaintenance = () => {
   const { user } = useAuth();
   const { isAdmin } = useOrgAdmin();
-  const { claimedProfile } = useEnhancedProfileClaim();
   const { toast } = useToast();
   const { entries, loading, createEntry, updateEntry, completeTodo, reopenTodo, deleteEntry } = useCabinMaintenance();
 
