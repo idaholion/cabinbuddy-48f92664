@@ -119,7 +119,7 @@ const CabinMaintenance = () => {
   }, [familyGroups]);
 
   const defaultPerformedBy = useMemo(() => {
-    if (claimedProfile?.full_name) return claimedProfile.full_name;
+    if (claimedProfile?.member_name) return claimedProfile.member_name;
     return user?.email || '';
   }, [claimedProfile, user]);
 
