@@ -178,7 +178,7 @@ export function useCabinMaintenance() {
       completed_at: new Date().toISOString(),
       date_performed: new Date().toISOString().slice(0, 10),
     } as any);
-    toast({ title: 'Marked complete', description: 'Task moved to Work Log' });
+    toast({ title: 'Marked complete', description: 'Task moved to Maintenance Log' });
   };
 
   const reopenTodo = async (id: string) => {

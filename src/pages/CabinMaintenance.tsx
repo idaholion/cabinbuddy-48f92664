@@ -230,7 +230,7 @@ const CabinMaintenance = () => {
               <div className="md:ml-auto">
                 <Button onClick={openAdd} className="w-full md:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
+                  Add {tab === 'work_log' ? 'Maintenance Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
                 </Button>
               </div>
             </div>
