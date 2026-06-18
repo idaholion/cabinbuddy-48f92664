@@ -52,8 +52,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
-import { useEnhancedProfileClaim } from '@/hooks/useEnhancedProfileClaim';
-import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import {
   useCabinMaintenance,
   type EntryType,
@@ -82,24 +80,13 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   high: 'High',
 };
 
-const UNASSIGNED = '__unassigned__';
-
 const bgStyle = {
   backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
 };
 
-function memberName(member: any): string {
-  if (!member) return '';
-  if (typeof member === 'string') return member;
-  if (member.full_name) return member.full_name;
-  return [member.first_name, member.last_name].filter(Boolean).join(' ').trim();
-}
-
 const CabinMaintenance = () => {
   const { user } = useAuth();
   const { isAdmin } = useOrgAdmin();
-  const { claimedProfile } = useEnhancedProfileClaim();
-  const { familyGroups } = useFamilyGroups();
   const { toast } = useToast();
   const { entries, loading, createEntry, updateEntry, completeTodo, reopenTodo, deleteEntry } = useCabinMaintenance();
 
@@ -109,22 +96,6 @@ const CabinMaintenance = () => {
   const [todoFilter, setTodoFilter] = useState<'open' | 'completed' | 'all'>('open');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
-
-  const allMembers = useMemo(() => {
-    const names = new Set<string>();
-    familyGroups.forEach((g: any) => {
-      (g.host_members || []).forEach((m: any) => {
-        const n = memberName(m);
-        if (n) names.add(n);
-      });
-    });
-    return Array.from(names).sort();
-  }, [familyGroups]);
-
-  const defaultPerformedBy = useMemo(() => {
-    if (claimedProfile?.member_name) return claimedProfile.member_name;
-    return user?.email || '';
-  }, [claimedProfile, user]);
 
   const filteredEntries = useMemo(() => {
     let list = entries.filter((e) => e.entry_type === tab);
@@ -316,8 +287,6 @@ const CabinMaintenance = () => {
         }}
         entryType={tab}
         editing={editingEntry}
-        defaultPerformedBy={defaultPerformedBy}
-        memberOptions={allMembers}
         onSubmit={async (input) => {
           if (editingEntry) {
             await updateEntry(editingEntry.id, {
@@ -487,16 +456,12 @@ function EntryDialog({
   onOpenChange,
   entryType,
   editing,
-  defaultPerformedBy,
-  memberOptions,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   entryType: EntryType;
   editing: MaintenanceEntry | null;
-  defaultPerformedBy: string;
-  memberOptions: string[];
   onSubmit: (input: NewEntryInput) => Promise<void> | void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -522,11 +487,7 @@ function EntryDialog({
       setDescription(editing.description || '');
       setCategory(editing.category || '');
       setDatePerformed(editing.date_performed || today);
-      const name = editing.performed_by_name || '';
-      setPerformedBy(name);
-      setPerformedByMode(
-        name && name !== defaultPerformedBy && !memberOptions.includes(name) ? 'custom' : 'select'
-      );
+      setPerformedBy(editing.performed_by_name || '');
       setCost(editing.cost != null ? String(editing.cost) : '');
       setPriority((editing.priority as Priority) || 'medium');
       setTargetDate(editing.target_date || '');
@@ -538,7 +499,6 @@ function EntryDialog({
       setDatePerformed(today);
       // Performed by / Assigned to defaults to blank for all entry types.
       setPerformedBy('');
-      setPerformedByMode('select');
       setCost('');
       setPriority('medium');
       setTargetDate('');
@@ -664,41 +624,11 @@ function EntryDialog({
           {effectiveType !== 'reference' && (
             <div className="space-y-2">
               <Label>{effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}</Label>
-              <Select
-                value={performedByMode === 'custom' ? 'custom' : performedBy || UNASSIGNED}
-                onValueChange={(v) => {
-                  if (v === 'custom') {
-                    setPerformedByMode('custom');
-                    setPerformedBy('');
-                  } else {
-                    setPerformedByMode('select');
-                    setPerformedBy(v === UNASSIGNED ? '' : v);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select or type a name…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                  {defaultPerformedBy && !memberOptions.includes(defaultPerformedBy) && (
-                    <SelectItem value={defaultPerformedBy}>{defaultPerformedBy} (me)</SelectItem>
-                  )}
-                  {memberOptions.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom">Other (type a name)</SelectItem>
-                </SelectContent>
-              </Select>
-              {performedByMode === 'custom' && (
-                <Input
-                  value={performedBy}
-                  onChange={(e) => setPerformedBy(e.target.value)}
-                  placeholder={effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}
-                />
-              )}
+              <Input
+                value={performedBy}
+                onChange={(e) => setPerformedBy(e.target.value)}
+                placeholder={effectiveType === 'todo' ? 'Name (optional)' : 'Name (optional)'}
+              />
             </div>
           )}
 
