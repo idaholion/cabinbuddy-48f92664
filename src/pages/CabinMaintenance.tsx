@@ -222,7 +222,7 @@ const CabinMaintenance = () => {
             <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
               <Tabs value={tab} onValueChange={(v) => setTab(v as EntryType)} className="w-full md:w-auto">
                 <TabsList>
-                  <TabsTrigger value="work_log">Work Log</TabsTrigger>
+                  <TabsTrigger value="work_log">Maintenance Log</TabsTrigger>
                   <TabsTrigger value="reference">Reference Info</TabsTrigger>
                   <TabsTrigger value="todo">To-Do</TabsTrigger>
                 </TabsList>
@@ -230,7 +230,7 @@ const CabinMaintenance = () => {
               <div className="md:ml-auto">
                 <Button onClick={openAdd} className="w-full md:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
+                  Add {tab === 'work_log' ? 'Maintenance Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
                 </Button>
               </div>
             </div>
@@ -565,7 +565,7 @@ function EntryDialog({
   const titleLabel = editing
     ? 'Edit Entry'
     : effectiveType === 'work_log'
-    ? 'Add Work Log Entry'
+    ? 'Add Maintenance Log Entry'
     : effectiveType === 'reference'
     ? 'Add Reference Info'
     : 'Add To-Do';
