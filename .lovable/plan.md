@@ -1,27 +1,58 @@
-## Problem
+# Cabin Maintenance Page
 
-In `src/components/SeasonalChecklistViewer.tsx`, each checklist row has two competing click handlers:
+A new page where family members log maintenance work, keep reference information (paint colors, model numbers), and track a shared to-do list. Styled like the Add Receipt page with the cabin background and "Cabin Maintenance" in the green script header.
 
-- The wrapper `<div>` calls `toggleItem(item.id)` on click.
-- The `<Checkbox>` inside it also calls `toggleItem(item.id)` via `onCheckedChange`.
+## Page setup
+- Route: `/cabin-maintenance`, protected, inside `MainLayout`, lazy-loaded in `App.tsx`
+- Add a nav/menu link alongside the other cabin pages (Cabin Rules, Documents, Seasonal Checklists)
+- `PageHeader` with `backgroundImage` styling and title "Cabin Maintenance" (matches the green script look used on the cabin pages)
 
-When the user clicks the checkbox directly, both handlers fire (the checkbox change + the parent div click bubbling up), toggling the state twice and leaving it unchanged. Clicking the row text only fires once, which is why Dana could check an item (by clicking text/row) but couldn't uncheck it (when clicking the checkbox itself).
+## Three tabs
 
-## Fix
+**1. Work Log** — dated maintenance actions
+- New-entry button opens a dialog with: Title, Description, Date performed (defaults to today), Category, Performed by (defaults to current user, can override to any family member), Cost (optional), Photo attachments (multiple)
+- List view: newest first, search box, category filter
+- Each card shows title, date, who did it, category chip, cost (if set), thumbnail strip, expandable description
 
-Make the row click the single source of truth, and let the checkbox be a visual reflection only:
+**2. Reference Info** — persistent facts (exterior stain color, well pump model, septic pumping interval, paint brands, etc.)
+- Same dialog shape minus the "date performed" requirement (date becomes "last updated")
+- Grouped by category, searchable
+- Good for the "the stain used for the cabin exterior is XXXX" type of note
 
-- Keep `onClick={() => toggleItem(item.id)}` on the row wrapper.
-- Change the `<Checkbox>` to not have its own handler — render it as a controlled visual (`checked={...}`) and remove `onCheckedChange`, OR stop click propagation on the checkbox and only let `onCheckedChange` fire.
+**3. To-Do** — open maintenance tasks
+- Add task: Title, Description, Category, Priority (Low/Med/High), Optional target date, Optional assignee
+- Checkbox to mark complete → moves into Work Log as a finished entry (prompts for any final notes/photos/cost)
+- Filter by Open / Completed / All
 
-Preferred: remove `onCheckedChange` from the Checkbox and add `onClick={(e) => e.stopPropagation()}` is not needed if there's no handler — the bubbled div click will still toggle it. Simplest change: delete the `onCheckedChange` line.
+## Categories (preset, with "Other")
+Plumbing, Electrical, Exterior, Interior, Septic/Well, Appliances, HVAC, Grounds, Safety, Reference Info, Other
 
-## Files
+## Permissions
+- Any family member can add entries to any tab
+- Only the author or an admin/treasurer can edit or delete
+- Tied to the current organization via the existing `createOrganizationContext` / secure query wrappers
 
-- `src/components/SeasonalChecklistViewer.tsx` (around line 184–188)
+## Helpful extras
+- "Duplicate entry" action on Work Log items (e.g. annual Ridex treatment)
+- Recent activity summary card at top: "5 entries this season, 2 open to-dos"
+- Photo lightbox on click
+- Empty-state illustrations with a "Add your first entry" CTA
 
-## Verification
+## Technical details
 
-- Check an item → state becomes checked.
-- Click the same checkbox again → state becomes unchecked.
-- Click the row text → toggles as before.
+**Database (Supabase migration, external project — user runs SQL manually per project memory):**
+- `cabin_maintenance_entries` — organization_id, entry_type ('work_log' | 'reference' | 'todo'), title, description, category, date_performed, performed_by_member_id, performed_by_user_id, cost, priority, target_date, status ('open'|'completed'), completed_at, completed_from_todo_id, created_by, created_at, updated_at
+- `cabin_maintenance_photos` — entry_id, storage_path, caption, uploaded_by, created_at
+- Storage bucket: `cabin-maintenance-photos` (private, RLS-scoped to org members)
+- RLS: read = org members; insert = org members; update/delete = author OR org admin/treasurer (via existing `has_role` helper)
+- GRANTs to `authenticated` and `service_role` per project rules
+
+**Frontend:**
+- New page `src/pages/CabinMaintenance.tsx`
+- Components under `src/components/cabin-maintenance/`: `MaintenanceTabs`, `WorkLogList`, `ReferenceInfoList`, `TodoList`, `MaintenanceEntryDialog`, `MaintenanceEntryCard`, `PhotoUploader`
+- Hook `src/hooks/useCabinMaintenance.ts` using `secureSelect/Insert/Update/Delete` wrappers and `createOrganizationContext` (per project memory rule)
+- React Query for caching, optimistic updates on todo toggle
+- Zod schemas for the entry form
+
+## Open questions before build
+None blocking — will follow existing patterns (Documents/Shared Notes) for layout, photo handling, and permissions unless you want changes.
