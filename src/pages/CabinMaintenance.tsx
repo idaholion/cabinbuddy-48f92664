@@ -218,7 +218,7 @@ const CabinMaintenance = () => {
 
         <Card className="bg-card/95">
           <CardHeader className="pb-3">
-            {/* Row 1: tabs + search (search where Add was) */}
+            {/* Row 1: tabs + Add button */}
             <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
               <Tabs value={tab} onValueChange={(v) => setTab(v as EntryType)} className="w-full md:w-auto">
                 <TabsList>
@@ -227,18 +227,15 @@ const CabinMaintenance = () => {
                   <TabsTrigger value="todo">To-Do</TabsTrigger>
                 </TabsList>
               </Tabs>
-              <div className="relative md:w-72">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search…"
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="md:ml-auto">
+                <Button onClick={openAdd} className="w-full md:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
+                </Button>
               </div>
             </div>
 
-            {/* Row 2: filters + Add button (Add where search was) */}
+            {/* Row 2: filters */}
             <div className="flex flex-col md:flex-row gap-2 mt-3">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="md:w-48">
@@ -265,16 +262,11 @@ const CabinMaintenance = () => {
                   </SelectContent>
                 </Select>
               )}
-              <div className="md:ml-auto">
-                <Button onClick={openAdd} className="w-full md:w-auto">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
-                </Button>
-              </div>
             </div>
           </CardHeader>
 
           <CardContent>
+
             {loading ? (
               <p className="text-center text-muted-foreground py-8">Loading…</p>
             ) : filteredEntries.length === 0 ? (
@@ -301,6 +293,17 @@ const CabinMaintenance = () => {
                 ))}
               </div>
             )}
+
+            <div className="relative mt-4">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search entries…"
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
           </CardContent>
         </Card>
       </div>
