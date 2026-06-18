@@ -293,6 +293,17 @@ const CabinMaintenance = () => {
                 ))}
               </div>
             )}
+
+            <div className="relative mt-4">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search entries…"
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
           </CardContent>
         </Card>
       </div>
