@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -14,14 +14,15 @@ import {
   DollarSign,
   User as UserIcon,
   Tag,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,8 @@ const PRIORITY_LABEL: Record<Priority, string> = {
   high: 'High',
 };
 
+const UNASSIGNED = '__unassigned__';
+
 const bgStyle = {
   backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
 };
@@ -98,15 +101,15 @@ const CabinMaintenance = () => {
   const { claimedProfile } = useEnhancedProfileClaim();
   const { familyGroups } = useFamilyGroups();
   const { toast } = useToast();
-  const { entries, loading, createEntry, completeTodo, reopenTodo, deleteEntry } = useCabinMaintenance();
+  const { entries, loading, createEntry, updateEntry, completeTodo, reopenTodo, deleteEntry } = useCabinMaintenance();
 
   const [tab, setTab] = useState<EntryType>('work_log');
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [todoFilter, setTodoFilter] = useState<'open' | 'completed' | 'all'>('open');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
 
-  // All members across family groups for the "Performed by" picker
   const allMembers = useMemo(() => {
     const names = new Set<string>();
     familyGroups.forEach((g: any) => {
@@ -162,6 +165,16 @@ const CabinMaintenance = () => {
 
   const canModify = (e: MaintenanceEntry) => isAdmin || e.created_by === user?.id;
 
+  const openAdd = () => {
+    setEditingEntry(null);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (e: MaintenanceEntry) => {
+    setEditingEntry(e);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat p-4" style={bgStyle}>
       <div className="max-w-5xl mx-auto">
@@ -182,7 +195,6 @@ const CabinMaintenance = () => {
           </p>
         </div>
 
-        {/* Activity summary */}
         <div className="grid grid-cols-3 gap-3 mb-4">
           <Card className="bg-card/95">
             <CardContent className="pt-4 pb-3 text-center">
@@ -206,6 +218,7 @@ const CabinMaintenance = () => {
 
         <Card className="bg-card/95">
           <CardHeader className="pb-3">
+            {/* Row 1: tabs + search (search where Add was) */}
             <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
               <Tabs value={tab} onValueChange={(v) => setTab(v as EntryType)} className="w-full md:w-auto">
                 <TabsList>
@@ -214,14 +227,7 @@ const CabinMaintenance = () => {
                   <TabsTrigger value="todo">To-Do</TabsTrigger>
                 </TabsList>
               </Tabs>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
-              </Button>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-2 mt-3">
-              <div className="relative flex-1">
+              <div className="relative md:w-72">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search…"
@@ -230,6 +236,10 @@ const CabinMaintenance = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+            </div>
+
+            {/* Row 2: filters + Add button (Add where search was) */}
+            <div className="flex flex-col md:flex-row gap-2 mt-3">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="md:w-48">
                   <SelectValue placeholder="All categories" />
@@ -255,6 +265,12 @@ const CabinMaintenance = () => {
                   </SelectContent>
                 </Select>
               )}
+              <div className="md:ml-auto">
+                <Button onClick={openAdd} className="w-full md:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add {tab === 'work_log' ? 'Work Entry' : tab === 'reference' ? 'Reference' : 'To-Do'}
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
@@ -265,7 +281,7 @@ const CabinMaintenance = () => {
               <div className="text-center py-12 text-muted-foreground">
                 <Wrench className="h-10 w-10 mx-auto mb-3 opacity-40" />
                 <p className="mb-3">Nothing here yet.</p>
-                <Button variant="outline" onClick={() => setDialogOpen(true)}>
+                <Button variant="outline" onClick={openAdd}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first entry
                 </Button>
@@ -279,6 +295,7 @@ const CabinMaintenance = () => {
                     onComplete={() => completeTodo(e.id)}
                     onReopen={() => reopenTodo(e.id)}
                     onDelete={() => deleteEntry(e.id)}
+                    onEdit={() => openEdit(e)}
                     canModify={canModify(e)}
                   />
                 ))}
@@ -290,13 +307,33 @@ const CabinMaintenance = () => {
 
       <EntryDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o) setEditingEntry(null);
+        }}
         entryType={tab}
+        editing={editingEntry}
         defaultPerformedBy={defaultPerformedBy}
         memberOptions={allMembers}
         onSubmit={async (input) => {
-          const result = await createEntry(input);
-          if (result) setDialogOpen(false);
+          if (editingEntry) {
+            await updateEntry(editingEntry.id, {
+              title: input.title,
+              description: input.description ?? null,
+              category: input.category ?? null,
+              date_performed: input.date_performed ?? null,
+              performed_by_name: input.performed_by_name ?? null,
+              cost: input.cost ?? null,
+              priority: input.priority ?? null,
+              target_date: input.target_date ?? null,
+            } as any);
+            setDialogOpen(false);
+            setEditingEntry(null);
+            toast({ title: 'Updated' });
+          } else {
+            const result = await createEntry(input);
+            if (result) setDialogOpen(false);
+          }
         }}
       />
     </div>
@@ -308,12 +345,14 @@ function EntryCard({
   onComplete,
   onReopen,
   onDelete,
+  onEdit,
   canModify,
 }: {
   entry: MaintenanceEntry;
   onComplete: () => void;
   onReopen: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   canModify: boolean;
 }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
@@ -350,25 +389,30 @@ function EntryCard({
                 )}
               </div>
               {canModify && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="ghost" className="text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This cannot be undone. Photos attached to this entry will also be removed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={onEdit} aria-label="Edit">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="ghost" className="text-destructive" aria-label="Delete">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This cannot be undone. Photos attached to this entry will also be removed.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
             </div>
 
@@ -439,6 +483,7 @@ function EntryDialog({
   open,
   onOpenChange,
   entryType,
+  editing,
   defaultPerformedBy,
   memberOptions,
   onSubmit,
@@ -446,68 +491,84 @@ function EntryDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   entryType: EntryType;
+  editing: MaintenanceEntry | null;
   defaultPerformedBy: string;
   memberOptions: string[];
   onSubmit: (input: NewEntryInput) => Promise<void> | void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
+  const effectiveType: EntryType = editing?.entry_type || entryType;
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string>('');
   const [datePerformed, setDatePerformed] = useState(today);
-  const [performedBy, setPerformedBy] = useState(defaultPerformedBy);
-  const [overrideMember, setOverrideMember] = useState(false);
+  const [performedBy, setPerformedBy] = useState('');
   const [cost, setCost] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [targetDate, setTargetDate] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Reset when re-opened
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setCategory('');
-    setDatePerformed(today);
-    setPerformedBy(defaultPerformedBy);
-    setOverrideMember(false);
-    setCost('');
-    setPriority('medium');
-    setTargetDate('');
-    setPhotos([]);
-  };
+  // Reset/populate when dialog opens
+  useEffect(() => {
+    if (!open) return;
+    if (editing) {
+      setTitle(editing.title || '');
+      setDescription(editing.description || '');
+      setCategory(editing.category || '');
+      setDatePerformed(editing.date_performed || today);
+      setPerformedBy(editing.performed_by_name || '');
+      setCost(editing.cost != null ? String(editing.cost) : '');
+      setPriority((editing.priority as Priority) || 'medium');
+      setTargetDate(editing.target_date || '');
+      setPhotos([]);
+    } else {
+      setTitle('');
+      setDescription('');
+      setCategory('');
+      setDatePerformed(today);
+      // Work log defaults to current user; To-Do "Assigned to" defaults blank.
+      setPerformedBy(entryType === 'work_log' ? defaultPerformedBy : '');
+      setCost('');
+      setPriority('medium');
+      setTargetDate('');
+      setPhotos([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing?.id]);
 
   const handleSubmit = async () => {
     if (!title.trim()) return;
     setSaving(true);
     try {
       await onSubmit({
-        entry_type: entryType,
+        entry_type: effectiveType,
         title,
         description,
         category: category || undefined,
-        date_performed: entryType === 'work_log' ? datePerformed : null,
-        performed_by_name: entryType === 'reference' ? null : performedBy || null,
+        date_performed: effectiveType === 'work_log' ? datePerformed : null,
+        performed_by_name: effectiveType === 'reference' ? null : (performedBy || null),
         cost: cost ? parseFloat(cost) : null,
-        priority: entryType === 'todo' ? priority : null,
-        target_date: entryType === 'todo' && targetDate ? targetDate : null,
+        priority: effectiveType === 'todo' ? priority : null,
+        target_date: effectiveType === 'todo' && targetDate ? targetDate : null,
         photos,
       });
-      resetForm();
     } finally {
       setSaving(false);
     }
   };
 
-  const titleLabel =
-    entryType === 'work_log'
-      ? 'Add Work Log Entry'
-      : entryType === 'reference'
-      ? 'Add Reference Info'
-      : 'Add To-Do';
+  const titleLabel = editing
+    ? 'Edit Entry'
+    : effectiveType === 'work_log'
+    ? 'Add Work Log Entry'
+    : effectiveType === 'reference'
+    ? 'Add Reference Info'
+    : 'Add To-Do';
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) resetForm(); }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{titleLabel}</DialogTitle>
@@ -520,9 +581,9 @@ function EntryDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={
-                entryType === 'reference'
+                effectiveType === 'reference'
                   ? 'e.g., Exterior stain color'
-                  : entryType === 'todo'
+                  : effectiveType === 'todo'
                   ? 'e.g., Replace water heater anode'
                   : 'e.g., Added Ridex to septic'
               }
@@ -536,7 +597,7 @@ function EntryDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={
-                entryType === 'reference'
+                effectiveType === 'reference'
                   ? 'e.g., Sherwin-Williams Cedar Bark SW-3525, 2 gallons'
                   : 'Details, brand names, part numbers…'
               }
@@ -561,13 +622,13 @@ function EntryDialog({
                 </SelectContent>
               </Select>
             </div>
-            {entryType === 'work_log' && (
+            {effectiveType === 'work_log' && (
               <div>
                 <Label>Date performed</Label>
                 <Input type="date" value={datePerformed} onChange={(e) => setDatePerformed(e.target.value)} />
               </div>
             )}
-            {entryType === 'todo' && (
+            {effectiveType === 'todo' && (
               <div>
                 <Label>Priority</Label>
                 <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
@@ -584,49 +645,47 @@ function EntryDialog({
             )}
           </div>
 
-          {entryType === 'todo' && (
+          {effectiveType === 'todo' && (
             <div>
               <Label>Target date (optional)</Label>
               <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
             </div>
           )}
 
-          {entryType !== 'reference' && (
+          {effectiveType !== 'reference' && (
             <div className="space-y-2">
-              <Label>{entryType === 'todo' ? 'Assigned to' : 'Performed by'}</Label>
-              {!overrideMember ? (
-                <div className="flex items-center gap-2">
-                  <Input value={performedBy} readOnly className="flex-1" />
-                  <Button type="button" variant="outline" size="sm" onClick={() => setOverrideMember(true)}>
-                    Change
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Select value={performedBy} onValueChange={setPerformedBy}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Pick a member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {memberOptions.length === 0 && (
-                        <SelectItem value={defaultPerformedBy}>{defaultPerformedBy}</SelectItem>
-                      )}
-                      {memberOptions.map((m) => (
-                        <SelectItem key={m} value={m}>
-                          {m}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => { setPerformedBy(defaultPerformedBy); setOverrideMember(false); }}>
-                    Reset
-                  </Button>
-                </div>
-              )}
+              <Label>{effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  value={performedBy}
+                  onChange={(e) => setPerformedBy(e.target.value)}
+                  placeholder={effectiveType === 'todo' ? 'Unassigned' : 'Name'}
+                  className="flex-1"
+                />
+                <Select
+                  value=""
+                  onValueChange={(v) => setPerformedBy(v === UNASSIGNED ? '' : v)}
+                >
+                  <SelectTrigger className="sm:w-48">
+                    <SelectValue placeholder="Pick member…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                    {defaultPerformedBy && !memberOptions.includes(defaultPerformedBy) && (
+                      <SelectItem value={defaultPerformedBy}>{defaultPerformedBy} (me)</SelectItem>
+                    )}
+                    {memberOptions.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
-          {entryType === 'work_log' && (
+          {effectiveType === 'work_log' && (
             <div>
               <Label>Cost (optional)</Label>
               <Input
@@ -640,21 +699,23 @@ function EntryDialog({
             </div>
           )}
 
-          <div>
-            <Label className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Photos (optional)
-            </Label>
-            <Input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-            />
-            {photos.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">{photos.length} file(s) selected</p>
-            )}
-          </div>
+          {!editing && (
+            <div>
+              <Label className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Photos (optional)
+              </Label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setPhotos(Array.from(e.target.files || []))}
+              />
+              {photos.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">{photos.length} file(s) selected</p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -662,7 +723,7 @@ function EntryDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={saving || !title.trim()}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving…' : editing ? 'Save Changes' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>
