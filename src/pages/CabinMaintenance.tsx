@@ -507,6 +507,7 @@ function EntryDialog({
   const [category, setCategory] = useState<string>('');
   const [datePerformed, setDatePerformed] = useState(today);
   const [performedBy, setPerformedBy] = useState('');
+  const [performedByMode, setPerformedByMode] = useState<'select' | 'custom'>('select');
   const [cost, setCost] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [targetDate, setTargetDate] = useState('');
