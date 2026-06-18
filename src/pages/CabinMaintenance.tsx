@@ -222,7 +222,7 @@ const CabinMaintenance = () => {
             <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
               <Tabs value={tab} onValueChange={(v) => setTab(v as EntryType)} className="w-full md:w-auto">
                 <TabsList>
-                  <TabsTrigger value="work_log">Work Log</TabsTrigger>
+                  <TabsTrigger value="work_log">Maintenance Log</TabsTrigger>
                   <TabsTrigger value="reference">Reference Info</TabsTrigger>
                   <TabsTrigger value="todo">To-Do</TabsTrigger>
                 </TabsList>
