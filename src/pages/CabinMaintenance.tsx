@@ -516,11 +516,7 @@ function EntryDialog({
       setDescription(editing.description || '');
       setCategory(editing.category || '');
       setDatePerformed(editing.date_performed || today);
-      const name = editing.performed_by_name || '';
-      setPerformedBy(name);
-      setPerformedByMode(
-        name && name !== defaultPerformedBy && !memberOptions.includes(name) ? 'custom' : 'select'
-      );
+      setPerformedBy(editing.performed_by_name || '');
       setCost(editing.cost != null ? String(editing.cost) : '');
       setPriority((editing.priority as Priority) || 'medium');
       setTargetDate(editing.target_date || '');
@@ -532,7 +528,6 @@ function EntryDialog({
       setDatePerformed(today);
       // Performed by / Assigned to defaults to blank for all entry types.
       setPerformedBy('');
-      setPerformedByMode('select');
       setCost('');
       setPriority('medium');
       setTargetDate('');
