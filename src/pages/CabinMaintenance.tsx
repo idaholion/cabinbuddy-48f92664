@@ -97,22 +97,6 @@ const CabinMaintenance = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
 
-  const allMembers = useMemo(() => {
-    const names = new Set<string>();
-    familyGroups.forEach((g: any) => {
-      (g.host_members || []).forEach((m: any) => {
-        const n = memberName(m);
-        if (n) names.add(n);
-      });
-    });
-    return Array.from(names).sort();
-  }, [familyGroups]);
-
-  const defaultPerformedBy = useMemo(() => {
-    if (claimedProfile?.member_name) return claimedProfile.member_name;
-    return user?.email || '';
-  }, [claimedProfile, user]);
-
   const filteredEntries = useMemo(() => {
     let list = entries.filter((e) => e.entry_type === tab);
     if (tab === 'todo' && todoFilter !== 'all') {
