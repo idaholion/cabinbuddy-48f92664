@@ -316,8 +316,6 @@ const CabinMaintenance = () => {
         }}
         entryType={tab}
         editing={editingEntry}
-        defaultPerformedBy={defaultPerformedBy}
-        memberOptions={allMembers}
         onSubmit={async (input) => {
           if (editingEntry) {
             await updateEntry(editingEntry.id, {
