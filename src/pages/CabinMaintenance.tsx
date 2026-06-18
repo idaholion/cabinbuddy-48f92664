@@ -565,7 +565,7 @@ function EntryDialog({
   const titleLabel = editing
     ? 'Edit Entry'
     : effectiveType === 'work_log'
-    ? 'Add Work Log Entry'
+    ? 'Add Maintenance Log Entry'
     : effectiveType === 'reference'
     ? 'Add Reference Info'
     : 'Add To-Do';
