@@ -98,7 +98,6 @@ const CabinMaintenance = () => {
   const { user } = useAuth();
   const { isAdmin } = useOrgAdmin();
   const { claimedProfile } = useEnhancedProfileClaim();
-  const { familyGroups } = useFamilyGroups();
   const { toast } = useToast();
   const { entries, loading, createEntry, updateEntry, completeTodo, reopenTodo, deleteEntry } = useCabinMaintenance();
 
