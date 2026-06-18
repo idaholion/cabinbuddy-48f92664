@@ -487,16 +487,12 @@ function EntryDialog({
   onOpenChange,
   entryType,
   editing,
-  defaultPerformedBy,
-  memberOptions,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   entryType: EntryType;
   editing: MaintenanceEntry | null;
-  defaultPerformedBy: string;
-  memberOptions: string[];
   onSubmit: (input: NewEntryInput) => Promise<void> | void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
