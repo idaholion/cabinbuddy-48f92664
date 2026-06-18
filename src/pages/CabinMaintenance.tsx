@@ -265,8 +265,8 @@ const CabinMaintenance = () => {
             </div>
           </CardHeader>
 
-
           <CardContent>
+
             {loading ? (
               <p className="text-center text-muted-foreground py-8">Loading…</p>
             ) : filteredEntries.length === 0 ? (
