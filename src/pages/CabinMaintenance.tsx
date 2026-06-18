@@ -653,41 +653,11 @@ function EntryDialog({
           {effectiveType !== 'reference' && (
             <div className="space-y-2">
               <Label>{effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}</Label>
-              <Select
-                value={performedByMode === 'custom' ? 'custom' : performedBy || UNASSIGNED}
-                onValueChange={(v) => {
-                  if (v === 'custom') {
-                    setPerformedByMode('custom');
-                    setPerformedBy('');
-                  } else {
-                    setPerformedByMode('select');
-                    setPerformedBy(v === UNASSIGNED ? '' : v);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select or type a name…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                  {defaultPerformedBy && !memberOptions.includes(defaultPerformedBy) && (
-                    <SelectItem value={defaultPerformedBy}>{defaultPerformedBy} (me)</SelectItem>
-                  )}
-                  {memberOptions.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom">Other (type a name)</SelectItem>
-                </SelectContent>
-              </Select>
-              {performedByMode === 'custom' && (
-                <Input
-                  value={performedBy}
-                  onChange={(e) => setPerformedBy(e.target.value)}
-                  placeholder={effectiveType === 'todo' ? 'Assigned to' : 'Performed by'}
-                />
-              )}
+              <Input
+                value={performedBy}
+                onChange={(e) => setPerformedBy(e.target.value)}
+                placeholder={effectiveType === 'todo' ? 'Name (optional)' : 'Name (optional)'}
+              />
             </div>
           )}
 
