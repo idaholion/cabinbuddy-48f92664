@@ -925,7 +925,7 @@ const AddReceipt = () => {
                   />
                 </div>
                 
-                <Button type="button" onClick={() => handleManualSubmit()} disabled={loading} className="w-full hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
+                <Button type="submit" disabled={loading} className="w-full hover:scale-105 hover:shadow-lg hover:shadow-primary/20 transition-all duration-200">
                   {loading ? "Adding..." : "Add Receipt Manually"}
                 </Button>
               </form>
