@@ -462,21 +462,36 @@ const AddReceipt = () => {
     setImagePan({ x: 0, y: 0 });
   };
 
-  const handleManualSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (amount && description) {
-      try {
-        await createReceipt({
-          amount: parseFloat(amount),
-          description,
-          date: new Date().toISOString().split('T')[0],
-          family_group: claimedProfile?.family_group_name
-        });
+  const handleManualSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    console.log('[AddReceipt] Manual submit clicked', { amount, description, claimedProfile });
+    if (!amount || !description) {
+      toast({
+        title: "Missing information",
+        description: "Please enter both an amount and a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const result = await createReceipt({
+        amount: parseFloat(amount),
+        description,
+        date: new Date().toISOString().split('T')[0],
+        family_group: claimedProfile?.family_group_name,
+      });
+      console.log('[AddReceipt] createReceipt result:', result);
+      if (result) {
         setAmount("");
         setDescription("");
-      } catch (error) {
-        console.error('Manual receipt creation failed:', error);
       }
+    } catch (error) {
+      console.error('Manual receipt creation failed:', error);
+      toast({
+        title: "Error",
+        description: (error as Error)?.message || "Failed to create receipt.",
+        variant: "destructive",
+      });
     }
   };
 
