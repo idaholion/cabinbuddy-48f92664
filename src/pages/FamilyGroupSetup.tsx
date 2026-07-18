@@ -302,7 +302,10 @@ const FamilyGroupSetup = () => {
           lastName,
           phone: userPhone,
           email: userEmail,
-          canHost: true // Group leads can always host
+          canHost: true, // Group leads can always host
+          canEditReservations: true,
+          canEditDailyFinal: true,
+          canEditStayHistory: true,
         };
         setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
       }
