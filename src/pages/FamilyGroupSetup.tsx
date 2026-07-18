@@ -435,7 +435,24 @@ const FamilyGroupSetup = () => {
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
-    
+
+    // Resolve alternate_lead_id safely:
+    // - "none" or blank => explicit clear (null)
+    // - value that doesn't match any current member name => preserve existing (skip write)
+    //   to avoid accidentally blanking the alternate when a name changed shape.
+    const rawAlt = (data.alternateLeadId ?? "").trim();
+    const memberNames = new Set(groupMembersList.map(m => m.name).filter(Boolean));
+    let resolvedAlternate: string | null | undefined;
+    if (rawAlt === "" || rawAlt === "none") {
+      resolvedAlternate = null;
+    } else if (memberNames.has(rawAlt)) {
+      resolvedAlternate = rawAlt;
+    } else {
+      // Stale/non-matching value — do not overwrite existing DB value.
+      resolvedAlternate = undefined;
+      console.warn('[FAMILY_GROUP_SETUP] alternateLeadId does not match any current member; preserving existing value:', rawAlt);
+    }
+
     try {
       // Derive lead_* fields from host_members[0] (the Group Lead)
       const firstMember = groupMembersList[0];
@@ -444,13 +461,14 @@ const FamilyGroupSetup = () => {
       const derivedLeadPhone = firstMember?.phone ? unformatPhoneNumber(firstMember.phone) : undefined;
       
       if (existingGroup) {
-        await updateFamilyGroup(existingGroup.id, {
+        const updates: any = {
           lead_name: derivedLeadName,
           lead_phone: derivedLeadPhone,
           lead_email: derivedLeadEmail,
           host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
-          alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
-        });
+        };
+        if (resolvedAlternate !== undefined) updates.alternate_lead_id = resolvedAlternate;
+        await updateFamilyGroup(existingGroup.id, updates);
         
         toast({
           title: "Success",
@@ -466,8 +484,7 @@ const FamilyGroupSetup = () => {
           lead_phone: derivedLeadPhone,
           lead_email: derivedLeadEmail,
           host_members: groupMembersList.length > 0 ? groupMembersList : undefined,
-          
-          alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId,
+          alternate_lead_id: resolvedAlternate ?? undefined,
         });
         
         toast({
