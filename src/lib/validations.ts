@@ -98,7 +98,7 @@ export const familyGroupSetupSchema = z.object({
       return new Set(phones).size === phones.length;
     }, "Group member phone numbers must be unique"),
   
-  alternateLeadId: z.string(),
+  alternateLeadId: z.string().min(1, "Alternate lead selection is required").default("none"),
 });
 
 // Reservation validation schemas
