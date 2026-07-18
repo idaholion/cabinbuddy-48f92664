@@ -1004,6 +1004,8 @@ export default function StayHistory() {
           </p>
         </div>
 
+        <ViewAsUserPicker scope="stayHistory" />
+
         <div className="flex flex-wrap gap-3">
           {/* Year Filter */}
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
