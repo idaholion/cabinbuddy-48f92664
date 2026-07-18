@@ -66,9 +66,9 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       groupMembers: [
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }, // Group lead (index 0) can have contact info
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }, // Group lead (index 0) can have contact info
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }
       ],
       alternateLeadId: "none",
     },
@@ -302,7 +302,10 @@ const FamilyGroupSetup = () => {
           lastName,
           phone: userPhone,
           email: userEmail,
-          canHost: true // Group leads can always host
+          canHost: true, // Group leads can always host
+          canEditReservations: true,
+          canEditDailyFinal: true,
+          canEditStayHistory: true,
         };
         setValue("groupMembers", updatedGroupMembers, { shouldDirty: false });
       }
@@ -340,7 +343,7 @@ const FamilyGroupSetup = () => {
         });
         
         // Create completely new member objects to avoid any reference issues
-        const formattedHostMembers = selectedFamilyGroup.host_members.map((member, idx) => {
+        const formattedHostMembers = selectedFamilyGroup.host_members.map((member: any, idx) => {
           const { firstName, lastName } = parseFullName(member.name || "");
           const newMember = {
             firstName: firstName || "",
@@ -349,6 +352,10 @@ const FamilyGroupSetup = () => {
             phone: member.phone || "",
             email: member.email || "",
             canHost: idx === 0 ? true : (member.canHost || false), // Group Lead always can host
+            // Group Lead always has full delegate access; other members default to true when unset
+            canEditReservations: idx === 0 ? true : (member.canEditReservations ?? true),
+            canEditDailyFinal:   idx === 0 ? true : (member.canEditDailyFinal   ?? true),
+            canEditStayHistory:  idx === 0 ? true : (member.canEditStayHistory  ?? true),
           };
           console.log(`📋 [FORM_LOAD] Member ${idx}:`, newMember);
           return newMember;
@@ -366,14 +373,17 @@ const FamilyGroupSetup = () => {
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
           email: selectedFamilyGroup.lead_email || "",
-          canHost: true // Group leads can always host
+          canHost: true, // Group leads can always host
+          canEditReservations: true,
+          canEditDailyFinal: true,
+          canEditStayHistory: true,
         };
         
         console.log('📋 [FORM_LOAD] Creating default member list with legacy lead data:', leadAsHostMember);
         setValue("groupMembers", [
           leadAsHostMember,
-          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true },
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }
         ], { shouldDirty: false });
       }
       
@@ -411,13 +421,17 @@ const FamilyGroupSetup = () => {
     setIsSaving(true);
     const groupMembersList = data.groupMembers
       .filter(member => (member.firstName?.trim() !== '' || member.lastName?.trim() !== ''))
-      .map(member => ({
+      .map((member, idx) => ({
         firstName: member.firstName || "",
         lastName: member.lastName || "",
         name: `${member.firstName || ""} ${member.lastName || ""}`.trim() || "",
         phone: member.phone || "",
         email: member.email || "",
-        canHost: member.canHost || false,
+        canHost: idx === 0 ? true : (member.canHost || false),
+        // Group Lead (index 0) is always a full delegate; other members default true when unset
+        canEditReservations: idx === 0 ? true : (member.canEditReservations ?? true),
+        canEditDailyFinal:   idx === 0 ? true : (member.canEditDailyFinal   ?? true),
+        canEditStayHistory:  idx === 0 ? true : (member.canEditStayHistory  ?? true),
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
@@ -496,7 +510,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addGroupMember = () => {
-    append({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
+    append({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true });
     setShowAllMembers(true);
   };
 

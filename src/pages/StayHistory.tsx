@@ -23,6 +23,8 @@ import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +44,9 @@ export default function StayHistory() {
   
 
   const { user } = useAuth();
+  const effective = useEffectiveUser();
+  const effectiveUserId = effective.id ?? user?.id;
+  const effectiveUserEmail = effective.email ?? user?.email;
   const { claimedProfile } = useProfileClaiming();
   const { organization, loading: orgLoading } = useOrganization();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
@@ -262,11 +267,11 @@ export default function StayHistory() {
     // Regular members can only see reservations where they are the primary host
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === user?.email?.toLowerCase();
+      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
     }
     
     // Fallback: if no host_assignments, only show if user_id matches (old data)
-    return reservation.user_id === user?.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   // Helper function to check if user owns a reservation (for split costs button)
@@ -285,11 +290,11 @@ export default function StayHistory() {
     // Check if user is the primary host via host_assignments (most reliable method)
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === user.email?.toLowerCase();
+      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
     }
     
     // Fallback: if no host_assignments, check user_id (legacy reservations)
-    return reservation.user_id === user.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   const filteredReservations = reservations
@@ -308,20 +313,17 @@ export default function StayHistory() {
   // Create virtual reservations from payment splits where current user is recipient
   // Admins and Calendar Keepers see all splits, regular users see only their own
   const createVirtualReservationsFromSplits = () => {
-    if (!user?.id) return [];
+    if (!effectiveUserId) return [];
     
     return paymentSplits
       .filter(split => {
-        // Admins and Calendar Keepers see all splits in the organization
         if (isAdmin || isCalendarKeeper) {
-          // If a specific family group is selected, filter to that group
           if (selectedFamilyGroup !== "all") {
             return split.split_to_family_group === selectedFamilyGroup;
           }
           return true;
         }
-        // Regular users only see splits where they are the recipient
-        return split.split_to_user_id === user.id;
+        return split.split_to_user_id === effectiveUserId;
       })
       .filter(split => 
         split.daily_occupancy_split && 
@@ -1002,6 +1004,8 @@ export default function StayHistory() {
             View and manage your past cabin stays
           </p>
         </div>
+
+        <ViewAsUserPicker scope="stayHistory" />
 
         <div className="flex flex-wrap gap-3">
           {/* Year Filter */}
