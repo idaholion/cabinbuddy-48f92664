@@ -373,14 +373,17 @@ const FamilyGroupSetup = () => {
           name: selectedFamilyGroup.lead_name || "",
           phone: selectedFamilyGroup.lead_phone || "",
           email: selectedFamilyGroup.lead_email || "",
-          canHost: true // Group leads can always host
+          canHost: true, // Group leads can always host
+          canEditReservations: true,
+          canEditDailyFinal: true,
+          canEditStayHistory: true,
         };
         
         console.log('📋 [FORM_LOAD] Creating default member list with legacy lead data:', leadAsHostMember);
         setValue("groupMembers", [
           leadAsHostMember,
-          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true },
+          { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }
         ], { shouldDirty: false });
       }
       
