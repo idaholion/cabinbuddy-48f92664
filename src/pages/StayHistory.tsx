@@ -313,20 +313,17 @@ export default function StayHistory() {
   // Create virtual reservations from payment splits where current user is recipient
   // Admins and Calendar Keepers see all splits, regular users see only their own
   const createVirtualReservationsFromSplits = () => {
-    if (!user?.id) return [];
+    if (!effectiveUserId) return [];
     
     return paymentSplits
       .filter(split => {
-        // Admins and Calendar Keepers see all splits in the organization
         if (isAdmin || isCalendarKeeper) {
-          // If a specific family group is selected, filter to that group
           if (selectedFamilyGroup !== "all") {
             return split.split_to_family_group === selectedFamilyGroup;
           }
           return true;
         }
-        // Regular users only see splits where they are the recipient
-        return split.split_to_user_id === user.id;
+        return split.split_to_user_id === effectiveUserId;
       })
       .filter(split => 
         split.daily_occupancy_split && 
