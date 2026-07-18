@@ -24,6 +24,7 @@ import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
+import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
