@@ -66,9 +66,9 @@ const FamilyGroupSetup = () => {
       leadPhone: "",
       leadEmail: "",
       groupMembers: [
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }, // Group lead (index 0) can have contact info
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false },
-        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false }
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }, // Group lead (index 0) can have contact info
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true },
+        { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }
       ],
       alternateLeadId: "none",
     },
