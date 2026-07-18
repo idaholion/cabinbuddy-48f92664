@@ -43,6 +43,9 @@ export default function StayHistory() {
   
 
   const { user } = useAuth();
+  const effective = useEffectiveUser();
+  const effectiveUserId = effective.id ?? user?.id;
+  const effectiveUserEmail = effective.email ?? user?.email;
   const { claimedProfile } = useProfileClaiming();
   const { organization, loading: orgLoading } = useOrganization();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
