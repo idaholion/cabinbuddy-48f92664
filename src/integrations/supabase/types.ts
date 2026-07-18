@@ -432,6 +432,7 @@ export type Database = {
           checklist_responses: Json
           completed_at: string | null
           created_at: string
+          edited_by_user_id: string | null
           family_group: string | null
           guest_names: string[] | null
           id: string
@@ -446,6 +447,7 @@ export type Database = {
           checklist_responses?: Json
           completed_at?: string | null
           created_at?: string
+          edited_by_user_id?: string | null
           family_group?: string | null
           guest_names?: string[] | null
           id?: string
@@ -460,6 +462,7 @@ export type Database = {
           checklist_responses?: Json
           completed_at?: string | null
           created_at?: string
+          edited_by_user_id?: string | null
           family_group?: string | null
           guest_names?: string[] | null
           id?: string
@@ -2314,6 +2317,7 @@ export type Database = {
           allocated_end_date: string | null
           allocated_start_date: string | null
           created_at: string
+          edited_by_user_id: string | null
           end_date: string
           family_group: string
           guest_count: number | null
@@ -2337,6 +2341,7 @@ export type Database = {
           allocated_end_date?: string | null
           allocated_start_date?: string | null
           created_at?: string
+          edited_by_user_id?: string | null
           end_date: string
           family_group: string
           guest_count?: number | null
@@ -2360,6 +2365,7 @@ export type Database = {
           allocated_end_date?: string | null
           allocated_start_date?: string | null
           created_at?: string
+          edited_by_user_id?: string | null
           end_date?: string
           family_group?: string
           guest_count?: number | null
@@ -3723,6 +3729,15 @@ export type Database = {
       }
       user_belongs_to_organization: {
         Args: { p_organization_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      user_has_delegate_permission: {
+        Args: {
+          _family_group_name: string
+          _organization_id: string
+          _permission: string
+          _user_id: string
+        }
         Returns: boolean
       }
       validate_guest_access: {
