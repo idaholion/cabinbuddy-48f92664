@@ -4,6 +4,7 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { useOrganization } from '@/hooks/useOrganization';
+import { useDelegatePermissions } from '@/hooks/useDelegatePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel,
