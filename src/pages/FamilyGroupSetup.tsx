@@ -421,13 +421,17 @@ const FamilyGroupSetup = () => {
     setIsSaving(true);
     const groupMembersList = data.groupMembers
       .filter(member => (member.firstName?.trim() !== '' || member.lastName?.trim() !== ''))
-      .map(member => ({
+      .map((member, idx) => ({
         firstName: member.firstName || "",
         lastName: member.lastName || "",
         name: `${member.firstName || ""} ${member.lastName || ""}`.trim() || "",
         phone: member.phone || "",
         email: member.email || "",
-        canHost: member.canHost || false,
+        canHost: idx === 0 ? true : (member.canHost || false),
+        // Group Lead (index 0) is always a full delegate; other members default true when unset
+        canEditReservations: idx === 0 ? true : (member.canEditReservations ?? true),
+        canEditDailyFinal:   idx === 0 ? true : (member.canEditDailyFinal   ?? true),
+        canEditStayHistory:  idx === 0 ? true : (member.canEditStayHistory  ?? true),
       }));
 
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
