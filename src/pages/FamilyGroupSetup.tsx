@@ -343,7 +343,7 @@ const FamilyGroupSetup = () => {
         });
         
         // Create completely new member objects to avoid any reference issues
-        const formattedHostMembers = selectedFamilyGroup.host_members.map((member, idx) => {
+        const formattedHostMembers = selectedFamilyGroup.host_members.map((member: any, idx) => {
           const { firstName, lastName } = parseFullName(member.name || "");
           const newMember = {
             firstName: firstName || "",
@@ -352,6 +352,10 @@ const FamilyGroupSetup = () => {
             phone: member.phone || "",
             email: member.email || "",
             canHost: idx === 0 ? true : (member.canHost || false), // Group Lead always can host
+            // Group Lead always has full delegate access; other members default to true when unset
+            canEditReservations: idx === 0 ? true : (member.canEditReservations ?? true),
+            canEditDailyFinal:   idx === 0 ? true : (member.canEditDailyFinal   ?? true),
+            canEditStayHistory:  idx === 0 ? true : (member.canEditStayHistory  ?? true),
           };
           console.log(`📋 [FORM_LOAD] Member ${idx}:`, newMember);
           return newMember;
