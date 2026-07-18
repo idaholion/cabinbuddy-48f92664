@@ -56,6 +56,9 @@ export const familyGroupSetupSchema = z.object({
     phone: z.string().optional(),
     email: z.string().optional(),
     canHost: z.boolean().optional().default(false),
+    canEditReservations: z.boolean().optional().default(true),
+    canEditDailyFinal: z.boolean().optional().default(true),
+    canEditStayHistory: z.boolean().optional().default(true),
   }))
     // Validate that Member 1 (Group Lead) has both first and last name
     .refine((members) => {
