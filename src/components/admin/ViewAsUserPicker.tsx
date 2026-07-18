@@ -19,17 +19,43 @@ import { Eye, X } from 'lucide-react';
  * impersonate them on Daily/Final Checkout. Also hydrates from ?viewAs=<id>
  * for deep links from Stay History.
  */
-export const ViewAsUserPicker = () => {
+export type DelegateScope = 'reservations' | 'dailyFinal' | 'stayHistory';
+
+interface Props {
+  /** Which delegate permission the page requires. Delegates without this
+   *  permission won't see the picker. Admins always see it. */
+  scope?: DelegateScope;
+}
+
+export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
   const { target, setTarget, clear, isImpersonating } = useImpersonation();
+  const { permissionsByGroup } = useDelegatePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
 
-  // Load claim links for this org
+  // Determine which family groups this non-admin user can act as a delegate on
+  // for the requested scope.
+  const delegateGroups = useMemo(() => {
+    const permKey = scope === 'reservations'
+      ? 'canEditReservations'
+      : scope === 'stayHistory'
+        ? 'canEditStayHistory'
+        : 'canEditDailyFinal';
+    const set = new Set<string>();
+    permissionsByGroup.forEach((flags, name) => {
+      if ((flags as any)[permKey]) set.add(name);
+    });
+    return set;
+  }, [permissionsByGroup, scope]);
+
+  const canUsePicker = isAdmin || delegateGroups.size > 0;
+
+  // Load claim links for this org (admins see all; delegates only need their groups' members)
   useEffect(() => {
-    if (!isAdmin || !organization?.id) return;
+    if (!canUsePicker || !organization?.id) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -39,7 +65,7 @@ export const ViewAsUserPicker = () => {
       if (!cancelled && !error && data) setLinks(data as any);
     })();
     return () => { cancelled = true; };
-  }, [isAdmin, organization?.id]);
+  }, [canUsePicker, organization?.id]);
 
   const linkByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -54,11 +80,13 @@ export const ViewAsUserPicker = () => {
     const list: Array<{ userId: string; displayName: string; familyGroup: string; email?: string | null }> = [];
     const seen = new Set<string>();
     for (const fg of familyGroups || []) {
+      // Delegates: restrict to family groups where they hold the required permission
+      if (!isAdmin && !delegateGroups.has(fg.name)) continue;
+
       const hosts: any[] = Array.isArray((fg as any).host_members) ? (fg as any).host_members : [];
       for (const m of hosts) {
         const name = m?.name || [m?.firstName, m?.lastName].filter(Boolean).join(' ') || m?.email;
         if (!name) continue;
-        // Try explicit user_id first, then resolve via claim links
         let userId: string | undefined = m?.user_id;
         if (!userId) userId = linkByKey.get(`${fg.name}::${name}`.toLowerCase());
         if (!userId) continue;
@@ -73,11 +101,11 @@ export const ViewAsUserPicker = () => {
       }
     }
     return list;
-  }, [familyGroups, linkByKey]);
+  }, [familyGroups, linkByKey, isAdmin, delegateGroups]);
 
   // Hydrate from ?viewAs= deep link
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canUsePicker) return;
     const viewAs = searchParams.get('viewAs');
     if (!viewAs) return;
     if (target?.userId === viewAs) return;
@@ -90,9 +118,9 @@ export const ViewAsUserPicker = () => {
         email: found.email,
       });
     }
-  }, [isAdmin, members, searchParams, target?.userId, setTarget]);
+  }, [canUsePicker, members, searchParams, target?.userId, setTarget]);
 
-  if (!isAdmin) return null;
+  if (!canUsePicker) return null;
 
   const grouped = members.reduce<Record<string, typeof members>>((acc, m) => {
     (acc[m.familyGroup] ||= []).push(m);
@@ -120,16 +148,19 @@ export const ViewAsUserPicker = () => {
     setSearchParams(next, { replace: true });
   };
 
+  const label = isAdmin ? 'Admin view' : 'Delegate view';
+  const placeholder = isAdmin ? 'View as user...' : 'Act on behalf of...';
+
   return (
     <div className="mb-3 rounded-md border bg-card p-3">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Eye className="h-4 w-4" />
-          <span>Admin view</span>
+          <span>{label}</span>
         </div>
         <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
           <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder="View as user..." />
+            <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent className="max-h-80">
             <SelectItem value="__self__">Myself</SelectItem>
@@ -149,7 +180,9 @@ export const ViewAsUserPicker = () => {
         </Select>
         {members.length === 0 && (
           <span className="text-xs text-muted-foreground">
-            No claimed members found in this organization.
+            {isAdmin
+              ? 'No claimed members found in this organization.'
+              : 'No other claimed members in your family group yet.'}
           </span>
         )}
         {isImpersonating && target && (
