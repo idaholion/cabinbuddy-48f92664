@@ -986,7 +986,7 @@ const CheckoutFinal = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       {/* Top Navigation Bar */}
       <div className="container mx-auto px-4 py-4">
-        <ViewAsUserPicker />
+        <ViewAsUserPicker scope="dailyFinal" />
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"
