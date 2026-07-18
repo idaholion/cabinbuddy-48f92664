@@ -267,11 +267,11 @@ export default function StayHistory() {
     // Regular members can only see reservations where they are the primary host
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === user?.email?.toLowerCase();
+      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
     }
     
     // Fallback: if no host_assignments, only show if user_id matches (old data)
-    return reservation.user_id === user?.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   // Helper function to check if user owns a reservation (for split costs button)
@@ -290,11 +290,11 @@ export default function StayHistory() {
     // Check if user is the primary host via host_assignments (most reliable method)
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === user.email?.toLowerCase();
+      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
     }
     
     // Fallback: if no host_assignments, check user_id (legacy reservations)
-    return reservation.user_id === user.id;
+    return reservation.user_id === effectiveUserId;
   };
 
   const filteredReservations = reservations
