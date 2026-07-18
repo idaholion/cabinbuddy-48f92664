@@ -510,7 +510,7 @@ const FamilyGroupSetup = () => {
   };
 
   const addGroupMember = () => {
-    append({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false });
+    append({ firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true });
     setShowAllMembers(true);
   };
 
