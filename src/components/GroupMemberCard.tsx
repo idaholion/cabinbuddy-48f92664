@@ -271,18 +271,19 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
             />
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <FormField
               control={control}
               name={`groupMembers.${index}.canHost`}
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded mt-2">
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
                     <FormControl>
                       <input
                         type="checkbox"
                         id={`host-${index}`}
-                        checked={field.value || false}
+                        checked={isGroupLead ? true : (field.value || false)}
+                        disabled={isGroupLead}
                         onChange={(e) => {
                           onFieldChange?.();
                           field.onChange(e.target.checked);
@@ -290,15 +291,91 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                         className="h-4 w-4"
                       />
                     </FormControl>
-                     <label htmlFor={`host-${index}`} className="text-xl">
-                       Can Host
-                     </label>
+                    <label htmlFor={`host-${index}`} className="text-base">
+                      Can Host
+                    </label>
                   </div>
-                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name={`groupMembers.${index}.canEditReservations`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        id={`edit-res-${index}`}
+                        checked={isGroupLead ? true : (field.value ?? true)}
+                        disabled={isGroupLead}
+                        onChange={(e) => { onFieldChange?.(); field.onChange(e.target.checked); }}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                    <label htmlFor={`edit-res-${index}`} className="text-base">
+                      Can Edit Reservations
+                    </label>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name={`groupMembers.${index}.canEditDailyFinal`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        id={`edit-df-${index}`}
+                        checked={isGroupLead ? true : (field.value ?? true)}
+                        disabled={isGroupLead}
+                        onChange={(e) => { onFieldChange?.(); field.onChange(e.target.checked); }}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                    <label htmlFor={`edit-df-${index}`} className="text-base">
+                      Can Edit Daily / Final Input
+                    </label>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name={`groupMembers.${index}.canEditStayHistory`}
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        id={`edit-sh-${index}`}
+                        checked={isGroupLead ? true : (field.value ?? true)}
+                        disabled={isGroupLead}
+                        onChange={(e) => { onFieldChange?.(); field.onChange(e.target.checked); }}
+                        className="h-4 w-4"
+                      />
+                    </FormControl>
+                    <label htmlFor={`edit-sh-${index}`} className="text-base">
+                      Can Edit Stay History
+                    </label>
+                  </div>
                 </FormItem>
               )}
             />
           </div>
+          {isGroupLead && (
+            <p className="text-xs text-muted-foreground pl-1">
+              Group Lead automatically has all permissions.
+            </p>
+          )}
         </div>
 
         {hasRootError && (
