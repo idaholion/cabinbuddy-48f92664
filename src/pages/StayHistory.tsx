@@ -1054,164 +1054,70 @@ export default function StayHistory() {
                     )}
                   </div>
 
-                  {/* Right Column - Financial Summary */}
+                  {/* Right Column - Financial Summary (simple chronological ledger) */}
                   <div className="space-y-2">
-                    {/* Credit Applied to Future Badge */}
-                    {stayData.creditAppliedToFuture && stayData.amountDue < 0 && (
-                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 border-green-300 dark:border-green-700">
-                            Credit Applied to Future
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          ${Math.abs(stayData.amountDue).toFixed(2)} credit will be applied to your next season's billing
-                        </p>
-                      </div>
-                    )}
-                    
-                    {stayData.previousBalance !== 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Previous Balance:</span>
-                        <span className={`font-medium ${stayData.previousBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                          ${stayData.previousBalance.toFixed(2)}
-                        </span>
-                      </div>
-                    )}
+                    {/* Previous Balance — always shown so the ledger reads top-to-bottom */}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Calculated Amount:</span>
+                      <span className="text-muted-foreground">Previous Balance:</span>
+                      <span className={`font-medium ${stayData.previousBalance > 0 ? 'text-destructive' : stayData.previousBalance < 0 ? 'text-green-600' : ''}`}>
+                        {stayData.previousBalance < 0 ? '−' : ''}${Math.abs(stayData.previousBalance).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Charges{stayData.nights ? ` (${stayData.nights} ${stayData.nights === 1 ? 'night' : 'nights'})` : ''}:
+                      </span>
                       <span className="font-medium">${stayData.billingAmount.toFixed(2)}</span>
                     </div>
-                            {stayData.manualAdjustment !== 0 && (
-                              <>
-                                <div className="flex justify-between text-sm">
-                                  <span className="text-muted-foreground">Manual Adjustment:</span>
-                                  <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                                    {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
-                                  </span>
-                                </div>
-                                {stayData.adjustmentNotes && (
-                                  <div className="text-sm text-muted-foreground italic pl-2 border-l-2 border-muted">
-                                    {stayData.adjustmentNotes}
-                                  </div>
-                                )}
-                                <div className="flex justify-between text-sm font-semibold border-t pt-2">
-                          <span className="text-muted-foreground">Total Amount:</span>
-                          <span>${(stayData.billingAmount + stayData.manualAdjustment).toFixed(2)}</span>
+
+                    {stayData.manualAdjustment !== 0 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Manual Adjustment:</span>
+                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                            {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
+                          </span>
                         </div>
+                        {stayData.adjustmentNotes && (
+                          <div className="text-sm text-muted-foreground italic pl-2 border-l-2 border-muted">
+                            {stayData.adjustmentNotes}
+                          </div>
+                        )}
                       </>
                     )}
-                    {/* Payments (money) — always show when non-zero */}
-                    {stayData.amountPaid > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
-                        <span className="font-medium">${stayData.amountPaid.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {/* Receipts credited — separate line, clearly labeled */}
-                    {stayData.receiptsTotal > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Receipts Credited{stayData.receiptsCount > 0 ? ` (${stayData.receiptsCount})` : ''}:
-                        </span>
-                        <span className="font-medium text-green-600">-${stayData.receiptsTotal.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {/* Show a $0 payments line only if nothing at all was paid/credited, so the card isn't blank */}
-                    {stayData.amountPaid === 0 && stayData.receiptsTotal === 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Amount Paid:</span>
-                        <span className="font-medium">$0.00</span>
-                      </div>
-                    )}
-                    {stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Applied to Earlier Stays:</span>
-                        <span className="font-medium text-green-600">-${stayData.creditDistributedToOlders.toFixed(2)}</span>
-                      </div>
-                    )}
+
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
+                      <span className="font-medium">
+                        {stayData.amountPaid > 0 ? `−$${stayData.amountPaid.toFixed(2)}` : '$0.00'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Receipts Credited{stayData.receiptsCount > 0 ? ` (${stayData.receiptsCount})` : ''}:
+                      </span>
+                      <span className="font-medium">
+                        {stayData.receiptsTotal > 0 ? `−$${stayData.receiptsTotal.toFixed(2)}` : '$0.00'}
+                      </span>
+                    </div>
+
                     {(() => {
-                      const distributedForward = stayData.creditDistributedToLaters || 0;
-                      // Any overpayment left AFTER forward consumption stays on currentBalance as a negative.
-                      const rolledForward = distributedForward > 0 && stayData.currentBalance < 0
-                        ? Math.abs(stayData.currentBalance)
-                        : 0;
-                      const totalOverpayment = distributedForward + rolledForward;
-                      if (distributedForward <= 0) return null;
+                      const bal = stayData.amountDue;
+                      const isCredit = bal < 0;
+                      const label = isLastVisible
+                        ? (isCredit ? 'Current Balance (Credit):' : 'Current Balance:')
+                        : (isCredit ? 'New Balance (Credit):' : 'New Balance:');
                       return (
-                        <>
-                          {rolledForward > 0 ? (
-                            <>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Applied to next stay:</span>
-                                <span className="font-medium text-green-600">-${distributedForward.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Rolled forward as credit:</span>
-                                <span className="font-medium text-green-600">-${rolledForward.toFixed(2)}</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground italic">
-                                ${totalOverpayment.toFixed(2)} total overpayment
-                              </p>
-                            </>
-                          ) : (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Credit to Later Stays:</span>
-                              <span className="font-medium text-green-600">-${distributedForward.toFixed(2)}</span>
-                            </div>
-                          )}
-                        </>
+                        <div className={`flex justify-between text-sm border-t pt-2 ${isLastVisible ? 'bg-muted/40 -mx-2 px-2 py-2 rounded' : ''}`}>
+                          <span className="font-semibold">{label}</span>
+                          <span className={`font-bold ${bal > 0 ? 'text-destructive' : isCredit ? 'text-green-600' : ''}`}>
+                            {isCredit ? '−' : ''}${Math.abs(bal).toFixed(2)}
+                          </span>
+                        </div>
                       );
                     })()}
-                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Credit Applied from Earlier Payment:</span>
-                        <span className="font-medium text-green-600">-${stayData.creditFromEarlierPayment.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {(() => {
-                      const displayAmount = (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ? 0 : stayData.amountDue;
-                      const isCredit = displayAmount < 0;
-                      // "Credit Remaining" only for the newest stay per host; otherwise it's still rolling forward.
-                      const hostKey = getPrimaryHostKey(reservation);
-                      const isNewestForHost = lastReservationByHost.get(hostKey) === reservation.id;
-                      const creditLabel = isNewestForHost ? 'Credit Remaining:' : 'Credit Carried Forward:';
-                      // Explainer line: incoming credit that fully covered this stay with leftover remaining
-                      const incomingCredit = stayData.previousBalance < 0 ? Math.abs(stayData.previousBalance) : 0;
-                      const consumedByThisStay = Math.min(incomingCredit, stayData.billingAmount + (stayData.manualAdjustment || 0) - (stayData.receiptsTotal || 0));
-                      const leftoverAfterThisStay = incomingCredit - Math.max(0, consumedByThisStay);
-                      const showTieLine = isCredit && incomingCredit > 0 && consumedByThisStay > 0 && leftoverAfterThisStay > 0;
-                      return (
-                        <>
-                          <div className="flex justify-between text-sm border-t pt-2">
-                            <span className="font-semibold">{isCredit ? creditLabel : 'Amount Due:'}</span>
-                            <span className={`font-bold ${displayAmount > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                              ${Math.abs(displayAmount).toFixed(2)}
-                              {stayData.paidViaLaterStay && stayData.originalAmountDue && (
-                                <span className="text-muted-foreground font-normal text-xs ml-2">
-                                  (orig. ${stayData.originalAmountDue.toFixed(2)} paid at later stay)
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          {showTieLine && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              ${consumedByThisStay.toFixed(2)} of the incoming credit covered this stay; ${leftoverAfterThisStay.toFixed(2)} remains.
-                            </p>
-                          )}
-                        </>
-                      );
-                    })()}
-                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.currentBalance === 0 && stayData.previousBalance < 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Covered by credit from earlier overpayment (included in previous balance)
-                      </p>
-                    )}
-                    {stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0 && stayData.billingAmount > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Payment covered this stay plus {Math.floor(stayData.creditDistributedToLaters / stayData.billingAmount)} later stay(s)
-                      </p>
-                    )}
                   </div>
                 </div>
 
