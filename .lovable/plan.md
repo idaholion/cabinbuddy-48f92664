@@ -1,43 +1,62 @@
-## What I found
 
-Querying the database directly:
+## What's actually happening (the explanation)
 
-| Group | `alternate_lead_id` | Members present |
-|---|---|---|
-| Andrew Family | `""` (empty string, not NULL) | Richard Andrew, **Sam Andrew** |
-| Woolf Family | `""` (empty string, not NULL) | Barb Woolf, Chanelle Knapp, Crystal Green |
-| Cook Family | `"Whitney Blake"` ✅ | ... |
-| Grandy Family | `"Chase Grandy"` ✅ | ... |
-| Poznanovich Family | `"Peter Poznanovich"` ✅ | ... |
-| newer groups (created after mid-June) | `NULL` | ... |
+Two clarifications in one, since they're both about how Stay History labels credits.
 
-So Sam **was** the alternate lead for the Andrew group and someone/something is stored as `""` for Woolf. The values weren't deleted by hand — they were overwritten to an empty string during a save. Groups that were saved via the newer Setup flow correctly write `NULL`; groups touched by the older `FamilyGroupSetup` page write `""` when the dropdown state is empty.
+### 1. The $30 vs $40 puzzle
 
-**Root cause (unconfirmed but strongly supported by the code):** in `src/pages/FamilyGroupSetup.tsx` the save handler does:
+Your Jun 24–Jul 2 stay was overpaid by **$70** ($390 paid − $320 billed), not $30. That $70 splits into two pieces as it cascades forward:
 
-```ts
-alternate_lead_id: data.alternateLeadId === "none" ? undefined : data.alternateLeadId
-```
+- **$30** — the exact amount needed to cover Oct 14–17. Stay History labels this as **"Credit to Later Stays: $30"** on the June card, because $30 was the portion consumed by a later stay charge.
+- **$40** — the leftover after Oct is covered. That $40 rolls forward as a running credit and shows on the Oct card as **"Previous Balance: −$40"** (green) and as **"Credit Remaining: $40"** at the bottom of the Oct card.
 
-The Zod schema is `z.string()`, so `""` is a valid value. If the form's `alternateLeadId` ever ends up as `""` — for example because autosave hydrated it as `""`, or because the stored name no longer matched any `<SelectItem>` after the recent firstName/lastName refactor and a subsequent save picked up an empty controlled value — the update writes `""` to the DB instead of leaving it alone. The check only guards against the sentinel `"none"`, not against empty/blank.
+$30 + $40 = $70 = the full overpayment. Both numbers are correct; the label "Credit to Later Stays" only counts what got *consumed by a subsequent charge in view*, not the leftover that keeps rolling forward. That's why the same $70 appears with two different labels on two different rows.
 
-## Fix plan
+### 2. "Total Payment Made" mixes money and receipts
 
-1. **Restore the two lost values (data fix)**
-   - `Andrew Family` → set `alternate_lead_id = 'Sam Andrew'`
-   - `Woolf Family` → ask you which member should be alternate (Chanelle Knapp or Crystal Green?) before writing. I'll leave it as-is until you tell me.
+On your June 24 row specifically, the $390 is 100% cash/venmo/check — no receipts. Receipts today are applied only to the **newest** reservation per family group (currently Aug 14, 2026 for Andrew Family, which holds all $763.95 of work-weekend receipts). But the label "Total Payment Made" doesn't distinguish money from receipts, so on the newest card the two get silently blended. That's the real risk you're flagging.
 
-2. **Harden the save path in `src/pages/FamilyGroupSetup.tsx`** (lines 452 and 470) so we never silently blank out an alternate:
-   - Treat `"none"`, `""`, and whitespace-only as "no selection" and send `null` (explicit clear) only when the user actively chose "None selected".
-   - If the dropdown value doesn't match any current member name (stale value from before a rename), skip writing the field instead of overwriting it — this prevents accidental clears when the member-name shape changes.
+## Proposed UI clarification (presentation only)
 
-3. **Tighten the schema** in `src/lib/validations.ts`:
-   - Change `alternateLeadId: z.string()` to default to `"none"` and reject empty strings, so form state can never silently become `""`.
+Small changes in `src/pages/StayHistory.tsx`. No billing logic, no cascade math, no DB migrations.
 
-4. **Normalize existing bad rows**: run a one-time update converting any `alternate_lead_id = ''` to `NULL` so the "no selection" state is unambiguous going forward.
+**A. Always break out money vs receipts on the right-hand summary**
 
-5. **Verify**: reload both group pages and confirm the Alternate Group Lead dropdown shows the restored selection, then save each group and re-query to confirm the value survives.
+Replace the current single "Amount Paid" line with two labeled rows whenever either is non-zero:
 
-## Question before I run the data fix
+- `Payments (cash / check / venmo): $XXX.XX`
+- `Receipts Credited: −$YYY.YY  (N receipts)`
 
-For **Woolf Family**, who should the alternate be — **Chanelle Knapp** or **Crystal Green**? (Andrew Family I'll restore to **Sam Andrew** since you confirmed that.)
+Keep the existing "Receipts Submitted" detail block on the left column, but link the two visually by using the same green color and receipt count.
+
+**B. Split the source-row overpayment into two lines**
+
+On any card whose overpayment was larger than the next stay's charge, replace the single "Credit to Later Stays" row with:
+
+- `Applied to next stay: −$30.00`
+- `Rolled forward as credit: −$40.00`
+
+Small footnote below: *"$70.00 total overpayment."*
+
+**C. Tie the two rows together on the receiving card**
+
+When Previous Balance is a credit *and* it fully covers this stay, add one explainer line under the bottom total:
+
+*"$30.00 of the incoming credit covered this stay; $40.00 remains."*
+
+**D. Rename the bottom label for mid-chain rows**
+
+When a row shows a negative total AND there is at least one later stay in view for the same host, label it **"Credit Carried Forward"** instead of **"Credit Remaining"**. Reserve "Credit Remaining" for the newest stay per host, where the credit actually stops.
+
+## Files touched
+
+- `src/pages/StayHistory.tsx` — right-column financial summary block (~lines 1243–1330). Read `stayData.amountPaid`, `stayData.receiptsTotal`, `stayData.receiptsCount`, `stayData.creditDistributedToLaters`, `stayData.creditFromEarlierPayment`, `stayData.previousBalance`, `stayData.amountDue`, and `lastReservationByHost` (already computed) to decide the split-vs-carry-forward wording.
+
+## What's NOT changing
+
+- No changes to `calculateStayData`, the forward cascade, or `applyBackwardPaymentCascade`.
+- No changes to `useCheckoutBilling` or the Daily/Final checkout pages.
+- No changes to receipt-attachment rules (receipts still land on the newest reservation per group).
+- No schema or migration changes.
+
+Ready to implement when you approve.
