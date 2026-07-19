@@ -961,7 +961,13 @@ export default function StayHistory() {
       {/* Past Stays List */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Past Stays</h2>
-        {displayReservations.map(({ reservation, stayData }) => {
+        {displayReservations.map(({ reservation, stayData }, idx) => {
+          const isLastVisible = reservation.id === lastVisibleId;
+          const currentYear = parseDateOnly(reservation.start_date).getFullYear();
+          const nextItem = displayReservations[idx + 1];
+          const nextYear = nextItem ? parseDateOnly(nextItem.reservation.start_date).getFullYear() : null;
+          const showYearEnd = nextYear !== null && nextYear !== currentYear;
+          const yearEndBal = yearEndBalances.get(currentYear) ?? 0;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
