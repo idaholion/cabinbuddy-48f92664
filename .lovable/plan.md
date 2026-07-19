@@ -1,44 +1,33 @@
-## Problem
+## Stay History: Simple Chronological Ledger
 
-On the Oct 14–17, 2025 Andrew Family card, the numbers don't visibly reconcile:
+**Goal:** Every stay card reads like a running ledger line. Year filter is display-only; math is always global. Receipts attach by date, not by "newest in group".
 
-- Previous Balance: −$40
-- Calculated Amount: $30
-- Amount Paid: $0
-- Credit Carried Forward: $40
+### Changes in `src/pages/StayHistory.tsx`
 
-There's no visible line showing that the $30 stay charge was already covered by $30 of June's overpayment, so the reader can't tell why a $30 charge with $0 paid results in a $40 credit rolling forward.
+1. **Separate cascade input from display filter.** Build the financial cascade from all permission/family-filtered reservations. Drop the `matchesYear` check from the cascade input (~lines 306, 381). Apply `selectedYear` only at render time, right before mapping cards.
 
-## Root cause (verified)
+2. **Attribute receipts by date (chronological walk).** Replace the `familyGroupsWithReceipts` / `isNewestInGroup` block (~lines 393, 561–574). For each family group, walk stays in date order: a receipt attaches to the first stay whose end date is on/after the receipt's date. Receipts dated after the last completed stay attach to that final stay as "Receipts received since last stay".
 
-The cascade logic already tracks this:
+3. **Remove overpayment split logic.** Delete `creditFromEarlierPayment` distribution (~lines 720–770) and the "Applied to next stay / Rolled forward as credit" UI rows (~lines 1336–1380). Each stay produces one signed New Balance that becomes the next stay's Previous Balance.
 
-- `stayData.creditFromEarlierPayment = 30` is set on the Oct 14 stay when June's overpayment is distributed forward.
-- June's `currentBalance` is bumped from −$70 to −$40 (the $30 consumed), and `previousBalance` for Oct is recalculated to −$40.
+4. **Unified card layout** for every stay:
+   ```text
+   Previous Balance:                 −$70.00   (or $0.00 for first stay)
+   Charges (X nights):                $30.00
+   Payments (cash/check/venmo):        $0.00
+   Receipts Credited (N):              $0.00
+   ─────────────────────────────────────────
+   New Balance:                      −$40.00   (green "Credit" / red "Balance Due")
+   ```
 
-The "Credit Applied from Earlier Payment" row in the UI (`StayHistory.tsx` line 1336) only renders when `stayData.previousBalance >= 0`. Oct 14's `previousBalance` is −$40, so the row is hidden — even though the field has a real $30 value that explains the missing math.
+5. **Year-end summary row** injected between year blocks in the rendered list:
+   ```text
+   2025 Year-End Balance: −$40.00 credit — rolling forward to 2026
+   ```
+   The next year's first stay renders that same value as its Previous Balance, so the two rows tie visibly. Default action is roll-forward (no refund UI action added in this pass — display only).
 
-## Fix
+6. **Bottom-of-list "Current Balance" card** — the last rendered row gets a highlighted "Current Balance" label instead of "New Balance", so the running total is clearly at the bottom.
 
-Remove the `previousBalance >= 0` gate so the "Credit Applied from Earlier Payment" line renders whenever `creditFromEarlierPayment > 0`.
-
-Oct 14 will then read:
-
-```text
-Previous Balance:                       −$40.00
-Calculated Amount:                       $30.00
-Credit Applied from Earlier Payment:    −$30.00
-Amount Paid:                              $0.00
-─────────────────────────────────────────────────
-Credit Carried Forward:                  $40.00
-```
-
-Math ties out: −40 + 30 − 30 + 0 = −40.
-
-## Files
-
-- `src/pages/StayHistory.tsx` — drop the `stayData.previousBalance >= 0` condition on the "Credit Applied from Earlier Payment" row (~line 1336). No hook or cascade changes; the value already exists.
-
-## Out of scope
-
-- No changes to the cascade math itself; June's "Applied to next stay: $30 / Rolled forward: $40 / $70 total overpayment" display and the existing tie‑line explainer stay as they are.
+### Out of scope
+- No changes to `useCheckoutBilling`, CheckoutFinal, or the underlying `payments`/`receipts` tables.
+- No refund workflow — year-end balance is display-only and always rolls forward.
