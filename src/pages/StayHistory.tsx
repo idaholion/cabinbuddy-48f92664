@@ -659,265 +659,84 @@ export default function StayHistory() {
     return reservation.user_id || 'unknown';
   };
   
-  // Find the newest reservation for each family group (by check-in date)
-  // This will be used to apply receipts to the newest stay
-  const newestReservationByFamily = new Map<string, string>();
-  
-  for (const reservation of sortedReservations) {
-    // Keep overwriting so we end up with the newest (last) reservation for each family group
-    newestReservationByFamily.set(reservation.family_group, reservation.id);
-  }
-
-  // Group reservations by primary host to calculate individual running balances
+  // Simple chronological ledger: for each host, walk stays oldest → newest and
+  // let each stay's newBalance = previousBalance + charges - payments - receipts.
+  // No forward/backward overpayment cascade — running balance carries forward as-is.
   const hostBalances = new Map<string, number>();
-  
-  // Calculate running balance for each reservation based on their primary host
   const reservationsWithBalance: any[] = [];
-  
+
   for (const reservation of sortedReservations) {
     const hostKey = getPrimaryHostKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
-    const isNewestInGroup = newestReservationByFamily.get(reservation.family_group) === reservation.id;
-    const stayData = calculateStayData(reservation, previousBalance, isNewestInGroup);
-    
-    console.log(`[BALANCE DEBUG] Processing: ${reservation.isVirtualSplit ? 'SPLIT' : 'REGULAR'} ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}, previousBalance=${previousBalance.toFixed(2)}, currentBalance=${stayData.currentBalance.toFixed(2)}, amountDue=${stayData.amountDue.toFixed(2)}, newRunningTotal=${(previousBalance + stayData.currentBalance).toFixed(2)}`);
-    
+    const stayData = calculateStayData(reservation, previousBalance);
+    // stayData.currentBalance is the *charge* delta for this stay
+    // (billing + adjustment - payments - receipts). amountDue already = prev + delta.
     reservationsWithBalance.push({ reservation, stayData });
-    
-    // Update this host's running balance
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
-  // FORWARD CREDIT CASCADE: Distribute overpayments from older reservations to newer ones
-  // Group reservations by primary host (not just family group) to properly track individual balances
-  const reservationsByHost = new Map<string, any[]>();
-  
-  for (const item of reservationsWithBalance) {
-    const hostKey = getPrimaryHostKey(item.reservation);
-    if (!reservationsByHost.has(hostKey)) {
-      reservationsByHost.set(hostKey, []);
-    }
-    reservationsByHost.get(hostKey)!.push(item);
-  }
-  
-  // For each host, check if any reservation has an overpayment (negative currentBalance)
-  for (const [hostKey, hostReservations] of reservationsByHost) {
-    // Sort by date (oldest first) to maintain chronological order
-    hostReservations.sort((a, b) => 
-      parseDateOnly(a.reservation.start_date).getTime() - parseDateOnly(b.reservation.start_date).getTime()
-    );
-    
-    console.log(`[CREDIT CASCADE] Processing ${hostReservations.length} reservations for host ${hostKey}`);
-    
-    // Check each reservation for overpayment (negative currentBalance), processing oldest first
-    for (let i = 0; i < hostReservations.length; i++) {
-      const currentItem = hostReservations[i];
-      
-      // If this reservation has overpayment (paid more than billed for THIS stay)
-      if (currentItem.stayData.currentBalance < 0) {
-        let remainingCredit = Math.abs(currentItem.stayData.currentBalance);
-        const originalCredit = remainingCredit;
-        const familyGroup = currentItem.reservation.family_group;
-        
-        // Track credit distribution from this reservation
-        currentItem.stayData.creditDistributedToLaters = 0;
-        currentItem.stayData.totalPaymentAmount = currentItem.stayData.amountPaid;
-        currentItem.stayData.effectiveAmountPaid = currentItem.stayData.billingAmount;
-        
-        console.log(`[CREDIT CASCADE] ${familyGroup} reservation on ${currentItem.reservation.start_date} has overpayment of $${remainingCredit.toFixed(2)}`);
+  // Full ledger is oldest → newest for display
+  const fullLedger = [...reservationsWithBalance];
 
-        // FIRST: Apply credit BACKWARD to older unpaid stays (most recent older stay first).
-        // This prevents the forward cascade from greedily consuming an overpayment that should
-        // settle an earlier outstanding balance before any leftover spills forward.
-        currentItem.stayData.creditDistributedToOlders = currentItem.stayData.creditDistributedToOlders || 0;
-        for (let k = i - 1; k >= 0 && remainingCredit > 0; k--) {
-          const olderItem = hostReservations[k];
-          if (olderItem.stayData.currentBalance > 0) {
-            const creditToApply = Math.min(remainingCredit, olderItem.stayData.currentBalance);
-            console.log(`[CREDIT CASCADE - BACKWARD] Applying $${creditToApply.toFixed(2)} to older stay ${olderItem.reservation.start_date}`);
-            olderItem.stayData.originalAmountDue = olderItem.stayData.originalAmountDue ?? olderItem.stayData.currentBalance;
-            olderItem.stayData.currentBalance -= creditToApply;
-            olderItem.stayData.amountDue -= creditToApply;
-            olderItem.stayData.paidViaLaterStay = true;
-            currentItem.stayData.creditDistributedToOlders! += creditToApply;
-            remainingCredit -= creditToApply;
-          }
-        }
-
-        // THEN: Distribute any remaining credit forward to newer reservations
-        for (let j = i + 1; j < hostReservations.length && remainingCredit > 0; j++) {
-          const newerItem = hostReservations[j];
-          
-          // Apply credit to currentBalance first (the charge for THIS reservation only)
-          if (newerItem.stayData.currentBalance > 0) {
-            const creditToApply = Math.min(remainingCredit, newerItem.stayData.currentBalance);
-            
-            console.log(`[CREDIT CASCADE] Applying $${creditToApply.toFixed(2)} credit to ${newerItem.reservation.start_date} currentBalance $${newerItem.stayData.currentBalance.toFixed(2)} (amountDue was $${newerItem.stayData.amountDue.toFixed(2)})`);
-            
-            // Add credit tracking field
-            newerItem.stayData.creditFromEarlierPayment = (newerItem.stayData.creditFromEarlierPayment || 0) + creditToApply;
-            
-            // Track total credit distributed from the current reservation
-            currentItem.stayData.creditDistributedToLaters! += creditToApply;
-            
-            // Reduce currentBalance by the applied credit
-            newerItem.stayData.currentBalance -= creditToApply;
-            
-            // Reduce remaining credit
-            remainingCredit -= creditToApply;
-            
-            console.log(`[CREDIT CASCADE] After credit: ${newerItem.reservation.start_date} currentBalance=$${newerItem.stayData.currentBalance.toFixed(2)}`);
-          }
-        }
-        
-        // "Consume" the distributed credit from the source stay so it doesn't also flow forward as previousBalance
-        const creditConsumed = originalCredit - remainingCredit;
-        if (creditConsumed > 0) {
-          currentItem.stayData.currentBalance += creditConsumed;
-          console.log(`[CREDIT CASCADE] Consumed $${creditConsumed.toFixed(2)} from source stay. New currentBalance: $${currentItem.stayData.currentBalance.toFixed(2)}`);
-        }
-        
-        console.log(`[CREDIT CASCADE] Credit cascade complete for ${currentItem.reservation.start_date}. Unused credit: $${remainingCredit.toFixed(2)}`);
-      }
-    }
-    
-    // RECALCULATE running balances after credits have been applied
-    // This ensures previousBalance flows correctly through the chain
-    let runningBalance = 0;
-    for (const item of hostReservations) {
-      item.stayData.previousBalance = runningBalance;
-      item.stayData.amountDue = item.stayData.currentBalance + runningBalance;
-      runningBalance += item.stayData.currentBalance;
-      
-      console.log(`[RECALC] ${item.reservation.start_date}: previousBalance=$${item.stayData.previousBalance.toFixed(2)}, currentBalance=$${item.stayData.currentBalance.toFixed(2)}, amountDue=$${item.stayData.amountDue.toFixed(2)}, runningBalance=$${runningBalance.toFixed(2)}`);
-    }
-  }
-  
-  // Display oldest first, newest last
-  let displayReservations = [...reservationsWithBalance];
-  
-  // Identify the last (newest) reservation for each host to only show credit options there
+  // Identify the last (newest) reservation for each host across the FULL ledger
   const lastReservationByHost = new Map<string, string>();
-  for (let i = displayReservations.length - 1; i >= 0; i--) {
-    const { reservation } = displayReservations[i];
+  for (let i = fullLedger.length - 1; i >= 0; i--) {
+    const { reservation } = fullLedger[i];
     const hostKey = getPrimaryHostKey(reservation);
     if (!lastReservationByHost.has(hostKey)) {
       lastReservationByHost.set(hostKey, reservation.id);
     }
   }
 
-  // Calculate summary stats (including virtual split reservations)
-  const totalStays = allReservations.length;
-  const totalNights = allReservations.reduce((sum, res) => {
+  // Apply the year filter to display ONLY (math already ran globally).
+  const displayReservations = fullLedger.filter(({ reservation }) => {
+    if (selectedYear === 0) return true;
+    return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
+  });
+
+  // ID of the very last visible row → gets "Current Balance" label instead of "New Balance".
+  const lastVisibleId = displayReservations.length > 0
+    ? displayReservations[displayReservations.length - 1].reservation.id
+    : null;
+
+  // Year-end balances: for each year present in the full ledger, take the running
+  // balance across all hosts as of the last stay of that year. Displayed as a
+  // divider row between years so the reader can see the rollover explicitly.
+  const yearEndBalances = new Map<number, number>();
+  {
+    const runningByHost = new Map<string, number>();
+    // Group by year, in chronological order
+    for (const item of fullLedger) {
+      const hostKey = getPrimaryHostKey(item.reservation);
+      runningByHost.set(hostKey, (runningByHost.get(hostKey) || 0) + item.stayData.currentBalance);
+      const year = parseDateOnly(item.reservation.start_date).getFullYear();
+      // sum across all hosts snapshot
+      let total = 0;
+      for (const v of runningByHost.values()) total += v;
+      yearEndBalances.set(year, total);
+    }
+  }
+
+  // Summary stats — apply year filter for display counts, but Current Balance
+  // reflects the GLOBAL running balance (sum across hosts) so it doesn't shift
+  // when the user narrows the year filter.
+  const visibleReservations = displayReservations.map(r => r.reservation);
+  const totalStays = visibleReservations.length;
+  const totalNights = visibleReservations.reduce((sum, res) => {
     if (res.isVirtualSplit) {
-      // For virtual splits, count the days in daily occupancy
       return sum + (res.splitData?.dailyOccupancy?.length || 0);
     }
-    const nights = differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
-    return sum + nights;
+    return sum + differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
   }, 0);
-  const totalPaid = allReservations.reduce((sum, res) => {
-    const stayData = calculateStayData(res);
-    return sum + stayData.amountPaid;
-  }, 0);
-  
-  // Apply backward payment cascade: excess payment on newest stay covers older unpaid stays
-  const applyBackwardPaymentCascade = (reservations: typeof displayReservations) => {
-    // Group by primary host
-    const hostGroups = new Map<string, typeof displayReservations>();
-    reservations.forEach(res => {
-      const hostKey = getPrimaryHostKey(res.reservation);
-      if (!hostGroups.has(hostKey)) {
-        hostGroups.set(hostKey, []);
-      }
-      hostGroups.get(hostKey)!.push(res);
-    });
+  const totalPaid = displayReservations.reduce((sum, r) => sum + (r.stayData.amountPaid || 0), 0);
 
-    // For each host group, apply excess credit from newest stay to older stays
-    hostGroups.forEach((hostReservations, hostKey) => {
-      const newestResId = lastReservationByHost.get(hostKey);
-      const newestRes = hostReservations.find(r => r.reservation.id === newestResId);
-      
-      if (!newestRes) return;
-      
-      // Calculate excess credit on newest stay using currentBalance (not amountDue)
-      // currentBalance = billingAmount - amountPaid, negative means overpayment on THIS stay
-      // The running balance already applies this credit, but we want to SHOW it on older stays
-      const currentBalance = newestRes.stayData.currentBalance;
-      let availableCredit = currentBalance < 0 ? Math.abs(currentBalance) : 0;
-      
-      console.log(`[BACKWARD CASCADE] Host ${hostKey}: newest stay currentBalance=${currentBalance}, availableCredit=${availableCredit}`);
-      
-      if (availableCredit > 0) {
-        // Sort older stays by date (most recent first, so we pay those first)
-        // Check currentBalance > 0 (the billing for THAT stay), not amountDue which includes running balance
-        const olderStays = hostReservations
-          .filter(r => r.reservation.id !== newestResId && r.stayData.currentBalance > 0)
-          .sort((a, b) => parseDateOnly(b.reservation.start_date).getTime() - parseDateOnly(a.reservation.start_date).getTime());
-        
-        console.log(`[BACKWARD CASCADE] Found ${olderStays.length} older stays with currentBalance > 0`);
-        
-        let totalCreditDistributed = 0;
-        
-        for (const res of olderStays) {
-          if (availableCredit <= 0) break;
-          
-          // Apply credit to this stay's currentBalance (its individual charge)
-          const amountToApply = Math.min(availableCredit, res.stayData.currentBalance);
-          res.stayData.originalAmountDue = res.stayData.currentBalance;
-          res.stayData.currentBalance -= amountToApply;
-          res.stayData.amountDue -= amountToApply;
-          res.stayData.paidViaLaterStay = true;
-          availableCredit -= amountToApply;
-          totalCreditDistributed += amountToApply;
-          
-          console.log(`[BACKWARD CASCADE] Applied $${amountToApply} to stay ${res.reservation.start_date}, remaining credit=${availableCredit}`);
-        }
-        
-        // Track how much credit was distributed FROM the newest stay TO older stays
-        if (totalCreditDistributed > 0) {
-          newestRes.stayData.creditDistributedToOlders = totalCreditDistributed;
-          // The "effective" amount paid for THIS stay is the billing amount, rest went to older stays
-          newestRes.stayData.effectiveAmountPaid = newestRes.stayData.billingAmount;
-          newestRes.stayData.totalPaymentAmount = newestRes.stayData.amountPaid;
-          
-          // CRITICAL: Adjust the newest stay's currentBalance - the credit was used for older stays
-          // currentBalance was negative (overpayment), add back the distributed amount
-          newestRes.stayData.currentBalance += totalCreditDistributed;
-          
-          console.log(`[BACKWARD CASCADE] Newest stay distributed $${totalCreditDistributed} to older stays, adjusted currentBalance to ${newestRes.stayData.currentBalance}`);
-        }
-      }
-      
-      // RECALCULATE running balances for this host after backward cascade
-      hostReservations.sort((a, b) => 
-        parseDateOnly(a.reservation.start_date).getTime() - parseDateOnly(b.reservation.start_date).getTime()
-      );
-      
-      let runningBalance = 0;
-      for (const item of hostReservations) {
-        item.stayData.previousBalance = runningBalance;
-        item.stayData.amountDue = item.stayData.currentBalance + runningBalance;
-        runningBalance += item.stayData.currentBalance;
-        
-        console.log(`[BACKWARD RECALC] ${item.reservation.start_date}: previousBalance=$${item.stayData.previousBalance.toFixed(2)}, currentBalance=$${item.stayData.currentBalance.toFixed(2)}, amountDue=$${item.stayData.amountDue.toFixed(2)}`);
-      }
-    });
-
-    return reservations;
-  };
-
-  // Apply the cascade
-  displayReservations = applyBackwardPaymentCascade(displayReservations);
-  
-  // Calculate current balance (only sum the newest stay's amountDue per host)
+  // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
-    const reservationItem = displayReservations.find(r => r.reservation.id === resId);
-    if (reservationItem) {
-      return sum + reservationItem.stayData.amountDue;
-    }
-    return sum;
+    const item = fullLedger.find(r => r.reservation.id === resId);
+    return item ? sum + item.stayData.amountDue : sum;
   }, 0);
+
+
 
   // Count orphaned payments (for admin debugging)
   // Exclude intentional split payments (reservation_id is null by design)
