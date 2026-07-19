@@ -985,24 +985,12 @@ export default function StayHistory() {
                         </Badge>
                       )}
                       {stayData.paymentId && (() => {
-                        // Determine if this stay should show as paid based on cascade logic
-                        // Check both forward cascade (creditDistributedToLaters) and backward cascade (creditDistributedToOlders)
-                        const effectivelyPaid = stayData.amountDue <= 0 || 
-                          stayData.paidViaLaterStay || 
-                          (stayData.creditDistributedToLaters && stayData.creditDistributedToLaters > 0) ||
-                          (stayData.creditDistributedToOlders && stayData.creditDistributedToOlders > 0);
-                        
+                        const isPending = stayData.billingAmount === 0 && !stayData.hasOccupancyData;
+                        const isPaid = stayData.amountDue <= 0;
+                        const isPartial = !isPaid && stayData.amountPaid > 0;
                         return (
-                          <Badge variant={
-                            stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'secondary' :
-                            effectivelyPaid ? 'default' : 
-                            stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'secondary' : 
-                            'destructive'
-                          }>
-                            {stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'pending' :
-                             effectivelyPaid ? 'paid' : 
-                             stayData.amountPaid > 0 && stayData.amountDue > 0 ? 'partial' : 
-                             'pending'}
+                          <Badge variant={isPending ? 'secondary' : isPaid ? 'default' : isPartial ? 'secondary' : 'destructive'}>
+                            {isPending ? 'pending' : isPaid ? 'paid' : isPartial ? 'partial' : 'pending'}
                           </Badge>
                         );
                       })()}
