@@ -297,17 +297,18 @@ export default function StayHistory() {
     return reservation.user_id === effectiveUserId;
   };
 
+  // NOTE: Year filter is intentionally NOT applied here. We build the financial
+  // cascade over ALL stays (globally) so running balances and receipt attribution
+  // are consistent; the year filter is applied at render time only.
   const filteredReservations = reservations
     .filter((reservation) => {
-      const checkInDate = parseDateOnly(reservation.start_date);
       const checkOutDate = parseDateOnly(reservation.end_date);
       const isPast = checkOutDate < new Date();
       const isConfirmed = reservation.status === "confirmed";
-      const matchesYear = selectedYear === 0 || checkInDate.getFullYear() === selectedYear;
       const matchesFamily = selectedFamilyGroup === "all" || reservation.family_group === selectedFamilyGroup;
       const hasPermission = canViewReservation(reservation);
       
-      return isPast && isConfirmed && matchesYear && matchesFamily && hasPermission;
+      return isPast && isConfirmed && matchesFamily && hasPermission;
     });
 
   // Create virtual reservations from payment splits where current user is recipient
