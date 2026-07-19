@@ -585,20 +585,10 @@ export default function StayHistory() {
       }
     }
     
-    // Only apply receipts to the newest reservation per family group
-    let receiptsTotal = 0;
-    let receiptsCount = 0;
-    
-    if (isNewestInGroup && !familyGroupsWithReceipts.has(reservation.family_group)) {
-      const stayReceipts = receipts.filter((receipt) => {
-        return receipt.family_group === reservation.family_group;
-      });
-      receiptsTotal = stayReceipts.reduce((sum, receipt) => sum + (receipt.amount || 0), 0);
-      receiptsCount = stayReceipts.length;
-      familyGroupsWithReceipts.add(reservation.family_group);
-      
-      console.log(`[StayHistory] Applied ${receiptsCount} receipts totaling $${receiptsTotal.toFixed(2)} to newest ${reservation.family_group} reservation`);
-    }
+    // Receipts attributed to this stay by date-based walk (see receiptsByReservation above)
+    const attributed = receiptsByReservation.get(reservation.id);
+    const receiptsTotal = attributed?.total || 0;
+    const receiptsCount = attributed?.count || 0;
     
     let billingAmount = 0;
     let amountPaid = 0;
