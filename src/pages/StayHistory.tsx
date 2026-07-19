@@ -1310,6 +1310,24 @@ export default function StayHistory() {
                  </div>
               </CardContent>
             </Card>
+            {showYearEnd && (
+              <div className="my-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">
+                  {currentYear} Year-End Balance:
+                  <span className={`ml-2 font-bold ${yearEndBal > 0 ? 'text-destructive' : yearEndBal < 0 ? 'text-green-600' : ''}`}>
+                    {yearEndBal < 0 ? '−' : ''}${Math.abs(yearEndBal).toFixed(2)}
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  {yearEndBal === 0
+                    ? `nothing rolling into ${nextYear}`
+                    : yearEndBal < 0
+                      ? `credit rolling forward to ${nextYear}`
+                      : `balance rolling forward to ${nextYear}`}
+                </span>
+              </div>
+            )}
+          </div>
           );
         })}
       </div>
