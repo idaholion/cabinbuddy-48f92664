@@ -1,62 +1,44 @@
+## Problem
 
-## What's actually happening (the explanation)
+On the Oct 14–17, 2025 Andrew Family card, the numbers don't visibly reconcile:
 
-Two clarifications in one, since they're both about how Stay History labels credits.
+- Previous Balance: −$40
+- Calculated Amount: $30
+- Amount Paid: $0
+- Credit Carried Forward: $40
 
-### 1. The $30 vs $40 puzzle
+There's no visible line showing that the $30 stay charge was already covered by $30 of June's overpayment, so the reader can't tell why a $30 charge with $0 paid results in a $40 credit rolling forward.
 
-Your Jun 24–Jul 2 stay was overpaid by **$70** ($390 paid − $320 billed), not $30. That $70 splits into two pieces as it cascades forward:
+## Root cause (verified)
 
-- **$30** — the exact amount needed to cover Oct 14–17. Stay History labels this as **"Credit to Later Stays: $30"** on the June card, because $30 was the portion consumed by a later stay charge.
-- **$40** — the leftover after Oct is covered. That $40 rolls forward as a running credit and shows on the Oct card as **"Previous Balance: −$40"** (green) and as **"Credit Remaining: $40"** at the bottom of the Oct card.
+The cascade logic already tracks this:
 
-$30 + $40 = $70 = the full overpayment. Both numbers are correct; the label "Credit to Later Stays" only counts what got *consumed by a subsequent charge in view*, not the leftover that keeps rolling forward. That's why the same $70 appears with two different labels on two different rows.
+- `stayData.creditFromEarlierPayment = 30` is set on the Oct 14 stay when June's overpayment is distributed forward.
+- June's `currentBalance` is bumped from −$70 to −$40 (the $30 consumed), and `previousBalance` for Oct is recalculated to −$40.
 
-### 2. "Total Payment Made" mixes money and receipts
+The "Credit Applied from Earlier Payment" row in the UI (`StayHistory.tsx` line 1336) only renders when `stayData.previousBalance >= 0`. Oct 14's `previousBalance` is −$40, so the row is hidden — even though the field has a real $30 value that explains the missing math.
 
-On your June 24 row specifically, the $390 is 100% cash/venmo/check — no receipts. Receipts today are applied only to the **newest** reservation per family group (currently Aug 14, 2026 for Andrew Family, which holds all $763.95 of work-weekend receipts). But the label "Total Payment Made" doesn't distinguish money from receipts, so on the newest card the two get silently blended. That's the real risk you're flagging.
+## Fix
 
-## Proposed UI clarification (presentation only)
+Remove the `previousBalance >= 0` gate so the "Credit Applied from Earlier Payment" line renders whenever `creditFromEarlierPayment > 0`.
 
-Small changes in `src/pages/StayHistory.tsx`. No billing logic, no cascade math, no DB migrations.
+Oct 14 will then read:
 
-**A. Always break out money vs receipts on the right-hand summary**
+```text
+Previous Balance:                       −$40.00
+Calculated Amount:                       $30.00
+Credit Applied from Earlier Payment:    −$30.00
+Amount Paid:                              $0.00
+─────────────────────────────────────────────────
+Credit Carried Forward:                  $40.00
+```
 
-Replace the current single "Amount Paid" line with two labeled rows whenever either is non-zero:
+Math ties out: −40 + 30 − 30 + 0 = −40.
 
-- `Payments (cash / check / venmo): $XXX.XX`
-- `Receipts Credited: −$YYY.YY  (N receipts)`
+## Files
 
-Keep the existing "Receipts Submitted" detail block on the left column, but link the two visually by using the same green color and receipt count.
+- `src/pages/StayHistory.tsx` — drop the `stayData.previousBalance >= 0` condition on the "Credit Applied from Earlier Payment" row (~line 1336). No hook or cascade changes; the value already exists.
 
-**B. Split the source-row overpayment into two lines**
+## Out of scope
 
-On any card whose overpayment was larger than the next stay's charge, replace the single "Credit to Later Stays" row with:
-
-- `Applied to next stay: −$30.00`
-- `Rolled forward as credit: −$40.00`
-
-Small footnote below: *"$70.00 total overpayment."*
-
-**C. Tie the two rows together on the receiving card**
-
-When Previous Balance is a credit *and* it fully covers this stay, add one explainer line under the bottom total:
-
-*"$30.00 of the incoming credit covered this stay; $40.00 remains."*
-
-**D. Rename the bottom label for mid-chain rows**
-
-When a row shows a negative total AND there is at least one later stay in view for the same host, label it **"Credit Carried Forward"** instead of **"Credit Remaining"**. Reserve "Credit Remaining" for the newest stay per host, where the credit actually stops.
-
-## Files touched
-
-- `src/pages/StayHistory.tsx` — right-column financial summary block (~lines 1243–1330). Read `stayData.amountPaid`, `stayData.receiptsTotal`, `stayData.receiptsCount`, `stayData.creditDistributedToLaters`, `stayData.creditFromEarlierPayment`, `stayData.previousBalance`, `stayData.amountDue`, and `lastReservationByHost` (already computed) to decide the split-vs-carry-forward wording.
-
-## What's NOT changing
-
-- No changes to `calculateStayData`, the forward cascade, or `applyBackwardPaymentCascade`.
-- No changes to `useCheckoutBilling` or the Daily/Final checkout pages.
-- No changes to receipt-attachment rules (receipts still land on the newest reservation per group).
-- No schema or migration changes.
-
-Ready to implement when you approve.
+- No changes to the cascade math itself; June's "Applied to next stay: $30 / Rolled forward: $40 / $70 total overpayment" display and the existing tie‑line explainer stay as they are.

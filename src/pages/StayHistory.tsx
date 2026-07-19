@@ -1333,7 +1333,7 @@ export default function StayHistory() {
                         </>
                       );
                     })()}
-                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && stayData.previousBalance >= 0 && (
+                    {stayData.creditFromEarlierPayment && stayData.creditFromEarlierPayment > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Credit Applied from Earlier Payment:</span>
                         <span className="font-medium text-green-600">-${stayData.creditFromEarlierPayment.toFixed(2)}</span>
