@@ -972,7 +972,9 @@ export default function StayHistory() {
           const checkOutDate = parseDateOnly(reservation.end_date);
 
           return (
-            <Card key={reservation.id}>
+            <div key={reservation.id}>
+            <Card>
+
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
