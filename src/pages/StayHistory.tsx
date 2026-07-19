@@ -389,8 +389,36 @@ export default function StayHistory() {
   const allReservations = [...filteredReservations, ...virtualSplitReservations]
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
-  // Track which family groups have had receipts applied (to avoid double-counting)
-  const familyGroupsWithReceipts = new Set<string>();
+  // Chronological receipt attribution: for each family group, walk stays oldest-first
+  // and assign each receipt to the FIRST stay whose end date is on/after the receipt date.
+  // Receipts dated after the family's most recent completed stay attach to that final stay
+  // as "received since last stay". Result: Map<reservationId, { total, count }>.
+  const receiptsByReservation = new Map<string, { total: number; count: number }>();
+  {
+    const staysByFamily = new Map<string, any[]>();
+    for (const r of [...filteredReservations, ...virtualSplitReservations]) {
+      if (!r.family_group) continue;
+      if (!staysByFamily.has(r.family_group)) staysByFamily.set(r.family_group, []);
+      staysByFamily.get(r.family_group)!.push(r);
+    }
+    for (const [family, stays] of staysByFamily) {
+      stays.sort((a, b) => parseDateOnly(a.end_date).getTime() - parseDateOnly(b.end_date).getTime());
+      const famReceipts = receipts
+        .filter(rc => rc.family_group === family && rc.date)
+        .slice()
+        .sort((a, b) => parseDateOnly(a.date).getTime() - parseDateOnly(b.date).getTime());
+      const lastStay = stays[stays.length - 1];
+      for (const rc of famReceipts) {
+        const rcDate = parseDateOnly(rc.date);
+        const target = stays.find(s => parseDateOnly(s.end_date).getTime() >= rcDate.getTime()) || lastStay;
+        if (!target) continue;
+        const entry = receiptsByReservation.get(target.id) || { total: 0, count: 0 };
+        entry.total += Number(rc.amount) || 0;
+        entry.count += 1;
+        receiptsByReservation.set(target.id, entry);
+      }
+    }
+  }
 
   // Helper function to check if daily occupancy has valid guest data
   const hasValidOccupancyData = (dailyOccupancy: any[]): boolean => {
@@ -398,7 +426,7 @@ export default function StayHistory() {
     return dailyOccupancy.some(day => (day.guests || 0) > 0);
   };
 
-  const calculateStayData = (reservation: any, previousBalance: number = 0, isNewestInGroup: boolean = false) => {
+  const calculateStayData = (reservation: any, previousBalance: number = 0) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
       const splitPayment = reservation.splitData.payment;
