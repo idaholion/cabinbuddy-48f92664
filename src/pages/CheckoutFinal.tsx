@@ -2003,13 +2003,13 @@ const CheckoutFinal = () => {
                         </SelectContent>
                       </Select>
 
-                      {selectedPaymentMethod === 'check' && (checkoutData.checkPayableTo?.name || checkoutData.checkPayableTo?.address) && (
+                      {selectedPaymentMethod === 'check' && (checkoutData.checkAddress?.name || checkoutData.checkAddress?.address) && (
                         <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
-                          {checkoutData.checkPayableTo?.name && (
-                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkPayableTo.name}</span></p>
+                          {checkoutData.checkAddress?.name && (
+                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkAddress.name}</span></p>
                           )}
-                          {checkoutData.checkPayableTo?.address && (
-                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkPayableTo.address}</span></p>
+                          {checkoutData.checkAddress?.address && (
+                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkAddress.address}</span></p>
                           )}
                         </div>
                       )}
