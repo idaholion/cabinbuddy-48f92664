@@ -27,7 +27,16 @@ interface CheckoutBillingResult {
   billingLocked: boolean;
   previousCredit: number;
   refetch: () => Promise<void>;
-  recordBalanceDue: (paymentMethod?: string) => Promise<boolean>;
+  recordBalanceDue: (
+    paymentMethod?: string,
+    options?: {
+      amountPaid?: number;
+      paidDate?: string;
+      paymentReference?: string;
+      notes?: string;
+    }
+  ) => Promise<boolean>;
+
   createSplitPayment: (
     splitToUserId: string,
     splitToFamilyGroup: string,
@@ -280,8 +289,16 @@ export const useCheckoutBilling = (
   const totalDays = Object.keys(dailyOccupancy).length;
   const totalGuests = Object.values(dailyOccupancy).reduce((sum, count) => sum + count, 0);
 
-  // Record the outstanding balance for this stay
-  const recordBalanceDue = async (paymentMethod?: string): Promise<boolean> => {
+  // Record the outstanding balance for this stay (optionally with a payment applied)
+  const recordBalanceDue = async (
+    paymentMethod?: string,
+    options?: {
+      amountPaid?: number;
+      paidDate?: string;
+      paymentReference?: string;
+      notes?: string;
+    }
+  ): Promise<boolean> => {
     if (!organization?.id || !reservationId || !checkInDate || !checkOutDate) {
       toast({
         title: 'Error',
@@ -314,18 +331,28 @@ export const useCheckoutBilling = (
         cost: day.cost
       }));
 
+      const amountPaid = Math.round((options?.amountPaid || 0) * 100) / 100;
+      const status = amountPaid >= result.total && amountPaid > 0
+        ? 'paid'
+        : amountPaid > 0
+        ? 'partial'
+        : 'pending';
+
       const { error } = await supabase.from('payments').insert({
         organization_id: organization.id,
         reservation_id: reservationId,
         family_group: reservation.family_group,
         payment_type: 'use_fee',
         amount: result.total,
-        amount_paid: 0,
-        status: 'pending',
+        amount_paid: amountPaid,
+        status,
         payment_method: (paymentMethod as any) || null,
+        payment_reference: options?.paymentReference || null,
+        paid_date: amountPaid > 0 ? (options?.paidDate || new Date().toISOString().split('T')[0]) : null,
         due_date: seasonEnd.toISOString().split('T')[0],
         description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days)`,
-        notes: `Balance due. Total ${totalGuests} guests over ${totalDays} days.${paymentMethod ? ` Paying by ${paymentMethod}.` : ''}`,
+        notes: options?.notes
+          || `Balance due. Total ${totalGuests} guests over ${totalDays} days.${paymentMethod ? ` Paying by ${paymentMethod}.` : ''}`,
         daily_occupancy: dailyOccupancyArray,
         created_by_user_id: user.id,
       });
@@ -333,9 +360,12 @@ export const useCheckoutBilling = (
       if (error) throw error;
 
       toast({
-        title: 'Balance Recorded',
-        description: `${BillingCalculator.formatCurrency(result.total)} is now shown as your balance due${paymentMethod ? ` (paying by ${paymentMethod})` : ''}.`,
+        title: amountPaid > 0 ? 'Payment Recorded' : 'Balance Recorded',
+        description: amountPaid > 0
+          ? `${BillingCalculator.formatCurrency(amountPaid)} recorded${paymentMethod ? ` (${paymentMethod})` : ''}.`
+          : `${BillingCalculator.formatCurrency(result.total)} is now shown as your balance due${paymentMethod ? ` (paying by ${paymentMethod})` : ''}.`,
       });
+
 
       return true;
     } catch (error: any) {

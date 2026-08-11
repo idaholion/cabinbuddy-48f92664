@@ -19,6 +19,8 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
+import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
 import { useToast } from "@/hooks/use-toast";
@@ -96,7 +98,7 @@ const CheckoutFinal = () => {
   const [paymentCreated, setPaymentCreated] = useState(false);
 
   // Chosen payment method for recording the balance due
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [otherPaymentOpen, setOtherPaymentOpen] = useState(false);
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
@@ -553,16 +555,8 @@ const CheckoutFinal = () => {
     isSample: isSampleMode
   };
 
-  // Default the payment method to the organization's preferred method
-  useEffect(() => {
-    if (selectedPaymentMethod) return;
-    const preferred = financialSettings?.preferred_payment_method;
-    if (!preferred) return;
-    const normalized = preferred === 'send-check' ? 'check' : preferred;
-    if (['venmo', 'paypal', 'check', 'cash', 'other'].includes(normalized)) {
-      setSelectedPaymentMethod(normalized);
-    }
-  }, [financialSettings?.preferred_payment_method, selectedPaymentMethod]);
+
+
 
 
 
@@ -762,7 +756,7 @@ const CheckoutFinal = () => {
 
           payment_type: 'reservation_balance' as const,
           status: 'pending' as const,
-          payment_method: (selectedPaymentMethod as any) || null,
+          payment_method: null,
           description: `Cabin stay - ${displayName}'s share`,
           due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
           daily_occupancy: dailyOccupancy,
@@ -773,7 +767,7 @@ const CheckoutFinal = () => {
 
       toast({
         title: "Balance Recorded",
-        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded${selectedPaymentMethod ? ` (paying by ${selectedPaymentMethod})` : ''}.`,
+        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded.`,
       });
 
       setPaymentCreated(true);
@@ -939,25 +933,77 @@ const CheckoutFinal = () => {
     setEditedOccupancy({});
   };
 
-  const handleRecordBalanceDue = async () => {
-    if (!selectedPaymentMethod) {
-      toast({
-        title: "Choose a payment method",
-        description: "Please select how you plan to pay before recording the balance.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Methods supported by the database enum; anything else is stored as "other"
+  const DB_PAYMENT_METHODS = ['cash', 'check', 'venmo', 'paypal', 'bank_transfer', 'stripe', 'other'];
+
+  const handleOtherPaymentSave = async (data: {
+    amount: number;
+    paidDate: string;
+    paymentMethod: string;
+    paymentReference?: string;
+    notes?: string;
+  }) => {
+    const dbMethod = DB_PAYMENT_METHODS.includes(data.paymentMethod) ? data.paymentMethod : 'other';
+    const methodLabel = data.paymentMethod.replace('_', ' ');
+    const amount = Math.round(data.amount * 100) / 100;
+    const noteText = [
+      `Paid by ${methodLabel}`,
+      data.paymentReference ? `Ref: ${data.paymentReference}` : null,
+      data.notes || null,
+    ].filter(Boolean).join(' — ');
 
     setIsCreatingPayment(true);
-    const success = await recordBalanceDue(selectedPaymentMethod);
-    setIsCreatingPayment(false);
+    try {
+      if (paymentId) {
+        // Apply the payment to the existing record for this stay
+        const { data: existing, error: fetchError } = await supabase
+          .from('payments')
+          .select('amount, amount_paid, notes')
+          .eq('id', paymentId)
+          .single();
 
-    if (success) {
-      // Navigate to stay history after the balance is recorded
-      setTimeout(() => navigate("/stay-history"), 1500);
+        if (fetchError) throw fetchError;
+
+        const newPaid = Math.round(((existing?.amount_paid || 0) + amount) * 100) / 100;
+        const total = existing?.amount || 0;
+        const status = newPaid >= total && newPaid > 0 ? 'paid' : newPaid > 0 ? 'partial' : 'pending';
+
+        const { error } = await supabase
+          .from('payments')
+          .update({
+            amount_paid: newPaid,
+            status: status as any,
+            payment_method: dbMethod as any,
+            payment_reference: data.paymentReference || null,
+            paid_date: data.paidDate,
+            notes: existing?.notes ? `${existing.notes}\n${noteText}` : noteText,
+            updated_by_user_id: user?.id,
+          })
+          .eq('id', paymentId);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Payment Recorded',
+          description: `${BillingCalculator.formatCurrency(amount)} recorded (${methodLabel}).`,
+        });
+      } else {
+        const success = await recordBalanceDue(dbMethod, {
+          amountPaid: amount,
+          paidDate: data.paidDate,
+          paymentReference: data.paymentReference,
+          notes: noteText,
+        });
+        if (!success) throw new Error('Failed to record payment');
+      }
+
+      setOtherPaymentOpen(false);
+      setTimeout(() => navigate('/stay-history'), 1200);
+    } finally {
+      setIsCreatingPayment(false);
     }
   };
+
 
   const handleApplyCreditToFuture = async () => {
     if (!paymentId || !organization?.id) {
@@ -2008,56 +2054,40 @@ const CheckoutFinal = () => {
                       </>
                     )}
                     
-                    {/* Payment Method Choice */}
-                    <Separator className="my-4" />
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">How will you pay?</Label>
-                      <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-                        <SelectTrigger className="text-base">
-                          <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="venmo">Venmo</SelectItem>
-                          <SelectItem value="paypal">PayPal</SelectItem>
-                          <SelectItem value="check">Check</SelectItem>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {selectedPaymentMethod === 'check' && (checkoutData.checkAddress?.name || checkoutData.checkAddress?.address) && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
-                          {checkoutData.checkAddress?.name && (
-                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkAddress.name}</span></p>
-                          )}
-                          {checkoutData.checkAddress?.address && (
-                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkAddress.address}</span></p>
-                          )}
-                        </div>
-                      )}
-
-                      {selectedPaymentMethod === 'paypal' && checkoutData.paypalEmail && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm">
-                          <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{checkoutData.paypalEmail}</span>
-                        </div>
-                      )}
-
-                      {selectedPaymentMethod === 'venmo' && checkoutData.venmoHandle && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm">
-                          <span className="text-muted-foreground">Send Venmo payment to:</span> <span className="font-medium">{checkoutData.venmoHandle}</span>
-                        </div>
-                      )}
-
+                    {/* Other Payment Options */}
+                    <div className="pt-3">
                       <Button
                         variant="outline"
-                        onClick={handleRecordBalanceDue}
+                        onClick={() => setOtherPaymentOpen(true)}
                         disabled={isCreatingPayment}
                         className="w-full"
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
-                        {isCreatingPayment ? "Processing..." : "Record Balance Due"}
+                        Other Payment Options
                       </Button>
                     </div>
+
+                    {otherPaymentOpen && (
+                      <RecordPaymentDialog
+                        open={otherPaymentOpen}
+                        onOpenChange={setOtherPaymentOpen}
+                        title="Other Payment Options"
+                        hideVenmo
+
+                        stay={{
+                          id: currentReservation?.id || '',
+                          family_group: currentReservation?.family_group || '',
+                          balanceDue: Math.max(0, Math.round(totalAmount * 100) / 100),
+                        }}
+                        paymentInfo={{
+                          checkPayableTo: checkoutData.checkAddress?.name,
+                          checkAddress: checkoutData.checkAddress?.address,
+                          paypalEmail: checkoutData.paypalEmail,
+                        }}
+                        onSave={handleOtherPaymentSave}
+                      />
+                    )}
+
                   </div>
                 </CardContent>
               </Card>

@@ -16,6 +16,19 @@ interface RecordPaymentDialogProps {
     family_group: string;
     balanceDue: number;
   };
+  /** Optional dialog title override (defaults to "Record Payment - {family group}") */
+  title?: string;
+  /** Optional save button label override */
+  saveLabel?: string;
+  /** Hide Venmo from the method list (when Venmo is offered elsewhere) */
+  hideVenmo?: boolean;
+
+  /** Optional organization payment instructions shown for the selected method */
+  paymentInfo?: {
+    checkPayableTo?: string;
+    checkAddress?: string;
+    paypalEmail?: string;
+  };
   onSave: (data: {
     amount: number;
     paidDate: string;
@@ -29,6 +42,11 @@ export const RecordPaymentDialog = ({
   open,
   onOpenChange,
   stay,
+  title,
+  saveLabel,
+  hideVenmo,
+
+  paymentInfo,
   onSave,
 }: RecordPaymentDialogProps) => {
   const { toast } = useToast();
@@ -39,6 +57,7 @@ export const RecordPaymentDialog = ({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
 
   const handleSave = async () => {
     if (!paymentMethod) {
@@ -94,7 +113,7 @@ export const RecordPaymentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Record Payment - {stay.family_group}</DialogTitle>
+          <DialogTitle>{title || `Record Payment - ${stay.family_group}`}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -153,7 +172,7 @@ export const RecordPaymentDialog = ({
               <SelectContent>
                 <SelectItem value="check">Check</SelectItem>
                 <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="venmo">Venmo</SelectItem>
+                {!hideVenmo && <SelectItem value="venmo">Venmo</SelectItem>}
                 <SelectItem value="zelle">Zelle</SelectItem>
                 <SelectItem value="paypal">PayPal</SelectItem>
                 <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
@@ -162,6 +181,25 @@ export const RecordPaymentDialog = ({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Organization payment instructions for the selected method */}
+          {paymentMethod === 'check' && (paymentInfo?.checkPayableTo || paymentInfo?.checkAddress) && (
+            <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
+              {paymentInfo.checkPayableTo && (
+                <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{paymentInfo.checkPayableTo}</span></p>
+              )}
+              {paymentInfo.checkAddress && (
+                <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{paymentInfo.checkAddress}</span></p>
+              )}
+            </div>
+          )}
+
+          {paymentMethod === 'paypal' && paymentInfo?.paypalEmail && (
+            <div className="rounded border bg-muted/40 p-3 text-sm">
+              <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{paymentInfo.paypalEmail}</span>
+            </div>
+          )}
+
 
           {/* Check Number Field - Only show when check is selected */}
           {paymentMethod === 'check' && (
@@ -186,7 +224,10 @@ export const RecordPaymentDialog = ({
                 ? 'Venmo Transaction ID' 
                 : paymentMethod === 'zelle'
                 ? 'Zelle Confirmation #'
+                : paymentMethod === 'paypal'
+                ? 'PayPal Transaction ID'
                 : 'Payment Reference/Confirmation #'}
+
             </Label>
             <Input
               id="reference"
@@ -223,7 +264,7 @@ export const RecordPaymentDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Recording..." : "Record Payment"}
+            {saving ? "Recording..." : (saveLabel || "Record Payment")}
           </Button>
         </DialogFooter>
       </DialogContent>
