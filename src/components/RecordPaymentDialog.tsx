@@ -16,6 +16,16 @@ interface RecordPaymentDialogProps {
     family_group: string;
     balanceDue: number;
   };
+  /** Optional dialog title override (defaults to "Record Payment - {family group}") */
+  title?: string;
+  /** Optional save button label override */
+  saveLabel?: string;
+  /** Optional organization payment instructions shown for the selected method */
+  paymentInfo?: {
+    checkPayableTo?: string;
+    checkAddress?: string;
+    paypalEmail?: string;
+  };
   onSave: (data: {
     amount: number;
     paidDate: string;
@@ -29,6 +39,9 @@ export const RecordPaymentDialog = ({
   open,
   onOpenChange,
   stay,
+  title,
+  saveLabel,
+  paymentInfo,
   onSave,
 }: RecordPaymentDialogProps) => {
   const { toast } = useToast();
@@ -39,6 +52,7 @@ export const RecordPaymentDialog = ({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
 
   const handleSave = async () => {
     if (!paymentMethod) {
