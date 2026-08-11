@@ -94,6 +94,9 @@ const CheckoutFinal = () => {
   const [splitCostsOpen, setSplitCostsOpen] = useState(false);
   const [editedOccupancy, setEditedOccupancy] = useState<Record<string, number>>({});
   const [paymentCreated, setPaymentCreated] = useState(false);
+
+  // Chosen payment method for recording the balance due
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
