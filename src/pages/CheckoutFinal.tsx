@@ -1614,28 +1614,29 @@ const CheckoutFinal = () => {
                             </div>
                           )}
                           
-                          {sourceReceiptsShare > 0 && (
+                          {sourceReceipts > 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Less: Your share of receipts:</span>
-                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceReceiptsShare)}</span>
+                              <span className="text-muted-foreground">Less: Receipts submitted:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceReceipts)}</span>
                             </div>
                           )}
                           
-                          {sourceCreditShare > 0 && (
+                          {sourceCredit > 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Your share of credit:</span>
-                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceCreditShare)}</span>
+                              <span className="text-muted-foreground">Less: Previous credit applied:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceCredit)}</span>
                             </div>
                           )}
                           
-                          {sourceBalanceShare !== 0 && (
+                          {sourceBalance !== 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Your share of previous balance:</span>
-                              <span className={`font-medium ${sourceBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                                {sourceBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(sourceBalanceShare))}
+                              <span className="text-muted-foreground">{sourceBalance > 0 ? 'Previous Balance:' : 'Previous Credit:'}</span>
+                              <span className={`font-medium ${sourceBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                                {sourceBalance > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(sourceBalance))}
                               </span>
                             </div>
                           )}
+
                           
                           <Separator />
                           
