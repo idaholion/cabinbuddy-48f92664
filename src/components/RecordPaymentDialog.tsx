@@ -167,7 +167,7 @@ export const RecordPaymentDialog = ({
               <SelectContent>
                 <SelectItem value="check">Check</SelectItem>
                 <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="venmo">Venmo</SelectItem>
+                {!hideVenmo && <SelectItem value="venmo">Venmo</SelectItem>}
                 <SelectItem value="zelle">Zelle</SelectItem>
                 <SelectItem value="paypal">PayPal</SelectItem>
                 <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
