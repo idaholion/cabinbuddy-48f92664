@@ -1550,10 +1550,13 @@ const CheckoutFinal = () => {
                 // Use the calculated source user's cost breakdown
                 const sourceBreakdown = sourceUserBreakdown.costBreakdown;
                 const sourcePercentage = allGuestNights > 0 ? sourceTotalGuestNights / allGuestNights : 0;
-                const sourceReceiptsShare = checkoutData.receiptsTotal * sourcePercentage;
-                const sourceCreditShare = previousCredit * sourcePercentage;
-                const sourceBalanceShare = previousBalance * sourcePercentage;
-                const sourceTotal = sourceBreakdown.total - sourceReceiptsShare - sourceCreditShare + sourceBalanceShare;
+                // Money already paid (receipts, credits, prior balance) belongs to the
+                // person who paid it — it is NOT prorated across split participants.
+                const sourceReceipts = checkoutData.receiptsTotal;
+                const sourceCredit = previousCredit;
+                const sourceBalance = previousBalance;
+                const sourceTotal = sourceBreakdown.total - sourceReceipts - sourceCredit + sourceBalance;
+
 
                 return (
                   <>
@@ -1611,28 +1614,29 @@ const CheckoutFinal = () => {
                             </div>
                           )}
                           
-                          {sourceReceiptsShare > 0 && (
+                          {sourceReceipts > 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Less: Your share of receipts:</span>
-                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceReceiptsShare)}</span>
+                              <span className="text-muted-foreground">Less: Receipts submitted:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceReceipts)}</span>
                             </div>
                           )}
                           
-                          {sourceCreditShare > 0 && (
+                          {sourceCredit > 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Your share of credit:</span>
-                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceCreditShare)}</span>
+                              <span className="text-muted-foreground">Less: Previous credit applied:</span>
+                              <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(sourceCredit)}</span>
                             </div>
                           )}
                           
-                          {sourceBalanceShare !== 0 && (
+                          {sourceBalance !== 0 && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Your share of previous balance:</span>
-                              <span className={`font-medium ${sourceBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                                {sourceBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(sourceBalanceShare))}
+                              <span className="text-muted-foreground">{sourceBalance > 0 ? 'Previous Balance:' : 'Previous Credit:'}</span>
+                              <span className={`font-medium ${sourceBalance > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                                {sourceBalance > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(sourceBalance))}
                               </span>
                             </div>
                           )}
+
                           
                           <Separator />
                           
@@ -1691,10 +1695,19 @@ const CheckoutFinal = () => {
                     {splitUsers.map(user => {
                       const userGuestNights = Object.values(user.dailyGuests).reduce((sum, guests) => sum + guests, 0);
                       const userPercentage = allGuestNights > 0 ? userGuestNights / allGuestNights : 0;
-                      const userReceiptsShare = checkoutData.receiptsTotal * userPercentage;
-                      const userCreditShare = previousCredit * userPercentage;
-                      const userBalanceShare = previousBalance * userPercentage;
-                      const userTotal = user.costBreakdown.total - userReceiptsShare - userCreditShare + userBalanceShare;
+                      // Only this person's OWN receipts count against their share.
+                      // Credits/prior balances stay with whoever earned them.
+                      const userReceipts = (!checkInDate || !checkOutDate)
+                        ? 0
+                        : receipts
+                            .filter(r => {
+                              if (r.user_id !== user.userId) return false;
+                              const d = parseDateOnly(r.date);
+                              return d >= checkInDate && d <= checkOutDate;
+                            })
+                            .reduce((sum, r) => sum + (r.amount || 0), 0);
+                      const userTotal = user.costBreakdown.total - userReceipts;
+
 
                       return (
                         <Card key={user.userId} className="mb-6">
@@ -1750,28 +1763,13 @@ const CheckoutFinal = () => {
                                 </div>
                               )}
                               
-                              {userReceiptsShare > 0 && (
+                              {userReceipts > 0 && (
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Less: Their share of receipts:</span>
-                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userReceiptsShare)}</span>
+                                  <span className="text-muted-foreground">Less: Receipts submitted:</span>
+                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userReceipts)}</span>
                                 </div>
                               )}
-                              
-                              {userCreditShare > 0 && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Their share of credit:</span>
-                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userCreditShare)}</span>
-                                </div>
-                              )}
-                              
-                              {userBalanceShare !== 0 && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Their share of previous balance:</span>
-                                  <span className={`font-medium ${userBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                                    {userBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(userBalanceShare))}
-                                  </span>
-                                </div>
-                              )}
+
                               
                               <Separator />
                               
