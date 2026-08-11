@@ -604,7 +604,7 @@ const CheckoutFinal = () => {
     billingLocked,
     previousCredit,
     refetch,
-    createDeferredPayment,
+    recordBalanceDue,
     createSplitPayment 
   } = useCheckoutBilling(
     currentReservation?.id,
