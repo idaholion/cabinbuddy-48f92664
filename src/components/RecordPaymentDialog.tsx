@@ -259,7 +259,7 @@ export const RecordPaymentDialog = ({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Recording..." : "Record Payment"}
+            {saving ? "Recording..." : (saveLabel || "Record Payment")}
           </Button>
         </DialogFooter>
       </DialogContent>
