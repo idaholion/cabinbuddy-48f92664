@@ -2143,7 +2143,7 @@ const CheckoutFinal = () => {
             organizationId={organization.id}
             reservationId={currentReservation.id}
             dailyBreakdown={dailyBreakdown}
-            totalAmount={enhancedBilling.total}
+            totalAmount={enhancedBilling.total + previousCredit}
             sourceUserId={user.id}
             sourceFamilyGroup={currentReservation.family_group}
             initialSelectedUsers={splitUsers.map(u => ({
