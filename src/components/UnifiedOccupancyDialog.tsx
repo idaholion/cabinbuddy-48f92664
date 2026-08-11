@@ -296,8 +296,9 @@ export const UnifiedOccupancyDialog = ({
   };
 
   const handleSplitGuestCountChange = (date: string, userIdOrSource: string, value: string) => {
-    const count = parseInt(value) || 0;
-    
+    const count = Math.max(0, parseInt(value) || 0);
+    const recorded = fullStayOccupancy.find(o => o.date === date)?.guests || 0;
+
     if (userIdOrSource === 'source') {
       // Update source daily guests
       setSourceDailyGuests(prev => ({ ...prev, [date]: count }));
@@ -311,13 +312,25 @@ export const UnifiedOccupancyDialog = ({
         return [...prev, { date, guests: count }];
       });
     } else {
+      // Auto-rebalance: participants take their guests from the host's column
+      const otherUsersTotal = selectedUsers
+        .filter(u => u.userId !== userIdOrSource)
+        .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
+      const adjusted = Math.min(count, Math.max(0, recorded - otherUsersTotal));
+
       setSelectedUsers(prev => prev.map(user => 
         user.userId === userIdOrSource
-          ? { ...user, dailyGuests: { ...user.dailyGuests, [date]: count } }
+          ? { ...user, dailyGuests: { ...user.dailyGuests, [date]: adjusted } }
           : user
       ));
+
+      setSourceDailyGuests(prev => ({
+        ...prev,
+        [date]: Math.max(0, recorded - otherUsersTotal - adjusted)
+      }));
     }
   };
+
 
   const validateSplit = () => {
     if (selectedUsers.length === 0) {
