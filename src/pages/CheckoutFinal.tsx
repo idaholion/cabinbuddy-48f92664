@@ -96,7 +96,7 @@ const CheckoutFinal = () => {
   const [paymentCreated, setPaymentCreated] = useState(false);
 
   // Chosen payment method for recording the balance due
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
+  const [otherPaymentOpen, setOtherPaymentOpen] = useState(false);
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
