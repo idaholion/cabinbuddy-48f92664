@@ -28,6 +28,8 @@ interface GuestCostSplitDialogProps {
   sourceUserId: string;
   sourceFamilyGroup: string;
   onSplitCreated?: (splitData: UserSplit[]) => void;
+  initialSelectedUsers?: UserSplit[];
+  initialSourceDailyGuests?: Record<string, number>;
 }
 
 interface OrgUser {
