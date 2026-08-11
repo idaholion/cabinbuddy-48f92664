@@ -58,7 +58,9 @@ export const GuestCostSplitDialog = ({
   totalAmount,
   sourceUserId,
   sourceFamilyGroup,
-  onSplitCreated
+  onSplitCreated,
+  initialSelectedUsers,
+  initialSourceDailyGuests
 }: GuestCostSplitDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
