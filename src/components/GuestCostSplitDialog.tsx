@@ -563,7 +563,13 @@ export const GuestCostSplitDialog = ({
                       {!user.actual_family_group && <span className="text-destructive ml-1">- No family group</span>}
                       {user.actual_family_group && <span className="ml-1">- {user.actual_family_group}</span>}
                     </span>
+                    {user.actual_family_group === sourceFamilyGroup && (
+                      <div className="text-xs text-amber-600 mt-1">
+                        Same family group — this will not move the cost to another group.
+                      </div>
+                    )}
                   </Label>
+
                 </div>
               ))}
             </div>
@@ -633,7 +639,13 @@ export const GuestCostSplitDialog = ({
                           ))}
                           <td className={`text-right p-3 font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
                             {dayTotal} / {day.guests}
+                            {capNotices[day.date] && (
+                              <div className="text-xs font-normal text-amber-600 mt-1 max-w-[220px] ml-auto">
+                                {capNotices[day.date]}
+                              </div>
+                            )}
                           </td>
+
                         </tr>
                       );
                     })}
