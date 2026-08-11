@@ -2052,56 +2052,38 @@ const CheckoutFinal = () => {
                       </>
                     )}
                     
-                    {/* Payment Method Choice */}
-                    <Separator className="my-4" />
-                    <div className="space-y-3">
-                      <Label className="text-base font-medium">How will you pay?</Label>
-                      <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-                        <SelectTrigger className="text-base">
-                          <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="venmo">Venmo</SelectItem>
-                          <SelectItem value="paypal">PayPal</SelectItem>
-                          <SelectItem value="check">Check</SelectItem>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      {selectedPaymentMethod === 'check' && (checkoutData.checkAddress?.name || checkoutData.checkAddress?.address) && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
-                          {checkoutData.checkAddress?.name && (
-                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkAddress.name}</span></p>
-                          )}
-                          {checkoutData.checkAddress?.address && (
-                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkAddress.address}</span></p>
-                          )}
-                        </div>
-                      )}
-
-                      {selectedPaymentMethod === 'paypal' && checkoutData.paypalEmail && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm">
-                          <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{checkoutData.paypalEmail}</span>
-                        </div>
-                      )}
-
-                      {selectedPaymentMethod === 'venmo' && checkoutData.venmoHandle && (
-                        <div className="rounded border bg-muted/40 p-3 text-sm">
-                          <span className="text-muted-foreground">Send Venmo payment to:</span> <span className="font-medium">{checkoutData.venmoHandle}</span>
-                        </div>
-                      )}
-
+                    {/* Other Payment Options */}
+                    <div className="pt-3">
                       <Button
                         variant="outline"
-                        onClick={handleRecordBalanceDue}
+                        onClick={() => setOtherPaymentOpen(true)}
                         disabled={isCreatingPayment}
                         className="w-full"
                       >
                         <DollarSign className="h-4 w-4 mr-2" />
-                        {isCreatingPayment ? "Processing..." : "Record Balance Due"}
+                        Other Payment Options
                       </Button>
                     </div>
+
+                    {otherPaymentOpen && (
+                      <RecordPaymentDialog
+                        open={otherPaymentOpen}
+                        onOpenChange={setOtherPaymentOpen}
+                        title="Other Payment Options"
+                        stay={{
+                          id: currentReservation?.id || '',
+                          family_group: currentReservation?.family_group || '',
+                          balanceDue: Math.max(0, Math.round(totalAmount * 100) / 100),
+                        }}
+                        paymentInfo={{
+                          checkPayableTo: checkoutData.checkAddress?.name,
+                          checkAddress: checkoutData.checkAddress?.address,
+                          paypalEmail: checkoutData.paypalEmail,
+                        }}
+                        onSave={handleOtherPaymentSave}
+                      />
+                    )}
+
                   </div>
                 </CardContent>
               </Card>
