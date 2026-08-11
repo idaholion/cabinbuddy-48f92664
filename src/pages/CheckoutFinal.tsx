@@ -553,16 +553,8 @@ const CheckoutFinal = () => {
     isSample: isSampleMode
   };
 
-  // Default the payment method to the organization's preferred method
-  useEffect(() => {
-    if (selectedPaymentMethod) return;
-    const preferred = financialSettings?.preferred_payment_method;
-    if (!preferred) return;
-    const normalized = preferred === 'send-check' ? 'check' : preferred;
-    if (['venmo', 'paypal', 'check', 'cash', 'other'].includes(normalized)) {
-      setSelectedPaymentMethod(normalized);
-    }
-  }, [financialSettings?.preferred_payment_method, selectedPaymentMethod]);
+
+
 
 
 
