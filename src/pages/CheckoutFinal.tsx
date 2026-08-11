@@ -931,25 +931,77 @@ const CheckoutFinal = () => {
     setEditedOccupancy({});
   };
 
-  const handleRecordBalanceDue = async () => {
-    if (!selectedPaymentMethod) {
-      toast({
-        title: "Choose a payment method",
-        description: "Please select how you plan to pay before recording the balance.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Methods supported by the database enum; anything else is stored as "other"
+  const DB_PAYMENT_METHODS = ['cash', 'check', 'venmo', 'paypal', 'bank_transfer', 'stripe', 'other'];
+
+  const handleOtherPaymentSave = async (data: {
+    amount: number;
+    paidDate: string;
+    paymentMethod: string;
+    paymentReference?: string;
+    notes?: string;
+  }) => {
+    const dbMethod = DB_PAYMENT_METHODS.includes(data.paymentMethod) ? data.paymentMethod : 'other';
+    const methodLabel = data.paymentMethod.replace('_', ' ');
+    const amount = Math.round(data.amount * 100) / 100;
+    const noteText = [
+      `Paid by ${methodLabel}`,
+      data.paymentReference ? `Ref: ${data.paymentReference}` : null,
+      data.notes || null,
+    ].filter(Boolean).join(' — ');
 
     setIsCreatingPayment(true);
-    const success = await recordBalanceDue(selectedPaymentMethod);
-    setIsCreatingPayment(false);
+    try {
+      if (paymentId) {
+        // Apply the payment to the existing record for this stay
+        const { data: existing, error: fetchError } = await supabase
+          .from('payments')
+          .select('amount, amount_paid, notes')
+          .eq('id', paymentId)
+          .single();
 
-    if (success) {
-      // Navigate to stay history after the balance is recorded
-      setTimeout(() => navigate("/stay-history"), 1500);
+        if (fetchError) throw fetchError;
+
+        const newPaid = Math.round(((existing?.amount_paid || 0) + amount) * 100) / 100;
+        const total = existing?.amount || 0;
+        const status = newPaid >= total && newPaid > 0 ? 'paid' : newPaid > 0 ? 'partial' : 'pending';
+
+        const { error } = await supabase
+          .from('payments')
+          .update({
+            amount_paid: newPaid,
+            status: status as any,
+            payment_method: dbMethod as any,
+            payment_reference: data.paymentReference || null,
+            paid_date: data.paidDate,
+            notes: existing?.notes ? `${existing.notes}\n${noteText}` : noteText,
+            updated_by_user_id: user?.id,
+          })
+          .eq('id', paymentId);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Payment Recorded',
+          description: `${BillingCalculator.formatCurrency(amount)} recorded (${methodLabel}).`,
+        });
+      } else {
+        const success = await recordBalanceDue(dbMethod, {
+          amountPaid: amount,
+          paidDate: data.paidDate,
+          paymentReference: data.paymentReference,
+          notes: noteText,
+        });
+        if (!success) throw new Error('Failed to record payment');
+      }
+
+      setOtherPaymentOpen(false);
+      setTimeout(() => navigate('/stay-history'), 1200);
+    } finally {
+      setIsCreatingPayment(false);
     }
   };
+
 
   const handleApplyCreditToFuture = async () => {
     if (!paymentId || !organization?.id) {
