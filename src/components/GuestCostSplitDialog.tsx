@@ -535,6 +535,21 @@ export const GuestCostSplitDialog = ({
     return { sourceTotal, users: updatedUsers, perDiem };
   }, [dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers]);
 
+  // First day whose per-person guest counts don't add up to the recorded guests
+  const mismatchedDay = useMemo(() => {
+    if (selectedUsers.length === 0) return null;
+    for (const day of dailyBreakdown) {
+      const total =
+        (sourceDailyGuests[day.date] || 0) +
+        selectedUsers.reduce((sum, u) => sum + (u.dailyGuests[day.date] || 0), 0);
+      if (Math.abs(total - day.guests) > 0.01) {
+        return { date: day.date, total, expected: day.guests };
+      }
+    }
+    return null;
+  }, [dailyBreakdown, sourceDailyGuests, selectedUsers]);
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
