@@ -63,6 +63,8 @@ export const GuestCostSplitDialog = ({
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
   const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
+  const [capNotices, setCapNotices] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     if (open) {
@@ -206,38 +208,63 @@ export const GuestCostSplitDialog = ({
   const handleGuestCountChange = (date: string, userId: string, value: string) => {
     const numValue = Math.max(0, parseInt(value) || 0);
     const originalGuests = dailyBreakdown.find(d => d.date === date)?.guests || 0;
-    
+
     if (userId === 'source') {
-      // Calculate total guests assigned to other users
-      const otherUsersTotal = selectedUsers.reduce((sum, user) => 
+      // Host column: cap at the day's recorded guests, then give the remainder
+      // back to / take it from the participants is not automatic here — the host
+      // simply can't exceed the day total.
+      const otherUsersTotal = selectedUsers.reduce((sum, user) =>
         sum + (user.dailyGuests[date] || 0), 0);
-      
-      // Source can't be more than original minus others
-      const maxSource = originalGuests - otherUsersTotal;
+      const maxSource = Math.max(0, originalGuests - otherUsersTotal);
       const adjustedValue = Math.min(numValue, maxSource);
-      
+
       setSourceDailyGuests(prev => ({ ...prev, [date]: adjustedValue }));
+      if (numValue > maxSource) {
+        setCapNotices(prev => ({
+          ...prev,
+          [date]: `Capped at ${maxSource} — ${originalGuests} guest${originalGuests === 1 ? '' : 's'} recorded for this day.`
+        }));
+      } else {
+        setCapNotices(prev => {
+          const { [date]: _removed, ...rest } = prev;
+          return rest;
+        });
+      }
     } else {
-      // Update specific user's guest count
-      setSelectedUsers(prev => prev.map(user => {
-        if (user.userId === userId) {
-          // Calculate max this user can have
-          const otherUsersTotal = prev
-            .filter(u => u.userId !== userId)
-            .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
-          const currentSourceGuests = sourceDailyGuests[date] || 0;
-          const maxForUser = Math.max(0, originalGuests - currentSourceGuests - otherUsersTotal);
-          const adjustedValue = Math.min(numValue, Math.max(0, maxForUser));
-          
-          return {
-            ...user,
-            dailyGuests: { ...user.dailyGuests, [date]: adjustedValue }
-          };
-        }
-        return user;
+      // Participant column: auto-rebalance by pulling guests from the host's
+      // column for that day instead of silently refusing the entry.
+      const otherUsersTotal = selectedUsers
+        .filter(u => u.userId !== userId)
+        .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
+      const maxForUser = Math.max(0, originalGuests - otherUsersTotal);
+      const adjustedValue = Math.min(numValue, maxForUser);
+
+      setSelectedUsers(prev => prev.map(user =>
+        user.userId === userId
+          ? { ...user, dailyGuests: { ...user.dailyGuests, [date]: adjustedValue } }
+          : user
+      ));
+
+      // Host keeps whatever is left over for that day
+      setSourceDailyGuests(prev => ({
+        ...prev,
+        [date]: Math.max(0, originalGuests - otherUsersTotal - adjustedValue)
       }));
+
+      if (numValue > maxForUser) {
+        setCapNotices(prev => ({
+          ...prev,
+          [date]: `Capped at ${maxForUser} — only ${originalGuests} guest${originalGuests === 1 ? '' : 's'} recorded for this day.`
+        }));
+      } else {
+        setCapNotices(prev => {
+          const { [date]: _removed, ...rest } = prev;
+          return rest;
+        });
+      }
     }
   };
+
 
   const validateSplit = (): boolean => {
     if (selectedUsers.length === 0) {
@@ -508,6 +535,21 @@ export const GuestCostSplitDialog = ({
     return { sourceTotal, users: updatedUsers, perDiem };
   }, [dailyBreakdown, totalAmount, sourceDailyGuests, selectedUsers]);
 
+  // First day whose per-person guest counts don't add up to the recorded guests
+  const mismatchedDay = useMemo(() => {
+    if (selectedUsers.length === 0) return null;
+    for (const day of dailyBreakdown) {
+      const total =
+        (sourceDailyGuests[day.date] || 0) +
+        selectedUsers.reduce((sum, u) => sum + (u.dailyGuests[day.date] || 0), 0);
+      if (Math.abs(total - day.guests) > 0.01) {
+        return { date: day.date, total, expected: day.guests };
+      }
+    }
+    return null;
+  }, [dailyBreakdown, sourceDailyGuests, selectedUsers]);
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -536,7 +578,13 @@ export const GuestCostSplitDialog = ({
                       {!user.actual_family_group && <span className="text-destructive ml-1">- No family group</span>}
                       {user.actual_family_group && <span className="ml-1">- {user.actual_family_group}</span>}
                     </span>
+                    {user.actual_family_group === sourceFamilyGroup && (
+                      <div className="text-xs text-amber-600 mt-1">
+                        Same family group — this will not move the cost to another group.
+                      </div>
+                    )}
                   </Label>
+
                 </div>
               ))}
             </div>
@@ -606,7 +654,13 @@ export const GuestCostSplitDialog = ({
                           ))}
                           <td className={`text-right p-3 font-semibold ${isValid ? 'text-muted-foreground' : 'text-destructive'}`}>
                             {dayTotal} / {day.guests}
+                            {capNotices[day.date] && (
+                              <div className="text-xs font-normal text-amber-600 mt-1 max-w-[220px] ml-auto">
+                                {capNotices[day.date]}
+                              </div>
+                            )}
                           </td>
+
                         </tr>
                       );
                     })}
@@ -638,14 +692,26 @@ export const GuestCostSplitDialog = ({
           )}
         </div>
 
+        {mismatchedDay && (
+          <p className="text-sm text-destructive">
+            {parseDateOnly(mismatchedDay.date).toLocaleDateString()}: guest counts total{' '}
+            {mismatchedDay.total} but {mismatchedDay.expected} {mismatchedDay.expected === 1 ? 'guest is' : 'guests are'} recorded.
+          </p>
+        )}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0}>
+          <Button
+            onClick={handleSplitCosts}
+            disabled={loading || selectedUsers.length === 0 || !!mismatchedDay}
+            title={mismatchedDay ? 'Daily guest counts must match the recorded guests for every day' : undefined}
+          >
             {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
