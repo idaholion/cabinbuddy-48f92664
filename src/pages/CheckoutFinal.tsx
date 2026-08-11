@@ -754,7 +754,7 @@ const CheckoutFinal = () => {
 
           payment_type: 'reservation_balance' as const,
           status: 'pending' as const,
-          payment_method: (selectedPaymentMethod as any) || null,
+          payment_method: null,
           description: `Cabin stay - ${displayName}'s share`,
           due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
           daily_occupancy: dailyOccupancy,
