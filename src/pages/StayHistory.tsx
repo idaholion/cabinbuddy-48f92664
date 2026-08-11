@@ -116,6 +116,51 @@ export default function StayHistory() {
     }
   };
 
+  // Map claimed user ids to their member email so split stays (keyed by user id)
+  // and regular stays (keyed by host email) resolve to the SAME person.
+  const [memberLinks, setMemberLinks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchMemberLinks = async () => {
+      if (!organization?.id) return;
+      const { data, error } = await supabase
+        .from('member_profile_links')
+        .select('claimed_by_user_id, family_group_name, member_name')
+        .eq('organization_id', organization.id);
+      if (error) {
+        console.error('Error fetching member profile links:', error);
+        return;
+      }
+      setMemberLinks(data || []);
+    };
+    fetchMemberLinks();
+  }, [organization?.id]);
+
+  const userIdToEmail = (() => {
+    const nameToEmail = new Map<string, string>();
+    for (const group of familyGroups || []) {
+      const members = Array.isArray((group as any).host_members) ? (group as any).host_members : [];
+      for (const member of members) {
+        if (member?.name && member?.email) {
+          nameToEmail.set(
+            `${String(group.name).trim().toLowerCase()}|${String(member.name).trim().toLowerCase()}`,
+            String(member.email).trim().toLowerCase()
+          );
+        }
+      }
+    }
+
+    const map = new Map<string, string>();
+    for (const link of memberLinks) {
+      if (!link.claimed_by_user_id || !link.member_name) continue;
+      const email = nameToEmail.get(
+        `${String(link.family_group_name || '').trim().toLowerCase()}|${String(link.member_name).trim().toLowerCase()}`
+      );
+      if (email) map.set(link.claimed_by_user_id, email);
+    }
+    return map;
+  })();
+
   // Refresh data when page becomes visible (user navigates back to this page)
   useEffect(() => {
     const handleVisibilityChange = () => {
