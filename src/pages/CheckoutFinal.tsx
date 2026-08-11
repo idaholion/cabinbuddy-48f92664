@@ -19,6 +19,8 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
+import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
 import { useToast } from "@/hooks/use-toast";
