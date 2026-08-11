@@ -63,6 +63,8 @@ export const GuestCostSplitDialog = ({
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
   const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
+  const [capNotices, setCapNotices] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     if (open) {
