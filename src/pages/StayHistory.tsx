@@ -82,6 +82,14 @@ export default function StayHistory() {
     )
   );
 
+  // Default to current year, but fall back to the most recent year with data
+  // if the current year has no stays.
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
+
   useEffect(() => {
     const yearFilter = selectedYear === 0 ? undefined : selectedYear;
     console.log(`[StayHistory] Fetching payments with year filter:`, yearFilter);
