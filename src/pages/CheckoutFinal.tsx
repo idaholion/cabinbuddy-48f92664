@@ -1986,17 +1986,56 @@ const CheckoutFinal = () => {
                       </>
                     )}
                     
-                    {/* Defer Payment Button */}
+                    {/* Payment Method Choice */}
                     <Separator className="my-4" />
-                    <Button
-                      variant="outline"
-                      onClick={handlePayLater}
-                      disabled={isCreatingPayment}
-                      className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      {isCreatingPayment ? "Processing..." : "Will pay by end of season"}
-                    </Button>
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">How will you pay?</Label>
+                      <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                        <SelectTrigger className="text-base">
+                          <SelectValue placeholder="Select a payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="venmo">Venmo</SelectItem>
+                          <SelectItem value="paypal">PayPal</SelectItem>
+                          <SelectItem value="check">Check</SelectItem>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {selectedPaymentMethod === 'check' && (checkoutData.checkPayableTo?.name || checkoutData.checkPayableTo?.address) && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
+                          {checkoutData.checkPayableTo?.name && (
+                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkPayableTo.name}</span></p>
+                          )}
+                          {checkoutData.checkPayableTo?.address && (
+                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkPayableTo.address}</span></p>
+                          )}
+                        </div>
+                      )}
+
+                      {selectedPaymentMethod === 'paypal' && checkoutData.paypalEmail && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm">
+                          <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{checkoutData.paypalEmail}</span>
+                        </div>
+                      )}
+
+                      {selectedPaymentMethod === 'venmo' && checkoutData.venmoHandle && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm">
+                          <span className="text-muted-foreground">Send Venmo payment to:</span> <span className="font-medium">{checkoutData.venmoHandle}</span>
+                        </div>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        onClick={handleRecordBalanceDue}
+                        disabled={isCreatingPayment}
+                        className="w-full"
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        {isCreatingPayment ? "Processing..." : "Record Balance Due"}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
