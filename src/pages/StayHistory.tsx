@@ -1400,6 +1400,14 @@ export default function StayHistory() {
         <RecordPaymentDialog
           open={true}
           onOpenChange={(open) => !open && setRecordPaymentStay(null)}
+          title="Other Payment Options"
+          hideVenmo
+          paymentInfo={{
+            checkPayableTo: financialSettings?.check_payable_to || undefined,
+            checkAddress: financialSettings?.check_mailing_address || undefined,
+            paypalEmail: financialSettings?.paypal_email || undefined,
+          }}
+
           stay={{
             id: recordPaymentStay.paymentId,
             balanceDue: recordPaymentStay.amountDue,
