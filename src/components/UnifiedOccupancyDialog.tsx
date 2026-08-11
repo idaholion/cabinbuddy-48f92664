@@ -911,7 +911,7 @@ export const UnifiedOccupancyDialog = ({
         </Button>
       ) : (
         <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
-          {loading ? 'Creating...' : `Save Split (${selectedUsers.length + 1})`}
+          {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
         </Button>
       )}
     </div>

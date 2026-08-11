@@ -28,6 +28,8 @@ interface GuestCostSplitDialogProps {
   sourceUserId: string;
   sourceFamilyGroup: string;
   onSplitCreated?: (splitData: UserSplit[]) => void;
+  initialSelectedUsers?: UserSplit[];
+  initialSourceDailyGuests?: Record<string, number>;
 }
 
 interface OrgUser {
@@ -56,7 +58,9 @@ export const GuestCostSplitDialog = ({
   totalAmount,
   sourceUserId,
   sourceFamilyGroup,
-  onSplitCreated
+  onSplitCreated,
+  initialSelectedUsers,
+  initialSourceDailyGuests
 }: GuestCostSplitDialogProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -70,6 +74,9 @@ export const GuestCostSplitDialog = ({
     if (open) {
       fetchUsers();
       initializeSourceGuests();
+      if (initialSelectedUsers?.length) {
+        setSelectedUsers(initialSelectedUsers);
+      }
     }
   }, [open]); // Only reinitialize when dialog opens, not when dailyBreakdown changes
 
@@ -160,6 +167,10 @@ export const GuestCostSplitDialog = ({
   };
 
   const initializeSourceGuests = () => {
+    if (initialSourceDailyGuests && Object.keys(initialSourceDailyGuests).length > 0) {
+      setSourceDailyGuests(initialSourceDailyGuests);
+      return;
+    }
     const sourceGuests: Record<string, number> = {};
     dailyBreakdown.forEach(day => {
       sourceGuests[day.date] = day.guests;
