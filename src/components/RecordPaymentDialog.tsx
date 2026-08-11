@@ -108,7 +108,7 @@ export const RecordPaymentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Record Payment - {stay.family_group}</DialogTitle>
+          <DialogTitle>{title || `Record Payment - ${stay.family_group}`}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
