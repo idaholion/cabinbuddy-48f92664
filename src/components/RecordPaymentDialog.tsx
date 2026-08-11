@@ -219,7 +219,10 @@ export const RecordPaymentDialog = ({
                 ? 'Venmo Transaction ID' 
                 : paymentMethod === 'zelle'
                 ? 'Zelle Confirmation #'
+                : paymentMethod === 'paypal'
+                ? 'PayPal Transaction ID'
                 : 'Payment Reference/Confirmation #'}
+
             </Label>
             <Input
               id="reference"
