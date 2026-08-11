@@ -177,6 +177,25 @@ export const RecordPaymentDialog = ({
             </Select>
           </div>
 
+          {/* Organization payment instructions for the selected method */}
+          {paymentMethod === 'check' && (paymentInfo?.checkPayableTo || paymentInfo?.checkAddress) && (
+            <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
+              {paymentInfo.checkPayableTo && (
+                <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{paymentInfo.checkPayableTo}</span></p>
+              )}
+              {paymentInfo.checkAddress && (
+                <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{paymentInfo.checkAddress}</span></p>
+              )}
+            </div>
+          )}
+
+          {paymentMethod === 'paypal' && paymentInfo?.paypalEmail && (
+            <div className="rounded border bg-muted/40 p-3 text-sm">
+              <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{paymentInfo.paypalEmail}</span>
+            </div>
+          )}
+
+
           {/* Check Number Field - Only show when check is selected */}
           {paymentMethod === 'check' && (
             <div>
