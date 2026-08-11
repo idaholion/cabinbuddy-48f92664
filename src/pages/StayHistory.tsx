@@ -37,7 +37,7 @@ import { BillingCalculator } from "@/lib/billing-calculator";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = All Years
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [editOccupancyStay, setEditOccupancyStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
@@ -81,6 +81,14 @@ export default function StayHistory() {
         .sort((a, b) => b - a)
     )
   );
+
+  // Default to current year, but fall back to the most recent year with data
+  // if the current year has no stays.
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
 
   useEffect(() => {
     const yearFilter = selectedYear === 0 ? undefined : selectedYear;
@@ -678,7 +686,7 @@ export default function StayHistory() {
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
-  // Full ledger is oldest → newest for display
+  // Full ledger is oldest → newest for calculations.
   const fullLedger = [...reservationsWithBalance];
 
   // Identify the last (newest) reservation for each host across the FULL ledger
@@ -691,15 +699,18 @@ export default function StayHistory() {
     }
   }
 
-  // Apply the year filter to display ONLY (math already ran globally).
-  const displayReservations = fullLedger.filter(({ reservation }) => {
-    if (selectedYear === 0) return true;
-    return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
-  });
+  // Apply the year filter to display ONLY (math already ran globally),
+  // then reverse so the most current stay appears at the top.
+  const displayReservations = fullLedger
+    .filter(({ reservation }) => {
+      if (selectedYear === 0) return true;
+      return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
+    })
+    .reverse();
 
-  // ID of the very last visible row → gets "Current Balance" label instead of "New Balance".
+  // ID of the newest visible row → gets "Current Balance" label instead of "New Balance".
   const lastVisibleId = displayReservations.length > 0
-    ? displayReservations[displayReservations.length - 1].reservation.id
+    ? displayReservations[0].reservation.id
     : null;
 
   // Year-end balances: for each year present in the full ledger, take the running
@@ -967,10 +978,10 @@ export default function StayHistory() {
         {displayReservations.map(({ reservation, stayData }, idx) => {
           const isLastVisible = reservation.id === lastVisibleId;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
-          const nextItem = displayReservations[idx + 1];
-          const nextYear = nextItem ? parseDateOnly(nextItem.reservation.start_date).getFullYear() : null;
-          const showYearEnd = nextYear !== null && nextYear !== currentYear;
-          const yearEndBal = yearEndBalances.get(currentYear) ?? 0;
+          const prevItem = displayReservations[idx - 1];
+          const prevYear = prevItem ? parseDateOnly(prevItem.reservation.start_date).getFullYear() : null;
+          const showYearEnd = prevYear !== null && prevYear !== currentYear;
+          const yearEndBal = yearEndBalances.get(prevYear ?? currentYear) ?? 0;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -1332,17 +1343,17 @@ export default function StayHistory() {
             {showYearEnd && (
               <div className="my-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
-                  {currentYear} Year-End Balance:
+                  {prevYear} Year-End Balance:
                   <span className={`ml-2 font-bold ${yearEndBal > 0 ? 'text-destructive' : yearEndBal < 0 ? 'text-green-600' : ''}`}>
                     {yearEndBal < 0 ? '−' : ''}${Math.abs(yearEndBal).toFixed(2)}
                   </span>
                 </span>
                 <span className="text-muted-foreground">
                   {yearEndBal === 0
-                    ? `nothing rolling into ${nextYear}`
+                    ? `nothing rolling into ${currentYear}`
                     : yearEndBal < 0
-                      ? `credit rolling forward to ${nextYear}`
-                      : `balance rolling forward to ${nextYear}`}
+                      ? `credit rolling forward to ${currentYear}`
+                      : `balance rolling forward to ${currentYear}`}
                 </span>
               </div>
             )}
