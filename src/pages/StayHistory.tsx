@@ -37,7 +37,7 @@ import { BillingCalculator } from "@/lib/billing-calculator";
 
 export default function StayHistory() {
   const [selectedFamilyGroup, setSelectedFamilyGroup] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<number>(0); // 0 = All Years
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [editOccupancyStay, setEditOccupancyStay] = useState<any>(null);
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
