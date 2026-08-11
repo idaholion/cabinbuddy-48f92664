@@ -693,26 +693,35 @@ export default function StayHistory() {
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Helper: ledger identity for a stay. Balances (and credits) belong to the
-  // FAMILY GROUP — the same field payments carry and the Daily & Final Input
-  // page uses — so split stays and regular stays share one running balance.
-  // Falls back to host email / user id only when a stay has no family group.
+  // Helper: ledger identity for a stay. Balances (and credits) belong to a
+  // PERSON, not a family group — two members of the same family keep separate
+  // running balances. Split stays (keyed by recipient user id) and regular
+  // stays (keyed by host email) are resolved to one identity via userIdToEmail.
   const getLedgerKey = (reservation: any) => {
+    if (reservation.isVirtualSplit) {
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    } else {
+      if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+        const primaryHost = reservation.host_assignments[0];
+        const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
+        if (hostEmail) return `p:${hostEmail}`;
+        if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
+      }
+
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    }
+
     if (reservation.family_group) {
       return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
     }
 
-    if (reservation.isVirtualSplit) {
-      return reservation.user_id || 'unknown';
-    }
-
-    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-      const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() || primaryHost.host_name || reservation.user_id || 'unknown';
-    }
-
-    return reservation.user_id || 'unknown';
+    return 'unknown';
   };
+
 
   
   // Simple chronological ledger: for each host, walk stays oldest → newest and
