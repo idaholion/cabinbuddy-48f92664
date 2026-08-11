@@ -1889,6 +1889,14 @@ const CheckoutFinal = () => {
                       <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(checkoutData.receiptsTotal)}</span>
                     </div>
 
+                    {previousCredit > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Less: Previous credit applied:</span>
+                        <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(previousCredit)}</span>
+                      </div>
+                    )}
+
+
                     {previousBalance !== 0 && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">
