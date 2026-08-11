@@ -37,6 +37,7 @@ import { Lock, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -93,6 +94,9 @@ const CheckoutFinal = () => {
   const [splitCostsOpen, setSplitCostsOpen] = useState(false);
   const [editedOccupancy, setEditedOccupancy] = useState<Record<string, number>>({});
   const [paymentCreated, setPaymentCreated] = useState(false);
+
+  // Chosen payment method for recording the balance due
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
@@ -549,6 +553,19 @@ const CheckoutFinal = () => {
     isSample: isSampleMode
   };
 
+  // Default the payment method to the organization's preferred method
+  useEffect(() => {
+    if (selectedPaymentMethod) return;
+    const preferred = financialSettings?.preferred_payment_method;
+    if (!preferred) return;
+    const normalized = preferred === 'send-check' ? 'check' : preferred;
+    if (['venmo', 'paypal', 'check', 'cash', 'other'].includes(normalized)) {
+      setSelectedPaymentMethod(normalized);
+    }
+  }, [financialSettings?.preferred_payment_method, selectedPaymentMethod]);
+
+
+
   const calculateBilling = () => {
     // If no financial settings or no reservation data, return empty billing
     if (!financialSettings || !currentReservation || checkoutData.nights === 0) {
@@ -603,7 +620,7 @@ const CheckoutFinal = () => {
     billingLocked,
     previousCredit,
     refetch,
-    createDeferredPayment,
+    recordBalanceDue,
     createSplitPayment 
   } = useCheckoutBilling(
     currentReservation?.id,
@@ -720,8 +737,8 @@ const CheckoutFinal = () => {
     return calculated[0] || null;
   }, [splitMode, financialSettings, checkInDate, checkOutDate, sourceDailyGuests, user?.id, claimedProfile, currentReservation, calculateSplitCostBreakdowns]);
 
-  // Create deferred payment for a specific user in split mode
-  const createDeferredPaymentForUser = async (
+  // Record the balance due for a specific user in split mode
+  const recordBalanceDueForUser = async (
     userId: string,
     familyGroup: string,
     displayName: string,
@@ -745,6 +762,7 @@ const CheckoutFinal = () => {
 
           payment_type: 'reservation_balance' as const,
           status: 'pending' as const,
+          payment_method: (selectedPaymentMethod as any) || null,
           description: `Cabin stay - ${displayName}'s share`,
           due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
           daily_occupancy: dailyOccupancy,
@@ -754,13 +772,13 @@ const CheckoutFinal = () => {
       if (error) throw error;
 
       toast({
-        title: "Payment Recorded",
-        description: `${displayName}'s payment of ${BillingCalculator.formatCurrency(amount)} has been added to their season balance.`,
+        title: "Balance Recorded",
+        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded${selectedPaymentMethod ? ` (paying by ${selectedPaymentMethod})` : ''}.`,
       });
 
       setPaymentCreated(true);
     } catch (error: any) {
-      console.error('Error creating deferred payment:', error);
+      console.error('Error recording balance due:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to record payment",
@@ -921,18 +939,22 @@ const CheckoutFinal = () => {
     setEditedOccupancy({});
   };
 
-  const handlePayLater = async () => {
-    setIsCreatingPayment(true);
-    const success = await createDeferredPayment();
-    setIsCreatingPayment(false);
-    
-    if (success) {
+  const handleRecordBalanceDue = async () => {
+    if (!selectedPaymentMethod) {
       toast({
-        title: "Payment Deferred",
-        description: "This payment has been added to your season balance. View Season Summary to see your total.",
+        title: "Choose a payment method",
+        description: "Please select how you plan to pay before recording the balance.",
+        variant: "destructive",
       });
-      
-      // Navigate to stay history after successful deferral
+      return;
+    }
+
+    setIsCreatingPayment(true);
+    const success = await recordBalanceDue(selectedPaymentMethod);
+    setIsCreatingPayment(false);
+
+    if (success) {
+      // Navigate to stay history after the balance is recorded
       setTimeout(() => navigate("/stay-history"), 1500);
     }
   };
@@ -1676,7 +1698,7 @@ const CheckoutFinal = () => {
                             variant="outline"
                             className="w-full"
                             onClick={async () => {
-                              await createDeferredPaymentForUser(
+                              await recordBalanceDueForUser(
                                 user?.id || '',
                                 claimedProfile?.family_group_name || currentReservation?.family_group || '',
                                 claimedProfile?.member_name || 'You',
@@ -1685,8 +1707,8 @@ const CheckoutFinal = () => {
                               );
                             }}
                           >
-                            <Clock className="h-4 w-4 mr-2" />
-                            I'll Pay by End of Season
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            Record My Balance Due
                           </Button>
                         </div>
                       </CardContent>
@@ -1809,7 +1831,7 @@ const CheckoutFinal = () => {
                                 variant="outline"
                                 className="w-full"
                                 onClick={async () => {
-                                  await createDeferredPaymentForUser(
+                                  await recordBalanceDueForUser(
                                     user.userId,
                                     user.familyGroup,
                                     user.displayName,
@@ -1818,8 +1840,8 @@ const CheckoutFinal = () => {
                                   );
                                 }}
                               >
-                                <Clock className="h-4 w-4 mr-2" />
-                                They'll Pay by End of Season
+                                <DollarSign className="h-4 w-4 mr-2" />
+                                Record Their Balance Due
                               </Button>
                             </div>
                           </CardContent>
@@ -1986,17 +2008,56 @@ const CheckoutFinal = () => {
                       </>
                     )}
                     
-                    {/* Defer Payment Button */}
+                    {/* Payment Method Choice */}
                     <Separator className="my-4" />
-                    <Button
-                      variant="outline"
-                      onClick={handlePayLater}
-                      disabled={isCreatingPayment}
-                      className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-300 dark:hover:bg-amber-950/20"
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      {isCreatingPayment ? "Processing..." : "Will pay by end of season"}
-                    </Button>
+                    <div className="space-y-3">
+                      <Label className="text-base font-medium">How will you pay?</Label>
+                      <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                        <SelectTrigger className="text-base">
+                          <SelectValue placeholder="Select a payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="venmo">Venmo</SelectItem>
+                          <SelectItem value="paypal">PayPal</SelectItem>
+                          <SelectItem value="check">Check</SelectItem>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {selectedPaymentMethod === 'check' && (checkoutData.checkAddress?.name || checkoutData.checkAddress?.address) && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
+                          {checkoutData.checkAddress?.name && (
+                            <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{checkoutData.checkAddress.name}</span></p>
+                          )}
+                          {checkoutData.checkAddress?.address && (
+                            <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{checkoutData.checkAddress.address}</span></p>
+                          )}
+                        </div>
+                      )}
+
+                      {selectedPaymentMethod === 'paypal' && checkoutData.paypalEmail && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm">
+                          <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{checkoutData.paypalEmail}</span>
+                        </div>
+                      )}
+
+                      {selectedPaymentMethod === 'venmo' && checkoutData.venmoHandle && (
+                        <div className="rounded border bg-muted/40 p-3 text-sm">
+                          <span className="text-muted-foreground">Send Venmo payment to:</span> <span className="font-medium">{checkoutData.venmoHandle}</span>
+                        </div>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        onClick={handleRecordBalanceDue}
+                        disabled={isCreatingPayment}
+                        className="w-full"
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        {isCreatingPayment ? "Processing..." : "Record Balance Due"}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

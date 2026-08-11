@@ -27,7 +27,7 @@ interface CheckoutBillingResult {
   billingLocked: boolean;
   previousCredit: number;
   refetch: () => Promise<void>;
-  createDeferredPayment: () => Promise<boolean>;
+  recordBalanceDue: (paymentMethod?: string) => Promise<boolean>;
   createSplitPayment: (
     splitToUserId: string,
     splitToFamilyGroup: string,
@@ -280,8 +280,8 @@ export const useCheckoutBilling = (
   const totalDays = Object.keys(dailyOccupancy).length;
   const totalGuests = Object.values(dailyOccupancy).reduce((sum, count) => sum + count, 0);
 
-  // Create deferred payment record
-  const createDeferredPayment = async (): Promise<boolean> => {
+  // Record the outstanding balance for this stay
+  const recordBalanceDue = async (paymentMethod?: string): Promise<boolean> => {
     if (!organization?.id || !reservationId || !checkInDate || !checkOutDate) {
       toast({
         title: 'Error',
@@ -321,10 +321,11 @@ export const useCheckoutBilling = (
         payment_type: 'use_fee',
         amount: result.total,
         amount_paid: 0,
-        status: 'deferred',
+        status: 'pending',
+        payment_method: (paymentMethod as any) || null,
         due_date: seasonEnd.toISOString().split('T')[0],
         description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days)`,
-        notes: `Deferred payment. Total ${totalGuests} guests over ${totalDays} days.`,
+        notes: `Balance due. Total ${totalGuests} guests over ${totalDays} days.${paymentMethod ? ` Paying by ${paymentMethod}.` : ''}`,
         daily_occupancy: dailyOccupancyArray,
         created_by_user_id: user.id,
       });
@@ -332,16 +333,16 @@ export const useCheckoutBilling = (
       if (error) throw error;
 
       toast({
-        title: 'Payment Deferred',
-        description: `Payment of ${BillingCalculator.formatCurrency(result.total)} has been deferred to end of season.`,
+        title: 'Balance Recorded',
+        description: `${BillingCalculator.formatCurrency(result.total)} is now shown as your balance due${paymentMethod ? ` (paying by ${paymentMethod})` : ''}.`,
       });
 
       return true;
     } catch (error: any) {
-      console.error('Error creating deferred payment:', error);
+      console.error('Error recording balance due:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to defer payment',
+        description: error.message || 'Failed to record balance',
         variant: 'destructive',
       });
       return false;
@@ -388,7 +389,7 @@ export const useCheckoutBilling = (
           payment_type: 'use_fee',
           amount: splitAmount,
           amount_paid: 0,
-          status: 'deferred',
+          status: 'pending',
           due_date: seasonEnd.toISOString().split('T')[0],
           description: `Guest cost split - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()}`,
           notes: `Split from ${reservation.family_group}`,
@@ -417,7 +418,7 @@ export const useCheckoutBilling = (
           payment_type: 'use_fee',
           amount: reducedAmount,
           amount_paid: 0,
-          status: 'deferred',
+          status: 'pending',
           due_date: seasonEnd.toISOString().split('T')[0],
           description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days, split)`,
           notes: `Cost split with ${splitToFamilyGroup}`,
@@ -497,7 +498,7 @@ export const useCheckoutBilling = (
     billingLocked,
     previousCredit,
     refetch,
-    createDeferredPayment,
+    recordBalanceDue,
     createSplitPayment,
   };
 };
