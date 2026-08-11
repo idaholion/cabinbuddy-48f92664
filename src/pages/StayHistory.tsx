@@ -638,26 +638,27 @@ export default function StayHistory() {
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Helper function to get the primary host identifier for a reservation
-  const getPrimaryHostKey = (reservation: any) => {
-    // For virtual split reservations, use the user_id (which is set to split_to_user_id)
-    if (reservation.isVirtualSplit) {
-      const hostKey = reservation.user_id || 'unknown';
-      console.log(`[BALANCE DEBUG] Virtual Split ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
-      return hostKey;
+  // Helper: ledger identity for a stay. Balances (and credits) belong to the
+  // FAMILY GROUP — the same field payments carry and the Daily & Final Input
+  // page uses — so split stays and regular stays share one running balance.
+  // Falls back to host email / user id only when a stay has no family group.
+  const getLedgerKey = (reservation: any) => {
+    if (reservation.family_group) {
+      return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
     }
-    
-    // For host_assignments, use the first host's email as the identifier
+
+    if (reservation.isVirtualSplit) {
+      return reservation.user_id || 'unknown';
+    }
+
     if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
       const primaryHost = reservation.host_assignments[0];
-      const hostKey = primaryHost.host_email?.toLowerCase() || primaryHost.host_name || reservation.user_id || 'unknown';
-      console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: hostKey=${hostKey}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
-      return hostKey;
+      return primaryHost.host_email?.toLowerCase() || primaryHost.host_name || reservation.user_id || 'unknown';
     }
-    // Fallback to user_id
-    console.log(`[BALANCE DEBUG] Reservation ${reservation.id}: using user_id=${reservation.user_id}, family=${reservation.family_group}, dates=${reservation.start_date} to ${reservation.end_date}`);
+
     return reservation.user_id || 'unknown';
   };
+
   
   // Simple chronological ledger: for each host, walk stays oldest → newest and
   // let each stay's newBalance = previousBalance + charges - payments - receipts.
@@ -666,7 +667,7 @@ export default function StayHistory() {
   const reservationsWithBalance: any[] = [];
 
   for (const reservation of sortedReservations) {
-    const hostKey = getPrimaryHostKey(reservation);
+    const hostKey = getLedgerKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
     const stayData = calculateStayData(reservation, previousBalance);
     // stayData.currentBalance is the *charge* delta for this stay
@@ -682,7 +683,7 @@ export default function StayHistory() {
   const lastReservationByHost = new Map<string, string>();
   for (let i = fullLedger.length - 1; i >= 0; i--) {
     const { reservation } = fullLedger[i];
-    const hostKey = getPrimaryHostKey(reservation);
+    const hostKey = getLedgerKey(reservation);
     if (!lastReservationByHost.has(hostKey)) {
       lastReservationByHost.set(hostKey, reservation.id);
     }
@@ -707,7 +708,7 @@ export default function StayHistory() {
     const runningByHost = new Map<string, number>();
     // Group by year, in chronological order
     for (const item of fullLedger) {
-      const hostKey = getPrimaryHostKey(item.reservation);
+      const hostKey = getLedgerKey(item.reservation);
       runningByHost.set(hostKey, (runningByHost.get(hostKey) || 0) + item.stayData.currentBalance);
       const year = parseDateOnly(item.reservation.start_date).getFullYear();
       // sum across all hosts snapshot
@@ -1143,7 +1144,7 @@ export default function StayHistory() {
 
                 {/* Venmo Payment Section - Only show on newest stay */}
                 {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
-                  lastReservationByHost.get(getPrimaryHostKey(reservation)) === reservation.id && (
+                  lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-blue-600" />
