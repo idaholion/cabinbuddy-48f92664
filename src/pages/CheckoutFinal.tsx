@@ -1763,28 +1763,13 @@ const CheckoutFinal = () => {
                                 </div>
                               )}
                               
-                              {userReceiptsShare > 0 && (
+                              {userReceipts > 0 && (
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Less: Their share of receipts:</span>
-                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userReceiptsShare)}</span>
+                                  <span className="text-muted-foreground">Less: Receipts submitted:</span>
+                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userReceipts)}</span>
                                 </div>
                               )}
-                              
-                              {userCreditShare > 0 && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Their share of credit:</span>
-                                  <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(userCreditShare)}</span>
-                                </div>
-                              )}
-                              
-                              {userBalanceShare !== 0 && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Their share of previous balance:</span>
-                                  <span className={`font-medium ${userBalanceShare > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                                    {userBalanceShare > 0 ? '' : '-'}{BillingCalculator.formatCurrency(Math.abs(userBalanceShare))}
-                                  </span>
-                                </div>
-                              )}
+
                               
                               <Separator />
                               
