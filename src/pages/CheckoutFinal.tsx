@@ -1698,7 +1698,7 @@ const CheckoutFinal = () => {
                             variant="outline"
                             className="w-full"
                             onClick={async () => {
-                              await createDeferredPaymentForUser(
+                              await recordBalanceDueForUser(
                                 user?.id || '',
                                 claimedProfile?.family_group_name || currentReservation?.family_group || '',
                                 claimedProfile?.member_name || 'You',
@@ -1708,7 +1708,7 @@ const CheckoutFinal = () => {
                             }}
                           >
                             <Clock className="h-4 w-4 mr-2" />
-                            I'll Pay by End of Season
+                            Record My Balance Due
                           </Button>
                         </div>
                       </CardContent>
@@ -1831,7 +1831,7 @@ const CheckoutFinal = () => {
                                 variant="outline"
                                 className="w-full"
                                 onClick={async () => {
-                                  await createDeferredPaymentForUser(
+                                  await recordBalanceDueForUser(
                                     user.userId,
                                     user.familyGroup,
                                     user.displayName,
@@ -1841,7 +1841,7 @@ const CheckoutFinal = () => {
                                 }}
                               >
                                 <Clock className="h-4 w-4 mr-2" />
-                                They'll Pay by End of Season
+                                Record Their Balance Due
                               </Button>
                             </div>
                           </CardContent>
