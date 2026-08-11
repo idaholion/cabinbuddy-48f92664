@@ -765,7 +765,7 @@ const CheckoutFinal = () => {
 
       toast({
         title: "Balance Recorded",
-        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded${selectedPaymentMethod ? ` (paying by ${selectedPaymentMethod})` : ''}.`,
+        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded.`,
       });
 
       setPaymentCreated(true);
