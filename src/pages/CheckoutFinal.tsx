@@ -2143,7 +2143,6 @@ const CheckoutFinal = () => {
             organizationId={organization.id}
             reservationId={currentReservation.id}
             dailyBreakdown={dailyBreakdown}
-            {/* Split only the stay charges — previous credit belongs to the person who earned it */}
             totalAmount={enhancedBilling.total + previousCredit}
             sourceUserId={user.id}
             sourceFamilyGroup={currentReservation.family_group}
