@@ -44,6 +44,8 @@ export const RecordPaymentDialog = ({
   stay,
   title,
   saveLabel,
+  hideVenmo,
+
   paymentInfo,
   onSave,
 }: RecordPaymentDialogProps) => {
