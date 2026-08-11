@@ -370,7 +370,26 @@ export const UnifiedOccupancyDialog = ({
   };
 
   const handleSplitCosts = async () => {
-    if (!validateSplit() || !sourceUserId || !stay.reservationId) return;
+    if (!validateSplit()) return;
+
+    if (!sourceUserId) {
+      toast({
+        title: 'Cannot Create Split',
+        description: 'Your user account could not be identified. Please reload the page and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!stay.reservationId) {
+      toast({
+        title: 'Cannot Create Split',
+        description: 'This stay is not linked to a reservation, so costs cannot be split.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
 
     setLoading(true);
     try {
