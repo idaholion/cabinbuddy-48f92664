@@ -2072,6 +2072,8 @@ const CheckoutFinal = () => {
                         open={otherPaymentOpen}
                         onOpenChange={setOtherPaymentOpen}
                         title="Other Payment Options"
+                        hideVenmo
+
                         stay={{
                           id: currentReservation?.id || '',
                           family_group: currentReservation?.family_group || '',
