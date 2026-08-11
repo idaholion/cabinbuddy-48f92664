@@ -978,10 +978,10 @@ export default function StayHistory() {
         {displayReservations.map(({ reservation, stayData }, idx) => {
           const isLastVisible = reservation.id === lastVisibleId;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
-          const nextItem = displayReservations[idx + 1];
-          const nextYear = nextItem ? parseDateOnly(nextItem.reservation.start_date).getFullYear() : null;
-          const showYearEnd = nextYear !== null && nextYear !== currentYear;
-          const yearEndBal = yearEndBalances.get(currentYear) ?? 0;
+          const prevItem = displayReservations[idx - 1];
+          const prevYear = prevItem ? parseDateOnly(prevItem.reservation.start_date).getFullYear() : null;
+          const showYearEnd = prevYear !== null && prevYear !== currentYear;
+          const yearEndBal = yearEndBalances.get(prevYear ?? currentYear) ?? 0;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
