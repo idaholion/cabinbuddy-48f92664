@@ -737,8 +737,8 @@ const CheckoutFinal = () => {
     return calculated[0] || null;
   }, [splitMode, financialSettings, checkInDate, checkOutDate, sourceDailyGuests, user?.id, claimedProfile, currentReservation, calculateSplitCostBreakdowns]);
 
-  // Create deferred payment for a specific user in split mode
-  const createDeferredPaymentForUser = async (
+  // Record the balance due for a specific user in split mode
+  const recordBalanceDueForUser = async (
     userId: string,
     familyGroup: string,
     displayName: string,
@@ -762,6 +762,7 @@ const CheckoutFinal = () => {
 
           payment_type: 'reservation_balance' as const,
           status: 'pending' as const,
+          payment_method: (selectedPaymentMethod as any) || null,
           description: `Cabin stay - ${displayName}'s share`,
           due_date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
           daily_occupancy: dailyOccupancy,
@@ -771,13 +772,13 @@ const CheckoutFinal = () => {
       if (error) throw error;
 
       toast({
-        title: "Payment Recorded",
-        description: `${displayName}'s payment of ${BillingCalculator.formatCurrency(amount)} has been added to their season balance.`,
+        title: "Balance Recorded",
+        description: `${displayName}'s balance of ${BillingCalculator.formatCurrency(amount)} has been recorded${selectedPaymentMethod ? ` (paying by ${selectedPaymentMethod})` : ''}.`,
       });
 
       setPaymentCreated(true);
     } catch (error: any) {
-      console.error('Error creating deferred payment:', error);
+      console.error('Error recording balance due:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to record payment",
