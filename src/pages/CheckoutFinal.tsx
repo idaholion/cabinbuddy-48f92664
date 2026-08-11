@@ -1550,10 +1550,13 @@ const CheckoutFinal = () => {
                 // Use the calculated source user's cost breakdown
                 const sourceBreakdown = sourceUserBreakdown.costBreakdown;
                 const sourcePercentage = allGuestNights > 0 ? sourceTotalGuestNights / allGuestNights : 0;
-                const sourceReceiptsShare = checkoutData.receiptsTotal * sourcePercentage;
-                const sourceCreditShare = previousCredit * sourcePercentage;
-                const sourceBalanceShare = previousBalance * sourcePercentage;
-                const sourceTotal = sourceBreakdown.total - sourceReceiptsShare - sourceCreditShare + sourceBalanceShare;
+                // Money already paid (receipts, credits, prior balance) belongs to the
+                // person who paid it — it is NOT prorated across split participants.
+                const sourceReceipts = checkoutData.receiptsTotal;
+                const sourceCredit = previousCredit;
+                const sourceBalance = previousBalance;
+                const sourceTotal = sourceBreakdown.total - sourceReceipts - sourceCredit + sourceBalance;
+
 
                 return (
                   <>
