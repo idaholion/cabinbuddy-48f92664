@@ -667,7 +667,7 @@ export default function StayHistory() {
   const reservationsWithBalance: any[] = [];
 
   for (const reservation of sortedReservations) {
-    const hostKey = getPrimaryHostKey(reservation);
+    const hostKey = getLedgerKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
     const stayData = calculateStayData(reservation, previousBalance);
     // stayData.currentBalance is the *charge* delta for this stay
@@ -683,7 +683,7 @@ export default function StayHistory() {
   const lastReservationByHost = new Map<string, string>();
   for (let i = fullLedger.length - 1; i >= 0; i--) {
     const { reservation } = fullLedger[i];
-    const hostKey = getPrimaryHostKey(reservation);
+    const hostKey = getLedgerKey(reservation);
     if (!lastReservationByHost.has(hostKey)) {
       lastReservationByHost.set(hostKey, reservation.id);
     }
@@ -708,7 +708,7 @@ export default function StayHistory() {
     const runningByHost = new Map<string, number>();
     // Group by year, in chronological order
     for (const item of fullLedger) {
-      const hostKey = getPrimaryHostKey(item.reservation);
+      const hostKey = getLedgerKey(item.reservation);
       runningByHost.set(hostKey, (runningByHost.get(hostKey) || 0) + item.stayData.currentBalance);
       const year = parseDateOnly(item.reservation.start_date).getFullYear();
       // sum across all hosts snapshot
@@ -1144,7 +1144,7 @@ export default function StayHistory() {
 
                 {/* Venmo Payment Section - Only show on newest stay */}
                 {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
-                  lastReservationByHost.get(getPrimaryHostKey(reservation)) === reservation.id && (
+                  lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-5 w-5 text-blue-600" />
