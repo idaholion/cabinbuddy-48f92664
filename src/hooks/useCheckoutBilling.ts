@@ -389,7 +389,7 @@ export const useCheckoutBilling = (
           payment_type: 'use_fee',
           amount: splitAmount,
           amount_paid: 0,
-          status: 'deferred',
+          status: 'pending',
           due_date: seasonEnd.toISOString().split('T')[0],
           description: `Guest cost split - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()}`,
           notes: `Split from ${reservation.family_group}`,
@@ -418,7 +418,7 @@ export const useCheckoutBilling = (
           payment_type: 'use_fee',
           amount: reducedAmount,
           amount_paid: 0,
-          status: 'deferred',
+          status: 'pending',
           due_date: seasonEnd.toISOString().split('T')[0],
           description: `Use fee - ${checkInDate.toLocaleDateString()} to ${checkOutDate.toLocaleDateString()} (${totalDays} days, split)`,
           notes: `Cost split with ${splitToFamilyGroup}`,
@@ -498,7 +498,7 @@ export const useCheckoutBilling = (
     billingLocked,
     previousCredit,
     refetch,
-    createDeferredPayment,
+    recordBalanceDue,
     createSplitPayment,
   };
 };
