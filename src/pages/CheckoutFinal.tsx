@@ -2146,20 +2146,27 @@ const CheckoutFinal = () => {
             totalAmount={enhancedBilling.total}
             sourceUserId={user.id}
             sourceFamilyGroup={currentReservation.family_group}
-            onSplitCreated={async (splitData) => {
-              // Enable split mode
-              setSplitMode(true);
-              
-              // Calculate cost breakdowns for each user
-              const calculatedSplits = calculateSplitCostBreakdowns(splitData);
-              setSplitUsers(calculatedSplits);
-              
-              // Close dialog
+            initialSelectedUsers={splitUsers.map(u => ({
+              userId: u.userId,
+              familyGroup: u.familyGroup,
+              displayName: u.displayName,
+              dailyGuests: u.dailyGuests,
+              totalAmount: 0
+            }))}
+            initialSourceDailyGuests={sourceDailyGuests}
+            onSplitCreated={async () => {
+              // Refresh billing data and clear split configuration
+              await refetch();
+              setSplitMode(false);
+              setSplitUsers([]);
+              setSourceDailyGuests({});
+              setEditedOccupancy({});
               setSplitCostsOpen(false);
-              
+              setPaymentCreated(false);
+
               toast({
-                title: "Split Configured",
-                description: "Cost breakdown updated to show individual charges. Review amounts below.",
+                title: "Split Created",
+                description: "Cost split has been created successfully.",
               });
             }}
           />
