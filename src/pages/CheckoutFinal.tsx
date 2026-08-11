@@ -20,6 +20,8 @@ import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
+
 
 import { useCheckoutBilling } from "@/hooks/useCheckoutBilling";
 import { useDailyOccupancySync } from "@/hooks/useDailyOccupancySync";
@@ -2055,17 +2057,11 @@ const CheckoutFinal = () => {
                     )}
                     
                     {/* Other Payment Options */}
-                    <div className="pt-3">
-                      <Button
-                        variant="outline"
-                        onClick={() => setOtherPaymentOpen(true)}
-                        disabled={isCreatingPayment}
-                        className="w-full"
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Other Payment Options
-                      </Button>
-                    </div>
+                    <OtherPaymentOptionsButton
+                      onClick={() => setOtherPaymentOpen(true)}
+                      disabled={isCreatingPayment}
+                    />
+
 
                     {otherPaymentOpen && (
                       <RecordPaymentDialog

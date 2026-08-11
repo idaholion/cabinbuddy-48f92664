@@ -19,6 +19,8 @@ import { getHostFirstName, getHostFullName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
+
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -1213,8 +1215,34 @@ export default function StayHistory() {
                         </div>
                       )}
                     </div>
+
+                    {stayData.paymentId && stayData.amountDue > 0 && (
+                      <OtherPaymentOptionsButton
+                        onClick={() => setRecordPaymentStay({
+                          ...reservation,
+                          paymentId: stayData.paymentId,
+                          amountDue: stayData.amountDue,
+                        })}
+                      />
+                    )}
                   </div>
                 )}
+
+                {/* Other payment options when no Venmo card is shown */}
+                {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
+                  lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
+                  stayData.paymentId && stayData.amountDue > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <OtherPaymentOptionsButton
+                      onClick={() => setRecordPaymentStay({
+                        ...reservation,
+                        paymentId: stayData.paymentId,
+                        amountDue: stayData.amountDue,
+                      })}
+                    />
+                  </div>
+                )}
+
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
@@ -1263,20 +1291,8 @@ export default function StayHistory() {
                       </Button>
                     </>
                   )}
-                  {stayData.paymentId && stayData.amountDue > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRecordPaymentStay({
-                        ...reservation,
-                          paymentId: stayData.paymentId,
-                          amountDue: stayData.amountDue
-                        })}
-                       >
-                         <DollarSign className="h-4 w-4 mr-2" />
-                         Record Payment
-                       </Button>
-                     )}
+
+
                    {stayData.paymentId && (
                      <Button
                        variant="outline"
@@ -1384,6 +1400,14 @@ export default function StayHistory() {
         <RecordPaymentDialog
           open={true}
           onOpenChange={(open) => !open && setRecordPaymentStay(null)}
+          title="Other Payment Options"
+          hideVenmo
+          paymentInfo={{
+            checkPayableTo: financialSettings?.check_payable_to || undefined,
+            checkAddress: financialSettings?.check_mailing_address || undefined,
+            paypalEmail: financialSettings?.paypal_email || undefined,
+          }}
+
           stay={{
             id: recordPaymentStay.paymentId,
             balanceDue: recordPaymentStay.amountDue,
