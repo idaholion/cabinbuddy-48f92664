@@ -740,8 +740,9 @@ const CheckoutFinal = () => {
           family_group: familyGroup,
           reservation_id: currentReservation.id,
           amount: amount,
-          balance_due: amount,
+          // balance_due is a generated column — the database computes it
           amount_paid: 0,
+
           payment_type: 'reservation_balance' as const,
           status: 'pending' as const,
           description: `Cabin stay - ${displayName}'s share`,

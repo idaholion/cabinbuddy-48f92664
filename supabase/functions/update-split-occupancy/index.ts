@@ -132,11 +132,12 @@ serve(async (req) => {
     const { error: updateSplitPaymentError } = await supabaseClient
       .from('payments')
       .update({
+        // balance_due is a generated column — never set it directly
         amount: newSplitAmount,
-        balance_due: newSplitAmount,
         daily_occupancy: newRecipientDailyOccupancy,
         updated_at: new Date().toISOString(),
       })
+
       .eq('id', split.split_payment_id);
 
     if (updateSplitPaymentError) throw updateSplitPaymentError;
