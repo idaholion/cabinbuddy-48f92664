@@ -1,33 +1,36 @@
-## Stay History: Simple Chronological Ledger
+# Show the applied credit on the Daily and Final cost breakdown
 
-**Goal:** Every stay card reads like a running ledger line. Year filter is display-only; math is always global. Receipts attach by date, not by "newest in group".
+## The problem
 
-### Changes in `src/pages/StayHistory.tsx`
+On Debbie's July 24 – Aug 6 stay the breakdown reads: base rate $1,170, subtotal $1,170, receipts submitted $0, balance due $1,160. The missing $10 is real and correct, but invisible.
 
-1. **Separate cascade input from display filter.** Build the financial cascade from all permission/family-filtered reservations. Drop the `matchesYear` check from the cascade input (~lines 306, 381). Apply `selectedYear` only at render time, right before mapping cards.
+Her family has a payment from Nov 2, 2025 where the charge was $40 and $50 was paid, leaving a $10 credit flagged "apply to future reservations". The checkout total already subtracts that credit, but the breakdown never prints a line for it, so the subtotal-to-balance math doesn't add up on screen.
 
-2. **Attribute receipts by date (chronological walk).** Replace the `familyGroupsWithReceipts` / `isNewestInGroup` block (~lines 393, 561–574). For each family group, walk stays in date order: a receipt attaches to the first stay whose end date is on/after the receipt's date. Receipts dated after the last completed stay attach to that final stay as "Receipts received since last stay".
+## The fix
 
-3. **Remove overpayment split logic.** Delete `creditFromEarlierPayment` distribution (~lines 720–770) and the "Applied to next stay / Rolled forward as credit" UI rows (~lines 1336–1380). Each stay produces one signed New Balance that becomes the next stay's Previous Balance.
+Add an explicit credit line to the cost breakdown so the math reads top to bottom:
 
-4. **Unified card layout** for every stay:
-   ```text
-   Previous Balance:                 −$70.00   (or $0.00 for first stay)
-   Charges (X nights):                $30.00
-   Payments (cash/check/venmo):        $0.00
-   Receipts Credited (N):              $0.00
-   ─────────────────────────────────────────
-   New Balance:                      −$40.00   (green "Credit" / red "Balance Due")
-   ```
+```text
+Base rate                        $1,170.00
+Subtotal                         $1,170.00
+Less: Receipts submitted             $0.00
+Less: Previous credit applied      −$10.00
+─────────────────────────────────────────
+Balance Due                      $1,160.00
+```
 
-5. **Year-end summary row** injected between year blocks in the rendered list:
-   ```text
-   2025 Year-End Balance: −$40.00 credit — rolling forward to 2026
-   ```
-   The next year's first stay renders that same value as its Previous Balance, so the two rows tie visibly. Default action is roll-forward (no refund UI action added in this pass — display only).
+Rules:
+- The line only appears when an applied credit is greater than zero.
+- Wording: "Less: Previous credit applied", green, with a minus sign, matching the existing receipts line.
+- Add it in both places the breakdown renders: the shared breakdown block and the main summary card near the Balance Due row.
+- Display only. No change to how the total is computed, so no risk of double-counting and no change to any saved amount.
 
-6. **Bottom-of-list "Current Balance" card** — the last rendered row gets a highlighted "Current Balance" label instead of "New Balance", so the running total is clearly at the bottom.
+## Technical notes
 
-### Out of scope
-- No changes to `useCheckoutBilling`, CheckoutFinal, or the underlying `payments`/`receipts` tables.
-- No refund workflow — year-end balance is display-only and always rolls forward.
+- `useCheckoutBilling.ts` already returns `previousCredit` and nets it into `total` (`total: result.total - previousCredit`). The page destructures `previousCredit` but never renders it.
+- Edit `src/pages/CheckoutFinal.tsx` only: insert the new row next to the existing "Less: Receipts submitted" rows in the memoized breakdown block and in the enhanced billing summary card.
+- The existing separate "Previous Balance / Previous Credit" row (driven by `previousBalance`) stays as is — it covers receipt-based and prior-stay balances, which are a different source than the payment credit.
+
+## Not included
+
+The duplicate $1,170 payment rows on this reservation (one `pending` full_payment, one `deferred` use_fee) are left alone for a later task.
