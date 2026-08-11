@@ -19,6 +19,8 @@ import { getHostFirstName, getHostFullName } from "@/lib/reservation-utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
+
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
