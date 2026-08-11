@@ -74,6 +74,9 @@ export const GuestCostSplitDialog = ({
     if (open) {
       fetchUsers();
       initializeSourceGuests();
+      if (initialSelectedUsers?.length) {
+        setSelectedUsers(initialSelectedUsers);
+      }
     }
   }, [open]); // Only reinitialize when dialog opens, not when dailyBreakdown changes
 
