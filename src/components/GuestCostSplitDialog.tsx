@@ -206,38 +206,63 @@ export const GuestCostSplitDialog = ({
   const handleGuestCountChange = (date: string, userId: string, value: string) => {
     const numValue = Math.max(0, parseInt(value) || 0);
     const originalGuests = dailyBreakdown.find(d => d.date === date)?.guests || 0;
-    
+
     if (userId === 'source') {
-      // Calculate total guests assigned to other users
-      const otherUsersTotal = selectedUsers.reduce((sum, user) => 
+      // Host column: cap at the day's recorded guests, then give the remainder
+      // back to / take it from the participants is not automatic here — the host
+      // simply can't exceed the day total.
+      const otherUsersTotal = selectedUsers.reduce((sum, user) =>
         sum + (user.dailyGuests[date] || 0), 0);
-      
-      // Source can't be more than original minus others
-      const maxSource = originalGuests - otherUsersTotal;
+      const maxSource = Math.max(0, originalGuests - otherUsersTotal);
       const adjustedValue = Math.min(numValue, maxSource);
-      
+
       setSourceDailyGuests(prev => ({ ...prev, [date]: adjustedValue }));
+      if (numValue > maxSource) {
+        setCapNotices(prev => ({
+          ...prev,
+          [date]: `Capped at ${maxSource} — ${originalGuests} guest${originalGuests === 1 ? '' : 's'} recorded for this day.`
+        }));
+      } else {
+        setCapNotices(prev => {
+          const { [date]: _removed, ...rest } = prev;
+          return rest;
+        });
+      }
     } else {
-      // Update specific user's guest count
-      setSelectedUsers(prev => prev.map(user => {
-        if (user.userId === userId) {
-          // Calculate max this user can have
-          const otherUsersTotal = prev
-            .filter(u => u.userId !== userId)
-            .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
-          const currentSourceGuests = sourceDailyGuests[date] || 0;
-          const maxForUser = Math.max(0, originalGuests - currentSourceGuests - otherUsersTotal);
-          const adjustedValue = Math.min(numValue, Math.max(0, maxForUser));
-          
-          return {
-            ...user,
-            dailyGuests: { ...user.dailyGuests, [date]: adjustedValue }
-          };
-        }
-        return user;
+      // Participant column: auto-rebalance by pulling guests from the host's
+      // column for that day instead of silently refusing the entry.
+      const otherUsersTotal = selectedUsers
+        .filter(u => u.userId !== userId)
+        .reduce((sum, u) => sum + (u.dailyGuests[date] || 0), 0);
+      const maxForUser = Math.max(0, originalGuests - otherUsersTotal);
+      const adjustedValue = Math.min(numValue, maxForUser);
+
+      setSelectedUsers(prev => prev.map(user =>
+        user.userId === userId
+          ? { ...user, dailyGuests: { ...user.dailyGuests, [date]: adjustedValue } }
+          : user
+      ));
+
+      // Host keeps whatever is left over for that day
+      setSourceDailyGuests(prev => ({
+        ...prev,
+        [date]: Math.max(0, originalGuests - otherUsersTotal - adjustedValue)
       }));
+
+      if (numValue > maxForUser) {
+        setCapNotices(prev => ({
+          ...prev,
+          [date]: `Capped at ${maxForUser} — only ${originalGuests} guest${originalGuests === 1 ? '' : 's'} recorded for this day.`
+        }));
+      } else {
+        setCapNotices(prev => {
+          const { [date]: _removed, ...rest } = prev;
+          return rest;
+        });
+      }
     }
   };
+
 
   const validateSplit = (): boolean => {
     if (selectedUsers.length === 0) {
