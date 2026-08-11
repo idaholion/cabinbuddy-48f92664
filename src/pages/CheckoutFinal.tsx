@@ -832,6 +832,13 @@ const CheckoutFinal = () => {
         </div>
       )}
 
+      {previousCredit > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Less: Previous credit applied:</span>
+          <span className="font-medium text-green-600">-{BillingCalculator.formatCurrency(previousCredit)}</span>
+        </div>
+      )}
+
       {previousBalance !== 0 && (
         <div className="flex justify-between">
           <span className="text-muted-foreground">
@@ -860,7 +867,8 @@ const CheckoutFinal = () => {
         );
       })()}
     </div>
-  ), [checkoutData.receiptsTotal, previousBalance]);
+  ), [checkoutData.receiptsTotal, previousBalance, previousCredit]);
+
 
   const [isCreatingPayment, setIsCreatingPayment] = useState(false);
   const [paymentId, setPaymentId] = useState<string | null>(null);
