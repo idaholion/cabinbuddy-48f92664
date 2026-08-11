@@ -677,14 +677,26 @@ export const GuestCostSplitDialog = ({
           )}
         </div>
 
+        {mismatchedDay && (
+          <p className="text-sm text-destructive">
+            {parseDateOnly(mismatchedDay.date).toLocaleDateString()}: guest counts total{' '}
+            {mismatchedDay.total} but {mismatchedDay.expected} {mismatchedDay.expected === 1 ? 'guest is' : 'guests are'} recorded.
+          </p>
+        )}
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0}>
+          <Button
+            onClick={handleSplitCosts}
+            disabled={loading || selectedUsers.length === 0 || !!mismatchedDay}
+            title={mismatchedDay ? 'Daily guest counts must match the recorded guests for every day' : undefined}
+          >
             {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
