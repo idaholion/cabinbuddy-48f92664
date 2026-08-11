@@ -1265,20 +1265,8 @@ export default function StayHistory() {
                       </Button>
                     </>
                   )}
-                  {stayData.paymentId && stayData.amountDue > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRecordPaymentStay({
-                        ...reservation,
-                          paymentId: stayData.paymentId,
-                          amountDue: stayData.amountDue
-                        })}
-                       >
-                         <DollarSign className="h-4 w-4 mr-2" />
-                         Record Payment
-                       </Button>
-                     )}
+
+
                    {stayData.paymentId && (
                      <Button
                        variant="outline"
