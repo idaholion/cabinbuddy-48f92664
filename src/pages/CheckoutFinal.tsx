@@ -922,18 +922,22 @@ const CheckoutFinal = () => {
     setEditedOccupancy({});
   };
 
-  const handlePayLater = async () => {
-    setIsCreatingPayment(true);
-    const success = await createDeferredPayment();
-    setIsCreatingPayment(false);
-    
-    if (success) {
+  const handleRecordBalanceDue = async () => {
+    if (!selectedPaymentMethod) {
       toast({
-        title: "Payment Deferred",
-        description: "This payment has been added to your season balance. View Season Summary to see your total.",
+        title: "Choose a payment method",
+        description: "Please select how you plan to pay before recording the balance.",
+        variant: "destructive",
       });
-      
-      // Navigate to stay history after successful deferral
+      return;
+    }
+
+    setIsCreatingPayment(true);
+    const success = await recordBalanceDue(selectedPaymentMethod);
+    setIsCreatingPayment(false);
+
+    if (success) {
+      // Navigate to stay history after the balance is recorded
       setTimeout(() => navigate("/stay-history"), 1500);
     }
   };
