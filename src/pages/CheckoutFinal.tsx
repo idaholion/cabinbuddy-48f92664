@@ -1695,10 +1695,19 @@ const CheckoutFinal = () => {
                     {splitUsers.map(user => {
                       const userGuestNights = Object.values(user.dailyGuests).reduce((sum, guests) => sum + guests, 0);
                       const userPercentage = allGuestNights > 0 ? userGuestNights / allGuestNights : 0;
-                      const userReceiptsShare = checkoutData.receiptsTotal * userPercentage;
-                      const userCreditShare = previousCredit * userPercentage;
-                      const userBalanceShare = previousBalance * userPercentage;
-                      const userTotal = user.costBreakdown.total - userReceiptsShare - userCreditShare + userBalanceShare;
+                      // Only this person's OWN receipts count against their share.
+                      // Credits/prior balances stay with whoever earned them.
+                      const userReceipts = (!checkInDate || !checkOutDate)
+                        ? 0
+                        : receipts
+                            .filter(r => {
+                              if (r.user_id !== user.userId) return false;
+                              const d = parseDateOnly(r.date);
+                              return d >= checkInDate && d <= checkOutDate;
+                            })
+                            .reduce((sum, r) => sum + (r.amount || 0), 0);
+                      const userTotal = user.costBreakdown.total - userReceipts;
+
 
                       return (
                         <Card key={user.userId} className="mb-6">
