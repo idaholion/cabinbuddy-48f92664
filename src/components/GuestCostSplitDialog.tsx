@@ -167,6 +167,10 @@ export const GuestCostSplitDialog = ({
   };
 
   const initializeSourceGuests = () => {
+    if (initialSourceDailyGuests && Object.keys(initialSourceDailyGuests).length > 0) {
+      setSourceDailyGuests(initialSourceDailyGuests);
+      return;
+    }
     const sourceGuests: Record<string, number> = {};
     dailyBreakdown.forEach(day => {
       sourceGuests[day.date] = day.guests;
