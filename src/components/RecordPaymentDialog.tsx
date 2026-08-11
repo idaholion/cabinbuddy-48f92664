@@ -20,6 +20,9 @@ interface RecordPaymentDialogProps {
   title?: string;
   /** Optional save button label override */
   saveLabel?: string;
+  /** Hide Venmo from the method list (when Venmo is offered elsewhere) */
+  hideVenmo?: boolean;
+
   /** Optional organization payment instructions shown for the selected method */
   paymentInfo?: {
     checkPayableTo?: string;
