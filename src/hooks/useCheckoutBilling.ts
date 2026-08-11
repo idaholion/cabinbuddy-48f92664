@@ -27,7 +27,16 @@ interface CheckoutBillingResult {
   billingLocked: boolean;
   previousCredit: number;
   refetch: () => Promise<void>;
-  recordBalanceDue: (paymentMethod?: string) => Promise<boolean>;
+  recordBalanceDue: (
+    paymentMethod?: string,
+    options?: {
+      amountPaid?: number;
+      paidDate?: string;
+      paymentReference?: string;
+      notes?: string;
+    }
+  ) => Promise<boolean>;
+
   createSplitPayment: (
     splitToUserId: string,
     splitToFamilyGroup: string,
