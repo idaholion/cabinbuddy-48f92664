@@ -1215,8 +1215,34 @@ export default function StayHistory() {
                         </div>
                       )}
                     </div>
+
+                    {stayData.paymentId && stayData.amountDue > 0 && (
+                      <OtherPaymentOptionsButton
+                        onClick={() => setRecordPaymentStay({
+                          ...reservation,
+                          paymentId: stayData.paymentId,
+                          amountDue: stayData.amountDue,
+                        })}
+                      />
+                    )}
                   </div>
                 )}
+
+                {/* Other payment options when no Venmo card is shown */}
+                {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
+                  lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
+                  stayData.paymentId && stayData.amountDue > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <OtherPaymentOptionsButton
+                      onClick={() => setRecordPaymentStay({
+                        ...reservation,
+                        paymentId: stayData.paymentId,
+                        amountDue: stayData.amountDue,
+                      })}
+                    />
+                  </div>
+                )}
+
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
