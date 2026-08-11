@@ -1,4 +1,16 @@
-# Fix: Splitting costs with another person silently fails
+# Fix: Previous-stay credit line + cost splits that silently fail
+
+## Part 1: Show the credit from previous stays
+
+On the Daily & Final Input page, Debbie's stay shows a base rate of $1,170, a subtotal of $1,170, receipts of $0, and a balance due of $1,160. The $10 difference is a real credit: Poznanovich Family overpaid by $10 on a Nov 2, 2025 payment, and that credit is flagged to apply to future reservations. It is being subtracted correctly, but there is no line explaining it.
+
+Change: in the cost breakdown, whenever a previous credit reduces the balance, add a row directly above Balance Due reading "Less: Previous credit applied" with the amount shown in green as a negative (e.g. −$10.00). The row is hidden when the credit is zero. No calculation changes — this only makes the existing math visible.
+
+Technical note: `src/pages/CheckoutFinal.tsx`, cost breakdown section, driven by the `previousCredit` value already returned from `useCheckoutBilling`.
+
+## Part 2: Splitting costs with another person silently fails
+
+
 
 ## What's happening
 
