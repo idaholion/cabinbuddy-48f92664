@@ -686,7 +686,7 @@ export default function StayHistory() {
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
-  // Full ledger is oldest → newest for display
+  // Full ledger is oldest → newest for calculations.
   const fullLedger = [...reservationsWithBalance];
 
   // Identify the last (newest) reservation for each host across the FULL ledger
@@ -699,15 +699,18 @@ export default function StayHistory() {
     }
   }
 
-  // Apply the year filter to display ONLY (math already ran globally).
-  const displayReservations = fullLedger.filter(({ reservation }) => {
-    if (selectedYear === 0) return true;
-    return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
-  });
+  // Apply the year filter to display ONLY (math already ran globally),
+  // then reverse so the most current stay appears at the top.
+  const displayReservations = fullLedger
+    .filter(({ reservation }) => {
+      if (selectedYear === 0) return true;
+      return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
+    })
+    .reverse();
 
-  // ID of the very last visible row → gets "Current Balance" label instead of "New Balance".
+  // ID of the newest visible row → gets "Current Balance" label instead of "New Balance".
   const lastVisibleId = displayReservations.length > 0
-    ? displayReservations[displayReservations.length - 1].reservation.id
+    ? displayReservations[0].reservation.id
     : null;
 
   // Year-end balances: for each year present in the full ledger, take the running
