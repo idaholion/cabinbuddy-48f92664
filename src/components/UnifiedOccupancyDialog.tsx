@@ -702,7 +702,13 @@ export const UnifiedOccupancyDialog = ({
                       <span className="text-xs text-muted-foreground block sm:inline sm:ml-1">
                         {user.actual_family_group ? `(${user.actual_family_group})` : <span className="text-destructive">No group</span>}
                       </span>
+                      {user.actual_family_group === stay.family_group && (
+                        <span className="text-xs text-amber-600 block">
+                          Same family group — this will not move the cost to another group.
+                        </span>
+                      )}
                     </Label>
+
                   </div>
                 ))}
               </div>
