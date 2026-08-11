@@ -1586,24 +1586,37 @@ const CheckoutFinal = () => {
                       )}
                       
                       {/* Save/Cancel buttons */}
-                      {hasOccupancyChanges && !paymentCreated && (
-                        <div className="flex gap-2 pt-4 mt-4 border-t">
+                      <div className="flex gap-2 pt-4 mt-4 border-t">
+                        {splitMode && splitUsers.length > 0 && !paymentCreated && (
                           <Button
-                            onClick={handleSaveOccupancy}
-                            disabled={syncingOccupancy}
+                            onClick={() => setSplitCostsOpen(true)}
                             className="flex-1"
-                          >
-                            {syncingOccupancy ? 'Saving...' : 'Save Changes'}
-                          </Button>
-                          <Button
-                            onClick={handleCancelOccupancyEdit}
-                            variant="outline"
                             disabled={syncingOccupancy}
                           >
-                            Cancel
+                            <Users className="h-4 w-4 mr-2" />
+                            Review & Create Split
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        {hasOccupancyChanges && !paymentCreated && (
+                          <>
+                            <Button
+                              onClick={handleSaveOccupancy}
+                              disabled={syncingOccupancy}
+                              variant={splitMode && splitUsers.length > 0 ? "outline" : "default"}
+                              className={splitMode && splitUsers.length > 0 ? "flex-1" : "flex-1"}
+                            >
+                              {syncingOccupancy ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                            <Button
+                              onClick={handleCancelOccupancyEdit}
+                              variant="outline"
+                              disabled={syncingOccupancy}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                      </div>
                       
                     </div>
                   </CardContent>
