@@ -1707,7 +1707,7 @@ const CheckoutFinal = () => {
                               );
                             }}
                           >
-                            <Clock className="h-4 w-4 mr-2" />
+                            <DollarSign className="h-4 w-4 mr-2" />
                             Record My Balance Due
                           </Button>
                         </div>
@@ -1840,7 +1840,7 @@ const CheckoutFinal = () => {
                                   );
                                 }}
                               >
-                                <Clock className="h-4 w-4 mr-2" />
+                                <DollarSign className="h-4 w-4 mr-2" />
                                 Record Their Balance Due
                               </Button>
                             </div>
