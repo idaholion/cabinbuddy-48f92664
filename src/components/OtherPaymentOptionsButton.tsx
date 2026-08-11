@@ -10,7 +10,7 @@ interface OtherPaymentOptionsButtonProps {
 /**
  * Shared "Other Payment Options" button used on both the Daily & Final Input
  * page and the Stay History page so the two pages stay visually identical.
- * Styled like the blue Venmo card, but in amber to distinguish it.
+ * Styled like the blue Venmo card, but in purple to distinguish it.
  */
 export const OtherPaymentOptionsButton = ({
   onClick,
@@ -22,7 +22,7 @@ export const OtherPaymentOptionsButton = ({
       variant="outline"
       onClick={onClick}
       disabled={disabled}
-      className="w-full h-12 text-base font-medium bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/40 hover:text-amber-800"
+      className="w-full h-12 text-base font-medium bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-950/40 hover:text-purple-800"
     >
       <DollarSign className="h-5 w-5 mr-2" />
       {label}
