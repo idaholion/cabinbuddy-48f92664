@@ -27,7 +27,7 @@ interface CheckoutBillingResult {
   billingLocked: boolean;
   previousCredit: number;
   refetch: () => Promise<void>;
-  createDeferredPayment: () => Promise<boolean>;
+  recordBalanceDue: (paymentMethod?: string) => Promise<boolean>;
   createSplitPayment: (
     splitToUserId: string,
     splitToFamilyGroup: string,
@@ -280,8 +280,8 @@ export const useCheckoutBilling = (
   const totalDays = Object.keys(dailyOccupancy).length;
   const totalGuests = Object.values(dailyOccupancy).reduce((sum, count) => sum + count, 0);
 
-  // Create deferred payment record
-  const createDeferredPayment = async (): Promise<boolean> => {
+  // Record the outstanding balance for this stay
+  const recordBalanceDue = async (paymentMethod?: string): Promise<boolean> => {
     if (!organization?.id || !reservationId || !checkInDate || !checkOutDate) {
       toast({
         title: 'Error',
