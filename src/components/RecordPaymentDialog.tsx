@@ -190,7 +190,23 @@ export const RecordPaymentDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="method">Payment Method</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="method">Payment Method</Label>
+              {isAdmin && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate("/use-fee-setup#payment-methods");
+                  }}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Manage payment options
+                </Button>
+              )}
+            </div>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select payment method" />
