@@ -136,6 +136,10 @@ export const SupervisorDashboard = () => {
           onBack={() => setSelectedOrganization(null)}
           onDelete={deleteOrganizationData}
           onUpdateAlternateSupervisor={updateAlternateSupervisor}
+          onNavigateToTab={(tab) => {
+            setSelectedOrganization(null);
+            setActiveTab(tab);
+          }}
         />
       );
     }
