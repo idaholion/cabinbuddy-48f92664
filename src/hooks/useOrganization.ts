@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { onOrganizationSwitched } from '@/lib/org-events';
+
 import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
@@ -292,6 +294,17 @@ export const useOrganization = () => {
       apiCache.clear(); // Clear all cache on user change
     }
   }, [user, fetchUserOrganization]);
+
+  // Refetch the primary organization whenever the app switches organizations
+  useEffect(() => {
+    return onOrganizationSwitched(() => {
+      if (!user) return;
+      apiCache.invalidate(cacheKeys.primaryOrganization(user.id));
+      fetchUserOrganization();
+    });
+  }, [user, fetchUserOrganization]);
+
+
 
   return {
     organization,

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { emitOrganizationSwitched, onOrganizationSwitched } from '@/lib/org-events';
+
 import { useRobustAsyncOperation } from './useRobustAsyncOperation';
 import { useEnhancedErrorTracking } from './useEnhancedErrorTracking';
 
@@ -215,6 +217,11 @@ export const useRobustMultiOrganization = () => {
         apiCache.invalidateByPrefix(`user_organizations_${user.id}`);
         apiCache.invalidateByPrefix(`organization_${organizationId}`);
 
+        // Notify every other hook instance so the whole app switches together
+        emitOrganizationSwitched(organizationId);
+
+
+
         return data;
       });
 
@@ -415,7 +422,24 @@ export const useRobustMultiOrganization = () => {
     }
   }, [user?.id]); // Only depend on user.id, not the fetchUserOrganizations function
 
+  // Stay in sync when any other part of the app switches organization
+  useEffect(() => {
+    return onOrganizationSwitched((organizationId) => {
+      setOrganizations(prev => {
+        const updated = prev.map(o => ({
+          ...o,
+          is_primary: o.organization_id === organizationId,
+        }));
+        const next = updated.find(o => o.organization_id === organizationId);
+        if (next) setActiveOrganization(next);
+        return updated;
+      });
+      if (user?.id) apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+    });
+  }, [user?.id]);
+
   // Auto-retry when coming back online
+
   useEffect(() => {
     if (!offline && error && isNetworkError) {
       const timer = setTimeout(() => {

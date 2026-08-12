@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { emitOrganizationSwitched, onOrganizationSwitched } from '@/lib/org-events';
+
 
 interface UserOrganization {
   organization_id: string;
@@ -126,6 +128,10 @@ export const useMultiOrganization = () => {
         
         // Update cache
         apiCache.set(cacheKeys.userOrganizations(user.id), updatedOrgs);
+
+        // Notify every other hook instance so the whole app switches together
+        emitOrganizationSwitched(organizationId);
+
       } catch (error) {
         console.error('Error setting primary organization:', error);
       }
@@ -346,6 +352,24 @@ export const useMultiOrganization = () => {
   useEffect(() => {
     fetchUserOrganizations();
   }, [user]);
+
+  // Keep every hook instance in sync when the active organization changes
+  useEffect(() => {
+    return onOrganizationSwitched((organizationId) => {
+      setOrganizations(prev => {
+        const updated = prev.map(o => ({
+          ...o,
+          is_primary: o.organization_id === organizationId,
+        }));
+        const next = updated.find(o => o.organization_id === organizationId);
+        if (next) setActiveOrganization(next);
+        return updated;
+      });
+      if (user?.id) apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+      fetchUserOrganizations();
+    });
+  }, [user?.id, fetchUserOrganizations]);
+
 
   return {
     organizations,
