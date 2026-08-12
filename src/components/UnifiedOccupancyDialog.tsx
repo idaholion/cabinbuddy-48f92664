@@ -707,7 +707,17 @@ export const UnifiedOccupancyDialog = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {selectedUsers.length > 0 && (
+          {cannotSplitDueToNoCharges && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs sm:text-sm">
+                Stay charges are not available for this stay, so costs cannot be split.
+                Record the occupancy and charges for this stay first.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {selectedUsers.length > 0 && !cannotSplitDueToNoCharges && (
             <>
               <Alert className="py-2">
                 <AlertCircle className="h-4 w-4" />
