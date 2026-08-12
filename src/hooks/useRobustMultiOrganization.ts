@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { emitOrganizationSwitched, onOrganizationSwitched } from '@/lib/org-events';
+
 import { useRobustAsyncOperation } from './useRobustAsyncOperation';
 import { useEnhancedErrorTracking } from './useEnhancedErrorTracking';
 
