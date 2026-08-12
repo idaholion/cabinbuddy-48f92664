@@ -110,8 +110,6 @@ export const UnifiedOccupancyDialog = ({
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
   const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
-  const [perDiem, setPerDiem] = useState<number>(0);
-  const [billingConfig, setBillingConfig] = useState<any>(null);
 
   useEffect(() => {
     if (open && stay.reservationId) {
@@ -123,45 +121,8 @@ export const UnifiedOccupancyDialog = ({
     if (open && mode === "split") {
       fetchUsers();
       initializeSourceGuests();
-      fetchBillingConfig();
     }
   }, [open, mode]);
-
-  const fetchBillingConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('reservation_settings')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching billing config:', error);
-        return;
-      }
-
-      if (data) {
-        setBillingConfig({
-          method: data.financial_method || 'per-person-per-day',
-          amount: data.nightly_rate || 0,
-          taxRate: data.tax_rate || 0,
-          cleaningFee: data.cleaning_fee || 0,
-          petFee: data.pet_fee || 0,
-          damageDeposit: data.damage_deposit || 0,
-        });
-
-        // Calculate per-diem rate based on billing method
-        if (data.financial_method === 'per-person-per-day') {
-          setPerDiem(data.nightly_rate || 0);
-        } else {
-          // For other methods, we'll need to calculate per-diem differently
-          setPerDiem(data.nightly_rate || 0);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching billing config:', error);
-    }
-  };
 
   const fetchUsers = async () => {
     if (!sourceUserId) return;
@@ -499,6 +460,21 @@ export const UnifiedOccupancyDialog = ({
     }
   };
 
+  // Per-guest-night rate derived from the stay's TOTAL charges (base rate plus
+  // cleaning, pet, tax and deposit) spread across every recorded guest-night.
+  // This mirrors GuestCostSplitDialog so a split created here produces the same
+  // amounts as one created from the Daily & Final Input page. Using the raw
+  // nightly_rate here would omit fees and undercharge the recipient.
+  const totalGuestNights = useMemo(
+    () => fullStayOccupancy.reduce((sum, day) => sum + (day.guests || 0), 0),
+    [fullStayOccupancy]
+  );
+
+  const perDiem = useMemo(
+    () => (totalGuestNights > 0 ? totalAmount / totalGuestNights : 0),
+    [totalAmount, totalGuestNights]
+  );
+
   // Calculate costs for split mode
   const { sourceTotal, users: calculatedUsers } = useMemo(() => {
     if (mode !== "split" || perDiem === 0) {
@@ -520,6 +496,11 @@ export const UnifiedOccupancyDialog = ({
 
     return { sourceTotal, users: updatedUsers };
   }, [mode, perDiem, sourceDailyGuests, selectedUsers, fullStayOccupancy]);
+
+  // When the stay has no recorded charges (or no guest-nights), perDiem is 0 and
+  // every share would compute to $0. Surface that explicitly instead of failing
+  // validation with a misleading "assign a guest count" message.
+  const cannotSplitDueToNoCharges = perDiem === 0;
 
   const canSplit = sourceUserId && stay.reservationId && !isSplit;
   
@@ -726,7 +707,17 @@ export const UnifiedOccupancyDialog = ({
             </CollapsibleContent>
           </Collapsible>
 
-          {selectedUsers.length > 0 && (
+          {cannotSplitDueToNoCharges && (
+            <Alert variant="destructive" className="py-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="text-xs sm:text-sm">
+                Stay charges are not available for this stay, so costs cannot be split.
+                Record the occupancy and charges for this stay first.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {selectedUsers.length > 0 && !cannotSplitDueToNoCharges && (
             <>
               <Alert className="py-2">
                 <AlertCircle className="h-4 w-4" />
@@ -910,7 +901,12 @@ export const UnifiedOccupancyDialog = ({
           {syncing ? "Saving..." : "Save Changes"}
         </Button>
       ) : (
-        <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
+        <Button
+          onClick={handleSplitCosts}
+          disabled={loading || selectedUsers.length === 0 || cannotSplitDueToNoCharges}
+          size={isMobile ? "sm" : "default"}
+          title={cannotSplitDueToNoCharges ? 'This stay has no recorded charges to split' : undefined}
+        >
           {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
         </Button>
       )}
