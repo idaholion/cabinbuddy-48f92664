@@ -64,6 +64,21 @@ export const RecordPaymentDialog = ({
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const methodList = useMemo(() => {
+    const base = methods && methods.length > 0
+      ? methods
+      : buildDefaultPaymentMethods({
+          checkPayableTo: paymentInfo?.checkPayableTo,
+          checkMailingAddress: paymentInfo?.checkAddress,
+          paypalEmail: paymentInfo?.paypalEmail,
+        });
+    return visiblePaymentMethods(base).filter((m) => !(hideVenmo && m.key === 'venmo'));
+  }, [methods, paymentInfo, hideVenmo]);
+
+  const selectedMethod = methodList.find((m) => m.key === paymentMethod);
+
+
+
 
   const handleSave = async () => {
     if (!paymentMethod) {
