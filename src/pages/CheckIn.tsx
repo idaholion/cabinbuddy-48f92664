@@ -335,20 +335,48 @@ const CheckIn = () => {
     }
 
     try {
-      // Save to database
-      await supabase.from('checkin_sessions').insert({
+      const checkDate = new Date().toISOString().split('T')[0];
+      const sessionData = {
         organization_id: organization.id,
+        user_id: user?.id || null,
         session_type: 'arrival',
         family_group: currentReservation.family_group,
-        check_date: new Date().toISOString().split('T')[0],
+        check_date: checkDate,
         checklist_responses: {
           checkedItems,
           notes,
           completedItems,
           totalItems: checklistItems.length,
+          reservationId: currentReservation.id,
         },
         notes,
-      });
+      };
+
+      // Avoid duplicate arrival rows: update today's session if one already exists
+      const { data: existing, error: existingError } = await supabase
+        .from('checkin_sessions')
+        .select('id')
+        .eq('organization_id', organization.id)
+        .eq('session_type', 'arrival')
+        .eq('family_group', currentReservation.family_group)
+        .eq('check_date', checkDate)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existing) {
+        const { error } = await supabase
+          .from('checkin_sessions')
+          .update(sessionData)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('checkin_sessions').insert(sessionData);
+        if (error) throw error;
+      }
+
 
       toast({
         title: "Check-in Completed",
