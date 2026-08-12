@@ -318,11 +318,29 @@ export const OrganizationDetail = ({
                 </div>
               </div>
             </div>
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-base text-blue-800">
-                <strong>Management Note:</strong> To manage family groups or financial records for this organization, 
-                return to the supervisor dashboard and use the "Family Groups" or "Financial Records" tabs.
+            <div className="mt-4 p-3 rounded-lg border bg-muted/40">
+              <p className="text-base text-muted-foreground">
+                <strong className="text-foreground">Management Note:</strong> Family groups and financial records are managed
+                from the supervisor dashboard tabs. Use the shortcuts below to jump there.
               </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => (onNavigateToTab ? onNavigateToTab('family-groups') : onBack())}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Family Groups tab
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => (onNavigateToTab ? onNavigateToTab('financial-records') : onBack())}
+                >
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Financial Records tab
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
