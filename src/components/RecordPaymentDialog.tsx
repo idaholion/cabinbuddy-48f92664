@@ -61,6 +61,8 @@ export const RecordPaymentDialog = ({
   onSave,
 }: RecordPaymentDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAdmin } = useUserRole();
   const [amount, setAmount] = useState(Math.round(stay.balanceDue * 100) / 100);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<string>('');
