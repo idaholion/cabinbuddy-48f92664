@@ -1060,7 +1060,7 @@ export default function StayHistory() {
                         const isPartial = !isPaid && stayData.amountPaid > 0;
                         return (
                           <Badge variant={isPending ? 'secondary' : isPaid ? 'default' : isPartial ? 'secondary' : 'destructive'}>
-                            {isPending ? 'pending' : isPaid ? 'paid' : isPartial ? 'partial' : 'pending'}
+                            {isPending ? 'Not checked out' : isPaid ? 'paid' : isPartial ? 'partial' : 'Pending payment'}
                           </Badge>
                         );
                       })()}
