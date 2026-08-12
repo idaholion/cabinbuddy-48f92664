@@ -110,8 +110,6 @@ export const UnifiedOccupancyDialog = ({
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserSplit[]>([]);
   const [sourceDailyGuests, setSourceDailyGuests] = useState<Record<string, number>>({});
-  const [perDiem, setPerDiem] = useState<number>(0);
-  const [billingConfig, setBillingConfig] = useState<any>(null);
 
   useEffect(() => {
     if (open && stay.reservationId) {
@@ -123,45 +121,8 @@ export const UnifiedOccupancyDialog = ({
     if (open && mode === "split") {
       fetchUsers();
       initializeSourceGuests();
-      fetchBillingConfig();
     }
   }, [open, mode]);
-
-  const fetchBillingConfig = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('reservation_settings')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching billing config:', error);
-        return;
-      }
-
-      if (data) {
-        setBillingConfig({
-          method: data.financial_method || 'per-person-per-day',
-          amount: data.nightly_rate || 0,
-          taxRate: data.tax_rate || 0,
-          cleaningFee: data.cleaning_fee || 0,
-          petFee: data.pet_fee || 0,
-          damageDeposit: data.damage_deposit || 0,
-        });
-
-        // Calculate per-diem rate based on billing method
-        if (data.financial_method === 'per-person-per-day') {
-          setPerDiem(data.nightly_rate || 0);
-        } else {
-          // For other methods, we'll need to calculate per-diem differently
-          setPerDiem(data.nightly_rate || 0);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching billing config:', error);
-    }
-  };
 
   const fetchUsers = async () => {
     if (!sourceUserId) return;
