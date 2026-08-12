@@ -366,7 +366,7 @@ const Setup = () => {
           <StepCard
             stepNumber={2}
             title="Step 2: Use Fee Setup"
-            description="Configure use fee rates, payment settings, and billing information for your cabin."
+            description="Configure use fee rates, payment settings, and billing information for your cabin. Also controls which payment methods members can choose under 'Other Payment Options'."
             icon={DollarSign}
             isComplete={isFinancialComplete}
             linkTo="/use-fee-setup"

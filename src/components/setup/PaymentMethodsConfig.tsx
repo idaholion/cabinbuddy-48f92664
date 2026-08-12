@@ -47,7 +47,7 @@ export const PaymentMethodsConfig = ({ methods, onChange }: PaymentMethodsConfig
   const removeCustom = (key: string) => commit(sorted.filter((m) => m.key !== key));
 
   return (
-    <Card>
+    <Card id="payment-methods" className="scroll-mt-24 target:ring-2 target:ring-primary">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Wallet className="h-4 w-4" />

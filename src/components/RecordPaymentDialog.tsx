@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod } from "@/lib/payment-methods";
 
 
@@ -58,6 +61,8 @@ export const RecordPaymentDialog = ({
   onSave,
 }: RecordPaymentDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { isAdmin } = useUserRole();
   const [amount, setAmount] = useState(Math.round(stay.balanceDue * 100) / 100);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [paymentMethod, setPaymentMethod] = useState<string>('');
@@ -190,7 +195,23 @@ export const RecordPaymentDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="method">Payment Method</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="method">Payment Method</Label>
+              {isAdmin && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate("/use-fee-setup#payment-methods");
+                  }}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Manage payment options
+                </Button>
+              )}
+            </div>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select payment method" />

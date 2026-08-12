@@ -70,6 +70,20 @@ const UseFeeSetupPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(paymentMethods)]);
 
+  // Scroll to the Payment Methods card when linked with #payment-methods
+  useEffect(() => {
+    if (loading) return;
+    if (window.location.hash !== "#payment-methods") return;
+    const timer = window.setTimeout(() => {
+      const el = document.getElementById("payment-methods");
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("ring-2", "ring-primary");
+      window.setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2500);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+
   const handleSaveSettings = async () => {
     const config = {
       method: useFeeMethod as any,
