@@ -293,6 +293,17 @@ export const useOrganization = () => {
     }
   }, [user, fetchUserOrganization]);
 
+  // Refetch the primary organization whenever the app switches organizations
+  useEffect(() => {
+    return onOrganizationSwitched(() => {
+      if (!user) return;
+      apiCache.invalidate(cacheKeys.primaryOrganization(user.id));
+      fetchUserOrganization();
+    });
+  }, [user, fetchUserOrganization]);
+
+
+
   return {
     organization,
     loading,
