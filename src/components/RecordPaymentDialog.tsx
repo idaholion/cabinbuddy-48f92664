@@ -25,12 +25,16 @@ interface RecordPaymentDialogProps {
   /** Hide Venmo from the method list (when Venmo is offered elsewhere) */
   hideVenmo?: boolean;
 
+  /** Admin-configured payment methods (falls back to defaults) */
+  methods?: PaymentMethodOption[];
+
   /** Optional organization payment instructions shown for the selected method */
   paymentInfo?: {
     checkPayableTo?: string;
     checkAddress?: string;
     paypalEmail?: string;
   };
+
   onSave: (data: {
     amount: number;
     paidDate: string;
