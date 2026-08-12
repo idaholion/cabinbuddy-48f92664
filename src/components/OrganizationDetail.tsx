@@ -37,6 +37,7 @@ interface OrganizationDetailProps {
   onBack: () => void;
   onDelete: (organizationId: string) => Promise<{ error?: any }>;
   onUpdateAlternateSupervisor: (organizationId: string, email: string) => Promise<{ error?: any }>;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 interface OrganizationStats {
@@ -102,7 +103,8 @@ export const OrganizationDetail = ({
   organization, 
   onBack, 
   onDelete, 
-  onUpdateAlternateSupervisor 
+  onUpdateAlternateSupervisor,
+  onNavigateToTab
 }: OrganizationDetailProps) => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<OrganizationStats>({
