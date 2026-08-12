@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
+import { PaymentMethodOption, resolvePaymentMethods } from '@/lib/payment-methods';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 export interface FinancialSettings {
@@ -26,6 +27,7 @@ export interface FinancialSettings {
   paypal_email?: string;
   check_payable_to?: string;
   check_mailing_address?: string;
+  payment_methods_config?: PaymentMethodOption[] | null;
   
   invoice_prefix?: string;
   next_invoice_number?: number;
@@ -101,6 +103,7 @@ export const useFinancialSettings = () => {
           paypal_email: data.paypal_email || '',
           check_payable_to: data.check_payable_to || '',
           check_mailing_address: data.check_mailing_address || '',
+          payment_methods_config: ((data as any).payment_methods_config as PaymentMethodOption[] | null) ?? null,
           
           invoice_prefix: data.invoice_prefix || 'INV',
           next_invoice_number: data.next_invoice_number || 1,
@@ -170,6 +173,9 @@ export const useFinancialSettings = () => {
         paypal_email: settingsData.paypal_email,
         check_payable_to: settingsData.check_payable_to,
         check_mailing_address: settingsData.check_mailing_address,
+        ...(settingsData.payment_methods_config !== undefined
+          ? { payment_methods_config: settingsData.payment_methods_config as any }
+          : {}),
         
         invoice_prefix: settingsData.invoice_prefix,
         next_invoice_number: settingsData.next_invoice_number,
@@ -257,8 +263,16 @@ export const useFinancialSettings = () => {
     }
   }, [organization?.id]);
 
+  const paymentMethods = resolvePaymentMethods(settings?.payment_methods_config, {
+    venmoHandle: settings?.venmo_handle,
+    paypalEmail: settings?.paypal_email,
+    checkPayableTo: settings?.check_payable_to,
+    checkMailingAddress: settings?.check_mailing_address,
+  });
+
   return {
     settings,
+    paymentMethods,
     loading,
     saveFinancialSettings,
     refetchFinancialSettings: fetchFinancialSettings,

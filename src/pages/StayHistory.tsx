@@ -53,7 +53,7 @@ export default function StayHistory() {
   const { organization, loading: orgLoading } = useOrganization();
   const { reservations, loading: reservationsLoading, refetchReservations, deleteReservation } = useReservations();
   const { receipts, loading: receiptsLoading } = useReceipts();
-  const { settings: financialSettings, loading: settingsLoading } = useFinancialSettings();
+  const { settings: financialSettings, paymentMethods, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
   const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
   const navigate = useNavigate();
@@ -1470,6 +1470,7 @@ export default function StayHistory() {
           onOpenChange={(open) => !open && setRecordPaymentStay(null)}
           title="Other Payment Options"
           hideVenmo
+          methods={paymentMethods}
           paymentInfo={{
             checkPayableTo: financialSettings?.check_payable_to || undefined,
             checkAddress: financialSettings?.check_mailing_address || undefined,
