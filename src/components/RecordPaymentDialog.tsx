@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod } from "@/lib/payment-methods";
 
 
