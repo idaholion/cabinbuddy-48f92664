@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -82,10 +82,16 @@ export default function StayHistory() {
     )
   );
 
-  // Default to current year, but fall back to the most recent year with data
-  // if the current year has no stays.
+  // On initial load only, default to current year but fall back to the most
+  // recent year with data if the current year has no stays. Never override an
+  // explicit user choice (including "All Years", which is 0).
+  const hasResolvedInitialYear = useRef(false);
   useEffect(() => {
-    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+    if (hasResolvedInitialYear.current) return;
+    if (availableYears.length === 0) return;
+
+    hasResolvedInitialYear.current = true;
+    if (!availableYears.includes(selectedYear)) {
       setSelectedYear(availableYears[0]);
     }
   }, [availableYears, selectedYear]);
