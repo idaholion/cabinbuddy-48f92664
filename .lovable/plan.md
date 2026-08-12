@@ -1,78 +1,62 @@
-# Unify Split-Stay Creation Across Daily/Final Input and Stay History
+# Fix Split Cost Calculation Consistency Across Both Pages
 
 ## Goal
-Make creating a split stay use the **same component and the same steps** on both the Daily & Final Input page (`CheckoutFinal.tsx`) and the Stay History page (`StayHistory.tsx`), and fix a cost-calculation discrepancy so both paths produce identical split amounts.
+Make split-stay amounts calculate identically whether the split is created from the Daily & Final Input page or the Stay History page. Keep each page's existing UI layout (inline on Daily & Final Input, modal on Stay History) and improve discoverability of the Stay History split option.
 
-## Current state (verified by reading the code)
+## The problem (verified in the code)
 
-| Aspect | Daily & Final Input | Stay History |
+Both pages call the same `create-split-payments` edge function and both already show a cost preview, but they compute the per-guest-night rate differently:
+
+| | Daily & Final Input | Stay History |
 |---|---|---|
-| Entry | Inline "Split Costs" toggle on the page | "Edit Occupancy" button → dialog |
-| Component | `GuestCostSplitDialog` (split-only) | `UnifiedOccupancyDialog` (Simple + Split tabs) |
-| perDiem | `totalAmount / totalGuestNights` (gross charges, **correct**) | `reservation_settings.nightly_rate` (raw rate, **excludes fees**) |
-| totalAmount passed | `enhancedBilling.total + previousCredit` | `payment.amount` (charges only) |
-| Edge function | `create-split-payments` | `create-split-payments` (same) |
+| Component | `GuestCostSplitDialog` | `UnifiedOccupancyDialog` |
+| perDiem formula | `totalAmount / totalGuestNights` | `reservation_settings.nightly_rate` |
+| Includes cleaning/tax/deposit? | Yes | **No** |
+| `totalAmount` passed in | `enhancedBilling.total + previousCredit` | `stayData.billingAmount` |
 
-**Bug:** Stay History splits undercharge recipients because perDiem excludes cleaning/tax/deposit. This must be fixed as part of unification.
+Two consequences:
+
+1. **Stay History undercharges recipients.** Because perDiem is the raw nightly rate, cleaning fees, tax, and the damage deposit are never distributed across guest-nights. A recipient pays only their share of the base rate.
+2. **The two pages can produce different amounts for the same stay** even after the formula is fixed, because the `totalAmount` inputs differ.
 
 ## Plan
 
-### 1. Adopt `UnifiedOccupancyDialog` as the single split component
-- Use `UnifiedOccupancyDialog` for split creation on **both** pages.
-- Remove `GuestCostSplitDialog` from `CheckoutFinal.tsx` and delete the component file.
-- CheckoutFinal keeps its inline **Simple Entry** (part of the active checkout billing display) but removes the inline **Split Costs** grid, the "Show User Selection" block, the "Review & Create Split" button, and all `splitMode`/`splitUsers`/`sourceDailyGuests` inline state.
+### 1. Fix perDiem in `UnifiedOccupancyDialog`
+Replace the `nightly_rate`-based perDiem with the same gross-charges formula the other dialog uses:
 
-### 2. Add a `defaultMode` prop to `UnifiedOccupancyDialog`
-- New optional prop: `defaultMode?: "simple" | "split"` (defaults to `"simple"`).
-- When CheckoutFinal opens the dialog for a split, pass `defaultMode="split"` so the user lands directly on the Split tab.
-- StayHistory continues to default to `"simple"` (no change).
+```ts
+const totalGuestNights = fullStayOccupancy.reduce((sum, d) => sum + (d.guests || 0), 0);
+const perDiem = totalGuestNights > 0 ? totalAmount / totalGuestNights : 0;
+```
 
-### 3. Fix the perDiem calculation in `UnifiedOccupancyDialog`
-- Replace the `fetchBillingConfig` perDiem logic (currently `nightly_rate`) with the gross-charges formula used by `GuestCostSplitDialog`:
-  ```ts
-  perDiem = totalAmount / totalGuestNights   // totalAmount prop / sum of recorded guests
-  ```
-- Keep the `fetchBillingConfig` call only if other fields (cleaning, tax, etc.) are still needed for display; otherwise remove it.
-- This makes Stay History splits include cleaning/tax/deposit, matching CheckoutFinal.
+- Derive this inside the existing `useMemo` that already computes `sourceTotal` and `calculatedUsers`, so it recalculates when guest counts change.
+- Remove the `perDiem` state variable and the perDiem assignment inside `fetchBillingConfig`.
+- Keep `fetchBillingConfig` only if `billingConfig` is still consumed elsewhere in the component; if it is unused after this change, remove the state, the fetch, and its `useEffect` trigger.
 
-### 4. Pass the correct `totalAmount` from both pages
-- **CheckoutFinal:** pass `enhancedBilling.total + previousCredit` (unchanged from current GuestCostSplitDialog usage).
-- **StayHistory:** pass `stayData.billingAmount` (the payment's full charge amount). This already includes all fees, so no change needed — but verify the value is non-zero and not just the nightly rate.
+### 2. Align the `totalAmount` inputs
+- **Daily & Final Input** already passes gross stay charges (`enhancedBilling.total + previousCredit`). No change.
+- **Stay History** passes `stayData.billingAmount`, which is the payment's `amount` field — the full charge for the stay including fees. Confirm during implementation that this value is the full charge and not a base-rate-only figure; if a manual adjustment exists, include `stayData.manualAdjustment` so the split is based on the true total charge.
 
-### 5. Add the split button to `CheckoutFinal`
-- In the "Daily Occupancy & Charges" card, add a **"Split Costs with Others"** button (next to or below the Simple Entry controls).
-- Clicking it opens `UnifiedOccupancyDialog` with:
-  - `defaultMode="split"`
-  - `sourceUserId={user.id}`
-  - `reservationId={currentReservation.id}`
-  - `dailyBreakdown` and `totalAmount` from the current billing
-  - `onSplitCreated` → refresh billing data (`refetch()`)
-- Guard: button disabled if no current reservation or if `paymentCreated` is true.
+### 3. Guard against a zero or missing total
+If `totalAmount` is 0 or `totalGuestNights` is 0, perDiem becomes 0 and every recipient's share computes to $0 — which the existing validation rejects with a confusing "Each selected person must have at least some guest count assigned" message.
 
-### 6. Relabel the Stay History button
-- Change "Edit Occupancy" → **"Edit/Split Occupancy"** on `StayHistory.tsx`.
+Add an explicit check in the Split tab: when perDiem resolves to 0, show an inline warning ("Stay charges are not available for this stay, so costs cannot be split") and disable the create-split button.
 
-### 7. Consistent button labels
-| Page | Button text | Opens |
-|---|---|---|
-| Daily & Final Input | "Split Costs with Others" | `UnifiedOccupancyDialog` (split tab) |
-| Stay History | "Edit/Split Occupancy" | `UnifiedOccupancyDialog` (simple tab, switch to split) |
-
-The split flow inside the dialog is identical on both pages: pick people → assign daily guest counts → see cost breakdown → "Create Split for N people".
+### 4. Relabel the Stay History button
+Change `Edit Occupancy` to **`Edit/Split Occupancy`** so members can tell that splits can be created from this page. The dialog title stays as is.
 
 ## Files to change
-- `src/components/UnifiedOccupancyDialog.tsx` — add `defaultMode` prop, fix perDiem, keep/delete billing-config fetch as needed.
-- `src/pages/CheckoutFinal.tsx` — remove inline split mode + `GuestCostSplitDialog`, add "Split Costs with Others" button + `UnifiedOccupancyDialog` instance.
-- `src/pages/StayHistory.tsx` — relabel button to "Edit/Split Occupancy".
-- `src/components/GuestCostSplitDialog.tsx` — delete (no longer referenced).
+- `src/components/UnifiedOccupancyDialog.tsx` — perDiem formula, remove unused billing-config perDiem logic, add the zero-total guard.
+- `src/pages/StayHistory.tsx` — button label, and include `manualAdjustment` in the `totalAmount` passed to the dialog if applicable.
 
 ## What stays the same
-- Inline Simple Entry on CheckoutFinal (editing daily guest counts during active checkout).
-- The `create-split-payments` edge function (no backend change).
-- StayHistory's "Edit/Split Occupancy" dialog still supports simple occupancy edits via the Simple tab.
+- The Daily & Final Input page keeps its inline split grid, user selection, cost preview, and "Review & Create Split" button.
+- The Stay History page keeps the modal with Simple Entry and Split Costs tabs, including its existing cost summary preview.
+- `GuestCostSplitDialog` stays in place, unchanged.
+- The `create-split-payments` edge function is unchanged.
 
 ## Verification
-- Build passes (no dangling `GuestCostSplitDialog` imports).
-- On CheckoutFinal: "Split Costs with Others" opens the dialog on the Split tab; creating a split calls `create-split-payments` and refreshes billing.
-- On StayHistory: "Edit/Split Occupancy" opens the same dialog; a split produces the same perDiem as CheckoutFinal (gross charges / guest-nights).
-- Confirm the split amount for a recipient matches between the two pages for the same stay.
+- Open the same past stay from both pages and configure an identical split (same people, same daily guest counts). The per-person dollar amounts in each page's preview should match.
+- Confirm a Stay History split now includes the cleaning fee, tax, and deposit share rather than only the nightly rate.
+- Confirm a stay with no payment record shows the new warning instead of silently producing $0 shares.
+- Confirm Simple Entry occupancy editing on Stay History still saves correctly.
