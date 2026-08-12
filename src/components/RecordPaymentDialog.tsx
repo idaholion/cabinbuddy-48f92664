@@ -108,14 +108,23 @@ export const RecordPaymentDialog = ({
       if (paymentMethod === 'check' && checkNumber) {
         paymentRef = checkNumber + (reference ? ` - ${reference}` : '');
       }
-      
+
+      // Methods that aren't real DB enum values are stored as "other",
+      // with the chosen label preserved in the reference so it stays readable.
+      const dbMethod = toDbPaymentMethod(paymentMethod);
+      if (dbMethod === 'other' && paymentMethod !== 'other') {
+        const label = selectedMethod?.label || paymentMethod;
+        paymentRef = paymentRef ? `${label}: ${paymentRef}` : label;
+      }
+
       await onSave({
         amount,
         paidDate,
-        paymentMethod,
+        paymentMethod: dbMethod,
         paymentReference: paymentRef || undefined,
         notes: notes || undefined,
       });
+
       toast({
         title: "Payment recorded",
         description: `$${amount.toFixed(2)} payment has been recorded successfully.`,
