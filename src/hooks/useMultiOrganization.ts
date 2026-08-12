@@ -128,6 +128,10 @@ export const useMultiOrganization = () => {
         
         // Update cache
         apiCache.set(cacheKeys.userOrganizations(user.id), updatedOrgs);
+
+        // Notify every other hook instance so the whole app switches together
+        emitOrganizationSwitched(organizationId);
+
       } catch (error) {
         console.error('Error setting primary organization:', error);
       }
