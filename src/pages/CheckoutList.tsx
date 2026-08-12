@@ -581,122 +581,126 @@ const CheckoutList = () => {
       totalTasks
     });
 
-    const familyData = localStorage.getItem('familySetupData');
-    if (familyData) {
-      const { organizationCode } = JSON.parse(familyData);
-      const completionData = {
-        checkedTasks: Array.from(checkedTasks),
-        isComplete: isChecklistComplete,
-        completedAt: isChecklistComplete ? new Date().toISOString() : null,
-        totalTasks,
-        completedTasks,
-        surveyData
-      };
-      
-      // Save to localStorage as backup
-      localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
-      console.log('✅ [CHECKOUT-SAVE] Saved to localStorage');
-      
-      // Save to database using current reservation info (UPSERT to avoid duplicates)
-      if (organization?.id && currentReservation) {
-        try {
-          console.log('💾 [CHECKOUT-SAVE] Checking for existing checkout session...');
-          
-          // First check if a checkout session already exists for this reservation
-          const { data: existingSession, error: checkError } = await supabase
-            .from('checkin_sessions')
-            .select('id')
-            .eq('organization_id', organization.id)
-            .eq('session_type', 'checkout')
-            .eq('family_group', currentReservation.family_group)
-            .gte('check_date', currentReservation.start_date)
-            .lte('check_date', currentReservation.end_date)
-            .maybeSingle();
+    const completionData = {
+      checkedTasks: Array.from(checkedTasks),
+      isComplete: isChecklistComplete,
+      completedAt: isChecklistComplete ? new Date().toISOString() : null,
+      totalTasks,
+      completedTasks,
+      surveyData
+    };
 
-          if (checkError) {
-            console.error('❌ [CHECKOUT-SAVE] Error checking existing session:', checkError);
-            throw checkError;
-          }
+    // Save to localStorage as a best-effort backup (never gates the DB save)
+    try {
+      const familyData = localStorage.getItem('familySetupData');
+      const organizationCode = familyData
+        ? JSON.parse(familyData)?.organizationCode
+        : (organization as any)?.code;
+      if (organizationCode) {
+        localStorage.setItem(`checkout_completion_${organizationCode}`, JSON.stringify(completionData));
+        console.log('✅ [CHECKOUT-SAVE] Saved to localStorage');
+      }
+    } catch (e) {
+      console.warn('⚠️ [CHECKOUT-SAVE] localStorage backup failed (non-fatal)', e);
+    }
 
-          const sessionData = {
-            organization_id: organization.id,
-            user_id: user?.id || null,
-            family_group: currentReservation.family_group,
-            session_type: 'checkout',
-            check_date: currentReservation.end_date,
-            checklist_responses: {
-              checklistCompletion: {
-                checkedTasks: Array.from(checkedTasks),
-                sections: checklistSections,
-                isComplete: isChecklistComplete,
-                completedAt: isChecklistComplete ? new Date().toISOString() : null,
-                totalTasks,
-                completedTasks,
-                reservationId: currentReservation.id,
-                startDate: currentReservation.start_date,
-                endDate: currentReservation.end_date
-              },
-              surveyResponses: surveyData
-            },
-            completed_at: isChecklistComplete ? new Date().toISOString() : null
-          };
+    // Save to database using current reservation info (UPSERT to avoid duplicates)
+    if (organization?.id && currentReservation) {
+      try {
+        console.log('💾 [CHECKOUT-SAVE] Checking for existing checkout session...');
 
-          if (existingSession) {
-            // Update existing session
-            console.log('💾 [CHECKOUT-SAVE] Updating existing session:', existingSession.id);
-            const { error } = await supabase
-              .from('checkin_sessions')
-              .update(sessionData)
-              .eq('id', existingSession.id);
+        // First check if a checkout session already exists for this reservation
+        const { data: existingSession, error: checkError } = await supabase
+          .from('checkin_sessions')
+          .select('id')
+          .eq('organization_id', organization.id)
+          .eq('session_type', 'checkout')
+          .eq('family_group', currentReservation.family_group)
+          .gte('check_date', currentReservation.start_date)
+          .lte('check_date', currentReservation.end_date)
+          .maybeSingle();
 
-            if (error) {
-              console.error('❌ [CHECKOUT-SAVE] Database update error:', error);
-              throw error;
-            }
-            console.log('✅ [CHECKOUT-SAVE] Successfully updated existing session');
-          } else {
-            // Insert new session
-            console.log('💾 [CHECKOUT-SAVE] Creating new checkout session...');
-            const { error } = await supabase
-              .from('checkin_sessions')
-              .insert(sessionData);
-
-            if (error) {
-              console.error('❌ [CHECKOUT-SAVE] Database insert error:', error);
-              throw error;
-            }
-            console.log('✅ [CHECKOUT-SAVE] Successfully created new session');
-          }
-
-          // Save survey responses to survey_responses table for Financial Dashboard
-          if (surveyData && Object.keys(surveyData).length > 0) {
-            console.log('💾 [CHECKOUT-SAVE] Saving survey responses to survey_responses table...');
-            await createResponse({
-              family_group: currentReservation.family_group,
-              responses: surveyData
-            });
-            console.log('✅ [CHECKOUT-SAVE] Survey responses saved to database');
-          }
-
-          toast({
-            title: "Checklist Saved",
-            description: `Checkout checklist saved to database (${completedTasks}/${totalTasks} tasks completed)`,
-          });
-        } catch (error) {
-          console.error('❌ [CHECKOUT-SAVE] Failed to save to database:', error);
-          toast({
-            title: "Partial Save",
-            description: "Checklist saved locally but database sync failed",
-            variant: "destructive",
-          });
+        if (checkError) {
+          console.error('❌ [CHECKOUT-SAVE] Error checking existing session:', checkError);
+          throw checkError;
         }
-      } else {
-        console.log('⚠️ [CHECKOUT-SAVE] Missing organization or reservation, saved locally only');
+
+        const sessionData = {
+          organization_id: organization.id,
+          user_id: user?.id || null,
+          family_group: currentReservation.family_group,
+          session_type: 'checkout',
+          check_date: currentReservation.end_date,
+          checklist_responses: {
+            checklistCompletion: {
+              checkedTasks: Array.from(checkedTasks),
+              sections: checklistSections,
+              isComplete: isChecklistComplete,
+              completedAt: isChecklistComplete ? new Date().toISOString() : null,
+              totalTasks,
+              completedTasks,
+              reservationId: currentReservation.id,
+              startDate: currentReservation.start_date,
+              endDate: currentReservation.end_date
+            },
+            surveyResponses: surveyData
+          },
+          completed_at: isChecklistComplete ? new Date().toISOString() : null
+        };
+
+        if (existingSession) {
+          console.log('💾 [CHECKOUT-SAVE] Updating existing session:', existingSession.id);
+          const { error } = await supabase
+            .from('checkin_sessions')
+            .update(sessionData)
+            .eq('id', existingSession.id);
+
+          if (error) {
+            console.error('❌ [CHECKOUT-SAVE] Database update error:', error);
+            throw error;
+          }
+          console.log('✅ [CHECKOUT-SAVE] Successfully updated session');
+        } else {
+          const { error } = await supabase
+            .from('checkin_sessions')
+            .insert(sessionData);
+
+          if (error) {
+            console.error('❌ [CHECKOUT-SAVE] Database insert error:', error);
+            throw error;
+          }
+          console.log('✅ [CHECKOUT-SAVE] Successfully created new session');
+        }
+
+        // Save survey responses to survey_responses table for Financial Dashboard
+        if (surveyData && Object.keys(surveyData).length > 0) {
+          console.log('💾 [CHECKOUT-SAVE] Saving survey responses to survey_responses table...');
+          await createResponse({
+            family_group: currentReservation.family_group,
+            responses: surveyData
+          });
+          console.log('✅ [CHECKOUT-SAVE] Survey responses saved to database');
+        }
+
         toast({
           title: "Checklist Saved",
-          description: `Checkout checklist saved locally (${completedTasks}/${totalTasks} tasks completed)`,
+          description: `Checkout checklist saved (${completedTasks}/${totalTasks} tasks completed)`,
+        });
+      } catch (error: any) {
+        console.error('❌ [CHECKOUT-SAVE] Failed to save to database:', error);
+        toast({
+          title: "Save Failed",
+          description: error?.message || "Checklist saved locally but database sync failed",
+          variant: "destructive",
         });
       }
+    } else {
+      console.log('⚠️ [CHECKOUT-SAVE] Missing organization or reservation, saved locally only');
+      toast({
+        title: "Saved Locally Only",
+        description: "No active stay found, so this checklist could not be linked to a reservation.",
+        variant: "destructive",
+      });
     }
   };
 
