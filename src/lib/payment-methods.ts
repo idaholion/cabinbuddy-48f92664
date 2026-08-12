@@ -131,6 +131,6 @@ export const resolvePaymentMethods = (
   return merged.sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
-/** Methods a member can actually pick */
+/** Methods shown in the dropdown (coming-soon ones render greyed out) */
 export const visiblePaymentMethods = (methods: PaymentMethodOption[]): PaymentMethodOption[] =>
-  methods.filter((m) => m.enabled || m.comingSoon);
+  methods.filter((m) => m.enabled);
