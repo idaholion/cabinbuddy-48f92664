@@ -1324,14 +1324,17 @@ export default function StayHistory() {
                         splitPaymentId: reservation.isVirtualSplit ? reservation.splitData?.payment?.id : undefined,
                         dailyOccupancy: stayData.dailyOccupancy,
                         paymentId: stayData.paymentId,
-                        billingAmount: stayData.billingAmount,
+                        // Total charge for the stay, including any manual adjustment.
+                        // The split dialog spreads this across guest-nights, so it must
+                        // be the full charge (fees included), not the base rate alone.
+                        billingAmount: (stayData.billingAmount || 0) + (stayData.manualAdjustment || 0),
                         user_id: reservation.user_id,
                         organization_id: reservation.organization_id,
                         reservationHolderName: getHostFullName(reservation)
                       })}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Occupancy
+                      Edit/Split Occupancy
                     </Button>
                   )}
                   {isAdmin && reservation.user_id && (
