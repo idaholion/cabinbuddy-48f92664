@@ -69,7 +69,7 @@ export const GuestCostSplits = () => {
       case 'partial':
         return <Badge variant="secondary">Partial</Badge>;
       case 'pending':
-        return <Badge variant="outline">Pending</Badge>;
+        return <Badge variant="outline">Pending payment</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
