@@ -166,9 +166,8 @@ export const RecordPaymentDialog = ({
                 Full Balance
               </Button>
             </div>
-
-            </div>
           </div>
+
 
           <div>
             <Label htmlFor="date">Payment Date</Label>
