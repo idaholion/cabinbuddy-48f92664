@@ -2166,6 +2166,7 @@ export type Database = {
           nightly_rate: number | null
           organization_id: string
           overdue_reminder_interval_days: number | null
+          payment_methods_config: Json | null
           payment_terms: string | null
           paypal_email: string | null
           pet_fee: number | null
@@ -2219,6 +2220,7 @@ export type Database = {
           nightly_rate?: number | null
           organization_id: string
           overdue_reminder_interval_days?: number | null
+          payment_methods_config?: Json | null
           payment_terms?: string | null
           paypal_email?: string | null
           pet_fee?: number | null
@@ -2272,6 +2274,7 @@ export type Database = {
           nightly_rate?: number | null
           organization_id?: string
           overdue_reminder_interval_days?: number | null
+          payment_methods_config?: Json | null
           payment_terms?: string | null
           paypal_email?: string | null
           pet_fee?: number | null
