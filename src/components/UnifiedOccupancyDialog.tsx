@@ -901,7 +901,12 @@ export const UnifiedOccupancyDialog = ({
           {syncing ? "Saving..." : "Save Changes"}
         </Button>
       ) : (
-        <Button onClick={handleSplitCosts} disabled={loading || selectedUsers.length === 0} size={isMobile ? "sm" : "default"}>
+        <Button
+          onClick={handleSplitCosts}
+          disabled={loading || selectedUsers.length === 0 || cannotSplitDueToNoCharges}
+          size={isMobile ? "sm" : "default"}
+          title={cannotSplitDueToNoCharges ? 'This stay has no recorded charges to split' : undefined}
+        >
           {loading ? 'Creating Split...' : `Create Split for ${selectedUsers.length} ${selectedUsers.length === 1 ? 'Person' : 'People'}`}
         </Button>
       )}
