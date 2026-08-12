@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { apiCache, cacheKeys } from '@/lib/cache';
+import { emitOrganizationSwitched, onOrganizationSwitched } from '@/lib/org-events';
+
 
 interface UserOrganization {
   organization_id: string;
