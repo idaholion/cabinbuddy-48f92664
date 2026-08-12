@@ -193,36 +193,21 @@ export const RecordPaymentDialog = ({
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="check">Check</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                {!hideVenmo && <SelectItem value="venmo">Venmo</SelectItem>}
-                <SelectItem value="zelle">Zelle</SelectItem>
-                <SelectItem value="paypal">PayPal</SelectItem>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="credit_card">Credit Card</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {methodList.map((m) => (
+                  <SelectItem key={m.key} value={m.key} disabled={!!m.comingSoon}>
+                    {m.label}{m.comingSoon ? ' (not yet active)' : ''}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           {/* Organization payment instructions for the selected method */}
-          {paymentMethod === 'check' && (paymentInfo?.checkPayableTo || paymentInfo?.checkAddress) && (
-            <div className="rounded border bg-muted/40 p-3 text-sm space-y-1">
-              {paymentInfo.checkPayableTo && (
-                <p><span className="text-muted-foreground">Make check payable to:</span> <span className="font-medium">{paymentInfo.checkPayableTo}</span></p>
-              )}
-              {paymentInfo.checkAddress && (
-                <p className="whitespace-pre-line"><span className="text-muted-foreground">Mail to:</span> <span className="font-medium">{paymentInfo.checkAddress}</span></p>
-              )}
+          {selectedMethod?.instructions && (
+            <div className="rounded border bg-muted/40 p-3 text-sm whitespace-pre-line">
+              {selectedMethod.instructions}
             </div>
           )}
-
-          {paymentMethod === 'paypal' && paymentInfo?.paypalEmail && (
-            <div className="rounded border bg-muted/40 p-3 text-sm">
-              <span className="text-muted-foreground">Send PayPal payment to:</span> <span className="font-medium">{paymentInfo.paypalEmail}</span>
-            </div>
-          )}
-
 
           {/* Check Number Field - Only show when check is selected */}
           {paymentMethod === 'check' && (
@@ -238,36 +223,24 @@ export const RecordPaymentDialog = ({
             </div>
           )}
 
-          {/* Payment Reference Field - Label changes based on method */}
+          {/* Payment Reference Field - Label comes from the admin config */}
           <div>
             <Label htmlFor="reference">
-              {paymentMethod === 'check' 
-                ? 'Additional Reference (optional)' 
-                : paymentMethod === 'venmo' 
-                ? 'Venmo Transaction ID' 
-                : paymentMethod === 'zelle'
-                ? 'Zelle Confirmation #'
-                : paymentMethod === 'paypal'
-                ? 'PayPal Transaction ID'
-                : 'Payment Reference/Confirmation #'}
-
+              {selectedMethod?.referenceLabel || 'Payment Reference/Confirmation #'}
             </Label>
             <Input
               id="reference"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder={
-                paymentMethod === 'check' 
+                paymentMethod === 'check'
                   ? 'Optional memo or note'
-                  : paymentMethod === 'venmo'
-                  ? 'e.g., Transaction ID'
-                  : paymentMethod === 'zelle'
-                  ? 'e.g., Confirmation number'
                   : 'e.g., Transaction ID, Confirmation #'
               }
               className="mt-1"
             />
           </div>
+
 
           <div>
             <Label htmlFor="notes">Notes</Label>
