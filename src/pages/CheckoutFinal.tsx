@@ -79,7 +79,7 @@ const CheckoutFinal = () => {
   const effectiveUserId = effective.id ?? user?.id ?? '';
   const { sessions, loading: sessionsLoading } = useCheckinSessions();
   const { responses: surveyResponses, loading: surveyLoading } = useSurveyResponses();
-  const { settings: financialSettings, loading: financialLoading } = useFinancialSettings();
+  const { settings: financialSettings, paymentMethods, loading: financialLoading } = useFinancialSettings();
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { reservations, loading: reservationsLoading } = useReservations();
 
@@ -2082,6 +2082,7 @@ const CheckoutFinal = () => {
                         onOpenChange={setOtherPaymentOpen}
                         title="Other Payment Options"
                         hideVenmo
+                        methods={paymentMethods}
 
                         stay={{
                           id: currentReservation?.id || '',
