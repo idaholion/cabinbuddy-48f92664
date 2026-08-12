@@ -165,13 +165,8 @@ export const RecordPaymentDialog = ({
               >
                 Full Balance
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAmount(Math.round((stay.balanceDue / 2) * 100) / 100)}
-              >
-                Half Balance
-              </Button>
+            </div>
+
             </div>
           </div>
 
