@@ -217,6 +217,11 @@ export const useRobustMultiOrganization = () => {
         apiCache.invalidateByPrefix(`user_organizations_${user.id}`);
         apiCache.invalidateByPrefix(`organization_${organizationId}`);
 
+        // Notify every other hook instance so the whole app switches together
+        emitOrganizationSwitched(organizationId);
+
+
+
         return data;
       });
 
