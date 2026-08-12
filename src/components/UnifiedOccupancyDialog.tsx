@@ -460,6 +460,21 @@ export const UnifiedOccupancyDialog = ({
     }
   };
 
+  // Per-guest-night rate derived from the stay's TOTAL charges (base rate plus
+  // cleaning, pet, tax and deposit) spread across every recorded guest-night.
+  // This mirrors GuestCostSplitDialog so a split created here produces the same
+  // amounts as one created from the Daily & Final Input page. Using the raw
+  // nightly_rate here would omit fees and undercharge the recipient.
+  const totalGuestNights = useMemo(
+    () => fullStayOccupancy.reduce((sum, day) => sum + (day.guests || 0), 0),
+    [fullStayOccupancy]
+  );
+
+  const perDiem = useMemo(
+    () => (totalGuestNights > 0 ? totalAmount / totalGuestNights : 0),
+    [totalAmount, totalGuestNights]
+  );
+
   // Calculate costs for split mode
   const { sourceTotal, users: calculatedUsers } = useMemo(() => {
     if (mode !== "split" || perDiem === 0) {
@@ -481,6 +496,11 @@ export const UnifiedOccupancyDialog = ({
 
     return { sourceTotal, users: updatedUsers };
   }, [mode, perDiem, sourceDailyGuests, selectedUsers, fullStayOccupancy]);
+
+  // When the stay has no recorded charges (or no guest-nights), perDiem is 0 and
+  // every share would compute to $0. Surface that explicitly instead of failing
+  // validation with a misleading "assign a guest count" message.
+  const cannotSplitDueToNoCharges = perDiem === 0;
 
   const canSplit = sourceUserId && stay.reservationId && !isSplit;
   
