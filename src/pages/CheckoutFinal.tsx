@@ -236,15 +236,8 @@ const CheckoutFinal = () => {
       parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime()
     )[0];
     
-    // If the most recent past reservation ended more than 7 days ago, show sample data instead
-    if (mostRecentPast) {
-      const endDate = parseDateOnly(mostRecentPast.end_date);
-      const daysSinceCheckout = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (daysSinceCheckout > 7) {
-        return undefined; // Show sample data
-      }
-    }
-    
+    // Always show the most recent past stay regardless of how long ago it ended.
+    // Sample mode only applies when the user has no stays at all.
     return mostRecentPast;
   };
 
