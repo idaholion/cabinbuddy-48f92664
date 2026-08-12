@@ -347,6 +347,24 @@ export const useMultiOrganization = () => {
     fetchUserOrganizations();
   }, [user]);
 
+  // Keep every hook instance in sync when the active organization changes
+  useEffect(() => {
+    return onOrganizationSwitched((organizationId) => {
+      setOrganizations(prev => {
+        const updated = prev.map(o => ({
+          ...o,
+          is_primary: o.organization_id === organizationId,
+        }));
+        const next = updated.find(o => o.organization_id === organizationId);
+        if (next) setActiveOrganization(next);
+        return updated;
+      });
+      if (user?.id) apiCache.invalidate(cacheKeys.userOrganizations(user.id));
+      fetchUserOrganizations();
+    });
+  }, [user?.id, fetchUserOrganizations]);
+
+
   return {
     organizations,
     activeOrganization,
