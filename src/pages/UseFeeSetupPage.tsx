@@ -10,13 +10,16 @@ import { Switch } from "@/components/ui/switch";
 import { DollarSign, CreditCard, Calendar as CalendarIcon, Settings, FileText, CalendarPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { PaymentMethodsConfig } from "@/components/setup/PaymentMethodsConfig";
+import { PaymentMethodOption } from "@/lib/payment-methods";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 const UseFeeSetupPage = () => {
-  const { settings, loading, saveFinancialSettings } = useFinancialSettings();
+  const { settings, paymentMethods, loading, saveFinancialSettings } = useFinancialSettings();
+  const [methodConfig, setMethodConfig] = useState<PaymentMethodOption[]>([]);
   const navigate = useNavigate();
   const [autoInvoicing, setAutoInvoicing] = useState(false);
   const [lateFeesEnabled, setLateFeesEnabled] = useState(false);
@@ -62,6 +65,11 @@ const UseFeeSetupPage = () => {
     }
   }, [settings]);
 
+  useEffect(() => {
+    setMethodConfig(paymentMethods);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(paymentMethods)]);
+
   const handleSaveSettings = async () => {
     const config = {
       method: useFeeMethod as any,
@@ -99,6 +107,7 @@ const UseFeeSetupPage = () => {
       paypal_email: paypalEmail,
       check_payable_to: checkPayableTo,
       check_mailing_address: checkMailingAddress,
+      payment_methods_config: methodConfig,
     });
     
     // Navigate to reservation setup after saving
@@ -244,6 +253,9 @@ const UseFeeSetupPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Payment Methods shown in "Other Payment Options" */}
+          <PaymentMethodsConfig methods={methodConfig} onChange={setMethodConfig} />
 
           {/* Payment Settings */}
           <Card>
