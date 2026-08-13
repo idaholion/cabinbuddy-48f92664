@@ -67,7 +67,8 @@ export const ReminderTemplateManager = () => {
         is_active: template.is_active ?? true,
         days_in_advance: template.days_in_advance ?? null,
         trigger_event: template.trigger_event ?? 'before_start',
-        sms_message_template: template.sms_message_template ?? null
+        sms_message_template: template.sms_message_template ?? null,
+        delivery_method: template.delivery_method ?? 'email'
       }));
 
       setTemplates(templatesWithArrays);
