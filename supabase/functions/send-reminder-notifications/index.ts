@@ -46,9 +46,41 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     console.log(`Found ${enabledOrgs.length} organizations with automated reminders enabled`);
-    
+
+    // Helper: resolve family group lead contact by org + family group name.
+    // NOTE: reservations.family_group is a text column with no FK to family_groups,
+    // so PostgREST embedding cannot be used here.
+    const familyGroupCache = new Map<string, any[]>();
+    const getFamilyGroup = async (orgId: string, name: string) => {
+      if (!familyGroupCache.has(orgId)) {
+        const { data } = await supabase
+          .from('family_groups')
+          .select('name, lead_email, lead_name, lead_phone')
+          .eq('organization_id', orgId);
+        familyGroupCache.set(orgId, data || []);
+      }
+      const groups = familyGroupCache.get(orgId) || [];
+      const target = (name || '').trim().toLowerCase();
+      return groups.find((g: any) => (g.name || '').trim().toLowerCase() === target) || null;
+    };
+
+    // Helper: fall back to host assignment contacts when the group lead has no email
+    const getReservationContact = async (reservation: any) => {
+      const fg = await getFamilyGroup(reservation.organization_id, reservation.family_group);
+      if (fg?.lead_email) {
+        return { email: fg.lead_email, name: fg.lead_name || '', phone: fg.lead_phone || '' };
+      }
+      const hosts = Array.isArray(reservation.host_assignments) ? reservation.host_assignments : [];
+      const host = hosts.find((h: any) => h?.host_email);
+      if (host) {
+        return { email: host.host_email, name: host.host_name || '', phone: host.host_phone || '' };
+      }
+      return null;
+    };
+
     // Get upcoming reservations based on enabled reminder days
     const reminderDays = [];
+
     
     // Check which specific reminder days are enabled for each organization
     for (const org of enabledOrgs) {
@@ -85,22 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Query reservations for the target date from this specific organization
         const { data: reservations, error } = await supabase
           .from('reservations')
-          .select(`
-            id,
-            start_date,
-            end_date,
-            family_group,
-            organization_id,
-            organizations!inner(
-              id,
-              name
-            ),
-            family_groups!inner(
-              lead_email,
-              lead_name,
-              lead_phone
-            )
-          `)
+          .select('id, start_date, end_date, family_group, host_assignments, organization_id')
           .eq('start_date', targetDateString)
           .eq('status', 'confirmed')
           .eq('organization_id', org.id);
@@ -114,6 +131,11 @@ const handler = async (req: Request): Promise<Response> => {
         
         // Send reminder notifications
         for (const reservation of reservations || []) {
+          const contact = await getReservationContact(reservation);
+          if (!contact?.email) {
+            console.log(`Skipping reservation ${reservation.id} - no contact email found`);
+            continue;
+          }
           try {
             const notificationResponse = await supabase.functions.invoke('send-notification', {
               body: {
@@ -124,10 +146,11 @@ const handler = async (req: Request): Promise<Response> => {
                   family_group_name: reservation.family_group,
                   check_in_date: reservation.start_date,
                   check_out_date: reservation.end_date,
-                  guest_email: reservation.family_groups?.[0]?.lead_email || '',
-                  guest_name: reservation.family_groups?.[0]?.lead_name || '',
-                  guest_phone: reservation.family_groups?.[0]?.lead_phone || '',
+                  guest_email: contact.email,
+                  guest_name: contact.name,
+                  guest_phone: contact.phone,
                 },
+
                 days_until: days,
               }
             });
@@ -168,18 +191,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         const { data: reservations, error: resError } = await supabase
           .from('reservations')
-          .select(`
-            id,
-            start_date,
-            end_date,
-            family_group,
-            organization_id,
-            family_groups!inner(
-              lead_email,
-              lead_name,
-              lead_phone
-            )
-          `)
+          .select('id, start_date, end_date, family_group, host_assignments, organization_id')
           .eq('end_date', targetDateString)
           .eq('status', 'confirmed')
           .eq('organization_id', org.id);
@@ -190,14 +202,14 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         for (const reservation of reservations || []) {
-          const fg: any = Array.isArray(reservation.family_groups)
-            ? reservation.family_groups[0]
-            : reservation.family_groups;
-          const email = fg?.lead_email;
+          const contact = await getReservationContact(reservation);
+          const email = contact?.email;
           if (!email) {
-            console.log(`Skipping reservation ${reservation.id} - no lead email`);
+            console.log(`Skipping reservation ${reservation.id} - no contact email`);
             continue;
           }
+          const fg = { lead_name: contact?.name };
+
 
           try {
             const response = await supabase.functions.invoke('send-notification', {
