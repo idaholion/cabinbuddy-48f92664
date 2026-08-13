@@ -362,10 +362,80 @@ export const useSurveyResponses = () => {
     }
   };
 
+  /**
+   * Insert-or-update a survey response for a given family group + stay window.
+   * The stay window is stored inside the responses JSON (`_stayKey`) so
+   * re-saving the departure checklist updates the same row instead of
+   * creating duplicates that inflate the Economic Impact totals.
+   */
+  const saveResponse = async (params: {
+    family_group?: string;
+    stayKey: string;
+    responses: Record<string, any>;
+  }) => {
+    if (!orgContext) return;
+
+    const payloadResponses = { ...params.responses, _stayKey: params.stayKey };
+
+    try {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+
+      // Look for an existing response for this family group + stay window
+      let query = secureSelect('survey_responses', orgContext).select('*');
+      if (params.family_group) {
+        query = query.eq('family_group', params.family_group);
+      }
+      const { data: existingRows, error: fetchError } = await query;
+      if (fetchError) throw fetchError;
+
+      const existing = (existingRows || []).find(
+        (row: any) => (row.responses as any)?._stayKey === params.stayKey
+      );
+
+      if (existing) {
+        const { data, error } = await secureUpdate(
+          'survey_responses',
+          { responses: payloadResponses },
+          orgContext
+        )
+          .eq('id', existing.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          const mapped = mapDbResponseToSurveyResponse(data);
+          setResponses(prev => prev.map(r => (r.id === mapped.id ? mapped : r)));
+          return mapped;
+        }
+        return;
+      }
+
+      const { data, error } = await secureInsert('survey_responses', {
+        family_group: params.family_group,
+        responses: payloadResponses,
+        user_id: userId
+      }, orgContext)
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        const mapped = mapDbResponseToSurveyResponse(data);
+        setResponses(prev => [mapped, ...prev]);
+        return mapped;
+      }
+    } catch (error) {
+      console.error('Error saving survey response:', error);
+      throw error;
+    }
+  };
+
   return {
     responses,
     loading,
     createResponse,
+    saveResponse,
     refetch: fetchResponses
   };
 };
