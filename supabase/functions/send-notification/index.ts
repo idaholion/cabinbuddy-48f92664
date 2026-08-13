@@ -95,13 +95,17 @@ interface NotificationRequest {
     subject_template: string;
     custom_message: string;
     checklist_items: string[];
+    sms_message_template?: string | null;
   };
   recipients?: Array<{
     name: string;
     email: string;
     familyGroup: string;
+    phone?: string | null;
   }>;
   template_variables?: Record<string, string>;
+  // 'email' | 'sms' | 'both' — controls which channels are used. Defaults to 'both'.
+  delivery_method?: 'email' | 'sms' | 'both';
 }
 
 async function sendSMS(to: string, message: string) {
@@ -276,7 +280,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data, template, recipients, template_variables }: NotificationRequest = await req.json();
+    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data, template, recipients, template_variables, delivery_method }: NotificationRequest = await req.json();
+
+    const deliveryMethod: 'email' | 'sms' | 'both' = delivery_method ?? 'both';
+    const wantsEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
+    const wantsSms = deliveryMethod === 'sms' || deliveryMethod === 'both';
+    console.log(`📬 Delivery method for ${type}: ${deliveryMethod}`);
 
     let subject = "";
     let htmlContent = "";
@@ -930,7 +939,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (!template || !recipients) throw new Error('Template and recipients required for manual template notification');
         
         // For manual templates, we'll send to each recipient individually
-        const emailPromises = recipients.map(async (recipient) => {
+        const emailPromises = wantsEmail ? recipients.map(async (recipient) => {
           // Replace recipient-specific variables
           let personalizedSubject = template.subject_template;
           let personalizedContent = template.custom_message;
@@ -972,14 +981,46 @@ const handler = async (req: Request): Promise<Response> => {
             subject: personalizedSubject,
             html: htmlContent,
           });
-        });
+        }) : [];
         
         // Wait for all emails to send
         const emailResults = await Promise.allSettled(emailPromises);
         const successfulSends = emailResults.filter(result => result.status === 'fulfilled').length;
         const failedSends = emailResults.filter(result => result.status === 'rejected').length;
         
-        console.log(`Manual template sent: ${successfulSends} successful, ${failedSends} failed`);
+        console.log(`Manual template sent: ${successfulSends} successful, ${failedSends} failed (email ${wantsEmail ? 'enabled' : 'disabled'})`);
+
+        // Send SMS copies when the template is configured for text delivery
+        if (wantsSms) {
+          const smsBody = template.sms_message_template?.trim();
+          if (!smsBody) {
+            console.log('⏭️ Manual template SMS skipped - no SMS text configured on template');
+          } else {
+            for (const recipient of recipients) {
+              if (!recipient.phone) {
+                console.log(`⏭️ SMS skipped for ${recipient.name || recipient.email} - no phone number`);
+                continue;
+              }
+              let personalizedSms = smsBody;
+              const smsVars = {
+                recipient_name: recipient.name,
+                guest_name: recipient.name,
+                family_group_name: recipient.familyGroup,
+                organization_name: organizationName,
+                ...template_variables
+              };
+              Object.entries(smsVars).forEach(([key, value]) => {
+                personalizedSms = personalizedSms.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
+              });
+              const result = await sendSMS(recipient.phone, personalizedSms);
+              if (result?.success) {
+                console.log(`✅ Manual template SMS sent to ${recipient.phone}`);
+              } else {
+                console.error(`❌ Manual template SMS failed for ${recipient.phone}:`, result?.error);
+              }
+            }
+          }
+        }
         
         // For manual templates, we'll use the first recipient's info for the response format
         subject = template.subject_template;
@@ -1003,11 +1044,21 @@ const handler = async (req: Request): Promise<Response> => {
       recipientPhone = work_weekend_data?.recipient_phone;
     }
 
+    // Safety net: if a notification is text-only but we have no phone number,
+    // fall back to email rather than silently sending nothing.
+    const emailFallback = deliveryMethod === 'sms' && !recipientPhone;
+    if (emailFallback) {
+      console.log('⚠️ Text-only delivery requested but no phone on file - falling back to email');
+    }
+
     // Send email using Resend
     let emailResponse;
     if (type === 'manual_template') {
       // Manual templates handle their own email sending
       emailResponse = { message: 'Manual template emails sent individually' };
+    } else if (!wantsEmail && !emailFallback) {
+      console.log('⏭️ Email skipped - delivery method is text only');
+      emailResponse = { message: 'Email skipped by delivery method' };
     } else if (recipientEmail) {
       console.log(`📧 Sending email to: ${recipientEmail}`);
       emailResponse = await resend.emails.send({
@@ -1026,7 +1077,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Send SMS if phone number is provided and SMS message is not empty
     let smsResponse = null;
     if (type !== 'manual_template') {
-      if (recipientPhone && smsMessage) {
+      if (!wantsSms) {
+        console.log('⏭️ SMS skipped - delivery method is email only');
+      } else if (recipientPhone && smsMessage) {
         console.log(`📱 Attempting to send SMS to: ${recipientPhone}`);
         smsResponse = await sendSMS(recipientPhone, smsMessage);
         
@@ -1041,6 +1094,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`⏭️ SMS skipped - missing ${!recipientPhone ? 'phone number' : 'message'}`);
       }
     }
+
 
     // Determine if calendar keeper should receive a copy based on notification type
     let shouldSendCopy = false;

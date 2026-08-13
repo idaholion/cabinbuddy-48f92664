@@ -23,6 +23,7 @@ interface ReminderTemplate {
   is_active: boolean;
   days_in_advance: number | null;
   trigger_event: 'before_start' | 'before_end' | 'manual';
+  delivery_method: 'email' | 'sms' | 'both';
   organization_id: string;
   created_at: string;
   updated_at: string;
@@ -66,7 +67,8 @@ export const ReminderTemplateManager = () => {
         is_active: template.is_active ?? true,
         days_in_advance: template.days_in_advance ?? null,
         trigger_event: template.trigger_event ?? 'before_start',
-        sms_message_template: template.sms_message_template ?? null
+        sms_message_template: template.sms_message_template ?? null,
+        delivery_method: template.delivery_method ?? 'email'
       }));
 
       setTemplates(templatesWithArrays);
@@ -108,6 +110,7 @@ export const ReminderTemplateManager = () => {
       is_active: true,
       days_in_advance: 7,
       trigger_event: 'before_start',
+      delivery_method: 'email',
       organization_id: activeOrganization?.organization_id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -167,6 +170,7 @@ export const ReminderTemplateManager = () => {
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
             trigger_event: template.trigger_event,
+            delivery_method: template.delivery_method,
             created_by_user_id: user.id
           }, { onConflict: 'organization_id,reminder_type' });
 
@@ -184,7 +188,8 @@ export const ReminderTemplateManager = () => {
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
-            trigger_event: template.trigger_event
+            trigger_event: template.trigger_event,
+            delivery_method: template.delivery_method
           })
           .eq('id', template.id);
 
@@ -343,6 +348,11 @@ export const ReminderTemplateManager = () => {
                       Sends {template.days_in_advance} day{template.days_in_advance !== 1 ? 's' : ''} before {template.trigger_event === 'before_end' ? 'stay ends' : 'stay starts'}
                     </span>
                   )}
+                  {!isEditing && (
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'}
+                    </span>
+                  )}
                 </div>
                 {isEditing && (
                   <div className="flex items-center space-x-4 flex-wrap gap-y-2">
@@ -385,6 +395,23 @@ export const ReminderTemplateManager = () => {
                         </Select>
                       </div>
                     )}
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor={`delivery-${template.id}`} className="text-sm">Send by</Label>
+                      <Select
+                        value={template.delivery_method}
+                        onValueChange={(value) => updateTemplate(template.id, { delivery_method: value as ReminderTemplate['delivery_method'] })}
+                      >
+                        <SelectTrigger className="w-40" id={`delivery-${template.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">Email only</SelectItem>
+                          <SelectItem value="sms">Text only</SelectItem>
+                          <SelectItem value="both">Email + Text</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
 
                     <Button 
                       onClick={() => deleteTemplate(template.id)}
@@ -438,9 +465,11 @@ export const ReminderTemplateManager = () => {
                 />
               </div>
 
-              <div>
+              <div className={template.delivery_method === 'email' ? 'opacity-50' : ''}>
                 <div className="flex items-center justify-between mb-1">
-                  <Label htmlFor={`sms-${template.id}`} className="text-base">SMS Message Template (Optional)</Label>
+                  <Label htmlFor={`sms-${template.id}`} className="text-base">
+                    Text (SMS) Message {template.delivery_method === 'email' ? '— not used (Email only)' : ''}
+                  </Label>
                   <span className={`text-sm ${(template.sms_message_template?.length || 0) > 160 ? 'text-warning' : 'text-muted-foreground'}`}>
                     {template.sms_message_template?.length || 0}/160 chars
                     {(template.sms_message_template?.length || 0) > 160 && ` (${Math.ceil((template.sms_message_template?.length || 0) / 160)} messages)`}
@@ -454,10 +483,15 @@ export const ReminderTemplateManager = () => {
                   })}
                   className="mt-1 text-base"
                   rows={3}
-                  placeholder="Short SMS message (160 chars for single SMS). Leave empty to use default. Variables: {{guest_name}}, {{family_group_name}}, etc."
-                  readOnly={!isEditing}
+                  placeholder="Short SMS message (160 chars for single SMS). Variables: {{guest_name}}, {{family_group_name}}, etc."
+                  readOnly={!isEditing || template.delivery_method === 'email'}
                   maxLength={480}
                 />
+                {template.delivery_method !== 'email' && !template.sms_message_template?.trim() && (
+                  <p className="text-sm text-warning mt-1">
+                    ⚠️ Text delivery is on but no SMS text is written — no text will be sent.
+                  </p>
+                )}
                 {(template.sms_message_template?.length || 0) > 160 && (
                   <p className="text-sm text-warning mt-1">
                     ⚠️ Messages over 160 characters will be sent as multiple SMS (costs more)
