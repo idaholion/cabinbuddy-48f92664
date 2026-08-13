@@ -348,6 +348,11 @@ export const ReminderTemplateManager = () => {
                       Sends {template.days_in_advance} day{template.days_in_advance !== 1 ? 's' : ''} before {template.trigger_event === 'before_end' ? 'stay ends' : 'stay starts'}
                     </span>
                   )}
+                  {!isEditing && (
+                    <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'}
+                    </span>
+                  )}
                 </div>
                 {isEditing && (
                   <div className="flex items-center space-x-4 flex-wrap gap-y-2">
