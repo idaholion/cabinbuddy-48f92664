@@ -1440,6 +1440,9 @@ export type Database = {
           ck_copy_work_weekend_reminder: boolean | null
           code: string
           created_at: string
+          delivery_selection_ending: string
+          delivery_selection_turn: string
+          delivery_work_weekend: string
           financial_test_mode: boolean | null
           guest_access_token: string | null
           guest_token_expires_at: string | null
@@ -1490,6 +1493,9 @@ export type Database = {
           ck_copy_work_weekend_reminder?: boolean | null
           code: string
           created_at?: string
+          delivery_selection_ending?: string
+          delivery_selection_turn?: string
+          delivery_work_weekend?: string
           financial_test_mode?: boolean | null
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
@@ -1540,6 +1546,9 @@ export type Database = {
           ck_copy_work_weekend_reminder?: boolean | null
           code?: string
           created_at?: string
+          delivery_selection_ending?: string
+          delivery_selection_turn?: string
+          delivery_work_weekend?: string
           financial_test_mode?: boolean | null
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
