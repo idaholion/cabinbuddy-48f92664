@@ -20,12 +20,17 @@ interface ScheduledTemplate {
   delivery_method: 'email' | 'sms' | 'both';
 }
 
+type DeliveryMethod = 'email' | 'sms' | 'both';
+
 interface AutomatedSettings {
 
   automated_reminders_enabled: boolean;
   automated_selection_turn_notifications_enabled: boolean;
   automated_selection_ending_tomorrow_enabled: boolean;
   automated_work_weekend_reminders_enabled: boolean;
+  delivery_selection_turn: DeliveryMethod;
+  delivery_selection_ending: DeliveryMethod;
+  delivery_work_weekend: DeliveryMethod;
   automated_reminders_7_day_enabled: boolean;
   automated_reminders_3_day_enabled: boolean;
   automated_reminders_1_day_enabled: boolean;
