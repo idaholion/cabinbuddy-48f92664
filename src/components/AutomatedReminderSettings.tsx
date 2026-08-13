@@ -438,11 +438,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="selection-turn-notifications"
-                checked={settings.automated_selection_turn_notifications_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_selection_turn_notifications_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_selection_turn" disabled={!settings.automated_selection_turn_notifications_enabled} />
+                <Switch
+                  id="selection-turn-notifications"
+                  checked={settings.automated_selection_turn_notifications_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_selection_turn_notifications_enabled', enabled)}
+                />
+              </div>
             </div>
             
             <div className="border-l-4 border-green-200 pl-4 space-y-1">
