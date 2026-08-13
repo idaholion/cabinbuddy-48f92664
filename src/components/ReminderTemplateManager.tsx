@@ -23,6 +23,7 @@ interface ReminderTemplate {
   is_active: boolean;
   days_in_advance: number | null;
   trigger_event: 'before_start' | 'before_end' | 'manual';
+  delivery_method: 'email' | 'sms' | 'both';
   organization_id: string;
   created_at: string;
   updated_at: string;
