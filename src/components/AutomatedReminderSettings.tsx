@@ -500,11 +500,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="work-weekend-reminders"
-                checked={settings.automated_work_weekend_reminders_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_work_weekend" disabled={!settings.automated_work_weekend_reminders_enabled} />
+                <Switch
+                  id="work-weekend-reminders"
+                  checked={settings.automated_work_weekend_reminders_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
+                />
+              </div>
             </div>
             
             {settings.automated_work_weekend_reminders_enabled && (
