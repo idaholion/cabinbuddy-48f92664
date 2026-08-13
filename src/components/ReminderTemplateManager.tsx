@@ -22,6 +22,7 @@ interface ReminderTemplate {
   sms_message_template: string | null;
   is_active: boolean;
   days_in_advance: number | null;
+  trigger_event: 'before_start' | 'before_end' | 'manual';
   organization_id: string;
   created_at: string;
   updated_at: string;
@@ -64,6 +65,7 @@ export const ReminderTemplateManager = () => {
           : [],
         is_active: template.is_active ?? true,
         days_in_advance: template.days_in_advance ?? null,
+        trigger_event: template.trigger_event ?? 'before_start',
         sms_message_template: template.sms_message_template ?? null
       }));
 
@@ -105,6 +107,7 @@ export const ReminderTemplateManager = () => {
       sms_message_template: null,
       is_active: true,
       days_in_advance: 7,
+      trigger_event: 'before_start',
       organization_id: activeOrganization?.organization_id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -142,6 +145,7 @@ export const ReminderTemplateManager = () => {
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
+            trigger_event: template.trigger_event,
             created_by_user_id: user.id
           });
 
@@ -158,7 +162,8 @@ export const ReminderTemplateManager = () => {
             checklist_items: template.checklist_items,
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
-            days_in_advance: template.days_in_advance
+            days_in_advance: template.days_in_advance,
+            trigger_event: template.trigger_event
           })
           .eq('id', template.id);
 
@@ -312,23 +317,28 @@ export const ReminderTemplateManager = () => {
 
       <div className="text-base text-muted-foreground">
         {isEditing ? "Editing reminder templates. " : ""}Customize the content of email and SMS reminder notifications. Available variables: 
-        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
+        {"{{guest_name}}, {{recipient_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{days_until_departure}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
       <div className="space-y-6">
         {templates.map((template) => (
           <Card key={template.id} className={`${!template.is_active ? 'opacity-60' : ''}`}>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex items-center space-x-2">
                   {getTemplateIcon(template.reminder_type)}
                   <CardTitle className="text-base">{getTemplateTitle(template.reminder_type)}</CardTitle>
                   {!template.is_active && (
                     <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Disabled</span>
                   )}
+                  {!isEditing && template.trigger_event !== 'manual' && template.days_in_advance && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                      Sends {template.days_in_advance} day{template.days_in_advance !== 1 ? 's' : ''} before {template.trigger_event === 'before_end' ? 'stay ends' : 'stay starts'}
+                    </span>
+                  )}
                 </div>
                 {isEditing && (
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 flex-wrap gap-y-2">
                     <div className="flex items-center space-x-2">
                       <Label htmlFor={`active-${template.id}`} className="text-sm">Active</Label>
                       <Switch
@@ -337,14 +347,30 @@ export const ReminderTemplateManager = () => {
                         onCheckedChange={(checked) => updateTemplate(template.id, { is_active: checked })}
                       />
                     </div>
-                    {(template.reminder_type.includes('stay_') || template.reminder_type.includes('work_')) && (
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor={`trigger-${template.id}`} className="text-sm">Send</Label>
+                      <Select
+                        value={template.trigger_event}
+                        onValueChange={(value) => updateTemplate(template.id, { trigger_event: value as ReminderTemplate['trigger_event'] })}
+                      >
+                        <SelectTrigger className="w-56" id={`trigger-${template.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="before_start">Before stay starts</SelectItem>
+                          <SelectItem value="before_end">Before stay ends</SelectItem>
+                          <SelectItem value="manual">Manual only (no schedule)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {template.trigger_event !== 'manual' && (
                       <div className="flex items-center space-x-2">
-                        <Label htmlFor={`days-${template.id}`} className="text-sm">Days in advance</Label>
+                        <Label htmlFor={`days-${template.id}`} className="text-sm">Days before</Label>
                         <Select 
                           value={(template.days_in_advance || 7).toString()} 
                           onValueChange={(value) => updateTemplate(template.id, { days_in_advance: parseInt(value) })}
                         >
-                          <SelectTrigger className="w-20">
+                          <SelectTrigger className="w-20" id={`days-${template.id}`}>
                             <SelectValue placeholder="7" />
                           </SelectTrigger>
                           <SelectContent>
@@ -359,6 +385,7 @@ export const ReminderTemplateManager = () => {
                         </Select>
                       </div>
                     )}
+
                     <Button 
                       onClick={() => deleteTemplate(template.id)}
                       variant="outline"

@@ -143,6 +143,103 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
     }
+
+    // ---- Template-driven "before end of stay" reminders ----
+    for (const org of enabledOrgs) {
+      const { data: endTemplates, error: tplError } = await supabase
+        .from('reminder_templates')
+        .select('*')
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .eq('trigger_event', 'before_end');
+
+      if (tplError) {
+        console.error(`Error fetching end-of-stay templates for ${org.name}:`, tplError);
+        continue;
+      }
+
+      for (const tpl of endTemplates || []) {
+        const days = tpl.days_in_advance ?? 1;
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + days);
+        const targetDateString = targetDate.toISOString().split('T')[0];
+
+        console.log(`[${org.name}] End-of-stay template "${tpl.reminder_type}": looking for stays ending ${targetDateString}`);
+
+        const { data: reservations, error: resError } = await supabase
+          .from('reservations')
+          .select(`
+            id,
+            start_date,
+            end_date,
+            family_group,
+            organization_id,
+            family_groups!inner(
+              lead_email,
+              lead_name,
+              lead_phone
+            )
+          `)
+          .eq('end_date', targetDateString)
+          .eq('status', 'confirmed')
+          .eq('organization_id', org.id);
+
+        if (resError) {
+          console.error(`Error fetching end-of-stay reservations for ${org.name}:`, resError);
+          continue;
+        }
+
+        for (const reservation of reservations || []) {
+          const fg: any = Array.isArray(reservation.family_groups)
+            ? reservation.family_groups[0]
+            : reservation.family_groups;
+          const email = fg?.lead_email;
+          if (!email) {
+            console.log(`Skipping reservation ${reservation.id} - no lead email`);
+            continue;
+          }
+
+          try {
+            const response = await supabase.functions.invoke('send-notification', {
+              body: {
+                type: 'manual_template',
+                organization_id: org.id,
+                template: {
+                  reminder_type: tpl.reminder_type,
+                  subject_template: tpl.subject_template,
+                  custom_message: tpl.custom_message,
+                  checklist_items: tpl.checklist_items || [],
+                },
+                recipients: [{
+                  email,
+                  name: fg?.lead_name || '',
+                  familyGroup: reservation.family_group,
+                }],
+                template_variables: {
+                  guest_name: fg?.lead_name || '',
+                  recipient_name: fg?.lead_name || '',
+                  family_group_name: reservation.family_group,
+                  check_in_date: reservation.start_date,
+                  check_out_date: reservation.end_date,
+                  organization_name: org.name,
+                  days_until_departure: String(days),
+                },
+              }
+            });
+
+            if (response.error) {
+              console.error(`Error sending end-of-stay reminder for ${reservation.id}:`, response.error);
+            } else {
+              console.log(`End-of-stay reminder sent for reservation ${reservation.id} (${days} days before departure)`);
+            }
+          } catch (err) {
+            console.error(`Failed end-of-stay reminder for ${reservation.id}:`, err);
+          }
+        }
+      }
+    }
+
+    
     
     return new Response(JSON.stringify({ success: true, message: 'Reminder notifications processed' }), {
       status: 200,
