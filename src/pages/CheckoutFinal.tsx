@@ -243,6 +243,16 @@ const CheckoutFinal = () => {
 
   const currentReservation = getCurrentUserReservation();
 
+  // Determine whether the displayed stay is currently in-progress or in the past
+  const todayForActiveCheck = new Date();
+  todayForActiveCheck.setHours(0, 0, 0, 0);
+  const isCurrentStay = (() => {
+    if (!currentReservation) return false;
+    const start = parseDateOnly(currentReservation.start_date);
+    const end = parseDateOnly(currentReservation.end_date);
+    return todayForActiveCheck >= start && todayForActiveCheck <= end;
+  })();
+
   // Helper function to check if user owns a reservation (for split costs button)
   const isUserReservationOwner = (reservation: any): boolean => {
     if (!user) return false;
