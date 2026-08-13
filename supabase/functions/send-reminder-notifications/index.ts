@@ -191,18 +191,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         const { data: reservations, error: resError } = await supabase
           .from('reservations')
-          .select(`
-            id,
-            start_date,
-            end_date,
-            family_group,
-            organization_id,
-            family_groups!inner(
-              lead_email,
-              lead_name,
-              lead_phone
-            )
-          `)
+          .select('id, start_date, end_date, family_group, host_assignments, organization_id')
           .eq('end_date', targetDateString)
           .eq('status', 'confirmed')
           .eq('organization_id', org.id);
@@ -213,14 +202,14 @@ const handler = async (req: Request): Promise<Response> => {
         }
 
         for (const reservation of reservations || []) {
-          const fg: any = Array.isArray(reservation.family_groups)
-            ? reservation.family_groups[0]
-            : reservation.family_groups;
-          const email = fg?.lead_email;
+          const contact = await getReservationContact(reservation);
+          const email = contact?.email;
           if (!email) {
-            console.log(`Skipping reservation ${reservation.id} - no lead email`);
+            console.log(`Skipping reservation ${reservation.id} - no contact email`);
             continue;
           }
+          const fg = { lead_name: contact?.name };
+
 
           try {
             const response = await supabase.functions.invoke('send-notification', {
