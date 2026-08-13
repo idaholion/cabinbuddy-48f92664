@@ -20,12 +20,17 @@ interface ScheduledTemplate {
   delivery_method: 'email' | 'sms' | 'both';
 }
 
+type DeliveryMethod = 'email' | 'sms' | 'both';
+
 interface AutomatedSettings {
 
   automated_reminders_enabled: boolean;
   automated_selection_turn_notifications_enabled: boolean;
   automated_selection_ending_tomorrow_enabled: boolean;
   automated_work_weekend_reminders_enabled: boolean;
+  delivery_selection_turn: DeliveryMethod;
+  delivery_selection_ending: DeliveryMethod;
+  delivery_work_weekend: DeliveryMethod;
   automated_reminders_7_day_enabled: boolean;
   automated_reminders_3_day_enabled: boolean;
   automated_reminders_1_day_enabled: boolean;
@@ -53,6 +58,9 @@ export const AutomatedReminderSettings = () => {
     automated_selection_turn_notifications_enabled: false,
     automated_selection_ending_tomorrow_enabled: false,
     automated_work_weekend_reminders_enabled: false,
+    delivery_selection_turn: 'email',
+    delivery_selection_ending: 'email',
+    delivery_work_weekend: 'email',
     automated_reminders_7_day_enabled: true,
     automated_reminders_3_day_enabled: true,
     automated_reminders_1_day_enabled: true,
@@ -172,7 +180,10 @@ export const AutomatedReminderSettings = () => {
           ck_copy_work_weekend_invitation,
           ck_copy_confirmation,
           ck_copy_cancellation,
-          ck_copy_manual_template
+          ck_copy_manual_template,
+          delivery_selection_turn,
+          delivery_selection_ending,
+          delivery_work_weekend
         `)
         .eq('id', organization.id)
         .single();
@@ -188,6 +199,9 @@ export const AutomatedReminderSettings = () => {
         automated_selection_turn_notifications_enabled: data?.automated_selection_turn_notifications_enabled || false,
         automated_selection_ending_tomorrow_enabled: data?.automated_selection_ending_tomorrow_enabled || false,
         automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
+        delivery_selection_turn: ((data as any)?.delivery_selection_turn || 'email') as DeliveryMethod,
+        delivery_selection_ending: ((data as any)?.delivery_selection_ending || 'email') as DeliveryMethod,
+        delivery_work_weekend: ((data as any)?.delivery_work_weekend || 'email') as DeliveryMethod,
         automated_reminders_7_day_enabled: data?.automated_reminders_7_day_enabled ?? true,
         automated_reminders_3_day_enabled: data?.automated_reminders_3_day_enabled ?? true,
         automated_reminders_1_day_enabled: data?.automated_reminders_1_day_enabled ?? true,
@@ -214,6 +228,51 @@ export const AutomatedReminderSettings = () => {
       setLoading(false);
     }
   };
+
+  const handleOrgDeliveryChange = async (
+    field: 'delivery_selection_turn' | 'delivery_selection_ending' | 'delivery_work_weekend',
+    method: DeliveryMethod
+  ) => {
+    if (!organization) return;
+    const { error } = await supabase
+      .from('organizations')
+      .update({ [field]: method } as any)
+      .eq('id', organization.id);
+
+    if (error) {
+      console.error('Error updating delivery method:', error);
+      toast.error('Failed to update delivery method');
+      return;
+    }
+    setSettings((prev) => ({ ...prev, [field]: method }));
+    toast.success('Delivery method updated');
+  };
+
+  const DeliverySelect = ({
+    field,
+    disabled,
+  }: {
+    field: 'delivery_selection_turn' | 'delivery_selection_ending' | 'delivery_work_weekend';
+    disabled?: boolean;
+  }) => (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">Send by</span>
+      <Select
+        value={settings[field]}
+        onValueChange={(value) => handleOrgDeliveryChange(field, value as DeliveryMethod)}
+        disabled={disabled}
+      >
+        <SelectTrigger className="w-36 h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="email">Email only</SelectItem>
+          <SelectItem value="sms">Text only</SelectItem>
+          <SelectItem value="both">Email + Text</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   const handleToggle = async (field: keyof AutomatedSettings, enabled: boolean) => {
     if (!organization) return;
@@ -379,11 +438,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="selection-turn-notifications"
-                checked={settings.automated_selection_turn_notifications_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_selection_turn_notifications_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_selection_turn" disabled={!settings.automated_selection_turn_notifications_enabled} />
+                <Switch
+                  id="selection-turn-notifications"
+                  checked={settings.automated_selection_turn_notifications_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_selection_turn_notifications_enabled', enabled)}
+                />
+              </div>
             </div>
             
             <div className="border-l-4 border-green-200 pl-4 space-y-1">
@@ -410,11 +472,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="selection-ending-tomorrow"
-                checked={settings.automated_selection_ending_tomorrow_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_selection_ending_tomorrow_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_selection_ending" disabled={!settings.automated_selection_ending_tomorrow_enabled} />
+                <Switch
+                  id="selection-ending-tomorrow"
+                  checked={settings.automated_selection_ending_tomorrow_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_selection_ending_tomorrow_enabled', enabled)}
+                />
+              </div>
             </div>
             
             <div className="border-l-4 border-blue-200 pl-4 space-y-1">
@@ -441,11 +506,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="work-weekend-reminders"
-                checked={settings.automated_work_weekend_reminders_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_work_weekend" disabled={!settings.automated_work_weekend_reminders_enabled} />
+                <Switch
+                  id="work-weekend-reminders"
+                  checked={settings.automated_work_weekend_reminders_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_work_weekend_reminders_enabled', enabled)}
+                />
+              </div>
             </div>
             
             {settings.automated_work_weekend_reminders_enabled && (

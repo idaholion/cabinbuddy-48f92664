@@ -23,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get organizations with automated work weekend reminders enabled
     const { data: organizations, error: orgError } = await supabase
       .from('organizations')
-      .select('id, name')
+      .select('id, name, delivery_work_weekend')
       .eq('automated_work_weekend_reminders_enabled', true);
 
     if (orgError) {
@@ -100,6 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
                       body: {
                         type: 'work_weekend_reminder',
                         organization_id: org.id,
+                        delivery_method: (org as any).delivery_work_weekend || 'email',
                         family_group: group.name,
                         guest_name: group.lead_name,
                         guest_email: group.lead_email,
