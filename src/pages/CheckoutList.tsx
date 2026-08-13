@@ -21,6 +21,12 @@ import { namesMatch } from "@/lib/name-utils";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
 
+// Format a reservation's date range for display, e.g. "Jun 23 – Jul 3, 2026"
+const formatReservationRange = (r: { start_date: string; end_date: string }): string => {
+  const fmt = (d: string) => parseDateOnly(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return `${fmt(r.start_date)} – ${fmt(r.end_date)}`;
+};
+
 const CheckoutList = () => {
   console.log('🚀🚀🚀 CheckoutList component IS RENDERING');
   const navigate = useNavigate();
