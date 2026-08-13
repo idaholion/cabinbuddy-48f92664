@@ -1,0 +1,2 @@
+ALTER TABLE public.checkin_sessions DROP CONSTRAINT IF EXISTS checkin_sessions_session_type_check;
+ALTER TABLE public.checkin_sessions ADD CONSTRAINT checkin_sessions_session_type_check CHECK (session_type = ANY (ARRAY['arrival'::text, 'daily'::text, 'checkout'::text, 'closing'::text, 'opening'::text, 'seasonal'::text, 'maintenance'::text]));
