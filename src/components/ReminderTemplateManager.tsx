@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -322,6 +322,11 @@ export const ReminderTemplateManager = () => {
         {"{{guest_name}}, {{recipient_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{days_until_departure}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
+      <div className="text-sm text-muted-foreground border-l-4 border-muted pl-3">
+        Turn a reminder on or off in Calendar Keeper → Automated Reminder System. This page controls the message content and schedule only.
+      </div>
+
+
       <div className="space-y-6">
         {templates.map((template) => (
           <Card key={template.id} className={`${!template.is_active ? 'opacity-60' : ''}`}>
@@ -330,9 +335,9 @@ export const ReminderTemplateManager = () => {
                 <div className="flex items-center space-x-2">
                   {getTemplateIcon(template.reminder_type)}
                   <CardTitle className="text-base">{getTemplateTitle(template.reminder_type)}</CardTitle>
-                  {!template.is_active && (
-                    <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Disabled</span>
-                  )}
+                  <span className={`text-xs px-2 py-1 rounded ${template.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    {template.is_active ? 'On' : 'Off'}
+                  </span>
                   {!isEditing && template.trigger_event !== 'manual' && template.days_in_advance && (
                     <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                       Sends {template.days_in_advance} day{template.days_in_advance !== 1 ? 's' : ''} before {template.trigger_event === 'before_end' ? 'stay ends' : 'stay starts'}
@@ -342,14 +347,7 @@ export const ReminderTemplateManager = () => {
                 {isEditing && (
                   <div className="flex items-center space-x-4 flex-wrap gap-y-2">
                     <div className="flex items-center space-x-2">
-                      <Label htmlFor={`active-${template.id}`} className="text-sm">Active</Label>
-                      <Switch
-                        id={`active-${template.id}`}
-                        checked={template.is_active}
-                        onCheckedChange={(checked) => updateTemplate(template.id, { is_active: checked })}
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
+
                       <Label htmlFor={`trigger-${template.id}`} className="text-sm">Send</Label>
                       <Select
                         value={template.trigger_event}

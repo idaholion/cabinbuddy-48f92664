@@ -10,7 +10,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview";
 
+interface ScheduledTemplate {
+  id: string;
+  reminder_type: string;
+  is_active: boolean;
+  days_in_advance: number | null;
+  trigger_event: string;
+}
+
 interface AutomatedSettings {
+
   automated_reminders_enabled: boolean;
   automated_selection_turn_notifications_enabled: boolean;
   automated_selection_ending_tomorrow_enabled: boolean;
@@ -63,12 +72,55 @@ export const AutomatedReminderSettings = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [scheduledTemplates, setScheduledTemplates] = useState<ScheduledTemplate[]>([]);
 
   useEffect(() => {
     if (organization) {
       fetchAutomatedReminderStatus();
+      fetchScheduledTemplates();
     }
   }, [organization]);
+
+  const formatTemplateName = (type: string) =>
+    (type || '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const fetchScheduledTemplates = async () => {
+    if (!organization) return;
+    const { data, error } = await supabase
+      .from('reminder_templates')
+      .select('id, reminder_type, is_active, days_in_advance, trigger_event')
+      .eq('organization_id', organization.id)
+      .in('trigger_event', ['before_start', 'before_end'])
+      .not('days_in_advance', 'is', null)
+      .order('trigger_event', { ascending: true })
+      .order('days_in_advance', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching scheduled reminder templates:', error);
+      return;
+    }
+    setScheduledTemplates((data || []) as ScheduledTemplate[]);
+  };
+
+  const handleTemplateToggle = async (templateId: string, enabled: boolean) => {
+    const { error } = await supabase
+      .from('reminder_templates')
+      .update({ is_active: enabled })
+      .eq('id', templateId);
+
+    if (error) {
+      console.error('Error updating reminder template:', error);
+      toast.error('Failed to update reminder');
+      return;
+    }
+    setScheduledTemplates((prev) =>
+      prev.map((t) => (t.id === templateId ? { ...t, is_active: enabled } : t))
+    );
+    toast.success(enabled ? 'Reminder enabled' : 'Reminder disabled');
+  };
+
 
   const fetchAutomatedReminderStatus = async () => {
     if (!organization) return;
@@ -240,32 +292,30 @@ export const AutomatedReminderSettings = () => {
             
             {settings.automated_reminders_enabled && (
               <div className="ml-6 mt-3 space-y-3 border-l-2 border-muted pl-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-7-day"
-                    checked={settings.automated_reminders_7_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_7_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-7-day" className="text-sm">7-day reminders</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-3-day"
-                    checked={settings.automated_reminders_3_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_3_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-3-day" className="text-sm">3-day reminders</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-1-day"
-                    checked={settings.automated_reminders_1_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_1_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-1-day" className="text-sm">1-day reminders</Label>
-                </div>
+                {scheduledTemplates.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No scheduled reminder templates yet. Create one in Reminder Templates and it will appear here.
+                  </p>
+                ) : (
+                  scheduledTemplates.map((tpl) => (
+                    <div key={tpl.id} className="flex items-center space-x-2">
+                      <Switch
+                        id={`tpl-${tpl.id}`}
+                        checked={tpl.is_active}
+                        onCheckedChange={(enabled) => handleTemplateToggle(tpl.id, enabled)}
+                      />
+                      <Label htmlFor={`tpl-${tpl.id}`} className="text-sm">
+                        {formatTemplateName(tpl.reminder_type)}
+                        <span className="text-muted-foreground font-normal">
+                          {" "}— sends {tpl.days_in_advance} day{tpl.days_in_advance === 1 ? '' : 's'} before stay {tpl.trigger_event === 'before_end' ? 'ends' : 'starts'}
+                        </span>
+                      </Label>
+                    </div>
+                  ))
+                )}
               </div>
             )}
+
             
             <div className="border-l-4 border-muted pl-4 space-y-1">
               <p className="text-xs text-muted-foreground">
