@@ -22,6 +22,7 @@ interface ReminderTemplate {
   sms_message_template: string | null;
   is_active: boolean;
   days_in_advance: number | null;
+  trigger_event: 'before_start' | 'before_end' | 'manual';
   organization_id: string;
   created_at: string;
   updated_at: string;
@@ -64,6 +65,7 @@ export const ReminderTemplateManager = () => {
           : [],
         is_active: template.is_active ?? true,
         days_in_advance: template.days_in_advance ?? null,
+        trigger_event: template.trigger_event ?? 'before_start',
         sms_message_template: template.sms_message_template ?? null
       }));
 
@@ -105,6 +107,7 @@ export const ReminderTemplateManager = () => {
       sms_message_template: null,
       is_active: true,
       days_in_advance: 7,
+      trigger_event: 'before_start',
       organization_id: activeOrganization?.organization_id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
