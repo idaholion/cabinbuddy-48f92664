@@ -180,7 +180,10 @@ export const AutomatedReminderSettings = () => {
           ck_copy_work_weekend_invitation,
           ck_copy_confirmation,
           ck_copy_cancellation,
-          ck_copy_manual_template
+          ck_copy_manual_template,
+          delivery_selection_turn,
+          delivery_selection_ending,
+          delivery_work_weekend
         `)
         .eq('id', organization.id)
         .single();
@@ -196,6 +199,9 @@ export const AutomatedReminderSettings = () => {
         automated_selection_turn_notifications_enabled: data?.automated_selection_turn_notifications_enabled || false,
         automated_selection_ending_tomorrow_enabled: data?.automated_selection_ending_tomorrow_enabled || false,
         automated_work_weekend_reminders_enabled: data?.automated_work_weekend_reminders_enabled || false,
+        delivery_selection_turn: ((data as any)?.delivery_selection_turn || 'email') as DeliveryMethod,
+        delivery_selection_ending: ((data as any)?.delivery_selection_ending || 'email') as DeliveryMethod,
+        delivery_work_weekend: ((data as any)?.delivery_work_weekend || 'email') as DeliveryMethod,
         automated_reminders_7_day_enabled: data?.automated_reminders_7_day_enabled ?? true,
         automated_reminders_3_day_enabled: data?.automated_reminders_3_day_enabled ?? true,
         automated_reminders_1_day_enabled: data?.automated_reminders_1_day_enabled ?? true,
