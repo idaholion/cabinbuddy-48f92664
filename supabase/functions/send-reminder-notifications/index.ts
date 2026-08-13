@@ -46,9 +46,41 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     console.log(`Found ${enabledOrgs.length} organizations with automated reminders enabled`);
-    
+
+    // Helper: resolve family group lead contact by org + family group name.
+    // NOTE: reservations.family_group is a text column with no FK to family_groups,
+    // so PostgREST embedding cannot be used here.
+    const familyGroupCache = new Map<string, any[]>();
+    const getFamilyGroup = async (orgId: string, name: string) => {
+      if (!familyGroupCache.has(orgId)) {
+        const { data } = await supabase
+          .from('family_groups')
+          .select('name, lead_email, lead_name, lead_phone')
+          .eq('organization_id', orgId);
+        familyGroupCache.set(orgId, data || []);
+      }
+      const groups = familyGroupCache.get(orgId) || [];
+      const target = (name || '').trim().toLowerCase();
+      return groups.find((g: any) => (g.name || '').trim().toLowerCase() === target) || null;
+    };
+
+    // Helper: fall back to host assignment contacts when the group lead has no email
+    const getReservationContact = async (reservation: any) => {
+      const fg = await getFamilyGroup(reservation.organization_id, reservation.family_group);
+      if (fg?.lead_email) {
+        return { email: fg.lead_email, name: fg.lead_name || '', phone: fg.lead_phone || '' };
+      }
+      const hosts = Array.isArray(reservation.host_assignments) ? reservation.host_assignments : [];
+      const host = hosts.find((h: any) => h?.host_email);
+      if (host) {
+        return { email: host.host_email, name: host.host_name || '', phone: host.host_phone || '' };
+      }
+      return null;
+    };
+
     // Get upcoming reservations based on enabled reminder days
     const reminderDays = [];
+
     
     // Check which specific reminder days are enabled for each organization
     for (const org of enabledOrgs) {
