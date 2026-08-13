@@ -14,7 +14,9 @@ So it's the same root cause as the departure checklist, and the fuzzy-matching f
 
 2. **Every save creates a new row.** `createResponse()` always inserts. Re-saving the checklist would create duplicate survey rows for the same stay, inflating the totals on the Documents tab. Saving should update the existing response for that family group and stay window instead.
 
-3. **The Documents tab displays counts as dollars.** The survey asks "how many times did you do the following", but `EconomicSurveyTab` formats every value as currency and titles the total "Total Economic Impact / Combined spending in area". It also labels only the eight default item ids — any custom survey item an admin adds shows its raw id.
+3. **The Documents tab displays counts as dollars.** The eight items at the top of the survey ask "how many times did you do the following", but `EconomicSurveyTab` formats every value as currency and titles the total "Total Economic Impact / Combined spending in area". It also labels only the eight default item ids — any custom survey item an admin adds shows its raw id.
+
+4. **The "Approximate $ spent in area" field is not wired up at all.** That 9th field at the bottom of the survey is an uncontrolled input with no state and no save — whatever is typed is discarded on every save. It is the one genuinely dollar-valued answer.
 
 ## The fix
 
@@ -22,9 +24,15 @@ So it's the same root cause as the departure checklist, and the fuzzy-matching f
 
 2. Change the survey save to look for an existing `survey_responses` row for the same organization + family group + stay window and update it, creating one only when none exists. Report survey save success/failure separately from the checklist so a partial failure is visible.
 
-3. In `src/components/EconomicSurveyTab.tsx`, present the values as **counts of activities**, not dollars: number formatting instead of currency, "Total Activities Reported" instead of "Total Economic Impact", and fall back to the item's own label (or a prettified id) for custom survey items rather than showing a raw key.
+3. Wire up the "Approximate $ spent in area" input: bind it to state, save it alongside the other answers under a dedicated `amountSpent` key, and reload it with the rest of the saved survey data.
 
-4. Leave the past, lost submissions alone — they only ever existed in each person's browser localStorage and cannot be recovered server-side. If someone re-opens the departure checklist in the same browser, their answers reload and a re-save will now persist.
+4. In `src/components/EconomicSurveyTab.tsx`, split the presentation by value type:
+   - The eight activity items display as **counts** (plain numbers), with a "Total Activities Reported" summary instead of "Total Economic Impact".
+   - `amountSpent` displays as **currency**, and is what drives a separate "Total $ Spent in Area" summary card and its own column in the responses table.
+   - Custom survey items fall back to their own label (or a prettified id) rather than showing a raw key, and are treated as counts.
+
+5. Leave the past, lost submissions alone — they only ever existed in each person's browser localStorage and cannot be recovered server-side. If someone re-opens the departure checklist in the same browser, their answers reload and a re-save will now persist.
+
 
 ## Technical notes
 
