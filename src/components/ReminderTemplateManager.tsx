@@ -110,6 +110,7 @@ export const ReminderTemplateManager = () => {
       is_active: true,
       days_in_advance: 7,
       trigger_event: 'before_start',
+      delivery_method: 'email',
       organization_id: activeOrganization?.organization_id || '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
