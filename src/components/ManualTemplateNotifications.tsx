@@ -85,6 +85,8 @@ export const ManualTemplateNotifications = () => {
   useEffect(() => {
     if (selectedTemplateId) {
       updateTemplateVariables();
+      const tpl = templates.find(t => t.id === selectedTemplateId);
+      setDeliveryMethod((tpl?.delivery_method as 'email' | 'sms' | 'both') || 'email');
     }
   }, [selectedTemplateId]);
 
