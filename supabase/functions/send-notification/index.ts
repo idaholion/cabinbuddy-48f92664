@@ -939,7 +939,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (!template || !recipients) throw new Error('Template and recipients required for manual template notification');
         
         // For manual templates, we'll send to each recipient individually
-        const emailPromises = recipients.map(async (recipient) => {
+        const emailPromises = wantsEmail ? recipients.map(async (recipient) => {
           // Replace recipient-specific variables
           let personalizedSubject = template.subject_template;
           let personalizedContent = template.custom_message;
@@ -981,14 +981,46 @@ const handler = async (req: Request): Promise<Response> => {
             subject: personalizedSubject,
             html: htmlContent,
           });
-        });
+        }) : [];
         
         // Wait for all emails to send
         const emailResults = await Promise.allSettled(emailPromises);
         const successfulSends = emailResults.filter(result => result.status === 'fulfilled').length;
         const failedSends = emailResults.filter(result => result.status === 'rejected').length;
         
-        console.log(`Manual template sent: ${successfulSends} successful, ${failedSends} failed`);
+        console.log(`Manual template sent: ${successfulSends} successful, ${failedSends} failed (email ${wantsEmail ? 'enabled' : 'disabled'})`);
+
+        // Send SMS copies when the template is configured for text delivery
+        if (wantsSms) {
+          const smsBody = template.sms_message_template?.trim();
+          if (!smsBody) {
+            console.log('⏭️ Manual template SMS skipped - no SMS text configured on template');
+          } else {
+            for (const recipient of recipients) {
+              if (!recipient.phone) {
+                console.log(`⏭️ SMS skipped for ${recipient.name || recipient.email} - no phone number`);
+                continue;
+              }
+              let personalizedSms = smsBody;
+              const smsVars = {
+                recipient_name: recipient.name,
+                guest_name: recipient.name,
+                family_group_name: recipient.familyGroup,
+                organization_name: organizationName,
+                ...template_variables
+              };
+              Object.entries(smsVars).forEach(([key, value]) => {
+                personalizedSms = personalizedSms.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
+              });
+              const result = await sendSMS(recipient.phone, personalizedSms);
+              if (result?.success) {
+                console.log(`✅ Manual template SMS sent to ${recipient.phone}`);
+              } else {
+                console.error(`❌ Manual template SMS failed for ${recipient.phone}:`, result?.error);
+              }
+            }
+          }
+        }
         
         // For manual templates, we'll use the first recipient's info for the response format
         subject = template.subject_template;
