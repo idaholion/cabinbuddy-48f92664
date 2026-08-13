@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       const { data: startTemplates, error: startTplError } = await supabase
         .from('reminder_templates')
-        .select('id, reminder_type, days_in_advance')
+        .select('id, reminder_type, days_in_advance, delivery_method')
         .eq('organization_id', org.id)
         .eq('is_active', true)
         .eq('trigger_event', 'before_start')
@@ -99,9 +99,16 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
-      const orgReminderDays = Array.from(
-        new Set((startTemplates || []).map((t: any) => t.days_in_advance).filter((d: any) => typeof d === 'number' && d > 0))
-      );
+      // Map each reminder day to its delivery method ('both' wins if templates disagree)
+      const deliveryByDay = new Map<number, string>();
+      for (const t of startTemplates || []) {
+        const d = t.days_in_advance;
+        if (typeof d !== 'number' || d <= 0) continue;
+        const method = t.delivery_method || 'email';
+        const existing = deliveryByDay.get(d);
+        deliveryByDay.set(d, existing && existing !== method ? 'both' : method);
+      }
+      const orgReminderDays = Array.from(deliveryByDay.keys());
 
       console.log(`${org.name} has these reminder days enabled:`, orgReminderDays);
 
