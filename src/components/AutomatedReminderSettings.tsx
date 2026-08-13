@@ -9,6 +9,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ScheduledTemplate {
   id: string;
@@ -16,6 +17,7 @@ interface ScheduledTemplate {
   is_active: boolean;
   days_in_advance: number | null;
   trigger_event: string;
+  delivery_method: 'email' | 'sms' | 'both';
 }
 
 interface AutomatedSettings {
@@ -90,7 +92,7 @@ export const AutomatedReminderSettings = () => {
     if (!organization) return;
     const { data, error } = await supabase
       .from('reminder_templates')
-      .select('id, reminder_type, is_active, days_in_advance, trigger_event')
+      .select('id, reminder_type, is_active, days_in_advance, trigger_event, delivery_method')
       .eq('organization_id', organization.id)
       .in('trigger_event', ['before_start', 'before_end'])
       .not('days_in_advance', 'is', null)
@@ -101,7 +103,10 @@ export const AutomatedReminderSettings = () => {
       console.error('Error fetching scheduled reminder templates:', error);
       return;
     }
-    setScheduledTemplates((data || []) as ScheduledTemplate[]);
+    setScheduledTemplates(((data || []) as any[]).map((t) => ({
+      ...t,
+      delivery_method: (t.delivery_method || 'email') as ScheduledTemplate['delivery_method'],
+    })));
   };
 
   const handleTemplateToggle = async (templateId: string, enabled: boolean) => {
@@ -121,6 +126,23 @@ export const AutomatedReminderSettings = () => {
     toast.success(enabled ? 'Reminder enabled' : 'Reminder disabled');
   };
 
+
+  const handleDeliveryChange = async (templateId: string, method: ScheduledTemplate['delivery_method']) => {
+    const { error } = await supabase
+      .from('reminder_templates')
+      .update({ delivery_method: method })
+      .eq('id', templateId);
+
+    if (error) {
+      console.error('Error updating delivery method:', error);
+      toast.error('Failed to update delivery method');
+      return;
+    }
+    setScheduledTemplates((prev) =>
+      prev.map((t) => (t.id === templateId ? { ...t, delivery_method: method } : t))
+    );
+    toast.success('Delivery method updated');
+  };
 
   const fetchAutomatedReminderStatus = async () => {
     if (!organization) return;
@@ -298,18 +320,34 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 ) : (
                   scheduledTemplates.map((tpl) => (
-                    <div key={tpl.id} className="flex items-center space-x-2">
-                      <Switch
-                        id={`tpl-${tpl.id}`}
-                        checked={tpl.is_active}
-                        onCheckedChange={(enabled) => handleTemplateToggle(tpl.id, enabled)}
-                      />
-                      <Label htmlFor={`tpl-${tpl.id}`} className="text-sm">
-                        {formatTemplateName(tpl.reminder_type)}
-                        <span className="text-muted-foreground font-normal">
-                          {" "}— sends {tpl.days_in_advance} day{tpl.days_in_advance === 1 ? '' : 's'} before stay {tpl.trigger_event === 'before_end' ? 'ends' : 'starts'}
-                        </span>
-                      </Label>
+                    <div key={tpl.id} className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={`tpl-${tpl.id}`}
+                          checked={tpl.is_active}
+                          onCheckedChange={(enabled) => handleTemplateToggle(tpl.id, enabled)}
+                        />
+                        <Label htmlFor={`tpl-${tpl.id}`} className="text-sm">
+                          {formatTemplateName(tpl.reminder_type)}
+                          <span className="text-muted-foreground font-normal">
+                            {" "}— sends {tpl.days_in_advance} day{tpl.days_in_advance === 1 ? '' : 's'} before stay {tpl.trigger_event === 'before_end' ? 'ends' : 'starts'}
+                          </span>
+                        </Label>
+                      </div>
+                      <Select
+                        value={tpl.delivery_method}
+                        onValueChange={(value) => handleDeliveryChange(tpl.id, value as ScheduledTemplate['delivery_method'])}
+                        disabled={!tpl.is_active}
+                      >
+                        <SelectTrigger className="w-36 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">Email only</SelectItem>
+                          <SelectItem value="sms">Text only</SelectItem>
+                          <SelectItem value="both">Email + Text</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   ))
                 )}
