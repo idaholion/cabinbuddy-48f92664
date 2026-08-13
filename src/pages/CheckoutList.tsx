@@ -761,6 +761,15 @@ const CheckoutList = () => {
         {/* Subtitle */}
         <div className="text-center mb-4 -mt-2">
           <p className="text-xl font-kaushan text-primary">Complete all tasks before leaving the cabin</p>
+          {currentReservation ? (
+            <p className="text-sm text-muted-foreground mt-1">
+              Departure checklist for {formatReservationRange(currentReservation)}
+            </p>
+          ) : (
+            <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">
+              No current or past stay found in your name — checklist will be saved locally only.
+            </p>
+          )}
           {isAdmin && (
             <p className="text-sm text-muted-foreground mt-1">
               Want to add photos to this checklist? Use the{' '}
