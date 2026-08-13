@@ -13,9 +13,9 @@ There's a second issue behind it: even when a match is found, the code picks the
 1. **Match hosts more forgivingly.** Compare host name to the claimed profile using a normalized comparison: case-insensitive, and treat a first-name-only host entry ("Richard") as a match for "Richard Andrew". Also accept a match on host email against the signed-in user's email, and keep the existing group-lead fallback.
 
 2. **Pick the right stay.** Choose in this order:
-   - a stay that includes today (in progress),
-   - otherwise the most recently **ended** stay (latest end date that is on or before today),
-   - otherwise the nearest upcoming stay.
+   - a stay that includes today (in progress — the normal case, filled out just before leaving),
+   - otherwise the most recently **ended** stay (latest end date on or before today — for the "forgot to hit save" case),
+   - never an upcoming/future stay. If there is no current or past stay, the checklist has no reservation to link to and saves locally with the clearer wording in step 4.
 
 3. **Show which stay is being filled out.** Display the linked reservation's date range near the top of the checklist ("Departure checklist for Jun 23 – Jul 3, 2026") so it is obvious which stay the entries attach to before you save.
 
