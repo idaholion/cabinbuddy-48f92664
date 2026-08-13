@@ -26,6 +26,8 @@ interface ReminderTemplate {
   checklist_items: string[];
   is_active: boolean;
   organization_id: string;
+  sms_message_template?: string | null;
+  delivery_method?: 'email' | 'sms' | 'both';
 }
 
 interface FamilyGroup {
@@ -65,6 +67,7 @@ export const ManualTemplateNotifications = () => {
   
   // Form state
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [deliveryMethod, setDeliveryMethod] = useState<'email' | 'sms' | 'both'>('email');
   const [recipientType, setRecipientType] = useState<'all_families' | 'selected_families' | 'custom_emails'>('all_families');
   const [selectedFamilyGroups, setSelectedFamilyGroups] = useState<string[]>([]);
   const [customEmails, setCustomEmails] = useState("");
@@ -82,6 +85,8 @@ export const ManualTemplateNotifications = () => {
   useEffect(() => {
     if (selectedTemplateId) {
       updateTemplateVariables();
+      const tpl = templates.find(t => t.id === selectedTemplateId);
+      setDeliveryMethod((tpl?.delivery_method as 'email' | 'sms' | 'both') || 'email');
     }
   }, [selectedTemplateId]);
 
@@ -110,8 +115,9 @@ export const ManualTemplateNotifications = () => {
 
       if (familyGroupsError) throw familyGroupsError;
 
-      setTemplates((templatesData || []).map(template => ({
+      setTemplates(((templatesData || []) as any[]).map(template => ({
         ...template,
+        delivery_method: (template.delivery_method || 'email') as 'email' | 'sms' | 'both',
         checklist_items: Array.isArray(template.checklist_items) 
           ? template.checklist_items as string[]
           : []
@@ -302,10 +308,12 @@ export const ManualTemplateNotifications = () => {
             id: selectedTemplateId,
             subject_template: subject,
             custom_message: content,
-            checklist_items: template.checklist_items || []
+            checklist_items: template.checklist_items || [],
+            sms_message_template: template.sms_message_template || null
           },
           recipients: recipients,
-          template_variables: variableMap
+          template_variables: variableMap,
+          delivery_method: deliveryMethod
         }
       });
 
@@ -313,6 +321,7 @@ export const ManualTemplateNotifications = () => {
 
       // Reset form
       setSelectedTemplateId("");
+      setDeliveryMethod('email');
       setRecipientType('all_families');
       setSelectedFamilyGroups([]);
       setCustomEmails("");
@@ -380,6 +389,26 @@ export const ManualTemplateNotifications = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Delivery Method */}
+            <div>
+              <Label htmlFor="delivery-method">Send By</Label>
+              <Select value={deliveryMethod} onValueChange={(value: any) => setDeliveryMethod(value)}>
+                <SelectTrigger id="delivery-method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email only</SelectItem>
+                  <SelectItem value="sms">Text only</SelectItem>
+                  <SelectItem value="both">Email + Text</SelectItem>
+                </SelectContent>
+              </Select>
+              {deliveryMethod !== 'email' && !getSelectedTemplate()?.sms_message_template?.trim() && (
+                <p className="text-xs text-warning mt-1">
+                  This template has no text (SMS) message written — recipients will get the email version instead.
+                </p>
+              )}
             </div>
 
             {/* Recipient Type */}

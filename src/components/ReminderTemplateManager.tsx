@@ -350,7 +350,7 @@ export const ReminderTemplateManager = () => {
                   )}
                   {!isEditing && (
                     <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'}
+                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'} (set on Automated System page)
                     </span>
                   )}
                 </div>
@@ -395,22 +395,8 @@ export const ReminderTemplateManager = () => {
                         </Select>
                       </div>
                     )}
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor={`delivery-${template.id}`} className="text-sm">Send by</Label>
-                      <Select
-                        value={template.delivery_method}
-                        onValueChange={(value) => updateTemplate(template.id, { delivery_method: value as ReminderTemplate['delivery_method'] })}
-                      >
-                        <SelectTrigger className="w-40" id={`delivery-${template.id}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="email">Email only</SelectItem>
-                          <SelectItem value="sms">Text only</SelectItem>
-                          <SelectItem value="both">Email + Text</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+
+
 
 
                     <Button 
@@ -465,10 +451,10 @@ export const ReminderTemplateManager = () => {
                 />
               </div>
 
-              <div className={template.delivery_method === 'email' ? 'opacity-50' : ''}>
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <Label htmlFor={`sms-${template.id}`} className="text-base">
-                    Text (SMS) Message {template.delivery_method === 'email' ? '— not used (Email only)' : ''}
+                    Text (SMS) Message
                   </Label>
                   <span className={`text-sm ${(template.sms_message_template?.length || 0) > 160 ? 'text-warning' : 'text-muted-foreground'}`}>
                     {template.sms_message_template?.length || 0}/160 chars
@@ -484,14 +470,15 @@ export const ReminderTemplateManager = () => {
                   className="mt-1 text-base"
                   rows={3}
                   placeholder="Short SMS message (160 chars for single SMS). Variables: {{guest_name}}, {{family_group_name}}, etc."
-                  readOnly={!isEditing || template.delivery_method === 'email'}
+                  readOnly={!isEditing}
                   maxLength={480}
                 />
                 {template.delivery_method !== 'email' && !template.sms_message_template?.trim() && (
                   <p className="text-sm text-warning mt-1">
-                    ⚠️ Text delivery is on but no SMS text is written — no text will be sent.
+                    ⚠️ Text delivery is on for this reminder but no SMS text is written — no text will be sent.
                   </p>
                 )}
+
                 {(template.sms_message_template?.length || 0) > 160 && (
                   <p className="text-sm text-warning mt-1">
                     ⚠️ Messages over 160 characters will be sent as multiple SMS (costs more)
