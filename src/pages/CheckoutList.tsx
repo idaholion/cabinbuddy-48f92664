@@ -1178,9 +1178,12 @@ const CheckoutList = () => {
                   type="text"
                   placeholder="Total $"
                   maxLength={6}
+                  value={surveyData.amountSpent || ""}
+                  onChange={(e) => handleSurveyChange("amountSpent", e.target.value)}
                   className="w-24 text-base placeholder:text-base"
                   style={{ width: "1in" }}
                 />
+
               </div>
 
             {/* Action Buttons */}
