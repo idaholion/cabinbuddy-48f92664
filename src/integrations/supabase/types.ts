@@ -2046,6 +2046,7 @@ export type Database = {
           sms_message_template: string | null
           sort_order: number | null
           subject_template: string
+          trigger_event: string
           updated_at: string
         }
         Insert: {
@@ -2061,6 +2062,7 @@ export type Database = {
           sms_message_template?: string | null
           sort_order?: number | null
           subject_template: string
+          trigger_event?: string
           updated_at?: string
         }
         Update: {
@@ -2076,6 +2078,7 @@ export type Database = {
           sms_message_template?: string | null
           sort_order?: number | null
           subject_template?: string
+          trigger_event?: string
           updated_at?: string
         }
         Relationships: [
