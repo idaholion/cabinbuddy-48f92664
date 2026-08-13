@@ -100,6 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
                       body: {
                         type: 'work_weekend_reminder',
                         organization_id: org.id,
+                        delivery_method: (org as any).delivery_work_weekend || 'email',
                         family_group: group.name,
                         guest_name: group.lead_name,
                         guest_email: group.lead_email,
