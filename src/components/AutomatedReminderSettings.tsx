@@ -469,11 +469,14 @@ export const AutomatedReminderSettings = () => {
                   </p>
                 </div>
               </div>
-              <Switch
-                id="selection-ending-tomorrow"
-                checked={settings.automated_selection_ending_tomorrow_enabled}
-                onCheckedChange={(enabled) => handleToggle('automated_selection_ending_tomorrow_enabled', enabled)}
-              />
+              <div className="flex items-center gap-3">
+                <DeliverySelect field="delivery_selection_ending" disabled={!settings.automated_selection_ending_tomorrow_enabled} />
+                <Switch
+                  id="selection-ending-tomorrow"
+                  checked={settings.automated_selection_ending_tomorrow_enabled}
+                  onCheckedChange={(enabled) => handleToggle('automated_selection_ending_tomorrow_enabled', enabled)}
+                />
+              </div>
             </div>
             
             <div className="border-l-4 border-blue-200 pl-4 space-y-1">
