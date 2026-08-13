@@ -322,6 +322,11 @@ export const ReminderTemplateManager = () => {
         {"{{guest_name}}, {{recipient_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{days_until_departure}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
+      <div className="text-sm text-muted-foreground border-l-4 border-muted pl-3">
+        Turn a reminder on or off in Calendar Keeper → Automated Reminder System. This page controls the message content and schedule only.
+      </div>
+
+
       <div className="space-y-6">
         {templates.map((template) => (
           <Card key={template.id} className={`${!template.is_active ? 'opacity-60' : ''}`}>
