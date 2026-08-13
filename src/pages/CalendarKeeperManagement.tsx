@@ -28,7 +28,7 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs defaultValue="notifications" className="w-full">
-            <TabsList className="flex w-full overflow-x-auto sm:grid sm:grid-cols-7 sm:overflow-visible scrollbar-thin">
+            <TabsList className="flex w-full justify-start overflow-x-auto scrollbar-thin">
               <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
               <TabsTrigger value="manual-templates">Manual Notifications</TabsTrigger>
               <TabsTrigger value="selection-turn">Selection Turn</TabsTrigger>
