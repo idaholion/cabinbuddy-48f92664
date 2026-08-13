@@ -26,7 +26,22 @@ export const useOrgAdmin = (): UseOrgAdminResult => {
       }
 
       try {
-        // Primary: use secure RPC which respects RLS
+        // Primary: org-scoped check that mirrors the database RLS policies exactly.
+        const activeOrgId = organization?.id
+          ?? (await supabase.rpc('get_user_organization_id')).data;
+
+        if (activeOrgId) {
+          const { data: scoped, error: scopedError } = await (supabase as any)
+            .rpc('is_org_admin_for', { p_organization_id: activeOrgId });
+          if (!scopedError) {
+            setIsAdmin(scoped === true);
+            setError(null);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Fallback: legacy primary-organization check
         const { data, error: rpcError } = await supabase.rpc('is_organization_admin');
         if (!rpcError && data === true) {
           setIsAdmin(true);
@@ -34,17 +49,15 @@ export const useOrgAdmin = (): UseOrgAdminResult => {
           return;
         }
 
-        // Fallback: read organization's admin_email and compare to current user
-        // First get the user's organization ID
-        const { data: userOrgId, error: userOrgError } = await supabase
-          .rpc('get_user_organization_id');
+        const userOrgId = activeOrgId;
 
-        if (userOrgError || !userOrgId) {
+        if (!userOrgId) {
           // User doesn't have an organization - this is normal for new users
           setIsAdmin(false);
           setError(null); // Don't set an error for new users
           return;
         }
+
 
         const { data: org, error: orgError } = await supabase
           .from('organizations')
