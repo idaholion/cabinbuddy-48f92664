@@ -229,6 +229,51 @@ export const AutomatedReminderSettings = () => {
     }
   };
 
+  const handleOrgDeliveryChange = async (
+    field: 'delivery_selection_turn' | 'delivery_selection_ending' | 'delivery_work_weekend',
+    method: DeliveryMethod
+  ) => {
+    if (!organization) return;
+    const { error } = await supabase
+      .from('organizations')
+      .update({ [field]: method } as any)
+      .eq('id', organization.id);
+
+    if (error) {
+      console.error('Error updating delivery method:', error);
+      toast.error('Failed to update delivery method');
+      return;
+    }
+    setSettings((prev) => ({ ...prev, [field]: method }));
+    toast.success('Delivery method updated');
+  };
+
+  const DeliverySelect = ({
+    field,
+    disabled,
+  }: {
+    field: 'delivery_selection_turn' | 'delivery_selection_ending' | 'delivery_work_weekend';
+    disabled?: boolean;
+  }) => (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground">Send by</span>
+      <Select
+        value={settings[field]}
+        onValueChange={(value) => handleOrgDeliveryChange(field, value as DeliveryMethod)}
+        disabled={disabled}
+      >
+        <SelectTrigger className="w-36 h-8 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="email">Email only</SelectItem>
+          <SelectItem value="sms">Text only</SelectItem>
+          <SelectItem value="both">Email + Text</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   const handleToggle = async (field: keyof AutomatedSettings, enabled: boolean) => {
     if (!organization) return;
 
