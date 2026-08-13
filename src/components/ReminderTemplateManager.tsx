@@ -170,6 +170,7 @@ export const ReminderTemplateManager = () => {
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
             trigger_event: template.trigger_event,
+            delivery_method: template.delivery_method,
             created_by_user_id: user.id
           }, { onConflict: 'organization_id,reminder_type' });
 
