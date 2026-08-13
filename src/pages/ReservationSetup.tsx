@@ -1531,7 +1531,7 @@ export default function ReservationSetup() {
               {loading ? "Saving..." : "Save Setup"}
             </Button>
             <Button onClick={() => navigate("/calendar-keeper-management")} className="text-base">
-              Continue to Calendar Keeper Management
+              Continue to Notification Management
             </Button>
           </div>
         </div>

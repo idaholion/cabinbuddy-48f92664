@@ -540,14 +540,14 @@ export function AppSidebar() {
               
               {/* Calendar Keeper and Demo moved to Organizations */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Calendar Keeper">
+                <SidebarMenuButton asChild tooltip="Notification Management">
                   <NavLink 
                     to="/calendar-keeper-management" 
                     onClick={handleMobileNavClick}
                     className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}
                   >
                     <HeadphonesIcon className="h-4 w-4" />
-                    <span>Calendar Keeper</span>
+                    <span>Notification Management</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

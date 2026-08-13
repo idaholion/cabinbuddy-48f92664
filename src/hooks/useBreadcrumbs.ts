@@ -123,7 +123,7 @@ export const useBreadcrumbs = (): BreadcrumbItem[] => {
     } else if (path === "/finance-reports") {
       breadcrumbs.push({ title: "Financial Dashboard", isActive: true });
     } else if (path === "/calendar-keeper-management") {
-      breadcrumbs.push({ title: "Calendar Keeper Management", isActive: true });
+      breadcrumbs.push({ title: "Notification Management", isActive: true });
     } else if (path === "/financial-review") {
       breadcrumbs.push({ title: "Financial Review", isActive: true });
     }

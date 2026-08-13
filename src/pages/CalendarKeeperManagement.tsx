@@ -12,17 +12,17 @@ import { SelectionTurnNotificationSender } from "@/components/SelectionTurnNotif
 
 const CalendarKeeperManagement = () => {
   useEffect(() => {
-    document.title = "Calendar Keeper Management – Notifications & Reminders";
+    document.title = "Notification Management – Notifications & Reminders";
   }, []);
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       <header className="sr-only">
-        <h1>Calendar Keeper Management – Notifications & Reminders</h1>
+        <h1>Notification Management – Notifications & Reminders</h1>
       </header>
       <main className="max-w-5xl mx-auto px-4 py-6">
         <PageHeader
-          title="Calendar Keeper Management"
+          title="Notification Management"
           subtitle="Send manual reminders, run automatic notifications, and manage reservation communications."
           backgroundImage={true}
         />

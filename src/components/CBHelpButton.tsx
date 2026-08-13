@@ -154,7 +154,7 @@ const helpContexts: Record<string, {
     ]
   },
   '/calendar-keeper': {
-    title: 'Calendar Keeper Management',
+    title: 'Notification Management',
     description: 'Manage reservation selections, rotation order, and calendar settings.',
     steps: [
       'View and manage the rotation order for selections',

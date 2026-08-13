@@ -89,7 +89,7 @@ const Setup = () => {
     rotationData?.start_month?.trim()
   );
 
-  // Calendar Keeper Management is considered complete when the organization has a calendar keeper
+  // Notification Management is considered complete when the organization has a calendar keeper
   const isCalendarKeeperComplete = !!(
     organization?.calendar_keeper_name?.trim() &&
     organization?.calendar_keeper_email?.trim()?.includes('@')
@@ -385,12 +385,12 @@ const Setup = () => {
 
           <StepCard
             stepNumber={4}
-            title="Step 4: Calendar Keeper Management"
+            title="Step 4: Notification Management"
             description="Configure messaging templates and reminder settings for communicating with cabin users about deadlines and updates."
             icon={MessageSquare}
             isComplete={isCalendarKeeperComplete}
             linkTo="/calendar-keeper-management"
-            linkText="Configure Calendar Keeper Management"
+            linkText="Configure Notification Management"
           />
         </div>
 
