@@ -159,6 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
                 },
 
                 days_until: days,
+                delivery_method: deliveryByDay.get(days) || 'email',
               }
             });
             
