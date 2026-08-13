@@ -243,6 +243,16 @@ const CheckoutFinal = () => {
 
   const currentReservation = getCurrentUserReservation();
 
+  // Determine whether the displayed stay is currently in-progress or in the past
+  const todayForActiveCheck = new Date();
+  todayForActiveCheck.setHours(0, 0, 0, 0);
+  const isCurrentStay = (() => {
+    if (!currentReservation) return false;
+    const start = parseDateOnly(currentReservation.start_date);
+    const end = parseDateOnly(currentReservation.end_date);
+    return todayForActiveCheck >= start && todayForActiveCheck <= end;
+  })();
+
   // Helper function to check if user owns a reservation (for split costs button)
   const isUserReservationOwner = (reservation: any): boolean => {
     if (!user) return false;
@@ -1311,6 +1321,9 @@ const CheckoutFinal = () => {
                     <CardTitle className="flex items-center gap-2">
                       <CalendarDays className="h-5 w-5" />
                       Daily Occupancy & Charges
+                      <span className="text-muted-foreground font-normal">
+                        — {isCurrentStay ? "Current Stay" : "Most Recent Stay"}
+                      </span>
                       {billingLocked && (
                         <Badge variant="secondary" className="ml-2">
                           <Lock className="h-3 w-3 mr-1" />
