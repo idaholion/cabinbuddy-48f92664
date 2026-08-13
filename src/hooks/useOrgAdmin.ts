@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOrganization } from "@/hooks/useOrganization";
 
 interface UseOrgAdminResult {
   isAdmin: boolean;
@@ -12,6 +13,7 @@ interface UseOrgAdminResult {
 // Falls back to checking the organization's admin_email against the signed-in user's email.
 export const useOrgAdmin = (): UseOrgAdminResult => {
   const { user, loading: authLoading } = useAuth();
+  const { organization } = useOrganization();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export const useOrgAdmin = (): UseOrgAdminResult => {
 
     checkAdmin();
     // Only rerun when auth state changes
-  }, [user, authLoading]);
+  }, [user, authLoading, organization?.id]);
 
   return { isAdmin, loading, error };
 };
