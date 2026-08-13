@@ -280,7 +280,12 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data, template, recipients, template_variables }: NotificationRequest = await req.json();
+    const { type, reservation, organization_id, days_until, selection_data, work_weekend_data, template, recipients, template_variables, delivery_method }: NotificationRequest = await req.json();
+
+    const deliveryMethod: 'email' | 'sms' | 'both' = delivery_method ?? 'both';
+    const wantsEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
+    const wantsSms = deliveryMethod === 'sms' || deliveryMethod === 'both';
+    console.log(`📬 Delivery method for ${type}: ${deliveryMethod}`);
 
     let subject = "";
     let htmlContent = "";
