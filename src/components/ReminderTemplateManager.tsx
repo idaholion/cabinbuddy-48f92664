@@ -395,6 +395,23 @@ export const ReminderTemplateManager = () => {
                         </Select>
                       </div>
                     )}
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor={`delivery-${template.id}`} className="text-sm">Send by</Label>
+                      <Select
+                        value={template.delivery_method}
+                        onValueChange={(value) => updateTemplate(template.id, { delivery_method: value as ReminderTemplate['delivery_method'] })}
+                      >
+                        <SelectTrigger className="w-40" id={`delivery-${template.id}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">Email only</SelectItem>
+                          <SelectItem value="sms">Text only</SelectItem>
+                          <SelectItem value="both">Email + Text</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
 
                     <Button 
                       onClick={() => deleteTemplate(template.id)}
