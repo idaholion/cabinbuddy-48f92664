@@ -190,9 +190,19 @@ export const useCabinRules = () => {
         .eq('id', id)
         .eq('organization_id', organization.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // No row came back => RLS blocked the write (user is not an admin of THIS organization)
+      if (!data) {
+        toast({
+          title: "Not saved",
+          description: "You don't have permission to edit cabin rules for this organization. Ask an organization admin to make this change.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       setCabinRules(prev => prev.map(rule => 
         rule.id === id ? { ...rule, ...data } : rule
