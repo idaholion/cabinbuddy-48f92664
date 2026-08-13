@@ -117,22 +117,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Query reservations for the target date from this specific organization
         const { data: reservations, error } = await supabase
           .from('reservations')
-          .select(`
-            id,
-            start_date,
-            end_date,
-            family_group,
-            organization_id,
-            organizations!inner(
-              id,
-              name
-            ),
-            family_groups!inner(
-              lead_email,
-              lead_name,
-              lead_phone
-            )
-          `)
+          .select('id, start_date, end_date, family_group, host_assignments, organization_id')
           .eq('start_date', targetDateString)
           .eq('status', 'confirmed')
           .eq('organization_id', org.id);
@@ -146,6 +131,11 @@ const handler = async (req: Request): Promise<Response> => {
         
         // Send reminder notifications
         for (const reservation of reservations || []) {
+          const contact = await getReservationContact(reservation);
+          if (!contact?.email) {
+            console.log(`Skipping reservation ${reservation.id} - no contact email found`);
+            continue;
+          }
           try {
             const notificationResponse = await supabase.functions.invoke('send-notification', {
               body: {
@@ -156,10 +146,11 @@ const handler = async (req: Request): Promise<Response> => {
                   family_group_name: reservation.family_group,
                   check_in_date: reservation.start_date,
                   check_out_date: reservation.end_date,
-                  guest_email: reservation.family_groups?.[0]?.lead_email || '',
-                  guest_name: reservation.family_groups?.[0]?.lead_name || '',
-                  guest_phone: reservation.family_groups?.[0]?.lead_phone || '',
+                  guest_email: contact.email,
+                  guest_name: contact.name,
+                  guest_phone: contact.phone,
                 },
+
                 days_until: days,
               }
             });
