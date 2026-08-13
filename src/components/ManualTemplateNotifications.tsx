@@ -115,8 +115,9 @@ export const ManualTemplateNotifications = () => {
 
       if (familyGroupsError) throw familyGroupsError;
 
-      setTemplates((templatesData || []).map(template => ({
+      setTemplates(((templatesData || []) as any[]).map(template => ({
         ...template,
+        delivery_method: (template.delivery_method || 'email') as 'email' | 'sms' | 'both',
         checklist_items: Array.isArray(template.checklist_items) 
           ? template.checklist_items as string[]
           : []
