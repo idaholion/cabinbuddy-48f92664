@@ -1321,6 +1321,9 @@ const CheckoutFinal = () => {
                     <CardTitle className="flex items-center gap-2">
                       <CalendarDays className="h-5 w-5" />
                       Daily Occupancy & Charges
+                      <span className="text-muted-foreground font-normal">
+                        — {isCurrentStay ? "Current Stay" : "Most Recent Stay"}
+                      </span>
                       {billingLocked && (
                         <Badge variant="secondary" className="ml-2">
                           <Lock className="h-3 w-3 mr-1" />
