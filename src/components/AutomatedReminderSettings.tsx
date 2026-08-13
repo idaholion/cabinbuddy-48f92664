@@ -10,7 +10,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UpcomingRemindersPreview } from "@/components/UpcomingRemindersPreview";
 
+interface ScheduledTemplate {
+  id: string;
+  reminder_type: string;
+  is_active: boolean;
+  days_in_advance: number | null;
+  trigger_event: string;
+}
+
 interface AutomatedSettings {
+
   automated_reminders_enabled: boolean;
   automated_selection_turn_notifications_enabled: boolean;
   automated_selection_ending_tomorrow_enabled: boolean;
