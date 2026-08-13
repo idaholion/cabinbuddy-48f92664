@@ -82,29 +82,29 @@ const handler = async (req: Request): Promise<Response> => {
     const reminderDays = [];
 
     
-    // Check which specific reminder days are enabled for each organization
+    // Reminder days are driven entirely by active "before stay starts" templates
     for (const org of enabledOrgs) {
-      console.log(`Checking reminder day settings for ${org.name}`);
-      
-      // Get detailed organization settings
-      const { data: orgDetails, error: orgDetailError } = await supabase
-        .from('organizations')
-        .select('id, name, automated_reminders_7_day_enabled, automated_reminders_3_day_enabled, automated_reminders_1_day_enabled')
-        .eq('id', org.id)
-        .single();
-        
-      if (orgDetailError || !orgDetails) {
-        console.error(`Error fetching org details for ${org.id}:`, orgDetailError);
+      console.log(`Checking scheduled start-of-stay templates for ${org.name}`);
+
+      const { data: startTemplates, error: startTplError } = await supabase
+        .from('reminder_templates')
+        .select('id, reminder_type, days_in_advance')
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .eq('trigger_event', 'before_start')
+        .not('days_in_advance', 'is', null);
+
+      if (startTplError) {
+        console.error(`Error fetching start-of-stay templates for ${org.name}:`, startTplError);
         continue;
       }
-      
-      // Build reminder days array based on enabled settings
-      const orgReminderDays = [];
-      if (orgDetails.automated_reminders_7_day_enabled) orgReminderDays.push(7);
-      if (orgDetails.automated_reminders_3_day_enabled) orgReminderDays.push(3);
-      if (orgDetails.automated_reminders_1_day_enabled) orgReminderDays.push(1);
-      
+
+      const orgReminderDays = Array.from(
+        new Set((startTemplates || []).map((t: any) => t.days_in_advance).filter((d: any) => typeof d === 'number' && d > 0))
+      );
+
       console.log(`${org.name} has these reminder days enabled:`, orgReminderDays);
+
       
       // Process each enabled reminder day for this organization
       for (const days of orgReminderDays) {
