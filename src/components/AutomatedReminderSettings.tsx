@@ -63,12 +63,55 @@ export const AutomatedReminderSettings = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [scheduledTemplates, setScheduledTemplates] = useState<ScheduledTemplate[]>([]);
 
   useEffect(() => {
     if (organization) {
       fetchAutomatedReminderStatus();
+      fetchScheduledTemplates();
     }
   }, [organization]);
+
+  const formatTemplateName = (type: string) =>
+    (type || '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const fetchScheduledTemplates = async () => {
+    if (!organization) return;
+    const { data, error } = await supabase
+      .from('reminder_templates')
+      .select('id, reminder_type, is_active, days_in_advance, trigger_event')
+      .eq('organization_id', organization.id)
+      .in('trigger_event', ['before_start', 'before_end'])
+      .not('days_in_advance', 'is', null)
+      .order('trigger_event', { ascending: true })
+      .order('days_in_advance', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching scheduled reminder templates:', error);
+      return;
+    }
+    setScheduledTemplates((data || []) as ScheduledTemplate[]);
+  };
+
+  const handleTemplateToggle = async (templateId: string, enabled: boolean) => {
+    const { error } = await supabase
+      .from('reminder_templates')
+      .update({ is_active: enabled })
+      .eq('id', templateId);
+
+    if (error) {
+      console.error('Error updating reminder template:', error);
+      toast.error('Failed to update reminder');
+      return;
+    }
+    setScheduledTemplates((prev) =>
+      prev.map((t) => (t.id === templateId ? { ...t, is_active: enabled } : t))
+    );
+    toast.success(enabled ? 'Reminder enabled' : 'Reminder disabled');
+  };
+
 
   const fetchAutomatedReminderStatus = async () => {
     if (!organization) return;
