@@ -725,7 +725,7 @@ const CheckoutList = () => {
       console.log('⚠️ [CHECKOUT-SAVE] Missing organization or reservation, saved locally only');
       toast({
         title: "Saved Locally Only",
-        description: "No active stay found, so this checklist could not be linked to a reservation.",
+        description: "No current or past stay was found in your name, so this checklist could not be linked to a reservation.",
         variant: "destructive",
       });
     }
