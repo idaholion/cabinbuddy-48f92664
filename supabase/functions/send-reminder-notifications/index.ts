@@ -229,11 +229,14 @@ const handler = async (req: Request): Promise<Response> => {
                   subject_template: tpl.subject_template,
                   custom_message: tpl.custom_message,
                   checklist_items: tpl.checklist_items || [],
+                  sms_message_template: tpl.sms_message_template || null,
                 },
+                delivery_method: tpl.delivery_method || 'email',
                 recipients: [{
                   email,
                   name: fg?.lead_name || '',
                   familyGroup: reservation.family_group,
+                  phone: contact?.phone || null,
                 }],
                 template_variables: {
                   guest_name: fg?.lead_name || '',
