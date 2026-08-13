@@ -317,7 +317,7 @@ export const ReminderTemplateManager = () => {
 
       <div className="text-base text-muted-foreground">
         {isEditing ? "Editing reminder templates. " : ""}Customize the content of email and SMS reminder notifications. Available variables: 
-        {"{{guest_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
+        {"{{guest_name}}, {{recipient_name}}, {{family_group_name}}, {{check_in_date}}, {{check_out_date}}, {{days_until_departure}}, {{organization_name}}, {{selection_year}}, {{work_weekend_date}}, {{participant_name}}, {{coordinator_name}}, {{start_time}}, {{location}}"}
       </div>
 
       <div className="space-y-6">
