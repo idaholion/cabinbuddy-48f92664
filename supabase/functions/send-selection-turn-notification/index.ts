@@ -146,9 +146,21 @@ const handler = async (req: Request): Promise<Response> => {
     // Send notification - use appropriate type based on notification_type
     const notificationType = notification_type === 'ending_tomorrow' ? 'selection_period_end' : 'selection_period_start';
     
+    // Look up the organization's configured delivery method for this notification type
+    const { data: orgDelivery } = await supabase
+      .from('organizations')
+      .select('delivery_selection_turn, delivery_selection_ending')
+      .eq('id', organization_id)
+      .maybeSingle();
+
+    const deliveryMethod = (notification_type === 'ending_tomorrow'
+      ? (orgDelivery as any)?.delivery_selection_ending
+      : (orgDelivery as any)?.delivery_selection_turn) || 'email';
+
     const notificationBody = {
       type: notificationType,
       organization_id: organization_id,
+      delivery_method: deliveryMethod,
       selection_data: {
         family_group_name: familyData.name,
         guest_email: familyData.lead_email,
