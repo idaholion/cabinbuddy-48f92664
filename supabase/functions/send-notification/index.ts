@@ -1044,11 +1044,21 @@ const handler = async (req: Request): Promise<Response> => {
       recipientPhone = work_weekend_data?.recipient_phone;
     }
 
+    // Safety net: if a notification is text-only but we have no phone number,
+    // fall back to email rather than silently sending nothing.
+    const emailFallback = deliveryMethod === 'sms' && !recipientPhone;
+    if (emailFallback) {
+      console.log('⚠️ Text-only delivery requested but no phone on file - falling back to email');
+    }
+
     // Send email using Resend
     let emailResponse;
     if (type === 'manual_template') {
       // Manual templates handle their own email sending
       emailResponse = { message: 'Manual template emails sent individually' };
+    } else if (!wantsEmail && !emailFallback) {
+      console.log('⏭️ Email skipped - delivery method is text only');
+      emailResponse = { message: 'Email skipped by delivery method' };
     } else if (recipientEmail) {
       console.log(`📧 Sending email to: ${recipientEmail}`);
       emailResponse = await resend.emails.send({
@@ -1067,7 +1077,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Send SMS if phone number is provided and SMS message is not empty
     let smsResponse = null;
     if (type !== 'manual_template') {
-      if (recipientPhone && smsMessage) {
+      if (!wantsSms) {
+        console.log('⏭️ SMS skipped - delivery method is email only');
+      } else if (recipientPhone && smsMessage) {
         console.log(`📱 Attempting to send SMS to: ${recipientPhone}`);
         smsResponse = await sendSMS(recipientPhone, smsMessage);
         
@@ -1082,6 +1094,7 @@ const handler = async (req: Request): Promise<Response> => {
         console.log(`⏭️ SMS skipped - missing ${!recipientPhone ? 'phone number' : 'message'}`);
       }
     }
+
 
     // Determine if calendar keeper should receive a copy based on notification type
     let shouldSendCopy = false;
