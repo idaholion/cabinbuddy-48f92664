@@ -145,6 +145,7 @@ export const ReminderTemplateManager = () => {
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
+            trigger_event: template.trigger_event,
             created_by_user_id: user.id
           });
 
@@ -161,7 +162,8 @@ export const ReminderTemplateManager = () => {
             checklist_items: template.checklist_items,
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
-            days_in_advance: template.days_in_advance
+            days_in_advance: template.days_in_advance,
+            trigger_event: template.trigger_event
           })
           .eq('id', template.id);
 
