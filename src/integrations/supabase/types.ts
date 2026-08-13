@@ -3626,6 +3626,14 @@ export type Database = {
         Args: { p_family_group_name: string; p_organization_id: string }
         Returns: boolean
       }
+      is_org_admin_for: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
+      is_org_member_of: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
       is_organization_admin: { Args: never; Returns: boolean }
       is_supervisor: { Args: never; Returns: boolean }
       link_orphaned_payments_to_reservations: {
