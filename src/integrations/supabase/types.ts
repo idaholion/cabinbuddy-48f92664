@@ -2039,6 +2039,7 @@ export type Database = {
           created_by_user_id: string | null
           custom_message: string | null
           days_in_advance: number | null
+          delivery_method: string
           id: string
           is_active: boolean | null
           organization_id: string
@@ -2055,6 +2056,7 @@ export type Database = {
           created_by_user_id?: string | null
           custom_message?: string | null
           days_in_advance?: number | null
+          delivery_method?: string
           id?: string
           is_active?: boolean | null
           organization_id: string
@@ -2071,6 +2073,7 @@ export type Database = {
           created_by_user_id?: string | null
           custom_message?: string | null
           days_in_advance?: number | null
+          delivery_method?: string
           id?: string
           is_active?: boolean | null
           organization_id?: string
