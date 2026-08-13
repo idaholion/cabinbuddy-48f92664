@@ -1,29 +1,39 @@
-# Carson Comeau: missing email and unclaimed profile
+# Dynamic "Current Stay" / "Most Recent Stay" label on Daily & Final Input
 
-## What the data shows
+## Goal
+Add a short qualifier next to "Daily Occupancy & Charges" on the Daily and Final Input page so users (and admins in View-as-user mode) can tell at a glance whether the stay being shown is in-progress or in the past.
 
-Findings from the live database (Andrew Family Cabin, org `f888...9f`):
+- While the stay is actively occurring (today is between start and end date): **"— Current Stay"**
+- After the stay has ended: **"— Most Recent Stay"**
 
-- In the Comeau Family group, both **Carson Comeau** and **Tim Comeau** currently have an empty `email` field. Everyone else in the org has an email.
-- There is **no account** in auth for Carson (no user with a Comeau-related email other than Tina and Eli), and **no profile-claim record** for Carson has ever existed in `member_profile_links` — the org has 19 claim rows, none for Carson.
-- The Comeau Family group row was last modified **2026-01-24 01:49:15 UTC**, at the exact same second as the Poznanovich group — the signature of a bulk/multi-group save rather than a single-member edit. Mallory Morrill's claim (2026-01-07) predates it; no Comeau claim exists after it.
-- No entries exist in the safety/bulk audit tables for this org, so the change was not logged.
-- Automated backups only retain the last few days (oldest: 2026-08-10), so Carson's previous email cannot be recovered from a backup.
+## Change
+Single edit in `src/pages/CheckoutFinal.tsx`:
 
-## Most likely explanation
+1. Derive an `isCurrentStay` boolean near where `currentReservation` is computed (line ~244). Reuse the same active-stay test already used inside `getCurrentUserReservation`:
+   ```ts
+   const today = new Date(); today.setHours(0,0,0,0);
+   const isCurrentStay = (() => {
+     if (!currentReservation) return false;
+     const start = parseDateOnly(currentReservation.start_date);
+     const end = parseDateOnly(currentReservation.end_date);
+     return today >= start && today <= end;
+   })();
+   ```
+2. Append the label to the `CardTitle` (line ~1313), right after the "Daily Occupancy & Charges" text:
+   ```tsx
+   Daily Occupancy & Charges
+   <span className="text-muted-foreground font-normal">
+     — {isCurrentStay ? "Current Stay" : "Most Recent Stay"}
+   </span>
+   ```
 
-Carson had an email on the member record, which made the row appear "claimed/linked" in the Family Group view, but she never actually created an account or claimed a profile — a claim requires a `member_profile_links` row, and none was ever created for her. A save of the Comeau Family group on 2026-01-24 wrote back empty strings for Carson's and Tim's emails, clearing them. That is why the count of unclaimed members went from one to two.
+## Notes
+- No new queries or state. The active/past distinction already exists in `getCurrentUserReservation`; this just surfaces it in the UI.
+- The card only renders when `dailyBreakdown.length > 0`, so the label never appears in sample mode (no stays).
+- The "Billing Locked" badge stays in its current position after the label.
+- Works correctly under impersonation since `currentReservation` already reflects the viewed-as user.
 
-Note: this is consistent with the same class of bug already fixed for the Woolf/Andrew alternate-lead fields, where an empty form value overwrote saved data on save.
-
-## Proposed work
-
-1. **Restore the contact data** — re-enter Carson's (and, if wanted, Tim's) email on the Comeau Family group. The value is not recoverable from the system, so it has to be supplied.
-2. **Prevent recurrence** — in the Family Group Setup save path, skip writing an empty email/phone over an existing non-empty value for a member (same guard pattern used for alternate lead IDs), so a partial save can never blank out member contact info. Clearing a value stays possible through an explicit clear action.
-3. **Make "claimed" unambiguous in the UI** — the Family Group Health Check / setup views should base the claimed indicator solely on an actual `member_profile_links` record, so a member with an email but no account is never shown as claimed.
-
-## Technical notes
-
-- Guard lives in `src/pages/FamilyGroupSetup.tsx` (member save/merge) plus the member validation in `src/lib/validations.ts`.
-- Claimed-state display reads from `get_user_claimed_profile` / `member_profile_links`; the health-check page should not infer claim status from the presence of an email.
-- No schema change required; the email restore is a data edit through the existing Family Group Setup page.
+## Verification
+- View as a user mid-stay → label reads "— Current Stay".
+- View as a user whose stay has ended → label reads "— Most Recent Stay".
+- Confirm the Billing Locked badge still displays normally when applicable.
