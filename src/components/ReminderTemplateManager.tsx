@@ -132,11 +132,32 @@ export const ReminderTemplateManager = () => {
       const newTemplates = templates.filter(t => t.id.startsWith('new-'));
       const existingTemplates = templates.filter(t => !t.id.startsWith('new-'));
 
+      // Delete removed templates FIRST (before inserting), so newly created
+      // rows are never mistaken for "removed" entries and deleted again.
+      const currentIds = existingTemplates.map(t => t.id);
+      const { data: dbTemplates } = await supabase
+        .from('reminder_templates')
+        .select('id')
+        .eq('organization_id', activeOrganization.organization_id);
+
+      const deletedIds = (dbTemplates || [])
+        .filter(db => !currentIds.includes(db.id))
+        .map(db => db.id);
+
+      if (deletedIds.length > 0) {
+        const { error } = await supabase
+          .from('reminder_templates')
+          .delete()
+          .in('id', deletedIds);
+
+        if (error) throw error;
+      }
+
       // Insert new templates
       for (const template of newTemplates) {
         const { error } = await supabase
           .from('reminder_templates')
-          .insert({
+          .upsert({
             organization_id: activeOrganization.organization_id,
             reminder_type: template.reminder_type,
             subject_template: template.subject_template,
@@ -147,7 +168,7 @@ export const ReminderTemplateManager = () => {
             days_in_advance: template.days_in_advance,
             trigger_event: template.trigger_event,
             created_by_user_id: user.id
-          });
+          }, { onConflict: 'organization_id,reminder_type' });
 
         if (error) throw error;
       }
@@ -170,25 +191,6 @@ export const ReminderTemplateManager = () => {
         if (error) throw error;
       }
 
-      // Delete templates that were removed (check if any in database don't exist in current list)
-      const currentIds = existingTemplates.map(t => t.id);
-      const { data: dbTemplates } = await supabase
-        .from('reminder_templates')
-        .select('id')
-        .eq('organization_id', activeOrganization.organization_id);
-
-      const deletedIds = (dbTemplates || [])
-        .filter(db => !currentIds.includes(db.id))
-        .map(db => db.id);
-
-      if (deletedIds.length > 0) {
-        const { error } = await supabase
-          .from('reminder_templates')
-          .delete()
-          .in('id', deletedIds);
-
-        if (error) throw error;
-      }
 
       await fetchTemplates(); // Refresh from database
       setIsEditing(false);
