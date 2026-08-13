@@ -350,7 +350,7 @@ export const ReminderTemplateManager = () => {
                   )}
                   {!isEditing && (
                     <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'}
+                      {template.delivery_method === 'both' ? 'Email + Text' : template.delivery_method === 'sms' ? 'Text only' : 'Email only'} (set on Automated System page)
                     </span>
                   )}
                 </div>
