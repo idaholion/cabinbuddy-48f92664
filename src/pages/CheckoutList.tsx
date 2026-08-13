@@ -705,16 +705,6 @@ const CheckoutList = () => {
           console.log('✅ [CHECKOUT-SAVE] Successfully created new session');
         }
 
-        // Save survey responses to survey_responses table for Financial Dashboard
-        if (surveyData && Object.keys(surveyData).length > 0) {
-          console.log('💾 [CHECKOUT-SAVE] Saving survey responses to survey_responses table...');
-          await createResponse({
-            family_group: currentReservation.family_group,
-            responses: surveyData
-          });
-          console.log('✅ [CHECKOUT-SAVE] Survey responses saved to database');
-        }
-
         toast({
           title: "Checklist Saved",
           description: `Checkout checklist saved (${completedTasks}/${totalTasks} tasks completed)`,
@@ -735,7 +725,41 @@ const CheckoutList = () => {
         variant: "destructive",
       });
     }
+
+    // Save the Cabin Coalition Economic Survey independently of the checklist.
+    // The survey is organization-level data and does not require a linked
+    // reservation, so it must never be lost just because no stay matched.
+    const hasSurveyAnswers = Object.values(surveyData).some(v => v && v !== '');
+    if (organization?.id && hasSurveyAnswers) {
+      const surveyFamilyGroup =
+        currentReservation?.family_group || claimedProfile?.family_group_name || undefined;
+      const stayKey = currentReservation
+        ? `${currentReservation.start_date}_${currentReservation.end_date}`
+        : `no-reservation_${new Date().toISOString().slice(0, 10)}`;
+
+      try {
+        console.log('💾 [CHECKOUT-SAVE] Saving economic survey responses...', { stayKey });
+        await saveResponse({
+          family_group: surveyFamilyGroup,
+          stayKey,
+          responses: surveyData
+        });
+        console.log('✅ [CHECKOUT-SAVE] Survey responses saved');
+        toast({
+          title: "Survey Saved",
+          description: "Your Cabin Coalition economic survey answers were recorded.",
+        });
+      } catch (error: any) {
+        console.error('❌ [CHECKOUT-SAVE] Survey save failed:', error);
+        toast({
+          title: "Survey Save Failed",
+          description: error?.message || "Your survey answers could not be saved.",
+          variant: "destructive",
+        });
+      }
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
