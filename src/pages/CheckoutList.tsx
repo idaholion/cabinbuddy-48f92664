@@ -17,6 +17,7 @@ import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { parseDateOnly } from "@/lib/date-utils";
+import { namesMatch } from "@/lib/name-utils";
 
 console.log('🚨 CheckoutList.tsx file is being executed');
 
