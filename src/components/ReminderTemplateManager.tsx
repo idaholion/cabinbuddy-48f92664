@@ -188,7 +188,8 @@ export const ReminderTemplateManager = () => {
             sms_message_template: template.sms_message_template,
             is_active: template.is_active,
             days_in_advance: template.days_in_advance,
-            trigger_event: template.trigger_event
+            trigger_event: template.trigger_event,
+            delivery_method: template.delivery_method
           })
           .eq('id', template.id);
 
