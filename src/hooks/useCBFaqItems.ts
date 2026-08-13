@@ -58,7 +58,7 @@ export const CB_FAQ_ROUTES = [
   { path: '/billing', label: 'Billing & Invoices' },
   { path: '/invoice-settings', label: 'Invoice Settings' },
   { path: '/financial-admin-tools', label: 'Financial Admin Tools' },
-  { path: '/calendar-keeper-management', label: 'Calendar Keeper' },
+  { path: '/calendar-keeper-management', label: 'Notification Management' },
   { path: '/group-member-profile', label: 'Profile Settings' },
   { path: '/setup', label: 'Account Setup' },
   { path: '/features', label: 'Feature Guide' },

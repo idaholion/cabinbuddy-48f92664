@@ -77,7 +77,7 @@ const STEPS: StepContent[] = [
   {
     icon: MessageSquare,
     iconColor: "text-purple-600",
-    title: "Step 4: Calendar Keeper Management",
+    title: "Step 4: Notification Management",
     description: "Finally, we'll configure how to communicate with families about their reservations.",
     bullets: [
       "Messaging templates",
