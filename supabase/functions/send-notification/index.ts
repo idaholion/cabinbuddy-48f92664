@@ -95,13 +95,17 @@ interface NotificationRequest {
     subject_template: string;
     custom_message: string;
     checklist_items: string[];
+    sms_message_template?: string | null;
   };
   recipients?: Array<{
     name: string;
     email: string;
     familyGroup: string;
+    phone?: string | null;
   }>;
   template_variables?: Record<string, string>;
+  // 'email' | 'sms' | 'both' — controls which channels are used. Defaults to 'both'.
+  delivery_method?: 'email' | 'sms' | 'both';
 }
 
 async function sendSMS(to: string, message: string) {
