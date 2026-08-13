@@ -36,7 +36,7 @@ const CheckoutList = () => {
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useOrgAdmin();
-  const { createResponse } = useSurveyResponses();
+  const { saveResponse } = useSurveyResponses();
   const { profile } = useProfile();
   const { user } = useAuth();
   const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
