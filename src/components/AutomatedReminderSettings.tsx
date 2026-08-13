@@ -240,32 +240,30 @@ export const AutomatedReminderSettings = () => {
             
             {settings.automated_reminders_enabled && (
               <div className="ml-6 mt-3 space-y-3 border-l-2 border-muted pl-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-7-day"
-                    checked={settings.automated_reminders_7_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_7_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-7-day" className="text-sm">7-day reminders</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-3-day"
-                    checked={settings.automated_reminders_3_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_3_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-3-day" className="text-sm">3-day reminders</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="reservation-1-day"
-                    checked={settings.automated_reminders_1_day_enabled}
-                    onCheckedChange={(enabled) => handleToggle('automated_reminders_1_day_enabled', enabled)}
-                  />
-                  <Label htmlFor="reservation-1-day" className="text-sm">1-day reminders</Label>
-                </div>
+                {scheduledTemplates.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    No scheduled reminder templates yet. Create one in Reminder Templates and it will appear here.
+                  </p>
+                ) : (
+                  scheduledTemplates.map((tpl) => (
+                    <div key={tpl.id} className="flex items-center space-x-2">
+                      <Switch
+                        id={`tpl-${tpl.id}`}
+                        checked={tpl.is_active}
+                        onCheckedChange={(enabled) => handleTemplateToggle(tpl.id, enabled)}
+                      />
+                      <Label htmlFor={`tpl-${tpl.id}`} className="text-sm">
+                        {formatTemplateName(tpl.reminder_type)}
+                        <span className="text-muted-foreground font-normal">
+                          {" "}— sends {tpl.days_in_advance} day{tpl.days_in_advance === 1 ? '' : 's'} before stay {tpl.trigger_event === 'before_end' ? 'ends' : 'starts'}
+                        </span>
+                      </Label>
+                    </div>
+                  ))
+                )}
               </div>
             )}
+
             
             <div className="border-l-4 border-muted pl-4 space-y-1">
               <p className="text-xs text-muted-foreground">
