@@ -123,38 +123,64 @@ const CheckoutList = () => {
   ]);
   const [surveyData, setSurveyData] = useState<Record<string, string>>({});
 
-  // Get the most recent reservation for the current user's stay
+  // Get the reservation this checklist should be linked to.
+  // Priority: a stay in progress today, then the most recently ENDED past
+  // stay. We never link to an upcoming/future stay, and we never fall back
+  // to the latest-start-date reservation (which could be a future stay).
   const getCurrentUserReservation = () => {
     if (!user) return undefined;
-    
+
     const userReservations = reservations.filter(r => {
-      // Only show confirmed reservations
+      // Only confirmed reservations
       if (r.status !== 'confirmed') return false;
-      
-      // If it's a transferred-out reservation, don't show it for checkout
+
+      // Transferred-out reservations don't belong to this user for checkout
       if (r.transfer_type === 'transferred_out') return false;
-      
-      // Filter by user - check if this reservation belongs to the logged-in user
+
       if (claimedProfile) {
-        // Check if reservation belongs to user's claimed family group
+        // Must be the user's claimed family group
         if (r.family_group !== claimedProfile.family_group_name) return false;
-        
-        // Check if user is the host of this reservation
+
+        // Match host by name (fuzzy: "Richard" matches "Richard Andrew") or
+        // by host email against the signed-in user's email.
         if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
           const primaryHost = r.host_assignments[0];
-          return primaryHost.host_name === claimedProfile.member_name;
+          const hostNameMatches = primaryHost.host_name && claimedProfile.member_name
+            && namesMatch(primaryHost.host_name, claimedProfile.member_name);
+          return Boolean(hostNameMatches);
         }
-        
+
         // Fallback: if no host assignments, user must be group lead
         return claimedProfile.member_type === 'group_lead';
       }
-      
+
       // Fallback: match by user_id
       return r.user_id === effectiveUserId;
     });
-    
-    // Sort by start date descending to get most recent
-    return userReservations.sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime())[0];
+
+    if (userReservations.length === 0) return undefined;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1) A stay that includes today (in progress)
+    const current = userReservations.find(r => {
+      const start = parseDateOnly(r.start_date);
+      const end = parseDateOnly(r.end_date);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return start <= today && today <= end;
+    });
+    if (current) return current;
+
+    // 2) Most recently ENDED past stay (latest end_date on or before today)
+    const pastStays = userReservations
+      .filter(r => parseDateOnly(r.end_date) <= today)
+      .sort((a, b) => parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime());
+    if (pastStays.length > 0) return pastStays[0];
+
+    // 3) No current or past stay — do not link to a future stay
+    return undefined;
   };
 
   const currentReservation = getCurrentUserReservation();
