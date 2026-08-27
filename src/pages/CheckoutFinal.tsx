@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { normalizeName } from "@/lib/name-utils";
+
 import { ArrowLeft, DollarSign, Users, Calendar, CreditCard, Send, FileText, CheckCircle, Circle, TrendingUp, History, Clock, CalendarDays, Edit3, Plus, Trash2, ChevronUp, ChevronDown, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -465,10 +467,25 @@ const CheckoutFinal = () => {
             if (r.family_group !== claimedProfile.family_group_name) return false;
             if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
               const primaryHost = r.host_assignments[0];
-              return primaryHost.host_name === claimedProfile.member_name;
+              // Host assignments often store only a first name ("Richard") while the
+              // claimed profile stores the full name ("Richard Andrew"). Compare
+              // tolerantly, and fall back to the host email when available.
+              const hostName = normalizeName(String(primaryHost?.host_name || ''));
+              const profileName = normalizeName(String(claimedProfile.member_name || ''));
+              const emailMatch =
+                !!primaryHost?.host_email &&
+                primaryHost.host_email.toLowerCase() === user.email?.toLowerCase();
+              const nameMatch =
+                !!hostName &&
+                !!profileName &&
+                (hostName === profileName ||
+                  profileName.startsWith(`${hostName} `) ||
+                  hostName.startsWith(`${profileName} `));
+              return emailMatch || nameMatch;
             }
             return claimedProfile.member_type === 'group_lead';
           }
+
           
           if (r.host_assignments && Array.isArray(r.host_assignments) && r.host_assignments.length > 0) {
             const userIsHost = r.host_assignments.some(host => 
