@@ -97,9 +97,7 @@ export default function StayHistory() {
   }, [availableYears, selectedYear]);
 
   useEffect(() => {
-    const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-    console.log(`[StayHistory] Fetching payments with year filter:`, yearFilter);
-    fetchPayments(1, 50, yearFilter);
+    fetchPayments(1, 500);
     fetchPaymentSplits();
   }, [selectedYear, selectedFamilyGroup, organization?.id]);
 
@@ -171,10 +169,8 @@ export default function StayHistory() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-        console.log(`[StayHistory] Refreshing data with year filter:`, yearFilter);
         refetchReservations();
-        fetchPayments(1, 50, yearFilter);
+        fetchPayments(1, 500);
         fetchPaymentSplits();
       }
     };
@@ -187,9 +183,8 @@ export default function StayHistory() {
 
   const handleSync = async () => {
     try {
-      const yearFilter = selectedYear === 0 ? undefined : selectedYear;
       await refetchReservations();
-      await fetchPayments(1, 50, yearFilter);
+      await fetchPayments(1, 500);
       await fetchPaymentSplits();
       toast.success("Data refreshed successfully");
     } catch (error) {
@@ -261,8 +256,7 @@ export default function StayHistory() {
   const handleSaveOccupancy = async (updatedOccupancy: any[]) => {
     // The EditOccupancyDialog already handles the save via useDailyOccupancySync
     // We just need to refresh the payments to show the updated amount
-    const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-    await fetchPayments(1, 50, yearFilter);
+    await fetchPayments(1, 500);
     toast.success("Occupancy updated successfully");
     setEditOccupancyStay(null);
   };
@@ -1461,8 +1455,7 @@ export default function StayHistory() {
           totalAmount={editOccupancyStay.billingAmount || 0}
           reservationHolderName={editOccupancyStay.reservationHolderName}
           onSplitCreated={() => {
-            const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-            fetchPayments(1, 50, yearFilter);
+            fetchPayments(1, 500);
             fetchPaymentSplits();
             refetchReservations();
             setEditOccupancyStay(null);
@@ -1554,8 +1547,7 @@ export default function StayHistory() {
           familyGroup={viewPaymentHistory.familyGroup}
           totalAmount={viewPaymentHistory.totalAmount}
           onPaymentUpdated={async () => {
-            const yearFilter = selectedYear === 0 ? undefined : selectedYear;
-            await fetchPayments(1, 50, yearFilter);
+            await fetchPayments(1, 500);
           }}
         />
       )}
