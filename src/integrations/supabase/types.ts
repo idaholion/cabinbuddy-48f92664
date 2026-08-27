@@ -302,28 +302,34 @@ export type Database = {
         Row: {
           content: Json
           created_at: string
+          customized_at: string | null
           id: string
           organization_id: string
           section_title: string
           section_type: string
+          source_template_id: string | null
           updated_at: string
         }
         Insert: {
           content?: Json
           created_at?: string
+          customized_at?: string | null
           id?: string
           organization_id: string
           section_title: string
           section_type: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Update: {
           content?: Json
           created_at?: string
+          customized_at?: string | null
           id?: string
           organization_id?: string
           section_title?: string
           section_type?: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -582,31 +588,37 @@ export type Database = {
         Row: {
           checklist_type: string
           created_at: string
+          customized_at: string | null
           id: string
           images: Json | null
           introductory_text: string | null
           items: Json
           organization_id: string
+          source_template_id: string | null
           updated_at: string
         }
         Insert: {
           checklist_type: string
           created_at?: string
+          customized_at?: string | null
           id?: string
           images?: Json | null
           introductory_text?: string | null
           items?: Json
           organization_id: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Update: {
           checklist_type?: string
           created_at?: string
+          customized_at?: string | null
           id?: string
           images?: Json | null
           introductory_text?: string | null
           items?: Json
           organization_id?: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -830,10 +842,12 @@ export type Database = {
           category: string
           category_order: number
           created_at: string
+          customized_at: string | null
           id: string
           item_order: number
           organization_id: string
           question: string
+          source_template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -841,10 +855,12 @@ export type Database = {
           category: string
           category_order?: number
           created_at?: string
+          customized_at?: string | null
           id?: string
           item_order?: number
           organization_id: string
           question: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -852,10 +868,12 @@ export type Database = {
           category?: string
           category_order?: number
           created_at?: string
+          customized_at?: string | null
           id?: string
           item_order?: number
           organization_id?: string
           question?: string
+          source_template_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1447,6 +1465,7 @@ export type Database = {
           guest_access_token: string | null
           guest_token_expires_at: string | null
           id: string
+          is_template_source: boolean
           is_test_organization: boolean | null
           name: string
           stay_history_snapshot_frequency: string | null
@@ -1500,6 +1519,7 @@ export type Database = {
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
+          is_template_source?: boolean
           is_test_organization?: boolean | null
           name: string
           stay_history_snapshot_frequency?: string | null
@@ -1553,6 +1573,7 @@ export type Database = {
           guest_access_token?: string | null
           guest_token_expires_at?: string | null
           id?: string
+          is_template_source?: boolean
           is_test_organization?: boolean | null
           name?: string
           stay_history_snapshot_frequency?: string | null
@@ -2047,6 +2068,7 @@ export type Database = {
           created_at: string
           created_by_user_id: string | null
           custom_message: string | null
+          customized_at: string | null
           days_in_advance: number | null
           delivery_method: string
           id: string
@@ -2055,6 +2077,7 @@ export type Database = {
           reminder_type: string
           sms_message_template: string | null
           sort_order: number | null
+          source_template_id: string | null
           subject_template: string
           trigger_event: string
           updated_at: string
@@ -2064,6 +2087,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           custom_message?: string | null
+          customized_at?: string | null
           days_in_advance?: number | null
           delivery_method?: string
           id?: string
@@ -2072,6 +2096,7 @@ export type Database = {
           reminder_type: string
           sms_message_template?: string | null
           sort_order?: number | null
+          source_template_id?: string | null
           subject_template: string
           trigger_event?: string
           updated_at?: string
@@ -2081,6 +2106,7 @@ export type Database = {
           created_at?: string
           created_by_user_id?: string | null
           custom_message?: string | null
+          customized_at?: string | null
           days_in_advance?: number | null
           delivery_method?: string
           id?: string
@@ -2089,6 +2115,7 @@ export type Database = {
           reminder_type?: string
           sms_message_template?: string | null
           sort_order?: number | null
+          source_template_id?: string | null
           subject_template?: string
           trigger_event?: string
           updated_at?: string
@@ -3662,6 +3689,10 @@ export type Database = {
         Returns: Json
       }
       revoke_guest_access: { Args: { org_id: string }; Returns: boolean }
+      seed_organization_content_from_template: {
+        Args: { p_org_id: string }
+        Returns: undefined
+      }
       set_primary_organization: { Args: { org_id: string }; Returns: boolean }
       supervisor_bulk_remove_host_member: {
         Args: {
