@@ -248,12 +248,16 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
             dayCountText = `Day ${daysPassed + 1} of ${totalDays}`;
           }
         } else if (isSecondaryRoundActive) {
-          // Check if this family comes before current family in secondary order
           const currentIndex = secondaryOrder.findIndex(f => isCurrentFamilyTurn(f));
-          if (currentIndex !== -1 && index < currentIndex) {
+          if (currentIndex === -1) {
+            // Round has started but no family is currently up: the secondary round
+            // has finished, so everyone's turn has passed (not "waiting").
+            status = 'completed';
+          } else if (index < currentIndex) {
             status = 'completed';
           }
         }
+
 
         return {
           familyGroup,
