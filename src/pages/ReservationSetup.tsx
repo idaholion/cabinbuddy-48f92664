@@ -794,6 +794,9 @@ export default function ReservationSetup() {
               
               <div className="space-y-2">
                 <Label className="text-base font-medium">Family Group Rotation Order in {rotationYear}:</Label>
+                <p className="text-sm text-muted-foreground">
+                  Pick a different group in any slot and the two groups swap places, or use the arrows to move a group up or down.
+                </p>
                 {rotationOrder.map((selectedGroup, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <span className="font-medium w-6">{index + 1}.</span>
@@ -802,16 +805,45 @@ export default function ReservationSetup() {
                        <SelectValue placeholder="Select Family Group" className="text-lg" />
                      </SelectTrigger>
                        <SelectContent className="text-lg">
-                    {familyGroups
-                      .filter(group => !rotationOrder.includes(group.name) || rotationOrder[index] === group.name)
-                      .map((group) => (
-                        <SelectItem key={group.id} value={group.name} className="text-lg">{group.name}</SelectItem>
-                      ))}
+                    {familyGroups.map((group) => (
+                      <SelectItem key={group.id} value={group.name} className="text-lg">{group.name}</SelectItem>
+                    ))}
                        </SelectContent>
                     </Select>
+                    <div className="flex flex-col">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-8"
+                        aria-label={`Move ${selectedGroup || 'group'} up`}
+                        disabled={index === 0}
+                        onClick={() => moveRotationGroup(index, -1)}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-8"
+                        aria-label={`Move ${selectedGroup || 'group'} down`}
+                        disabled={index === rotationOrder.length - 1}
+                        onClick={() => moveRotationGroup(index, 1)}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
+                {rotationOrder.length > 0 && (
+                  <p className="text-sm text-muted-foreground pt-1">
+                    Saving this order for {rotationYear} also re-derives every later year from it (
+                    {firstLastOption === "first" ? "first group moves to last" : "last group moves to first"} each year).
+                  </p>
+                )}
               </div>
+
               
               {/* Booking Limits Configuration Section */}
               <div className="space-y-4 pt-4 border-t">
