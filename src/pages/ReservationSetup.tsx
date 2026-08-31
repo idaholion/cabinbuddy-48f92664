@@ -309,9 +309,23 @@ export default function ReservationSetup() {
 
   const handleRotationOrderChange = (index: number, value: string) => {
     const newOrder = [...rotationOrder];
+    const existingIndex = newOrder.indexOf(value);
+    if (existingIndex !== -1 && existingIndex !== index) {
+      // Swap so a group is never duplicated or silently dropped
+      newOrder[existingIndex] = newOrder[index];
+    }
     newOrder[index] = value;
     setRotationOrder(newOrder);
   };
+
+  const moveRotationGroup = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= rotationOrder.length) return;
+    const newOrder = [...rotationOrder];
+    [newOrder[index], newOrder[target]] = [newOrder[target], newOrder[index]];
+    setRotationOrder(newOrder);
+  };
+
 
   const handleSetupMethodChange = (newMethod: string) => {
     // If changing from the original setup method, show confirmation
