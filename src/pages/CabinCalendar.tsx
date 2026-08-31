@@ -429,7 +429,7 @@ const CabinCalendar = () => {
                   <div className="w-full">
                     <div className="flex items-center gap-2 md:hidden mb-2">
                       <RotateCcw className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-sm font-medium">{rotationYear} Rotation · Round 1</span>
+                      <span className="text-sm font-medium">{rotationYear} Rotation</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 lg:gap-4">
                        {/* 2025 Order Dropdown - Narrow trigger, wide content */}
