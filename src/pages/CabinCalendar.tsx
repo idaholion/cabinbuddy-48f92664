@@ -434,13 +434,13 @@ const CabinCalendar = () => {
                     <div className="flex flex-wrap items-center gap-3 lg:gap-4">
                        {/* 2025 Order Dropdown - Narrow trigger, wide content */}
                        <Select>
-                         <SelectTrigger className="w-32 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear} Order`} />
+                         <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
+                           <SelectValue placeholder={`${rotationYear} Order · Round 1`} />
                          </SelectTrigger>
                          <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
-                               {rotationYear} Rotation Order
+                               {rotationYear} Rotation Order — Primary Selection (Round 1)
                              </div>
                              <div className="space-y-1">
                                {currentRotationOrder.map((familyGroup, index) => {
