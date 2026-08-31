@@ -457,16 +457,32 @@ const CabinCalendar = () => {
                        </Select>
 
                        {/* Selection Status Dropdown - Narrow trigger, wide content */}
+                       {(() => {
+                         const phaseLabel = currentPhase === 'secondary'
+                           ? 'Secondary Selection (Round 2)'
+                           : currentPhase === 'post_rotation'
+                             ? 'Free Selection (Rounds Complete)'
+                             : 'Primary Selection (Round 1)';
+                         const phaseShort = currentPhase === 'secondary'
+                           ? 'Round 2'
+                           : currentPhase === 'post_rotation'
+                             ? 'Complete'
+                             : 'Round 1';
+                         return (
                        <Select>
                          <SelectTrigger className="w-40 bg-background/90 backdrop-blur-sm border-border">
-                           <SelectValue placeholder={`${rotationYear} Status`} />
+                           <SelectValue placeholder={`${rotationYear} Status · ${phaseShort}`} />
                          </SelectTrigger>
                          <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
-                             <div className="font-medium text-sm mb-2">
+                             <div className="font-medium text-sm">
                                {rotationYear} Selection Status
                              </div>
+                             <div className="text-xs text-muted-foreground mb-2">
+                               Showing: {phaseLabel}
+                             </div>
                              <div className="space-y-1">
+
                                {currentRotationYearStatuses.map((familyStatus, index) => {
                                  const getStatusDisplay = () => {
                                    switch (familyStatus.status) {
@@ -639,6 +655,9 @@ const CabinCalendar = () => {
                            </div>
                          </SelectContent>
                        </Select>
+                         );
+                       })()}
+
 
                        {/* Booking Controls */}
                        <DropdownMenu>
