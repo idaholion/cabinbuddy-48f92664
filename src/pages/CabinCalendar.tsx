@@ -655,6 +655,9 @@ const CabinCalendar = () => {
                            </div>
                          </SelectContent>
                        </Select>
+                         );
+                       })()}
+
 
                        {/* Booking Controls */}
                        <DropdownMenu>
