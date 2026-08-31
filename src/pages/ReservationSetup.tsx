@@ -15,6 +15,8 @@ import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { supabase } from "@/integrations/supabase/client";
 import { AllocationModelBadge } from "@/components/AllocationModelBadge";
 import { AllocationModelChangeDialog, type AllocationModel } from "@/components/AllocationModelChangeDialog";
+import { ChevronUp, ChevronDown } from "lucide-react";
+
 
 export default function ReservationSetup() {
   const navigate = useNavigate();
