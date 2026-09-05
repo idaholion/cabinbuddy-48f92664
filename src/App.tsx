@@ -72,6 +72,8 @@ const ReservationDetail = React.lazy(() => import("./pages/ReservationDetail"));
 const FamilyVoting = React.lazy(() => import("./pages/FamilyVoting"));
 const FeaturesPage = React.lazy(() => import("./pages/FeaturesPage"));
 const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
+const CabinSecurityCameras = React.lazy(() => import("./pages/CabinSecurityCameras"));
+
 
 // Lazy load admin/supervisor pages
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
@@ -142,6 +144,8 @@ const AppContent = () => {
         <Route path="/season-summary" element={<Navigate to="/stay-history" replace />} />
         <Route path="/cabin-rules" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinRules /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/cabin-maintenance" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinMaintenance /></Suspense></MainLayout></ProtectedRoute>} />
+        <Route path="/cabin-security-cameras" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CabinSecurityCameras /></Suspense></MainLayout></ProtectedRoute>} />
+
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/checklist-creator" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminTreasurerRoute>} />
