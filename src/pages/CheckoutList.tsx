@@ -948,15 +948,24 @@ const CheckoutList = () => {
                           </div>
                         ) : (
                           <>
-                            <span 
+                            <span
                               className={`text-base flex-1 ${
-                                isChecked 
-                                  ? 'line-through text-muted-foreground' 
+                                isChecked
+                                  ? 'line-through text-muted-foreground'
                                   : 'text-foreground'
                               } ${!isChecked ? 'cursor-pointer' : ''}`}
                               onClick={() => !isChecked && toggleTask(taskId)}
                             >
                               {task}
+                              {task.trim().toLowerCase().startsWith('open the arlo app') && (
+                                <Link
+                                  to="/cabin-security-cameras?from=checkout-list"
+                                  className="block mt-1 text-sm text-primary underline underline-offset-2 hover:text-primary/80"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  View camera instructions
+                                </Link>
+                              )}
                             </span>
                             {isAdmin && isEditing && (
                               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">

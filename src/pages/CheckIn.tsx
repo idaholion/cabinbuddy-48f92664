@@ -445,6 +445,14 @@ const CheckIn = () => {
                     <>
                       <label htmlFor={item.id} className="text-base font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
                         {item.label}
+                        {item.label?.trim().toLowerCase().startsWith('open the arlo app') && (
+                          <Link
+                            to="/cabin-security-cameras?from=checkin"
+                            className="block mt-1 text-sm text-primary underline underline-offset-2 hover:text-primary/80"
+                          >
+                            View camera instructions
+                          </Link>
+                        )}
                       </label>
                       {isAdmin && isEditing && (
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
