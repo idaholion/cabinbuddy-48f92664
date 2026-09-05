@@ -84,9 +84,16 @@ const bgStyle = {
 
 const generateId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
+const RETURN_TARGETS: Record<string, { path: string; label: string }> = {
+  'checkin': { path: '/checkin', label: 'Arrival Checklist' },
+  'checkout-list': { path: '/checkout-list', label: 'Departure Checklist' },
+};
+
 const CabinSecurityCameras = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const returnChecklist = RETURN_TARGETS[searchParams.get('from') ?? ''];
 
   const storageKey = `cabin-camera-instructions-${organization?.id ?? 'none'}`;
 
