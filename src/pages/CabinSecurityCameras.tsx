@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
+  ArrowLeft,
   Camera,
   Home,
   Video,
@@ -83,9 +84,16 @@ const bgStyle = {
 
 const generateId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
+const RETURN_TARGETS: Record<string, { path: string; label: string }> = {
+  'checkin': { path: '/checkin', label: 'Arrival Checklist' },
+  'checkout-list': { path: '/checkout-list', label: 'Departure Checklist' },
+};
+
 const CabinSecurityCameras = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const returnChecklist = RETURN_TARGETS[searchParams.get('from') ?? ''];
 
   const storageKey = `cabin-camera-instructions-${organization?.id ?? 'none'}`;
 
@@ -128,6 +136,20 @@ const CabinSecurityCameras = () => {
               Home
             </Link>
           </Button>
+          {returnChecklist && (
+            <Alert className="mb-4 bg-primary/10 border-primary/30">
+              <ArrowLeft className="h-4 w-4" />
+              <AlertTitle>Viewing from the {returnChecklist.label}</AlertTitle>
+              <AlertDescription>
+                <Button variant="outline" size="sm" asChild className="mt-2 text-base">
+                  <Link to={returnChecklist.path}>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Return to {returnChecklist.label}
+                  </Link>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           <h1 className="text-6xl mb-2 font-kaushan text-primary drop-shadow-lg text-center flex items-center justify-center gap-3">
             <Camera className="h-10 w-10" />
             Cabin Security Cameras
