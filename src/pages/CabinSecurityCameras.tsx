@@ -223,10 +223,10 @@ const CabinSecurityCameras = () => {
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
                 <li>
-                  Remove the camera from its mount and open the battery container.  remove the battery and place in the battery charger.  
+                  Carefully open the battery container.  Remove the battery and place in the battery charger.  
                 </li>
                 <li>Wait until the charge indicator is solid green before reinstalling, usually 4–6 hours.  Charge batteries indoors at room temperature </li>
-                <li>Mount the camera back in the same location, clean the lens if needed, and power it on. Confirm it shows as online before you leave.</li>
+                <li>Mount the camera back in the same location, clean the lens if needed. Confirm it shows up online before you leave.</li>
               </ul>
             </div>
 
