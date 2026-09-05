@@ -213,7 +213,7 @@ const CabinSecurityCameras = () => {
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
                 <li></li>
-                <li>Carefully unmount the camera and note the angle and direction it was facing so you can reinstall it the same way.  Some of the cameras are mounted on a screw mount, one is on a magnetic mount</li>
+                <li>If any of the cameras show low power or are not able to be brought online, carefully unmount the camera and note the angle and direction it was facing so you can reinstall it the same way.  Some of the cameras are mounted on a screw mount, one is on a magnetic mount</li>
                 <li>Use a sturdy step stool or ladder, and have someone spot you when working at height.</li>
               </ul>
             </div>
