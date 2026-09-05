@@ -7,7 +7,6 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Search,
   CheckCircle2,
   AlertCircle,
   Video,
@@ -89,7 +88,6 @@ const CabinSecurityCameras = () => {
 
   const [cameras, setCameras] = useState<SecurityCamera[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SecurityCamera | null>(null);
 
@@ -116,24 +114,7 @@ const CabinSecurityCameras = () => {
   }, [cameras, loaded, storageKey]);
 
   const filteredCameras = useMemo(() => {
-    let list = [...cameras].sort((a, b) => a.name.localeCompare(b.name));
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.location.toLowerCase().includes(q) ||
-          c.notes.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [cameras, search]);
-
-  const stats = useMemo(() => {
-    const online = cameras.filter((c) => c.status === 'online').length;
-    const offline = cameras.filter((c) => c.status === 'offline').length;
-    const intermittent = cameras.filter((c) => c.status === 'intermittent').length;
-    return { online, offline, intermittent, total: cameras.length };
+    return [...cameras].sort((a, b) => a.name.localeCompare(b.name));
   }, [cameras]);
 
   const openAdd = () => {
@@ -253,50 +234,12 @@ const CabinSecurityCameras = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <Card className="bg-card/95">
-            <CardContent className="pt-4 pb-3 text-center">
-              <div className="text-2xl font-bold text-primary">{stats.total}</div>
-              <div className="text-xs text-muted-foreground">Total cameras</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/95">
-            <CardContent className="pt-4 pb-3 text-center">
-              <div className="text-2xl font-bold text-emerald-600">{stats.online}</div>
-              <div className="text-xs text-muted-foreground">Online</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/95">
-            <CardContent className="pt-4 pb-3 text-center">
-              <div className="text-2xl font-bold text-destructive">{stats.offline}</div>
-              <div className="text-xs text-muted-foreground">Offline</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-card/95">
-            <CardContent className="pt-4 pb-3 text-center">
-              <div className="text-2xl font-bold text-amber-500">{stats.intermittent}</div>
-              <div className="text-xs text-muted-foreground">Intermittent</div>
-            </CardContent>
-          </Card>
-        </div>
-
         <Card className="bg-card/95">
           <CardHeader className="pb-3">
-            <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-              <div className="relative w-full md:w-72">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search cameras…"
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <Button onClick={openAdd} className="w-full md:w-auto">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Camera
-              </Button>
-            </div>
+            <Button onClick={openAdd}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Camera
+            </Button>
           </CardHeader>
 
           <CardContent>
