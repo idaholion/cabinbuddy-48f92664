@@ -201,8 +201,6 @@ const CabinSecurityCameras = () => {
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
                 <li>Open the Arlo app and check the battery level of the outdoor security camera batteries, Offline or unreadable cameras are often a sign of low battery. </li>
-                <li></li>
-                <li></li>
               </ul>
             </div>
 
