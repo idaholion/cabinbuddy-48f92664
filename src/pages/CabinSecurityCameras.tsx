@@ -69,6 +69,9 @@ const bgStyle = {
   backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)',
 };
 
+const generateId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+
 const CabinSecurityCameras = () => {
   const { organization } = useOrganization();
   const { toast } = useToast();
