@@ -148,7 +148,7 @@ const CabinSecurityCameras = () => {
     } else {
       setCameras((prev) => [
         ...prev,
-        { ...camera, id: crypto.randomUUID(), addedAt: new Date().toISOString() },
+        { ...camera, id: generateId(), addedAt: new Date().toISOString() },
       ]);
       toast({ title: 'Camera added' });
     }
