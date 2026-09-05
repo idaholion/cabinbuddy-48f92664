@@ -200,8 +200,8 @@ const CabinSecurityCameras = () => {
                 Check battery level
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
-                <li>Open the battery compartment and check the LED indicator near the power button. Green means a strong charge, yellow is moderate, and red means it needs charging soon.</li>
-                <li>If the camera is connected through the mobile app, the battery percentage may also appear there.</li>
+                <li>Open the Arlo app and check the battery level of the outdoor security camera batteries,  </li>
+                <li></li>
                 <li>Offline or intermittent cameras are often the first sign of a low battery.</li>
               </ul>
             </div>
@@ -212,8 +212,8 @@ const CabinSecurityCameras = () => {
                 Remove cameras for charging
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
-                <li>Power the camera off first by holding the button for a few seconds.</li>
-                <li>Carefully unmount the camera and note the angle and direction it was facing so you can reinstall it the same way.</li>
+                <li></li>
+                <li>Carefully unmount the camera and note the angle and direction it was facing so you can reinstall it the same way.  Some of the cameras are mounted on a screw mount, one is on a magnetic mount</li>
                 <li>Use a sturdy step stool or ladder, and have someone spot you when working at height.</li>
               </ul>
             </div>
@@ -224,8 +224,10 @@ const CabinSecurityCameras = () => {
                 Charge and reinstall
               </h3>
               <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
-                <li>Charge batteries indoors at room temperature using the supplied cable or charging base.</li>
-                <li>Wait until the charge indicator is solid green before reinstalling, usually 4–6 hours.</li>
+                <li>
+                  If any of the batteries show low, remove the camera from its mount and open the battery container.  remove the battery and place in the battery charger.  
+                </li>
+                <li>Remove the battery from the camera and install it in the battery charger.  Wait until the charge indicator is solid green before reinstalling, usually 4–6 hours.  Charge batteries indoors at room temperature </li>
                 <li>Mount the camera back in the same location, clean the lens if needed, and power it on. Confirm it shows as online before you leave.</li>
               </ul>
             </div>
