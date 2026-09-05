@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Video,
+  Battery,
+  Zap,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -32,6 +35,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 
@@ -177,6 +185,60 @@ const CabinSecurityCameras = () => {
             Keep track of security cameras around the cabin: locations, status, and notes.
           </p>
         </div>
+
+        <Card className="bg-card/95 mb-4">
+          <CardHeader className="pb-2">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Camera className="h-5 w-5 text-primary" />
+              Camera Maintenance Instructions
+            </h2>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 mb-1">
+                <Battery className="h-4 w-4 text-primary" />
+                Check battery level
+              </h3>
+              <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
+                <li>Open the battery compartment and check the LED indicator near the power button. Green means a strong charge, yellow is moderate, and red means it needs charging soon.</li>
+                <li>If the camera is connected through the mobile app, the battery percentage may also appear there.</li>
+                <li>Offline or intermittent cameras are often the first sign of a low battery.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 mb-1">
+                <Video className="h-4 w-4 text-primary" />
+                Remove cameras for charging
+              </h3>
+              <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
+                <li>Power the camera off first by holding the button for a few seconds.</li>
+                <li>Carefully unmount the camera and note the angle and direction it was facing so you can reinstall it the same way.</li>
+                <li>Use a sturdy step stool or ladder, and have someone spot you when working at height.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 mb-1">
+                <Zap className="h-4 w-4 text-primary" />
+                Charge and reinstall
+              </h3>
+              <ul className="list-disc pl-5 text-sm text-foreground/80 space-y-1">
+                <li>Charge batteries indoors at room temperature using the supplied cable or charging base.</li>
+                <li>Wait until the charge indicator is solid green before reinstalling, usually 4–6 hours.</li>
+                <li>Mount the camera back in the same location, clean the lens if needed, and power it on. Confirm it shows as online before you leave.</li>
+              </ul>
+            </div>
+
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Important cautions</AlertTitle>
+              <AlertDescription className="text-sm">
+                Do not leave batteries charging when no one is at the cabin. Unattended charging is a fire risk. Avoid charging near flammable materials, in direct sunlight, or in very hot or cold areas. If a battery looks swollen or damaged, do not use it; replace it instead.
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <Card className="bg-card/95">
