@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Circle, Edit3, Plus, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, CheckCircle2, Circle, Edit3, Plus, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -565,6 +565,20 @@ const CheckoutList = () => {
       title: "Task Deleted",
       description: "Checkout task has been removed.",
     });
+  };
+
+  const moveTask = async (sectionIndex: number, taskIndex: number, direction: -1 | 1) => {
+    const newIndex = taskIndex + direction;
+    const tasks = checklistSections[sectionIndex].tasks;
+    if (newIndex < 0 || newIndex >= tasks.length) return;
+    const updatedSections = checklistSections.map((sec, idx) => {
+      if (idx !== sectionIndex) return sec;
+      const newTasks = [...sec.tasks];
+      [newTasks[taskIndex], newTasks[newIndex]] = [newTasks[newIndex], newTasks[taskIndex]];
+      return { ...sec, tasks: newTasks };
+    });
+    setChecklistSections(updatedSections);
+    await saveCheckoutList(updatedSections);
   };
 
   const startEditTask = (sectionIndex: number, taskIndex: number, taskLabel: string) => {
