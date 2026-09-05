@@ -154,6 +154,11 @@ const resourcesItems = [
     url: "/photos",
     icon: Image,
   },
+  {
+    title: "Cabin Security Cameras",
+    url: "/cabin-security-cameras",
+    icon: Camera,
+  },
 ];
 
 const helpItems = [
