@@ -960,6 +960,26 @@ const CheckoutList = () => {
                             </span>
                             {isAdmin && isEditing && (
                               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  onClick={() => moveTask(sectionIndex, taskIndex, -1)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-base"
+                                  disabled={taskIndex === 0}
+                                  title="Move up"
+                                >
+                                  <ArrowUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  onClick={() => moveTask(sectionIndex, taskIndex, 1)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-base"
+                                  disabled={taskIndex === section.tasks.length - 1}
+                                  title="Move down"
+                                >
+                                  <ArrowDown className="h-3 w-3" />
+                                </Button>
                                 <Button 
                                   onClick={() => startEditTask(sectionIndex, taskIndex, task)} 
                                   size="sm" 
