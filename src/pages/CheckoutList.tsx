@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Circle, Edit3, Plus, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, CheckCircle2, Circle, Edit3, Plus, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -567,6 +567,20 @@ const CheckoutList = () => {
     });
   };
 
+  const moveTask = async (sectionIndex: number, taskIndex: number, direction: -1 | 1) => {
+    const newIndex = taskIndex + direction;
+    const tasks = checklistSections[sectionIndex].tasks;
+    if (newIndex < 0 || newIndex >= tasks.length) return;
+    const updatedSections = checklistSections.map((sec, idx) => {
+      if (idx !== sectionIndex) return sec;
+      const newTasks = [...sec.tasks];
+      [newTasks[taskIndex], newTasks[newIndex]] = [newTasks[newIndex], newTasks[taskIndex]];
+      return { ...sec, tasks: newTasks };
+    });
+    setChecklistSections(updatedSections);
+    await saveCheckoutList(updatedSections);
+  };
+
   const startEditTask = (sectionIndex: number, taskIndex: number, taskLabel: string) => {
     setEditingTaskId(`${sectionIndex}-${taskIndex}`);
     setEditingLabel(taskLabel);
@@ -946,6 +960,26 @@ const CheckoutList = () => {
                             </span>
                             {isAdmin && isEditing && (
                               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  onClick={() => moveTask(sectionIndex, taskIndex, -1)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-base"
+                                  disabled={taskIndex === 0}
+                                  title="Move up"
+                                >
+                                  <ArrowUp className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  onClick={() => moveTask(sectionIndex, taskIndex, 1)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-base"
+                                  disabled={taskIndex === section.tasks.length - 1}
+                                  title="Move down"
+                                >
+                                  <ArrowDown className="h-3 w-3" />
+                                </Button>
                                 <Button 
                                   onClick={() => startEditTask(sectionIndex, taskIndex, task)} 
                                   size="sm" 
