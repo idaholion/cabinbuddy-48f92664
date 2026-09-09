@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   Camera,
   Home,
   Video,
@@ -244,8 +246,23 @@ function InstructionsDialog({
 
   const removeSection = (id: string) => setDraft((prev) => prev.filter((s) => s.id !== id));
 
-  const addSection = () =>
-    setDraft((prev) => [...prev, { id: generateId(), title: 'New section', items: [] }]);
+  const addSectionAt = (index?: number) =>
+    setDraft((prev) => {
+      const next = [...prev];
+      const newSection = { id: generateId(), title: 'New section', items: [] };
+      if (index === undefined) next.push(newSection);
+      else next.splice(index + 1, 0, newSection);
+      return next;
+    });
+
+  const moveSection = (index: number, direction: -1 | 1) =>
+    setDraft((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -254,7 +271,7 @@ function InstructionsDialog({
           <DialogTitle>Edit Camera Maintenance Instructions</DialogTitle>
         </DialogHeader>
         <div className="space-y-6 py-2">
-          {draft.map((section) => (
+          {draft.map((section, index) => (
             <div key={section.id} className="space-y-2 border rounded-lg p-3">
               <div className="flex items-center gap-2">
                 <Input
@@ -262,6 +279,26 @@ function InstructionsDialog({
                   onChange={(e) => updateTitle(section.id, e.target.value)}
                   placeholder="Section title"
                 />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0"
+                  onClick={() => moveSection(index, -1)}
+                  disabled={index === 0}
+                  aria-label="Move section up"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0"
+                  onClick={() => moveSection(index, 1)}
+                  disabled={index === draft.length - 1}
+                  aria-label="Move section down"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -278,10 +315,19 @@ function InstructionsDialog({
                 placeholder={'One instruction per line'}
                 rows={Math.max(2, section.items.length)}
               />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground"
+                onClick={() => addSectionAt(index)}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Insert section below
+              </Button>
             </div>
           ))}
 
-          <Button variant="outline" onClick={addSection}>
+          <Button variant="outline" onClick={() => addSectionAt()}>
             <Plus className="h-4 w-4 mr-2" />
             Add section
           </Button>
