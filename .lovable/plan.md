@@ -4,11 +4,14 @@ Short answer today:
 - **Family Admin: yes.** An org admin already sees a "From" list of every member who has credit and can move it to anyone.
 - **Group lead: no.** A lead who isn't an admin can currently only move their own credit, so Tina can't move Mallory's.
 
-This plan adds the group-lead case.
+This plan adds the group-lead case, controlled by an admin switch.
 
 ## What changes
 
-1. **Group leads can transfer for their own group.**
+0. **Admin switch: "Allow group leads to transfer credit for their members."**
+   A new on/off setting in Admin tools (organization settings), off by default. Admins always keep full transfer rights regardless of the switch. When off, leads can only move their own credit — exactly today's behaviour.
+
+1. **Group leads can transfer for their own group (when the switch is on).**
    When the signed-in person is the lead of a family group, the Transfer Credit dialog's "From" list shows every member of *their group* who has credit (including themselves), instead of only themselves. Members of other groups are not listed.
 
 2. **Recipient list.**
