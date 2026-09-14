@@ -2172,7 +2172,7 @@ export default function StayHistory() {
           open={showExportDialog}
           onOpenChange={setShowExportDialog}
           seasonData={exportSeasonData}
-          year={selectedYear || new Date().getFullYear()}
+          year={selectedYear}
           isAdminView={isAdmin}
         />
       )}

@@ -38,7 +38,7 @@ export const ExportSeasonDataDialog = ({
   const [includeBilling, setIncludeBilling] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  const actualYear = year || seasonYear || new Date().getFullYear();
+  const actualYear = year ?? seasonYear ?? 0;
 
   if (!seasonData) return null;
 
