@@ -80,7 +80,8 @@ Then:
 - `src/pages/CheckoutFinal.tsx` — insert transactions
 - New Supabase migration for `payment_transactions`
 
-## Decision needed
-Phase 1 can be done now and makes the page much clearer without changing any data model. Phase 2 is the correct long-term fix for an accurate "paid by Venmo / check / etc." total, but it changes how payments are stored and requires the migration above to be run manually in the Supabase SQL Editor.
+## Scope of this plan
+Only **Phase 1** will be built now: the clearer summary cards and per-stay lines, with no database change and no change to how payments are stored.
 
-Do you want Phase 1 now and defer Phase 2, or implement both together?
+**Phase 2 is not being implemented.** It stays in this document as a reference option for you to evaluate later. If it looks like unneeded complexity, Phase 1 stands on its own — the one thing it cannot do is split historical totals by payment method, since that detail is stored only per stay today.
+
