@@ -667,10 +667,18 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
+    // Portion of this stay's receipts that actually paid down charges, vs the
+    // overflow that simply became credit on the books.
+    const owedBeforeReceipts = Math.max(0, previousBalance + billingAmount + manualAdjustment - amountPaid);
+    const receiptsApplied = Math.min(receiptsTotal, owedBeforeReceipts);
+    const receiptsOverflow = receiptsTotal - receiptsApplied;
+
     return {
       nights,
       receiptsTotal,
       receiptsCount,
+      receiptsApplied,
+      receiptsOverflow,
       billingAmount,
       amountPaid,
       currentBalance,
@@ -801,7 +809,7 @@ export default function StayHistory() {
     (sum, r) => sum + (r.stayData.billingAmount || 0) + (r.stayData.manualAdjustment || 0),
     0
   );
-  const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsTotal || 0), 0);
+  const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
@@ -1032,7 +1040,7 @@ export default function StayHistory() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalReceiptsCredited.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Purchases credited against stay costs</p>
+            <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
         <Card>
@@ -1203,9 +1211,18 @@ export default function StayHistory() {
                         Receipts Credited{stayData.receiptsCount > 0 ? ` (${stayData.receiptsCount})` : ''}:
                       </span>
                       <span className="font-medium">
-                        {stayData.receiptsTotal > 0 ? `−$${stayData.receiptsTotal.toFixed(2)}` : '$0.00'}
+                        {stayData.receiptsApplied > 0 ? `−$${stayData.receiptsApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+
+                    {stayData.receiptsOverflow > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Receipt Credit Carried Forward:</span>
+                        <span className="font-medium text-green-600">
+                          −${stayData.receiptsOverflow.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
 
                     {(() => {
                       const bal = stayData.amountDue;
@@ -1403,7 +1420,7 @@ export default function StayHistory() {
                          paymentId: stayData.paymentId,
                          familyGroup: reservation.family_group,
                          totalAmount: stayData.billingAmount + stayData.manualAdjustment,
-                         receiptsCredited: stayData.receiptsTotal,
+                         receiptsCredited: stayData.receiptsApplied,
                          receiptsCount: stayData.receiptsCount,
                          balanceAfterStay: stayData.amountDue
                        })}
