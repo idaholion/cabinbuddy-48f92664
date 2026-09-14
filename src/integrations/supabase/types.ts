@@ -584,6 +584,53 @@ export type Database = {
           },
         ]
       }
+      credit_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_user_id: string | null
+          from_ledger_name: string
+          id: string
+          notes: string | null
+          organization_id: string
+          to_ledger_name: string
+          transfer_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_user_id?: string | null
+          from_ledger_name: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          to_ledger_name: string
+          transfer_date?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          from_ledger_name?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          to_ledger_name?: string
+          transfer_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transfers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_checklists: {
         Row: {
           checklist_type: string

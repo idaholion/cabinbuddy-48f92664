@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -12,6 +12,7 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useUserRole } from "@/hooks/useUserRole";
 import { usePayments } from "@/hooks/usePayments";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useCreditTransfers } from "@/hooks/useCreditTransfers";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays, addDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
@@ -20,6 +21,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
+import { TransferCreditDialog } from "@/components/TransferCreditDialog";
 
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
@@ -43,6 +45,10 @@ export default function StayHistory() {
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferDialogSourceKey, setTransferDialogSourceKey] = useState<string | null>(null);
+  const [transferDialogSourceLabel, setTransferDialogSourceLabel] = useState<string>("");
+  const [transferDialogCredit, setTransferDialogCredit] = useState<number>(0);
   
 
   const { user } = useAuth();
@@ -61,6 +67,11 @@ export default function StayHistory() {
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
   const { syncing, syncPayments } = usePaymentSync();
+  const { transfers: creditTransfers, createTransfer, refetchTransfers } = useCreditTransfers();
+
+  const currentUserLedgerKey = user?.email
+    ? `p:${user.email.trim().toLowerCase()}`
+    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
@@ -172,6 +183,7 @@ export default function StayHistory() {
         refetchReservations();
         fetchPayments(1, 500);
         fetchPaymentSplits();
+        refetchTransfers();
       }
     };
 
@@ -484,7 +496,7 @@ export default function StayHistory() {
   // pool: unspent funds carried forward for this person, tagged by source so a
   // later stay's coverage is attributed to payments vs receipts (never a
   // generic "earlier credit" bucket). Mutated in place by each stay.
-  const calculateStayData = (reservation: any, previousBalance: number = 0, pool: { payment: number; receipt: number } = { payment: 0, receipt: 0 }) => {
+  const calculateStayData = (reservation: any, previousBalance: number = 0, pool: { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] } = { payment: 0, receipt: 0, transferInQueue: [] }) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
       const splitPayment = reservation.splitData.payment;
@@ -494,6 +506,21 @@ export default function StayHistory() {
       const paidRaw = Math.max(0, Number(splitPayment.amount_paid) || 0);
       const ownPaidApplied = Math.min(paidRaw, chargesDue);
       let remaining = chargesDue - ownPaidApplied;
+
+      // Transferred credit is applied first — it was intentionally moved between people.
+      const carriedInTransfers: { amount: number; fromName: string; notes?: string }[] = [];
+      let transferRemaining = remaining;
+      while (transferRemaining > 0.004 && pool.transferInQueue.length > 0) {
+        const head = pool.transferInQueue[0];
+        const use = Math.min(head.remaining, transferRemaining);
+        head.remaining -= use;
+        transferRemaining -= use;
+        carriedInTransfers.push({ amount: use, fromName: head.fromName, notes: head.notes });
+        if (head.remaining <= 0.004) pool.transferInQueue.shift();
+      }
+      const carriedInTransfer = carriedInTransfers.reduce((sum, t) => sum + t.amount, 0);
+      remaining -= carriedInTransfer;
+
       const carriedInPayment = Math.min(pool.payment, remaining);
       pool.payment -= carriedInPayment; remaining -= carriedInPayment;
       const carriedInReceipt = Math.min(pool.receipt, remaining);
@@ -509,11 +536,14 @@ export default function StayHistory() {
         receiptsApplied: carriedInReceipt,
         receiptsOverflow: 0,
         paidApplied,
-        priorCreditApplied: carriedInPayment + carriedInReceipt,
+        transferredInApplied: carriedInTransfer,
+        carriedInTransfers,
+        priorCreditApplied: carriedInPayment + carriedInReceipt + carriedInTransfer,
         unpaidRemaining,
         chargesDue,
         carriedInPayment,
         carriedInReceipt,
+        carriedInTransfer,
         billingAmount: Number(splitPayment.amount) || 0,
         amountPaid: Number(splitPayment.amount_paid) || 0,
         currentBalance: Number(splitPayment.balance_due) || 0,
@@ -691,23 +721,37 @@ export default function StayHistory() {
     const amountDue = currentBalance + previousBalance;
 
     // Allocation of THIS stay's charges: this stay's own cash/check payments
-    // first, then this stay's receipts, then credit carried in from earlier
-    // stays — tagged by source so carried payment credit counts as payments
-    // and carried receipt credit counts as receipts. What remains is unpaid;
-    // overpayments and receipt overflow carry forward into the tagged pool.
+    // first, then this stay's receipts, then transferred-in credit, then
+    // tagged carryover credit (payment vs receipt sources). What remains is
+    // unpaid; overpayments and receipt overflow carry forward into the tagged pool.
     const chargesDue = Math.max(0, billingAmount + manualAdjustment);
     const paidRaw = Math.max(0, amountPaid);
     const receiptsRaw = Math.max(0, receiptsTotal);
     const ownPaidApplied = Math.min(paidRaw, chargesDue);
     const ownReceiptsApplied = Math.min(receiptsRaw, chargesDue - ownPaidApplied);
     let remaining = chargesDue - ownPaidApplied - ownReceiptsApplied;
+
+    // Transferred credit is applied first — it was intentionally moved between people.
+    const carriedInTransfers: { amount: number; fromName: string; notes?: string }[] = [];
+    let transferRemaining = remaining;
+    while (transferRemaining > 0.004 && pool.transferInQueue.length > 0) {
+      const head = pool.transferInQueue[0];
+      const use = Math.min(head.remaining, transferRemaining);
+      head.remaining -= use;
+      transferRemaining -= use;
+      carriedInTransfers.push({ amount: use, fromName: head.fromName, notes: head.notes });
+      if (head.remaining <= 0.004) pool.transferInQueue.shift();
+    }
+    const carriedInTransfer = carriedInTransfers.reduce((sum, t) => sum + t.amount, 0);
+    remaining -= carriedInTransfer;
+
     const carriedInPayment = Math.min(pool.payment, remaining);
     pool.payment -= carriedInPayment; remaining -= carriedInPayment;
     const carriedInReceipt = Math.min(pool.receipt, remaining);
     pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
     const paidApplied = ownPaidApplied + carriedInPayment;
     const receiptsApplied = ownReceiptsApplied + carriedInReceipt;
-    const priorCreditApplied = carriedInPayment + carriedInReceipt;
+    const priorCreditApplied = carriedInPayment + carriedInReceipt + carriedInTransfer;
     const unpaidRemaining = Math.max(0, remaining);
     const receiptsOverflow = Math.max(0, receiptsRaw - ownReceiptsApplied);
     pool.payment += paidRaw - ownPaidApplied; // overpayment carries forward, payment-tagged
@@ -720,11 +764,14 @@ export default function StayHistory() {
       receiptsApplied,
       receiptsOverflow,
       paidApplied,
+      transferredInApplied: carriedInTransfer,
+      carriedInTransfers,
       priorCreditApplied,
       unpaidRemaining,
       chargesDue,
       carriedInPayment,
       carriedInReceipt,
+      carriedInTransfer,
 
       billingAmount,
       amountPaid,
@@ -777,21 +824,103 @@ export default function StayHistory() {
     return 'unknown';
   };
 
+  // Build a map of ledger key -> display name so transfer records are shown
+  // with the recipient/source person, not a raw key.
+  const transferDisplayNameMap = new Map<string, string>();
+  for (const group of (familyGroups || []) as any[]) {
+    const members = Array.isArray(group.host_members) ? group.host_members : [];
+    for (const member of members) {
+      if (!member?.name) continue;
+      const key = member.email
+        ? `p:${String(member.email).trim().toLowerCase()}`
+        : `n:${String(member.name).trim().toLowerCase()}`;
+      if (!transferDisplayNameMap.has(key)) {
+        transferDisplayNameMap.set(key, member.name);
+      }
+    }
+  }
+  const getTransferDisplayName = (key: string) => transferDisplayNameMap.get(key) || key;
 
-  
+  // Group credit transfers by source and target ledger key, ordered by date.
+  const transfersBySource = new Map<string, any[]>();
+  const transfersByTarget = new Map<string, any[]>();
+  for (const t of creditTransfers || []) {
+    const sList = transfersBySource.get(t.from_ledger_name) || [];
+    sList.push(t);
+    transfersBySource.set(t.from_ledger_name, sList);
+    const tList = transfersByTarget.get(t.to_ledger_name) || [];
+    tList.push(t);
+    transfersByTarget.set(t.to_ledger_name, tList);
+  }
+  for (const list of [...transfersBySource.values(), ...transfersByTarget.values()]) {
+    list.sort((a, b) => parseDateOnly(a.transfer_date).getTime() - parseDateOnly(b.transfer_date).getTime());
+  }
+
   // Simple chronological ledger: for each host, walk stays oldest → newest and
   // let each stay's newBalance = previousBalance + charges - payments - receipts.
   // Alongside the balance, a source-tagged pool ({payment, receipt}) tracks
   // unspent funds so carried credit is attributed to its original source.
+  // Transfers in/out mutate the pool before/after the relevant stay dates.
   const hostBalances = new Map<string, number>();
-  const hostPools = new Map<string, { payment: number; receipt: number }>();
+  const hostPools = new Map<string, { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }>();
+  const hostTransferPointers = new Map<string, { outIndex: number; inIndex: number }>();
   const reservationsWithBalance: any[] = [];
+
+  const applyOutgoingTransfers = (hostKey: string, beforeDate: Date, pool: { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }) => {
+    const list = transfersBySource.get(hostKey);
+    if (!list) return;
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    while (ptr.outIndex < list.length && parseDateOnly(list[ptr.outIndex].transfer_date).getTime() <= beforeDate.getTime()) {
+      const t = list[ptr.outIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
+      let remainingOut = amount;
+      const fromPayment = Math.min(pool.payment, remainingOut);
+      pool.payment -= fromPayment; remainingOut -= fromPayment;
+      const fromReceipt = Math.min(pool.receipt, remainingOut);
+      pool.receipt -= fromReceipt; remainingOut -= fromReceipt;
+      const transferPoolTotal = pool.transferInQueue.reduce((sum, q) => sum + q.remaining, 0);
+      const fromTransfer = Math.min(transferPoolTotal, remainingOut);
+      if (fromTransfer > 0) {
+        let toDrain = fromTransfer;
+        for (const head of pool.transferInQueue) {
+          if (toDrain <= 0.004) break;
+          const drain = Math.min(head.remaining, toDrain);
+          head.remaining -= drain;
+          toDrain -= drain;
+        }
+        pool.transferInQueue = pool.transferInQueue.filter(q => q.remaining > 0.004);
+      }
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  };
+
+  const applyIncomingTransfers = (hostKey: string, beforeDate: Date, pool: { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }) => {
+    const list = transfersByTarget.get(hostKey);
+    if (!list) return;
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    while (ptr.inIndex < list.length && parseDateOnly(list[ptr.inIndex].transfer_date).getTime() <= beforeDate.getTime()) {
+      const t = list[ptr.inIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      pool.transferInQueue.push({
+        id: t.id,
+        fromName: getTransferDisplayName(t.from_ledger_name),
+        notes: t.notes,
+        remaining: amount,
+      });
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  };
 
   for (const reservation of sortedReservations) {
     const hostKey = getLedgerKey(reservation);
-    const previousBalance = hostBalances.get(hostKey) || 0;
-    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
     hostPools.set(hostKey, pool);
+    const beforeDate = parseDateOnly(reservation.start_date);
+    applyOutgoingTransfers(hostKey, beforeDate, pool);
+    applyIncomingTransfers(hostKey, beforeDate, pool);
+    const previousBalance = hostBalances.get(hostKey) || 0;
     const stayData = calculateStayData(reservation, previousBalance, pool);
     // stayData.currentBalance is the *charge* delta for this stay
     // (billing + adjustment - payments - receipts). amountDue already = prev + delta.
@@ -831,6 +960,52 @@ export default function StayHistory() {
     const hostKey = getLedgerKey(reservation);
     if (!lastReservationByHost.has(hostKey)) {
       lastReservationByHost.set(hostKey, reservation.id);
+    }
+  }
+
+  // Apply any credit transfers dated after the last stay for each host so the
+  // final balance reflects them. Only adjust the amountDue on the host's last
+  // visible stay; hostBalances is also updated for any downstream summary math.
+  const postStayAdjustments = new Map<string, number>();
+  for (const [hostKey, list] of transfersBySource.entries()) {
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
+    while (ptr.outIndex < list.length) {
+      const t = list[ptr.outIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
+      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) + amount);
+      let remainingOut = amount;
+      const fromPayment = Math.min(pool.payment, remainingOut);
+      pool.payment -= fromPayment; remainingOut -= fromPayment;
+      const fromReceipt = Math.min(pool.receipt, remainingOut);
+      pool.receipt -= fromReceipt; remainingOut -= fromReceipt;
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  }
+  for (const [hostKey, list] of transfersByTarget.entries()) {
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
+    while (ptr.inIndex < list.length) {
+      const t = list[ptr.inIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) - amount);
+      pool.transferInQueue.push({
+        id: t.id,
+        fromName: getTransferDisplayName(t.from_ledger_name),
+        notes: t.notes,
+        remaining: amount,
+      });
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  }
+  for (const [hostKey, adj] of postStayAdjustments.entries()) {
+    const lastId = lastReservationByHost.get(hostKey);
+    if (!lastId) continue;
+    const item = reservationsWithBalance.find(r => r.reservation.id === lastId);
+    if (item) {
+      item.stayData.amountDue += adj;
     }
   }
 
@@ -884,6 +1059,7 @@ export default function StayHistory() {
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
   const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
+  const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
 
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
@@ -892,7 +1068,29 @@ export default function StayHistory() {
     return item ? sum + item.stayData.amountDue : sum;
   }, 0);
 
+  // Map each person with a credit balance to the amount available to transfer.
+  // Used for both self-service transfer buttons and admin source selection.
+  const hostCreditMap = new Map<string, number>();
+  for (const [hostKey, resId] of lastReservationByHost.entries()) {
+    const item = fullLedger.find(r => r.reservation.id === resId);
+    if (item && item.stayData.amountDue < -0.004) {
+      hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
+    }
+  }
+  const currentUserHasTransferableCredit = currentUserLedgerKey
+    ? (hostCreditMap.get(currentUserLedgerKey) || 0)
+    : 0;
 
+
+
+  // Credit transfers visible in the current view (source or recipient belongs to a host shown).
+  const visibleHostKeys = new Set<string>();
+  for (const { reservation } of displayReservations) {
+    visibleHostKeys.add(getLedgerKey(reservation));
+  }
+  const visibleTransfers = (creditTransfers || []).filter(t =>
+    visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
+  );
 
   // Count orphaned payments (for admin debugging)
   // Exclude intentional split payments (reservation_id is null by design)
@@ -1118,6 +1316,18 @@ export default function StayHistory() {
             <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
+        {totalTransferredInApplied > 0.004 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Paid via Transferred Credit</CardTitle>
+              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${totalTransferredInApplied.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Credit moved between family members</p>
+            </CardContent>
+          </Card>
+        )}
         {totalStillOwed > 0.004 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1152,10 +1362,61 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
+              {selectedFamilyGroup !== 'all' && currentBalance < -0.004 && (isAdmin || currentUserHasTransferableCredit > 0.004) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={() => {
+                    if (isAdmin) {
+                      setTransferDialogSourceKey(null);
+                      setTransferDialogSourceLabel("");
+                      setTransferDialogCredit(0);
+                    } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
+                      setTransferDialogSourceKey(currentUserLedgerKey);
+                      setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
+                      setTransferDialogCredit(currentUserHasTransferableCredit);
+                    }
+                    setTransferDialogOpen(true);
+                  }}
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Transfer Credit
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
       </div>
+
+      {visibleTransfers.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Credit Transfers</h2>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {visibleTransfers
+                  .slice()
+                  .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
+                  .map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-4">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">
+                          {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
+                          {t.notes ? ` · ${t.notes}` : ''}
+                        </div>
+                      </div>
+                      <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
 
       {/* Past Stays List */}
@@ -1318,6 +1579,20 @@ export default function StayHistory() {
                       <div className="text-xs text-muted-foreground italic text-right -mt-1">
                         includes credit applied from a later stay's receipts
                       </div>
+                    )}
+
+                    {(stayData.carriedInTransfer || 0) > 0.004 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Transferred Credit:</span>
+                          <span className="font-medium">−${stayData.carriedInTransfer.toFixed(2)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                          includes {stayData.carriedInTransfers.map((t: any, i: number) => (
+                            `${i > 0 ? ', ' : ''}$${t.amount.toFixed(2)} from ${t.fromName}${t.notes ? ` (${t.notes})` : ''}`
+                          )).join('')}
+                        </div>
+                      </>
                     )}
 
                     {stayData.receiptsOverflow > 0 && (
@@ -1746,6 +2021,32 @@ export default function StayHistory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TransferCreditDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        sourceKey={transferDialogSourceKey}
+        sourceLabel={transferDialogSourceLabel}
+        availableCredit={transferDialogCredit}
+        familyGroups={familyGroups || []}
+        isAdmin={!!isAdmin}
+        creditBySource={Object.fromEntries(hostCreditMap)}
+        onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
+          const result = await createTransfer({
+            from_ledger_name,
+            to_ledger_name,
+            amount,
+            transfer_date,
+            notes,
+          });
+          if (result) {
+            toast.success('Credit transferred successfully');
+            await refetchTransfers();
+            await fetchPayments(1, 500);
+            setTransferDialogOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }
