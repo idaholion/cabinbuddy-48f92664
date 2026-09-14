@@ -1113,7 +1113,7 @@ export default function StayHistory() {
         : (visibleReservations.length
             ? [...visibleReservations].sort((a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime())[0].start_date
             : `${new Date().getFullYear()}-01-01`),
-      endDate: selectedYear && selectedYear !== 'all'
+      endDate: selectedYear !== 0
         ? `${selectedYear}-12-31`
         : (visibleReservations.length
             ? [...visibleReservations].sort((a, b) => parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime())[0].end_date
