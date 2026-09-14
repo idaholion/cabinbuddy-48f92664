@@ -191,7 +191,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
              end_date: defaultEndDate
            }];
          }
-       } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
+       } else if ((canEditReservations || isCalendarKeeper || isAdmin) && userFamilyGroup) {
         // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
         
