@@ -38,9 +38,11 @@ export const ExportSeasonDataDialog = ({
   const [includeBilling, setIncludeBilling] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  const actualYear = year || seasonYear || new Date().getFullYear();
+  const actualYear = year ?? seasonYear ?? 0;
 
   if (!seasonData) return null;
+
+  const yearLabel = actualYear ? String(actualYear) : 'All Years';
 
   const generateCSV = () => {
     const headers = [
@@ -140,7 +142,7 @@ export const ExportSeasonDataDialog = ({
       const url = URL.createObjectURL(blob);
       
       link.setAttribute('href', url);
-      link.setAttribute('download', `season_${seasonYear}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      link.setAttribute('download', `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
       link.style.visibility = 'hidden';
       
       document.body.appendChild(link);
@@ -149,7 +151,7 @@ export const ExportSeasonDataDialog = ({
 
       toast({
         title: 'Export Successful',
-        description: `Season ${seasonYear} data has been exported to CSV.`,
+        description: `${yearLabel} stay data has been exported to CSV.`,
       });
 
       onOpenChange(false);
@@ -171,14 +173,14 @@ export const ExportSeasonDataDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            Export Season {seasonYear} Data
+            Export {yearLabel} Stay Data
           </DialogTitle>
         </DialogHeader>
 
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Export complete season summary data for record-keeping and analysis.
+            Exports the stays currently shown on your Stay History page, for record-keeping and analysis.
           </AlertDescription>
         </Alert>
 
