@@ -34,6 +34,12 @@ interface TransferCreditDialogProps {
   familyGroups: any[];
   isAdmin: boolean;
   creditBySource?: Record<string, number>;
+  /** Whose credit this person may move: their own, anyone in their group, or anyone. */
+  scope?: "own" | "group" | "all";
+  /** Family group name the "group" scope is limited to. */
+  scopeGroupName?: string;
+  /** Ledger key of the signed-in person, used to confirm on-behalf-of transfers. */
+  currentUserKey?: string;
   onTransfer: (data: {
     from_ledger_name: string;
     to_ledger_name: string;
@@ -52,6 +58,9 @@ export const TransferCreditDialog = ({
   familyGroups,
   isAdmin,
   creditBySource,
+  scope,
+  scopeGroupName,
+  currentUserKey,
   onTransfer,
 }: TransferCreditDialogProps) => {
   const members = useMemo<MemberOption[]>(() => {
