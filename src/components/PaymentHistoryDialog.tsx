@@ -28,6 +28,12 @@ interface PaymentHistoryDialogProps {
   paymentId: string;
   familyGroup: string;
   totalAmount: number;
+  /** Receipt purchases credited against this stay */
+  receiptsCredited?: number;
+  /** Number of receipts credited against this stay */
+  receiptsCount?: number;
+  /** Running ledger balance after this stay (negative = credit) */
+  balanceAfterStay?: number;
   onPaymentUpdated: () => void;
 }
 
@@ -37,6 +43,9 @@ export const PaymentHistoryDialog = ({
   paymentId,
   familyGroup,
   totalAmount,
+  receiptsCredited = 0,
+  receiptsCount = 0,
+  balanceAfterStay,
   onPaymentUpdated,
 }: PaymentHistoryDialogProps) => {
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -137,13 +146,32 @@ export const PaymentHistoryDialog = ({
                   <span className="text-muted-foreground">Amount Paid:</span>
                   <span className="font-medium">${payment.amount_paid.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Receipts Credited{receiptsCount > 0 ? ` (${receiptsCount})` : ''}:
+                  </span>
+                  <span className="font-medium">${receiptsCredited.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between text-sm border-t pt-2">
                   <span className="font-semibold">Balance Due:</span>
                   <span className={`font-bold ${balanceDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
                     ${balanceDue.toFixed(2)}
                   </span>
                 </div>
+                {balanceAfterStay !== undefined && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {balanceAfterStay < 0 ? 'Credit Remaining After This Stay:' : 'Running Balance After This Stay:'}
+                    </span>
+                    <span className={`font-medium ${
+                      balanceAfterStay > 0 ? 'text-destructive' : balanceAfterStay < 0 ? 'text-green-600' : ''
+                    }`}>
+                      ${Math.abs(balanceAfterStay).toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </div>
+
 
               {/* Payment Details */}
               {payment.amount_paid > 0 ? (

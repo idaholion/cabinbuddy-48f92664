@@ -797,6 +797,11 @@ export default function StayHistory() {
     return sum + differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
   }, 0);
   const totalPaid = displayReservations.reduce((sum, r) => sum + (r.stayData.amountPaid || 0), 0);
+  const totalCharges = displayReservations.reduce(
+    (sum, r) => sum + (r.stayData.billingAmount || 0) + (r.stayData.manualAdjustment || 0),
+    0
+  );
+  const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsTotal || 0), 0);
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
@@ -981,7 +986,7 @@ export default function StayHistory() {
 
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Stays</CardTitle>
@@ -1002,16 +1007,39 @@ export default function StayHistory() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Charges</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalCharges.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Stay costs for the stays shown</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalPaid.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Cash, check, Venmo and other payments</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Receipts Credited</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalReceiptsCredited.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">Purchases credited against stay costs</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              {currentBalance < 0 ? 'Credit Remaining' : 'Current Balance'}
+            </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1020,11 +1048,17 @@ export default function StayHistory() {
               currentBalance < 0 ? 'text-green-600 dark:text-green-400' : 
               ''
             }`}>
-              {currentBalance < 0 ? '+' : ''}${Math.abs(currentBalance).toFixed(2)}
+              ${Math.abs(currentBalance).toFixed(2)}
             </div>
+            {currentBalance < 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                From payments and receipts above total charges
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
+
 
       {/* Past Stays List */}
       <div className="space-y-4">
@@ -1368,7 +1402,10 @@ export default function StayHistory() {
                        onClick={() => setViewPaymentHistory({
                          paymentId: stayData.paymentId,
                          familyGroup: reservation.family_group,
-                         totalAmount: stayData.billingAmount + stayData.manualAdjustment
+                         totalAmount: stayData.billingAmount + stayData.manualAdjustment,
+                         receiptsCredited: stayData.receiptsTotal,
+                         receiptsCount: stayData.receiptsCount,
+                         balanceAfterStay: stayData.amountDue
                        })}
                      >
                        <Receipt className="h-4 w-4 mr-2" />
@@ -1546,6 +1583,9 @@ export default function StayHistory() {
           paymentId={viewPaymentHistory.paymentId}
           familyGroup={viewPaymentHistory.familyGroup}
           totalAmount={viewPaymentHistory.totalAmount}
+          receiptsCredited={viewPaymentHistory.receiptsCredited}
+          receiptsCount={viewPaymentHistory.receiptsCount}
+          balanceAfterStay={viewPaymentHistory.balanceAfterStay}
           onPaymentUpdated={async () => {
             await fetchPayments(1, 500);
           }}
