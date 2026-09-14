@@ -1446,6 +1446,12 @@ export default function StayHistory() {
                           {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
                           {t.notes ? ` · ${t.notes}` : ''}
                         </div>
+                        {t.created_by_user_id && user?.id === t.created_by_user_id &&
+                          currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
+                          <div className="text-xs text-muted-foreground italic">
+                            Recorded by you on their behalf
+                          </div>
+                        )}
                       </div>
                       <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
                     </div>
