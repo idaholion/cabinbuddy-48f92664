@@ -73,6 +73,20 @@ export default function StayHistory() {
     ? `p:${user.email.trim().toLowerCase()}`
     : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
 
+  // Group leads may move credit for members of their own group only when the
+  // organization has enabled that privilege. Admins always have full rights.
+  const leadGroupName = userFamilyGroup || claimedProfile?.family_group_name || undefined;
+  const leadCanTransferForGroup =
+    !isAdmin &&
+    !!(organization as any)?.allow_lead_credit_transfers &&
+    !!isGroupLead &&
+    !!leadGroupName;
+  const transferScope: 'own' | 'group' | 'all' = isAdmin
+    ? 'all'
+    : leadCanTransferForGroup
+      ? 'group'
+      : 'own';
+
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
   console.log('[StayHistory] Component state:', {
