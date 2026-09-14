@@ -2218,6 +2218,19 @@ const CheckoutFinal = () => {
           />
         )}
       </div>
+
+      <TransferCreditDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        sourceKey={transferSourceKey || null}
+        sourceLabel={transferSourceLabel}
+        availableCredit={Math.max(0, -totalAmount)}
+        familyGroups={familyGroups}
+        isAdmin={isAdmin}
+        onTransfer={async (data) => {
+          await createTransfer(data);
+        }}
+      />
     </div>
   );
 };
