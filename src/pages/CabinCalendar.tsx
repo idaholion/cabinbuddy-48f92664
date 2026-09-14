@@ -26,6 +26,7 @@ import { ExtendSelectionDialog } from "@/components/ExtendSelectionDialog";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useEffect, useRef } from "react";
