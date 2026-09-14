@@ -2171,8 +2171,9 @@ export default function StayHistory() {
         <ExportSeasonDataDialog
           open={showExportDialog}
           onOpenChange={setShowExportDialog}
-          seasonData={null}
+          seasonData={exportSeasonData}
           year={selectedYear || new Date().getFullYear()}
+          isAdminView={isAdmin}
         />
       )}
 
