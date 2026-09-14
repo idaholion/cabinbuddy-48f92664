@@ -1292,9 +1292,14 @@ export default function StayHistory() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
                       <span className="font-medium">
-                        {stayData.amountPaid > 0 ? `−$${stayData.amountPaid.toFixed(2)}` : '$0.00'}
+                        {(stayData.paidApplied || 0) > 0 ? `−$${stayData.paidApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.carriedInPayment || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes ${stayData.carriedInPayment.toFixed(2)} payment credit carried in
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
@@ -1304,6 +1309,16 @@ export default function StayHistory() {
                         {stayData.receiptsApplied > 0 ? `−$${stayData.receiptsApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.carriedInReceipt || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes ${stayData.carriedInReceipt.toFixed(2)} receipt credit carried in
+                      </div>
+                    )}
+                    {stayData.receiptsApplied - (stayData.carriedInReceipt || 0) > (stayData.receiptsTotal || 0) + 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes credit applied from a later stay's receipts
+                      </div>
+                    )}
 
                     {stayData.receiptsOverflow > 0 && (
                       <div className="flex justify-between text-sm">
