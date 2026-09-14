@@ -667,10 +667,18 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
+    // Portion of this stay's receipts that actually paid down charges, vs the
+    // overflow that simply became credit on the books.
+    const owedBeforeReceipts = Math.max(0, previousBalance + billingAmount + manualAdjustment - amountPaid);
+    const receiptsApplied = Math.min(receiptsTotal, owedBeforeReceipts);
+    const receiptsOverflow = receiptsTotal - receiptsApplied;
+
     return {
       nights,
       receiptsTotal,
       receiptsCount,
+      receiptsApplied,
+      receiptsOverflow,
       billingAmount,
       amountPaid,
       currentBalance,
