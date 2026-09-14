@@ -1629,13 +1629,33 @@ export default function StayHistory() {
                       <CreditCard className="h-5 w-5 text-green-600" />
                       <h4 className="text-base font-medium">Credit Options</h4>
                     </div>
-                    <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-4">
+                    <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-4 space-y-2">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
                           Credit applied to future reservations
                         </p>
                       </div>
+                      {(() => {
+                        const hostKey = getLedgerKey(reservation);
+                        const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                        if (!canTransfer || stayData.amountDue >= -0.004) return null;
+                        return (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              setTransferDialogSourceKey(hostKey);
+                              setTransferDialogSourceLabel(getTransferDisplayName(hostKey));
+                              setTransferDialogCredit(Math.abs(stayData.amountDue));
+                              setTransferDialogOpen(true);
+                            }}
+                          >
+                            <ArrowRightLeft className="h-4 w-4 mr-2" />
+                            Transfer Credit to Another Member
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
