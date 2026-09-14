@@ -1389,6 +1389,35 @@ export default function StayHistory() {
         )}
       </div>
 
+      {visibleTransfers.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Credit Transfers</h2>
+          <Card>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {visibleTransfers
+                  .slice()
+                  .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
+                  .map(t => (
+                    <div key={t.id} className="flex items-center justify-between p-4">
+                      <div className="space-y-0.5">
+                        <div className="text-sm font-medium">
+                          {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
+                          {t.notes ? ` · ${t.notes}` : ''}
+                        </div>
+                      </div>
+                      <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
 
       {/* Past Stays List */}
       <div className="space-y-4">
