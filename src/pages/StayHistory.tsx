@@ -855,6 +855,19 @@ export default function StayHistory() {
   }
   const getTransferDisplayName = (key: string) => transferDisplayNameMap.get(key) || key;
 
+  // Ledger key -> family group name, used for group-lead transfer permissions.
+  const memberGroupMap = new Map<string, string>();
+  for (const group of (familyGroups || []) as any[]) {
+    const members = Array.isArray(group.host_members) ? group.host_members : [];
+    for (const member of members) {
+      if (!member?.name) continue;
+      const key = member.email
+        ? `p:${String(member.email).trim().toLowerCase()}`
+        : `n:${String(member.name).trim().toLowerCase()}`;
+      if (!memberGroupMap.has(key)) memberGroupMap.set(key, group.name);
+    }
+  }
+
   // Group credit transfers by source and target ledger key, ordered by date.
   const transfersBySource = new Map<string, any[]>();
   const transfersByTarget = new Map<string, any[]>();
