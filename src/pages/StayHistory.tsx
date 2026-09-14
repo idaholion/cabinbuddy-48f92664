@@ -667,11 +667,16 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
-    // Portion of this stay's receipts that actually paid down charges, vs the
-    // overflow that simply became credit on the books.
-    const owedBeforeReceipts = Math.max(0, previousBalance + billingAmount + manualAdjustment - amountPaid);
-    const receiptsApplied = Math.min(receiptsTotal, owedBeforeReceipts);
-    const receiptsOverflow = receiptsTotal - receiptsApplied;
+    // Allocation of THIS stay's charges: cash/check payments first, then receipt
+    // credit, then any credit carried in from earlier stays. Anything left is
+    // still owed. These four always sum to this stay's charges.
+    const chargesDue = Math.max(0, billingAmount + manualAdjustment);
+    const paidApplied = Math.min(Math.max(0, amountPaid), chargesDue);
+    const receiptsApplied = Math.min(Math.max(0, receiptsTotal), chargesDue - paidApplied);
+    const priorCreditAvailable = Math.max(0, -previousBalance);
+    const priorCreditApplied = Math.min(priorCreditAvailable, chargesDue - paidApplied - receiptsApplied);
+    const unpaidRemaining = chargesDue - paidApplied - receiptsApplied - priorCreditApplied;
+    const receiptsOverflow = Math.max(0, receiptsTotal - receiptsApplied);
 
     return {
       nights,
@@ -679,6 +684,11 @@ export default function StayHistory() {
       receiptsCount,
       receiptsApplied,
       receiptsOverflow,
+      paidApplied,
+      priorCreditApplied,
+      unpaidRemaining,
+      chargesDue,
+
       billingAmount,
       amountPaid,
       currentBalance,
@@ -804,12 +814,15 @@ export default function StayHistory() {
     }
     return sum + differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
   }, 0);
-  const totalPaid = displayReservations.reduce((sum, r) => sum + (r.stayData.amountPaid || 0), 0);
+  const totalPaid = displayReservations.reduce((sum, r) => sum + (r.stayData.paidApplied || 0), 0);
   const totalCharges = displayReservations.reduce(
     (sum, r) => sum + (r.stayData.billingAmount || 0) + (r.stayData.manualAdjustment || 0),
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
+  const totalPriorCreditApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.priorCreditApplied || 0), 0);
+  const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
+
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
@@ -1043,6 +1056,31 @@ export default function StayHistory() {
             <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
+        {totalPriorCreditApplied > 0.004 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Charges Paid from Earlier Credit</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${totalPriorCreditApplied.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Credit carried in from earlier stays</p>
+            </CardContent>
+          </Card>
+        )}
+        {totalStillOwed > 0.004 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Charges Still Unpaid</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">${totalStillOwed.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Not yet covered by payments or credit</p>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
