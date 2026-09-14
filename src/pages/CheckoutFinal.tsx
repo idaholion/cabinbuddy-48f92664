@@ -174,6 +174,12 @@ const CheckoutFinal = () => {
   };
   
   const { isAdmin, isImpersonating } = useEffectiveRole();
+  const impersonationGuard = useImpersonationGuard();
+  const blockWhileImpersonating = () => {
+    if (!impersonationGuard.isImpersonating) return false;
+    toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
+    return true;
+  };
   const { familyGroups } = useFamilyGroups();
   const { createTransfer } = useCreditTransfers();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);

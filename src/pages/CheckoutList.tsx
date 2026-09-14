@@ -36,6 +36,7 @@ const CheckoutList = () => {
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin, isImpersonating } = useEffectiveRole();
+  const impersonationGuard = useImpersonationGuard();
   const { saveResponse } = useSurveyResponses();
   const { profile } = useProfile();
   const { user } = useAuth();
