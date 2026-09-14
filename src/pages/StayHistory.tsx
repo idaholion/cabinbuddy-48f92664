@@ -1400,13 +1400,13 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
-              {(isAdmin ? hostCreditMap.size > 0 : currentUserHasTransferableCredit > 0.004) && (
+              {transferableCreditKeys.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-3 w-full"
                   onClick={() => {
-                    if (isAdmin) {
+                    if (isAdmin || leadCanTransferForGroup) {
                       setTransferDialogSourceKey(null);
                       setTransferDialogSourceLabel("");
                       setTransferDialogCredit(0);
