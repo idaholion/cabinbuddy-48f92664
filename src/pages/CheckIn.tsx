@@ -58,25 +58,31 @@ const CheckIn = () => {
     const matchingReservation = reservations.find(res => {
       const startDate = parseDateOnly(res.start_date);
       const endDate = parseDateOnly(res.end_date);
-      
+
       const dateInRange = startDate <= today && endDate >= today;
-      
+
       // Check if user is assigned as host for this reservation
-      const isAssignedHost = res.host_assignments?.some((assignment: any) => 
+      const isAssignedHost = res.host_assignments?.some((assignment: any) =>
         assignment.host_email?.toLowerCase() === userEmail
       );
-      
+
+      // Members given Daily/Final permission can see any current stay in their family group.
+      const canEditFamilyStay = canEditDailyFinal && userFamilyGroupName && res.family_group === userFamilyGroupName;
+
+      const matches = dateInRange && (isAssignedHost || canEditFamilyStay);
+
       console.log('📋 [CHECK-IN] Checking reservation:', {
         family: res.family_group,
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
         dateInRange,
         isAssignedHost,
+        canEditFamilyStay,
         hostAssignments: res.host_assignments,
-        matches: dateInRange && isAssignedHost
+        matches
       });
-      
-      return dateInRange && isAssignedHost;
+
+      return matches;
     });
     
     if (!matchingReservation) {
