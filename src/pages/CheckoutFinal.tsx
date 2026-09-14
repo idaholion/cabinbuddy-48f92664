@@ -233,7 +233,13 @@ const CheckoutFinal = () => {
         if (userIsHost) return true;
       }
       
-      // Option 3: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
+      // Option 3: Members who have been given Daily/Final permission can work with
+      // any stay in their own family group.
+      if (canEditDailyFinal && userFamilyGroupName && r.family_group === userFamilyGroupName) {
+        return true;
+      }
+
+      // Option 4: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
       return r.user_id === effectiveUserId;
     });
     
