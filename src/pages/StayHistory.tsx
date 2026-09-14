@@ -1108,6 +1108,17 @@ export default function StayHistory() {
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
     : 0;
 
+  // Members whose credit the signed-in person is allowed to move.
+  const canTransferForHostKey = (hostKey: string) => {
+    if (isAdmin) return true;
+    if (currentUserLedgerKey && hostKey === currentUserLedgerKey) return true;
+    if (leadCanTransferForGroup) {
+      return memberGroupMap.get(hostKey) === leadGroupName;
+    }
+    return false;
+  };
+  const transferableCreditKeys = Array.from(hostCreditMap.keys()).filter(canTransferForHostKey);
+
 
 
   // Credit transfers visible in the current view (source or recipient belongs to a host shown).
