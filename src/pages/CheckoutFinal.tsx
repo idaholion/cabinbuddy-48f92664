@@ -173,8 +173,9 @@ const CheckoutFinal = () => {
     setAvailableUsers(enrichedUsers);
   };
   
-  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const { isAdmin, isImpersonating, canEditDailyFinal, userFamilyGroup } = useEffectiveRole();
   const impersonationGuard = useImpersonationGuard();
+  const userFamilyGroupName = userFamilyGroup?.name;
   const blockWhileImpersonating = () => {
     if (!impersonationGuard.isImpersonating) return false;
     toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
