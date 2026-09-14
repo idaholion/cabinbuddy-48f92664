@@ -781,14 +781,18 @@ export default function StayHistory() {
   
   // Simple chronological ledger: for each host, walk stays oldest → newest and
   // let each stay's newBalance = previousBalance + charges - payments - receipts.
-  // No forward/backward overpayment cascade — running balance carries forward as-is.
+  // Alongside the balance, a source-tagged pool ({payment, receipt}) tracks
+  // unspent funds so carried credit is attributed to its original source.
   const hostBalances = new Map<string, number>();
+  const hostPools = new Map<string, { payment: number; receipt: number }>();
   const reservationsWithBalance: any[] = [];
 
   for (const reservation of sortedReservations) {
     const hostKey = getLedgerKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
-    const stayData = calculateStayData(reservation, previousBalance);
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0 };
+    hostPools.set(hostKey, pool);
+    const stayData = calculateStayData(reservation, previousBalance, pool);
     // stayData.currentBalance is the *charge* delta for this stay
     // (billing + adjustment - payments - receipts). amountDue already = prev + delta.
     reservationsWithBalance.push({ reservation, stayData });
