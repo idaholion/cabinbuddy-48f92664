@@ -1362,7 +1362,7 @@ export default function StayHistory() {
             </SelectContent>
           </Select>
 
-          {/* Scope toggle (group leads only) */}
+          {/* Scope toggle (group leads and members with Stay History permission) */}
           {isEffectiveLead && (
             <div className="inline-flex items-center rounded-md border bg-card p-1">
               <Button
