@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { useEffectiveRole, useImpersonationGuard } from "@/hooks/useEffectiveRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useSurveyResponses } from "@/hooks/useChecklistData";
@@ -35,7 +35,8 @@ const CheckoutList = () => {
   console.log('🔍 CheckoutList organization:', organization);
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
-  const { isAdmin } = useOrgAdmin();
+  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const impersonationGuard = useImpersonationGuard();
   const { saveResponse } = useSurveyResponses();
   const { profile } = useProfile();
   const { user } = useAuth();
@@ -335,6 +336,10 @@ const CheckoutList = () => {
   };
 
   const toggleTask = (taskId: string) => {
+    if (isImpersonating) {
+      toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
+      return;
+    }
     const newCheckedTasks = new Set(checkedTasks);
     if (newCheckedTasks.has(taskId)) {
       newCheckedTasks.delete(taskId);

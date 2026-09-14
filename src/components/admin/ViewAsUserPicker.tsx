@@ -148,56 +148,62 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
     setSearchParams(next, { replace: true });
   };
 
-  const label = isAdmin ? 'Admin view' : 'Delegate view';
-  const placeholder = isAdmin ? 'View as user...' : 'Act on behalf of...';
+  const label = isAdmin ? 'View as' : 'Delegate view';
+  const placeholder = isAdmin ? 'Admin (myself)' : 'Act on behalf of...';
 
   return (
-    <div className="mb-3 rounded-md border bg-card p-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Eye className="h-4 w-4" />
-          <span>{label}</span>
-        </div>
-        <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
-          <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent className="max-h-80">
-            <SelectItem value="__self__">Myself</SelectItem>
-            {Object.entries(grouped)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([fg, list]) => (
-                <SelectGroup key={fg}>
-                  <SelectLabel>{fg}</SelectLabel>
-                  {list.map((m) => (
-                    <SelectItem key={m.userId} value={m.userId}>
-                      {m.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-          </SelectContent>
-        </Select>
-        {members.length === 0 && (
-          <span className="text-xs text-muted-foreground">
-            {isAdmin
-              ? 'No claimed members found in this organization.'
-              : 'No other claimed members in your family group yet.'}
-          </span>
-        )}
-        {isImpersonating && target && (
-          <Button variant="outline" size="sm" onClick={() => handleSelect('__self__')}>
-            <X className="h-3.5 w-3.5 mr-1" /> Exit
-          </Button>
-        )}
-      </div>
+    <div className="mb-3 space-y-2">
       {isImpersonating && target && (
-        <div className="mt-2 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          ⚠️ You are viewing this page as <strong>{target.displayName}</strong>
-          {target.familyGroup ? <> ({target.familyGroup})</> : null}. Saves on this
-          page will be recorded as actions performed on their behalf.
+        <div className="sticky top-0 z-40 -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-500/60 bg-amber-100 px-4 py-3 text-amber-900 shadow-sm dark:bg-amber-950/60 dark:text-amber-100">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Eye className="h-4 w-4" />
+            <span>
+              Viewing as <strong>{target.displayName}</strong>
+              {target.familyGroup ? <> ({target.familyGroup})</> : null} — you are
+              seeing exactly what they see. Changes are disabled.
+            </span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => handleSelect('__self__')}>
+            <X className="h-3.5 w-3.5 mr-1" /> Return to Admin
+          </Button>
         </div>
       )}
+
+      <div className="rounded-md border bg-card p-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Eye className="h-4 w-4" />
+            <span>{label}</span>
+          </div>
+          <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent className="max-h-80">
+              <SelectItem value="__self__">{isAdmin ? 'Admin (myself)' : 'Myself'}</SelectItem>
+              {Object.entries(grouped)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([fg, list]) => (
+                  <SelectGroup key={fg}>
+                    <SelectLabel>{fg}</SelectLabel>
+                    {list.map((m) => (
+                      <SelectItem key={m.userId} value={m.userId}>
+                        {m.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+            </SelectContent>
+          </Select>
+          {members.length === 0 && (
+            <span className="text-xs text-muted-foreground">
+              {isAdmin
+                ? 'No claimed members found in this organization.'
+                : 'No other claimed members in your family group yet.'}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

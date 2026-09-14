@@ -9,7 +9,7 @@ import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
-import { useUserRole } from "@/hooks/useUserRole";
+
 import { usePayments } from "@/hooks/usePayments";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useCreditTransfers } from "@/hooks/useCreditTransfers";
@@ -29,6 +29,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,7 +62,7 @@ export default function StayHistory() {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, paymentMethods, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
+  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup, isImpersonating } = useEffectiveRole();
   const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
@@ -69,13 +70,19 @@ export default function StayHistory() {
   const { syncing, syncPayments } = usePaymentSync();
   const { transfers: creditTransfers, createTransfer, refetchTransfers } = useCreditTransfers();
 
-  const currentUserLedgerKey = user?.email
-    ? `p:${user.email.trim().toLowerCase()}`
-    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
+  const ledgerName = effective.isImpersonated
+    ? effective.displayName
+    : claimedProfile?.member_name;
+  const currentUserLedgerKey = effectiveUserEmail
+    ? `p:${effectiveUserEmail.trim().toLowerCase()}`
+    : (ledgerName ? `n:${String(ledgerName).trim().toLowerCase()}` : undefined);
 
   // Group leads may move credit for members of their own group only when the
   // organization has enabled that privilege. Admins always have full rights.
-  const leadGroupName = userFamilyGroup || claimedProfile?.family_group_name || undefined;
+  const leadGroupName = (effective.isImpersonated
+    ? effective.familyGroup
+    : (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name))
+    || claimedProfile?.family_group_name || undefined;
   const leadCanTransferForGroup =
     !isAdmin &&
     !!(organization as any)?.allow_lead_credit_transfers &&
@@ -86,6 +93,16 @@ export default function StayHistory() {
     : leadCanTransferForGroup
       ? 'group'
       : 'own';
+
+  // While viewing as someone else, the page is locked to their family group.
+  useEffect(() => {
+    if (isImpersonating && effective.familyGroup && selectedFamilyGroup !== effective.familyGroup) {
+      setSelectedFamilyGroup(effective.familyGroup);
+    }
+    if (!isImpersonating && selectedFamilyGroup !== 'all' && !isAdmin) {
+      // nothing to do; non-admins have no selector
+    }
+  }, [isImpersonating, effective.familyGroup]);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 

@@ -44,7 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { useEffectiveRole, useImpersonationGuard } from "@/hooks/useEffectiveRole";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useCreditTransfers } from "@/hooks/useCreditTransfers";
 import { TransferCreditDialog } from "@/components/TransferCreditDialog";
@@ -173,7 +173,13 @@ const CheckoutFinal = () => {
     setAvailableUsers(enrichedUsers);
   };
   
-  const { isAdmin } = useOrgAdmin();
+  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const impersonationGuard = useImpersonationGuard();
+  const blockWhileImpersonating = () => {
+    if (!impersonationGuard.isImpersonating) return false;
+    toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
+    return true;
+  };
   const { familyGroups } = useFamilyGroups();
   const { createTransfer } = useCreditTransfers();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
@@ -946,6 +952,7 @@ const CheckoutFinal = () => {
   }, [currentReservation?.id, organization?.id]);
 
   const handleSaveOccupancy = async () => {
+    if (blockWhileImpersonating()) return;
     if (!currentReservation) return;
 
     const updatedOccupancy = dailyBreakdown.map(day => ({
@@ -976,6 +983,7 @@ const CheckoutFinal = () => {
     paymentReference?: string;
     notes?: string;
   }) => {
+    if (blockWhileImpersonating()) return;
     const dbMethod = DB_PAYMENT_METHODS.includes(data.paymentMethod) ? data.paymentMethod : 'other';
     const methodLabel = data.paymentMethod.replace('_', ' ');
     const amount = Math.round(data.amount * 100) / 100;
@@ -1039,6 +1047,7 @@ const CheckoutFinal = () => {
 
 
   const handleApplyCreditToFuture = async () => {
+    if (blockWhileImpersonating()) return;
     if (!paymentId || !organization?.id) {
       toast({
         title: "Error",
@@ -2228,6 +2237,7 @@ const CheckoutFinal = () => {
         familyGroups={familyGroups}
         isAdmin={isAdmin}
         onTransfer={async (data) => {
+          if (blockWhileImpersonating()) return;
           await createTransfer(data);
         }}
       />
