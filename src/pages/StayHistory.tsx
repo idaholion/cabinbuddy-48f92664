@@ -73,6 +73,20 @@ export default function StayHistory() {
     ? `p:${user.email.trim().toLowerCase()}`
     : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
 
+  // Group leads may move credit for members of their own group only when the
+  // organization has enabled that privilege. Admins always have full rights.
+  const leadGroupName = userFamilyGroup || claimedProfile?.family_group_name || undefined;
+  const leadCanTransferForGroup =
+    !isAdmin &&
+    !!(organization as any)?.allow_lead_credit_transfers &&
+    !!isGroupLead &&
+    !!leadGroupName;
+  const transferScope: 'own' | 'group' | 'all' = isAdmin
+    ? 'all'
+    : leadCanTransferForGroup
+      ? 'group'
+      : 'own';
+
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
   console.log('[StayHistory] Component state:', {
@@ -841,6 +855,19 @@ export default function StayHistory() {
   }
   const getTransferDisplayName = (key: string) => transferDisplayNameMap.get(key) || key;
 
+  // Ledger key -> family group name, used for group-lead transfer permissions.
+  const memberGroupMap = new Map<string, string>();
+  for (const group of (familyGroups || []) as any[]) {
+    const members = Array.isArray(group.host_members) ? group.host_members : [];
+    for (const member of members) {
+      if (!member?.name) continue;
+      const key = member.email
+        ? `p:${String(member.email).trim().toLowerCase()}`
+        : `n:${String(member.name).trim().toLowerCase()}`;
+      if (!memberGroupMap.has(key)) memberGroupMap.set(key, group.name);
+    }
+  }
+
   // Group credit transfers by source and target ledger key, ordered by date.
   const transfersBySource = new Map<string, any[]>();
   const transfersByTarget = new Map<string, any[]>();
@@ -1080,6 +1107,17 @@ export default function StayHistory() {
   const currentUserHasTransferableCredit = currentUserLedgerKey
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
     : 0;
+
+  // Members whose credit the signed-in person is allowed to move.
+  const canTransferForHostKey = (hostKey: string) => {
+    if (isAdmin) return true;
+    if (currentUserLedgerKey && hostKey === currentUserLedgerKey) return true;
+    if (leadCanTransferForGroup) {
+      return memberGroupMap.get(hostKey) === leadGroupName;
+    }
+    return false;
+  };
+  const transferableCreditKeys = Array.from(hostCreditMap.keys()).filter(canTransferForHostKey);
 
 
 
@@ -1362,13 +1400,13 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
-              {(isAdmin ? hostCreditMap.size > 0 : currentUserHasTransferableCredit > 0.004) && (
+              {transferableCreditKeys.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-3 w-full"
                   onClick={() => {
-                    if (isAdmin) {
+                    if (isAdmin || leadCanTransferForGroup) {
                       setTransferDialogSourceKey(null);
                       setTransferDialogSourceLabel("");
                       setTransferDialogCredit(0);
@@ -1408,6 +1446,12 @@ export default function StayHistory() {
                           {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
                           {t.notes ? ` · ${t.notes}` : ''}
                         </div>
+                        {t.created_by_user_id && user?.id === t.created_by_user_id &&
+                          currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
+                          <div className="text-xs text-muted-foreground italic">
+                            Recorded by you on their behalf
+                          </div>
+                        )}
                       </div>
                       <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
                     </div>
@@ -1638,7 +1682,7 @@ export default function StayHistory() {
                       </div>
                       {(() => {
                         const hostKey = getLedgerKey(reservation);
-                        const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                        const canTransfer = canTransferForHostKey(hostKey);
                         if (!canTransfer || stayData.amountDue >= -0.004) return null;
                         return (
                           <Button
@@ -1703,7 +1747,7 @@ export default function StayHistory() {
 
                           {(() => {
                             const hostKey = getLedgerKey(reservation);
-                            const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                            const canTransfer = canTransferForHostKey(hostKey);
                             if (!canTransfer) return null;
                             return (
                               <Button
@@ -2071,6 +2115,9 @@ export default function StayHistory() {
         availableCredit={transferDialogCredit}
         familyGroups={familyGroups || []}
         isAdmin={!!isAdmin}
+        scope={transferScope}
+        scopeGroupName={leadGroupName}
+        currentUserKey={currentUserLedgerKey}
         creditBySource={Object.fromEntries(hostCreditMap)}
         onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
           const result = await createTransfer({

@@ -1474,6 +1474,7 @@ export type Database = {
           admin_name: string | null
           admin_phone: string | null
           allocation_model: string | null
+          allow_lead_credit_transfers: boolean
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
           automated_backups_enabled: boolean | null
@@ -1528,6 +1529,7 @@ export type Database = {
           admin_name?: string | null
           admin_phone?: string | null
           allocation_model?: string | null
+          allow_lead_credit_transfers?: boolean
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_backups_enabled?: boolean | null
@@ -1582,6 +1584,7 @@ export type Database = {
           admin_name?: string | null
           admin_phone?: string | null
           allocation_model?: string | null
+          allow_lead_credit_transfers?: boolean
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
           automated_backups_enabled?: boolean | null
@@ -3536,6 +3539,10 @@ export type Database = {
     Functions: {
       assign_default_colors: { Args: never; Returns: undefined }
       backfill_checklist_images: { Args: never; Returns: number }
+      can_lead_transfer_credit: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
       claim_family_member_profile: {
         Args: {
           p_family_group_name: string
