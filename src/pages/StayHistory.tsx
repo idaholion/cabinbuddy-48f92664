@@ -963,6 +963,52 @@ export default function StayHistory() {
     }
   }
 
+  // Apply any credit transfers dated after the last stay for each host so the
+  // final balance reflects them. Only adjust the amountDue on the host's last
+  // visible stay; hostBalances is also updated for any downstream summary math.
+  const postStayAdjustments = new Map<string, number>();
+  for (const [hostKey, list] of transfersBySource.entries()) {
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
+    while (ptr.outIndex < list.length) {
+      const t = list[ptr.outIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
+      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) + amount);
+      let remainingOut = amount;
+      const fromPayment = Math.min(pool.payment, remainingOut);
+      pool.payment -= fromPayment; remainingOut -= fromPayment;
+      const fromReceipt = Math.min(pool.receipt, remainingOut);
+      pool.receipt -= fromReceipt; remainingOut -= fromReceipt;
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  }
+  for (const [hostKey, list] of transfersByTarget.entries()) {
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
+    while (ptr.inIndex < list.length) {
+      const t = list[ptr.inIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) - amount);
+      pool.transferInQueue.push({
+        id: t.id,
+        fromName: getTransferDisplayName(t.from_ledger_name),
+        notes: t.notes,
+        remaining: amount,
+      });
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  }
+  for (const [hostKey, adj] of postStayAdjustments.entries()) {
+    const lastId = lastReservationByHost.get(hostKey);
+    if (!lastId) continue;
+    const item = reservationsWithBalance.find(r => r.reservation.id === lastId);
+    if (item) {
+      item.stayData.amountDue += adj;
+    }
+  }
+
   // Apply the year filter to display ONLY (math already ran globally),
   // then reverse so the most current stay appears at the top.
   const displayReservations = fullLedger
