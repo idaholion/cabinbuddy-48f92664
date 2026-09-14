@@ -79,7 +79,10 @@ export default function StayHistory() {
 
   // Group leads may move credit for members of their own group only when the
   // organization has enabled that privilege. Admins always have full rights.
-  const leadGroupName = userFamilyGroup || claimedProfile?.family_group_name || undefined;
+  const leadGroupName = (effective.isImpersonated
+    ? effective.familyGroup
+    : (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name))
+    || claimedProfile?.family_group_name || undefined;
   const leadCanTransferForGroup =
     !isAdmin &&
     !!(organization as any)?.allow_lead_credit_transfers &&
@@ -90,6 +93,16 @@ export default function StayHistory() {
     : leadCanTransferForGroup
       ? 'group'
       : 'own';
+
+  // While viewing as someone else, the page is locked to their family group.
+  useEffect(() => {
+    if (isImpersonating && effective.familyGroup && selectedFamilyGroup !== effective.familyGroup) {
+      setSelectedFamilyGroup(effective.familyGroup);
+    }
+    if (!isImpersonating && selectedFamilyGroup !== 'all' && !isAdmin) {
+      // nothing to do; non-admins have no selector
+    }
+  }, [isImpersonating, effective.familyGroup]);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
