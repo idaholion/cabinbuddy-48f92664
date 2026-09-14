@@ -15,10 +15,13 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useReservations } from "@/hooks/useReservations";
 import { parseDateOnly } from "@/lib/date-utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 const CheckIn = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { organization } = useOrganization();
+  const { canEditDailyFinal, userFamilyGroup } = useEffectiveRole();
+  const userFamilyGroupName = userFamilyGroup?.name;
   const { reservations, loading: reservationsLoading } = useReservations();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState("");
