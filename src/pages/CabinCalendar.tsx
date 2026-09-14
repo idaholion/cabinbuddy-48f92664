@@ -28,7 +28,6 @@ import { useTradeRequests } from "@/hooks/useTradeRequests";
 import { useOrganization } from "@/hooks/useOrganization";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
-import { useUserRole } from "@/hooks/useUserRole";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
