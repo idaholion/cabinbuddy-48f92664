@@ -1068,6 +1068,19 @@ export default function StayHistory() {
     return item ? sum + item.stayData.amountDue : sum;
   }, 0);
 
+  // Map each person with a credit balance to the amount available to transfer.
+  // Used for both self-service transfer buttons and admin source selection.
+  const hostCreditMap = new Map<string, number>();
+  for (const [hostKey, resId] of lastReservationByHost.entries()) {
+    const item = fullLedger.find(r => r.reservation.id === resId);
+    if (item && item.stayData.amountDue < -0.004) {
+      hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
+    }
+  }
+  const currentUserHasTransferableCredit = currentUserLedgerKey
+    ? (hostCreditMap.get(currentUserLedgerKey) || 0)
+    : 0;
+
 
 
   // Count orphaned payments (for admin debugging)
