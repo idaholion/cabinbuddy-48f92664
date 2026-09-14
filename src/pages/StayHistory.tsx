@@ -809,7 +809,7 @@ export default function StayHistory() {
     (sum, r) => sum + (r.stayData.billingAmount || 0) + (r.stayData.manualAdjustment || 0),
     0
   );
-  const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsTotal || 0), 0);
+  const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
