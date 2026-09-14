@@ -430,9 +430,9 @@ export default function StayHistory() {
     // Admins can split costs on any reservation
     if (isAdmin) return true;
     
-    // Family group leads can split costs on their group's reservations
-    if (claimedProfile?.member_type === 'group_lead' && 
-        claimedProfile?.family_group_name === reservation.family_group) {
+    // Family group leads (and members with Stay History permission) can split
+    // costs on their group's reservations.
+    if (canEditStayHistory && leadGroupName === reservation.family_group) {
       return true;
     }
     
