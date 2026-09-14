@@ -1353,6 +1353,28 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
+              {selectedFamilyGroup !== 'all' && currentBalance < -0.004 && (isAdmin || currentUserHasTransferableCredit > 0.004) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={() => {
+                    if (isAdmin) {
+                      setTransferDialogSourceKey(null);
+                      setTransferDialogSourceLabel("");
+                      setTransferDialogCredit(0);
+                    } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
+                      setTransferDialogSourceKey(currentUserLedgerKey);
+                      setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
+                      setTransferDialogCredit(currentUserHasTransferableCredit);
+                    }
+                    setTransferDialogOpen(true);
+                  }}
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Transfer Credit
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
