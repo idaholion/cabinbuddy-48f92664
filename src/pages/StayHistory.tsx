@@ -1534,7 +1534,7 @@ export default function StayHistory() {
                 size="sm"
                 className="mt-3 w-full"
                 onClick={() => {
-                  if (isAdmin || leadCanTransferForGroup) {
+                  if (isAdmin || canActForFamilyInStayHistory) {
                     setTransferDialogSourceKey(null);
                     setTransferDialogSourceLabel("");
                     setTransferDialogCredit(0);
