@@ -2021,6 +2021,33 @@ export default function StayHistory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <TransferCreditDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        sourceKey={transferDialogSourceKey}
+        sourceLabel={transferDialogSourceLabel}
+        availableCredit={transferDialogCredit}
+        familyGroups={familyGroups || []}
+        isAdmin={!!isAdmin}
+        creditBySource={Object.fromEntries(hostCreditMap)}
+        onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
+          const result = await createTransfer({
+            organization_id: organization?.id || '',
+            from_ledger_name,
+            to_ledger_name,
+            amount,
+            transfer_date,
+            notes,
+          });
+          if (result) {
+            toast.success('Credit transferred successfully');
+            await refetchTransfers();
+            await fetchPayments(1, 500);
+            setTransferDialogOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }
