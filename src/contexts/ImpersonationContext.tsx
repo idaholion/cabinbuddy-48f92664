@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
-import { useDelegatePermissions } from '@/hooks/useDelegatePermissions';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -15,11 +14,6 @@ export interface ImpersonationTarget {
 interface ImpersonationContextType {
   target: ImpersonationTarget | null;
   isImpersonating: boolean;
-  /** 'admin' = admin read-only "View as"; 'delegate' = family member acting on
-   *  behalf of another member in their own group (saves allowed). */
-  mode: 'admin' | 'delegate' | null;
-  isAdminView: boolean;
-  isDelegateMode: boolean;
   canImpersonate: boolean;
   setTarget: (target: ImpersonationTarget | null) => void;
   clear: () => void;
@@ -33,16 +27,12 @@ const STORAGE_KEY = 'cb_impersonation_target';
 export const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { isAdmin } = useOrgAdmin();
-  const { hasAnyDelegatePermission } = useDelegatePermissions();
   const { organization } = useOrganization();
   const [target, setTargetState] = useState<ImpersonationTarget | null>(null);
 
-  const canImpersonate = !!isAdmin || hasAnyDelegatePermission;
-  const mode: 'admin' | 'delegate' | null = !target
-    ? null
-    : isAdmin ? 'admin' : (hasAnyDelegatePermission ? 'delegate' : null);
+  const canImpersonate = !!isAdmin;
 
-  // Hydrate from sessionStorage so the choice persists across nav
+  // Hydrate from sessionStorage so the admin's choice persists across nav
   useEffect(() => {
     if (!canImpersonate) {
       setTargetState(null);
@@ -98,10 +88,7 @@ export const ImpersonationProvider = ({ children }: { children: ReactNode }) => 
   return (
     <ImpersonationContext.Provider value={{
       target,
-      isImpersonating: !!target && mode !== null,
-      mode,
-      isAdminView: mode === 'admin',
-      isDelegateMode: mode === 'delegate',
+      isImpersonating: !!target,
       canImpersonate,
       setTarget,
       clear,
