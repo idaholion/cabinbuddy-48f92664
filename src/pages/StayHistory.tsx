@@ -2033,7 +2033,6 @@ export default function StayHistory() {
         creditBySource={Object.fromEntries(hostCreditMap)}
         onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
           const result = await createTransfer({
-            organization_id: organization?.id || '',
             from_ledger_name,
             to_ledger_name,
             amount,
