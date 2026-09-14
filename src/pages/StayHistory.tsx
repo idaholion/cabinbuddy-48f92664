@@ -1307,6 +1307,18 @@ export default function StayHistory() {
             <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
+        {totalTransferredInApplied > 0.004 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Paid via Transferred Credit</CardTitle>
+              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${totalTransferredInApplied.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Credit moved between family members</p>
+            </CardContent>
+          </Card>
+        )}
         {totalStillOwed > 0.004 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
