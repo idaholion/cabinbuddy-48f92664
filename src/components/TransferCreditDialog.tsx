@@ -90,12 +90,14 @@ export const TransferCreditDialog = ({
   const [amount, setAmount] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [confirmedOnBehalf, setConfirmedOnBehalf] = useState(false);
 
   // Reset source selection when the dialog reopens with a new sourceKey.
   useEffect(() => {
     setSelectedSource(sourceKey || "");
     setAmount("");
     setNotes("");
+    setConfirmedOnBehalf(false);
   }, [sourceKey]);
 
   const effectiveSource = sourceKey || selectedSource;
@@ -107,10 +109,22 @@ export const TransferCreditDialog = ({
     ? availableCredit
     : (creditBySource?.[selectedSource] || 0);
 
-  // For admin source selection, only list people who actually have transferable credit.
+  const effectiveScope: "own" | "group" | "all" =
+    scope || (isAdmin ? "all" : "own");
+
+  // Only list people who actually have transferable credit and fall inside the
+  // permission scope of the person making the transfer.
   const sourceOptions = useMemo(
-    () => members.filter((m) => (creditBySource?.[m.key] || 0) > 0.004),
-    [members, creditBySource]
+    () =>
+      members.filter((m) => {
+        if ((creditBySource?.[m.key] || 0) <= 0.004) return false;
+        if (effectiveScope === "all") return true;
+        if (effectiveScope === "group") {
+          return !!scopeGroupName && m.familyGroup === scopeGroupName;
+        }
+        return !!currentUserKey && m.key === currentUserKey;
+      }),
+    [members, creditBySource, effectiveScope, scopeGroupName, currentUserKey]
   );
 
   const recipientOptions = useMemo(
@@ -118,12 +132,18 @@ export const TransferCreditDialog = ({
     [members, effectiveSource]
   );
 
+  const recipientDisplay =
+    members.find((m) => m.key === selectedRecipient)?.label || selectedRecipient;
+
   const numericAmount = Math.abs(parseFloat(amount) || 0);
+  const isOnBehalf =
+    !!effectiveSource && !!currentUserKey && effectiveSource !== currentUserKey;
   const isValid =
     effectiveSource &&
     selectedRecipient &&
     numericAmount > 0.004 &&
-    numericAmount <= effectiveAvailable + 0.004;
+    numericAmount <= effectiveAvailable + 0.004 &&
+    (!isOnBehalf || confirmedOnBehalf);
 
   const handleSubmit = async () => {
     if (!isValid) return;
