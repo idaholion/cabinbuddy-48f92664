@@ -43,6 +43,9 @@ export const PaymentHistoryDialog = ({
   paymentId,
   familyGroup,
   totalAmount,
+  receiptsCredited = 0,
+  receiptsCount = 0,
+  balanceAfterStay,
   onPaymentUpdated,
 }: PaymentHistoryDialogProps) => {
   const [payment, setPayment] = useState<Payment | null>(null);
