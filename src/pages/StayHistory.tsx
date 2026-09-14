@@ -1543,6 +1543,20 @@ export default function StayHistory() {
                       </div>
                     )}
 
+                    {(stayData.carriedInTransfer || 0) > 0.004 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Transferred Credit:</span>
+                          <span className="font-medium">−${stayData.carriedInTransfer.toFixed(2)}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                          includes {stayData.carriedInTransfers.map((t: any, i: number) => (
+                            `${i > 0 ? ', ' : ''}$${t.amount.toFixed(2)} from ${t.fromName}${t.notes ? ` (${t.notes})` : ''}`
+                          )).join('')}
+                        </div>
+                      </>
+                    )}
+
                     {stayData.receiptsOverflow > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Receipt Credit Carried Forward:</span>
