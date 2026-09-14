@@ -62,7 +62,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
-  const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
+  const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo, isAdmin, canEditReservations } = useEffectiveRole();
   const { createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
