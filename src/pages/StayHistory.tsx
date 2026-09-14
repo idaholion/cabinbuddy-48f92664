@@ -481,16 +481,39 @@ export default function StayHistory() {
     return dailyOccupancy.some(day => (day.guests || 0) > 0);
   };
 
-  const calculateStayData = (reservation: any, previousBalance: number = 0) => {
+  // pool: unspent funds carried forward for this person, tagged by source so a
+  // later stay's coverage is attributed to payments vs receipts (never a
+  // generic "earlier credit" bucket). Mutated in place by each stay.
+  const calculateStayData = (reservation: any, previousBalance: number = 0, pool: { payment: number; receipt: number } = { payment: 0, receipt: 0 }) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
       const splitPayment = reservation.splitData.payment;
       const days = reservation.splitData.dailyOccupancy;
-      
+
+      const chargesDue = Math.max(0, Number(splitPayment.amount) || 0);
+      const paidRaw = Math.max(0, Number(splitPayment.amount_paid) || 0);
+      const ownPaidApplied = Math.min(paidRaw, chargesDue);
+      let remaining = chargesDue - ownPaidApplied;
+      const carriedInPayment = Math.min(pool.payment, remaining);
+      pool.payment -= carriedInPayment; remaining -= carriedInPayment;
+      const carriedInReceipt = Math.min(pool.receipt, remaining);
+      pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
+      const paidApplied = ownPaidApplied + carriedInPayment;
+      const unpaidRemaining = Math.max(0, remaining);
+      pool.payment += paidRaw - ownPaidApplied; // overpayment carries forward, payment-tagged
+
       return {
         nights: days.length,
         receiptsTotal: 0,
         receiptsCount: 0,
+        receiptsApplied: carriedInReceipt,
+        receiptsOverflow: 0,
+        paidApplied,
+        priorCreditApplied: carriedInPayment + carriedInReceipt,
+        unpaidRemaining,
+        chargesDue,
+        carriedInPayment,
+        carriedInReceipt,
         billingAmount: Number(splitPayment.amount) || 0,
         amountPaid: Number(splitPayment.amount_paid) || 0,
         currentBalance: Number(splitPayment.balance_due) || 0,
@@ -667,16 +690,28 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
-    // Allocation of THIS stay's charges: cash/check payments first, then receipt
-    // credit, then any credit carried in from earlier stays. Anything left is
-    // still owed. These four always sum to this stay's charges.
+    // Allocation of THIS stay's charges: this stay's own cash/check payments
+    // first, then this stay's receipts, then credit carried in from earlier
+    // stays — tagged by source so carried payment credit counts as payments
+    // and carried receipt credit counts as receipts. What remains is unpaid;
+    // overpayments and receipt overflow carry forward into the tagged pool.
     const chargesDue = Math.max(0, billingAmount + manualAdjustment);
-    const paidApplied = Math.min(Math.max(0, amountPaid), chargesDue);
-    const receiptsApplied = Math.min(Math.max(0, receiptsTotal), chargesDue - paidApplied);
-    const priorCreditAvailable = Math.max(0, -previousBalance);
-    const priorCreditApplied = Math.min(priorCreditAvailable, chargesDue - paidApplied - receiptsApplied);
-    const unpaidRemaining = chargesDue - paidApplied - receiptsApplied - priorCreditApplied;
-    const receiptsOverflow = Math.max(0, receiptsTotal - receiptsApplied);
+    const paidRaw = Math.max(0, amountPaid);
+    const receiptsRaw = Math.max(0, receiptsTotal);
+    const ownPaidApplied = Math.min(paidRaw, chargesDue);
+    const ownReceiptsApplied = Math.min(receiptsRaw, chargesDue - ownPaidApplied);
+    let remaining = chargesDue - ownPaidApplied - ownReceiptsApplied;
+    const carriedInPayment = Math.min(pool.payment, remaining);
+    pool.payment -= carriedInPayment; remaining -= carriedInPayment;
+    const carriedInReceipt = Math.min(pool.receipt, remaining);
+    pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
+    const paidApplied = ownPaidApplied + carriedInPayment;
+    const receiptsApplied = ownReceiptsApplied + carriedInReceipt;
+    const priorCreditApplied = carriedInPayment + carriedInReceipt;
+    const unpaidRemaining = Math.max(0, remaining);
+    const receiptsOverflow = Math.max(0, receiptsRaw - ownReceiptsApplied);
+    pool.payment += paidRaw - ownPaidApplied; // overpayment carries forward, payment-tagged
+    pool.receipt += receiptsOverflow;         // receipt overflow carries forward, receipt-tagged
 
     return {
       nights,
@@ -688,6 +723,8 @@ export default function StayHistory() {
       priorCreditApplied,
       unpaidRemaining,
       chargesDue,
+      carriedInPayment,
+      carriedInReceipt,
 
       billingAmount,
       amountPaid,
@@ -744,14 +781,18 @@ export default function StayHistory() {
   
   // Simple chronological ledger: for each host, walk stays oldest → newest and
   // let each stay's newBalance = previousBalance + charges - payments - receipts.
-  // No forward/backward overpayment cascade — running balance carries forward as-is.
+  // Alongside the balance, a source-tagged pool ({payment, receipt}) tracks
+  // unspent funds so carried credit is attributed to its original source.
   const hostBalances = new Map<string, number>();
+  const hostPools = new Map<string, { payment: number; receipt: number }>();
   const reservationsWithBalance: any[] = [];
 
   for (const reservation of sortedReservations) {
     const hostKey = getLedgerKey(reservation);
     const previousBalance = hostBalances.get(hostKey) || 0;
-    const stayData = calculateStayData(reservation, previousBalance);
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0 };
+    hostPools.set(hostKey, pool);
+    const stayData = calculateStayData(reservation, previousBalance, pool);
     // stayData.currentBalance is the *charge* delta for this stay
     // (billing + adjustment - payments - receipts). amountDue already = prev + delta.
     reservationsWithBalance.push({ reservation, stayData });
@@ -842,7 +883,6 @@ export default function StayHistory() {
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
-  const totalPriorCreditApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.priorCreditApplied || 0), 0);
   const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
 
 
@@ -1078,18 +1118,6 @@ export default function StayHistory() {
             <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
-        {totalPriorCreditApplied > 0.004 && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Charges Paid from Earlier Credit</CardTitle>
-              <Wallet className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${totalPriorCreditApplied.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Credit carried in from earlier stays</p>
-            </CardContent>
-          </Card>
-        )}
         {totalStillOwed > 0.004 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1264,9 +1292,14 @@ export default function StayHistory() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
                       <span className="font-medium">
-                        {stayData.amountPaid > 0 ? `−$${stayData.amountPaid.toFixed(2)}` : '$0.00'}
+                        {(stayData.paidApplied || 0) > 0 ? `−$${stayData.paidApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.carriedInPayment || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes ${stayData.carriedInPayment.toFixed(2)} payment credit carried in
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
@@ -1276,6 +1309,16 @@ export default function StayHistory() {
                         {stayData.receiptsApplied > 0 ? `−$${stayData.receiptsApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.carriedInReceipt || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes ${stayData.carriedInReceipt.toFixed(2)} receipt credit carried in
+                      </div>
+                    )}
+                    {stayData.receiptsApplied - (stayData.carriedInReceipt || 0) > (stayData.receiptsTotal || 0) + 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        includes credit applied from a later stay's receipts
+                      </div>
+                    )}
 
                     {stayData.receiptsOverflow > 0 && (
                       <div className="flex justify-between text-sm">
