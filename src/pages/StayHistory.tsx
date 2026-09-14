@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,6 +50,8 @@ export default function StayHistory() {
   const [transferDialogSourceKey, setTransferDialogSourceKey] = useState<string | null>(null);
   const [transferDialogSourceLabel, setTransferDialogSourceLabel] = useState<string>("");
   const [transferDialogCredit, setTransferDialogCredit] = useState<number>(0);
+  // Group leads can look at their whole family's stays or narrow to their own.
+  const [leadScope, setLeadScope] = useState<'family' | 'mine'>('family');
   
 
   const { user } = useAuth();
