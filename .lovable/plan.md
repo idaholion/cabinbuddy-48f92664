@@ -1,26 +1,30 @@
-# Group leads: see whole family on Stay History (plus optional "just me" toggle)
+# Family group visibility: leads, delegates, and Stay History
 
-## Opinion
+## What I found
 
-Two separate things are tangled together here:
+Three related things, all in the same wiring:
 
-1. **Tina not seeing her whole family is a bug, not a design gap.** The page already intends group leads to see every stay for their family group (`canViewReservation` allows it when the lead's group matches the stay's group). Something in the lead detection is failing for her, so she falls back to "regular member" rules and only sees stays she personally hosts.
-2. **A "just me / whole family" toggle for leads is worth adding — and it's not too complicated.** It reuses filtering logic the page already has; it's one small control shown only to group leads. It matches how leads actually think: sometimes they want the family's money picture, sometimes just their own.
+1. **You did add the member permissions.** Every member card in Family Group Setup has three checkboxes — Reservations, Daily/Final, Stay History — on by default, and the group lead always has all three.
+2. **Those permissions don't do anything yet.** They only decide whether the "Delegate view" dropdown appears on a page. The app only actually switches identity when an *admin* picks someone. So Eli picks Tina and nothing changes — and the new "changes are disabled while viewing as someone" rule would block him from saving even if it did.
+3. **Tina not seeing her whole family is a separate bug.** Stay History already intends group leads to see every stay in their family group, so something in the lead detection is failing for her and she falls back to member-only rules.
 
 ## What will change
 
-1. **Fix the lead-visibility bug (first step: confirm the cause).** Check the Comeau family group's lead name/email fields against Tina's profile, and the lead-matching logic in `useEffectiveRole`, to find why Tina isn't recognized as lead. Fix so a real group lead sees all their family's stays, both in "View as Tina" mode and when Tina signs in herself.
-2. **Add a simple toggle for group leads** at the top of Stay History: **My stays | Whole family** (default: Whole family). "My stays" narrows the list to stays where the lead is personally the host. Regular members see no toggle (they only ever have their own stays anyway).
-3. Summary cards (charges, paid, credit) follow the toggle, so the totals always match what's listed.
+1. **Confirm and fix Tina's lead detection** so a real group lead sees all of their family's stays on Stay History — both when she signs in and in "View as Tina" mode.
+2. **Make delegate access real.** When Eli (or any member with the Daily/Final permission) picks Tina in the dropdown, the page loads her stay and lets him fill it in. Saves are allowed — they are recorded as made by Eli on Tina's behalf, so the trail stays honest.
+3. **Keep the admin rule unchanged:** an admin viewing as someone is still strictly read-only, as approved earlier. Only permission-based delegate access allows edits, and only on the pages the checkboxes allow.
+4. **Add a simple toggle for group leads** on Stay History: **My stays | Whole family** (default: Whole family), so a lead can narrow to just their own. Regular members see no toggle.
 
 ## Out of scope
 
-- No change to what regular members see.
-- No change to admin "All Family Groups" behavior.
+- No change to what admins see on "All Family Groups".
+- No new permission types; the existing three checkboxes stay as they are.
 
 ## Technical notes
 
-- Diagnosis first: query `family_groups` for the Comeau group (`lead_email`, `lead_name`) and compare with Tina's `member_profile_links` / auth email; also verify `useEffectiveRole`'s `isLead` matching handles her record while impersonating.
-- Fix likely lands in `useEffectiveRole.ts` (lead matching) and/or the data (mismatched lead email), plus `StayHistory.tsx` `canViewReservation` if `userFamilyGroup?.name` is undefined for leads.
-- Toggle: local state in `StayHistory.tsx`, rendered only when `isGroupLead && !isAdmin`; when set to "my", apply the same host-matching test regular members use (primary host email, fallback `user_id`).
-- Verify with the preview in "View as Tina Comeau" mode: whole family stays listed, toggle narrows to her own.
+- Diagnosis first: check the Comeau `family_groups` row (`lead_email`, `lead_name`, `host_members[0]`) against Tina's profile and `member_profile_links`, and `useEffectiveRole`'s lead matching, before changing code.
+- `ImpersonationContext.isImpersonating` is currently `!!target && isAdmin`, so delegate selections are inert. Split into two modes on the context: `mode: 'admin-view' | 'delegate'`, where delegate requires `useDelegatePermissions().forGroup(target.familyGroup)` to grant the page's scope. `useEffectiveUser` honours both; `useEffectiveRole` strips admin flags in both.
+- Write guards (`blockWhileImpersonating`, `toggleTask` guard) fire only in `admin-view` mode. In delegate mode, save handlers keep the acting user's id in `created_by_user_id` / audit fields while the record targets the selected member; log via `logAction`.
+- `ViewAsUserPicker` banner text becomes mode-aware: amber read-only for admin view, a neutral "Editing on behalf of X" banner for delegates.
+- Stay History: `canViewReservation` should also allow a delegate holding `canEditStayHistory` for that group; add lead toggle state rendered when `isGroupLead && !isAdmin`, applying the existing host-match test when set to "My stays".
+- Verify on the preview: Tina sees all Comeau stays; the lead toggle narrows correctly; a delegate can open and save another member's Daily/Final input.
