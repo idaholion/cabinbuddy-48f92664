@@ -2073,6 +2073,17 @@ const CheckoutFinal = () => {
                                   <Send className="h-4 w-4 mr-2" />
                                   Request Refund via Venmo
                                 </Button>
+
+                                {(isAdmin || transferSourceKey) && (
+                                  <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => setTransferDialogOpen(true)}
+                                  >
+                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                    Transfer Credit to Another Member
+                                  </Button>
+                                )}
                               </div>
                             ) : (
                               // Positive balance - show pay now button
