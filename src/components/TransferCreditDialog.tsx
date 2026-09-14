@@ -190,11 +190,17 @@ export const TransferCreditDialog = ({
                   <SelectValue placeholder="Select a person with credit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sourceOptions.map((m) => (
-                    <SelectItem key={m.key} value={m.key}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
+                  {sourceOptions.map((m) => {
+                    const credit = creditBySource?.[m.key] || 0;
+                    return (
+                      <SelectItem key={m.key} value={m.key}>
+                        {m.label}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (${Math.abs(credit).toFixed(2)} available)
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}
