@@ -45,6 +45,10 @@ export default function StayHistory() {
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferDialogSourceKey, setTransferDialogSourceKey] = useState<string | null>(null);
+  const [transferDialogSourceLabel, setTransferDialogSourceLabel] = useState<string>("");
+  const [transferDialogCredit, setTransferDialogCredit] = useState<number>(0);
   
 
   const { user } = useAuth();
