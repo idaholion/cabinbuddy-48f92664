@@ -35,9 +35,10 @@ const CheckoutList = () => {
   console.log('🔍 CheckoutList organization:', organization);
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
-  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const { isAdmin, isImpersonating, canEditDailyFinal, userFamilyGroup } = useEffectiveRole();
   const impersonationGuard = useImpersonationGuard();
   const { saveResponse } = useSurveyResponses();
+  const userFamilyGroupName = userFamilyGroup?.name;
   const { profile } = useProfile();
   const { user } = useAuth();
   const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
