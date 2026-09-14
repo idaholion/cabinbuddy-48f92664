@@ -1420,7 +1420,7 @@ export default function StayHistory() {
                          paymentId: stayData.paymentId,
                          familyGroup: reservation.family_group,
                          totalAmount: stayData.billingAmount + stayData.manualAdjustment,
-                         receiptsCredited: stayData.receiptsTotal,
+                         receiptsCredited: stayData.receiptsApplied,
                          receiptsCount: stayData.receiptsCount,
                          balanceAfterStay: stayData.amountDue
                        })}
