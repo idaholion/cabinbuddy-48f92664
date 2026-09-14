@@ -160,6 +160,7 @@ export const TransferCreditDialog = ({
       setSelectedRecipient("");
       setAmount("");
       setNotes("");
+      setConfirmedOnBehalf(false);
     } catch (error) {
       console.error("Transfer failed:", error);
     } finally {
