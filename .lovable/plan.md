@@ -29,7 +29,7 @@ Improve the existing **Payment Details** dialog so it also shows:
 - Receipt credits applied to that stay
 - The running ledger balance after the stay
 
-### Phase 2 — Accurate payment-method totals (DB change)
+### Phase 2 (deferred — reference only, not part of this build) — Accurate payment-method totals
 To make the "Total Paid by Venmo, Check, etc." breakdown correct across history, add a `payment_transactions` table and record each payment there instead of only updating `payments.amount_paid`.
 
 Migration outline:
