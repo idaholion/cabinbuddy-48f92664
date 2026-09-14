@@ -85,10 +85,10 @@ const CabinCalendar = () => {
   useEffect(() => {
     if (userHostInfo && !selectedHost) {
       setSelectedHost(userHostInfo.name);
-    } else if (isGroupLead && userGroup?.lead_name && !selectedHost) {
+    } else if ((isGroupLead || canEditReservations) && userGroup?.lead_name && !selectedHost) {
       setSelectedHost(userGroup.lead_name);
     }
-  }, [userHostInfo, isGroupLead, userGroup, selectedHost]);
+  }, [userHostInfo, isGroupLead, canEditReservations, userGroup, selectedHost]);
   
   // Get available hosts based on selected family group and user role
   const getAvailableHosts = () => {
