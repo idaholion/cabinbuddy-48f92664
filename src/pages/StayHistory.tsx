@@ -1118,8 +1118,10 @@ export default function StayHistory() {
     return false;
   };
   const transferableCreditKeys = Array.from(hostCreditMap.keys()).filter(canTransferForHostKey);
-
-
+  const totalTransferableCredit = transferableCreditKeys.reduce(
+    (sum, key) => sum + (hostCreditMap.get(key) || 0),
+    0
+  );
 
   // Credit transfers visible in the current view (source or recipient belongs to a host shown).
   const visibleHostKeys = new Set<string>();
