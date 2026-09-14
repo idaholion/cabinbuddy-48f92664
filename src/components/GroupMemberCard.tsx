@@ -299,6 +299,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
               )}
             />
 
+            <p className="text-sm text-muted-foreground">
+              Allow this member to manage all stays in this family group (like the lead).
+              Uncheck all three to keep them limited to their own stays only.
+            </p>
+
             <FormField
               control={control}
               name={`groupMembers.${index}.canEditReservations`}
