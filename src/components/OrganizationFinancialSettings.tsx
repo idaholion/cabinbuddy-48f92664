@@ -146,6 +146,26 @@ export const OrganizationFinancialSettings = () => {
           />
         </div>
 
+        <div className="flex items-center justify-between border-t pt-4">
+          <div className="space-y-0.5">
+            <Label htmlFor="lead-credit-transfers" className="text-base">
+              Allow Group Leads to Transfer Credit for Their Members
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              When enabled, a family group lead can move credit on behalf of members of their own
+              group. Members can always move their own credit, and admins can always move anyone's.
+            </p>
+          </div>
+          <Switch
+            id="lead-credit-transfers"
+            checked={localLeadTransfers ?? false}
+            onCheckedChange={handleToggleLeadTransfers}
+            disabled={updating}
+          />
+        </div>
+
+
+
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
