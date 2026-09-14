@@ -31,7 +31,7 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
-  const { target, setTarget, clear, isImpersonating } = useImpersonation();
+  const { target, setTarget, clear, isImpersonating, isDelegateMode } = useImpersonation();
   const { permissionsByGroup } = useDelegatePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
@@ -148,7 +148,7 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
     setSearchParams(next, { replace: true });
   };
 
-  const label = isAdmin ? 'View as' : 'Delegate view';
+  const label = isAdmin ? 'View as' : 'Act on behalf of';
   const placeholder = isAdmin ? 'Admin (myself)' : 'Act on behalf of...';
 
   return (
@@ -158,13 +158,23 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
           <div className="flex items-center gap-2 text-sm font-medium">
             <Eye className="h-4 w-4" />
             <span>
-              Viewing as <strong>{target.displayName}</strong>
-              {target.familyGroup ? <> ({target.familyGroup})</> : null} — you are
-              seeing exactly what they see. Changes are disabled.
+              {isDelegateMode ? (
+                <>
+                  Acting for <strong>{target.displayName}</strong>
+                  {target.familyGroup ? <> ({target.familyGroup})</> : null} — anything you
+                  save is recorded on their behalf.
+                </>
+              ) : (
+                <>
+                  Viewing as <strong>{target.displayName}</strong>
+                  {target.familyGroup ? <> ({target.familyGroup})</> : null} — you are
+                  seeing exactly what they see. Changes are disabled.
+                </>
+              )}
             </span>
           </div>
           <Button size="sm" variant="outline" onClick={() => handleSelect('__self__')}>
-            <X className="h-3.5 w-3.5 mr-1" /> Return to Admin
+            <X className="h-3.5 w-3.5 mr-1" /> {isDelegateMode ? 'Back to myself' : 'Return to Admin'}
           </Button>
         </div>
       )}
