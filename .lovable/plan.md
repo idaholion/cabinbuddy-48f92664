@@ -1,25 +1,40 @@
-# Show Eli's own "Act on behalf of" dropdown while viewing as Eli
+# Simplify delegate permissions: checkbox = act as lead, no dropdown
 
-## What's happening now
+## Your question answered: what does the dropdown do today?
 
-On Daily & Final Input the picker at the top is always built from **your own** account, not the person you're viewing as. So while you are viewing as Eli, you still see the admin picker ("View as", every member listed). Eli's own delegate dropdown is never simulated, which is why it looks like his permissions aren't working.
+The "Delegate view" / "Act on behalf of" dropdown was an extra step I built: a member with permissions picks a person from their family group, and the page then behaves as if they were that person. You were right to question it — it adds a second identity concept, it's confusing, and it's not what you asked for.
 
-Eli's checkboxes themselves are fine — the page just never asks "what would Eli see here?".
+## What you actually want (and what this plan builds)
 
-## What will change
+The checkboxes in Family Group Setup mean one thing: **this member can make changes on their own family group's pages as if they were the group lead.**
 
-While an admin is viewing as someone:
+So Eli, with the boxes checked, just opens Daily & Final Input and fills in the checkout for his mom's stay — no dropdown, no identity switching. If Tina unchecks his boxes, Eli can only touch his own stays.
 
-- The picker recalculates permissions **as that person**. If Eli has Daily/Final permission in the Comeau group, the page shows his dropdown exactly as he'd get it: labelled **Act on behalf of**, listing only claimed members of his own family group.
-- That simulated dropdown is read-only (you can open it and see the names, but selecting a person doesn't chain a second impersonation) — consistent with view-as being strictly look-don't-touch.
-- If the person you're viewing as has no delegate permission for that page, no dropdown appears — which is the true picture of what they'd see.
-- The amber "Viewing as …" banner and **Return to Admin** button stay exactly where they are, above the simulated dropdown, so you always have the exit.
+Abuse is naturally limited: Eli's reach never extends beyond the Comeau family group's data.
 
-Same behaviour on Stay History and the Departure Checklist, each using its own permission (Stay History, Reservations).
+## Changes
+
+1. **Remove the delegate dropdown entirely.**
+   - Non-admins no longer see "Delegate view" / "Act on behalf of" on Daily & Final Input, Stay History, or the Departure Checklist.
+   - The admin "View as" picker stays as-is for you (read-only observation mode, amber banner, Return to Admin).
+
+2. **Permissions widen in place instead.** On each page, a member with the matching checkbox for their family group gets the same edit abilities the lead has *for that group only*:
+   - **Daily & Final Input** (`canEditDailyFinal`): can view and fill in Daily/Final checkout for any stay in their family group, and save it — saves are recorded under the stay's host as normal.
+   - **Stay History** (`canEditStayHistory`): sees the whole family's stays (like the lead does), can record payments/receipts and transfer credit within the family.
+   - **Reservations** (`canEditReservations`): can create/edit/cancel reservations for their family group on the Calendar.
+   - Members with boxes unchecked keep today's member-level view: only their own stays.
+
+3. **Guardrails stay.** Server-side checks (the existing `user_has_delegate_permission` database function plus family-group scoping) enforce the same limits, so a crafted request can't touch another family group.
+
+4. **Family Group Setup wording.** Update the checkbox helper text to say what it now means, e.g. "Allow this member to manage all stays in this family group (like the lead)" — so leads understand what they're granting.
+
+## What this removes
+
+- The whole "acting on behalf of" banner/mode for members, and the confusion you hit where viewing as Eli didn't show his dropdown. With no dropdown, there's nothing to simulate — viewing as Eli will simply show the page exactly as Eli sees it, with his lead-like editing powers visible.
 
 ## Technical notes
 
-- `useDelegatePermissions` gains an optional identity argument (email / user id) instead of always reading `useAuth()`; default behaviour unchanged.
-- `ViewAsUserPicker` resolves its identity from `useImpersonation()`: in admin-view mode it passes the target's email/user id into `useDelegatePermissions` and drops admin privileges for the purpose of building the member list, so `delegateGroups` and `members` reflect the target.
-- In that simulated state the `Select` renders `disabled`, with the real admin picker still reachable through the banner's **Return to Admin**.
-- Delegate mode (a real member acting for someone) is untouched.
+- `ViewAsUserPicker` becomes admin-only again (remove delegate path).
+- `useDelegatePermissions` stays as the single source of the three flags per family group; pages call `forGroup(familyGroup)` and treat permitted members like leads for that group.
+- `ImpersonationContext` delegate mode code is removed; admin view-as mode unchanged.
+- Server enforcement reuses existing `user_has_delegate_permission` RPC; verify it matches the checkbox columns before relying on it (first implementation step).
