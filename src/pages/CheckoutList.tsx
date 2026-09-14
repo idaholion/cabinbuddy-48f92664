@@ -158,8 +158,14 @@ const CheckoutList = () => {
           return Boolean(hostNameMatches);
         }
 
-        // Fallback: if no host assignments, user must be group lead
-        return claimedProfile.member_type === 'group_lead';
+        // Fallback: if no host assignments, user must be group lead (or a member
+        // with Daily/Final permission) for the whole family group.
+        return claimedProfile.member_type === 'group_lead' || canEditDailyFinal;
+      }
+
+      // Members with Daily/Final permission can work with any stay in their own family group.
+      if (canEditDailyFinal && userFamilyGroupName && r.family_group === userFamilyGroupName) {
+        return true;
       }
 
       // Fallback: match by user_id
