@@ -183,6 +183,7 @@ export default function StayHistory() {
         refetchReservations();
         fetchPayments(1, 500);
         fetchPaymentSplits();
+        refetchTransfers();
       }
     };
 
