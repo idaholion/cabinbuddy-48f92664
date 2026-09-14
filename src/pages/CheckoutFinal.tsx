@@ -983,6 +983,7 @@ const CheckoutFinal = () => {
     paymentReference?: string;
     notes?: string;
   }) => {
+    if (blockWhileImpersonating()) return;
     const dbMethod = DB_PAYMENT_METHODS.includes(data.paymentMethod) ? data.paymentMethod : 'other';
     const methodLabel = data.paymentMethod.replace('_', ' ');
     const amount = Math.round(data.amount * 100) / 100;
@@ -1046,6 +1047,7 @@ const CheckoutFinal = () => {
 
 
   const handleApplyCreditToFuture = async () => {
+    if (blockWhileImpersonating()) return;
     if (!paymentId || !organization?.id) {
       toast({
         title: "Error",
