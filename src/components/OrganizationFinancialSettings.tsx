@@ -14,6 +14,7 @@ export const OrganizationFinancialSettings = () => {
   const { isAdmin } = useOrgAdmin();
   const [updating, setUpdating] = useState(false);
   const [localAccessState, setLocalAccessState] = useState<boolean | null>(null);
+  const [localLeadTransfers, setLocalLeadTransfers] = useState<boolean | null>(null);
 
   // Sync local state with organization data
   useEffect(() => {
@@ -21,6 +22,43 @@ export const OrganizationFinancialSettings = () => {
       setLocalAccessState(organization.allow_member_financial_access);
     }
   }, [organization?.allow_member_financial_access]);
+
+  useEffect(() => {
+    const value = (organization as any)?.allow_lead_credit_transfers;
+    if (value !== undefined) setLocalLeadTransfers(!!value);
+  }, [(organization as any)?.allow_lead_credit_transfers]);
+
+  const handleToggleLeadTransfers = async (enabled: boolean) => {
+    if (!organization?.id) return;
+    setUpdating(true);
+    setLocalLeadTransfers(enabled);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ allow_lead_credit_transfers: enabled } as any)
+        .eq('id', organization.id);
+
+      if (error) throw error;
+      await refetchOrganization();
+
+      toast({
+        title: 'Settings Updated',
+        description: enabled
+          ? 'Group leads can now transfer credit for members of their own group'
+          : 'Only admins can transfer credit on behalf of another member',
+      });
+    } catch (error) {
+      console.error('❌ Error updating lead transfer setting:', error);
+      setLocalLeadTransfers(!enabled);
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to update credit transfer permissions',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleToggleMemberAccess = async (enabled: boolean) => {
     if (!organization?.id) return;
