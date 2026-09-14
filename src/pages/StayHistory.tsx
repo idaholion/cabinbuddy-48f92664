@@ -64,7 +64,14 @@ export default function StayHistory() {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, paymentMethods, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup, isImpersonating } = useEffectiveRole();
+  const {
+    isAdmin,
+    isCalendarKeeper,
+    isGroupLead,
+    userFamilyGroup,
+    isImpersonating,
+    canEditStayHistory,
+  } = useEffectiveRole();
   const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
