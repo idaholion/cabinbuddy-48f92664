@@ -1381,6 +1381,43 @@ export default function StayHistory() {
           </Card>
         )}
 
+        {selectedFamilyGroup === 'all' && transferableCreditKeys.length > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Credit Available to Transfer</CardTitle>
+              <Wallet className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                ${totalTransferableCredit.toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Held by {transferableCreditKeys.length} member{transferableCreditKeys.length === 1 ? '' : 's'}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => {
+                  if (isAdmin || leadCanTransferForGroup) {
+                    setTransferDialogSourceKey(null);
+                    setTransferDialogSourceLabel("");
+                    setTransferDialogCredit(0);
+                  } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
+                    setTransferDialogSourceKey(currentUserLedgerKey);
+                    setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
+                    setTransferDialogCredit(currentUserHasTransferableCredit);
+                  }
+                  setTransferDialogOpen(true);
+                }}
+              >
+                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                Transfer Credit
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {selectedFamilyGroup !== 'all' && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
