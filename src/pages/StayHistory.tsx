@@ -481,16 +481,39 @@ export default function StayHistory() {
     return dailyOccupancy.some(day => (day.guests || 0) > 0);
   };
 
-  const calculateStayData = (reservation: any, previousBalance: number = 0) => {
+  // pool: unspent funds carried forward for this person, tagged by source so a
+  // later stay's coverage is attributed to payments vs receipts (never a
+  // generic "earlier credit" bucket). Mutated in place by each stay.
+  const calculateStayData = (reservation: any, previousBalance: number = 0, pool: { payment: number; receipt: number } = { payment: 0, receipt: 0 }) => {
     // Handle virtual split reservations
     if (reservation.isVirtualSplit) {
       const splitPayment = reservation.splitData.payment;
       const days = reservation.splitData.dailyOccupancy;
-      
+
+      const chargesDue = Math.max(0, Number(splitPayment.amount) || 0);
+      const paidRaw = Math.max(0, Number(splitPayment.amount_paid) || 0);
+      const ownPaidApplied = Math.min(paidRaw, chargesDue);
+      let remaining = chargesDue - ownPaidApplied;
+      const carriedInPayment = Math.min(pool.payment, remaining);
+      pool.payment -= carriedInPayment; remaining -= carriedInPayment;
+      const carriedInReceipt = Math.min(pool.receipt, remaining);
+      pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
+      const paidApplied = ownPaidApplied + carriedInPayment;
+      const unpaidRemaining = Math.max(0, remaining);
+      pool.payment += paidRaw - ownPaidApplied; // overpayment carries forward, payment-tagged
+
       return {
         nights: days.length,
         receiptsTotal: 0,
         receiptsCount: 0,
+        receiptsApplied: carriedInReceipt,
+        receiptsOverflow: 0,
+        paidApplied,
+        priorCreditApplied: carriedInPayment + carriedInReceipt,
+        unpaidRemaining,
+        chargesDue,
+        carriedInPayment,
+        carriedInReceipt,
         billingAmount: Number(splitPayment.amount) || 0,
         amountPaid: Number(splitPayment.amount_paid) || 0,
         currentBalance: Number(splitPayment.balance_due) || 0,
