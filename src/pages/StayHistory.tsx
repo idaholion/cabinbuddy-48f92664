@@ -1329,10 +1329,12 @@ export default function StayHistory() {
                 </Link>
               </Button>
             )}
-            <Button variant="outline" onClick={handleSync}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Sync Data
-            </Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={handleSync}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sync Data
+              </Button>
+            )}
             {isAdmin && (
               <Button 
                 variant="default" 
