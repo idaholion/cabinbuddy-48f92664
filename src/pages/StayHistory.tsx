@@ -92,14 +92,13 @@ export default function StayHistory() {
     ? effective.familyGroup
     : (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name))
     || claimedProfile?.family_group_name || undefined;
-  const leadCanTransferForGroup =
+  const canActForFamilyInStayHistory =
     !isAdmin &&
-    !!(organization as any)?.allow_lead_credit_transfers &&
-    !!isGroupLead &&
+    !!canEditStayHistory &&
     !!leadGroupName;
   const transferScope: 'own' | 'group' | 'all' = isAdmin
     ? 'all'
-    : leadCanTransferForGroup
+    : canActForFamilyInStayHistory
       ? 'group'
       : 'own';
 
