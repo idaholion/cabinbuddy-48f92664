@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,6 +50,8 @@ export default function StayHistory() {
   const [transferDialogSourceKey, setTransferDialogSourceKey] = useState<string | null>(null);
   const [transferDialogSourceLabel, setTransferDialogSourceLabel] = useState<string>("");
   const [transferDialogCredit, setTransferDialogCredit] = useState<number>(0);
+  // Group leads can look at their whole family's stays or narrow to their own.
+  const [leadScope, setLeadScope] = useState<'family' | 'mine'>('family');
   
 
   const { user } = useAuth();
@@ -93,6 +95,41 @@ export default function StayHistory() {
     : leadCanTransferForGroup
       ? 'group'
       : 'own';
+
+  // ---- Group-lead identity -------------------------------------------------
+  // Leads are meant to see every stay in their family group. Lead records are
+  // inconsistent across organizations (some have lead_email, some only
+  // lead_name, some only the first host member), so resolve all three.
+  const sameName = (a?: string | null, b?: string | null) =>
+    !!a && !!b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+
+  const identityEmail = (effectiveUserEmail || '').trim().toLowerCase();
+  const identityName = String(
+    (effective.isImpersonated ? effective.displayName : claimedProfile?.member_name)
+      || (user?.user_metadata as any)?.display_name
+      || ''
+  ).trim().toLowerCase();
+
+  const resolvedLeadGroupName = useMemo(() => {
+    if (isAdmin) return undefined;
+    const match = (familyGroups || []).find((fg: any) => {
+      if (sameName(fg.lead_email, identityEmail)) return true;
+      if (sameName(fg.lead_name, identityName)) return true;
+      const hosts = Array.isArray(fg.host_members) ? fg.host_members : [];
+      const first = hosts[0];
+      if (!first) return false;
+      const firstName = first.name
+        || [first.firstName, first.lastName].filter(Boolean).join(' ');
+      return sameName(first.email, identityEmail) || sameName(firstName, identityName);
+    });
+    return match?.name as string | undefined;
+  }, [familyGroups, identityEmail, identityName, isAdmin]);
+
+  const myGroupName = resolvedLeadGroupName
+    || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
+    || leadGroupName;
+  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!isGroupLead && !!myGroupName));
+
 
   // While viewing as someone else, the page is locked to their family group.
   useEffect(() => {
@@ -354,22 +391,30 @@ export default function StayHistory() {
     }
   };
 
+  // Is this stay personally hosted by the current (or viewed-as) person?
+  const isOwnReservation = (reservation: any): boolean => {
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      if (sameName(primaryHost.host_email, identityEmail)) return true;
+      if (sameName(primaryHost.host_name, identityName)) return true;
+      return false;
+    }
+    return reservation.user_id === effectiveUserId;
+  };
+
   // Permission check helper - determines if user can view a specific reservation
   const canViewReservation = (reservation: any): boolean => {
     // Admins and calendar keepers can see everything
     if (isAdmin || isCalendarKeeper) return true;
-    
-    // Group leads can see all reservations for their family group
-    if (isGroupLead && userFamilyGroup?.name === reservation.family_group) return true;
-    
-    // Regular members can only see reservations where they are the primary host
-    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-      const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
+
+    // Group leads can see all reservations for their family group, unless they
+    // have narrowed the view to their own stays.
+    if (isEffectiveLead && sameName(myGroupName, reservation.family_group)) {
+      return leadScope === 'family' ? true : isOwnReservation(reservation);
     }
-    
-    // Fallback: if no host_assignments, only show if user_id matches (old data)
-    return reservation.user_id === effectiveUserId;
+
+    // Regular members can only see reservations where they are the primary host
+    return isOwnReservation(reservation);
   };
 
   // Helper function to check if user owns a reservation (for split costs button)
@@ -1302,6 +1347,28 @@ export default function StayHistory() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Scope toggle (group leads only) */}
+          {isEffectiveLead && (
+            <div className="inline-flex items-center rounded-md border bg-card p-1">
+              <Button
+                type="button"
+                size="sm"
+                variant={leadScope === 'mine' ? 'default' : 'ghost'}
+                onClick={() => setLeadScope('mine')}
+              >
+                My stays
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={leadScope === 'family' ? 'default' : 'ghost'}
+                onClick={() => setLeadScope('family')}
+              >
+                Whole family
+              </Button>
+            </div>
+          )}
 
           {/* Family Group Filter (Admin only) */}
           {isAdmin && (
