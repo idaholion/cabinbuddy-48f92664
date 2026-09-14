@@ -28,11 +28,12 @@ interface MemberOption {
 interface TransferCreditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  sourceKey?: string;
+  sourceKey?: string | null;
   sourceLabel?: string;
   availableCredit: number;
   familyGroups: any[];
   isAdmin: boolean;
+  creditBySource?: Record<string, number>;
   onTransfer: (data: {
     from_ledger_name: string;
     to_ledger_name: string;
