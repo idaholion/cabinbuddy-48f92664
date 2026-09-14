@@ -1223,7 +1223,7 @@ export default function StayHistory() {
   const canTransferForHostKey = (hostKey: string) => {
     if (isAdmin) return true;
     if (currentUserLedgerKey && hostKey === currentUserLedgerKey) return true;
-    if (leadCanTransferForGroup) {
+    if (canActForFamilyInStayHistory) {
       return memberGroupMap.get(hostKey) === leadGroupName;
     }
     return false;
