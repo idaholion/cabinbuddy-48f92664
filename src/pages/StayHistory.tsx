@@ -690,16 +690,28 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
-    // Allocation of THIS stay's charges: cash/check payments first, then receipt
-    // credit, then any credit carried in from earlier stays. Anything left is
-    // still owed. These four always sum to this stay's charges.
+    // Allocation of THIS stay's charges: this stay's own cash/check payments
+    // first, then this stay's receipts, then credit carried in from earlier
+    // stays — tagged by source so carried payment credit counts as payments
+    // and carried receipt credit counts as receipts. What remains is unpaid;
+    // overpayments and receipt overflow carry forward into the tagged pool.
     const chargesDue = Math.max(0, billingAmount + manualAdjustment);
-    const paidApplied = Math.min(Math.max(0, amountPaid), chargesDue);
-    const receiptsApplied = Math.min(Math.max(0, receiptsTotal), chargesDue - paidApplied);
-    const priorCreditAvailable = Math.max(0, -previousBalance);
-    const priorCreditApplied = Math.min(priorCreditAvailable, chargesDue - paidApplied - receiptsApplied);
-    const unpaidRemaining = chargesDue - paidApplied - receiptsApplied - priorCreditApplied;
-    const receiptsOverflow = Math.max(0, receiptsTotal - receiptsApplied);
+    const paidRaw = Math.max(0, amountPaid);
+    const receiptsRaw = Math.max(0, receiptsTotal);
+    const ownPaidApplied = Math.min(paidRaw, chargesDue);
+    const ownReceiptsApplied = Math.min(receiptsRaw, chargesDue - ownPaidApplied);
+    let remaining = chargesDue - ownPaidApplied - ownReceiptsApplied;
+    const carriedInPayment = Math.min(pool.payment, remaining);
+    pool.payment -= carriedInPayment; remaining -= carriedInPayment;
+    const carriedInReceipt = Math.min(pool.receipt, remaining);
+    pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
+    const paidApplied = ownPaidApplied + carriedInPayment;
+    const receiptsApplied = ownReceiptsApplied + carriedInReceipt;
+    const priorCreditApplied = carriedInPayment + carriedInReceipt;
+    const unpaidRemaining = Math.max(0, remaining);
+    const receiptsOverflow = Math.max(0, receiptsRaw - ownReceiptsApplied);
+    pool.payment += paidRaw - ownPaidApplied; // overpayment carries forward, payment-tagged
+    pool.receipt += receiptsOverflow;         // receipt overflow carries forward, receipt-tagged
 
     return {
       nights,
@@ -711,6 +723,8 @@ export default function StayHistory() {
       priorCreditApplied,
       unpaidRemaining,
       chargesDue,
+      carriedInPayment,
+      carriedInReceipt,
 
       billingAmount,
       amountPaid,
