@@ -824,21 +824,103 @@ export default function StayHistory() {
     return 'unknown';
   };
 
+  // Build a map of ledger key -> display name so transfer records are shown
+  // with the recipient/source person, not a raw key.
+  const transferDisplayNameMap = new Map<string, string>();
+  for (const group of (familyGroups || []) as any[]) {
+    const members = Array.isArray(group.host_members) ? group.host_members : [];
+    for (const member of members) {
+      if (!member?.name) continue;
+      const key = member.email
+        ? `p:${String(member.email).trim().toLowerCase()}`
+        : `n:${String(member.name).trim().toLowerCase()}`;
+      if (!transferDisplayNameMap.has(key)) {
+        transferDisplayNameMap.set(key, member.name);
+      }
+    }
+  }
+  const getTransferDisplayName = (key: string) => transferDisplayNameMap.get(key) || key;
 
-  
+  // Group credit transfers by source and target ledger key, ordered by date.
+  const transfersBySource = new Map<string, any[]>();
+  const transfersByTarget = new Map<string, any[]>();
+  for (const t of creditTransfers || []) {
+    const sList = transfersBySource.get(t.from_ledger_name) || [];
+    sList.push(t);
+    transfersBySource.set(t.from_ledger_name, sList);
+    const tList = transfersByTarget.get(t.to_ledger_name) || [];
+    tList.push(t);
+    transfersByTarget.set(t.to_ledger_name, tList);
+  }
+  for (const list of [...transfersBySource.values(), ...transfersByTarget.values()]) {
+    list.sort((a, b) => parseDateOnly(a.transfer_date).getTime() - parseDateOnly(b.transfer_date).getTime());
+  }
+
   // Simple chronological ledger: for each host, walk stays oldest → newest and
   // let each stay's newBalance = previousBalance + charges - payments - receipts.
   // Alongside the balance, a source-tagged pool ({payment, receipt}) tracks
   // unspent funds so carried credit is attributed to its original source.
+  // Transfers in/out mutate the pool before/after the relevant stay dates.
   const hostBalances = new Map<string, number>();
-  const hostPools = new Map<string, { payment: number; receipt: number }>();
+  const hostPools = new Map<string, { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }>();
+  const hostTransferPointers = new Map<string, { outIndex: number; inIndex: number }>();
   const reservationsWithBalance: any[] = [];
+
+  const applyOutgoingTransfers = (hostKey: string, beforeDate: Date, pool: { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }) => {
+    const list = transfersBySource.get(hostKey);
+    if (!list) return;
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    while (ptr.outIndex < list.length && parseDateOnly(list[ptr.outIndex].transfer_date).getTime() <= beforeDate.getTime()) {
+      const t = list[ptr.outIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
+      let remainingOut = amount;
+      const fromPayment = Math.min(pool.payment, remainingOut);
+      pool.payment -= fromPayment; remainingOut -= fromPayment;
+      const fromReceipt = Math.min(pool.receipt, remainingOut);
+      pool.receipt -= fromReceipt; remainingOut -= fromReceipt;
+      const transferPoolTotal = pool.transferInQueue.reduce((sum, q) => sum + q.remaining, 0);
+      const fromTransfer = Math.min(transferPoolTotal, remainingOut);
+      if (fromTransfer > 0) {
+        let toDrain = fromTransfer;
+        for (const head of pool.transferInQueue) {
+          if (toDrain <= 0.004) break;
+          const drain = Math.min(head.remaining, toDrain);
+          head.remaining -= drain;
+          toDrain -= drain;
+        }
+        pool.transferInQueue = pool.transferInQueue.filter(q => q.remaining > 0.004);
+      }
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  };
+
+  const applyIncomingTransfers = (hostKey: string, beforeDate: Date, pool: { payment: number; receipt: number; transferInQueue: { id: string; fromName: string; notes?: string; remaining: number }[] }) => {
+    const list = transfersByTarget.get(hostKey);
+    if (!list) return;
+    const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
+    while (ptr.inIndex < list.length && parseDateOnly(list[ptr.inIndex].transfer_date).getTime() <= beforeDate.getTime()) {
+      const t = list[ptr.inIndex++];
+      const amount = Number(t.amount) || 0;
+      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      pool.transferInQueue.push({
+        id: t.id,
+        fromName: getTransferDisplayName(t.from_ledger_name),
+        notes: t.notes,
+        remaining: amount,
+      });
+    }
+    hostTransferPointers.set(hostKey, ptr);
+  };
 
   for (const reservation of sortedReservations) {
     const hostKey = getLedgerKey(reservation);
-    const previousBalance = hostBalances.get(hostKey) || 0;
-    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0 };
+    const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
     hostPools.set(hostKey, pool);
+    const beforeDate = parseDateOnly(reservation.start_date);
+    applyOutgoingTransfers(hostKey, beforeDate, pool);
+    applyIncomingTransfers(hostKey, beforeDate, pool);
+    const previousBalance = hostBalances.get(hostKey) || 0;
     const stayData = calculateStayData(reservation, previousBalance, pool);
     // stayData.currentBalance is the *charge* delta for this stay
     // (billing + adjustment - payments - receipts). amountDue already = prev + delta.
