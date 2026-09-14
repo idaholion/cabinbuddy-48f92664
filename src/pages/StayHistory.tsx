@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -12,6 +12,7 @@ import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useUserRole } from "@/hooks/useUserRole";
 import { usePayments } from "@/hooks/usePayments";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useCreditTransfers } from "@/hooks/useCreditTransfers";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays, addDays } from "date-fns";
 import { parseDateOnly } from "@/lib/date-utils";
@@ -20,6 +21,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { UnifiedOccupancyDialog } from "@/components/UnifiedOccupancyDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
 import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
+import { TransferCreditDialog } from "@/components/TransferCreditDialog";
 
 import { PaymentHistoryDialog } from "@/components/PaymentHistoryDialog";
 import { ExportSeasonDataDialog } from "@/components/ExportSeasonDataDialog";
