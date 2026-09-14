@@ -1362,7 +1362,7 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
-              {selectedFamilyGroup !== 'all' && currentBalance < -0.004 && (isAdmin || currentUserHasTransferableCredit > 0.004) && (
+              {(isAdmin ? hostCreditMap.size > 0 : currentUserHasTransferableCredit > 0.004) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1680,6 +1680,27 @@ export default function StayHistory() {
                             <Send className="h-4 w-4 mr-2" />
                             Request ${Math.abs(stayData.amountDue).toFixed(2)} Refund via Venmo
                           </Button>
+
+                          {(() => {
+                            const hostKey = getLedgerKey(reservation);
+                            const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                            if (!canTransfer) return null;
+                            return (
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => {
+                                  setTransferDialogSourceKey(hostKey);
+                                  setTransferDialogSourceLabel(getTransferDisplayName(hostKey));
+                                  setTransferDialogCredit(Math.abs(stayData.amountDue));
+                                  setTransferDialogOpen(true);
+                                }}
+                              >
+                                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                Transfer Credit to Another Member
+                              </Button>
+                            );
+                          })()}
                         </div>
                       ) : (
                         // Positive balance - show pay now button

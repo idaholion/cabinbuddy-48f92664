@@ -45,6 +45,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrgAdmin } from "@/hooks/useOrgAdmin";
+import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useCreditTransfers } from "@/hooks/useCreditTransfers";
+import { TransferCreditDialog } from "@/components/TransferCreditDialog";
+import { ArrowRightLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserSplit {
@@ -170,6 +174,13 @@ const CheckoutFinal = () => {
   };
   
   const { isAdmin } = useOrgAdmin();
+  const { familyGroups } = useFamilyGroups();
+  const { createTransfer } = useCreditTransfers();
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const transferSourceKey = user?.email
+    ? `p:${user.email.trim().toLowerCase()}`
+    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : '');
+  const transferSourceLabel = claimedProfile?.member_name || user?.email || 'You';
 
   // Get the most recent reservation for the current user's stay
   // Prioritize reservations that include today's date (active stays)
@@ -2062,6 +2073,17 @@ const CheckoutFinal = () => {
                                   <Send className="h-4 w-4 mr-2" />
                                   Request Refund via Venmo
                                 </Button>
+
+                                {(isAdmin || transferSourceKey) && (
+                                  <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    onClick={() => setTransferDialogOpen(true)}
+                                  >
+                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                    Transfer Credit to Another Member
+                                  </Button>
+                                )}
                               </div>
                             ) : (
                               // Positive balance - show pay now button
@@ -2196,6 +2218,19 @@ const CheckoutFinal = () => {
           />
         )}
       </div>
+
+      <TransferCreditDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        sourceKey={transferSourceKey || null}
+        sourceLabel={transferSourceLabel}
+        availableCredit={Math.max(0, -totalAmount)}
+        familyGroups={familyGroups}
+        isAdmin={isAdmin}
+        onTransfer={async (data) => {
+          await createTransfer(data);
+        }}
+      />
     </div>
   );
 };
