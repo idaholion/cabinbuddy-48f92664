@@ -2237,6 +2237,7 @@ const CheckoutFinal = () => {
         familyGroups={familyGroups}
         isAdmin={isAdmin}
         onTransfer={async (data) => {
+          if (blockWhileImpersonating()) return;
           await createTransfer(data);
         }}
       />

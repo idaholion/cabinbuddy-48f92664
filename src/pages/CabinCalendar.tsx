@@ -63,7 +63,7 @@ const CabinCalendar = () => {
   const [extensionEndDate, setExtensionEndDate] = useState<Date>(new Date());
 
   // Get user role information
-  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo, isAdmin } = useUserRole();
+  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo, isAdmin, isImpersonating } = useEffectiveRole();
   const { impersonatedFamilyGroup, setImpersonatedFamilyGroup } = useRole();
   
   // Get user's family group and pending trade requests
