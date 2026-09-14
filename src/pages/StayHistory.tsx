@@ -883,7 +883,6 @@ export default function StayHistory() {
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
-  const totalPriorCreditApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.priorCreditApplied || 0), 0);
   const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
 
 
