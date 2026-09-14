@@ -28,8 +28,9 @@ This plan adds the group-lead case, controlled by an admin switch.
 
 ## Technical notes
 
-- Lead detection reuses the existing `is_family_group_lead` / unified lead model (member 1 of the group); no schema change.
-- `TransferCreditDialog` gains a permission scope prop (`own` | `group` | `all`) plus the lead's group name; `sourceOptions` filters `creditBySource` by that scope.
-- `StayHistory.tsx` computes the viewer's lead status once and passes the scope; per-stay button condition becomes `isAdmin || isOwnStay || (isLead && stayHostInLeadGroup)`.
-- Database: add an RLS insert policy allowing a family group lead to insert a transfer whose `from_ledger_name` resolves to a member of their group, so the client rule is enforced server-side too (current insert policy only covers self and admins). This is an external Supabase project, so the SQL will be provided to run in the SQL Editor.
+- New column `organizations.allow_lead_credit_transfers boolean not null default false`, surfaced as a toggle in the admin settings page alongside the other org permission switches.
+- Lead detection reuses the existing `is_family_group_lead` / unified lead model (member 1 of the group).
+- `TransferCreditDialog` gains a permission scope prop (`own` | `group` | `all`) plus the lead's group name; `sourceOptions` filters `creditBySource` by that scope. Scope = `all` for admins, `group` for leads when the org setting is on, otherwise `own`.
+- `StayHistory.tsx` computes the viewer's lead status and the org setting once and passes the scope; per-stay button condition becomes `isAdmin || isOwnStay || (leadScopeEnabled && stayHostInLeadGroup)`.
+- Database: add an RLS insert policy allowing a family group lead to insert a transfer whose `from_ledger_name` resolves to a member of their group, gated on the organization's toggle, so the client rule is enforced server-side too (current insert policy only covers self and admins). This is an external Supabase project, so the SQL will be provided to run in the SQL Editor.
 - `CheckoutFinal.tsx` keeps its existing behaviour (self or admin); no lead-specific list there since that page is scoped to one person's stay.
