@@ -134,7 +134,7 @@ export default function StayHistory() {
   const myGroupName = resolvedLeadGroupName
     || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
     || leadGroupName;
-  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!isGroupLead && !!myGroupName));
+  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
 
 
   // While viewing as someone else, the page is locked to their family group.
