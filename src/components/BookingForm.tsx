@@ -217,7 +217,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         adminOverride: false
       });
     }
-  }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, isAdmin, canEditReservations, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
