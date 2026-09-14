@@ -268,7 +268,7 @@ const CabinCalendar = () => {
           <CardContent>
             
             {/* Admin "View as user" controls */}
-            <ViewAsUserPicker scope="reservations" />
+            <ViewAsUserPicker />
             
             {/* Debug logging for button visibility */}
             {(() => {

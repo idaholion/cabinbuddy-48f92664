@@ -1346,7 +1346,7 @@ export default function StayHistory() {
           </p>
         </div>
 
-        <ViewAsUserPicker scope="stayHistory" />
+        <ViewAsUserPicker />
 
         <div className="flex flex-wrap gap-3">
           {/* Year Filter */}
