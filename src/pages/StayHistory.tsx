@@ -1362,7 +1362,7 @@ export default function StayHistory() {
                   From payments and receipts above total charges
                 </p>
               )}
-              {selectedFamilyGroup !== 'all' && currentBalance < -0.004 && (isAdmin || currentUserHasTransferableCredit > 0.004) && (
+              {(isAdmin ? hostCreditMap.size > 0 : currentUserHasTransferableCredit > 0.004) && (
                 <Button
                   variant="outline"
                   size="sm"
