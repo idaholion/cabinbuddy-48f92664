@@ -1083,6 +1083,15 @@ export default function StayHistory() {
 
 
 
+  // Credit transfers visible in the current view (source or recipient belongs to a host shown).
+  const visibleHostKeys = new Set<string>();
+  for (const { reservation } of displayReservations) {
+    visibleHostKeys.add(getLedgerKey(reservation));
+  }
+  const visibleTransfers = (creditTransfers || []).filter(t =>
+    visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
+  );
+
   // Count orphaned payments (for admin debugging)
   // Exclude intentional split payments (reservation_id is null by design)
   const orphanedPaymentsCount = payments.filter(p => 
