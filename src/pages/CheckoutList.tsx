@@ -335,6 +335,10 @@ const CheckoutList = () => {
   };
 
   const toggleTask = (taskId: string) => {
+    if (isImpersonating) {
+      toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
+      return;
+    }
     const newCheckedTasks = new Set(checkedTasks);
     if (newCheckedTasks.has(taskId)) {
       newCheckedTasks.delete(taskId);

@@ -946,6 +946,7 @@ const CheckoutFinal = () => {
   }, [currentReservation?.id, organization?.id]);
 
   const handleSaveOccupancy = async () => {
+    if (blockWhileImpersonating()) return;
     if (!currentReservation) return;
 
     const updatedOccupancy = dailyBreakdown.map(day => ({
