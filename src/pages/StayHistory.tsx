@@ -758,6 +758,28 @@ export default function StayHistory() {
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
+  // Receipt credit that overflowed on a later stay is allowed to settle charges
+  // still unpaid on an EARLIER stay for the same host (receipts arrive after the
+  // stay they relate to). Walk newest → oldest per host carrying the overflow pool.
+  {
+    const overflowPool = new Map<string, number>();
+    for (let i = reservationsWithBalance.length - 1; i >= 0; i--) {
+      const { reservation, stayData } = reservationsWithBalance[i];
+      const hostKey = getLedgerKey(reservation);
+      let pool = overflowPool.get(hostKey) || 0;
+      pool += stayData.receiptsOverflow || 0;
+      if (stayData.unpaidRemaining > 0 && pool > 0) {
+        const applied = Math.min(pool, stayData.unpaidRemaining);
+        stayData.receiptsApplied += applied;
+        stayData.unpaidRemaining -= applied;
+        pool -= applied;
+      }
+      overflowPool.set(hostKey, pool);
+    }
+  }
+
+
+
   // Full ledger is oldest → newest for calculations.
   const fullLedger = [...reservationsWithBalance];
 
