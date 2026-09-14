@@ -150,8 +150,8 @@ const CabinCalendar = () => {
             setSelectedHost(newGroup.lead_name || "");
           }
         }
-        // If group lead, they can only select their own group and they are the default host
-        else if (isGroupLead && newGroup.name === userFamilyGroupName) {
+        // If group lead (or a member allowed to manage reservations), they can only select their own group and they default to the lead as host
+        else if ((isGroupLead || canEditReservations) && newGroup.name === userFamilyGroupName) {
           setSelectedHost(userGroup?.lead_name || "");
         }
       }
