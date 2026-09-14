@@ -1,7 +1,7 @@
 # Stay History — clarify "Earlier Credit" wording
 
 ## Finding (no math change needed)
-In the all-years view, "Charges Paid from Earlier Credit" is legitimate: it is credit **earned on an earlier stay within the shown range** (from receipt overflow or overpayment) and later applied to another stay. The ledger starts each person's balance at $0 on their oldest stay, so no credit enters from outside the data. The label just reads as if the credit predates the view.
+The ledger walks stays oldest → newest, per person. In the All Years view, "earlier credit" is real, but it means credit **earned on an earlier stay within the same view** (receipts larger than charges, or an overpayment) and later applied to another stay. It does **not** mean credit from a year outside the data. The label just reads that way, which is what caused the confusion.
 
 ## Change (UI text only, `src/pages/StayHistory.tsx`)
 1. Rename the summary card from **"Charges Paid from Earlier Credit"** to **"Charges Paid with Carryover Credit"**.
