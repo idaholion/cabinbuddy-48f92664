@@ -28,6 +28,12 @@ interface PaymentHistoryDialogProps {
   paymentId: string;
   familyGroup: string;
   totalAmount: number;
+  /** Receipt purchases credited against this stay */
+  receiptsCredited?: number;
+  /** Number of receipts credited against this stay */
+  receiptsCount?: number;
+  /** Running ledger balance after this stay (negative = credit) */
+  balanceAfterStay?: number;
   onPaymentUpdated: () => void;
 }
 
