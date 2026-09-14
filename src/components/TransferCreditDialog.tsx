@@ -159,7 +159,7 @@ export const TransferCreditDialog = ({
                   <SelectValue placeholder="Select a person with credit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {members.map((m) => (
+                  {sourceOptions.map((m) => (
                     <SelectItem key={m.key} value={m.key}>
                       {m.label}
                     </SelectItem>
