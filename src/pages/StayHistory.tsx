@@ -29,6 +29,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveUser } from "@/hooks/useEffectiveUser";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,7 +62,7 @@ export default function StayHistory() {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, paymentMethods, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup } = useUserRole();
+  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup, isImpersonating } = useEffectiveRole();
   const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
@@ -69,9 +70,12 @@ export default function StayHistory() {
   const { syncing, syncPayments } = usePaymentSync();
   const { transfers: creditTransfers, createTransfer, refetchTransfers } = useCreditTransfers();
 
-  const currentUserLedgerKey = user?.email
-    ? `p:${user.email.trim().toLowerCase()}`
-    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
+  const ledgerName = effective.isImpersonated
+    ? effective.displayName
+    : claimedProfile?.member_name;
+  const currentUserLedgerKey = effectiveUserEmail
+    ? `p:${effectiveUserEmail.trim().toLowerCase()}`
+    : (ledgerName ? `n:${String(ledgerName).trim().toLowerCase()}` : undefined);
 
   // Group leads may move credit for members of their own group only when the
   // organization has enabled that privilege. Admins always have full rights.
