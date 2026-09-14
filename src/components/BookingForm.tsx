@@ -15,7 +15,7 @@ import { useReservations } from '@/hooks/useReservations';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useOrganizationContext } from '@/hooks/useOrganizationContext';
