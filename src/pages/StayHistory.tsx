@@ -1105,6 +1105,41 @@ export default function StayHistory() {
   const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
   const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
 
+  // Data handed to the CSV export dialog — exactly the stays currently listed.
+  const exportSeasonData = {
+    config: {
+      startDate: selectedYear && selectedYear !== 'all'
+        ? `${selectedYear}-01-01`
+        : (visibleReservations.length
+            ? [...visibleReservations].sort((a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime())[0].start_date
+            : `${new Date().getFullYear()}-01-01`),
+      endDate: selectedYear && selectedYear !== 'all'
+        ? `${selectedYear}-12-31`
+        : (visibleReservations.length
+            ? [...visibleReservations].sort((a, b) => parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime())[0].end_date
+            : `${new Date().getFullYear()}-12-31`),
+    },
+    stays: displayReservations.map(({ reservation, stayData }) => ({
+      reservation,
+      billing: {
+        baseAmount: stayData.billingAmount || 0,
+        total: (stayData.billingAmount || 0) + (stayData.manualAdjustment || 0),
+      },
+      payment: {
+        amount_paid: stayData.paidApplied || 0,
+        status: stayData.unpaidRemaining > 0.004 ? 'unpaid' : 'paid',
+        daily_occupancy: stayData.dailyOccupancy,
+      },
+    })),
+    totals: {
+      totalNights,
+      totalCharged: totalCharges,
+      totalPaid,
+      outstandingBalance: totalStillOwed,
+      actualGuestsAvg: totalStays > 0 ? totalNights / totalStays : 0,
+    },
+  };
+
 
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
   const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
