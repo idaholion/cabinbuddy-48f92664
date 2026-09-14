@@ -1040,7 +1040,7 @@ export default function StayHistory() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalReceiptsCredited.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Purchases credited against stay costs</p>
+            <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
           </CardContent>
         </Card>
         <Card>
@@ -1211,9 +1211,18 @@ export default function StayHistory() {
                         Receipts Credited{stayData.receiptsCount > 0 ? ` (${stayData.receiptsCount})` : ''}:
                       </span>
                       <span className="font-medium">
-                        {stayData.receiptsTotal > 0 ? `−$${stayData.receiptsTotal.toFixed(2)}` : '$0.00'}
+                        {stayData.receiptsApplied > 0 ? `−$${stayData.receiptsApplied.toFixed(2)}` : '$0.00'}
                       </span>
                     </div>
+
+                    {stayData.receiptsOverflow > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Receipt Credit Carried Forward:</span>
+                        <span className="font-medium text-green-600">
+                          −${stayData.receiptsOverflow.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
 
                     {(() => {
                       const bal = stayData.amountDue;
