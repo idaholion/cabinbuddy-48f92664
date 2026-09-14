@@ -1680,6 +1680,27 @@ export default function StayHistory() {
                             <Send className="h-4 w-4 mr-2" />
                             Request ${Math.abs(stayData.amountDue).toFixed(2)} Refund via Venmo
                           </Button>
+
+                          {(() => {
+                            const hostKey = getLedgerKey(reservation);
+                            const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                            if (!canTransfer) return null;
+                            return (
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => {
+                                  setTransferDialogSourceKey(hostKey);
+                                  setTransferDialogSourceLabel(getTransferDisplayName(hostKey));
+                                  setTransferDialogCredit(Math.abs(stayData.amountDue));
+                                  setTransferDialogOpen(true);
+                                }}
+                              >
+                                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                Transfer Credit to Another Member
+                              </Button>
+                            );
+                          })()}
                         </div>
                       ) : (
                         // Positive balance - show pay now button
