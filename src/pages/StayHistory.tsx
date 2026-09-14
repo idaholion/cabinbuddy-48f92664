@@ -1402,7 +1402,10 @@ export default function StayHistory() {
                        onClick={() => setViewPaymentHistory({
                          paymentId: stayData.paymentId,
                          familyGroup: reservation.family_group,
-                         totalAmount: stayData.billingAmount + stayData.manualAdjustment
+                         totalAmount: stayData.billingAmount + stayData.manualAdjustment,
+                         receiptsCredited: stayData.receiptsTotal,
+                         receiptsCount: stayData.receiptsCount,
+                         balanceAfterStay: stayData.amountDue
                        })}
                      >
                        <Receipt className="h-4 w-4 mr-2" />
