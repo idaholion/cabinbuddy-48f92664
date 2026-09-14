@@ -65,9 +65,13 @@ export const useEffectiveRole = () => {
  * record is attributed to the wrong person.
  */
 export const useImpersonationGuard = () => {
-  const { isImpersonating, target } = useImpersonation();
+  const { isImpersonating, target, isAdminView, isDelegateMode } = useImpersonation();
   return {
-    isImpersonating,
+    // Only admin "View as" is read-only. Delegates may save on behalf of the
+    // member they are acting for.
+    isImpersonating: isImpersonating && isAdminView,
+    isAdminView,
+    isDelegateMode,
     targetName: target?.displayName ?? null,
     blockedMessage: target
       ? `You are viewing as ${target.displayName}. Return to Admin to make changes.`

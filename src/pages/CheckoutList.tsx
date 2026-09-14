@@ -336,7 +336,7 @@ const CheckoutList = () => {
   };
 
   const toggleTask = (taskId: string) => {
-    if (isImpersonating) {
+    if (impersonationGuard.isImpersonating) {
       toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
       return;
     }

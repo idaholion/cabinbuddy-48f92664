@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
+import { useDelegatePermissions } from '@/hooks/useDelegatePermissions';
 import { useOrganization } from '@/hooks/useOrganization';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,6 +15,11 @@ export interface ImpersonationTarget {
 interface ImpersonationContextType {
   target: ImpersonationTarget | null;
   isImpersonating: boolean;
+  /** 'admin' = admin read-only "View as"; 'delegate' = family member acting on
+   *  behalf of another member in their own group (saves allowed). */
+  mode: 'admin' | 'delegate' | null;
+  isAdminView: boolean;
+  isDelegateMode: boolean;
   canImpersonate: boolean;
   setTarget: (target: ImpersonationTarget | null) => void;
   clear: () => void;
@@ -27,12 +33,18 @@ const STORAGE_KEY = 'cb_impersonation_target';
 export const ImpersonationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { isAdmin } = useOrgAdmin();
+  const { hasAnyDelegatePermission } = useDelegatePermissions();
   const { organization } = useOrganization();
   const [target, setTargetState] = useState<ImpersonationTarget | null>(null);
 
+  const canImpersonate = !!isAdmin || hasAnyDelegatePermission;
+  const mode: 'admin' | 'delegate' | null = !target
+    ? null
+    : isAdmin ? 'admin' : (hasAnyDelegatePermission ? 'delegate' : null);
+
   // Hydrate from sessionStorage so the choice persists across nav
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canImpersonate) {
       setTargetState(null);
       return;
     }
@@ -40,7 +52,7 @@ export const ImpersonationProvider = ({ children }: { children: ReactNode }) => 
       const raw = sessionStorage.getItem(STORAGE_KEY);
       if (raw) setTargetState(JSON.parse(raw));
     } catch { /* ignore */ }
-  }, [isAdmin]);
+  }, [canImpersonate]);
 
   const setTarget = useCallback((t: ImpersonationTarget | null) => {
     setTargetState(t);
@@ -86,8 +98,11 @@ export const ImpersonationProvider = ({ children }: { children: ReactNode }) => 
   return (
     <ImpersonationContext.Provider value={{
       target,
-      isImpersonating: !!target && isAdmin,
-      canImpersonate: !!isAdmin,
+      isImpersonating: !!target && mode !== null,
+      mode,
+      isAdminView: mode === 'admin',
+      isDelegateMode: mode === 'delegate',
+      canImpersonate,
       setTarget,
       clear,
       logAction,
