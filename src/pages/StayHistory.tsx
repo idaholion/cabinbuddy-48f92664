@@ -1108,7 +1108,7 @@ export default function StayHistory() {
   // Data handed to the CSV export dialog — exactly the stays currently listed.
   const exportSeasonData = {
     config: {
-      startDate: selectedYear && selectedYear !== 'all'
+      startDate: selectedYear !== 0
         ? `${selectedYear}-01-01`
         : (visibleReservations.length
             ? [...visibleReservations].sort((a, b) => parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime())[0].start_date
