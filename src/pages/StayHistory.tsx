@@ -1348,6 +1348,28 @@ export default function StayHistory() {
             </SelectContent>
           </Select>
 
+          {/* Scope toggle (group leads only) */}
+          {isEffectiveLead && (
+            <div className="inline-flex items-center rounded-md border bg-card p-1">
+              <Button
+                type="button"
+                size="sm"
+                variant={leadScope === 'mine' ? 'default' : 'ghost'}
+                onClick={() => setLeadScope('mine')}
+              >
+                My stays
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={leadScope === 'family' ? 'default' : 'ghost'}
+                onClick={() => setLeadScope('family')}
+              >
+                Whole family
+              </Button>
+            </div>
+          )}
+
           {/* Family Group Filter (Admin only) */}
           {isAdmin && (
             <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
