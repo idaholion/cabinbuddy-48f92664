@@ -1676,7 +1676,7 @@ export default function StayHistory() {
                       </div>
                       {(() => {
                         const hostKey = getLedgerKey(reservation);
-                        const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                        const canTransfer = canTransferForHostKey(hostKey);
                         if (!canTransfer || stayData.amountDue >= -0.004) return null;
                         return (
                           <Button
@@ -1741,7 +1741,7 @@ export default function StayHistory() {
 
                           {(() => {
                             const hostKey = getLedgerKey(reservation);
-                            const canTransfer = isAdmin || (currentUserLedgerKey && hostKey === currentUserLedgerKey);
+                            const canTransfer = canTransferForHostKey(hostKey);
                             if (!canTransfer) return null;
                             return (
                               <Button
@@ -2109,6 +2109,9 @@ export default function StayHistory() {
         availableCredit={transferDialogCredit}
         familyGroups={familyGroups || []}
         isAdmin={!!isAdmin}
+        scope={transferScope}
+        scopeGroupName={leadGroupName}
+        currentUserKey={currentUserLedgerKey}
         creditBySource={Object.fromEntries(hostCreditMap)}
         onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
           const result = await createTransfer({
