@@ -51,6 +51,7 @@ export const TransferCreditDialog = ({
   availableCredit,
   familyGroups,
   isAdmin,
+  creditBySource,
   onTransfer,
 }: TransferCreditDialogProps) => {
   const members = useMemo<MemberOption[]>(() => {
@@ -81,14 +82,27 @@ export const TransferCreditDialog = ({
   const [notes, setNotes] = useState<string>("");
   const [saving, setSaving] = useState(false);
 
+  // Reset source selection when the dialog reopens with a new sourceKey.
+  useEffect(() => {
+    setSelectedSource(sourceKey || "");
+    setAmount("");
+    setNotes("");
+  }, [sourceKey]);
+
   const effectiveSource = sourceKey || selectedSource;
   const sourceDisplay = sourceKey
     ? sourceLabel || sourceKey
     : members.find((m) => m.key === selectedSource)?.label || selectedSource;
 
-  const effectiveAvailable = sourceKey ? availableCredit : availableCredit;
-  // When admin picks a source from a list, the dialog only knows one passed-in credit value.
-  // The parent should re-open the dialog with the correct sourceKey and availableCredit.
+  const effectiveAvailable = sourceKey
+    ? availableCredit
+    : (creditBySource?.[selectedSource] || 0);
+
+  // For admin source selection, only list people who actually have transferable credit.
+  const sourceOptions = useMemo(
+    () => members.filter((m) => (creditBySource?.[m.key] || 0) > 0.004),
+    [members, creditBySource]
+  );
 
   const recipientOptions = useMemo(
     () => members.filter((m) => m.key !== effectiveSource),
