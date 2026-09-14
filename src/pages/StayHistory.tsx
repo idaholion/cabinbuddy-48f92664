@@ -96,6 +96,41 @@ export default function StayHistory() {
       ? 'group'
       : 'own';
 
+  // ---- Group-lead identity -------------------------------------------------
+  // Leads are meant to see every stay in their family group. Lead records are
+  // inconsistent across organizations (some have lead_email, some only
+  // lead_name, some only the first host member), so resolve all three.
+  const sameName = (a?: string | null, b?: string | null) =>
+    !!a && !!b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+
+  const identityEmail = (effectiveUserEmail || '').trim().toLowerCase();
+  const identityName = String(
+    (effective.isImpersonated ? effective.displayName : claimedProfile?.member_name)
+      || (user?.user_metadata as any)?.display_name
+      || ''
+  ).trim().toLowerCase();
+
+  const resolvedLeadGroupName = useMemo(() => {
+    if (isAdmin) return undefined;
+    const match = (familyGroups || []).find((fg: any) => {
+      if (sameName(fg.lead_email, identityEmail)) return true;
+      if (sameName(fg.lead_name, identityName)) return true;
+      const hosts = Array.isArray(fg.host_members) ? fg.host_members : [];
+      const first = hosts[0];
+      if (!first) return false;
+      const firstName = first.name
+        || [first.firstName, first.lastName].filter(Boolean).join(' ');
+      return sameName(first.email, identityEmail) || sameName(firstName, identityName);
+    });
+    return match?.name as string | undefined;
+  }, [familyGroups, identityEmail, identityName, isAdmin]);
+
+  const myGroupName = resolvedLeadGroupName
+    || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
+    || leadGroupName;
+  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!isGroupLead && !!myGroupName));
+
+
   // While viewing as someone else, the page is locked to their family group.
   useEffect(() => {
     if (isImpersonating && effective.familyGroup && selectedFamilyGroup !== effective.familyGroup) {
