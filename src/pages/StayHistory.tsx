@@ -391,22 +391,30 @@ export default function StayHistory() {
     }
   };
 
+  // Is this stay personally hosted by the current (or viewed-as) person?
+  const isOwnReservation = (reservation: any): boolean => {
+    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+      const primaryHost = reservation.host_assignments[0];
+      if (sameName(primaryHost.host_email, identityEmail)) return true;
+      if (sameName(primaryHost.host_name, identityName)) return true;
+      return false;
+    }
+    return reservation.user_id === effectiveUserId;
+  };
+
   // Permission check helper - determines if user can view a specific reservation
   const canViewReservation = (reservation: any): boolean => {
     // Admins and calendar keepers can see everything
     if (isAdmin || isCalendarKeeper) return true;
-    
-    // Group leads can see all reservations for their family group
-    if (isGroupLead && userFamilyGroup?.name === reservation.family_group) return true;
-    
-    // Regular members can only see reservations where they are the primary host
-    if (reservation.host_assignments && Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-      const primaryHost = reservation.host_assignments[0];
-      return primaryHost.host_email?.toLowerCase() === effectiveUserEmail?.toLowerCase();
+
+    // Group leads can see all reservations for their family group, unless they
+    // have narrowed the view to their own stays.
+    if (isEffectiveLead && sameName(myGroupName, reservation.family_group)) {
+      return leadScope === 'family' ? true : isOwnReservation(reservation);
     }
-    
-    // Fallback: if no host_assignments, only show if user_id matches (old data)
-    return reservation.user_id === effectiveUserId;
+
+    // Regular members can only see reservations where they are the primary host
+    return isOwnReservation(reservation);
   };
 
   // Helper function to check if user owns a reservation (for split costs button)
