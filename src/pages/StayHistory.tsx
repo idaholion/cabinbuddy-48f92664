@@ -467,6 +467,14 @@ export default function StayHistory() {
           }
           return true;
         }
+
+        // A group lead's Whole family view must include split stays assigned to
+        // another member of that family. My stays remains limited to the viewed
+        // person's own split records.
+        if (isEffectiveLead && sameName(myGroupName, split.split_to_family_group)) {
+          return leadScope === 'family' || split.split_to_user_id === effectiveUserId;
+        }
+
         return split.split_to_user_id === effectiveUserId;
       })
       .filter(split => 
