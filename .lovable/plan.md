@@ -4,6 +4,8 @@
 
 On Stay History, the **Transfer Credit** button lives only inside the "Credit Remaining / Current Balance" card, and that card is hidden whenever the family-group filter is **All Family Groups** (it was hidden on purpose, because one family's credit and another family's debt shouldn't be netted into a single figure).
 
+The family-group selector — including the **All Family Groups** option — is already visible only to admins.
+
 Result: an admin has to switch to each family group one at a time to move someone's credit, even though the page already knows every person who holds credit when "All Family Groups" is selected.
 
 ## What changes
