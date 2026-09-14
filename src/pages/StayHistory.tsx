@@ -1580,17 +1580,17 @@ export default function StayHistory() {
                   size="sm"
                   className="mt-3 w-full"
                   onClick={() => {
-                    if (isAdmin || leadCanTransferForGroup) {
-                      setTransferDialogSourceKey(null);
-                      setTransferDialogSourceLabel("");
-                      setTransferDialogCredit(0);
-                    } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
-                      setTransferDialogSourceKey(currentUserLedgerKey);
-                      setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
-                      setTransferDialogCredit(currentUserHasTransferableCredit);
-                    }
-                    setTransferDialogOpen(true);
-                  }}
+                  if (isAdmin || canActForFamilyInStayHistory) {
+                    setTransferDialogSourceKey(null);
+                    setTransferDialogSourceLabel("");
+                    setTransferDialogCredit(0);
+                  } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
+                    setTransferDialogSourceKey(currentUserLedgerKey);
+                    setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
+                    setTransferDialogCredit(currentUserHasTransferableCredit);
+                  }
+                  setTransferDialogOpen(true);
+                }}
                 >
                   <ArrowRightLeft className="h-4 w-4 mr-2" />
                   Transfer Credit
