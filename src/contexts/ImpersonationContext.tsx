@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { useOrganization } from '@/hooks/useOrganization';
@@ -51,6 +51,21 @@ export const ImpersonationProvider = ({ children }: { children: ReactNode }) => 
   }, []);
 
   const clear = useCallback(() => setTarget(null), [setTarget]);
+
+  // Drop the impersonation target when the admin signs out or switches orgs.
+  const prevOrgId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user) {
+      setTarget(null);
+      prevOrgId.current = null;
+      return;
+    }
+    const orgId = organization?.id ?? null;
+    if (prevOrgId.current && orgId && prevOrgId.current !== orgId) {
+      setTarget(null);
+    }
+    if (orgId) prevOrgId.current = orgId;
+  }, [user, organization?.id, setTarget]);
 
   const logAction = useCallback(async (action: string, context?: Record<string, any>) => {
     if (!target || !user?.id || !organization?.id) return;
