@@ -67,6 +67,11 @@ export default function StayHistory() {
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
   const { syncing, syncPayments } = usePaymentSync();
+  const { transfers: creditTransfers, createTransfer, refetchTransfers } = useCreditTransfers();
+
+  const currentUserLedgerKey = user?.email
+    ? `p:${user.email.trim().toLowerCase()}`
+    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : undefined);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
