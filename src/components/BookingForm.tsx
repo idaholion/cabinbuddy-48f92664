@@ -552,7 +552,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                       {...field} 
                       className="w-full p-2 border rounded-md bg-background"
                       required
-                      disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
+                      disabled={(!canEditReservations && !isCalendarKeeper && !isAdmin) && !testOverrideMode} // Bypass restrictions in test mode
                     >
                       <option value="">Select Family Group</option>
                       {availableFamilyGroups.map((group) => (
@@ -590,7 +590,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                             }]);
                           }
                         }}
-                        disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
+                        disabled={(!canEditReservations && !isCalendarKeeper && !isAdmin) && !testOverrideMode} // Bypass restrictions in test mode
                       >
                         <option value="">Select Host</option>
                         {familyGroupHosts.map((host: any) => (
