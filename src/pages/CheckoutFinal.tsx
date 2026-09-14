@@ -174,6 +174,13 @@ const CheckoutFinal = () => {
   };
   
   const { isAdmin } = useOrgAdmin();
+  const { familyGroups } = useFamilyGroups();
+  const { createTransfer } = useCreditTransfers();
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const transferSourceKey = user?.email
+    ? `p:${user.email.trim().toLowerCase()}`
+    : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : '');
+  const transferSourceLabel = claimedProfile?.member_name || user?.email || 'You';
 
   // Get the most recent reservation for the current user's stay
   // Prioritize reservations that include today's date (active stays)
