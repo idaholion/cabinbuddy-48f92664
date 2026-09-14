@@ -64,7 +64,14 @@ export default function StayHistory() {
   const { receipts, loading: receiptsLoading } = useReceipts();
   const { settings: financialSettings, paymentMethods, loading: settingsLoading } = useFinancialSettings();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isCalendarKeeper, isGroupLead, userFamilyGroup, isImpersonating } = useEffectiveRole();
+  const {
+    isAdmin,
+    isCalendarKeeper,
+    isGroupLead,
+    userFamilyGroup,
+    isImpersonating,
+    canEditStayHistory,
+  } = useEffectiveRole();
   const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
   const { payments, fetchPayments } = usePayments();
@@ -85,14 +92,13 @@ export default function StayHistory() {
     ? effective.familyGroup
     : (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name))
     || claimedProfile?.family_group_name || undefined;
-  const leadCanTransferForGroup =
+  const canActForFamilyInStayHistory =
     !isAdmin &&
-    !!(organization as any)?.allow_lead_credit_transfers &&
-    !!isGroupLead &&
+    !!canEditStayHistory &&
     !!leadGroupName;
   const transferScope: 'own' | 'group' | 'all' = isAdmin
     ? 'all'
-    : leadCanTransferForGroup
+    : canActForFamilyInStayHistory
       ? 'group'
       : 'own';
 
@@ -128,7 +134,7 @@ export default function StayHistory() {
   const myGroupName = resolvedLeadGroupName
     || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
     || leadGroupName;
-  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!isGroupLead && !!myGroupName));
+  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
 
 
   // While viewing as someone else, the page is locked to their family group.
@@ -424,9 +430,9 @@ export default function StayHistory() {
     // Admins can split costs on any reservation
     if (isAdmin) return true;
     
-    // Family group leads can split costs on their group's reservations
-    if (claimedProfile?.member_type === 'group_lead' && 
-        claimedProfile?.family_group_name === reservation.family_group) {
+    // Family group leads (and members with Stay History permission) can split
+    // costs on their group's reservations.
+    if (canEditStayHistory && leadGroupName === reservation.family_group) {
       return true;
     }
     
@@ -1217,7 +1223,7 @@ export default function StayHistory() {
   const canTransferForHostKey = (hostKey: string) => {
     if (isAdmin) return true;
     if (currentUserLedgerKey && hostKey === currentUserLedgerKey) return true;
-    if (leadCanTransferForGroup) {
+    if (canActForFamilyInStayHistory) {
       return memberGroupMap.get(hostKey) === leadGroupName;
     }
     return false;
@@ -1340,7 +1346,7 @@ export default function StayHistory() {
           </p>
         </div>
 
-        <ViewAsUserPicker scope="stayHistory" />
+        <ViewAsUserPicker />
 
         <div className="flex flex-wrap gap-3">
           {/* Year Filter */}
@@ -1356,7 +1362,7 @@ export default function StayHistory() {
             </SelectContent>
           </Select>
 
-          {/* Scope toggle (group leads only) */}
+          {/* Scope toggle (group leads and members with Stay History permission) */}
           {isEffectiveLead && (
             <div className="inline-flex items-center rounded-md border bg-card p-1">
               <Button
@@ -1528,7 +1534,7 @@ export default function StayHistory() {
                 size="sm"
                 className="mt-3 w-full"
                 onClick={() => {
-                  if (isAdmin || leadCanTransferForGroup) {
+                  if (isAdmin || canActForFamilyInStayHistory) {
                     setTransferDialogSourceKey(null);
                     setTransferDialogSourceLabel("");
                     setTransferDialogCredit(0);
@@ -1574,17 +1580,17 @@ export default function StayHistory() {
                   size="sm"
                   className="mt-3 w-full"
                   onClick={() => {
-                    if (isAdmin || leadCanTransferForGroup) {
-                      setTransferDialogSourceKey(null);
-                      setTransferDialogSourceLabel("");
-                      setTransferDialogCredit(0);
-                    } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
-                      setTransferDialogSourceKey(currentUserLedgerKey);
-                      setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
-                      setTransferDialogCredit(currentUserHasTransferableCredit);
-                    }
-                    setTransferDialogOpen(true);
-                  }}
+                  if (isAdmin || canActForFamilyInStayHistory) {
+                    setTransferDialogSourceKey(null);
+                    setTransferDialogSourceLabel("");
+                    setTransferDialogCredit(0);
+                  } else if (currentUserLedgerKey && currentUserHasTransferableCredit > 0.004) {
+                    setTransferDialogSourceKey(currentUserLedgerKey);
+                    setTransferDialogSourceLabel(getTransferDisplayName(currentUserLedgerKey));
+                    setTransferDialogCredit(currentUserHasTransferableCredit);
+                  }
+                  setTransferDialogOpen(true);
+                }}
                 >
                   <ArrowRightLeft className="h-4 w-4 mr-2" />
                   Transfer Credit

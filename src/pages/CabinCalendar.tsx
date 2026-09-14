@@ -64,7 +64,7 @@ const CabinCalendar = () => {
   const [extensionEndDate, setExtensionEndDate] = useState<Date>(new Date());
 
   // Get user role information
-  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo, isAdmin, isImpersonating } = useEffectiveRole();
+  const { isCalendarKeeper, isGroupLead, userFamilyGroup: userGroup, userHostInfo, isAdmin, isImpersonating, canEditReservations } = useEffectiveRole();
   const { impersonatedFamilyGroup, setImpersonatedFamilyGroup } = useRole();
   
   // Get user's family group and pending trade requests
@@ -85,10 +85,10 @@ const CabinCalendar = () => {
   useEffect(() => {
     if (userHostInfo && !selectedHost) {
       setSelectedHost(userHostInfo.name);
-    } else if (isGroupLead && userGroup?.lead_name && !selectedHost) {
+    } else if ((isGroupLead || canEditReservations) && userGroup?.lead_name && !selectedHost) {
       setSelectedHost(userGroup.lead_name);
     }
-  }, [userHostInfo, isGroupLead, userGroup, selectedHost]);
+  }, [userHostInfo, isGroupLead, canEditReservations, userGroup, selectedHost]);
   
   // Get available hosts based on selected family group and user role
   const getAvailableHosts = () => {
@@ -150,8 +150,8 @@ const CabinCalendar = () => {
             setSelectedHost(newGroup.lead_name || "");
           }
         }
-        // If group lead, they can only select their own group and they are the default host
-        else if (isGroupLead && newGroup.name === userFamilyGroupName) {
+        // If group lead (or a member allowed to manage reservations), they can only select their own group and they default to the lead as host
+        else if ((isGroupLead || canEditReservations) && newGroup.name === userFamilyGroupName) {
           setSelectedHost(userGroup?.lead_name || "");
         }
       }
@@ -268,7 +268,7 @@ const CabinCalendar = () => {
           <CardContent>
             
             {/* Admin "View as user" controls */}
-            <ViewAsUserPicker scope="reservations" />
+            <ViewAsUserPicker />
             
             {/* Debug logging for button visibility */}
             {(() => {

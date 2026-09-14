@@ -173,8 +173,9 @@ const CheckoutFinal = () => {
     setAvailableUsers(enrichedUsers);
   };
   
-  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const { isAdmin, isImpersonating, canEditDailyFinal, userFamilyGroup } = useEffectiveRole();
   const impersonationGuard = useImpersonationGuard();
+  const userFamilyGroupName = userFamilyGroup?.name;
   const blockWhileImpersonating = () => {
     if (!impersonationGuard.isImpersonating) return false;
     toast({ title: "Viewing only", description: impersonationGuard.blockedMessage });
@@ -219,8 +220,9 @@ const CheckoutFinal = () => {
           if (userIsHost) return true;
         }
         
-        // Fallback: if no host assignments, user must be group lead and reservation must be for their group
-        return claimedProfile.member_type === 'group_lead';
+        // Fallback: if no host assignments, user must be group lead (or a member with
+        // Daily/Final permission) and reservation must be for their group.
+        return claimedProfile.member_type === 'group_lead' || canEditDailyFinal;
       }
       
       // Option 2: Check if user's email matches any host in host_assignments (works without claiming profile)
@@ -231,7 +233,13 @@ const CheckoutFinal = () => {
         if (userIsHost) return true;
       }
       
-      // Option 3: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
+      // Option 3: Members who have been given Daily/Final permission can work with
+      // any stay in their own family group.
+      if (canEditDailyFinal && userFamilyGroupName && r.family_group === userFamilyGroupName) {
+        return true;
+      }
+
+      // Option 4: If no claimed profile and not in host assignments, match by user_id (fallback for legacy data)
       return r.user_id === effectiveUserId;
     });
     
@@ -1105,7 +1113,7 @@ const CheckoutFinal = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       {/* Top Navigation Bar */}
       <div className="container mx-auto px-4 py-4">
-        <ViewAsUserPicker scope="dailyFinal" />
+        <ViewAsUserPicker />
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"

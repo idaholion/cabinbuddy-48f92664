@@ -4,7 +4,6 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgAdmin } from '@/hooks/useOrgAdmin';
 import { useOrganization } from '@/hooks/useOrganization';
-import { useDelegatePermissions } from '@/hooks/useDelegatePermissions';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel,
@@ -16,46 +15,23 @@ import { Eye, X } from 'lucide-react';
 /**
  * Admin-only "View as user" picker. Lists every claimed family-group member
  * (resolved via member_profile_links → claimed_by_user_id) and lets the admin
- * impersonate them on Daily/Final Checkout. Also hydrates from ?viewAs=<id>
- * for deep links from Stay History.
+ * impersonate them on Daily/Final Checkout, Stay History, the Departure
+ * Checklist and the Calendar. Hydrates from ?viewAs=<id> for deep links from
+ * Stay History.
  */
-export type DelegateScope = 'reservations' | 'dailyFinal' | 'stayHistory';
-
-interface Props {
-  /** Which delegate permission the page requires. Delegates without this
-   *  permission won't see the picker. Admins always see it. */
-  scope?: DelegateScope;
-}
-
-export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
+export const ViewAsUserPicker = () => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
-  const { target, setTarget, clear, isImpersonating, isDelegateMode } = useImpersonation();
-  const { permissionsByGroup } = useDelegatePermissions();
+  const { target, setTarget, clear, isImpersonating } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
 
-  // Determine which family groups this non-admin user can act as a delegate on
-  // for the requested scope.
-  const delegateGroups = useMemo(() => {
-    const permKey = scope === 'reservations'
-      ? 'canEditReservations'
-      : scope === 'stayHistory'
-        ? 'canEditStayHistory'
-        : 'canEditDailyFinal';
-    const set = new Set<string>();
-    permissionsByGroup.forEach((flags, name) => {
-      if ((flags as any)[permKey]) set.add(name);
-    });
-    return set;
-  }, [permissionsByGroup, scope]);
+  if (!isAdmin) return null;
 
-  const canUsePicker = isAdmin || delegateGroups.size > 0;
-
-  // Load claim links for this org (admins see all; delegates only need their groups' members)
+  // Load claim links for this org
   useEffect(() => {
-    if (!canUsePicker || !organization?.id) return;
+    if (!organization?.id) return;
     let cancelled = false;
     (async () => {
       const { data, error } = await supabase
@@ -65,7 +41,7 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
       if (!cancelled && !error && data) setLinks(data as any);
     })();
     return () => { cancelled = true; };
-  }, [canUsePicker, organization?.id]);
+  }, [organization?.id]);
 
   const linkByKey = useMemo(() => {
     const map = new Map<string, string>();
@@ -80,9 +56,6 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
     const list: Array<{ userId: string; displayName: string; familyGroup: string; email?: string | null }> = [];
     const seen = new Set<string>();
     for (const fg of familyGroups || []) {
-      // Delegates: restrict to family groups where they hold the required permission
-      if (!isAdmin && !delegateGroups.has(fg.name)) continue;
-
       const hosts: any[] = Array.isArray((fg as any).host_members) ? (fg as any).host_members : [];
       for (const m of hosts) {
         const name = m?.name || [m?.firstName, m?.lastName].filter(Boolean).join(' ') || m?.email;
@@ -101,11 +74,10 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
       }
     }
     return list;
-  }, [familyGroups, linkByKey, isAdmin, delegateGroups]);
+  }, [familyGroups, linkByKey]);
 
   // Hydrate from ?viewAs= deep link
   useEffect(() => {
-    if (!canUsePicker) return;
     const viewAs = searchParams.get('viewAs');
     if (!viewAs) return;
     if (target?.userId === viewAs) return;
@@ -118,9 +90,7 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
         email: found.email,
       });
     }
-  }, [canUsePicker, members, searchParams, target?.userId, setTarget]);
-
-  if (!canUsePicker) return null;
+  }, [members, searchParams, target?.userId, setTarget]);
 
   const grouped = members.reduce<Record<string, typeof members>>((acc, m) => {
     (acc[m.familyGroup] ||= []).push(m);
@@ -148,9 +118,6 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
     setSearchParams(next, { replace: true });
   };
 
-  const label = isAdmin ? 'View as' : 'Act on behalf of';
-  const placeholder = isAdmin ? 'Admin (myself)' : 'Act on behalf of...';
-
   return (
     <div className="mb-3 space-y-2">
       {isImpersonating && target && (
@@ -158,23 +125,13 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
           <div className="flex items-center gap-2 text-sm font-medium">
             <Eye className="h-4 w-4" />
             <span>
-              {isDelegateMode ? (
-                <>
-                  Acting for <strong>{target.displayName}</strong>
-                  {target.familyGroup ? <> ({target.familyGroup})</> : null} — anything you
-                  save is recorded on their behalf.
-                </>
-              ) : (
-                <>
-                  Viewing as <strong>{target.displayName}</strong>
-                  {target.familyGroup ? <> ({target.familyGroup})</> : null} — you are
-                  seeing exactly what they see. Changes are disabled.
-                </>
-              )}
+              Viewing as <strong>{target.displayName}</strong>
+              {target.familyGroup ? <> ({target.familyGroup})</> : null} — you are
+              seeing exactly what they see. Changes are disabled.
             </span>
           </div>
           <Button size="sm" variant="outline" onClick={() => handleSelect('__self__')}>
-            <X className="h-3.5 w-3.5 mr-1" /> {isDelegateMode ? 'Back to myself' : 'Return to Admin'}
+            <X className="h-3.5 w-3.5 mr-1" /> Return to Admin
           </Button>
         </div>
       )}
@@ -183,14 +140,14 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Eye className="h-4 w-4" />
-            <span>{label}</span>
+            <span>View as</span>
           </div>
           <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
             <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder={placeholder} />
+              <SelectValue placeholder="Admin (myself)" />
             </SelectTrigger>
             <SelectContent className="max-h-80">
-              <SelectItem value="__self__">{isAdmin ? 'Admin (myself)' : 'Myself'}</SelectItem>
+              <SelectItem value="__self__">Admin (myself)</SelectItem>
               {Object.entries(grouped)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([fg, list]) => (
@@ -207,9 +164,7 @@ export const ViewAsUserPicker = ({ scope = 'dailyFinal' }: Props) => {
           </Select>
           {members.length === 0 && (
             <span className="text-xs text-muted-foreground">
-              {isAdmin
-                ? 'No claimed members found in this organization.'
-                : 'No other claimed members in your family group yet.'}
+              No claimed members found in this organization.
             </span>
           )}
         </div>

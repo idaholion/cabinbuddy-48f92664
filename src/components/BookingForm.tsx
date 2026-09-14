@@ -15,7 +15,7 @@ import { useReservations } from '@/hooks/useReservations';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useOrganizationContext } from '@/hooks/useOrganizationContext';
@@ -62,7 +62,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { user } = useAuth();
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
-  const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo } = useUserRole();
+  const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo, isAdmin, canEditReservations } = useEffectiveRole();
   const { createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
@@ -191,7 +191,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
              end_date: defaultEndDate
            }];
          }
-       } else if ((isGroupLead || isCalendarKeeper) && userFamilyGroup) {
+       } else if ((canEditReservations || isCalendarKeeper || isAdmin) && userFamilyGroup) {
         // For group leads and calendar keepers: default to their family group
         defaultFamilyGroup = userFamilyGroup.name;
         
@@ -217,7 +217,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         adminOverride: false
       });
     }
-  }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
+  }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, isAdmin, canEditReservations, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
 
   const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
@@ -552,7 +552,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                       {...field} 
                       className="w-full p-2 border rounded-md bg-background"
                       required
-                      disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
+                      disabled={(!canEditReservations && !isCalendarKeeper && !isAdmin) && !testOverrideMode} // Bypass restrictions in test mode
                     >
                       <option value="">Select Family Group</option>
                       {availableFamilyGroups.map((group) => (
@@ -590,7 +590,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                             }]);
                           }
                         }}
-                        disabled={(isGroupMember && !isGroupLead && !isCalendarKeeper) && !testOverrideMode} // Bypass restrictions in test mode
+                        disabled={(!canEditReservations && !isCalendarKeeper && !isAdmin) && !testOverrideMode} // Bypass restrictions in test mode
                       >
                         <option value="">Select Host</option>
                         {familyGroupHosts.map((host: any) => (

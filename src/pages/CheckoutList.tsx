@@ -35,9 +35,10 @@ const CheckoutList = () => {
   console.log('🔍 CheckoutList organization:', organization);
   const [checkedTasks, setCheckedTasks] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
-  const { isAdmin, isImpersonating } = useEffectiveRole();
+  const { isAdmin, isImpersonating, canEditDailyFinal, userFamilyGroup } = useEffectiveRole();
   const impersonationGuard = useImpersonationGuard();
   const { saveResponse } = useSurveyResponses();
+  const userFamilyGroupName = userFamilyGroup?.name;
   const { profile } = useProfile();
   const { user } = useAuth();
   const { claimedProfile: rawClaimedProfile } = useProfileClaiming();
@@ -157,8 +158,14 @@ const CheckoutList = () => {
           return Boolean(hostNameMatches);
         }
 
-        // Fallback: if no host assignments, user must be group lead
-        return claimedProfile.member_type === 'group_lead';
+        // Fallback: if no host assignments, user must be group lead (or a member
+        // with Daily/Final permission) for the whole family group.
+        return claimedProfile.member_type === 'group_lead' || canEditDailyFinal;
+      }
+
+      // Members with Daily/Final permission can work with any stay in their own family group.
+      if (canEditDailyFinal && userFamilyGroupName && r.family_group === userFamilyGroupName) {
+        return true;
       }
 
       // Fallback: match by user_id
@@ -784,7 +791,7 @@ const CheckoutList = () => {
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
       {/* Top Navigation Bar */}
       <div className="container mx-auto px-4 py-4">
-        <ViewAsUserPicker scope="dailyFinal" />
+        <ViewAsUserPicker />
         <div className="flex items-center justify-between mb-6">
           <Button
             variant="outline"

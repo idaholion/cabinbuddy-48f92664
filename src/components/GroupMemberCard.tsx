@@ -299,6 +299,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
               )}
             />
 
+            <p className="text-sm text-muted-foreground">
+              Allow this member to manage all stays in this family group (like the lead).
+              Uncheck all three to keep them limited to their own stays only.
+            </p>
+
             <FormField
               control={control}
               name={`groupMembers.${index}.canEditReservations`}
@@ -316,7 +321,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                       />
                     </FormControl>
                     <label htmlFor={`edit-res-${index}`} className="text-base">
-                      Can Edit Reservations
+                      Can manage calendar reservations for the whole family group
                     </label>
                   </div>
                 </FormItem>
@@ -340,7 +345,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                       />
                     </FormControl>
                     <label htmlFor={`edit-df-${index}`} className="text-base">
-                      Can Edit Daily / Final Input
+                      Can fill out Daily & Final Input for the whole family group
                     </label>
                   </div>
                 </FormItem>
@@ -364,7 +369,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                       />
                     </FormControl>
                     <label htmlFor={`edit-sh-${index}`} className="text-base">
-                      Can Edit Stay History
+                      Can view and edit Stay History for the whole family group
                     </label>
                   </div>
                 </FormItem>
