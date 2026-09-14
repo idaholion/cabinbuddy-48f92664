@@ -220,8 +220,9 @@ const CheckoutFinal = () => {
           if (userIsHost) return true;
         }
         
-        // Fallback: if no host assignments, user must be group lead and reservation must be for their group
-        return claimedProfile.member_type === 'group_lead';
+        // Fallback: if no host assignments, user must be group lead (or a member with
+        // Daily/Final permission) and reservation must be for their group.
+        return claimedProfile.member_type === 'group_lead' || canEditDailyFinal;
       }
       
       // Option 2: Check if user's email matches any host in host_assignments (works without claiming profile)
