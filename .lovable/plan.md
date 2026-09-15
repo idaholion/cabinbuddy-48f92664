@@ -1,4 +1,4 @@
-# Changing a member's email: a complete, one-step process (Holly Cook)
+# Changing a member's email: self-service + a complete cleanup (Holly Cook)
 
 ## What actually happened
 
@@ -11,52 +11,70 @@ bounced her back to the profile page.
 There is also a leftover duplicate: the Cook Family member list has "Holly Cook" twice — once with
 lavenderlily33@gmail.com and once with hcook@kw.com.
 
-## The fix, in two parts
+## Answer to your question: no admin needed
 
-### 1. One button that changes an email everywhere
+Supabase already supports a person changing their own login email: they enter the new address, get
+a confirmation link at the **new** address, click it, and the change is done. We just never wired
+it into the profile page, and today nothing keeps the contact emails in sync. So the plan is
+self-service first, with a supervisor tool as the fallback for people who get stuck.
 
-Today the supervisor tool changes only the login credential, and warns you to update contact emails
-by hand. Instead, a single **Change a Person's Email** tool that:
+## The plan
 
-- Shows a preview first: every place the old address appears (sign-in account, family group lead,
-  member list entries, share allocations, work weekend and trade records, votes, organization
-  roles such as admin / treasurer / calendar keeper), with counts.
-- On confirm, updates all of them to the new address in one transaction, and removes any duplicate
-  member entry left behind for the same person.
-- Writes an audit entry recording old address, new address, and what was touched.
-- Tells the person in plain words what happens next: the old address stops working immediately,
-  and they must sign in with the new one — signing out and back in is required.
+### 1. Self-service: "Change sign-in email" on the profile page (no admin involved)
 
-### 2. Move Holly to lavenderlily33@gmail.com and clean up
+- A new section on the Group Member Profile page: enter your new address, click send.
+- The person receives a confirmation link at the **new** address and clicks it. Their login email
+  changes automatically — no admin, no supervisor.
+- The page shows clearly: "this changes how you sign in" vs "this is the contact email other
+  members see," so the two stop getting mixed up (this distinction already exists in the data; the
+  UI just doesn't make it obvious).
+- After the link is clicked, a database trigger automatically copies the new login email to that
+  person's **contact** email wherever they are the group lead or appear in a member list, and
+  removes a duplicate member entry left behind for the same person. This is what fixes Holly's
+  class of problem permanently: login email and lead contact email can no longer drift apart.
 
-Run the new tool for hcook@kw.com → lavenderlily33@gmail.com. That makes her sign-in match the
-Cook Family lead email again, so Family Group Setup opens normally, and it removes the stale
-hcook member entry.
+### 2. Supervisor fallback: one button that changes an email everywhere
 
-### Safety net (small, worth doing)
+For people who can't complete the self-service flow (dead address they can't receive at, confused,
+like Holly):
 
-Even after this, an email mismatch shouldn't lock a lead out. Lead detection will also accept a
-name match against the group's lead name, and Family Group Setup will stop redirecting anyone who
-is a lead by name or who has the "manage the whole family group" checkboxes ticked.
+- Upgraded supervisor tool: enter old and new address, see a **preview** of every place the old
+  address appears (sign-in account, family group lead, member list, share allocations, work
+  weekends, trades, votes, org admin/treasurer/calendar-keeper roles), confirm, and all of it
+  changes in one transaction with an audit entry.
+- Replaces today's narrow tool that only changes the login and warns you to fix the rest by hand.
+
+### 3. Migrate Holly now
+
+Run the supervisor tool for hcook@kw.com → lavenderlily33@gmail.com. Her sign-in then matches the
+Cook Family lead email, Family Group Setup opens normally, and the stale hcook member entry is
+removed. She signs in with lavenderlily33@gmail.com from then on.
+
+### 4. Safety net so a mismatch never locks a lead out again
+
+- Lead detection also accepts a **name match** against the group's lead name, not just email.
+- Family Group Setup stops bouncing anyone who is a lead by name or who has the "manage the whole
+  family group" checkboxes ticked.
 
 ## Technical notes
 
-- New migration: `supervisor_change_member_email(p_old_email, p_new_email, p_confirmation_code)` —
-  SECURITY DEFINER, supervisor-only, replaces the narrow `supervisor_fix_user_email`. Updates
-  `auth.users.email` (and `email_confirmed_at`/identities as needed), `family_groups.lead_email`,
-  email entries inside `family_groups.host_members` jsonb, `organizations.admin_email` /
-  `treasurer_email` / `calendar_keeper_email` / `alternate_supervisor_email`,
-  `member_share_allocations.member_email`, `trade_requests.requester_email` /
-  `target_host_email`, `work_weekends.proposer_email`, `work_weekend_approvals.approved_by_email`,
-  `work_weekend_comments.commenter_email`, `votes.voter_email`, `feedback.email`. De-duplicates
-  `host_members` entries that resolve to the same person. Logs to `bulk_operation_audit`.
-- Companion read-only function `supervisor_preview_email_change(p_email)` returning per-table
-  counts, used to render the preview.
-- `src/components/SupervisorUserTools.tsx`: replace the current form with preview → confirm flow;
-  drop the "contact emails must be updated manually" warning.
-- `src/hooks/useUserRole.ts`: `setIsGroupLead(!!leadGroup || !!nameMatchedLeadGroup)` and fall back
-  to the name-matched group for `userFamilyGroup`.
-- `src/pages/FamilyGroupSetup.tsx` redirect effect (~line 250): also skip the redirect when the
-  member has `canEditReservations` / `canEditDailyFinal` / `canEditStayHistory`.
-- Note: Holly's browser "remembering" the old address is only autofill — no code change can alter
-  that; the tool's next-steps message covers it.
+- Self-service: `supabase.auth.updateUser({ email })` from Group Member Profile; Supabase emails
+  the confirmation link and applies the change (project email settings may need
+  "confirm email change" enabled — I'll verify).
+- New trigger on `auth.users` email change: updates `family_groups.lead_email` and
+  `host_members` email entries where the old email (or matching name) appears, dedupes
+  `host_members` for the same person, logs to `bulk_operation_audit`. Contact email stays as-is
+  when it differs intentionally from the login email for non-lead members — the auto-copy applies
+  only where the old email was both login and contact (or the person is the lead).
+- New `supervisor_change_member_email` function (SECURITY DEFINER, supervisor-only) replacing
+  `supervisor_fix_user_email`, plus a read-only preview function; covers `auth.users`,
+  `family_groups`, `organizations` role emails, `member_share_allocations.member_email`,
+  `trade_requests`, `work_weekends`, `work_weekend_approvals`, `work_weekend_comments`, `votes`,
+  `feedback`.
+- `src/components/SupervisorUserTools.tsx` becomes preview → confirm.
+- `src/hooks/useUserRole.ts`: `setIsGroupLead(!!leadGroup || !!nameMatchedLeadGroup)`;
+  `userFamilyGroup` falls back to the name-matched lead group.
+- `src/pages/FamilyGroupSetup.tsx` redirect effect (~line 250): skip redirect when the member has
+  `canEditReservations` / `canEditDailyFinal` / `canEditStayHistory`.
+- Holly's browser "remembering" the old address is autofill; she'll need to pick the new address at
+  sign-in once. No code can change a browser's saved form data.
