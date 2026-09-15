@@ -32,6 +32,7 @@ import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
 import { useProfile } from "@/hooks/useProfile";
@@ -44,6 +45,7 @@ const FamilyGroupSetup = () => {
   const { activeOrganization: organization, loading: organizationLoading } = useMultiOrganization();
   const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
   const { isGroupLead, userFamilyGroup, isAdmin, loading: roleLoading, isGroupMember } = useUserRole();
+  const { canEditReservations, canEditDailyFinal, canEditStayHistory } = useEffectiveRole();
   const { isSupervisor } = useSupervisor();
   const { claimProfile } = useEnhancedProfileClaim(organization?.organization_id);
   const { updateProfile: updateUserProfile } = useProfile();
@@ -246,8 +248,11 @@ const FamilyGroupSetup = () => {
         hasOrganization: !!organization
       });
 
-      // Regular group members should use the Group Member Profile page
-      if (isGroupMember && !isGroupLead && !isAdmin && !isSupervisor) {
+      // Regular group members should use the Group Member Profile page — but
+      // members trusted to manage the whole family group (canEdit* checkboxes)
+      // are allowed to open and edit this page like the lead.
+      const canManageGroup = canEditReservations || canEditDailyFinal || canEditStayHistory;
+      if (isGroupMember && !isGroupLead && !isAdmin && !isSupervisor && !canManageGroup) {
         console.log('🔄 [FAMILY_GROUP_SETUP] Redirecting group member to profile page');
         toast({
           title: "Redirecting",
@@ -257,7 +262,7 @@ const FamilyGroupSetup = () => {
         return;
       }
     }
-  }, [isGroupMember, isGroupLead, isAdmin, isSupervisor, roleLoading, authLoading, organizationLoading, navigate, toast, user?.email, userFamilyGroup, familyGroups.length, organization]);
+  }, [isGroupMember, isGroupLead, isAdmin, isSupervisor, canEditReservations, canEditDailyFinal, canEditStayHistory, roleLoading, authLoading, organizationLoading, navigate, toast, user?.email, userFamilyGroup, familyGroups.length, organization]);
 
   // Pre-populate user information for new signups AND auto-populate family group for non-admin users
   useEffect(() => {

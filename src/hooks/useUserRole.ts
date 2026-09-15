@@ -135,11 +135,13 @@ export const useUserRole = () => {
       //   isGroupLead: !!leadGroup,
       //   isNameMatchedGroupLead: !!nameMatchedLeadGroup
       // });
-      setIsGroupLead(!!leadGroup);
+      // Treat a name match against the lead name as a lead too — a lead's login
+      // email and contact (lead) email can legitimately differ (identity separation).
+      setIsGroupLead(!!leadGroup || !!nameMatchedLeadGroup);
       setIsNameMatchedGroupLead(!!nameMatchedLeadGroup);
-      
-      if (leadGroup) {
-        setUserFamilyGroup(leadGroup);
+
+      if (leadGroup || nameMatchedLeadGroup) {
+        setUserFamilyGroup(leadGroup || nameMatchedLeadGroup);
         setUserHostInfo(null);
       } else {
         // Check if user is a host member in any family group by email
