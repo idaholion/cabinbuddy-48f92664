@@ -32,6 +32,7 @@ import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 
 import { FamilyGroupColorPicker } from "@/components/FamilyGroupColorPicker";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useSupervisor } from "@/hooks/useSupervisor";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
 import { useProfile } from "@/hooks/useProfile";
@@ -44,6 +45,7 @@ const FamilyGroupSetup = () => {
   const { activeOrganization: organization, loading: organizationLoading } = useMultiOrganization();
   const { familyGroups, loading: familyGroupsLoading, createFamilyGroup, updateFamilyGroup, renameFamilyGroup, refetchFamilyGroups } = useFamilyGroups();
   const { isGroupLead, userFamilyGroup, isAdmin, loading: roleLoading, isGroupMember } = useUserRole();
+  const { canEditReservations, canEditDailyFinal, canEditStayHistory } = useEffectiveRole();
   const { isSupervisor } = useSupervisor();
   const { claimProfile } = useEnhancedProfileClaim(organization?.organization_id);
   const { updateProfile: updateUserProfile } = useProfile();
