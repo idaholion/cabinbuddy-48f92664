@@ -1,48 +1,62 @@
-# Fix: Holly gets bounced from Family Group Setup back to her profile page
+# Changing a member's email: a complete, one-step process (Holly Cook)
 
-## What's actually happening
+## What actually happened
 
-Holly signs in as **hcook@kw.com**. The Cook Family group records its lead's email as
-**lavenderlily33@gmail.com** (lead name: Holly Cook). Two things follow from that:
+Holly's sign-in account is still **hcook@kw.com** — that never changed. What she changed was the
+*contact* email in her family group, which is now **lavenderlily33@gmail.com**. The app decides
+"are you the group lead?" by comparing the **sign-in** email to the family group's lead email, so
+after her change the two no longer match: she became an ordinary member, and Family Group Setup
+bounced her back to the profile page.
 
-- The app decides "are you the group lead?" by comparing the login email to the group's lead
-  email only. Holly's two addresses don't match, so she is treated as an ordinary member.
-- Family Group Setup sends ordinary members to the Group Member Profile page, so she is bounced
-  back every time.
+There is also a leftover duplicate: the Cook Family member list has "Holly Cook" twice — once with
+lavenderlily33@gmail.com and once with hcook@kw.com.
 
-There is also a duplicate entry in the Cook Family member list: "Holly Cook" appears twice — once
-with lavenderlily33@gmail.com and once with hcook@kw.com.
+## The fix, in two parts
 
-## The fix
+### 1. One button that changes an email everywhere
 
-**1. Recognize the lead by name as well as email**
+Today the supervisor tool changes only the login credential, and warns you to update contact emails
+by hand. Instead, a single **Change a Person's Email** tool that:
 
-If the signed-in person's name matches the group's lead name, treat them as the group lead — the
-app already computes this name match but currently ignores it when deciding the role. This also
-helps any other lead who signs in with a different address than the one on file.
+- Shows a preview first: every place the old address appears (sign-in account, family group lead,
+  member list entries, share allocations, work weekend and trade records, votes, organization
+  roles such as admin / treasurer / calendar keeper), with counts.
+- On confirm, updates all of them to the new address in one transaction, and removes any duplicate
+  member entry left behind for the same person.
+- Writes an audit entry recording old address, new address, and what was touched.
+- Tells the person in plain words what happens next: the old address stops working immediately,
+  and they must sign in with the new one — signing out and back in is required.
 
-**2. Stop the bounce for members who are allowed to manage the group**
+### 2. Move Holly to lavenderlily33@gmail.com and clean up
 
-Family Group Setup will only redirect someone away if they are neither the lead, nor an admin, nor
-a member whose "manage the whole family group" checkboxes are ticked. A member with those
-permissions can open the page and edit their group.
+Run the new tool for hcook@kw.com → lavenderlily33@gmail.com. That makes her sign-in match the
+Cook Family lead email again, so Family Group Setup opens normally, and it removes the stale
+hcook member entry.
 
-**3. Clean up Holly's duplicate entry (data, done separately)**
+### Safety net (small, worth doing)
 
-The Cook Family member list has Holly twice. Recommended: keep one Holly Cook entry carrying both
-addresses — login email hcook@kw.com — and remove the stale duplicate. I'll prepare the SQL for
-you to run, and I'll show you the before/after values before anything is changed.
+Even after this, an email mismatch shouldn't lock a lead out. Lead detection will also accept a
+name match against the group's lead name, and Family Group Setup will stop redirecting anyone who
+is a lead by name or who has the "manage the whole family group" checkboxes ticked.
 
 ## Technical notes
 
-- `src/hooks/useUserRole.ts`: `setIsGroupLead(!!leadGroup)` becomes
-  `!!leadGroup || !!nameMatchedLeadGroup`, and `userFamilyGroup` falls back to the name-matched
-  lead group. `isGroupMember` stays `!isGroupLead && !!userHostInfo`.
-- `src/hooks/useEffectiveRole.ts`: confirm its lead resolution follows the same rule so Stay
-  History / Daily & Final behave consistently.
-- `src/pages/FamilyGroupSetup.tsx` (redirect effect, ~line 250): condition becomes
-  `isGroupMember && !isGroupLead && !isAdmin && !isSupervisor && !canEditReservations &&
-  !canEditDailyFinal && !canEditStayHistory`, using the permission flags already exposed by
-  `useEffectiveRole`.
-- No schema change. The duplicate-member cleanup is a one-off update to
-  `family_groups.host_members` for the Cook Family row, run by you in the SQL editor.
+- New migration: `supervisor_change_member_email(p_old_email, p_new_email, p_confirmation_code)` —
+  SECURITY DEFINER, supervisor-only, replaces the narrow `supervisor_fix_user_email`. Updates
+  `auth.users.email` (and `email_confirmed_at`/identities as needed), `family_groups.lead_email`,
+  email entries inside `family_groups.host_members` jsonb, `organizations.admin_email` /
+  `treasurer_email` / `calendar_keeper_email` / `alternate_supervisor_email`,
+  `member_share_allocations.member_email`, `trade_requests.requester_email` /
+  `target_host_email`, `work_weekends.proposer_email`, `work_weekend_approvals.approved_by_email`,
+  `work_weekend_comments.commenter_email`, `votes.voter_email`, `feedback.email`. De-duplicates
+  `host_members` entries that resolve to the same person. Logs to `bulk_operation_audit`.
+- Companion read-only function `supervisor_preview_email_change(p_email)` returning per-table
+  counts, used to render the preview.
+- `src/components/SupervisorUserTools.tsx`: replace the current form with preview → confirm flow;
+  drop the "contact emails must be updated manually" warning.
+- `src/hooks/useUserRole.ts`: `setIsGroupLead(!!leadGroup || !!nameMatchedLeadGroup)` and fall back
+  to the name-matched group for `userFamilyGroup`.
+- `src/pages/FamilyGroupSetup.tsx` redirect effect (~line 250): also skip the redirect when the
+  member has `canEditReservations` / `canEditDailyFinal` / `canEditStayHistory`.
+- Note: Holly's browser "remembering" the old address is only autofill — no code change can alter
+  that; the tool's next-steps message covers it.
