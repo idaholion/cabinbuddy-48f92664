@@ -65,3 +65,20 @@ sees their own separate balance rather than a family blob.
 - `src/pages/CheckoutFinal.tsx`: reuse the same standing-balance helper for the
   credit-options box and the `TransferCreditDialog` available amount.
 - Pull the balance maths into a shared helper so both pages agree.
+
+## Also: Mallory's July 2025 stay ($120 paid vs $200 in her payment history)
+
+Checked the records. Her payment row for that stay is: charges $120, amount
+paid $200, balance -$80 — so the $200 really was recorded, and $80 of it is
+credit. The page only shows the part of the payment that this stay could use
+($120) and carries the remaining $80 forward, and it is labelling that leftover
+as a "balance of $80" instead of as credit.
+
+Fix, in the same pass:
+
+- The stay row shows the full amount received ("Paid $200.00"), with a note
+  "$120.00 applied to this stay, $80.00 carried forward as credit".
+- The leftover is labelled credit, with the minus sign and green styling used
+  elsewhere, never as a positive balance owed.
+- Technical: in `StayHistory.tsx` the stay row prints `paidApplied`; also surface
+  the raw `amountPaid` and the overflow already pushed into `pool.payment`.
