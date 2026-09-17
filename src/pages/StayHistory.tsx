@@ -1312,6 +1312,20 @@ export default function StayHistory() {
     0
   );
 
+  // Standing-credit holders the viewer is allowed to see (their own, their group
+  // as a lead, everyone as an admin), respecting the family-group filter.
+  const visibleStandingCredit = Array.from(standingCredit.entries())
+    .filter(([key]) => selectedFamilyGroup === 'all' || memberGroupMap.get(key) === selectedFamilyGroup)
+    .filter(([key]) => canTransferForHostKey(key) || key === currentUserLedgerKey);
+  const visibleStandingCreditTotal = visibleStandingCredit.reduce((sum, [, e]) => sum + e.amount, 0);
+
+  const openTransferForKey = (key: string, amount: number) => {
+    setTransferDialogSourceKey(key);
+    setTransferDialogSourceLabel(getTransferDisplayName(key));
+    setTransferDialogCredit(amount);
+    setTransferDialogOpen(true);
+  };
+
   // Credit transfers visible in the current view (source or recipient belongs to a host shown,
   // or to a person holding standing credit here — they have no stays to attach to).
   const visibleHostKeys = new Set<string>();
