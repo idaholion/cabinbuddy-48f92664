@@ -20,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { ChangeSignInEmail } from "@/components/ChangeSignInEmail";
+
 // Removed FeatureOverviewDialog import as it's not needed here
 import { ProfileClaimingDialog } from "@/components/ProfileClaimingDialog";
 import { PageHeader } from "@/components/ui/page-header";
