@@ -1377,6 +1377,10 @@ export default function StayHistory() {
             <p className="text-muted-foreground">View your past cabin stays and related costs</p>
           </div>
 
+          <ViewAsUserPicker />
+
+
+
           <div className="flex flex-wrap gap-3">
             {/* Year Filter */}
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
