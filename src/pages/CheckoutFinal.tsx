@@ -2256,7 +2256,7 @@ const CheckoutFinal = () => {
         onOpenChange={setTransferDialogOpen}
         sourceKey={transferSourceKey || null}
         sourceLabel={transferSourceLabel}
-        availableCredit={Math.max(0, -totalAmount)}
+        availableCredit={Math.max(Math.max(0, -totalAmount), isSampleMode ? standingCreditAmount : 0)}
         familyGroups={familyGroups}
         isAdmin={isAdmin}
         onTransfer={async (data) => {
