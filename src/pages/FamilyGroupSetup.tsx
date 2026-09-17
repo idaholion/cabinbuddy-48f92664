@@ -956,6 +956,9 @@ const FamilyGroupSetup = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Family members can add their own email and phone when they log in and claim their profile. Check the boxes to indicate who can host and make reservations.
                       </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        ✅ <strong>Reservations / Daily &amp; Final / Stay History:</strong> Checking these lets that member manage those pages for the <em>whole family group</em>, just like the lead. Leave all three unchecked to keep them limited to their own stays only.
+                      </p>
                       <p className="text-xs text-primary/80 mt-2">
                         📧 Adding email addresses enables the "Send Invite to All" button below, making it easy to email everyone a sign-up link.
                       </p>
