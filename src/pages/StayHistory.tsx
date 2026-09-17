@@ -1732,7 +1732,7 @@ export default function StayHistory() {
           </Card>
         )}
 
-        {selectedFamilyGroup === 'all' && transferableCreditKeys.length > 0 && (
+        {isAdmin && selectedFamilyGroup === 'all' && transferableCreditKeys.length > 0 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Credit Available to Transfer</CardTitle>
