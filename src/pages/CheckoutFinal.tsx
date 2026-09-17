@@ -2064,6 +2064,32 @@ const CheckoutFinal = () => {
                         {BillingCalculator.formatCurrency(Math.abs(totalAmount))}
                       </span>
                     </div>
+
+                    {isSampleMode && standingCreditAmount > 0.004 && (
+                      <div className="rounded border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 p-4 space-y-2">
+                        <div className="flex justify-between text-base font-semibold">
+                          <span>Credit Balance:</span>
+                          <span className="text-green-600 dark:text-green-400">
+                            {BillingCalculator.formatCurrency(standingCreditAmount)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Credit transferred to you. It will be applied to your next stay, or you can pass it on.
+                        </p>
+                        {(isAdmin || transferSourceKey) && (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setTransferDialogOpen(true)}
+                          >
+                            <ArrowRightLeft className="h-4 w-4 mr-2" />
+                            Transfer Credit to Another Member
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    
                     
                     {/* Venmo Payment Info */}
                     {checkoutData.venmoHandle && (
