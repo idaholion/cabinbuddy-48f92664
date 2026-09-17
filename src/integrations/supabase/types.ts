@@ -3537,6 +3537,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _email_columns: {
+        Args: never
+        Returns: {
+          col: string
+          tbl: string
+        }[]
+      }
+      _sync_member_emails: {
+        Args: { p_new: string; p_old: string }
+        Returns: undefined
+      }
       assign_default_colors: { Args: never; Returns: undefined }
       backfill_checklist_images: { Args: never; Returns: number }
       can_lead_transfer_credit: {
@@ -3778,6 +3789,14 @@ export type Database = {
         }
         Returns: number
       }
+      supervisor_change_member_email: {
+        Args: {
+          p_confirmation_code: string
+          p_new_email: string
+          p_old_email: string
+        }
+        Returns: Json
+      }
       supervisor_cleanup_duplicate_family_groups: {
         Args: never
         Returns: string
@@ -3813,6 +3832,10 @@ export type Database = {
       supervisor_normalize_emails_and_fix_membership: {
         Args: never
         Returns: string
+      }
+      supervisor_preview_email_change: {
+        Args: { p_email: string }
+        Returns: Json
       }
       supervisor_remove_user_from_organization: {
         Args: {
