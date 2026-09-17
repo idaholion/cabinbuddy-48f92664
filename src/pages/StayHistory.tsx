@@ -546,6 +546,63 @@ export default function StayHistory() {
   const allReservations = [...filteredReservations, ...virtualSplitReservations]
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
+  // Helper: ledger identity for a stay. Balances (and credits) belong to a
+  // PERSON, not a family group — two members of the same family keep separate
+  // running balances. Split stays (keyed by recipient user id) and regular
+  // stays (keyed by host email) are resolved to one identity via userIdToEmail.
+  const getLedgerKey = (reservation: any) => {
+    if (reservation.isVirtualSplit) {
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    } else {
+      if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+        const primaryHost = reservation.host_assignments[0];
+        const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
+        if (hostEmail) return `p:${hostEmail}`;
+        if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
+      }
+
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    }
+
+    if (reservation.family_group) {
+      return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
+    }
+
+    return 'unknown';
+  };
+
+  // People who host at least one stay in this view. Someone with NO stays keeps
+  // a standing credit balance instead (transfers received, receipts submitted).
+  const hostKeysWithStays = new Set<string>(allReservations.map(r => getLedgerKey(r)));
+
+  // Ledger key of the person who submitted a receipt (when resolvable).
+  const receiptOwnerKey = (rc: any): string | undefined => {
+    const email = rc?.user_id ? userIdToEmail.get(rc.user_id) : undefined;
+    if (email) return `p:${email}`;
+    if (rc?.user_id) return `u:${rc.user_id}`;
+    return undefined;
+  };
+
+  // Receipts turned in by someone who has no stays of their own become THEIR
+  // standing credit rather than reducing the family's next stay.
+  const standingReceiptTotals = new Map<string, { total: number; count: number }>();
+  const isStandingReceipt = (rc: any) => {
+    const key = receiptOwnerKey(rc);
+    return !!key && !hostKeysWithStays.has(key);
+  };
+  for (const rc of receipts) {
+    if (!isStandingReceipt(rc)) continue;
+    const key = receiptOwnerKey(rc)!;
+    const entry = standingReceiptTotals.get(key) || { total: 0, count: 0 };
+    entry.total += Number(rc.amount) || 0;
+    entry.count += 1;
+    standingReceiptTotals.set(key, entry);
+  }
+
   // Chronological receipt attribution: for each family group, walk stays oldest-first
   // and assign each receipt to the FIRST stay whose end date is on/after the receipt date.
   // Receipts dated after the family's most recent completed stay attach to that final stay
@@ -561,7 +618,7 @@ export default function StayHistory() {
     for (const [family, stays] of staysByFamily) {
       stays.sort((a, b) => parseDateOnly(a.end_date).getTime() - parseDateOnly(b.end_date).getTime());
       const famReceipts = receipts
-        .filter(rc => rc.family_group === family && rc.date)
+        .filter(rc => rc.family_group === family && rc.date && !isStandingReceipt(rc))
         .slice()
         .sort((a, b) => parseDateOnly(a.date).getTime() - parseDateOnly(b.date).getTime());
       const lastStay = stays[stays.length - 1];
@@ -626,6 +683,7 @@ export default function StayHistory() {
         receiptsApplied: carriedInReceipt,
         receiptsOverflow: 0,
         paidApplied,
+        paymentOverflow: Math.max(0, paidRaw - ownPaidApplied),
         transferredInApplied: carriedInTransfer,
         carriedInTransfers,
         priorCreditApplied: carriedInPayment + carriedInReceipt + carriedInTransfer,
@@ -854,6 +912,7 @@ export default function StayHistory() {
       receiptsApplied,
       receiptsOverflow,
       paidApplied,
+      paymentOverflow: Math.max(0, paidRaw - ownPaidApplied),
       transferredInApplied: carriedInTransfer,
       carriedInTransfers,
       priorCreditApplied,
@@ -885,34 +944,6 @@ export default function StayHistory() {
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Helper: ledger identity for a stay. Balances (and credits) belong to a
-  // PERSON, not a family group — two members of the same family keep separate
-  // running balances. Split stays (keyed by recipient user id) and regular
-  // stays (keyed by host email) are resolved to one identity via userIdToEmail.
-  const getLedgerKey = (reservation: any) => {
-    if (reservation.isVirtualSplit) {
-      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
-      if (email) return `p:${email}`;
-      if (reservation.user_id) return `u:${reservation.user_id}`;
-    } else {
-      if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-        const primaryHost = reservation.host_assignments[0];
-        const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
-        if (hostEmail) return `p:${hostEmail}`;
-        if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
-      }
-
-      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
-      if (email) return `p:${email}`;
-      if (reservation.user_id) return `u:${reservation.user_id}`;
-    }
-
-    if (reservation.family_group) {
-      return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
-    }
-
-    return 'unknown';
-  };
 
   // Build a map of ledger key -> display name so transfer records are shown
   // with the recipient/source person, not a raw key.
@@ -1200,8 +1231,41 @@ export default function StayHistory() {
   };
 
 
+  // Standing credit: people with NO stays still hold credit from transfers they
+  // received and receipts they turned in. Without this they have nothing to
+  // anchor a balance to and their credit is invisible.
+  const standingCredit = new Map<string, {
+    amount: number;
+    transfersIn: number;
+    transfersOut: number;
+    receiptsTotal: number;
+    receiptsCount: number;
+  }>();
+  {
+    const candidateKeys = new Set<string>([
+      ...transfersByTarget.keys(),
+      ...transfersBySource.keys(),
+      ...standingReceiptTotals.keys(),
+    ]);
+    for (const key of candidateKeys) {
+      if (hostKeysWithStays.has(key)) continue;
+      const transfersIn = (transfersByTarget.get(key) || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
+      const transfersOut = (transfersBySource.get(key) || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
+      const rc = standingReceiptTotals.get(key) || { total: 0, count: 0 };
+      const amount = transfersIn - transfersOut + rc.total;
+      if (amount <= 0.004) continue;
+      standingCredit.set(key, {
+        amount,
+        transfersIn,
+        transfersOut,
+        receiptsTotal: rc.total,
+        receiptsCount: rc.count,
+      });
+    }
+  }
+
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
-  const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
+  const currentBalanceFromStays = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
     const item = fullLedger.find(r => r.reservation.id === resId);
     return item ? sum + item.stayData.amountDue : sum;
   }, 0);
@@ -1215,9 +1279,23 @@ export default function StayHistory() {
       hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
     }
   }
+  for (const [key, entry] of standingCredit.entries()) {
+    hostCreditMap.set(key, entry.amount);
+  }
+
+  // Standing credit counted into the balance card, respecting the family filter.
+  const standingCreditInView = Array.from(standingCredit.entries()).reduce((sum, [key, entry]) => {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) return sum;
+    return sum + entry.amount;
+  }, 0);
+  const currentBalance = currentBalanceFromStays - standingCreditInView;
+
   const currentUserHasTransferableCredit = currentUserLedgerKey
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
     : 0;
+  const currentUserStandingCredit = currentUserLedgerKey
+    ? standingCredit.get(currentUserLedgerKey)
+    : undefined;
 
   // Members whose credit the signed-in person is allowed to move.
   const canTransferForHostKey = (hostKey: string) => {
@@ -1234,11 +1312,31 @@ export default function StayHistory() {
     0
   );
 
-  // Credit transfers visible in the current view (source or recipient belongs to a host shown).
+  // Standing-credit holders the viewer is allowed to see (their own, their group
+  // as a lead, everyone as an admin), respecting the family-group filter.
+  const visibleStandingCredit = Array.from(standingCredit.entries())
+    .filter(([key]) => selectedFamilyGroup === 'all' || memberGroupMap.get(key) === selectedFamilyGroup)
+    .filter(([key]) => canTransferForHostKey(key) || key === currentUserLedgerKey);
+  const visibleStandingCreditTotal = visibleStandingCredit.reduce((sum, [, e]) => sum + e.amount, 0);
+
+  const openTransferForKey = (key: string, amount: number) => {
+    setTransferDialogSourceKey(key);
+    setTransferDialogSourceLabel(getTransferDisplayName(key));
+    setTransferDialogCredit(amount);
+    setTransferDialogOpen(true);
+  };
+
+  // Credit transfers visible in the current view (source or recipient belongs to a host shown,
+  // or to a person holding standing credit here — they have no stays to attach to).
   const visibleHostKeys = new Set<string>();
   for (const { reservation } of displayReservations) {
     visibleHostKeys.add(getLedgerKey(reservation));
   }
+  for (const key of standingCredit.keys()) {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) continue;
+    visibleHostKeys.add(key);
+  }
+  if (currentUserLedgerKey) visibleHostKeys.add(currentUserLedgerKey);
   const visibleTransfers = (creditTransfers || []).filter(t =>
     visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
   );
@@ -1278,6 +1376,10 @@ export default function StayHistory() {
             <h1 className="text-3xl font-bold mb-2">Stay History</h1>
             <p className="text-muted-foreground">View your past cabin stays and related costs</p>
           </div>
+
+          <ViewAsUserPicker />
+
+
 
           <div className="flex flex-wrap gap-3">
             {/* Year Filter */}
@@ -1331,6 +1433,116 @@ export default function StayHistory() {
             </div>
           </CardContent>
         </Card>
+
+        {visibleStandingCredit.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold">Credit Balance</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleStandingCredit.map(([key, entry]) => (
+                <Card key={key}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {getTransferDisplayName(key)}
+                    </CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      ${entry.amount.toFixed(2)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Available credit. It will be applied to the next stay booked in this name.
+                    </p>
+                    <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                      {entry.transfersIn > 0.004 && (
+                        <div>Transferred in: ${entry.transfersIn.toFixed(2)}</div>
+                      )}
+                      {entry.transfersOut > 0.004 && (
+                        <div>Transferred out: ${entry.transfersOut.toFixed(2)}</div>
+                      )}
+                      {entry.receiptsCount > 0 && (
+                        <div>
+                          Receipts submitted ({entry.receiptsCount}): ${entry.receiptsTotal.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                    {canTransferForHostKey(key) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => openTransferForKey(key, entry.amount)}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Transfer Credit
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {visibleTransfers.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold">Credit Transfers</h2>
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {visibleTransfers
+                    .slice()
+                    .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
+                    .map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-4">
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-medium">
+                            {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
+                          </div>
+                          {t.notes && (
+                            <div className="text-xs text-muted-foreground italic">{t.notes}</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-semibold">${Number(t.amount).toFixed(2)}</div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <TransferCreditDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          sourceKey={transferDialogSourceKey}
+          sourceLabel={transferDialogSourceLabel}
+          availableCredit={transferDialogCredit}
+          familyGroups={familyGroups || []}
+          isAdmin={!!isAdmin}
+          scope={transferScope}
+          scopeGroupName={leadGroupName}
+          currentUserKey={currentUserLedgerKey}
+          creditBySource={Object.fromEntries(hostCreditMap)}
+          onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
+            const result = await createTransfer({
+              from_ledger_name,
+              to_ledger_name,
+              amount,
+              transfer_date,
+              notes,
+            });
+            if (result) {
+              toast.success('Credit transferred successfully');
+              await refetchTransfers();
+              await fetchPayments(1, 500);
+              setTransferDialogOpen(false);
+            }
+          }}
+        />
       </div>
     );
   }
@@ -1601,6 +1813,50 @@ export default function StayHistory() {
         )}
       </div>
 
+      {visibleStandingCredit.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Credit Held Without a Stay</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {visibleStandingCredit.map(([key, entry]) => (
+              <Card key={key}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{getTransferDisplayName(key)}</CardTitle>
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    ${entry.amount.toFixed(2)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Available credit. It will be applied to the next stay booked in this name.
+                  </p>
+                  <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                    {entry.transfersIn > 0.004 && <div>Transferred in: ${entry.transfersIn.toFixed(2)}</div>}
+                    {entry.transfersOut > 0.004 && <div>Transferred out: ${entry.transfersOut.toFixed(2)}</div>}
+                    {entry.receiptsCount > 0 && (
+                      <div>Receipts submitted ({entry.receiptsCount}): ${entry.receiptsTotal.toFixed(2)}</div>
+                    )}
+                  </div>
+                  {canTransferForHostKey(key) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 w-full"
+                      onClick={() => openTransferForKey(key, entry.amount)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      Transfer Credit
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+
+
       {visibleTransfers.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Credit Transfers</h2>
@@ -1771,9 +2027,17 @@ export default function StayHistory() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
                       <span className="font-medium">
-                        {(stayData.paidApplied || 0) > 0 ? `−$${stayData.paidApplied.toFixed(2)}` : '$0.00'}
+                        {((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)) > 0
+                          ? `−$${((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)).toFixed(2)}`
+                          : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.paymentOverflow || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        ${(stayData.paidApplied || 0).toFixed(2)} applied to this stay, $
+                        {stayData.paymentOverflow.toFixed(2)} carried forward as credit
+                      </div>
+                    )}
                     {(stayData.carriedInPayment || 0) > 0.004 && (
                       <div className="text-xs text-muted-foreground italic text-right -mt-1">
                         includes ${stayData.carriedInPayment.toFixed(2)} payment credit carried in

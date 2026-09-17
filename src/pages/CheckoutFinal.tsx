@@ -182,12 +182,27 @@ const CheckoutFinal = () => {
     return true;
   };
   const { familyGroups } = useFamilyGroups();
-  const { createTransfer } = useCreditTransfers();
+  const { transfers: creditTransfers, createTransfer } = useCreditTransfers();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const transferSourceKey = user?.email
     ? `p:${user.email.trim().toLowerCase()}`
     : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : '');
   const transferSourceLabel = claimedProfile?.member_name || user?.email || 'You';
+
+  // Credit held with no stay attached: transfers received minus transfers sent.
+  // Shown only when this person has no stay of their own, so it can never be
+  // double-counted against a stay's own balance.
+  const standingCreditAmount = useMemo(() => {
+    if (!transferSourceKey) return 0;
+    const list = creditTransfers || [];
+    const inSum = list
+      .filter(t => t.to_ledger_name === transferSourceKey)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const outSum = list
+      .filter(t => t.from_ledger_name === transferSourceKey)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    return Math.max(0, inSum - outSum);
+  }, [creditTransfers, transferSourceKey]);
 
   // Get the most recent reservation for the current user's stay
   // Prioritize reservations that include today's date (active stays)
@@ -2049,6 +2064,32 @@ const CheckoutFinal = () => {
                         {BillingCalculator.formatCurrency(Math.abs(totalAmount))}
                       </span>
                     </div>
+
+                    {isSampleMode && standingCreditAmount > 0.004 && (
+                      <div className="rounded border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20 p-4 space-y-2">
+                        <div className="flex justify-between text-base font-semibold">
+                          <span>Credit Balance:</span>
+                          <span className="text-green-600 dark:text-green-400">
+                            {BillingCalculator.formatCurrency(standingCreditAmount)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Credit transferred to you. It will be applied to your next stay, or you can pass it on.
+                        </p>
+                        {(isAdmin || transferSourceKey) && (
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setTransferDialogOpen(true)}
+                          >
+                            <ArrowRightLeft className="h-4 w-4 mr-2" />
+                            Transfer Credit to Another Member
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    
                     
                     {/* Venmo Payment Info */}
                     {checkoutData.venmoHandle && (
@@ -2241,7 +2282,7 @@ const CheckoutFinal = () => {
         onOpenChange={setTransferDialogOpen}
         sourceKey={transferSourceKey || null}
         sourceLabel={transferSourceLabel}
-        availableCredit={Math.max(0, -totalAmount)}
+        availableCredit={Math.max(Math.max(0, -totalAmount), isSampleMode ? standingCreditAmount : 0)}
         familyGroups={familyGroups}
         isAdmin={isAdmin}
         onTransfer={async (data) => {
