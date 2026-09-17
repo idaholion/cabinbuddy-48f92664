@@ -215,7 +215,7 @@ export const SupervisorDashboard = () => {
             <TabsTrigger value="data-management" className="text-base">Data Management</TabsTrigger>
             <TabsTrigger value="user-tools" className="text-base flex items-center gap-1">
               <KeyRound className="h-4 w-4" />
-              User Tools
+              Change user email
             </TabsTrigger>
             <TabsTrigger value="feedback-inbox" className="text-base flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
