@@ -27,7 +27,6 @@ export const ViewAsUserPicker = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
 
-  if (!isAdmin) return null;
 
   // Load claim links for this org
   useEffect(() => {
@@ -91,6 +90,8 @@ export const ViewAsUserPicker = () => {
       });
     }
   }, [members, searchParams, target?.userId, setTarget]);
+
+  if (!isAdmin) return null;
 
   const grouped = members.reduce<Record<string, typeof members>>((acc, m) => {
     (acc[m.familyGroup] ||= []).push(m);
