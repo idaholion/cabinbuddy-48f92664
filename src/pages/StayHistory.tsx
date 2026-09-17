@@ -1231,8 +1231,41 @@ export default function StayHistory() {
   };
 
 
+  // Standing credit: people with NO stays still hold credit from transfers they
+  // received and receipts they turned in. Without this they have nothing to
+  // anchor a balance to and their credit is invisible.
+  const standingCredit = new Map<string, {
+    amount: number;
+    transfersIn: number;
+    transfersOut: number;
+    receiptsTotal: number;
+    receiptsCount: number;
+  }>();
+  {
+    const candidateKeys = new Set<string>([
+      ...transfersByTarget.keys(),
+      ...transfersBySource.keys(),
+      ...standingReceiptTotals.keys(),
+    ]);
+    for (const key of candidateKeys) {
+      if (hostKeysWithStays.has(key)) continue;
+      const transfersIn = (transfersByTarget.get(key) || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
+      const transfersOut = (transfersBySource.get(key) || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
+      const rc = standingReceiptTotals.get(key) || { total: 0, count: 0 };
+      const amount = transfersIn - transfersOut + rc.total;
+      if (amount <= 0.004) continue;
+      standingCredit.set(key, {
+        amount,
+        transfersIn,
+        transfersOut,
+        receiptsTotal: rc.total,
+        receiptsCount: rc.count,
+      });
+    }
+  }
+
   // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
-  const currentBalance = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
+  const currentBalanceFromStays = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
     const item = fullLedger.find(r => r.reservation.id === resId);
     return item ? sum + item.stayData.amountDue : sum;
   }, 0);
@@ -1246,9 +1279,23 @@ export default function StayHistory() {
       hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
     }
   }
+  for (const [key, entry] of standingCredit.entries()) {
+    hostCreditMap.set(key, entry.amount);
+  }
+
+  // Standing credit counted into the balance card, respecting the family filter.
+  const standingCreditInView = Array.from(standingCredit.entries()).reduce((sum, [key, entry]) => {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) return sum;
+    return sum + entry.amount;
+  }, 0);
+  const currentBalance = currentBalanceFromStays - standingCreditInView;
+
   const currentUserHasTransferableCredit = currentUserLedgerKey
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
     : 0;
+  const currentUserStandingCredit = currentUserLedgerKey
+    ? standingCredit.get(currentUserLedgerKey)
+    : undefined;
 
   // Members whose credit the signed-in person is allowed to move.
   const canTransferForHostKey = (hostKey: string) => {
