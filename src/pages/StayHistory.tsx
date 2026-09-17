@@ -1312,11 +1312,17 @@ export default function StayHistory() {
     0
   );
 
-  // Credit transfers visible in the current view (source or recipient belongs to a host shown).
+  // Credit transfers visible in the current view (source or recipient belongs to a host shown,
+  // or to a person holding standing credit here — they have no stays to attach to).
   const visibleHostKeys = new Set<string>();
   for (const { reservation } of displayReservations) {
     visibleHostKeys.add(getLedgerKey(reservation));
   }
+  for (const key of standingCredit.keys()) {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) continue;
+    visibleHostKeys.add(key);
+  }
+  if (currentUserLedgerKey) visibleHostKeys.add(currentUserLedgerKey);
   const visibleTransfers = (creditTransfers || []).filter(t =>
     visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
   );
