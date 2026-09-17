@@ -942,34 +942,6 @@ export default function StayHistory() {
     parseDateOnly(a.start_date).getTime() - parseDateOnly(b.start_date).getTime()
   );
   
-  // Helper: ledger identity for a stay. Balances (and credits) belong to a
-  // PERSON, not a family group — two members of the same family keep separate
-  // running balances. Split stays (keyed by recipient user id) and regular
-  // stays (keyed by host email) are resolved to one identity via userIdToEmail.
-  const getLedgerKey = (reservation: any) => {
-    if (reservation.isVirtualSplit) {
-      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
-      if (email) return `p:${email}`;
-      if (reservation.user_id) return `u:${reservation.user_id}`;
-    } else {
-      if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
-        const primaryHost = reservation.host_assignments[0];
-        const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
-        if (hostEmail) return `p:${hostEmail}`;
-        if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
-      }
-
-      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
-      if (email) return `p:${email}`;
-      if (reservation.user_id) return `u:${reservation.user_id}`;
-    }
-
-    if (reservation.family_group) {
-      return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
-    }
-
-    return 'unknown';
-  };
 
   // Build a map of ledger key -> display name so transfer records are shown
   // with the recipient/source person, not a raw key.
