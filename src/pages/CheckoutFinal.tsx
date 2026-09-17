@@ -182,12 +182,27 @@ const CheckoutFinal = () => {
     return true;
   };
   const { familyGroups } = useFamilyGroups();
-  const { createTransfer } = useCreditTransfers();
+  const { transfers: creditTransfers, createTransfer } = useCreditTransfers();
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const transferSourceKey = user?.email
     ? `p:${user.email.trim().toLowerCase()}`
     : (claimedProfile?.member_name ? `n:${String(claimedProfile.member_name).trim().toLowerCase()}` : '');
   const transferSourceLabel = claimedProfile?.member_name || user?.email || 'You';
+
+  // Credit held with no stay attached: transfers received minus transfers sent.
+  // Shown only when this person has no stay of their own, so it can never be
+  // double-counted against a stay's own balance.
+  const standingCreditAmount = useMemo(() => {
+    if (!transferSourceKey) return 0;
+    const list = creditTransfers || [];
+    const inSum = list
+      .filter(t => t.to_ledger_name === transferSourceKey)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const outSum = list
+      .filter(t => t.from_ledger_name === transferSourceKey)
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    return Math.max(0, inSum - outSum);
+  }, [creditTransfers, transferSourceKey]);
 
   // Get the most recent reservation for the current user's stay
   // Prioritize reservations that include today's date (active stays)
