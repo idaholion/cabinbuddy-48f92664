@@ -1084,17 +1084,26 @@ const FamilyGroupSetup = () => {
                           }}
                         >
                            <SelectTrigger className="w-full text-lg">
-                             <SelectValue placeholder="Select alternate lead" className="text-lg" />
+                             <SelectValue placeholder="Select alternate lead" className="text-lg">
+                               {field.value && field.value !== "none" ? field.value : "None selected"}
+                             </SelectValue>
                            </SelectTrigger>
                             <SelectContent className="bg-background z-50 text-lg">
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
-                               {watchedData.groupMembers
-                                ?.filter((member, idx) => member.name && member.name.trim() !== '' && idx !== 0) // Exclude Member 1 (Group Lead)
-                                .map((member, index) => (
-                                  <SelectItem key={index} value={member.name || ""} className="text-lg">
-                                    {member.name}
-                                  </SelectItem>
-                                ))}
+                               {(() => {
+                                 const names = (watchedData.groupMembers || [])
+                                   .filter((member, idx) => member.name && member.name.trim() !== '' && idx !== 0) // Exclude Member 1 (Group Lead)
+                                   .map(member => member.name as string);
+                                 // Keep the saved alternate visible even if the member list hasn't loaded yet
+                                 if (field.value && field.value !== "none" && !names.includes(field.value)) {
+                                   names.unshift(field.value);
+                                 }
+                                 return names.map((name, index) => (
+                                   <SelectItem key={`${name}-${index}`} value={name} className="text-lg">
+                                     {name}
+                                   </SelectItem>
+                                 ));
+                               })()}
                             </SelectContent>
                         </Select>
                       </FormControl>
