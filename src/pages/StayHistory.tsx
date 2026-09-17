@@ -1433,6 +1433,116 @@ export default function StayHistory() {
             </div>
           </CardContent>
         </Card>
+
+        {visibleStandingCredit.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold">Credit Balance</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleStandingCredit.map(([key, entry]) => (
+                <Card key={key}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {getTransferDisplayName(key)}
+                    </CardTitle>
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      ${entry.amount.toFixed(2)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Available credit. It will be applied to the next stay booked in this name.
+                    </p>
+                    <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
+                      {entry.transfersIn > 0.004 && (
+                        <div>Transferred in: ${entry.transfersIn.toFixed(2)}</div>
+                      )}
+                      {entry.transfersOut > 0.004 && (
+                        <div>Transferred out: ${entry.transfersOut.toFixed(2)}</div>
+                      )}
+                      {entry.receiptsCount > 0 && (
+                        <div>
+                          Receipts submitted ({entry.receiptsCount}): ${entry.receiptsTotal.toFixed(2)}
+                        </div>
+                      )}
+                    </div>
+                    {canTransferForHostKey(key) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => openTransferForKey(key, entry.amount)}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        Transfer Credit
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {visibleTransfers.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold">Credit Transfers</h2>
+            <Card>
+              <CardContent className="p-0">
+                <div className="divide-y">
+                  {visibleTransfers
+                    .slice()
+                    .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
+                    .map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-4">
+                        <div className="space-y-0.5">
+                          <div className="text-sm font-medium">
+                            {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
+                          </div>
+                          {t.notes && (
+                            <div className="text-xs text-muted-foreground italic">{t.notes}</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-semibold">${Number(t.amount).toFixed(2)}</div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <TransferCreditDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          sourceKey={transferDialogSourceKey}
+          sourceLabel={transferDialogSourceLabel}
+          availableCredit={transferDialogCredit}
+          familyGroups={familyGroups || []}
+          isAdmin={!!isAdmin}
+          scope={transferScope}
+          scopeGroupName={leadGroupName}
+          currentUserKey={currentUserLedgerKey}
+          creditBySource={Object.fromEntries(hostCreditMap)}
+          onTransfer={async ({ from_ledger_name, to_ledger_name, amount, transfer_date, notes }) => {
+            const result = await createTransfer({
+              from_ledger_name,
+              to_ledger_name,
+              amount,
+              transfer_date,
+              notes,
+            });
+            if (result) {
+              toast.success('Credit transferred successfully');
+              await refetchTransfers();
+              await fetchPayments(1, 500);
+              setTransferDialogOpen(false);
+            }
+          }}
+        />
       </div>
     );
   }
