@@ -1140,7 +1140,9 @@ const GroupMemberProfile = () => {
                 Change Password
               </Button>
             </ConfirmationDialog>
+            <ChangeSignInEmail />
           </div>
+
         </CardContent>
       </Card>
 
