@@ -2,11 +2,12 @@
 
 ## Active (email change process — plan approved 2026-09-15)
 - [ ] SQL migration file: supervisor_change_member_email + preview fn + auth.users email-change trigger (user runs manually — external Supabase)
-- [ ] GroupMemberProfile: self-service "Change sign-in email" section
+- [x] GroupMemberProfile: self-service "Change sign-in email" section (mounted in Account Security card)
 - [ ] SupervisorUserTools: preview → confirm flow
-- [ ] useUserRole: lead by name match
-- [ ] FamilyGroupSetup: redirect guard honors canEdit* flags
-- [ ] Holly migration: hcook@kw.com → lavenderlily33@gmail.com (SQL, user runs)
+- [x] useUserRole: lead by name match
+- [x] FamilyGroupSetup: redirect guard honors canEdit* flags
+- [x] Holly migration: hcook@kw.com → lavenderlily33@gmail.com (applied; duplicate member entry removed)
+
 
 ## Waiting on user / external
 - [ ] Verify credit-transfer math on preview
