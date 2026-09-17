@@ -138,14 +138,18 @@ export default function StayHistory() {
 
 
   // While viewing as someone else, the page is locked to their family group.
+  // Non-admins are always scoped to their own family group — the permission
+  // checkboxes grant access within a family group, never across the whole
+  // organization. Only an admin sees "All Family Groups".
   useEffect(() => {
     if (isImpersonating && effective.familyGroup && selectedFamilyGroup !== effective.familyGroup) {
       setSelectedFamilyGroup(effective.familyGroup);
+      return;
     }
-    if (!isImpersonating && selectedFamilyGroup !== 'all' && !isAdmin) {
-      // nothing to do; non-admins have no selector
+    if (!isAdmin && myGroupName && selectedFamilyGroup !== myGroupName) {
+      setSelectedFamilyGroup(myGroupName);
     }
-  }, [isImpersonating, effective.familyGroup]);
+  }, [isImpersonating, effective.familyGroup, isAdmin, myGroupName]);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
