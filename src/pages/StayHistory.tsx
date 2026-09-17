@@ -546,6 +546,63 @@ export default function StayHistory() {
   const allReservations = [...filteredReservations, ...virtualSplitReservations]
     .sort((a, b) => parseDateOnly(b.start_date).getTime() - parseDateOnly(a.start_date).getTime());
 
+  // Helper: ledger identity for a stay. Balances (and credits) belong to a
+  // PERSON, not a family group — two members of the same family keep separate
+  // running balances. Split stays (keyed by recipient user id) and regular
+  // stays (keyed by host email) are resolved to one identity via userIdToEmail.
+  const getLedgerKey = (reservation: any) => {
+    if (reservation.isVirtualSplit) {
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    } else {
+      if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
+        const primaryHost = reservation.host_assignments[0];
+        const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
+        if (hostEmail) return `p:${hostEmail}`;
+        if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
+      }
+
+      const email = reservation.user_id ? userIdToEmail.get(reservation.user_id) : undefined;
+      if (email) return `p:${email}`;
+      if (reservation.user_id) return `u:${reservation.user_id}`;
+    }
+
+    if (reservation.family_group) {
+      return `fg:${String(reservation.family_group).trim().toLowerCase()}`;
+    }
+
+    return 'unknown';
+  };
+
+  // People who host at least one stay in this view. Someone with NO stays keeps
+  // a standing credit balance instead (transfers received, receipts submitted).
+  const hostKeysWithStays = new Set<string>(allReservations.map(r => getLedgerKey(r)));
+
+  // Ledger key of the person who submitted a receipt (when resolvable).
+  const receiptOwnerKey = (rc: any): string | undefined => {
+    const email = rc?.user_id ? userIdToEmail.get(rc.user_id) : undefined;
+    if (email) return `p:${email}`;
+    if (rc?.user_id) return `u:${rc.user_id}`;
+    return undefined;
+  };
+
+  // Receipts turned in by someone who has no stays of their own become THEIR
+  // standing credit rather than reducing the family's next stay.
+  const standingReceiptTotals = new Map<string, { total: number; count: number }>();
+  const isStandingReceipt = (rc: any) => {
+    const key = receiptOwnerKey(rc);
+    return !!key && !hostKeysWithStays.has(key);
+  };
+  for (const rc of receipts) {
+    if (!isStandingReceipt(rc)) continue;
+    const key = receiptOwnerKey(rc)!;
+    const entry = standingReceiptTotals.get(key) || { total: 0, count: 0 };
+    entry.total += Number(rc.amount) || 0;
+    entry.count += 1;
+    standingReceiptTotals.set(key, entry);
+  }
+
   // Chronological receipt attribution: for each family group, walk stays oldest-first
   // and assign each receipt to the FIRST stay whose end date is on/after the receipt date.
   // Receipts dated after the family's most recent completed stay attach to that final stay
@@ -561,7 +618,7 @@ export default function StayHistory() {
     for (const [family, stays] of staysByFamily) {
       stays.sort((a, b) => parseDateOnly(a.end_date).getTime() - parseDateOnly(b.end_date).getTime());
       const famReceipts = receipts
-        .filter(rc => rc.family_group === family && rc.date)
+        .filter(rc => rc.family_group === family && rc.date && !isStandingReceipt(rc))
         .slice()
         .sort((a, b) => parseDateOnly(a.date).getTime() - parseDateOnly(b.date).getTime());
       const lastStay = stays[stays.length - 1];
