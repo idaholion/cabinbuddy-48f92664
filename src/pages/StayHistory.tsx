@@ -2027,9 +2027,17 @@ export default function StayHistory() {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
                       <span className="font-medium">
-                        {(stayData.paidApplied || 0) > 0 ? `−$${stayData.paidApplied.toFixed(2)}` : '$0.00'}
+                        {((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)) > 0
+                          ? `−$${((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)).toFixed(2)}`
+                          : '$0.00'}
                       </span>
                     </div>
+                    {(stayData.paymentOverflow || 0) > 0.004 && (
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        ${(stayData.paidApplied || 0).toFixed(2)} applied to this stay, $
+                        {stayData.paymentOverflow.toFixed(2)} carried forward as credit
+                      </div>
+                    )}
                     {(stayData.carriedInPayment || 0) > 0.004 && (
                       <div className="text-xs text-muted-foreground italic text-right -mt-1">
                         includes ${stayData.carriedInPayment.toFixed(2)} payment credit carried in
