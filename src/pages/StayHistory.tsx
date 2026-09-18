@@ -1992,6 +1992,12 @@ export default function StayHistory() {
           const olderVisibleYear = olderVisibleStayForHost
             ? parseDateOnly(olderVisibleStayForHost.reservation.start_date).getFullYear()
             : null;
+          const newerVisibleStayForHost = displayReservations
+            .slice(0, idx)
+            .find(item => getLedgerKey(item.reservation) === hostKey);
+          const newerVisibleYear = newerVisibleStayForHost
+            ? parseDateOnly(newerVisibleStayForHost.reservation.start_date).getFullYear()
+            : null;
           const isOldestVisibleStayForHost = !olderVisibleStayForHost;
           const hasEarlierYearForHost = (yearsByHost.get(hostKey) || []).some(year => year < currentYear);
           const showReceiptYearBoundary = selectedYear === 0
@@ -2002,6 +2008,7 @@ export default function StayHistory() {
             0,
             (stayData.receiptsOverflow || 0) - (stayData.backwardCreditOut || 0)
           );
+          const receiptOverflowMovesIntoLaterYear = newerVisibleYear !== null && newerVisibleYear > currentYear;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2189,7 +2196,7 @@ export default function StayHistory() {
                       </>
                     )}
 
-                    {netReceiptOverflow > 0.004 && !showReceiptYearBoundary && (
+                    {netReceiptOverflow > 0.004 && !showReceiptYearBoundary && !receiptOverflowMovesIntoLaterYear && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Receipt Credit Available for Later Stays:</span>
                         <span className="font-medium text-green-600">
