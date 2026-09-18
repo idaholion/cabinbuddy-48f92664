@@ -1101,52 +1101,9 @@ export default function StayHistory() {
     hostBalances.set(hostKey, previousBalance + stayData.currentBalance);
   }
 
-  // Receipt credit that overflowed on a later stay is allowed to settle charges
-  // still unpaid on an EARLIER stay for the same host (receipts arrive after the
-  // stay they relate to). Walk newest → oldest per host carrying the overflow pool.
-  {
-    // Queue of later-stay overflow contributors per host, so we can move the
-    // credit off the source stay and onto the earlier stay it settles.
-    const overflowQueues = new Map<string, { data: any; remaining: number }[]>();
-    for (let i = reservationsWithBalance.length - 1; i >= 0; i--) {
-      const { reservation, stayData } = reservationsWithBalance[i];
-      const hostKey = getLedgerKey(reservation);
-      const queue = overflowQueues.get(hostKey) || [];
-      overflowQueues.set(hostKey, queue);
-      if ((stayData.receiptsOverflow || 0) > 0.004) {
-        queue.push({ data: stayData, remaining: stayData.receiptsOverflow });
-      }
-      let need = stayData.unpaidRemaining > 0 ? stayData.unpaidRemaining : 0;
-      while (need > 0.004 && queue.length > 0) {
-        const head = queue[0];
-        const use = Math.min(head.remaining, need);
-        head.remaining -= use;
-        need -= use;
-        stayData.receiptsApplied += use;
-        stayData.unpaidRemaining -= use;
-        // Move the credit off the source stay and onto this one so the
-        // running balances match what is shown as credited.
-        stayData.backwardCreditIn = (stayData.backwardCreditIn || 0) + use;
-        head.data.backwardCreditOut = (head.data.backwardCreditOut || 0) + use;
-        if (head.remaining <= 0.004) queue.shift();
-      }
-    }
-
-    // Re-run the per-host running balance with the moved credit applied so the
-    // displayed previous balance / amount due agree with the credited amounts.
-    const rebalanced = new Map<string, number>();
-    for (const { reservation, stayData } of reservationsWithBalance) {
-      const hostKey = getLedgerKey(reservation);
-      const prev = rebalanced.get(hostKey) || 0;
-      const delta = stayData.currentBalance
-        - (stayData.backwardCreditIn || 0)
-        + (stayData.backwardCreditOut || 0);
-      stayData.currentBalance = delta;
-      stayData.previousBalance = prev;
-      stayData.amountDue = prev + delta;
-      rebalanced.set(hostKey, prev + delta);
-    }
-  }
+  // Credit only ever moves forward in time: a later stay's receipts never reach
+  // back to settle an earlier stay. Each stay closes with its own balance, which
+  // becomes the next stay's previous balance.
 
 
 
