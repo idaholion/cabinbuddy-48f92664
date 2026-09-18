@@ -2586,7 +2586,7 @@ export default function StayHistory() {
             {selectedYear === 0 && showReceiptYearBoundary && receiptCarry > 0.004 && (
               <div className="my-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
-                  Receipt credit carried into {currentYear}:
+                  Credit carried into {currentYear}:
                   <span className="ml-2 font-bold text-green-600">
                     +${receiptCarry.toFixed(2)}
                   </span>
