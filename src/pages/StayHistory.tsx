@@ -2696,9 +2696,15 @@ export default function StayHistory() {
       {recordPaymentStay && (
         <RecordPaymentDialog
           open={true}
-          onOpenChange={(open) => !open && setRecordPaymentStay(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRecordPaymentStay(null);
+              setRecordPaymentDefaultMethod(undefined);
+            }
+          }}
           title="Other Payment Options"
-          hideVenmo
+          venmoAlreadySent
+          defaultMethod={recordPaymentDefaultMethod}
           methods={paymentMethods}
           paymentInfo={{
             checkPayableTo: financialSettings?.check_payable_to || undefined,
