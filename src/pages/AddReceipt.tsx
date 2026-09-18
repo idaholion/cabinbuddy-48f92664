@@ -522,6 +522,7 @@ const AddReceipt = () => {
     setEditFormData({
       description: '',
       amount: '',
+      date: '',
       newImage: null,
       newImagePreview: null,
     });
