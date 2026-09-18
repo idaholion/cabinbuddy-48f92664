@@ -2478,7 +2478,7 @@ export default function StayHistory() {
                                 Amount: ${stayData.amountDue.toFixed(2)}
                               </p>
                             </div>
-                            <div className="flex flex-col items-end">
+                            <div className="flex flex-col">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -2487,15 +2487,16 @@ export default function StayHistory() {
                                   paymentId: stayData.paymentId,
                                   amountDue: stayData.amountDue
                                 })}
-                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full"
                               >
                                 <Send className="h-4 w-4 mr-2" />
-                                Pay Now
+                                Pay Now Via Venmo
                               </Button>
                               {stayData.paymentId && (
-                                <button
-                                  type="button"
-                                  className="mt-2 text-sm text-blue-600 hover:underline underline-offset-2"
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2 text-blue-600 border-blue-200 hover:bg-blue-50 w-full whitespace-normal"
                                   onClick={() => {
                                     setRecordPaymentDefaultMethod('venmo');
                                     setRecordPaymentStay({
@@ -2506,7 +2507,7 @@ export default function StayHistory() {
                                   }}
                                 >
                                   Already paid outside CabinBuddy? Record it instead.
-                                </button>
+                                </Button>
                               )}
                             </div>
                           </div>
