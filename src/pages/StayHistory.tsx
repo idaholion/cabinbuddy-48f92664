@@ -1421,15 +1421,6 @@ export default function StayHistory() {
     hostCreditMap.set(key, entry.amount);
   }
 
-  // Charges still unpaid = what each visible person still owes at the END of
-  // their ledger. Intermediate stays that were later covered by credit are not
-  // outstanding, so summing per-stay shortfalls would overstate the amount.
-  const totalStillOwed = Array.from(lastReservationByHost.entries()).reduce((sum, [hostKey, resId]) => {
-    if (!visibleHostKeys.has(hostKey)) return sum;
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    if (!item) return sum;
-    return sum + Math.max(0, item.stayData.amountDue);
-  }, 0);
 
 
 
