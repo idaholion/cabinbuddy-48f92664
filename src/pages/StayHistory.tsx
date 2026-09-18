@@ -1321,7 +1321,8 @@ export default function StayHistory() {
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
-  const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
+  // Visible people, used below to scope the "still unpaid" figure to the filter.
+  const visibleHostKeys = new Set<string>(displayReservations.map(r => getLedgerKey(r.reservation)));
   const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
 
   // Data handed to the CSV export dialog — exactly the stays currently listed.
