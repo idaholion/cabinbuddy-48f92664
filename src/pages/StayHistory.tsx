@@ -2415,6 +2415,20 @@ export default function StayHistory() {
                           </Button>
                         );
                       })()}
+                      {financialSettings?.venmo_handle && stayData.amountDue < -0.004 && (
+                        <Button
+                          variant="outline"
+                          className="w-full text-blue-600 border-blue-200 hover:bg-blue-50"
+                          onClick={() => {
+                            const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                            const venmoUrl = `https://venmo.com/${cleanHandle}?txn=charge&amount=${Math.abs(stayData.amountDue).toFixed(2)}&note=${encodeURIComponent('Cabin stay refund request')}`;
+                            window.open(venmoUrl, '_blank');
+                          }}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Request ${Math.abs(stayData.amountDue).toFixed(2)} Refund via Venmo
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
