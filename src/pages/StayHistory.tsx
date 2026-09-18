@@ -254,6 +254,26 @@ export default function StayHistory() {
     return map;
   })();
 
+  // Reservation host assignments are historical snapshots, so their email may
+  // be stale after a member changes their sign-in address. Resolve the host's
+  // current email by family group + member name before using the saved email.
+  // This keeps old stays, receipts (which use the stable user id), payments and
+  // transfers on one personal ledger after an email change.
+  const memberNameToCurrentEmail = (() => {
+    const map = new Map<string, string>();
+    for (const group of familyGroups || []) {
+      const members = Array.isArray((group as any).host_members) ? (group as any).host_members : [];
+      for (const member of members) {
+        if (!member?.name || !member?.email) continue;
+        map.set(
+          `${String(group.name).trim().toLowerCase()}|${String(member.name).trim().toLowerCase()}`,
+          String(member.email).trim().toLowerCase()
+        );
+      }
+    }
+    return map;
+  })();
+
   // Refresh data when page becomes visible (user navigates back to this page)
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -562,6 +582,12 @@ export default function StayHistory() {
     } else {
       if (Array.isArray(reservation.host_assignments) && reservation.host_assignments.length > 0) {
         const primaryHost = reservation.host_assignments[0];
+        const currentEmail = primaryHost?.host_name && reservation.family_group
+          ? memberNameToCurrentEmail.get(
+              `${String(reservation.family_group).trim().toLowerCase()}|${String(primaryHost.host_name).trim().toLowerCase()}`
+            )
+          : undefined;
+        if (currentEmail) return `p:${currentEmail}`;
         const hostEmail = primaryHost?.host_email ? String(primaryHost.host_email).trim().toLowerCase() : '';
         if (hostEmail) return `p:${hostEmail}`;
         if (primaryHost?.host_name) return `n:${String(primaryHost.host_name).trim().toLowerCase()}`;
