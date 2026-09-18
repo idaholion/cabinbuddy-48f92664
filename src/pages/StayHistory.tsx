@@ -1406,34 +1406,38 @@ export default function StayHistory() {
     }
   }
 
-  // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
-  const currentBalanceFromStays = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    return item ? sum + item.stayData.amountDue : sum;
-  }, 0);
+  // Each person's true closing balance: every stay AND every credit transfer,
+  // plus receipts held by people with no stays. Positive = owed, negative = credit.
+  const netBalanceByHost = new Map<string, number>();
+  for (const [hostKey, balance] of finalBalanceByHost.entries()) {
+    netBalanceByHost.set(hostKey, balance);
+  }
+  for (const [key, entry] of standingCredit.entries()) {
+    // standingCredit already nets transfers in/out for stay-less people, so
+    // replace (not add to) whatever the transfer-only ledger produced.
+    netBalanceByHost.set(key, -entry.amount);
+  }
+
+  // People counted in the summary cards: anyone with a stay in the current view,
+  // plus stay-less credit holders inside the selected family group.
+  const summaryHostKeys = new Set<string>(fullLedger.map(({ reservation }) => getLedgerKey(reservation)));
+  for (const key of standingCredit.keys()) {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) continue;
+    if (scopeIsMineOnly && key !== currentUserLedgerKey) continue;
+    summaryHostKeys.add(key);
+  }
+
+  const currentBalance = Array.from(summaryHostKeys).reduce(
+    (sum, key) => sum + (netBalanceByHost.get(key) || 0),
+    0
+  );
 
   // Map each person with a credit balance to the amount available to transfer.
   // Used for both self-service transfer buttons and admin source selection.
   const hostCreditMap = new Map<string, number>();
-  for (const [hostKey, resId] of lastReservationByHost.entries()) {
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    if (item && item.stayData.amountDue < -0.004) {
-      hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
-    }
+  for (const [hostKey, balance] of netBalanceByHost.entries()) {
+    if (balance < -0.004) hostCreditMap.set(hostKey, Math.abs(balance));
   }
-  for (const [key, entry] of standingCredit.entries()) {
-    hostCreditMap.set(key, entry.amount);
-  }
-
-
-
-
-  // Standing credit counted into the balance card, respecting the family filter.
-  const standingCreditInView = Array.from(standingCredit.entries()).reduce((sum, [key, entry]) => {
-    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) return sum;
-    return sum + entry.amount;
-  }, 0);
-  const currentBalance = currentBalanceFromStays - standingCreditInView;
 
   const currentUserHasTransferableCredit = currentUserLedgerKey
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
