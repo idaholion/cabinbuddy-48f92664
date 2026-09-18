@@ -107,6 +107,9 @@ const CheckoutFinal = () => {
 
   // Chosen payment method for recording the balance due
   const [otherPaymentOpen, setOtherPaymentOpen] = useState(false);
+  const [otherPaymentDefaultMethod, setOtherPaymentDefaultMethod] = useState<string | undefined>(undefined);
+  // Asked before Venmo opens, so someone who already sent money doesn't pay twice.
+  const [venmoPrecheckOpen, setVenmoPrecheckOpen] = useState(false);
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
