@@ -922,8 +922,14 @@ export default function StayHistory() {
     const chargesDue = Math.max(0, billingAmount + manualAdjustment);
     const paidRaw = Math.max(0, amountPaid);
     const receiptsRaw = Math.max(0, receiptsTotal);
-    const ownPaidApplied = Math.min(paidRaw, chargesDue);
-    let remaining = chargesDue - ownPaidApplied;
+    // Money recorded on this stay settles anything still owed from earlier
+    // stays first (charges accumulate), then this stay's own charges. Only a
+    // genuine surplus beyond everything owed to date becomes forward credit.
+    const priorOwed = Math.max(0, previousBalance);
+    const owedThroughThisStay = priorOwed + chargesDue;
+    const ownPaidApplied = Math.min(paidRaw, owedThroughThisStay);
+    let remaining = owedThroughThisStay - ownPaidApplied;
+
 
     // Transferred credit is applied first — it was intentionally moved between people.
     const carriedInTransfers: { amount: number; fromName: string; notes?: string }[] = [];
