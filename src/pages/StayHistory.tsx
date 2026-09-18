@@ -2816,7 +2816,6 @@ export default function StayHistory() {
           </DialogHeader>
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
             <Button
-              variant="outline"
               onClick={() => {
                 const stayToPay = venmoPrecheckStay;
                 setVenmoPrecheckStay(null);
@@ -2830,6 +2829,7 @@ export default function StayHistory() {
               No — open Venmo
             </Button>
             <Button
+              variant="outline"
               onClick={() => {
                 setRecordPaymentDefaultMethod('venmo');
                 setRecordPaymentStay(venmoPrecheckStay);
