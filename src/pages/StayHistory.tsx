@@ -1217,6 +1217,7 @@ export default function StayHistory() {
       order: number;
       createdAt: number;
       delta: number;
+      stayData?: any;
       transfer?: any;
       direction?: 'out' | 'in';
     }> = [];
@@ -1229,6 +1230,7 @@ export default function StayHistory() {
         order: 0,
         createdAt: 0,
         delta: stayData.currentBalance,
+        stayData,
       });
     }
 
@@ -1267,6 +1269,10 @@ export default function StayHistory() {
       const previousBalance = balance;
       balance += event.delta;
       latestLedgerEventByHost.set(hostKey, event.id);
+      if (event.stayData) {
+        event.stayData.previousBalance = previousBalance;
+        event.stayData.amountDue = balance;
+      }
       if (event.transfer && event.direction) {
         transferLedgerDetails.set(`${event.transfer.id}|${hostKey}`, {
           eventId: event.id,
