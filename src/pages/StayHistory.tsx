@@ -139,6 +139,9 @@ export default function StayHistory() {
     || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
     || leadGroupName;
   const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
+  // Admins viewing one family group get the same My stays / Whole family choice.
+  const canChooseScope = isEffectiveLead || (isAdmin && selectedFamilyGroup !== 'all');
+  const scopeIsMineOnly = canChooseScope && leadScope === 'mine';
 
 
   // While viewing as someone else, the page is locked to their family group.
@@ -438,8 +441,13 @@ export default function StayHistory() {
 
   // Permission check helper - determines if user can view a specific reservation
   const canViewReservation = (reservation: any): boolean => {
-    // Admins and calendar keepers can see everything
-    if (isAdmin || isCalendarKeeper) return true;
+    // Admins and calendar keepers can see everything, unless an admin has
+    // narrowed a single family group down to their own stays.
+    if (isAdmin || isCalendarKeeper) {
+      if (isAdmin && scopeIsMineOnly) return isOwnReservation(reservation);
+      return true;
+    }
+
 
     // Group leads can see all reservations for their family group, unless they
     // have narrowed the view to their own stays.
@@ -496,6 +504,9 @@ export default function StayHistory() {
     return paymentSplits
       .filter(split => {
         if (isAdmin || isCalendarKeeper) {
+          if (isAdmin && scopeIsMineOnly && split.split_to_user_id !== effectiveUserId) {
+            return false;
+          }
           if (selectedFamilyGroup !== "all") {
             return split.split_to_family_group === selectedFamilyGroup;
           }
@@ -1170,6 +1181,7 @@ export default function StayHistory() {
   };
   const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
   const latestLedgerEventByHost = new Map<string, string>();
+  const finalBalanceByHost = new Map<string, number>();
   const ledgerHostKeys = new Set<string>([
     ...fullLedger.map(({ reservation }) => getLedgerKey(reservation)),
     ...Array.from(transfersBySource.keys()),
@@ -1250,6 +1262,9 @@ export default function StayHistory() {
         });
       }
     }
+    // Closing balance after EVERY event (stays and transfers alike). Summary
+    // totals use this so credit moved out is not still counted as held.
+    finalBalanceByHost.set(hostKey, balance);
   }
 
   for (const detail of transferLedgerDetails.values()) {
@@ -1322,15 +1337,13 @@ export default function StayHistory() {
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
   // Charges still unpaid = what each visible person still owes at the END of
-  // their ledger. Intermediate stays later covered by credit are not outstanding,
-  // so summing per-stay shortfalls would overstate the amount.
-  const stillOwedHostKeys = new Set<string>(displayReservations.map(r => getLedgerKey(r.reservation)));
-  const totalStillOwed = Array.from(lastReservationByHost.entries()).reduce((sum, [hostKey, resId]) => {
-    if (!stillOwedHostKeys.has(hostKey)) return sum;
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    if (!item) return sum;
-    return sum + Math.max(0, item.stayData.amountDue);
-  }, 0);
+  // their ledger (stays and transfers alike). Intermediate stays later covered by
+  // credit are not outstanding, so summing per-stay shortfalls would overstate it.
+  const stillOwedHostKeys = new Set<string>(fullLedger.map(r => getLedgerKey(r.reservation)));
+  const totalStillOwed = Array.from(stillOwedHostKeys).reduce(
+    (sum, hostKey) => sum + Math.max(0, finalBalanceByHost.get(hostKey) || 0),
+    0
+  );
   const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
 
   // Data handed to the CSV export dialog — exactly the stays currently listed.
@@ -1402,34 +1415,38 @@ export default function StayHistory() {
     }
   }
 
-  // Current balance = sum across hosts of the newest stay's amountDue in the full ledger
-  const currentBalanceFromStays = Array.from(lastReservationByHost.values()).reduce((sum, resId) => {
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    return item ? sum + item.stayData.amountDue : sum;
-  }, 0);
+  // Each person's true closing balance: every stay AND every credit transfer,
+  // plus receipts held by people with no stays. Positive = owed, negative = credit.
+  const netBalanceByHost = new Map<string, number>();
+  for (const [hostKey, balance] of finalBalanceByHost.entries()) {
+    netBalanceByHost.set(hostKey, balance);
+  }
+  for (const [key, entry] of standingCredit.entries()) {
+    // standingCredit already nets transfers in/out for stay-less people, so
+    // replace (not add to) whatever the transfer-only ledger produced.
+    netBalanceByHost.set(key, -entry.amount);
+  }
+
+  // People counted in the summary cards: anyone with a stay in the current view,
+  // plus stay-less credit holders inside the selected family group.
+  const summaryHostKeys = new Set<string>(fullLedger.map(({ reservation }) => getLedgerKey(reservation)));
+  for (const key of standingCredit.keys()) {
+    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) continue;
+    if (scopeIsMineOnly && key !== currentUserLedgerKey) continue;
+    summaryHostKeys.add(key);
+  }
+
+  const currentBalance = Array.from(summaryHostKeys).reduce(
+    (sum, key) => sum + (netBalanceByHost.get(key) || 0),
+    0
+  );
 
   // Map each person with a credit balance to the amount available to transfer.
   // Used for both self-service transfer buttons and admin source selection.
   const hostCreditMap = new Map<string, number>();
-  for (const [hostKey, resId] of lastReservationByHost.entries()) {
-    const item = fullLedger.find(r => r.reservation.id === resId);
-    if (item && item.stayData.amountDue < -0.004) {
-      hostCreditMap.set(hostKey, Math.abs(item.stayData.amountDue));
-    }
+  for (const [hostKey, balance] of netBalanceByHost.entries()) {
+    if (balance < -0.004) hostCreditMap.set(hostKey, Math.abs(balance));
   }
-  for (const [key, entry] of standingCredit.entries()) {
-    hostCreditMap.set(key, entry.amount);
-  }
-
-
-
-
-  // Standing credit counted into the balance card, respecting the family filter.
-  const standingCreditInView = Array.from(standingCredit.entries()).reduce((sum, [key, entry]) => {
-    if (selectedFamilyGroup !== 'all' && memberGroupMap.get(key) !== selectedFamilyGroup) return sum;
-    return sum + entry.amount;
-  }, 0);
-  const currentBalance = currentBalanceFromStays - standingCreditInView;
 
   const currentUserHasTransferableCredit = currentUserLedgerKey
     ? (hostCreditMap.get(currentUserLedgerKey) || 0)
@@ -1730,7 +1747,7 @@ export default function StayHistory() {
           </Select>
 
           {/* Scope toggle (group leads and members with Stay History permission) */}
-          {isEffectiveLead && (
+          {canChooseScope && (
             <div className="inline-flex items-center rounded-md border bg-card p-1">
               <Button
                 type="button"
