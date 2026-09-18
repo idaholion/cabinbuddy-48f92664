@@ -22,6 +22,7 @@ import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
 
 
