@@ -2155,27 +2155,28 @@ const CheckoutFinal = () => {
                                     <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
                                     <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
                                   </div>
-                                  <div className="flex flex-col items-end">
+                                  <div className="flex flex-col">
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => setVenmoPrecheckOpen(true)}
                                       disabled={totalAmount === 0}
-                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full"
                                     >
                                       <Send className="h-4 w-4 mr-2" />
-                                      Pay Now
+                                      Pay Now Via Venmo
                                     </Button>
-                                    <button
-                                      type="button"
-                                      className="mt-2 text-sm text-blue-600 hover:underline underline-offset-2"
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="mt-2 text-blue-600 border-blue-200 hover:bg-blue-50 w-full whitespace-normal"
                                       onClick={() => {
                                         setOtherPaymentDefaultMethod('venmo');
                                         setOtherPaymentOpen(true);
                                       }}
                                     >
                                       Already paid outside CabinBuddy? Record it instead.
-                                    </button>
+                                    </Button>
                                   </div>
                                 </div>
                               </div>
