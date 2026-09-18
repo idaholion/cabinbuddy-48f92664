@@ -2293,67 +2293,68 @@ export default function StayHistory() {
                       </>
                     )}
 
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
-                      <span className="font-medium">
-                        {((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)) > 0
-                          ? `−$${((stayData.paidApplied || 0) + (stayData.paymentOverflow || 0)).toFixed(2)}`
-                          : '$0.00'}
-                      </span>
-                    </div>
-                    {(stayData.paymentOverflow || 0) > 0.004 && (
-                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
-                        ${(stayData.paidApplied || 0).toFixed(2)} applied to this stay, $
-                        {stayData.paymentOverflow.toFixed(2)} carried forward as credit
-                      </div>
-                    )}
-                    {(stayData.carriedInPayment || 0) > 0.004 && (
-                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
-                        includes ${stayData.carriedInPayment.toFixed(2)} payment credit carried in
-                      </div>
-                    )}
+                    {(() => {
+                      const paymentsTotal = Math.max(0, stayData.amountPaid || 0);
+                      const displayedReceipts = Math.max(
+                        0,
+                        (stayData.receiptsTotal || 0) - receiptCreditMovedToOpeningBalance
+                      );
+                      const receiptsAppliedHere = Math.max(
+                        0,
+                        Math.min(displayedReceipts, (stayData.receiptsApplied || 0) - (stayData.carriedInReceipt || 0))
+                      );
+                      const receiptsLeftOver = Math.max(0, displayedReceipts - receiptsAppliedHere);
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Payments (cash / check / venmo):</span>
+                            <span className="font-medium">
+                              {paymentsTotal > 0.004 ? `−$${paymentsTotal.toFixed(2)}` : '$0.00'}
+                            </span>
+                          </div>
+                          {(stayData.paymentOverflow || 0) > 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Applied ${(stayData.paidApplied || 0).toFixed(2)} to this stay, $
+                              {stayData.paymentOverflow.toFixed(2)} available for later stays
+                            </div>
+                          )}
 
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Receipts Credited{stayData.receiptsCount > 0 ? ` (${stayData.receiptsCount})` : ''}:
-                      </span>
-                      <span className="font-medium">
-                        {stayData.receiptsApplied > 0 ? `−$${stayData.receiptsApplied.toFixed(2)}` : '$0.00'}
-                      </span>
-                    </div>
-                    {(stayData.carriedInReceipt || 0) > 0.004 && (
-                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
-                        includes ${stayData.carriedInReceipt.toFixed(2)} receipt credit carried in
-                      </div>
-                    )}
-                    {stayData.receiptsApplied - (stayData.carriedInReceipt || 0) > (stayData.receiptsTotal || 0) + 0.004 && (
-                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
-                        includes credit applied from a later stay's receipts
-                      </div>
-                    )}
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Receipt Credits Submitted:</span>
+                            <span className="font-medium">
+                              {displayedReceipts > 0.004 ? `−$${displayedReceipts.toFixed(2)}` : '$0.00'}
+                            </span>
+                          </div>
+                          {receiptsLeftOver > 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Applied ${receiptsAppliedHere.toFixed(2)} to this stay, $
+                              {receiptsLeftOver.toFixed(2)} available for later stays
+                            </div>
+                          )}
+                          {(stayData.carriedInPayment || 0) + (stayData.carriedInReceipt || 0) > 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Previous balance covered $
+                              {((stayData.carriedInPayment || 0) + (stayData.carriedInReceipt || 0)).toFixed(2)} of
+                              this stay
+                            </div>
+                          )}
+                          {stayData.receiptsApplied - (stayData.carriedInReceipt || 0) > (stayData.receiptsTotal || 0) + 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Includes credit applied from a later stay's receipts
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     {(stayData.carriedInTransfer || 0) > 0.004 && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Transferred Credit:</span>
-                          <span className="font-medium">−${stayData.carriedInTransfer.toFixed(2)}</span>
-                        </div>
-                        <div className="text-xs text-muted-foreground italic text-right -mt-1">
-                          includes {stayData.carriedInTransfers.map((t: any, i: number) => (
-                            `${i > 0 ? ', ' : ''}$${t.amount.toFixed(2)} from ${t.fromName}${t.notes ? ` (${t.notes})` : ''}`
-                          )).join('')}
-                        </div>
-                      </>
-                    )}
-
-                    {netReceiptOverflow > 0.004 && !showReceiptYearBoundary && !receiptOverflowMovesIntoLaterYear && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Receipt Credit Available for Later Stays:</span>
-                        <span className="font-medium text-green-600">
-                          +${netReceiptOverflow.toFixed(2)}
-                        </span>
+                      <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                        Includes transferred credit {stayData.carriedInTransfers.map((t: any, i: number) => (
+                          `${i > 0 ? ', ' : ''}$${t.amount.toFixed(2)} from ${t.fromName}${t.notes ? ` (${t.notes})` : ''}`
+                        )).join('')}
                       </div>
                     )}
+
 
                     {(() => {
                       const bal = stayData.amountDue;
