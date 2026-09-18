@@ -1321,7 +1321,16 @@ export default function StayHistory() {
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
-  const totalStillOwed = displayReservations.reduce((sum, r) => sum + (r.stayData.unpaidRemaining || 0), 0);
+  // Charges still unpaid = what each visible person still owes at the END of
+  // their ledger. Intermediate stays later covered by credit are not outstanding,
+  // so summing per-stay shortfalls would overstate the amount.
+  const stillOwedHostKeys = new Set<string>(displayReservations.map(r => getLedgerKey(r.reservation)));
+  const totalStillOwed = Array.from(lastReservationByHost.entries()).reduce((sum, [hostKey, resId]) => {
+    if (!stillOwedHostKeys.has(hostKey)) return sum;
+    const item = fullLedger.find(r => r.reservation.id === resId);
+    if (!item) return sum;
+    return sum + Math.max(0, item.stayData.amountDue);
+  }, 0);
   const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
 
   // Data handed to the CSV export dialog — exactly the stays currently listed.
@@ -1411,6 +1420,9 @@ export default function StayHistory() {
   for (const [key, entry] of standingCredit.entries()) {
     hostCreditMap.set(key, entry.amount);
   }
+
+
+
 
   // Standing credit counted into the balance card, respecting the family filter.
   const standingCreditInView = Array.from(standingCredit.entries()).reduce((sum, [key, entry]) => {
