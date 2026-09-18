@@ -2420,7 +2420,7 @@ export default function StayHistory() {
                 )}
 
                 {/* Venmo Payment Section - Only show on newest stay */}
-                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture && 
+                {financialSettings?.venmo_handle && stayData.amountDue !== 0 &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
@@ -2541,7 +2541,7 @@ export default function StayHistory() {
                 )}
 
                 {/* Other payment options when no Venmo card is shown — newest stay per person only */}
-                {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
+                {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id &&
                   stayData.paymentId && stayData.amountDue > 0 && (
