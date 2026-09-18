@@ -10,7 +10,7 @@ A simple top-to-bottom sum, where every line adds to the one below it:
 Previous Balance (Credit):              +$70.00
 Charges (2 nights):                      $30.00
 Payments (cash / check / venmo):          $0.00
-Receipt Credits Submitted (3):         −$350.74
+Receipt Credits Submitted:             −$350.74
 ------------------------------------------------
 New Balance (Credit):                  +$390.74
 ```
