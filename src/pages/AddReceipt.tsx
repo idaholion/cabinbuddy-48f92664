@@ -17,6 +17,7 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
+import { parseDateOnly } from "@/lib/date-utils";
 
 const AddReceipt = () => {
   const { receipts, loading, createReceipt, deleteReceipt, refetchReceipts } = useReceipts();
@@ -46,6 +47,7 @@ const AddReceipt = () => {
   const [editFormData, setEditFormData] = useState({
     description: '',
     amount: '',
+    date: '',
     newImage: null as File | null,
     newImagePreview: null as string | null,
   });
@@ -505,6 +507,7 @@ const AddReceipt = () => {
     setEditFormData({
       description: receipt.description,
       amount: receipt.amount.toString(),
+      date: (receipt.date || receipt.created_at || '').toString().split('T')[0],
       newImage: null,
       newImagePreview: null,
     });
@@ -520,6 +523,7 @@ const AddReceipt = () => {
     setEditFormData({
       description: '',
       amount: '',
+      date: '',
       newImage: null,
       newImagePreview: null,
     });
@@ -630,6 +634,7 @@ const AddReceipt = () => {
         .update({
           description: editFormData.description.trim(),
           amount: parsedAmount,
+          date: editFormData.date || editingReceiptFull.date,
           image_url: imageUrl,
         })
         .eq('id', editingReceiptFull.id);
@@ -1013,7 +1018,10 @@ const AddReceipt = () => {
                         <div className="flex-1 min-w-0">
                           <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(receipt.created_at).toLocaleDateString()}
+                            {receipt.date ? parseDateOnly(receipt.date).toLocaleDateString() : new Date(receipt.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/70">
+                            Submitted {new Date(receipt.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <Button
@@ -1266,7 +1274,25 @@ const AddReceipt = () => {
                 />
               </div>
             </div>
+
+            {/* Receipt Date */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-date">Receipt Date</Label>
+              <Input
+                id="edit-date"
+                type="date"
+                value={editFormData.date}
+                onChange={(e) => setEditFormData(prev => ({...prev, date: e.target.value}))}
+              />
+              <p className="text-xs text-muted-foreground">
+                The date this purchase was actually made — this is the date used for stay credits.
+                {editingReceiptFull?.created_at && (
+                  <> Submitted {new Date(editingReceiptFull.created_at).toLocaleDateString()}.</>
+                )}
+              </p>
+            </div>
           </div>
+          
           
           <DialogFooter className="flex-col gap-3 sm:flex-row">
             {/* Delete with Confirmation */}
