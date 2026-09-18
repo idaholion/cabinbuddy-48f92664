@@ -1330,18 +1330,32 @@ export default function StayHistory() {
     }
     return sum + differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
   }, 0);
-  const totalPaid = displayReservations.reduce((sum, r) => sum + (r.stayData.paidApplied || 0), 0);
+  // "Paid" means money that actually arrived against the stays shown. Credit
+  // carried in from an earlier stay/year is reported separately so the boxes add up.
+  const totalPaid = displayReservations.reduce(
+    (sum, r) => sum + Math.max(0, (r.stayData.paidApplied || 0) - (r.stayData.carriedInPayment || 0)),
+    0
+  );
+  const totalCreditApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.carriedInPayment || 0), 0);
   const totalCharges = displayReservations.reduce(
     (sum, r) => sum + (r.stayData.billingAmount || 0) + (r.stayData.manualAdjustment || 0),
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
-  // Charges still unpaid = what each visible person still owes at the END of
-  // their ledger (stays and transfers alike). Intermediate stays later covered by
-  // credit are not outstanding, so summing per-stay shortfalls would overstate it.
-  const stillOwedHostKeys = new Set<string>(fullLedger.map(r => getLedgerKey(r.reservation)));
-  const totalStillOwed = Array.from(stillOwedHostKeys).reduce(
-    (sum, hostKey) => sum + Math.max(0, finalBalanceByHost.get(hostKey) || 0),
+  // Charges still unpaid = what each visible person still owes at the END of the
+  // stays currently shown (the year filter included). Intermediate stays later
+  // covered by credit are not outstanding, so summing per-stay shortfalls would
+  // overstate it. displayReservations is newest-first, so the first entry per host
+  // is that person's latest visible stay. Credit is never pooled across people.
+  const lastVisibleBalanceByHost = new Map<string, number>();
+  for (const item of displayReservations) {
+    const hostKey = getLedgerKey(item.reservation);
+    if (!lastVisibleBalanceByHost.has(hostKey)) {
+      lastVisibleBalanceByHost.set(hostKey, item.stayData.amountDue || 0);
+    }
+  }
+  const totalStillOwed = Array.from(lastVisibleBalanceByHost.values()).reduce(
+    (sum, balance) => sum + Math.max(0, balance),
     0
   );
   const totalTransferredInApplied = displayReservations.reduce((sum, r) => sum + (r.stayData.transferredInApplied || 0), 0);
