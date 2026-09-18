@@ -1156,9 +1156,8 @@ export default function StayHistory() {
   }
 
   // Apply any credit transfers dated after the last stay for each host so the
-  // final balance reflects them. Only adjust the amountDue on the host's last
-  // visible stay; hostBalances is also updated for any downstream summary math.
-  const postStayAdjustments = new Map<string, number>();
+  // final balance and source-tagged pools reflect them. These remain separate
+  // ledger transactions; they must not rewrite the ending balance of a stay.
   for (const [hostKey, list] of transfersBySource.entries()) {
     const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
     const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
@@ -1166,7 +1165,6 @@ export default function StayHistory() {
       const t = list[ptr.outIndex++];
       const amount = Number(t.amount) || 0;
       hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
-      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) + amount);
       let remainingOut = amount;
       const fromPayment = Math.min(pool.payment, remainingOut);
       pool.payment -= fromPayment; remainingOut -= fromPayment;
@@ -1182,7 +1180,6 @@ export default function StayHistory() {
       const t = list[ptr.inIndex++];
       const amount = Number(t.amount) || 0;
       hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
-      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) - amount);
       pool.transferInQueue.push({
         id: t.id,
         fromName: getTransferDisplayName(t.from_ledger_name),
@@ -1192,13 +1189,98 @@ export default function StayHistory() {
     }
     hostTransferPointers.set(hostKey, ptr);
   }
-  for (const [hostKey, adj] of postStayAdjustments.entries()) {
-    const lastId = lastReservationByHost.get(hostKey);
-    if (!lastId) continue;
-    const item = reservationsWithBalance.find(r => r.reservation.id === lastId);
-    if (item) {
-      item.stayData.amountDue += adj;
+
+  // Reconstruct each person's visible statement as dated ledger events. A stay
+  // closes first on its date; transfers on that date follow in creation order.
+  // This gives every transfer an auditable opening and resulting balance while
+  // preserving historical stay balances.
+  type TransferLedgerDetail = {
+    hostKey: string;
+    direction: 'out' | 'in';
+    previousBalance: number;
+    newBalance: number;
+    isCurrent: boolean;
+  };
+  const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
+  const latestLedgerEventByHost = new Map<string, string>();
+  const ledgerHostKeys = new Set<string>([
+    ...fullLedger.map(({ reservation }) => getLedgerKey(reservation)),
+    ...Array.from(transfersBySource.keys()),
+    ...Array.from(transfersByTarget.keys()),
+  ]);
+
+  for (const hostKey of ledgerHostKeys) {
+    const events: Array<{
+      id: string;
+      date: number;
+      order: number;
+      createdAt: number;
+      delta: number;
+      transfer?: any;
+      direction?: 'out' | 'in';
+    }> = [];
+
+    for (const { reservation, stayData } of fullLedger) {
+      if (getLedgerKey(reservation) !== hostKey) continue;
+      events.push({
+        id: `stay:${reservation.id}`,
+        date: parseDateOnly(reservation.start_date).getTime(),
+        order: 0,
+        createdAt: 0,
+        delta: stayData.currentBalance,
+      });
     }
+
+    for (const transfer of transfersBySource.get(hostKey) || []) {
+      events.push({
+        id: `transfer:${transfer.id}:out`,
+        date: parseDateOnly(transfer.transfer_date).getTime(),
+        order: 1,
+        createdAt: transfer.created_at ? new Date(transfer.created_at).getTime() : 0,
+        delta: Number(transfer.amount) || 0,
+        transfer,
+        direction: 'out',
+      });
+    }
+    for (const transfer of transfersByTarget.get(hostKey) || []) {
+      events.push({
+        id: `transfer:${transfer.id}:in`,
+        date: parseDateOnly(transfer.transfer_date).getTime(),
+        order: 1,
+        createdAt: transfer.created_at ? new Date(transfer.created_at).getTime() : 0,
+        delta: -(Number(transfer.amount) || 0),
+        transfer,
+        direction: 'in',
+      });
+    }
+
+    events.sort((a, b) =>
+      a.date - b.date ||
+      a.order - b.order ||
+      a.createdAt - b.createdAt ||
+      a.id.localeCompare(b.id)
+    );
+
+    let balance = 0;
+    for (const event of events) {
+      const previousBalance = balance;
+      balance += event.delta;
+      latestLedgerEventByHost.set(hostKey, event.id);
+      if (event.transfer && event.direction) {
+        transferLedgerDetails.set(`${event.transfer.id}|${hostKey}`, {
+          hostKey,
+          direction: event.direction,
+          previousBalance,
+          newBalance: balance,
+          isCurrent: false,
+        });
+      }
+    }
+  }
+
+  for (const detail of transferLedgerDetails.values()) {
+    detail.isCurrent = latestLedgerEventByHost.get(detail.hostKey)?.startsWith('transfer:') === true &&
+      latestLedgerEventByHost.get(detail.hostKey)?.includes(`:${detail.direction}`) === true;
   }
 
   // Apply the year filter to display ONLY (math already ran globally),
