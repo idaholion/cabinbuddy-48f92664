@@ -17,6 +17,7 @@ import { useReceipts } from "@/hooks/useReceipts";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { supabase } from "@/integrations/supabase/client";
 import { useEnhancedProfileClaim } from "@/hooks/useEnhancedProfileClaim";
+import { parseDateOnly } from "@/lib/date-utils";
 
 const AddReceipt = () => {
   const { receipts, loading, createReceipt, deleteReceipt, refetchReceipts } = useReceipts();
