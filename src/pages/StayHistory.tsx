@@ -653,6 +653,11 @@ export default function StayHistory() {
   // Receipts dated after the family's most recent completed stay attach to that final stay
   // as "received since last stay". Result: Map<reservationId, { total, count }>.
   const receiptsByReservation = new Map<string, { total: number; count: number }>();
+  // Receipts turned in AFTER a person's last stay of a calendar year but still
+  // inside that year. They settle on that final stay of the year so the year
+  // closes with every receipt accounted for (instead of surfacing unexplained
+  // in the following year).
+  const yearEndReceiptsByReservation = new Map<string, number>();
   {
     const staysByFamily = new Map<string, any[]>();
     for (const r of [...filteredReservations, ...virtualSplitReservations]) {
@@ -669,12 +674,30 @@ export default function StayHistory() {
       const lastStay = stays[stays.length - 1];
       for (const rc of famReceipts) {
         const rcDate = parseDateOnly(rc.date);
-        const target = stays.find(s => parseDateOnly(s.end_date).getTime() >= rcDate.getTime()) || lastStay;
+        const rcYear = rcDate.getFullYear();
+        const direct = stays.find(s => parseDateOnly(s.end_date).getTime() >= rcDate.getTime());
+        let target = direct || lastStay;
+        let isYearEnd = false;
+        if (!direct || parseDateOnly(direct.end_date).getFullYear() > rcYear) {
+          // No remaining stay in the receipt's own year: keep the credit in that
+          // year by attaching it to the last stay of that year, when there is one.
+          const sameYear = stays.filter(s => parseDateOnly(s.end_date).getFullYear() === rcYear);
+          if (sameYear.length) {
+            target = sameYear[sameYear.length - 1];
+            isYearEnd = true;
+          }
+        }
         if (!target) continue;
         const entry = receiptsByReservation.get(target.id) || { total: 0, count: 0 };
         entry.total += Number(rc.amount) || 0;
         entry.count += 1;
         receiptsByReservation.set(target.id, entry);
+        if (isYearEnd) {
+          yearEndReceiptsByReservation.set(
+            target.id,
+            (yearEndReceiptsByReservation.get(target.id) || 0) + (Number(rc.amount) || 0)
+          );
+        }
       }
     }
   }
@@ -2322,6 +2345,13 @@ export default function StayHistory() {
                             <div className="text-xs text-muted-foreground italic text-right -mt-1">
                               Applied ${receiptsAppliedHere.toFixed(2)} to this stay, $
                               {receiptsLeftOver.toFixed(2)} available for later stays
+                            </div>
+                          )}
+                          {(yearEndReceiptsByReservation.get(reservation.id) || 0) > 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Includes $
+                              {(yearEndReceiptsByReservation.get(reservation.id) || 0).toFixed(2)} in receipts turned in
+                              after this stay but before the end of {currentYear}
                             </div>
                           )}
                           {(stayData.carriedInPayment || 0) + (stayData.carriedInReceipt || 0) > 0.004 && (
