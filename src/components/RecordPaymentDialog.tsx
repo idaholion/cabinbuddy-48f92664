@@ -27,6 +27,13 @@ interface RecordPaymentDialogProps {
   saveLabel?: string;
   /** Hide Venmo from the method list (when Venmo is offered elsewhere) */
   hideVenmo?: boolean;
+  /**
+   * Keep Venmo in the list but relabel it as a payment the member already sent
+   * outside CabinBuddy, so recording it never triggers a second charge.
+   */
+  venmoAlreadySent?: boolean;
+  /** Preselect a payment method when the dialog opens */
+  defaultMethod?: string;
 
   /** Admin-configured payment methods (falls back to defaults) */
   methods?: PaymentMethodOption[];
