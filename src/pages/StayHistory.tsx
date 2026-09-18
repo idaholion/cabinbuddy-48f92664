@@ -1215,21 +1215,49 @@ export default function StayHistory() {
     ? displayReservations[0].reservation.id
     : null;
 
-  // Year-end balances: for each year present in the full ledger, take the running
-  // balance across all hosts as of the last stay of that year. Displayed as a
-  // divider row between years so the reader can see the rollover explicitly.
-  const yearEndBalances = new Map<number, number>();
+  // Receipt-only credit crossing a calendar-year boundary, kept separate for
+  // every person. Receipts recorded on the first stay of a new year represent
+  // receipts received since that person's previous stay, so their net overflow
+  // belongs in the opening-year marker as well. Any portion moved backward to
+  // settle an older charge is removed before the rollover is shown.
+  const receiptCarryIntoYear = new Map<string, number>();
+  const yearsByHost = new Map<string, number[]>();
   {
-    const runningByHost = new Map<string, number>();
-    // Group by year, in chronological order
+    const itemsByHost = new Map<string, typeof fullLedger>();
     for (const item of fullLedger) {
       const hostKey = getLedgerKey(item.reservation);
-      runningByHost.set(hostKey, (runningByHost.get(hostKey) || 0) + item.stayData.currentBalance);
-      const year = parseDateOnly(item.reservation.start_date).getFullYear();
-      // sum across all hosts snapshot
-      let total = 0;
-      for (const v of runningByHost.values()) total += v;
-      yearEndBalances.set(year, total);
+      const items = itemsByHost.get(hostKey) || [];
+      items.push(item);
+      itemsByHost.set(hostKey, items);
+    }
+
+    for (const [hostKey, items] of itemsByHost.entries()) {
+      let receiptPool = 0;
+      let priorYear: number | null = null;
+      const hostYears: number[] = [];
+
+      for (const item of items) {
+        const year = parseDateOnly(item.reservation.start_date).getFullYear();
+        if (!hostYears.includes(year)) hostYears.push(year);
+
+        const netReceiptOverflow = Math.max(
+          0,
+          (item.stayData.receiptsOverflow || 0) - (item.stayData.backwardCreditOut || 0)
+        );
+
+        if (priorYear !== null && year !== priorYear) {
+          const openingReceiptCredit = receiptPool + netReceiptOverflow;
+          if (openingReceiptCredit > 0.004) {
+            receiptCarryIntoYear.set(`${hostKey}|${year}`, openingReceiptCredit);
+          }
+        }
+
+        receiptPool = Math.max(0, receiptPool - (item.stayData.carriedInReceipt || 0));
+        receiptPool += netReceiptOverflow;
+        priorYear = year;
+      }
+
+      yearsByHost.set(hostKey, hostYears);
     }
   }
 
@@ -1957,10 +1985,23 @@ export default function StayHistory() {
         {displayReservations.map(({ reservation, stayData }, idx) => {
           const isLastVisible = reservation.id === lastVisibleId;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
-          const prevItem = displayReservations[idx - 1];
-          const prevYear = prevItem ? parseDateOnly(prevItem.reservation.start_date).getFullYear() : null;
-          const showYearEnd = prevYear !== null && prevYear !== currentYear;
-          const yearEndBal = yearEndBalances.get(prevYear ?? currentYear) ?? 0;
+          const hostKey = getLedgerKey(reservation);
+          const olderVisibleStayForHost = displayReservations
+            .slice(idx + 1)
+            .find(item => getLedgerKey(item.reservation) === hostKey);
+          const olderVisibleYear = olderVisibleStayForHost
+            ? parseDateOnly(olderVisibleStayForHost.reservation.start_date).getFullYear()
+            : null;
+          const isOldestVisibleStayForHost = !olderVisibleStayForHost;
+          const hasEarlierYearForHost = (yearsByHost.get(hostKey) || []).some(year => year < currentYear);
+          const showReceiptYearBoundary = selectedYear === 0
+            ? olderVisibleYear !== null && olderVisibleYear < currentYear
+            : isOldestVisibleStayForHost && hasEarlierYearForHost;
+          const receiptCarry = receiptCarryIntoYear.get(`${hostKey}|${currentYear}`) || 0;
+          const netReceiptOverflow = Math.max(
+            0,
+            (stayData.receiptsOverflow || 0) - (stayData.backwardCreditOut || 0)
+          );
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2135,11 +2176,11 @@ export default function StayHistory() {
                       </>
                     )}
 
-                    {stayData.receiptsOverflow > 0 && (
+                    {netReceiptOverflow > 0.004 && !showReceiptYearBoundary && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Receipt Credit Carried Forward:</span>
+                        <span className="text-muted-foreground">Receipt Credit Available for Later Stays:</span>
                         <span className="font-medium text-green-600">
-                          −${stayData.receiptsOverflow.toFixed(2)}
+                          −${netReceiptOverflow.toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -2412,21 +2453,17 @@ export default function StayHistory() {
                  </div>
               </CardContent>
             </Card>
-            {showYearEnd && (
+            {showReceiptYearBoundary && receiptCarry > 0.004 && (
               <div className="my-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
-                  {prevYear} Year-End Balance:
-                  <span className={`ml-2 font-bold ${yearEndBal > 0 ? 'text-destructive' : yearEndBal < 0 ? 'text-green-600' : ''}`}>
-                    {yearEndBal < 0 ? '−' : ''}${Math.abs(yearEndBal).toFixed(2)}
+                  Receipt credit carried into {currentYear}:
+                  <span className="ml-2 font-bold text-green-600">
+                    ${receiptCarry.toFixed(2)}
                   </span>
                 </span>
-                <span className="text-muted-foreground">
-                  {yearEndBal === 0
-                    ? `nothing rolling into ${currentYear}`
-                    : yearEndBal < 0
-                      ? `credit rolling forward to ${currentYear}`
-                      : `balance rolling forward to ${currentYear}`}
-                </span>
+                {displayReservations.some(item => getLedgerKey(item.reservation) !== hostKey) && (
+                  <span className="text-muted-foreground">{getTransferDisplayName(hostKey)}</span>
+                )}
               </div>
             )}
           </div>
