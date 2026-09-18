@@ -46,6 +46,7 @@ const AddReceipt = () => {
   const [editFormData, setEditFormData] = useState({
     description: '',
     amount: '',
+    date: '',
     newImage: null as File | null,
     newImagePreview: null as string | null,
   });
@@ -505,6 +506,7 @@ const AddReceipt = () => {
     setEditFormData({
       description: receipt.description,
       amount: receipt.amount.toString(),
+      date: (receipt.date || receipt.created_at || '').toString().split('T')[0],
       newImage: null,
       newImagePreview: null,
     });
