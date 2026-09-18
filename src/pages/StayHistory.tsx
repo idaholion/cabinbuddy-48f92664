@@ -1330,11 +1330,11 @@ export default function StayHistory() {
   // when the user narrows the year filter.
   const visibleReservations = displayReservations.map(r => r.reservation);
   const totalStays = visibleReservations.length;
-  const totalNights = visibleReservations.reduce((sum, res) => {
-    if (res.isVirtualSplit) {
-      return sum + (res.splitData?.dailyOccupancy?.length || 0);
-    }
-    return sum + differenceInDays(parseDateOnly(res.end_date), parseDateOnly(res.start_date));
+  // Guest Nights = people × nights. Uses the actual per-day guest counts
+  // recorded on each stay; stays with no people numbers yet contribute 0.
+  const totalNights = displayReservations.reduce((sum, r) => {
+    const days = r.stayData?.dailyOccupancy || [];
+    return sum + days.reduce((s: number, d: any) => s + (d.guests || 0), 0);
   }, 0);
   // "Paid" means money that actually arrived against the stays shown. Credit
   // carried in from an earlier stay/year is reported separately so the boxes add up.
