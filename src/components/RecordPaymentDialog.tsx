@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
-import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod } from "@/lib/payment-methods";
+import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod, withVenmoAlreadySent } from "@/lib/payment-methods";
 
 
 interface RecordPaymentDialogProps {
