@@ -2272,7 +2272,7 @@ export default function StayHistory() {
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Manual Adjustment:</span>
-                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : ''}`}>
                             {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
                           </span>
                         </div>
@@ -2619,7 +2619,7 @@ export default function StayHistory() {
                 <span className="font-semibold">
                   Receipt credit carried into {currentYear}:
                   <span className="ml-2 font-bold text-green-600">
-                    ${receiptCarry.toFixed(2)}
+                    +${receiptCarry.toFixed(2)}
                   </span>
                 </span>
                 {displayReservations.some(item => getLedgerKey(item.reservation) !== hostKey) && (
