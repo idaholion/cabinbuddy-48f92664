@@ -2230,7 +2230,6 @@ const CheckoutFinal = () => {
                         </DialogHeader>
                         <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
                           <Button
-                            variant="outline"
                             onClick={() => {
                               setVenmoPrecheckOpen(false);
                               if (!checkoutData.venmoHandle) return;
@@ -2242,6 +2241,7 @@ const CheckoutFinal = () => {
                             No — open Venmo
                           </Button>
                           <Button
+                            variant="outline"
                             onClick={() => {
                               setVenmoPrecheckOpen(false);
                               setOtherPaymentDefaultMethod('venmo');
