@@ -18,7 +18,7 @@ New Balance (Credit):                  +$390.74
 Rules:
 - Previous Balance is the full balance carried in from the person's earlier activity.
 - Payments shows everything paid toward that stay, in full.
-- Receipt Credits shows the full amount of receipts submitted for that stay, in full.
+- Receipt Credits shows the full amount of receipts submitted for that stay, with no receipt count in parentheses.
 - New Balance = previous balance + charges + adjustment − payments − receipts. Always exact.
 
 ## Notes instead of extra lines
