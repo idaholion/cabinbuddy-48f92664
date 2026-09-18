@@ -633,6 +633,7 @@ const AddReceipt = () => {
         .update({
           description: editFormData.description.trim(),
           amount: parsedAmount,
+          date: editFormData.date || editingReceiptFull.date,
           image_url: imageUrl,
         })
         .eq('id', editingReceiptFull.id);
@@ -1016,7 +1017,10 @@ const AddReceipt = () => {
                         <div className="flex-1 min-w-0">
                           <p className="text-lg font-bold text-primary">${receipt.amount.toFixed(2)}</p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(receipt.created_at).toLocaleDateString()}
+                            {receipt.date ? parseDateOnly(receipt.date).toLocaleDateString() : new Date(receipt.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/70">
+                            Submitted {new Date(receipt.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <Button
