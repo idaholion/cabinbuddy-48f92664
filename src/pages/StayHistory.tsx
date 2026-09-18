@@ -2854,6 +2854,7 @@ export default function StayHistory() {
               Not Yet
             </Button>
             <Button onClick={() => {
+              setRecordPaymentDefaultMethod('venmo');
               setRecordPaymentStay(venmoConfirmStay);
               setVenmoConfirmStay(null);
             }}>
