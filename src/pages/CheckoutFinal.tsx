@@ -2148,26 +2148,33 @@ const CheckoutFinal = () => {
                               </div>
                             ) : (
                               // Positive balance - show pay now button
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
-                                  <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
+                                    <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setVenmoPrecheckOpen(true)}
+                                    disabled={totalAmount === 0}
+                                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Pay Now
+                                  </Button>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                <button
+                                  type="button"
+                                  className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
                                   onClick={() => {
-                                    const cleanHandle = checkoutData.venmoHandle.replace('@', '');
-                                    const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=${encodeURIComponent('Cabin stay payment')}`;
-                                    console.log('Opening Venmo URL:', venmoUrl);
-                                    window.open(venmoUrl, '_blank');
+                                    setOtherPaymentDefaultMethod('venmo');
+                                    setOtherPaymentOpen(true);
                                   }}
-                                  disabled={totalAmount === 0}
-                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
                                 >
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Pay Now
-                                </Button>
+                                  Already paid outside CabinBuddy? Record it instead.
+                                </button>
                               </div>
                             )}
                           </div>
