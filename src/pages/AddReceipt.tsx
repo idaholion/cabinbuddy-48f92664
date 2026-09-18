@@ -1274,7 +1274,25 @@ const AddReceipt = () => {
                 />
               </div>
             </div>
+
+            {/* Receipt Date */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-date">Receipt Date</Label>
+              <Input
+                id="edit-date"
+                type="date"
+                value={editFormData.date}
+                onChange={(e) => setEditFormData(prev => ({...prev, date: e.target.value}))}
+              />
+              <p className="text-xs text-muted-foreground">
+                The date this purchase was actually made — this is the date used for stay credits.
+                {editingReceiptFull?.created_at && (
+                  <> Submitted {new Date(editingReceiptFull.created_at).toLocaleDateString()}.</>
+                )}
+              </p>
+            </div>
           </div>
+          
           
           <DialogFooter className="flex-col gap-3 sm:flex-row">
             {/* Delete with Confirmation */}
