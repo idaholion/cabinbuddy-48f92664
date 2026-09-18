@@ -1195,6 +1195,7 @@ export default function StayHistory() {
   // This gives every transfer an auditable opening and resulting balance while
   // preserving historical stay balances.
   type TransferLedgerDetail = {
+    eventId: string;
     hostKey: string;
     direction: 'out' | 'in';
     previousBalance: number;
@@ -1268,6 +1269,7 @@ export default function StayHistory() {
       latestLedgerEventByHost.set(hostKey, event.id);
       if (event.transfer && event.direction) {
         transferLedgerDetails.set(`${event.transfer.id}|${hostKey}`, {
+          eventId: event.id,
           hostKey,
           direction: event.direction,
           previousBalance,
@@ -1279,8 +1281,7 @@ export default function StayHistory() {
   }
 
   for (const detail of transferLedgerDetails.values()) {
-    detail.isCurrent = latestLedgerEventByHost.get(detail.hostKey)?.startsWith('transfer:') === true &&
-      latestLedgerEventByHost.get(detail.hostKey)?.includes(`:${detail.direction}`) === true;
+    detail.isCurrent = latestLedgerEventByHost.get(detail.hostKey) === detail.eventId;
   }
 
   // Apply the year filter to display ONLY (math already ran globally),
@@ -1507,6 +1508,20 @@ export default function StayHistory() {
   if (currentUserLedgerKey) visibleHostKeys.add(currentUserLedgerKey);
   const visibleTransfers = (creditTransfers || []).filter(t =>
     visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
+  );
+  const visibleTransferEntries = visibleTransfers.flatMap(transfer => {
+    const entries: Array<{ transfer: any; detail: TransferLedgerDetail }> = [];
+    const sourceDetail = transferLedgerDetails.get(`${transfer.id}|${transfer.from_ledger_name}`);
+    const targetDetail = transferLedgerDetails.get(`${transfer.id}|${transfer.to_ledger_name}`);
+    if (sourceDetail && visibleHostKeys.has(transfer.from_ledger_name)) {
+      entries.push({ transfer, detail: sourceDetail });
+    }
+    if (targetDetail && visibleHostKeys.has(transfer.to_ledger_name)) {
+      entries.push({ transfer, detail: targetDetail });
+    }
+    return entries;
+  }).filter(({ transfer }) =>
+    selectedYear === 0 || parseDateOnly(transfer.transfer_date).getFullYear() === selectedYear
   );
 
   // Count orphaned payments (for admin debugging)
