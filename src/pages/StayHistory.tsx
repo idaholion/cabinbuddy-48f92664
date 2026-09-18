@@ -1282,28 +1282,21 @@ export default function StayHistory() {
     }
 
     for (const [hostKey, items] of itemsByHost.entries()) {
-      let receiptPool = 0;
       let priorYear: number | null = null;
+      let priorBalance = 0;
       const hostYears: number[] = [];
 
       for (const item of items) {
         const year = parseDateOnly(item.reservation.start_date).getFullYear();
         if (!hostYears.includes(year)) hostYears.push(year);
 
-        const netReceiptOverflow = Math.max(
-          0,
-          (item.stayData.receiptsOverflow || 0) - (item.stayData.backwardCreditOut || 0)
-        );
-
-        if (priorYear !== null && year !== priorYear) {
-          const openingReceiptCredit = receiptPool + netReceiptOverflow;
-          if (openingReceiptCredit > 0.004) {
-            receiptCarryIntoYear.set(`${hostKey}|${year}`, openingReceiptCredit);
-          }
+        // The whole credit balance standing at the end of the prior year is what
+        // crosses into the new year — payment credit, receipt credit and transfers alike.
+        if (priorYear !== null && year !== priorYear && priorBalance < -0.004) {
+          receiptCarryIntoYear.set(`${hostKey}|${year}`, Math.abs(priorBalance));
         }
 
-        receiptPool = Math.max(0, receiptPool - (item.stayData.carriedInReceipt || 0));
-        receiptPool += netReceiptOverflow;
+        priorBalance = item.stayData.amountDue;
         priorYear = year;
       }
 
