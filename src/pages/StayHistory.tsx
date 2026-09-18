@@ -1293,11 +1293,6 @@ export default function StayHistory() {
     })
     .reverse();
 
-  // ID of the newest visible row → gets "Current Balance" label instead of "New Balance".
-  const lastVisibleId = displayReservations.length > 0
-    ? displayReservations[0].reservation.id
-    : null;
-
   // Receipt-only credit crossing a calendar-year boundary, kept separate for
   // every person. Receipts recorded on the first stay of a new year represent
   // receipts received since that person's previous stay, so their net overflow
@@ -2040,38 +2035,71 @@ export default function StayHistory() {
 
 
 
-      {visibleTransfers.length > 0 && (
+      {visibleTransferEntries.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Credit Transfers</h2>
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {visibleTransfers
-                  .slice()
-                  .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
-                  .map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-4">
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium">
-                          {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
-                          {t.notes ? ` · ${t.notes}` : ''}
-                        </div>
-                        {t.created_by_user_id && user?.id === t.created_by_user_id &&
-                          currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
-                          <div className="text-xs text-muted-foreground italic">
-                            Recorded by you on their behalf
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
+          {visibleTransferEntries
+            .slice()
+            .sort((a, b) => {
+              const dateDiff = parseDateOnly(b.transfer.transfer_date).getTime() - parseDateOnly(a.transfer.transfer_date).getTime();
+              if (dateDiff !== 0) return dateDiff;
+              const createdDiff = new Date(b.transfer.created_at || 0).getTime() - new Date(a.transfer.created_at || 0).getTime();
+              if (createdDiff !== 0) return createdDiff;
+              return b.detail.eventId.localeCompare(a.detail.eventId);
+            })
+            .map(({ transfer: t, detail }) => {
+              const amount = Number(t.amount) || 0;
+              const previousIsCredit = detail.previousBalance < -0.004;
+              const newIsCredit = detail.newBalance < -0.004;
+              const counterpart = detail.direction === 'out'
+                ? getTransferDisplayName(t.to_ledger_name)
+                : getTransferDisplayName(t.from_ledger_name);
+              return (
+                <Card key={detail.eventId}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      {detail.direction === 'out' ? `Credit transfer to ${counterpart}` : `Credit transfer from ${counterpart}`}
+                    </CardTitle>
+                    <CardDescription>
+                      {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                      {t.notes ? ` · ${t.notes}` : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {previousIsCredit ? 'Previous Balance (Credit):' : 'Previous Balance:'}
+                      </span>
+                      <span className={`font-medium ${detail.previousBalance > 0 ? 'text-destructive' : previousIsCredit ? 'text-green-600' : ''}`}>
+                        {previousIsCredit ? '−' : ''}${Math.abs(detail.previousBalance).toFixed(2)}
+                      </span>
                     </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {detail.direction === 'out' ? `Transfer to ${counterpart}:` : `Transfer from ${counterpart}:`}
+                      </span>
+                      <span className="font-medium">
+                        {detail.direction === 'out' ? '+' : '−'}${amount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className={`flex justify-between text-sm border-t pt-2 ${detail.isCurrent ? 'bg-muted/40 -mx-2 px-2 py-2 rounded' : ''}`}>
+                      <span className="font-semibold">
+                        {detail.isCurrent ? 'Current Balance' : 'New Balance'}{newIsCredit ? ' (Credit):' : ':'}
+                      </span>
+                      <span className={`font-bold ${detail.newBalance > 0 ? 'text-destructive' : newIsCredit ? 'text-green-600' : ''}`}>
+                        {newIsCredit ? '−' : ''}${Math.abs(detail.newBalance).toFixed(2)}
+                      </span>
+                    </div>
+                    {t.created_by_user_id && user?.id === t.created_by_user_id &&
+                      currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
+                      <div className="text-xs text-muted-foreground italic">
+                        Recorded by you on their behalf
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
 
@@ -2080,7 +2108,7 @@ export default function StayHistory() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Past Stays</h2>
         {displayReservations.map(({ reservation, stayData }, idx) => {
-          const isLastVisible = reservation.id === lastVisibleId;
+          const isLastVisible = latestLedgerEventByHost.get(getLedgerKey(reservation)) === `stay:${reservation.id}`;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
           const hostKey = getLedgerKey(reservation);
           const olderVisibleStayForHost = displayReservations
