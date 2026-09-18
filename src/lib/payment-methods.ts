@@ -134,3 +134,24 @@ export const resolvePaymentMethods = (
 /** Methods shown in the dropdown (coming-soon ones render greyed out) */
 export const visiblePaymentMethods = (methods: PaymentMethodOption[]): PaymentMethodOption[] =>
   methods.filter((m) => m.enabled);
+
+/** Copy used when the payer already sent money outside CabinBuddy */
+export const VENMO_ALREADY_SENT_LABEL = 'Venmo (already sent)';
+export const VENMO_ALREADY_SENT_INSTRUCTIONS =
+  'Use this only if you already sent the money in Venmo. It will not charge you again.';
+
+/**
+ * Relabel the Venmo option so it reads as "money already sent" rather than a
+ * new charge. Used wherever a live Venmo "Pay Now" button is also on screen.
+ */
+export const withVenmoAlreadySent = (methods: PaymentMethodOption[]): PaymentMethodOption[] =>
+  methods.map((m) =>
+    m.key === 'venmo'
+      ? {
+          ...m,
+          label: VENMO_ALREADY_SENT_LABEL,
+          instructions: VENMO_ALREADY_SENT_INSTRUCTIONS,
+          referenceLabel: m.referenceLabel || 'Venmo Transaction ID',
+        }
+      : m,
+  );

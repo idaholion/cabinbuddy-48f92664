@@ -46,6 +46,10 @@ export default function StayHistory() {
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
+  // Asked before we open Venmo, so someone who already sent the money
+  // records it instead of paying twice.
+  const [venmoPrecheckStay, setVenmoPrecheckStay] = useState<any>(null);
+  const [recordPaymentDefaultMethod, setRecordPaymentDefaultMethod] = useState<string | undefined>(undefined);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [transferDialogSourceKey, setTransferDialogSourceKey] = useState<string | null>(null);
   const [transferDialogSourceLabel, setTransferDialogSourceLabel] = useState<string>("");
@@ -2466,31 +2470,44 @@ export default function StayHistory() {
                         </div>
                       ) : (
                         // Positive balance - show pay now button
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Amount: ${stayData.amountDue.toFixed(2)}
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue.toFixed(2)}&note=${encodeURIComponent('Cabin stay payment')}`;
-                              window.open(venmoUrl, '_blank');
-                              setVenmoConfirmStay({
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Amount: ${stayData.amountDue.toFixed(2)}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setVenmoPrecheckStay({
                                 ...reservation,
                                 paymentId: stayData.paymentId,
                                 amountDue: stayData.amountDue
-                              });
-                            }}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Pay Now
-                          </Button>
+                              })}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Pay Now
+                            </Button>
+                          </div>
+                          {stayData.paymentId && (
+                            <button
+                              type="button"
+                              className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                              onClick={() => {
+                                setRecordPaymentDefaultMethod('venmo');
+                                setRecordPaymentStay({
+                                  ...reservation,
+                                  paymentId: stayData.paymentId,
+                                  amountDue: stayData.amountDue,
+                                });
+                              }}
+                            >
+                              Already paid outside CabinBuddy? Record it instead.
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2679,9 +2696,15 @@ export default function StayHistory() {
       {recordPaymentStay && (
         <RecordPaymentDialog
           open={true}
-          onOpenChange={(open) => !open && setRecordPaymentStay(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRecordPaymentStay(null);
+              setRecordPaymentDefaultMethod(undefined);
+            }
+          }}
           title="Other Payment Options"
-          hideVenmo
+          venmoAlreadySent
+          defaultMethod={recordPaymentDefaultMethod}
           methods={paymentMethods}
           paymentInfo={{
             checkPayableTo: financialSettings?.check_payable_to || undefined,
@@ -2778,6 +2801,44 @@ export default function StayHistory() {
         />
       )}
 
+      {/* Ask first, so nobody who already sent money pays a second time */}
+      <Dialog open={!!venmoPrecheckStay} onOpenChange={(open) => !open && setVenmoPrecheckStay(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Have you already sent this payment in Venmo?</DialogTitle>
+            <DialogDescription>
+              If you already sent ${venmoPrecheckStay?.amountDue?.toFixed(2)} on your own, record it here
+              instead of opening Venmo again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const stayToPay = venmoPrecheckStay;
+                setVenmoPrecheckStay(null);
+                if (!stayToPay || !financialSettings?.venmo_handle) return;
+                const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayToPay.amountDue.toFixed(2)}&note=${encodeURIComponent('Cabin stay payment')}`;
+                window.open(venmoUrl, '_blank');
+                setVenmoConfirmStay(stayToPay);
+              }}
+            >
+              No — open Venmo
+            </Button>
+            <Button
+              onClick={() => {
+                setRecordPaymentDefaultMethod('venmo');
+                setRecordPaymentStay(venmoPrecheckStay);
+                setVenmoPrecheckStay(null);
+              }}
+            >
+              Yes — record the payment I already sent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Venmo Payment Confirmation Dialog */}
       <Dialog open={!!venmoConfirmStay} onOpenChange={(open) => !open && setVenmoConfirmStay(null)}>
         <DialogContent>
@@ -2793,6 +2854,7 @@ export default function StayHistory() {
               Not Yet
             </Button>
             <Button onClick={() => {
+              setRecordPaymentDefaultMethod('venmo');
               setRecordPaymentStay(venmoConfirmStay);
               setVenmoConfirmStay(null);
             }}>

@@ -22,6 +22,7 @@ import { useReservations } from "@/hooks/useReservations";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { EarlyCheckoutDialog } from "@/components/EarlyCheckoutDialog";
 import { RecordPaymentDialog } from "@/components/RecordPaymentDialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OtherPaymentOptionsButton } from "@/components/OtherPaymentOptionsButton";
 
 
@@ -107,6 +108,9 @@ const CheckoutFinal = () => {
 
   // Chosen payment method for recording the balance due
   const [otherPaymentOpen, setOtherPaymentOpen] = useState(false);
+  const [otherPaymentDefaultMethod, setOtherPaymentDefaultMethod] = useState<string | undefined>(undefined);
+  // Asked before Venmo opens, so someone who already sent money doesn't pay twice.
+  const [venmoPrecheckOpen, setVenmoPrecheckOpen] = useState(false);
   
   // Split mode state
   const [splitMode, setSplitMode] = useState(false);
@@ -2145,26 +2149,33 @@ const CheckoutFinal = () => {
                               </div>
                             ) : (
                               // Positive balance - show pay now button
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
-                                  <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
+                                    <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setVenmoPrecheckOpen(true)}
+                                    disabled={totalAmount === 0}
+                                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Pay Now
+                                  </Button>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                <button
+                                  type="button"
+                                  className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
                                   onClick={() => {
-                                    const cleanHandle = checkoutData.venmoHandle.replace('@', '');
-                                    const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=${encodeURIComponent('Cabin stay payment')}`;
-                                    console.log('Opening Venmo URL:', venmoUrl);
-                                    window.open(venmoUrl, '_blank');
+                                    setOtherPaymentDefaultMethod('venmo');
+                                    setOtherPaymentOpen(true);
                                   }}
-                                  disabled={totalAmount === 0}
-                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
                                 >
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Pay Now
-                                </Button>
+                                  Already paid outside CabinBuddy? Record it instead.
+                                </button>
                               </div>
                             )}
                           </div>
@@ -2182,9 +2193,13 @@ const CheckoutFinal = () => {
                     {otherPaymentOpen && (
                       <RecordPaymentDialog
                         open={otherPaymentOpen}
-                        onOpenChange={setOtherPaymentOpen}
+                        onOpenChange={(open) => {
+                          setOtherPaymentOpen(open);
+                          if (!open) setOtherPaymentDefaultMethod(undefined);
+                        }}
                         title="Other Payment Options"
-                        hideVenmo
+                        venmoAlreadySent
+                        defaultMethod={otherPaymentDefaultMethod}
                         methods={paymentMethods}
 
                         stay={{
@@ -2198,10 +2213,45 @@ const CheckoutFinal = () => {
                           paypalEmail: checkoutData.paypalEmail,
                         }}
                         onSave={handleOtherPaymentSave}
-                      />
-                    )}
+                       />
+                     )}
 
-                  </div>
+                    <Dialog open={venmoPrecheckOpen} onOpenChange={setVenmoPrecheckOpen}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Have you already sent this payment in Venmo?</DialogTitle>
+                          <DialogDescription>
+                            If you already sent {BillingCalculator.formatCurrency(totalAmount)} on your own,
+                            record it here instead of opening Venmo again.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setVenmoPrecheckOpen(false);
+                              if (!checkoutData.venmoHandle) return;
+                              const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=${encodeURIComponent('Cabin stay payment')}`;
+                              window.open(venmoUrl, '_blank');
+                            }}
+                          >
+                            No — open Venmo
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setVenmoPrecheckOpen(false);
+                              setOtherPaymentDefaultMethod('venmo');
+                              setOtherPaymentOpen(true);
+                            }}
+                          >
+                            Yes — record the payment I already sent
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
+                   </div>
                 </CardContent>
               </Card>
               )}

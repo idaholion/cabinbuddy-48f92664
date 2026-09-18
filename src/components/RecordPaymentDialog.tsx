@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
-import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod } from "@/lib/payment-methods";
+import { PaymentMethodOption, buildDefaultPaymentMethods, visiblePaymentMethods, toDbPaymentMethod, withVenmoAlreadySent } from "@/lib/payment-methods";
 
 
 interface RecordPaymentDialogProps {
@@ -27,6 +27,13 @@ interface RecordPaymentDialogProps {
   saveLabel?: string;
   /** Hide Venmo from the method list (when Venmo is offered elsewhere) */
   hideVenmo?: boolean;
+  /**
+   * Keep Venmo in the list but relabel it as a payment the member already sent
+   * outside CabinBuddy, so recording it never triggers a second charge.
+   */
+  venmoAlreadySent?: boolean;
+  /** Preselect a payment method when the dialog opens */
+  defaultMethod?: string;
 
   /** Admin-configured payment methods (falls back to defaults) */
   methods?: PaymentMethodOption[];
@@ -54,6 +61,8 @@ export const RecordPaymentDialog = ({
   title,
   saveLabel,
   hideVenmo,
+  venmoAlreadySent,
+  defaultMethod,
   methods,
 
 
@@ -65,7 +74,7 @@ export const RecordPaymentDialog = ({
   const { isAdmin } = useUserRole();
   const [amount, setAmount] = useState(Math.round(stay.balanceDue * 100) / 100);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>(defaultMethod || '');
   const [checkNumber, setCheckNumber] = useState('');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
@@ -79,8 +88,11 @@ export const RecordPaymentDialog = ({
           checkMailingAddress: paymentInfo?.checkAddress,
           paypalEmail: paymentInfo?.paypalEmail,
         });
-    return visiblePaymentMethods(base).filter((m) => !(hideVenmo && m.key === 'venmo'));
-  }, [methods, paymentInfo, hideVenmo]);
+    const visible = visiblePaymentMethods(base).filter(
+      (m) => !(hideVenmo && !venmoAlreadySent && m.key === 'venmo'),
+    );
+    return venmoAlreadySent ? withVenmoAlreadySent(visible) : visible;
+  }, [methods, paymentInfo, hideVenmo, venmoAlreadySent]);
 
   const selectedMethod = methodList.find((m) => m.key === paymentMethod);
 
@@ -122,12 +134,20 @@ export const RecordPaymentDialog = ({
         paymentRef = paymentRef ? `${label}: ${paymentRef}` : label;
       }
 
+      // Flag Venmo payments that were sent outside CabinBuddy so they are
+      // identifiable in payment history.
+      let finalNotes = notes;
+      if (venmoAlreadySent && paymentMethod === 'venmo') {
+        const marker = 'Self-reported: sent in Venmo outside CabinBuddy';
+        finalNotes = notes ? `${notes} (${marker})` : marker;
+      }
+
       await onSave({
         amount,
         paidDate,
         paymentMethod: dbMethod,
         paymentReference: paymentRef || undefined,
-        notes: notes || undefined,
+        notes: finalNotes || undefined,
       });
 
       toast({
