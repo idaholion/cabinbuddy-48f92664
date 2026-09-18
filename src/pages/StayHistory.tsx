@@ -2007,6 +2007,19 @@ export default function StayHistory() {
 
           return (
             <div key={reservation.id}>
+            {selectedYear !== 0 && showReceiptYearBoundary && receiptCarry > 0.004 && (
+              <div className="mb-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">
+                  Receipt credit carried into {currentYear}:
+                  <span className="ml-2 font-bold text-green-600">
+                    ${receiptCarry.toFixed(2)}
+                  </span>
+                </span>
+                {displayReservations.some(item => getLedgerKey(item.reservation) !== hostKey) && (
+                  <span className="text-muted-foreground">{getTransferDisplayName(hostKey)}</span>
+                )}
+              </div>
+            )}
             <Card>
 
               <CardHeader>
@@ -2453,7 +2466,7 @@ export default function StayHistory() {
                  </div>
               </CardContent>
             </Card>
-            {showReceiptYearBoundary && receiptCarry > 0.004 && (
+            {selectedYear === 0 && showReceiptYearBoundary && receiptCarry > 0.004 && (
               <div className="my-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
                   Receipt credit carried into {currentYear}:
