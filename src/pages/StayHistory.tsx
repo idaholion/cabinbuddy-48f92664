@@ -2433,8 +2433,8 @@ export default function StayHistory() {
                   </div>
                 )}
 
-                {/* Venmo Payment Section - Only show on newest stay */}
-                {financialSettings?.venmo_handle && stayData.amountDue !== 0 &&
+                {/* Venmo Payment Section - Only show on newest stay (green Credit Options box covers credit-applied stays) */}
+                {financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id && (
                   <div className="mt-4 pt-4 border-t space-y-3">
                     <div className="flex items-center gap-2">
