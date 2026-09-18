@@ -902,16 +902,17 @@ export default function StayHistory() {
     const currentBalance = (billingAmount + manualAdjustment) - amountPaid - receiptsTotal;
     const amountDue = currentBalance + previousBalance;
 
-    // Allocation of THIS stay's charges: this stay's own cash/check payments
-    // first, then this stay's receipts, then transferred-in credit, then
-    // tagged carryover credit (payment vs receipt sources). What remains is
-    // unpaid; overpayments and receipt overflow carry forward into the tagged pool.
+    // Allocation of THIS stay's charges, oldest money first: this stay's own
+    // cash/check payments, then credit carried in from earlier (transfers, then
+    // payment credit, then receipt credit), and finally this stay's own
+    // receipts. Draining carryover before new receipts keeps older credit from
+    // lingering and reappearing on a much later stay. What remains is unpaid;
+    // overpayments and unused receipts carry forward into the tagged pool.
     const chargesDue = Math.max(0, billingAmount + manualAdjustment);
     const paidRaw = Math.max(0, amountPaid);
     const receiptsRaw = Math.max(0, receiptsTotal);
     const ownPaidApplied = Math.min(paidRaw, chargesDue);
-    const ownReceiptsApplied = Math.min(receiptsRaw, chargesDue - ownPaidApplied);
-    let remaining = chargesDue - ownPaidApplied - ownReceiptsApplied;
+    let remaining = chargesDue - ownPaidApplied;
 
     // Transferred credit is applied first — it was intentionally moved between people.
     const carriedInTransfers: { amount: number; fromName: string; notes?: string }[] = [];
@@ -931,6 +932,10 @@ export default function StayHistory() {
     pool.payment -= carriedInPayment; remaining -= carriedInPayment;
     const carriedInReceipt = Math.min(pool.receipt, remaining);
     pool.receipt -= carriedInReceipt; remaining -= carriedInReceipt;
+
+    const ownReceiptsApplied = Math.min(receiptsRaw, remaining);
+    remaining -= ownReceiptsApplied;
+
     const paidApplied = ownPaidApplied + carriedInPayment;
     const receiptsApplied = ownReceiptsApplied + carriedInReceipt;
     const priorCreditApplied = carriedInPayment + carriedInReceipt + carriedInTransfer;
