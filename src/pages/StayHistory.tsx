@@ -2506,7 +2506,7 @@ export default function StayHistory() {
                                     });
                                   }}
                                 >
-                                  Already paid outside CabinBuddy? Record it instead.
+                                  Already paid Venmo outside CabinBuddy? Record it.
                                 </Button>
                               )}
                             </div>
