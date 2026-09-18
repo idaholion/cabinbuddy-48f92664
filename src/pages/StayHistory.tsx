@@ -2540,9 +2540,10 @@ export default function StayHistory() {
                   </div>
                 )}
 
-                {/* Other payment options when no Venmo card is shown */}
+                {/* Other payment options when no Venmo card is shown — newest stay per person only */}
                 {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
+                  lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id &&
                   stayData.paymentId && stayData.amountDue > 0 && (
                   <div className="mt-4 pt-4 border-t">
                     <OtherPaymentOptionsButton
