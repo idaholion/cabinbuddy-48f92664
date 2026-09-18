@@ -1170,6 +1170,7 @@ export default function StayHistory() {
   };
   const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
   const latestLedgerEventByHost = new Map<string, string>();
+  const finalBalanceByHost = new Map<string, number>();
   const ledgerHostKeys = new Set<string>([
     ...fullLedger.map(({ reservation }) => getLedgerKey(reservation)),
     ...Array.from(transfersBySource.keys()),
