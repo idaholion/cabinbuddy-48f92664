@@ -441,8 +441,13 @@ export default function StayHistory() {
 
   // Permission check helper - determines if user can view a specific reservation
   const canViewReservation = (reservation: any): boolean => {
-    // Admins and calendar keepers can see everything
-    if (isAdmin || isCalendarKeeper) return true;
+    // Admins and calendar keepers can see everything, unless an admin has
+    // narrowed a single family group down to their own stays.
+    if (isAdmin || isCalendarKeeper) {
+      if (isAdmin && scopeIsMineOnly) return isOwnReservation(reservation);
+      return true;
+    }
+
 
     // Group leads can see all reservations for their family group, unless they
     // have narrowed the view to their own stays.
