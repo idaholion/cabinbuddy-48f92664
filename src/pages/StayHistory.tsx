@@ -139,6 +139,9 @@ export default function StayHistory() {
     || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
     || leadGroupName;
   const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
+  // Admins viewing one family group get the same My stays / Whole family choice.
+  const canChooseScope = isEffectiveLead || (isAdmin && selectedFamilyGroup !== 'all');
+  const scopeIsMineOnly = canChooseScope && leadScope === 'mine';
 
 
   // While viewing as someone else, the page is locked to their family group.
