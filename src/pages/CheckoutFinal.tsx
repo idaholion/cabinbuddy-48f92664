@@ -2192,9 +2192,13 @@ const CheckoutFinal = () => {
                     {otherPaymentOpen && (
                       <RecordPaymentDialog
                         open={otherPaymentOpen}
-                        onOpenChange={setOtherPaymentOpen}
+                        onOpenChange={(open) => {
+                          setOtherPaymentOpen(open);
+                          if (!open) setOtherPaymentDefaultMethod(undefined);
+                        }}
                         title="Other Payment Options"
-                        hideVenmo
+                        venmoAlreadySent
+                        defaultMethod={otherPaymentDefaultMethod}
                         methods={paymentMethods}
 
                         stay={{
