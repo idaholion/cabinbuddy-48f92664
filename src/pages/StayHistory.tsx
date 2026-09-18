@@ -504,6 +504,9 @@ export default function StayHistory() {
     return paymentSplits
       .filter(split => {
         if (isAdmin || isCalendarKeeper) {
+          if (isAdmin && scopeIsMineOnly && split.split_to_user_id !== effectiveUserId) {
+            return false;
+          }
           if (selectedFamilyGroup !== "all") {
             return split.split_to_family_group === selectedFamilyGroup;
           }
