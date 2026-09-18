@@ -1250,6 +1250,9 @@ export default function StayHistory() {
         });
       }
     }
+    // Closing balance after EVERY event (stays and transfers alike). Summary
+    // totals use this so credit moved out is not still counted as held.
+    finalBalanceByHost.set(hostKey, balance);
   }
 
   for (const detail of transferLedgerDetails.values()) {
