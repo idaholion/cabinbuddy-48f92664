@@ -2470,31 +2470,44 @@ export default function StayHistory() {
                         </div>
                       ) : (
                         // Positive balance - show pay now button
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Amount: ${stayData.amountDue.toFixed(2)}
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const cleanHandle = financialSettings.venmo_handle.replace('@', '');
-                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayData.amountDue.toFixed(2)}&note=${encodeURIComponent('Cabin stay payment')}`;
-                              window.open(venmoUrl, '_blank');
-                              setVenmoConfirmStay({
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-base font-medium">{financialSettings.venmo_handle}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Amount: ${stayData.amountDue.toFixed(2)}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setVenmoPrecheckStay({
                                 ...reservation,
                                 paymentId: stayData.paymentId,
                                 amountDue: stayData.amountDue
-                              });
-                            }}
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Pay Now
-                          </Button>
+                              })}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Pay Now
+                            </Button>
+                          </div>
+                          {stayData.paymentId && (
+                            <button
+                              type="button"
+                              className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                              onClick={() => {
+                                setRecordPaymentDefaultMethod('venmo');
+                                setRecordPaymentStay({
+                                  ...reservation,
+                                  paymentId: stayData.paymentId,
+                                  amountDue: stayData.amountDue,
+                                });
+                              }}
+                            >
+                              Already paid outside CabinBuddy? Record it instead.
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
