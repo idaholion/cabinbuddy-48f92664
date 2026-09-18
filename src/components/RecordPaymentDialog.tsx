@@ -61,6 +61,8 @@ export const RecordPaymentDialog = ({
   title,
   saveLabel,
   hideVenmo,
+  venmoAlreadySent,
+  defaultMethod,
   methods,
 
 
@@ -72,7 +74,7 @@ export const RecordPaymentDialog = ({
   const { isAdmin } = useUserRole();
   const [amount, setAmount] = useState(Math.round(stay.balanceDue * 100) / 100);
   const [paidDate, setPaidDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>(defaultMethod || '');
   const [checkNumber, setCheckNumber] = useState('');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
@@ -86,8 +88,11 @@ export const RecordPaymentDialog = ({
           checkMailingAddress: paymentInfo?.checkAddress,
           paypalEmail: paymentInfo?.paypalEmail,
         });
-    return visiblePaymentMethods(base).filter((m) => !(hideVenmo && m.key === 'venmo'));
-  }, [methods, paymentInfo, hideVenmo]);
+    const visible = visiblePaymentMethods(base).filter(
+      (m) => !(hideVenmo && !venmoAlreadySent && m.key === 'venmo'),
+    );
+    return venmoAlreadySent ? withVenmoAlreadySent(visible) : visible;
+  }, [methods, paymentInfo, hideVenmo, venmoAlreadySent]);
 
   const selectedMethod = methodList.find((m) => m.key === paymentMethod);
 
