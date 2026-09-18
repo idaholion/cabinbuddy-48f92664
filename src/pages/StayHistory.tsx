@@ -2009,6 +2009,14 @@ export default function StayHistory() {
             (stayData.receiptsOverflow || 0) - (stayData.backwardCreditOut || 0)
           );
           const receiptOverflowMovesIntoLaterYear = newerVisibleYear !== null && newerVisibleYear > currentYear;
+          // Receipts recorded since the prior stay are attached to this first
+          // stay by the data model. For the statement, present their unused
+          // portion as opening credit so the visible arithmetic starts with the
+          // amount available before this year's stay activity.
+          const receiptCreditMovedToOpeningBalance = showReceiptYearBoundary
+            ? netReceiptOverflow
+            : 0;
+          const displayedPreviousBalance = stayData.previousBalance - receiptCreditMovedToOpeningBalance;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2114,9 +2122,11 @@ export default function StayHistory() {
                   <div className="space-y-2">
                     {/* Previous Balance — always shown so the ledger reads top-to-bottom */}
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Previous Balance:</span>
-                      <span className={`font-medium ${stayData.previousBalance > 0 ? 'text-destructive' : stayData.previousBalance < 0 ? 'text-green-600' : ''}`}>
-                        {stayData.previousBalance < 0 ? '−' : ''}${Math.abs(stayData.previousBalance).toFixed(2)}
+                      <span className="text-muted-foreground">
+                        {displayedPreviousBalance < -0.004 ? 'Previous Balance (Credit):' : 'Previous Balance:'}
+                      </span>
+                      <span className={`font-medium ${displayedPreviousBalance > 0 ? 'text-destructive' : displayedPreviousBalance < 0 ? 'text-green-600' : ''}`}>
+                        {displayedPreviousBalance < 0 ? '−' : ''}${Math.abs(displayedPreviousBalance).toFixed(2)}
                       </span>
                     </div>
 
