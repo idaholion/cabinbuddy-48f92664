@@ -1156,9 +1156,8 @@ export default function StayHistory() {
   }
 
   // Apply any credit transfers dated after the last stay for each host so the
-  // final balance reflects them. Only adjust the amountDue on the host's last
-  // visible stay; hostBalances is also updated for any downstream summary math.
-  const postStayAdjustments = new Map<string, number>();
+  // final balance and source-tagged pools reflect them. These remain separate
+  // ledger transactions; they must not rewrite the ending balance of a stay.
   for (const [hostKey, list] of transfersBySource.entries()) {
     const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
     const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
@@ -1166,7 +1165,6 @@ export default function StayHistory() {
       const t = list[ptr.outIndex++];
       const amount = Number(t.amount) || 0;
       hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) + amount);
-      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) + amount);
       let remainingOut = amount;
       const fromPayment = Math.min(pool.payment, remainingOut);
       pool.payment -= fromPayment; remainingOut -= fromPayment;
@@ -1182,7 +1180,6 @@ export default function StayHistory() {
       const t = list[ptr.inIndex++];
       const amount = Number(t.amount) || 0;
       hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
-      postStayAdjustments.set(hostKey, (postStayAdjustments.get(hostKey) || 0) - amount);
       pool.transferInQueue.push({
         id: t.id,
         fromName: getTransferDisplayName(t.from_ledger_name),
@@ -1192,13 +1189,105 @@ export default function StayHistory() {
     }
     hostTransferPointers.set(hostKey, ptr);
   }
-  for (const [hostKey, adj] of postStayAdjustments.entries()) {
-    const lastId = lastReservationByHost.get(hostKey);
-    if (!lastId) continue;
-    const item = reservationsWithBalance.find(r => r.reservation.id === lastId);
-    if (item) {
-      item.stayData.amountDue += adj;
+
+  // Reconstruct each person's visible statement as dated ledger events. A stay
+  // closes first on its date; transfers on that date follow in creation order.
+  // This gives every transfer an auditable opening and resulting balance while
+  // preserving historical stay balances.
+  type TransferLedgerDetail = {
+    eventId: string;
+    hostKey: string;
+    direction: 'out' | 'in';
+    previousBalance: number;
+    newBalance: number;
+    isCurrent: boolean;
+  };
+  const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
+  const latestLedgerEventByHost = new Map<string, string>();
+  const ledgerHostKeys = new Set<string>([
+    ...fullLedger.map(({ reservation }) => getLedgerKey(reservation)),
+    ...Array.from(transfersBySource.keys()),
+    ...Array.from(transfersByTarget.keys()),
+  ]);
+
+  for (const hostKey of ledgerHostKeys) {
+    const events: Array<{
+      id: string;
+      date: number;
+      order: number;
+      createdAt: number;
+      delta: number;
+      stayData?: any;
+      transfer?: any;
+      direction?: 'out' | 'in';
+    }> = [];
+
+    for (const { reservation, stayData } of fullLedger) {
+      if (getLedgerKey(reservation) !== hostKey) continue;
+      events.push({
+        id: `stay:${reservation.id}`,
+        date: parseDateOnly(reservation.start_date).getTime(),
+        order: 0,
+        createdAt: 0,
+        delta: stayData.currentBalance,
+        stayData,
+      });
     }
+
+    for (const transfer of transfersBySource.get(hostKey) || []) {
+      events.push({
+        id: `transfer:${transfer.id}:out`,
+        date: parseDateOnly(transfer.transfer_date).getTime(),
+        order: 1,
+        createdAt: transfer.created_at ? new Date(transfer.created_at).getTime() : 0,
+        delta: Number(transfer.amount) || 0,
+        transfer,
+        direction: 'out',
+      });
+    }
+    for (const transfer of transfersByTarget.get(hostKey) || []) {
+      events.push({
+        id: `transfer:${transfer.id}:in`,
+        date: parseDateOnly(transfer.transfer_date).getTime(),
+        order: 1,
+        createdAt: transfer.created_at ? new Date(transfer.created_at).getTime() : 0,
+        delta: -(Number(transfer.amount) || 0),
+        transfer,
+        direction: 'in',
+      });
+    }
+
+    events.sort((a, b) =>
+      a.date - b.date ||
+      a.order - b.order ||
+      a.createdAt - b.createdAt ||
+      a.id.localeCompare(b.id)
+    );
+
+    let balance = 0;
+    for (const event of events) {
+      const previousBalance = balance;
+      balance += event.delta;
+      latestLedgerEventByHost.set(hostKey, event.id);
+      if (event.stayData) {
+        event.stayData.previousBalance = previousBalance;
+        event.stayData.amountDue = balance;
+      }
+      if (event.transfer && event.direction) {
+        transferLedgerDetails.set(`${event.transfer.id}|${hostKey}`, {
+          eventId: event.id,
+          hostKey,
+          direction: event.direction,
+          previousBalance,
+          newBalance: balance,
+          isCurrent: false,
+        });
+      }
+    }
+  }
+
+  for (const detail of transferLedgerDetails.values()) {
+    detail.isCurrent = latestLedgerEventByHost.get(detail.hostKey) === detail.eventId;
   }
 
   // Apply the year filter to display ONLY (math already ran globally),
@@ -1209,11 +1298,6 @@ export default function StayHistory() {
       return parseDateOnly(reservation.start_date).getFullYear() === selectedYear;
     })
     .reverse();
-
-  // ID of the newest visible row → gets "Current Balance" label instead of "New Balance".
-  const lastVisibleId = displayReservations.length > 0
-    ? displayReservations[0].reservation.id
-    : null;
 
   // Receipt-only credit crossing a calendar-year boundary, kept separate for
   // every person. Receipts recorded on the first stay of a new year represent
@@ -1425,6 +1509,20 @@ export default function StayHistory() {
   if (currentUserLedgerKey) visibleHostKeys.add(currentUserLedgerKey);
   const visibleTransfers = (creditTransfers || []).filter(t =>
     visibleHostKeys.has(t.from_ledger_name) || visibleHostKeys.has(t.to_ledger_name)
+  );
+  const visibleTransferEntries = visibleTransfers.flatMap(transfer => {
+    const entries: Array<{ transfer: any; detail: TransferLedgerDetail }> = [];
+    const sourceDetail = transferLedgerDetails.get(`${transfer.id}|${transfer.from_ledger_name}`);
+    const targetDetail = transferLedgerDetails.get(`${transfer.id}|${transfer.to_ledger_name}`);
+    if (sourceDetail && visibleHostKeys.has(transfer.from_ledger_name)) {
+      entries.push({ transfer, detail: sourceDetail });
+    }
+    if (targetDetail && visibleHostKeys.has(transfer.to_ledger_name)) {
+      entries.push({ transfer, detail: targetDetail });
+    }
+    return entries;
+  }).filter(({ transfer }) =>
+    selectedYear === 0 || parseDateOnly(transfer.transfer_date).getFullYear() === selectedYear
   );
 
   // Count orphaned payments (for admin debugging)
@@ -1943,38 +2041,71 @@ export default function StayHistory() {
 
 
 
-      {visibleTransfers.length > 0 && (
+      {visibleTransferEntries.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">Credit Transfers</h2>
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y">
-                {visibleTransfers
-                  .slice()
-                  .sort((a, b) => parseDateOnly(b.transfer_date).getTime() - parseDateOnly(a.transfer_date).getTime())
-                  .map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-4">
-                      <div className="space-y-0.5">
-                        <div className="text-sm font-medium">
-                          {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {getTransferDisplayName(t.from_ledger_name)} → {getTransferDisplayName(t.to_ledger_name)}
-                          {t.notes ? ` · ${t.notes}` : ''}
-                        </div>
-                        {t.created_by_user_id && user?.id === t.created_by_user_id &&
-                          currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
-                          <div className="text-xs text-muted-foreground italic">
-                            Recorded by you on their behalf
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-base font-semibold">${Number(t.amount).toFixed(2)}</div>
+          {visibleTransferEntries
+            .slice()
+            .sort((a, b) => {
+              const dateDiff = parseDateOnly(b.transfer.transfer_date).getTime() - parseDateOnly(a.transfer.transfer_date).getTime();
+              if (dateDiff !== 0) return dateDiff;
+              const createdDiff = new Date(b.transfer.created_at || 0).getTime() - new Date(a.transfer.created_at || 0).getTime();
+              if (createdDiff !== 0) return createdDiff;
+              return b.detail.eventId.localeCompare(a.detail.eventId);
+            })
+            .map(({ transfer: t, detail }) => {
+              const amount = Number(t.amount) || 0;
+              const previousIsCredit = detail.previousBalance < -0.004;
+              const newIsCredit = detail.newBalance < -0.004;
+              const counterpart = detail.direction === 'out'
+                ? getTransferDisplayName(t.to_ledger_name)
+                : getTransferDisplayName(t.from_ledger_name);
+              return (
+                <Card key={detail.eventId}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      {detail.direction === 'out' ? `Credit transfer to ${counterpart}` : `Credit transfer from ${counterpart}`}
+                    </CardTitle>
+                    <CardDescription>
+                      {format(parseDateOnly(t.transfer_date), 'MMM d, yyyy')}
+                      {t.notes ? ` · ${t.notes}` : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {previousIsCredit ? 'Previous Balance (Credit):' : 'Previous Balance:'}
+                      </span>
+                      <span className={`font-medium ${detail.previousBalance > 0 ? 'text-destructive' : previousIsCredit ? 'text-green-600' : ''}`}>
+                        {previousIsCredit ? '−' : ''}${Math.abs(detail.previousBalance).toFixed(2)}
+                      </span>
                     </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {detail.direction === 'out' ? `Transfer to ${counterpart}:` : `Transfer from ${counterpart}:`}
+                      </span>
+                      <span className="font-medium">
+                        {detail.direction === 'out' ? '+' : '−'}${amount.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className={`flex justify-between text-sm border-t pt-2 ${detail.isCurrent ? 'bg-muted/40 -mx-2 px-2 py-2 rounded' : ''}`}>
+                      <span className="font-semibold">
+                        {detail.isCurrent ? 'Current Balance' : 'New Balance'}{newIsCredit ? ' (Credit):' : ':'}
+                      </span>
+                      <span className={`font-bold ${detail.newBalance > 0 ? 'text-destructive' : newIsCredit ? 'text-green-600' : ''}`}>
+                        {newIsCredit ? '−' : ''}${Math.abs(detail.newBalance).toFixed(2)}
+                      </span>
+                    </div>
+                    {t.created_by_user_id && user?.id === t.created_by_user_id &&
+                      currentUserLedgerKey && t.from_ledger_name !== currentUserLedgerKey && (
+                      <div className="text-xs text-muted-foreground italic">
+                        Recorded by you on their behalf
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
       )}
 
@@ -1983,7 +2114,7 @@ export default function StayHistory() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Past Stays</h2>
         {displayReservations.map(({ reservation, stayData }, idx) => {
-          const isLastVisible = reservation.id === lastVisibleId;
+          const isLastVisible = latestLedgerEventByHost.get(getLedgerKey(reservation)) === `stay:${reservation.id}`;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
           const hostKey = getLedgerKey(reservation);
           const olderVisibleStayForHost = displayReservations
