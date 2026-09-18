@@ -2213,10 +2213,45 @@ const CheckoutFinal = () => {
                           paypalEmail: checkoutData.paypalEmail,
                         }}
                         onSave={handleOtherPaymentSave}
-                      />
-                    )}
+                       />
+                     )}
 
-                  </div>
+                    <Dialog open={venmoPrecheckOpen} onOpenChange={setVenmoPrecheckOpen}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Have you already sent this payment in Venmo?</DialogTitle>
+                          <DialogDescription>
+                            If you already sent {BillingCalculator.formatCurrency(totalAmount)} on your own,
+                            record it here instead of opening Venmo again.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setVenmoPrecheckOpen(false);
+                              if (!checkoutData.venmoHandle) return;
+                              const cleanHandle = checkoutData.venmoHandle.replace('@', '');
+                              const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${totalAmount}&note=${encodeURIComponent('Cabin stay payment')}`;
+                              window.open(venmoUrl, '_blank');
+                            }}
+                          >
+                            No — open Venmo
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setVenmoPrecheckOpen(false);
+                              setOtherPaymentDefaultMethod('venmo');
+                              setOtherPaymentOpen(true);
+                            }}
+                          >
+                            Yes — record the payment I already sent
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+
+                   </div>
                 </CardContent>
               </Card>
               )}
