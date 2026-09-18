@@ -2094,19 +2094,12 @@ export default function StayHistory() {
             ? olderVisibleYear !== null && olderVisibleYear < currentYear
             : isOldestVisibleStayForHost && hasEarlierYearForHost;
           const receiptCarry = receiptCarryIntoYear.get(`${hostKey}|${currentYear}`) || 0;
-          const netReceiptOverflow = Math.max(
-            0,
-            (stayData.receiptsOverflow || 0) - (stayData.backwardCreditOut || 0)
-          );
+          const netReceiptOverflow = Math.max(0, stayData.receiptsOverflow || 0);
           const receiptOverflowMovesIntoLaterYear = newerVisibleYear !== null && newerVisibleYear > currentYear;
-          // Receipts recorded since the prior stay are attached to this first
-          // stay by the data model. For the statement, present their unused
-          // portion as opening credit so the visible arithmetic starts with the
-          // amount available before this year's stay activity.
-          const receiptCreditMovedToOpeningBalance = showReceiptYearBoundary
-            ? netReceiptOverflow
-            : 0;
-          const displayedPreviousBalance = stayData.previousBalance - receiptCreditMovedToOpeningBalance;
+          // The running balance already carries every kind of credit forward, so
+          // the opening line is simply the balance standing before this stay.
+          const receiptCreditMovedToOpeningBalance = 0;
+          const displayedPreviousBalance = stayData.previousBalance;
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2115,7 +2108,7 @@ export default function StayHistory() {
             {selectedYear !== 0 && showReceiptYearBoundary && receiptCarry > 0.004 && (
               <div className="mb-2 rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
-                  Receipt credit carried into {currentYear}:
+                  Credit carried into {currentYear}:
                   <span className="ml-2 font-bold text-green-600">
                     +${receiptCarry.toFixed(2)}
                   </span>
