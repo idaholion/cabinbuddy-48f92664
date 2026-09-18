@@ -2155,27 +2155,29 @@ const CheckoutFinal = () => {
                                     <p className="text-base font-medium">{checkoutData.venmoHandle}</p>
                                     <p className="text-sm text-muted-foreground">Amount: {BillingCalculator.formatCurrency(totalAmount)}</p>
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setVenmoPrecheckOpen(true)}
-                                    disabled={totalAmount === 0}
-                                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                  >
-                                    <Send className="h-4 w-4 mr-2" />
-                                    Pay Now
-                                  </Button>
+                                  <div className="flex flex-col items-end">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setVenmoPrecheckOpen(true)}
+                                      disabled={totalAmount === 0}
+                                      className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                    >
+                                      <Send className="h-4 w-4 mr-2" />
+                                      Pay Now
+                                    </Button>
+                                    <button
+                                      type="button"
+                                      className="mt-2 text-sm text-blue-600 hover:underline underline-offset-2"
+                                      onClick={() => {
+                                        setOtherPaymentDefaultMethod('venmo');
+                                        setOtherPaymentOpen(true);
+                                      }}
+                                    >
+                                      Already paid outside CabinBuddy? Record it instead.
+                                    </button>
+                                  </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  className="mt-2 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                                  onClick={() => {
-                                    setOtherPaymentDefaultMethod('venmo');
-                                    setOtherPaymentOpen(true);
-                                  }}
-                                >
-                                  Already paid outside CabinBuddy? Record it instead.
-                                </button>
                               </div>
                             )}
                           </div>
