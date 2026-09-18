@@ -2801,6 +2801,44 @@ export default function StayHistory() {
         />
       )}
 
+      {/* Ask first, so nobody who already sent money pays a second time */}
+      <Dialog open={!!venmoPrecheckStay} onOpenChange={(open) => !open && setVenmoPrecheckStay(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Have you already sent this payment in Venmo?</DialogTitle>
+            <DialogDescription>
+              If you already sent ${venmoPrecheckStay?.amountDue?.toFixed(2)} on your own, record it here
+              instead of opening Venmo again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const stayToPay = venmoPrecheckStay;
+                setVenmoPrecheckStay(null);
+                if (!stayToPay || !financialSettings?.venmo_handle) return;
+                const cleanHandle = financialSettings.venmo_handle.replace('@', '');
+                const venmoUrl = `https://venmo.com/${cleanHandle}?txn=pay&amount=${stayToPay.amountDue.toFixed(2)}&note=${encodeURIComponent('Cabin stay payment')}`;
+                window.open(venmoUrl, '_blank');
+                setVenmoConfirmStay(stayToPay);
+              }}
+            >
+              No — open Venmo
+            </Button>
+            <Button
+              onClick={() => {
+                setRecordPaymentDefaultMethod('venmo');
+                setRecordPaymentStay(venmoPrecheckStay);
+                setVenmoPrecheckStay(null);
+              }}
+            >
+              Yes — record the payment I already sent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Venmo Payment Confirmation Dialog */}
       <Dialog open={!!venmoConfirmStay} onOpenChange={(open) => !open && setVenmoConfirmStay(null)}>
         <DialogContent>
