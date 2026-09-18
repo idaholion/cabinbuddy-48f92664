@@ -2347,6 +2347,13 @@ export default function StayHistory() {
                               {receiptsLeftOver.toFixed(2)} available for later stays
                             </div>
                           )}
+                          {(yearEndReceiptsByReservation.get(reservation.id) || 0) > 0.004 && (
+                            <div className="text-xs text-muted-foreground italic text-right -mt-1">
+                              Includes $
+                              {(yearEndReceiptsByReservation.get(reservation.id) || 0).toFixed(2)} in receipts turned in
+                              after this stay but before the end of {currentYear}
+                            </div>
+                          )}
                           {(stayData.carriedInPayment || 0) + (stayData.carriedInReceipt || 0) > 0.004 && (
                             <div className="text-xs text-muted-foreground italic text-right -mt-1">
                               Previous balance covered $
