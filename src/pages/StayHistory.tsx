@@ -1632,7 +1632,7 @@ export default function StayHistory() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      ${entry.amount.toFixed(2)}
+                      +${entry.amount.toFixed(2)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       Available credit. It will be applied to the next stay booked in this name.
@@ -1920,7 +1920,7 @@ export default function StayHistory() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                ${totalTransferableCredit.toFixed(2)}
+                +${totalTransferableCredit.toFixed(2)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Held by {transferableCreditKeys.length} member{transferableCreditKeys.length === 1 ? '' : 's'}
@@ -1963,7 +1963,7 @@ export default function StayHistory() {
                 currentBalance < 0 ? 'text-green-600 dark:text-green-400' : 
                 ''
               }`}>
-                ${Math.abs(currentBalance).toFixed(2)}
+                {currentBalance < 0 ? '+' : ''}${Math.abs(currentBalance).toFixed(2)}
               </div>
               {currentBalance < 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -2009,7 +2009,7 @@ export default function StayHistory() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    ${entry.amount.toFixed(2)}
+                    +${entry.amount.toFixed(2)}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Available credit. It will be applied to the next stay booked in this name.
@@ -2077,15 +2077,15 @@ export default function StayHistory() {
                         {previousIsCredit ? 'Previous Balance (Credit):' : 'Previous Balance:'}
                       </span>
                       <span className={`font-medium ${detail.previousBalance > 0 ? 'text-destructive' : previousIsCredit ? 'text-green-600' : ''}`}>
-                        {previousIsCredit ? '−' : ''}${Math.abs(detail.previousBalance).toFixed(2)}
+                        {previousIsCredit ? '+' : ''}${Math.abs(detail.previousBalance).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
                         {detail.direction === 'out' ? `Transfer to ${counterpart}:` : `Transfer from ${counterpart}:`}
                       </span>
-                      <span className="font-medium">
-                        {detail.direction === 'out' ? '+' : '−'}${amount.toFixed(2)}
+                      <span className={`font-medium ${detail.direction === 'in' ? 'text-green-600' : ''}`}>
+                        {detail.direction === 'out' ? '−' : '+'}${amount.toFixed(2)}
                       </span>
                     </div>
                     <div className={`flex justify-between text-sm border-t pt-2 ${detail.isCurrent ? 'bg-muted/40 -mx-2 px-2 py-2 rounded' : ''}`}>
@@ -2093,7 +2093,7 @@ export default function StayHistory() {
                         {detail.isCurrent ? 'Current Balance' : 'New Balance'}{newIsCredit ? ' (Credit):' : ':'}
                       </span>
                       <span className={`font-bold ${detail.newBalance > 0 ? 'text-destructive' : newIsCredit ? 'text-green-600' : ''}`}>
-                        {newIsCredit ? '−' : ''}${Math.abs(detail.newBalance).toFixed(2)}
+                        {newIsCredit ? '+' : ''}${Math.abs(detail.newBalance).toFixed(2)}
                       </span>
                     </div>
                     {t.created_by_user_id && user?.id === t.created_by_user_id &&
@@ -2158,7 +2158,7 @@ export default function StayHistory() {
                 <span className="font-semibold">
                   Receipt credit carried into {currentYear}:
                   <span className="ml-2 font-bold text-green-600">
-                    ${receiptCarry.toFixed(2)}
+                    +${receiptCarry.toFixed(2)}
                   </span>
                 </span>
                 {displayReservations.some(item => getLedgerKey(item.reservation) !== hostKey) && (
@@ -2257,7 +2257,7 @@ export default function StayHistory() {
                         {displayedPreviousBalance < -0.004 ? 'Previous Balance (Credit):' : 'Previous Balance:'}
                       </span>
                       <span className={`font-medium ${displayedPreviousBalance > 0 ? 'text-destructive' : displayedPreviousBalance < 0 ? 'text-green-600' : ''}`}>
-                        {displayedPreviousBalance < 0 ? '−' : ''}${Math.abs(displayedPreviousBalance).toFixed(2)}
+                        {displayedPreviousBalance < 0 ? '+' : ''}${Math.abs(displayedPreviousBalance).toFixed(2)}
                       </span>
                     </div>
 
@@ -2272,7 +2272,7 @@ export default function StayHistory() {
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Manual Adjustment:</span>
-                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                          <span className={`font-medium ${stayData.manualAdjustment > 0 ? 'text-amber-600' : ''}`}>
                             {stayData.manualAdjustment > 0 ? '+' : ''}${stayData.manualAdjustment.toFixed(2)}
                           </span>
                         </div>
@@ -2341,7 +2341,7 @@ export default function StayHistory() {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Receipt Credit Available for Later Stays:</span>
                         <span className="font-medium text-green-600">
-                          −${netReceiptOverflow.toFixed(2)}
+                          +${netReceiptOverflow.toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -2356,7 +2356,7 @@ export default function StayHistory() {
                         <div className={`flex justify-between text-sm border-t pt-2 ${isLastVisible ? 'bg-muted/40 -mx-2 px-2 py-2 rounded' : ''}`}>
                           <span className="font-semibold">{label}</span>
                           <span className={`font-bold ${bal > 0 ? 'text-destructive' : isCredit ? 'text-green-600' : ''}`}>
-                            {isCredit ? '−' : ''}${Math.abs(bal).toFixed(2)}
+                            {isCredit ? '+' : ''}${Math.abs(bal).toFixed(2)}
                           </span>
                         </div>
                       );
@@ -2619,7 +2619,7 @@ export default function StayHistory() {
                 <span className="font-semibold">
                   Receipt credit carried into {currentYear}:
                   <span className="ml-2 font-bold text-green-600">
-                    ${receiptCarry.toFixed(2)}
+                    +${receiptCarry.toFixed(2)}
                   </span>
                 </span>
                 {displayReservations.some(item => getLedgerKey(item.reservation) !== hostKey) && (
