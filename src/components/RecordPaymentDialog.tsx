@@ -134,12 +134,20 @@ export const RecordPaymentDialog = ({
         paymentRef = paymentRef ? `${label}: ${paymentRef}` : label;
       }
 
+      // Flag Venmo payments that were sent outside CabinBuddy so they are
+      // identifiable in payment history.
+      let finalNotes = notes;
+      if (venmoAlreadySent && paymentMethod === 'venmo') {
+        const marker = 'Self-reported: sent in Venmo outside CabinBuddy';
+        finalNotes = notes ? `${notes} (${marker})` : marker;
+      }
+
       await onSave({
         amount,
         paidDate,
         paymentMethod: dbMethod,
         paymentReference: paymentRef || undefined,
-        notes: notes || undefined,
+        notes: finalNotes || undefined,
       });
 
       toast({
