@@ -229,6 +229,30 @@ const CabinCalendar = () => {
   // Use correct selection status from useSequentialSelection hook
   const currentRotationYearStatuses = familyStatuses;
   const currentRotationYearCurrentFamily = currentFamilyGroup;
+
+  // A family's turn is only live once its scheduled start date has arrived.
+  const getFamilyPeriod = (familyGroup?: string | null) =>
+    familyGroup
+      ? (reservationPeriods || []).find(
+          p => p.current_family_group === familyGroup && p.rotation_year === rotationYear
+        )
+      : undefined;
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const hasTurnStarted = (familyGroup?: string | null) => {
+    const period = getFamilyPeriod(familyGroup);
+    if (!period?.selection_start_date) return true;
+    return startOfToday >= parseISO(period.selection_start_date);
+  };
+
+  const currentFamilyPeriod = getFamilyPeriod(currentRotationYearCurrentFamily);
+  const currentTurnStarted = hasTurnStarted(currentRotationYearCurrentFamily);
+  const seasonStartDate = currentFamilyPeriod?.selection_start_date
+    ? parseISO(currentFamilyPeriod.selection_start_date)
+    : null;
+
   
   // Get selection period extensions for current rotation year
   const { 
