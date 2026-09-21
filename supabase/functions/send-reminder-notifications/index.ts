@@ -195,6 +195,11 @@ const handler = async (req: Request): Promise<Response> => {
             console.log(`Skipping reservation ${reservation.id} - no contact email found`);
             continue;
           }
+          if (await isContinuation(reservation)) {
+            console.log(`Skipping arrival reminder for ${reservation.id} - same host is already at the cabin (continuous stay)`);
+            continue;
+          }
+          const trueEndDate = await chainedEndDate(reservation);
           try {
             const notificationResponse = await supabase.functions.invoke('send-notification', {
               body: {
@@ -204,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
                   id: reservation.id,
                   family_group_name: reservation.family_group,
                   check_in_date: reservation.start_date,
-                  check_out_date: reservation.end_date,
+                  check_out_date: trueEndDate,
                   guest_email: contact.email,
                   guest_name: contact.name,
                   guest_phone: contact.phone,
