@@ -229,6 +229,30 @@ const CabinCalendar = () => {
   // Use correct selection status from useSequentialSelection hook
   const currentRotationYearStatuses = familyStatuses;
   const currentRotationYearCurrentFamily = currentFamilyGroup;
+
+  // A family's turn is only live once its scheduled start date has arrived.
+  const getFamilyPeriod = (familyGroup?: string | null) =>
+    familyGroup
+      ? (reservationPeriods || []).find(
+          p => p.current_family_group === familyGroup && p.rotation_year === rotationYear
+        )
+      : undefined;
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const hasTurnStarted = (familyGroup?: string | null) => {
+    const period = getFamilyPeriod(familyGroup);
+    if (!period?.selection_start_date) return true;
+    return startOfToday >= parseISO(period.selection_start_date);
+  };
+
+  const currentFamilyPeriod = getFamilyPeriod(currentRotationYearCurrentFamily);
+  const currentTurnStarted = hasTurnStarted(currentRotationYearCurrentFamily);
+  const seasonStartDate = currentFamilyPeriod?.selection_start_date
+    ? parseISO(currentFamilyPeriod.selection_start_date)
+    : null;
+
   
   // Get selection period extensions for current rotation year
   const { 
@@ -285,8 +309,22 @@ const CabinCalendar = () => {
               return null;
             })()}
             
+            {/* Upcoming turn notice — shown before the scheduled start date */}
+            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && !currentTurnStarted && seasonStartDate && currentFamilyPeriod && (
+              <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-1">
+                  <Clock className="h-5 w-5 flex-shrink-0" />
+                  Your selection turn is coming up
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {rotationYear} selection opens {format(seasonStartDate, 'MMMM d, yyyy')}. Your turn runs {format(seasonStartDate, 'MMM d')} – {format(parseISO(currentFamilyPeriod.selection_end_date), 'MMM d')}.
+                </p>
+              </div>
+            )}
+
             {/* Primary Selection Turn Indicator Banner */}
-            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && (
+            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && currentTurnStarted && (
+
               <div className="mb-4 p-4 bg-primary/10 border-2 border-primary rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
@@ -357,7 +395,9 @@ const CabinCalendar = () => {
             {(isCalendarKeeper || isAdmin || organization?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase()) && 
              currentPhase === 'primary' && 
              currentRotationYearCurrentFamily && 
+             currentTurnStarted &&
              (!userGroup || !canCurrentUserSelect(userGroup.name)) && (
+
               <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
@@ -440,9 +480,22 @@ const CabinCalendar = () => {
                              <div className="space-y-1">
 
                                {currentRotationYearStatuses.map((familyStatus, index) => {
+                                 const familyPeriod = reservationPeriods?.find(
+                                   p => p.current_family_group === familyStatus.familyGroup &&
+                                        p.rotation_year === rotationYear
+                                 );
+                                 const notStartedYet = !hasTurnStarted(familyStatus.familyGroup);
+
                                  const getStatusDisplay = () => {
                                    switch (familyStatus.status) {
                                      case 'active':
+                                       if (notStartedYet && familyPeriod?.selection_start_date) {
+                                         return {
+                                           icon: '⏳',
+                                           text: `starts ${format(parseISO(familyPeriod.selection_start_date), 'MMM d')}`,
+                                           title: 'Turn has not opened yet'
+                                         };
+                                       }
                                        return {
                                          icon: '🟢',
                                          text: familyStatus.dayCountText || 'selecting',
@@ -471,13 +524,10 @@ const CabinCalendar = () => {
                                  
                                  const statusDisplay = getStatusDisplay();
 
-                                 const familyPeriod = reservationPeriods?.find(
-                                   p => p.current_family_group === familyStatus.familyGroup &&
-                                        p.rotation_year === rotationYear
-                                 );
                                  const turnDates = familyPeriod
                                    ? `${format(parseISO(familyPeriod.selection_start_date), 'MMM d')} – ${format(parseISO(familyPeriod.selection_end_date), 'MMM d')}`
                                    : null;
+
                                  
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
