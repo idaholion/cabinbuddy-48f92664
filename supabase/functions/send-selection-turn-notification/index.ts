@@ -151,8 +151,6 @@ const handler = async (req: Request): Promise<Response> => {
     const periodsAllowed = periodUsageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
-    // Determine if we're in secondary phase based on the earlier query
-    const isSecondaryPhase = !!secondaryStatus;
 
     // For secondary phase: 1 week, 1 period
     // For primary phase: 2 weeks, up to 2 periods
