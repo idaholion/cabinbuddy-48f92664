@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Get rotation order for this year
         const { data: rotationData } = await supabase
           .from('rotation_orders')
-          .select('rotation_order, first_last_option, rotation_start_month')
+          .select('rotation_order, first_last_option, start_month')
           .eq('organization_id', org.id)
           .eq('rotation_year', year)
           .maybeSingle();
