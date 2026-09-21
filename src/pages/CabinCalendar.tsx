@@ -395,7 +395,9 @@ const CabinCalendar = () => {
             {(isCalendarKeeper || isAdmin || organization?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase()) && 
              currentPhase === 'primary' && 
              currentRotationYearCurrentFamily && 
+             currentTurnStarted &&
              (!userGroup || !canCurrentUserSelect(userGroup.name)) && (
+
               <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex-1 min-w-0">
