@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AllocationModelBadge } from "@/components/AllocationModelBadge";
 import { AllocationModelChangeDialog, type AllocationModel } from "@/components/AllocationModelChangeDialog";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { SelectionSeasonSetup } from "@/components/SelectionSeasonSetup";
 
 
 export default function ReservationSetup() {
@@ -1149,6 +1150,8 @@ export default function ReservationSetup() {
             </CardContent>
           </Card>
         )}
+
+        {setupMethod === "rotation" && <SelectionSeasonSetup />}
 
         {/* Static Weeks Setup - Only show if static-weeks is selected */}
         {setupMethod === "static-weeks" && (

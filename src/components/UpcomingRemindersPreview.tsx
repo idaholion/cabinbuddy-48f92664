@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { format, addDays, isAfter, isBefore } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -704,6 +705,19 @@ Don't miss out on making your reservations!`;
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {periods.filter(p => p.rotation_year === rotationYear).length === 0 && (
+          <div className="mb-4 rounded-lg border-l-4 border-amber-400 bg-amber-50 p-4 dark:bg-amber-950/30">
+            <p className="font-medium text-amber-900 dark:text-amber-200">
+              No selection season has been set up for {rotationYear} yet
+            </p>
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              Turn notifications can't be scheduled until the {rotationYear} selection turns exist.{' '}
+              <Link to="/reservation-setup" className="underline font-medium">
+                Set up the {rotationYear} season
+              </Link>
+            </p>
+          </div>
+        )}
         {totalReminders === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />

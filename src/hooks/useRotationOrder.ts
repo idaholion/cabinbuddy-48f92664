@@ -45,6 +45,10 @@ interface DatabaseRotationOrder {
   start_month?: string;
 }
 
+// How far before the rotation start month the app switches to the upcoming
+// selection year, so the new season can be previewed before it begins.
+export const SELECTION_YEAR_LOOKAHEAD_DAYS = 60;
+
 export const useRotationOrder = () => {
   const [rotationData, setRotationData] = useState<RotationOrderData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,8 +103,13 @@ export const useRotationOrder = () => {
     
     // Create rotation start date for current year (use 1st of month for year calculation)
     const rotationStartThisYear = new Date(currentYear, startMonthIndex, 1);
+
+    // Roll over to the upcoming selection year ahead of the start date so the
+    // upcoming season shows up in reminder previews during the run-up.
+    const lookaheadStart = new Date(rotationStartThisYear);
+    lookaheadStart.setDate(lookaheadStart.getDate() - SELECTION_YEAR_LOOKAHEAD_DAYS);
     
-    return today >= rotationStartThisYear ? currentYear + 1 : currentYear;
+    return today >= lookaheadStart ? currentYear + 1 : currentYear;
   };
 
   const isValidRotationOrder = (order: any): boolean => {
