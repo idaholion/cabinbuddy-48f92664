@@ -14,7 +14,7 @@ import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { supabase } from '@/integrations/supabase/client';
-import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
+import { getHostFirstName, getFirstNameFromFullName, isContinuationOfPreviousStay, getChainedEndDate } from '@/lib/reservation-utils';
 import { parseDateOnly } from '@/lib/date-utils';
 import { getSelectionPeriodDisplayInfo } from '@/lib/selection-period-utils';
 
