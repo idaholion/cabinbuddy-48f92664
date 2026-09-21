@@ -470,11 +470,24 @@ const CabinCalendar = () => {
                                  };
                                  
                                  const statusDisplay = getStatusDisplay();
+
+                                 const familyPeriod = reservationPeriods?.find(
+                                   p => p.current_family_group === familyStatus.familyGroup &&
+                                        p.rotation_year === rotationYear
+                                 );
+                                 const turnDates = familyPeriod
+                                   ? `${format(parseISO(familyPeriod.selection_start_date), 'MMM d')} – ${format(parseISO(familyPeriod.selection_end_date), 'MMM d')}`
+                                   : null;
                                  
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
                                      <span className="font-semibold w-6">{index + 1}.</span>
-                                     <span className="flex-1">{familyStatus.familyGroup}</span>
+                                     <span className="flex-1">
+                                       {familyStatus.familyGroup}
+                                       {turnDates && (
+                                         <span className="block text-xs text-muted-foreground">{turnDates}</span>
+                                       )}
+                                     </span>
                                      <div className="flex items-center gap-1">
                                        <div title={statusDisplay.title}>
                                          {statusDisplay.icon}
