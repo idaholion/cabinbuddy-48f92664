@@ -480,9 +480,22 @@ const CabinCalendar = () => {
                              <div className="space-y-1">
 
                                {currentRotationYearStatuses.map((familyStatus, index) => {
+                                 const familyPeriod = reservationPeriods?.find(
+                                   p => p.current_family_group === familyStatus.familyGroup &&
+                                        p.rotation_year === rotationYear
+                                 );
+                                 const notStartedYet = !hasTurnStarted(familyStatus.familyGroup);
+
                                  const getStatusDisplay = () => {
                                    switch (familyStatus.status) {
                                      case 'active':
+                                       if (notStartedYet && familyPeriod?.selection_start_date) {
+                                         return {
+                                           icon: '⏳',
+                                           text: `starts ${format(parseISO(familyPeriod.selection_start_date), 'MMM d')}`,
+                                           title: 'Turn has not opened yet'
+                                         };
+                                       }
                                        return {
                                          icon: '🟢',
                                          text: familyStatus.dayCountText || 'selecting',
@@ -511,13 +524,10 @@ const CabinCalendar = () => {
                                  
                                  const statusDisplay = getStatusDisplay();
 
-                                 const familyPeriod = reservationPeriods?.find(
-                                   p => p.current_family_group === familyStatus.familyGroup &&
-                                        p.rotation_year === rotationYear
-                                 );
                                  const turnDates = familyPeriod
                                    ? `${format(parseISO(familyPeriod.selection_start_date), 'MMM d')} – ${format(parseISO(familyPeriod.selection_end_date), 'MMM d')}`
                                    : null;
+
                                  
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
