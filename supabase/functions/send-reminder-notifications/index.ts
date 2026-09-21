@@ -275,6 +275,10 @@ const handler = async (req: Request): Promise<Response> => {
           }
           const fg = { lead_name: contact?.name };
 
+          if (await hasNextStay(reservation)) {
+            console.log(`Skipping departure reminder for ${reservation.id} - same host continues into the next stay`);
+            continue;
+          }
 
           try {
             const response = await supabase.functions.invoke('send-notification', {
