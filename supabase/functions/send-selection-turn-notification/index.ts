@@ -78,6 +78,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Family group not found: ${family_group}`);
     }
 
+    // Determine if we're in secondary phase based on the earlier query
+    const isSecondaryPhase = !!secondaryStatus;
+
     // Get selection dates based on phase
     let selectionStartDate = '';
     let selectionEndDate = '';
