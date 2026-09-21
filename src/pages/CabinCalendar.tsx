@@ -168,13 +168,24 @@ const CabinCalendar = () => {
   
   // Calculate the active rotation year based on current date and rotation start date
   const getRotationYear = () => {
-    if (!rotationData || !rotationData.start_month) {
-      return new Date().getFullYear();
-    }
-    
     const today = new Date();
     const currentYear = today.getFullYear();
-    
+    const upcomingYear = currentYear + 1;
+
+    // As soon as an admin creates the upcoming selection season (dated turns exist
+    // for next year), show that season on the calendar instead of waiting for the
+    // rotation start month to arrive.
+    const upcomingSeasonExists = (reservationPeriods || []).some(
+      p => p.rotation_year === upcomingYear
+    );
+    if (upcomingSeasonExists) {
+      return upcomingYear;
+    }
+
+    if (!rotationData || !rotationData.start_month) {
+      return currentYear;
+    }
+
     // Parse rotation start month (e.g., "October" -> 9, zero-indexed)
     const monthNames = ["January", "February", "March", "April", "May", "June",
                         "July", "August", "September", "October", "November", "December"];
@@ -183,18 +194,9 @@ const CabinCalendar = () => {
     // Create rotation start date for current year (use 1st of month for year calculation)
     const rotationStartThisYear = new Date(currentYear, startMonthIndex, 1);
     
-    console.log('[CabinCalendar] getRotationYear calculation:', {
-      today: today.toISOString(),
-      currentYear,
-      startMonth: rotationData.start_month,
-      rotationStartThisYear: rotationStartThisYear.toISOString(),
-      hasPassedStartDate: today >= rotationStartThisYear,
-      calculatedRotationYear: today >= rotationStartThisYear ? currentYear + 1 : currentYear
-    });
-    
     // If we've passed the rotation start date, we're in the next rotation year
     if (today >= rotationStartThisYear) {
-      return currentYear + 1;
+      return upcomingYear;
     }
     
     // Otherwise, we're still in the current rotation year
@@ -468,11 +470,24 @@ const CabinCalendar = () => {
                                  };
                                  
                                  const statusDisplay = getStatusDisplay();
+
+                                 const familyPeriod = reservationPeriods?.find(
+                                   p => p.current_family_group === familyStatus.familyGroup &&
+                                        p.rotation_year === rotationYear
+                                 );
+                                 const turnDates = familyPeriod
+                                   ? `${format(parseISO(familyPeriod.selection_start_date), 'MMM d')} – ${format(parseISO(familyPeriod.selection_end_date), 'MMM d')}`
+                                   : null;
                                  
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
                                      <span className="font-semibold w-6">{index + 1}.</span>
-                                     <span className="flex-1">{familyStatus.familyGroup}</span>
+                                     <span className="flex-1">
+                                       {familyStatus.familyGroup}
+                                       {turnDates && (
+                                         <span className="block text-xs text-muted-foreground">{turnDates}</span>
+                                       )}
+                                     </span>
                                      <div className="flex items-center gap-1">
                                        <div title={statusDisplay.title}>
                                          {statusDisplay.icon}
