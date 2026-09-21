@@ -64,6 +64,58 @@ const handler = async (req: Request): Promise<Response> => {
       return groups.find((g: any) => (g.name || '').trim().toLowerCase() === target) || null;
     };
 
+    // ---- Consecutive stay detection (SAME PRIMARY HOST only) ----
+    // Back-to-back reservations only count as one continuous visit when the same
+    // person is the primary host on both. Different hosts = separate visits.
+    const primaryHostKey = (r: any): string => {
+      const assignments = Array.isArray(r?.host_assignments) ? r.host_assignments : [];
+      const p = assignments[0];
+      const email = typeof p?.host_email === 'string' ? p.host_email.trim().toLowerCase() : '';
+      if (email) return `email:${email}`;
+      const name = typeof p?.host_name === 'string' ? p.host_name.trim().toLowerCase() : '';
+      if (name) return `name:${name}`;
+      return `fg:${String(r?.family_group || '').trim().toLowerCase()}`;
+    };
+
+    const findAdjacent = async (orgId: string, field: 'start_date' | 'end_date', date: string) => {
+      const { data } = await supabase
+        .from('reservations')
+        .select('id, start_date, end_date, family_group, host_assignments, organization_id')
+        .eq('organization_id', orgId)
+        .eq(field, date)
+        .eq('status', 'confirmed');
+      return data || [];
+    };
+
+    // Is the same host already at the cabin the day this reservation starts?
+    const isContinuation = async (reservation: any) => {
+      const key = primaryHostKey(reservation);
+      const prior = await findAdjacent(reservation.organization_id, 'end_date', reservation.start_date);
+      return prior.some((o: any) => o.id !== reservation.id && primaryHostKey(o) === key);
+    };
+
+    // Does the same host stay on past this reservation's end date?
+    const hasNextStay = async (reservation: any) => {
+      const key = primaryHostKey(reservation);
+      const next = await findAdjacent(reservation.organization_id, 'start_date', reservation.end_date);
+      return next.some((o: any) => o.id !== reservation.id && primaryHostKey(o) === key);
+    };
+
+    // Walk forward through back-to-back stays by the same host for the true final end date
+    const chainedEndDate = async (reservation: any) => {
+      const key = primaryHostKey(reservation);
+      let end = reservation.end_date;
+      const seen = new Set<string>([reservation.id]);
+      for (let i = 0; i < 52; i++) {
+        const candidates = await findAdjacent(reservation.organization_id, 'start_date', end);
+        const next = candidates.find((o: any) => !seen.has(o.id) && primaryHostKey(o) === key);
+        if (!next) break;
+        seen.add(next.id);
+        end = next.end_date;
+      }
+      return end;
+    };
+
     // Helper: fall back to host assignment contacts when the group lead has no email
     const getReservationContact = async (reservation: any) => {
       const fg = await getFamilyGroup(reservation.organization_id, reservation.family_group);
