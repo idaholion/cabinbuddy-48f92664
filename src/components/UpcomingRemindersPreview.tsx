@@ -14,7 +14,7 @@ import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { supabase } from '@/integrations/supabase/client';
-import { getHostFirstName, getFirstNameFromFullName } from '@/lib/reservation-utils';
+import { getHostFirstName, getFirstNameFromFullName, isContinuationOfPreviousStay, getChainedEndDate } from '@/lib/reservation-utils';
 import { parseDateOnly } from '@/lib/date-utils';
 import { getSelectionPeriodDisplayInfo } from '@/lib/selection-period-utils';
 
@@ -144,8 +144,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     // Generate reservation reminders
     if (automatedSettings.automated_reminders_enabled) {
       reservations.forEach(reservation => {
+        // Same host staying straight through? No second "your stay is starting" notice.
+        if (isContinuationOfPreviousStay(reservation, reservations)) return;
         const checkInDate = parseDateOnly(reservation.start_date);
-        const checkOutDate = parseDateOnly(reservation.end_date);
+        const checkOutDate = parseDateOnly(getChainedEndDate(reservation, reservations));
         if (isAfter(checkInDate, now) && isBefore(checkInDate, thirtyDaysFromNow)) {
           const hostName = getHostFirstName(reservation);
           
