@@ -216,6 +216,23 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
+        // Do not notify before the family's scheduled selection start date
+        {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const { data: currentPeriod } = await supabase
+            .from('reservation_periods')
+            .select('selection_start_date')
+            .eq('organization_id', org.id)
+            .eq('rotation_year', year)
+            .eq('current_family_group', currentFamily)
+            .maybeSingle();
+
+          if (currentPeriod?.selection_start_date && currentPeriod.selection_start_date > todayStr) {
+            console.log(`Selection for ${currentFamily} (${year}) starts ${currentPeriod.selection_start_date} — skipping until then`);
+            continue;
+          }
+        }
+
         // Check for active extension for the current family
         const currentExtension = extensionsData?.find(e => 
           e.family_group === currentFamily && new Date(e.extended_until) >= now

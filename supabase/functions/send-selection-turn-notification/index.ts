@@ -78,6 +78,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Family group not found: ${family_group}`);
     }
 
+    // Determine if we're in secondary phase based on the earlier query
+    const isSecondaryPhase = !!secondaryStatus;
+
     // Get selection dates based on phase
     let selectionStartDate = '';
     let selectionEndDate = '';
@@ -119,6 +122,20 @@ const handler = async (req: Request): Promise<Response> => {
       
       selectionStartDate = periodData?.selection_start_date || '';
       selectionEndDate = periodData?.selection_end_date || '';
+
+      // Safety gate: never announce a turn before its scheduled start date
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (selectionStartDate && selectionStartDate > todayStr) {
+        console.log(`Skipping notification for ${family_group} - selection starts ${selectionStartDate}`);
+        return new Response(JSON.stringify({
+          success: true,
+          skipped: true,
+          message: `Selection period for ${family_group} has not started yet (${selectionStartDate})`
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Get time period usage to calculate available periods
@@ -134,8 +151,6 @@ const handler = async (req: Request): Promise<Response> => {
     const periodsAllowed = periodUsageData?.time_periods_allowed || 0;
     const periodsRemaining = Math.max(0, periodsAllowed - periodsUsed);
 
-    // Determine if we're in secondary phase based on the earlier query
-    const isSecondaryPhase = !!secondaryStatus;
 
     // For secondary phase: 1 week, 1 period
     // For primary phase: 2 weeks, up to 2 periods

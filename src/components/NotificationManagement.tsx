@@ -390,15 +390,21 @@ export const NotificationManagement = () => {
             endDateStr = toDateOnlyString(endDate);
           }
           
+          // Only treat the turn as active once the start date has arrived
+          const daysUntilStart = differenceInDays(parseLocalDate(startDateStr), today);
+          const turnHasStarted = daysUntilStart <= 0;
+
           allUpcoming.push({
             familyGroup: currentFamilyGroup,
-            status: 'active',
+            status: turnHasStarted ? 'active' : 'scheduled',
             scheduledStartDate: startDateStr,
             scheduledEndDate: endDateStr,
-            daysUntilScheduled: 0,
-            isCurrentlyActive: true,
-            displayText: `Active Now (Primary Selection - ${primaryUsed}/${primaryAllowed} periods used)`,
-            daysRemaining: daysLeft
+            daysUntilScheduled: turnHasStarted ? 0 : daysUntilStart,
+            isCurrentlyActive: turnHasStarted,
+            displayText: turnHasStarted
+              ? `Active Now (Primary Selection - ${primaryUsed}/${primaryAllowed} periods used)`
+              : `Starts ${parseLocalDate(startDateStr).toLocaleDateString()} (${daysUntilStart} day${daysUntilStart === 1 ? '' : 's'} away)`,
+            daysRemaining: turnHasStarted ? daysLeft : undefined
           });
           
           // Then show future turns for families that haven't completed
