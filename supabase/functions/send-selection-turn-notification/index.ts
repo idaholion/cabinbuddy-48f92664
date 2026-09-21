@@ -119,6 +119,20 @@ const handler = async (req: Request): Promise<Response> => {
       
       selectionStartDate = periodData?.selection_start_date || '';
       selectionEndDate = periodData?.selection_end_date || '';
+
+      // Safety gate: never announce a turn before its scheduled start date
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (selectionStartDate && selectionStartDate > todayStr) {
+        console.log(`Skipping notification for ${family_group} - selection starts ${selectionStartDate}`);
+        return new Response(JSON.stringify({
+          success: true,
+          skipped: true,
+          message: `Selection period for ${family_group} has not started yet (${selectionStartDate})`
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     // Get time period usage to calculate available periods
