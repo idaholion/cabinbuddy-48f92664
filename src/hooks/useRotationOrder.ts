@@ -45,6 +45,10 @@ interface DatabaseRotationOrder {
   start_month?: string;
 }
 
+// How far before the rotation start month the app switches to the upcoming
+// selection year, so the new season can be previewed before it begins.
+export const SELECTION_YEAR_LOOKAHEAD_DAYS = 60;
+
 export const useRotationOrder = () => {
   const [rotationData, setRotationData] = useState<RotationOrderData | null>(null);
   const [loading, setLoading] = useState(true);
