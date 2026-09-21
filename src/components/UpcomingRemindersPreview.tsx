@@ -144,8 +144,10 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     // Generate reservation reminders
     if (automatedSettings.automated_reminders_enabled) {
       reservations.forEach(reservation => {
+        // Same host staying straight through? No second "your stay is starting" notice.
+        if (isContinuationOfPreviousStay(reservation, reservations)) return;
         const checkInDate = parseDateOnly(reservation.start_date);
-        const checkOutDate = parseDateOnly(reservation.end_date);
+        const checkOutDate = parseDateOnly(getChainedEndDate(reservation, reservations));
         if (isAfter(checkInDate, now) && isBefore(checkInDate, thirtyDaysFromNow)) {
           const hostName = getHostFirstName(reservation);
           
