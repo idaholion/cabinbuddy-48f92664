@@ -1123,7 +1123,13 @@ const FamilyGroupSetup = () => {
                             <SelectContent className="bg-background z-50 text-lg">
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
                                {(() => {
-                                 const names = (watchedData.groupMembers || [])
+                                 // Only the member slots that belong to the group currently rendered
+                                 // (fields.length), and only once that group's data is loaded.
+                                 const isLoadedGroup =
+                                   !!watchedData.selectedGroup && loadedGroupName === watchedData.selectedGroup;
+                                 const names = (isLoadedGroup
+                                   ? (watchedData.groupMembers || []).slice(0, fields.length)
+                                   : [])
                                    // Exclude Member 1 (Group Lead); build the name from the live fields
                                    .map((member, idx) => ({
                                      idx,
