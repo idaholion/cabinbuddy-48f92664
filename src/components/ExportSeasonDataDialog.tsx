@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 import { parseDateOnly, calculateNights } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 
