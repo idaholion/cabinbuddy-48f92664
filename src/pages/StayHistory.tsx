@@ -2598,7 +2598,7 @@ export default function StayHistory() {
                       )}
                     </div>
 
-                    {stayData.paymentId && stayData.amountDue > 0 && (
+                    {stayData.amountDue > 0 && (
                       <OtherPaymentOptionsButton
                         onClick={() => setRecordPaymentStay({
                           ...reservation,
