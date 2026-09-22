@@ -105,11 +105,16 @@ const FamilyGroupSetup = () => {
   const autoSaveKey = watchedData.selectedGroup 
     ? `family-group-setup-${watchedData.selectedGroup}` 
     : 'family-group-setup';
-    
+
+  // The group whose data the form currently holds. Until this matches the selected
+  // group, the form still contains the PREVIOUS group's members, so auto-saving would
+  // store those members under the newly selected group's key (cross-contamination).
+  const [loadedGroupName, setLoadedGroupName] = useState<string>("");
+
   const { loadSavedData, clearSavedData } = useAutoSave({
     key: autoSaveKey,
     data: watchedData,
-    enabled: true,
+    enabled: !!watchedData.selectedGroup && loadedGroupName === watchedData.selectedGroup,
   });
 
   // Drag and drop sensors
@@ -332,6 +337,12 @@ const FamilyGroupSetup = () => {
   // Load form data when a family group is selected
   useEffect(() => {
     if (selectedFamilyGroup) {
+      const isGroupSwitch = loadedGroupName !== "" && loadedGroupName !== selectedFamilyGroup.name;
+      if (isGroupSwitch) {
+        // Discard any draft stored for the newly selected group; it may have been
+        // written while the form still held the previous group's members.
+        clearSavedData();
+      }
       console.log('📝 [FORM_LOAD] Loading data for family group:', {
         groupName: selectedFamilyGroup.name,
         groupId: selectedFamilyGroup.id,
@@ -411,12 +422,14 @@ const FamilyGroupSetup = () => {
       
       form.reset(finalValues);
       hasUserMadeChanges.current = false;
+      setLoadedGroupName(selectedFamilyGroup.name);
       
       console.log('✅ [FORM_LOAD] Form populated successfully for group:', selectedFamilyGroup.name);
     } else if (watchedData.selectedGroup === "") {
       console.log('🔄 [FORM_LOAD] Clearing form - no group selected');
       form.reset();
       hasUserMadeChanges.current = false;
+      setLoadedGroupName("");
     }
   }, [selectedFamilyGroup, setValue, form, getValues, user?.email, setShowAllMembers, parseFullName]);
 
@@ -1110,7 +1123,13 @@ const FamilyGroupSetup = () => {
                             <SelectContent className="bg-background z-50 text-lg">
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
                                {(() => {
-                                 const names = (watchedData.groupMembers || [])
+                                 // Only the member slots that belong to the group currently rendered
+                                 // (fields.length), and only once that group's data is loaded.
+                                 const isLoadedGroup =
+                                   !!watchedData.selectedGroup && loadedGroupName === watchedData.selectedGroup;
+                                 const names = (isLoadedGroup
+                                   ? (watchedData.groupMembers || []).slice(0, fields.length)
+                                   : [])
                                    // Exclude Member 1 (Group Lead); build the name from the live fields
                                    .map((member, idx) => ({
                                      idx,
