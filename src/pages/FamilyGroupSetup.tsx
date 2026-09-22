@@ -122,6 +122,12 @@ const FamilyGroupSetup = () => {
 
   // Get the selected family group data
   const selectedFamilyGroup = familyGroups.find(g => g.name === watchedData.selectedGroup);
+  // The persisted group value is authoritative on page load. A legacy browser draft may
+  // contain an empty string before the form-loading effect has synchronized the field.
+  const effectiveAlternateLeadId =
+    watchedData.alternateLeadId?.trim() ||
+    selectedFamilyGroup?.alternate_lead_id?.trim() ||
+    "none";
 
   // Load member claim status for visual indicators (Phase 3)
   useEffect(() => {
@@ -442,14 +448,17 @@ const FamilyGroupSetup = () => {
     const existingGroup = familyGroups.find(g => g.name === data.selectedGroup);
 
     // Resolve alternate_lead_id safely:
-    // - "none" or blank => explicit clear (null)
+    // - "none" => explicit clear (null)
+    // - blank => preserve the existing database value (a stale browser draft can be blank)
     // - value that doesn't match any current member name => preserve existing (skip write)
     //   to avoid accidentally blanking the alternate when a name changed shape.
     const rawAlt = (data.alternateLeadId ?? "").trim();
     const memberNames = new Set(groupMembersList.map(m => m.name).filter(Boolean));
     let resolvedAlternate: string | null | undefined;
-    if (rawAlt === "" || rawAlt === "none") {
+    if (rawAlt === "none") {
       resolvedAlternate = null;
+    } else if (rawAlt === "") {
+      resolvedAlternate = undefined;
     } else if (memberNames.has(rawAlt)) {
       resolvedAlternate = rawAlt;
     } else if ([...memberNames].some(n => n.toLowerCase() === rawAlt.toLowerCase())) {
@@ -1039,8 +1048,8 @@ const FamilyGroupSetup = () => {
                               isGroupLead={index === 0}
                               isAlternateLead={
                                 !!memberName &&
-                                (watchedData.alternateLeadId === memberName ||
-                                  watchedData.alternateLeadId === watchedData.groupMembers[index]?.name)
+                                (effectiveAlternateLeadId.localeCompare(memberName, undefined, { sensitivity: 'accent' }) === 0 ||
+                                  effectiveAlternateLeadId.localeCompare(watchedData.groupMembers[index]?.name || '', undefined, { sensitivity: 'accent' }) === 0)
                               }
                             />
                           );
@@ -1085,7 +1094,7 @@ const FamilyGroupSetup = () => {
                        </p>
                       <FormControl>
                         <Select 
-                          value={field.value} 
+                          value={effectiveAlternateLeadId}
                           onValueChange={(value) => {
                             hasUserMadeChanges.current = true;
                             field.onChange(value);
@@ -1093,7 +1102,7 @@ const FamilyGroupSetup = () => {
                         >
                            <SelectTrigger className="w-full text-lg">
                              <SelectValue placeholder="Select alternate lead" className="text-lg">
-                               {field.value && field.value !== "none" ? field.value : "None selected"}
+                               {effectiveAlternateLeadId !== "none" ? effectiveAlternateLeadId : "None selected"}
                              </SelectValue>
                            </SelectTrigger>
                             <SelectContent className="bg-background z-50 text-lg">
@@ -1108,8 +1117,8 @@ const FamilyGroupSetup = () => {
                                    .filter(m => m.idx !== 0 && m.name !== '')
                                    .map(m => m.name);
                                  // Keep the saved alternate visible even if the member list hasn't loaded yet
-                                 if (field.value && field.value !== "none" && !names.includes(field.value)) {
-                                   names.unshift(field.value);
+                                  if (effectiveAlternateLeadId !== "none" && !names.includes(effectiveAlternateLeadId)) {
+                                    names.unshift(effectiveAlternateLeadId);
                                  }
                                  return names.map((name, index) => (
                                    <SelectItem key={`${name}-${index}`} value={name} className="text-lg">
