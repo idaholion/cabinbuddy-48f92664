@@ -422,12 +422,14 @@ const FamilyGroupSetup = () => {
       
       form.reset(finalValues);
       hasUserMadeChanges.current = false;
+      setLoadedGroupName(selectedFamilyGroup.name);
       
       console.log('✅ [FORM_LOAD] Form populated successfully for group:', selectedFamilyGroup.name);
     } else if (watchedData.selectedGroup === "") {
       console.log('🔄 [FORM_LOAD] Clearing form - no group selected');
       form.reset();
       hasUserMadeChanges.current = false;
+      setLoadedGroupName("");
     }
   }, [selectedFamilyGroup, setValue, form, getValues, user?.email, setShowAllMembers, parseFullName]);
 
