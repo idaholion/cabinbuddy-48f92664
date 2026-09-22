@@ -157,22 +157,26 @@ export const ExportSeasonDataDialog = ({
   const handleExport = async () => {
     setExporting(true);
     try {
-      const csvContent = generateCSV();
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (exportFormat === 'excel') {
+        generateExcel();
+      } else {
+        const csvContent = generateCSV();
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
       toast({
         title: 'Export Successful',
-        description: `${yearLabel} stay data has been exported to CSV.`,
+        description: `${yearLabel} stay data has been exported to ${exportFormat === 'excel' ? 'Excel' : 'CSV'}.`,
       });
 
       onOpenChange(false);
@@ -217,9 +221,9 @@ export const ExportSeasonDataDialog = ({
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="excel" id="excel" disabled />
-                <Label htmlFor="excel" className="font-normal cursor-pointer text-muted-foreground">
-                  Excel (.xlsx) - Coming Soon
+                <RadioGroupItem value="excel" id="excel" />
+                <Label htmlFor="excel" className="font-normal cursor-pointer">
+                  Excel (.xlsx)
                 </Label>
               </div>
             </RadioGroup>
