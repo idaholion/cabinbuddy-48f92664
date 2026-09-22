@@ -1110,22 +1110,11 @@ export default function ReservationSetup() {
                   <h4 className="font-medium mb-3">Rotation Order Preview</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[0, 1, 2].map((yearOffset) => {
-                      const year = parseInt(rotationYear) + yearOffset;
-                      const currentOrder = rotationOrder.filter(group => group !== '');
-                      
-                      // Calculate rotation for this year
-                      let yearOrder = [...currentOrder];
-                      for (let i = 0; i < yearOffset; i++) {
-                        if (firstLastOption === "first") {
-                          // Move first person to last position
-                          const first = yearOrder.shift();
-                          if (first) yearOrder.push(first);
-                        } else {
-                          // Move last person to first position
-                          const last = yearOrder.pop();
-                          if (last) yearOrder.unshift(last);
-                        }
-                      }
+                      const currentYear = new Date().getFullYear();
+                      const anchorYear = parseInt(rotationYear);
+                      const year = currentYear + yearOffset;
+                      const baseOrder = rotationOrder.filter(group => group !== '');
+                      const yearOrder = calculateRotationForYear(baseOrder, anchorYear, year, firstLastOption);
                       
                       return (
                         <div key={year} className="space-y-2">
