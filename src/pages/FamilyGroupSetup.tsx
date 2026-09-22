@@ -337,6 +337,12 @@ const FamilyGroupSetup = () => {
   // Load form data when a family group is selected
   useEffect(() => {
     if (selectedFamilyGroup) {
+      const isGroupSwitch = loadedGroupName !== "" && loadedGroupName !== selectedFamilyGroup.name;
+      if (isGroupSwitch) {
+        // Discard any draft stored for the newly selected group; it may have been
+        // written while the form still held the previous group's members.
+        clearSavedData();
+      }
       console.log('📝 [FORM_LOAD] Loading data for family group:', {
         groupName: selectedFamilyGroup.name,
         groupId: selectedFamilyGroup.id,
