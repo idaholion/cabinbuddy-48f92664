@@ -2,9 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CalendarClock, CheckCircle2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Wand2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useOrgAdmin } from "@/hooks/useOrgAdmin";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,9 +44,14 @@ export const SelectionSeasonSetup = () => {
   const { rotationData, calculateRotationForYear, getSelectionRotationYear } = useRotationOrder();
   const { toast } = useToast();
 
+  const { isAdmin } = useOrgAdmin();
+
   const [existingTurns, setExistingTurns] = useState<PlannedTurn[] | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoEnabled, setAutoEnabled] = useState(true);
+  const [leadDays, setLeadDays] = useState(10);
+  const [savingAuto, setSavingAuto] = useState(false);
 
   const targetYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear() + 1;
   const selectionYear = targetYear - 1;
@@ -104,6 +113,47 @@ export const SelectionSeasonSetup = () => {
   useEffect(() => {
     loadExisting();
   }, [loadExisting]);
+
+  useEffect(() => {
+    const loadAutoSettings = async () => {
+      if (!organization?.id) return;
+      const { data } = await (supabase as any)
+        .from("organizations")
+        .select("auto_create_selection_season, selection_season_lead_days")
+        .eq("id", organization.id)
+        .maybeSingle();
+      if (data) {
+        setAutoEnabled(data.auto_create_selection_season !== false);
+        setLeadDays(Number(data.selection_season_lead_days ?? 10));
+      }
+    };
+    loadAutoSettings();
+  }, [organization?.id]);
+
+  const handleSaveAutoSettings = async () => {
+    if (!organization?.id) return;
+    setSavingAuto(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("organizations")
+        .update({
+          auto_create_selection_season: autoEnabled,
+          selection_season_lead_days: Math.max(1, Math.min(180, Math.round(leadDays) || 10)),
+        })
+        .eq("id", organization.id);
+      if (error) throw error;
+      toast({ title: "Automatic setup saved" });
+    } catch (error: any) {
+      toast({
+        title: "Could not save the setting",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingAuto(false);
+    }
+  };
+
 
   const handleCreateSeason = async () => {
     if (!organization?.id || plannedTurns.length === 0) return;
@@ -205,6 +255,15 @@ export const SelectionSeasonSetup = () => {
 
   const turnsToShow = existingTurns || plannedTurns;
 
+  const firstStart = turnsToShow[0]?.startDate;
+  let autoCreateDate: string | null = null;
+  if (firstStart) {
+    const [y, m, d] = firstStart.split("-").map(Number);
+    const trigger = new Date(y, m - 1, d);
+    trigger.setDate(trigger.getDate() - (Math.round(leadDays) || 10));
+    autoCreateDate = toDateString(trigger);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -243,6 +302,50 @@ export const SelectionSeasonSetup = () => {
           <Button onClick={handleCreateSeason} disabled={saving || checking} className="w-full">
             {saving ? "Creating..." : `Start the ${targetYear} selection season`}
           </Button>
+        )}
+
+        {isAdmin && (
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Wand2 className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="auto-season" className="text-base">
+                  Set up each season automatically
+                </Label>
+              </div>
+              <Switch id="auto-season" checked={autoEnabled} onCheckedChange={setAutoEnabled} />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Label htmlFor="lead-days" className="text-base whitespace-nowrap">
+                How many days ahead
+              </Label>
+              <Input
+                id="lead-days"
+                type="number"
+                min={1}
+                max={180}
+                value={leadDays}
+                onChange={(e) => setLeadDays(Number(e.target.value))}
+                disabled={!autoEnabled}
+                className="w-24"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {autoEnabled
+                ? existingTurns
+                  ? `The ${targetYear} season is already set up, so nothing will be created again. Next year's season will be set up ${leadDays} days before it starts.`
+                  : autoCreateDate
+                    ? `If you don't start it yourself, the ${targetYear} season will be set up on ${formatDate(autoCreateDate)} and you'll get an email letting you know.`
+                    : ""
+                : "Seasons will only be created when you press the button above."}
+            </p>
+
+            <Button variant="outline" onClick={handleSaveAutoSettings} disabled={savingAuto}>
+              {savingAuto ? "Saving..." : "Save"}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
