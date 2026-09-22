@@ -114,6 +114,47 @@ export const SelectionSeasonSetup = () => {
     loadExisting();
   }, [loadExisting]);
 
+  useEffect(() => {
+    const loadAutoSettings = async () => {
+      if (!organization?.id) return;
+      const { data } = await (supabase as any)
+        .from("organizations")
+        .select("auto_create_selection_season, selection_season_lead_days")
+        .eq("id", organization.id)
+        .maybeSingle();
+      if (data) {
+        setAutoEnabled(data.auto_create_selection_season !== false);
+        setLeadDays(Number(data.selection_season_lead_days ?? 10));
+      }
+    };
+    loadAutoSettings();
+  }, [organization?.id]);
+
+  const handleSaveAutoSettings = async () => {
+    if (!organization?.id) return;
+    setSavingAuto(true);
+    try {
+      const { error } = await (supabase as any)
+        .from("organizations")
+        .update({
+          auto_create_selection_season: autoEnabled,
+          selection_season_lead_days: Math.max(1, Math.min(180, Math.round(leadDays) || 10)),
+        })
+        .eq("id", organization.id);
+      if (error) throw error;
+      toast({ title: "Automatic setup saved" });
+    } catch (error: any) {
+      toast({
+        title: "Could not save the setting",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingAuto(false);
+    }
+  };
+
+
   const handleCreateSeason = async () => {
     if (!organization?.id || plannedTurns.length === 0) return;
     setSaving(true);
