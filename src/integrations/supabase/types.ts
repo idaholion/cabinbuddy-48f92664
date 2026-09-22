@@ -1477,6 +1477,7 @@ export type Database = {
           allow_lead_credit_transfers: boolean
           allow_member_financial_access: boolean | null
           alternate_supervisor_email: string | null
+          auto_create_selection_season: boolean
           automated_backups_enabled: boolean | null
           automated_reminders_1_day_enabled: boolean | null
           automated_reminders_3_day_enabled: boolean | null
@@ -1516,6 +1517,7 @@ export type Database = {
           is_template_source: boolean
           is_test_organization: boolean | null
           name: string
+          selection_season_lead_days: number
           stay_history_snapshot_frequency: string | null
           stay_history_snapshot_retention: number | null
           treasurer_email: string | null
@@ -1532,6 +1534,7 @@ export type Database = {
           allow_lead_credit_transfers?: boolean
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          auto_create_selection_season?: boolean
           automated_backups_enabled?: boolean | null
           automated_reminders_1_day_enabled?: boolean | null
           automated_reminders_3_day_enabled?: boolean | null
@@ -1571,6 +1574,7 @@ export type Database = {
           is_template_source?: boolean
           is_test_organization?: boolean | null
           name: string
+          selection_season_lead_days?: number
           stay_history_snapshot_frequency?: string | null
           stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
@@ -1587,6 +1591,7 @@ export type Database = {
           allow_lead_credit_transfers?: boolean
           allow_member_financial_access?: boolean | null
           alternate_supervisor_email?: string | null
+          auto_create_selection_season?: boolean
           automated_backups_enabled?: boolean | null
           automated_reminders_1_day_enabled?: boolean | null
           automated_reminders_3_day_enabled?: boolean | null
@@ -1626,6 +1631,7 @@ export type Database = {
           is_template_source?: boolean
           is_test_organization?: boolean | null
           name?: string
+          selection_season_lead_days?: number
           stay_history_snapshot_frequency?: string | null
           stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
