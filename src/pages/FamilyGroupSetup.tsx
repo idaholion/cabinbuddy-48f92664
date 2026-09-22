@@ -452,6 +452,9 @@ const FamilyGroupSetup = () => {
       resolvedAlternate = null;
     } else if (memberNames.has(rawAlt)) {
       resolvedAlternate = rawAlt;
+    } else if ([...memberNames].some(n => n.toLowerCase() === rawAlt.toLowerCase())) {
+      // Same person, different spacing/casing — save the current canonical name
+      resolvedAlternate = [...memberNames].find(n => n.toLowerCase() === rawAlt.toLowerCase()) as string;
     } else {
       // Stale/non-matching value — do not overwrite existing DB value.
       resolvedAlternate = undefined;
