@@ -2502,8 +2502,15 @@ export default function StayHistory() {
                           <Button
                             variant="outline"
                             className="w-full"
-                            onClick={() => handleApplyCreditToFuture(stayData.paymentId, stayData.amountDue)}
-                            disabled={!stayData.paymentId}
+                            onClick={async () => {
+                              const pid = await ensurePaymentRecord({ ...reservation, paymentId: stayData.paymentId });
+                              if (!pid) {
+                                toast.error("Unable to apply credit. Please try again.");
+                                return;
+                              }
+                              await handleApplyCreditToFuture(pid, stayData.amountDue);
+                            }}
+
                           >
                             <CalendarIcon className="h-4 w-4 mr-2" />
                             Apply Credit to Future Reservations
