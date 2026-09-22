@@ -44,9 +44,14 @@ export const SelectionSeasonSetup = () => {
   const { rotationData, calculateRotationForYear, getSelectionRotationYear } = useRotationOrder();
   const { toast } = useToast();
 
+  const { isAdmin } = useOrgAdmin();
+
   const [existingTurns, setExistingTurns] = useState<PlannedTurn[] | null>(null);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoEnabled, setAutoEnabled] = useState(true);
+  const [leadDays, setLeadDays] = useState(10);
+  const [savingAuto, setSavingAuto] = useState(false);
 
   const targetYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear() + 1;
   const selectionYear = targetYear - 1;
