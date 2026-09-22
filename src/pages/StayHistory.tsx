@@ -342,11 +342,43 @@ export default function StayHistory() {
   };
 
 
+  // Some stays never go through Daily & Final Input (for example a reservation
+  // nobody ended up using), so no payment record exists yet. Create one on the
+  // fly so a payment or credit can still be recorded against that stay.
+  const ensurePaymentRecord = async (stay: any): Promise<string | null> => {
+    if (stay?.paymentId) return stay.paymentId;
+    if (!organization?.id || !stay?.family_group) return null;
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .insert({
+          organization_id: organization.id,
+          family_group: stay.family_group,
+          reservation_id: stay.isVirtualSplit ? null : (stay.id || null),
+          amount: 0,
+          amount_paid: 0,
+          status: 'pending' as any,
+          payment_type: 'use_fee' as any,
+          daily_occupancy: [],
+          description: 'Created to record a payment for a stay with no daily input',
+          created_by_user_id: user?.id ?? null,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      return data?.id ?? null;
+    } catch (error) {
+      console.error('Error creating payment record for stay:', error);
+      return null;
+    }
+  };
+
   const handleApplyCreditToFuture = async (paymentId: string, amount: number) => {
     if (!paymentId || !organization?.id) {
       toast.error("Unable to apply credit. Please try again.");
       return;
     }
+
     
     try {
       // Update payment record to mark credit as applied to future
@@ -2470,8 +2502,15 @@ export default function StayHistory() {
                           <Button
                             variant="outline"
                             className="w-full"
-                            onClick={() => handleApplyCreditToFuture(stayData.paymentId, stayData.amountDue)}
-                            disabled={!stayData.paymentId}
+                            onClick={async () => {
+                              const pid = await ensurePaymentRecord({ ...reservation, paymentId: stayData.paymentId });
+                              if (!pid) {
+                                toast.error("Unable to apply credit. Please try again.");
+                                return;
+                              }
+                              await handleApplyCreditToFuture(pid, stayData.amountDue);
+                            }}
+
                           >
                             <CalendarIcon className="h-4 w-4 mr-2" />
                             Apply Credit to Future Reservations
@@ -2535,7 +2574,7 @@ export default function StayHistory() {
                                 <Send className="h-4 w-4 mr-2" />
                                 Pay Now Via Venmo
                               </Button>
-                              {stayData.paymentId && (
+                              {stayData.amountDue > 0 && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -2552,13 +2591,14 @@ export default function StayHistory() {
                                   Already paid Venmo outside CabinBuddy? Record it.
                                 </Button>
                               )}
+
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {stayData.paymentId && stayData.amountDue > 0 && (
+                    {stayData.amountDue > 0 && (
                       <OtherPaymentOptionsButton
                         onClick={() => setRecordPaymentStay({
                           ...reservation,
@@ -2574,7 +2614,7 @@ export default function StayHistory() {
                 {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id &&
-                  stayData.paymentId && stayData.amountDue > 0 && (
+                  stayData.amountDue > 0 && (
                   <div className="mt-4 pt-4 border-t">
                     <OtherPaymentOptionsButton
                       onClick={() => setRecordPaymentStay({
@@ -2760,22 +2800,31 @@ export default function StayHistory() {
           }}
 
           stay={{
-            id: recordPaymentStay.paymentId,
+            id: recordPaymentStay.paymentId || recordPaymentStay.id,
             balanceDue: recordPaymentStay.amountDue,
             family_group: recordPaymentStay.family_group
           }}
           onSave={async (paymentData) => {
-            if (!recordPaymentStay?.paymentId || !organization?.id) return;
-            
+            if (!organization?.id) return;
+
             try {
+              // Stays that never went through Daily & Final Input have no payment
+              // record yet, so create one before recording the payment.
+              const paymentId = await ensurePaymentRecord(recordPaymentStay);
+              if (!paymentId) {
+                toast.error("Failed to record payment. Please try again.");
+                return;
+              }
+
               // Get the current payment details
               const { data: payment, error: fetchError } = await supabase
                 .from('payments')
                 .select('*')
-                .eq('id', recordPaymentStay.paymentId)
+                .eq('id', paymentId)
                 .single();
 
               if (fetchError) throw fetchError;
+
 
               const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
               const newBalanceDue = payment.amount - newAmountPaid;
