@@ -342,11 +342,43 @@ export default function StayHistory() {
   };
 
 
+  // Some stays never go through Daily & Final Input (for example a reservation
+  // nobody ended up using), so no payment record exists yet. Create one on the
+  // fly so a payment or credit can still be recorded against that stay.
+  const ensurePaymentRecord = async (stay: any): Promise<string | null> => {
+    if (stay?.paymentId) return stay.paymentId;
+    if (!organization?.id || !stay?.family_group) return null;
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .insert({
+          organization_id: organization.id,
+          family_group: stay.family_group,
+          reservation_id: stay.isVirtualSplit ? null : (stay.id || null),
+          amount: 0,
+          amount_paid: 0,
+          status: 'pending' as any,
+          payment_type: 'use_fee' as any,
+          daily_occupancy: [],
+          description: 'Created to record a payment for a stay with no daily input',
+          created_by_user_id: user?.id ?? null,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      return data?.id ?? null;
+    } catch (error) {
+      console.error('Error creating payment record for stay:', error);
+      return null;
+    }
+  };
+
   const handleApplyCreditToFuture = async (paymentId: string, amount: number) => {
     if (!paymentId || !organization?.id) {
       toast.error("Unable to apply credit. Please try again.");
       return;
     }
+
     
     try {
       // Update payment record to mark credit as applied to future
