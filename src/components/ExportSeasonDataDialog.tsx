@@ -45,7 +45,7 @@ export const ExportSeasonDataDialog = ({
 
   const yearLabel = actualYear ? String(actualYear) : 'All Years';
 
-  const generateCSV = () => {
+  const buildTable = (): { headers: string[]; rows: (string | number)[][] } => {
     const headers = [
       'Family Group',
       'Check-In Date',
