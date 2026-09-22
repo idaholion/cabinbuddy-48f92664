@@ -2800,22 +2800,31 @@ export default function StayHistory() {
           }}
 
           stay={{
-            id: recordPaymentStay.paymentId,
+            id: recordPaymentStay.paymentId || recordPaymentStay.id,
             balanceDue: recordPaymentStay.amountDue,
             family_group: recordPaymentStay.family_group
           }}
           onSave={async (paymentData) => {
-            if (!recordPaymentStay?.paymentId || !organization?.id) return;
-            
+            if (!organization?.id) return;
+
             try {
+              // Stays that never went through Daily & Final Input have no payment
+              // record yet, so create one before recording the payment.
+              const paymentId = await ensurePaymentRecord(recordPaymentStay);
+              if (!paymentId) {
+                toast.error("Failed to record payment. Please try again.");
+                return;
+              }
+
               // Get the current payment details
               const { data: payment, error: fetchError } = await supabase
                 .from('payments')
                 .select('*')
-                .eq('id', recordPaymentStay.paymentId)
+                .eq('id', paymentId)
                 .single();
 
               if (fetchError) throw fetchError;
+
 
               const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
               const newBalanceDue = payment.amount - newAmountPaid;
