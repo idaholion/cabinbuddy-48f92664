@@ -2574,7 +2574,7 @@ export default function StayHistory() {
                                 <Send className="h-4 w-4 mr-2" />
                                 Pay Now Via Venmo
                               </Button>
-                              {stayData.paymentId && (
+                              {stayData.amountDue > 0 && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -2591,6 +2591,7 @@ export default function StayHistory() {
                                   Already paid Venmo outside CabinBuddy? Record it.
                                 </Button>
                               )}
+
                             </div>
                           </div>
                         </div>
