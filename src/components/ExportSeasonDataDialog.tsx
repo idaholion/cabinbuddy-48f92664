@@ -125,13 +125,33 @@ export const ExportSeasonDataDialog = ({
 
     rows.push(totalsRow);
 
-    // Convert to CSV
-    const csvContent = [
+    return { headers, rows };
+  };
+
+  const generateCSV = () => {
+    const { headers, rows } = buildTable();
+    return [
       headers.join(','),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
+  };
 
-    return csvContent;
+  const generateExcel = () => {
+    const { headers, rows } = buildTable();
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Column widths so text and numbers are readable on open
+    worksheet['!cols'] = headers.map((h, i) => ({
+      wch: Math.max(
+        h.length + 2,
+        ...rows.map(r => String(r[i] ?? '').length + 2),
+        12
+      ),
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${yearLabel} Stays`.slice(0, 31));
+    XLSX.writeFile(workbook, `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   const handleExport = async () => {
