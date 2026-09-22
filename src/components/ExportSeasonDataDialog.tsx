@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import * as XLSX from 'xlsx';
 import { parseDateOnly, calculateNights } from '@/lib/date-utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -44,7 +45,7 @@ export const ExportSeasonDataDialog = ({
 
   const yearLabel = actualYear ? String(actualYear) : 'All Years';
 
-  const generateCSV = () => {
+  const buildTable = (): { headers: string[]; rows: (string | number)[][] } => {
     const headers = [
       'Family Group',
       'Check-In Date',
@@ -124,34 +125,58 @@ export const ExportSeasonDataDialog = ({
 
     rows.push(totalsRow);
 
-    // Convert to CSV
-    const csvContent = [
+    return { headers, rows };
+  };
+
+  const generateCSV = () => {
+    const { headers, rows } = buildTable();
+    return [
       headers.join(','),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
+  };
 
-    return csvContent;
+  const generateExcel = () => {
+    const { headers, rows } = buildTable();
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+    // Column widths so text and numbers are readable on open
+    worksheet['!cols'] = headers.map((h, i) => ({
+      wch: Math.max(
+        h.length + 2,
+        ...rows.map(r => String(r[i] ?? '').length + 2),
+        12
+      ),
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${yearLabel} Stays`.slice(0, 31));
+    XLSX.writeFile(workbook, `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
   };
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      const csvContent = generateCSV();
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (exportFormat === 'excel') {
+        generateExcel();
+      } else {
+        const csvContent = generateCSV();
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `season_${actualYear || 'all-years'}_summary_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
 
       toast({
         title: 'Export Successful',
-        description: `${yearLabel} stay data has been exported to CSV.`,
+        description: `${yearLabel} stay data has been exported to ${exportFormat === 'excel' ? 'Excel' : 'CSV'}.`,
       });
 
       onOpenChange(false);
@@ -196,9 +221,9 @@ export const ExportSeasonDataDialog = ({
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="excel" id="excel" disabled />
-                <Label htmlFor="excel" className="font-normal cursor-pointer text-muted-foreground">
-                  Excel (.xlsx) - Coming Soon
+                <RadioGroupItem value="excel" id="excel" />
+                <Label htmlFor="excel" className="font-normal cursor-pointer">
+                  Excel (.xlsx)
                 </Label>
               </div>
             </RadioGroup>
