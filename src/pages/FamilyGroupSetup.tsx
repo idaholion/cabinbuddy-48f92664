@@ -105,11 +105,16 @@ const FamilyGroupSetup = () => {
   const autoSaveKey = watchedData.selectedGroup 
     ? `family-group-setup-${watchedData.selectedGroup}` 
     : 'family-group-setup';
-    
+
+  // The group whose data the form currently holds. Until this matches the selected
+  // group, the form still contains the PREVIOUS group's members, so auto-saving would
+  // store those members under the newly selected group's key (cross-contamination).
+  const [loadedGroupName, setLoadedGroupName] = useState<string>("");
+
   const { loadSavedData, clearSavedData } = useAutoSave({
     key: autoSaveKey,
     data: watchedData,
-    enabled: true,
+    enabled: !!watchedData.selectedGroup && loadedGroupName === watchedData.selectedGroup,
   });
 
   // Drag and drop sensors
