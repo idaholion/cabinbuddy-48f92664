@@ -255,6 +255,15 @@ export const SelectionSeasonSetup = () => {
 
   const turnsToShow = existingTurns || plannedTurns;
 
+  const firstStart = turnsToShow[0]?.startDate;
+  let autoCreateDate: string | null = null;
+  if (firstStart) {
+    const [y, m, d] = firstStart.split("-").map(Number);
+    const trigger = new Date(y, m - 1, d);
+    trigger.setDate(trigger.getDate() - (Math.round(leadDays) || 10));
+    autoCreateDate = toDateString(trigger);
+  }
+
   return (
     <Card>
       <CardHeader>
