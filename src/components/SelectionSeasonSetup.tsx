@@ -303,6 +303,50 @@ export const SelectionSeasonSetup = () => {
             {saving ? "Creating..." : `Start the ${targetYear} selection season`}
           </Button>
         )}
+
+        {isAdmin && (
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Wand2 className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="auto-season" className="text-base">
+                  Set up each season automatically
+                </Label>
+              </div>
+              <Switch id="auto-season" checked={autoEnabled} onCheckedChange={setAutoEnabled} />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Label htmlFor="lead-days" className="text-base whitespace-nowrap">
+                How many days ahead
+              </Label>
+              <Input
+                id="lead-days"
+                type="number"
+                min={1}
+                max={180}
+                value={leadDays}
+                onChange={(e) => setLeadDays(Number(e.target.value))}
+                disabled={!autoEnabled}
+                className="w-24"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              {autoEnabled
+                ? existingTurns
+                  ? `The ${targetYear} season is already set up, so nothing will be created again. Next year's season will be set up ${leadDays} days before it starts.`
+                  : autoCreateDate
+                    ? `If you don't start it yourself, the ${targetYear} season will be set up on ${formatDate(autoCreateDate)} and you'll get an email letting you know.`
+                    : ""
+                : "Seasons will only be created when you press the button above."}
+            </p>
+
+            <Button variant="outline" onClick={handleSaveAutoSettings} disabled={savingAuto}>
+              {savingAuto ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
