@@ -452,6 +452,9 @@ const FamilyGroupSetup = () => {
       resolvedAlternate = null;
     } else if (memberNames.has(rawAlt)) {
       resolvedAlternate = rawAlt;
+    } else if ([...memberNames].some(n => n.toLowerCase() === rawAlt.toLowerCase())) {
+      // Same person, different spacing/casing — save the current canonical name
+      resolvedAlternate = [...memberNames].find(n => n.toLowerCase() === rawAlt.toLowerCase()) as string;
     } else {
       // Stale/non-matching value — do not overwrite existing DB value.
       resolvedAlternate = undefined;
@@ -1034,6 +1037,11 @@ const FamilyGroupSetup = () => {
                               hasClaimed={status?.hasClaimed || false}
                               showStatusIndicators={isAdmin || isSupervisor}
                               isGroupLead={index === 0}
+                              isAlternateLead={
+                                !!memberName &&
+                                (watchedData.alternateLeadId === memberName ||
+                                  watchedData.alternateLeadId === watchedData.groupMembers[index]?.name)
+                              }
                             />
                           );
                         })}
@@ -1092,8 +1100,13 @@ const FamilyGroupSetup = () => {
                               <SelectItem value="none" className="text-lg">None selected</SelectItem>
                                {(() => {
                                  const names = (watchedData.groupMembers || [])
-                                   .filter((member, idx) => member.name && member.name.trim() !== '' && idx !== 0) // Exclude Member 1 (Group Lead)
-                                   .map(member => member.name as string);
+                                   // Exclude Member 1 (Group Lead); build the name from the live fields
+                                   .map((member, idx) => ({
+                                     idx,
+                                     name: `${member.firstName || ''} ${member.lastName || ''}`.trim() || (member.name || ''),
+                                   }))
+                                   .filter(m => m.idx !== 0 && m.name !== '')
+                                   .map(m => m.name);
                                  // Keep the saved alternate visible even if the member list hasn't loaded yet
                                  if (field.value && field.value !== "none" && !names.includes(field.value)) {
                                    names.unshift(field.value);

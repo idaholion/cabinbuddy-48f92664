@@ -25,6 +25,7 @@ interface GroupMemberCardProps {
   hasClaimed?: boolean;
   showStatusIndicators?: boolean;
   isGroupLead?: boolean;
+  isAlternateLead?: boolean;
 }
 
 export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
@@ -38,6 +39,7 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
   hasClaimed = false,
   showStatusIndicators = false,
   isGroupLead = false,
+  isAlternateLead = false,
 }) => {
   const { watch, formState: { errors } } = useFormContext<FamilyGroupSetupFormData>();
   const groupMembers = watch('groupMembers');
@@ -92,6 +94,11 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
             {isGroupLead && (
               <Badge variant="default" className="text-xs font-semibold">
                 GROUP LEAD
+              </Badge>
+            )}
+            {!isGroupLead && isAlternateLead && (
+              <Badge variant="secondary" className="text-xs font-semibold">
+                ALTERNATE GROUP LEAD
               </Badge>
             )}
             

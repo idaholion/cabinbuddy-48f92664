@@ -84,8 +84,17 @@ export const useRoleAwareFamilyGroups = () => {
     if (isOrgAdmin) return true;
     
     // Group leads can manage their own group
-    if (userEmail && (group.lead_email === userEmail || group.alternate_lead_id === userEmail)) {
-      return true;
+    const normalize = (v?: string | null) => (v || '').toLowerCase().trim();
+    if (userEmail && normalize(group.lead_email) === normalize(userEmail)) return true;
+
+    // Alternate lead may be stored as an email OR as the member's name
+    if (userEmail && group.alternate_lead_id) {
+      const alt = normalize(group.alternate_lead_id);
+      if (alt === normalize(userEmail)) return true;
+
+      const members: any[] = Array.isArray(group.host_members) ? group.host_members : [];
+      const me = members.find((m: any) => normalize(m?.email) === normalize(userEmail));
+      if (me && normalize(me.name) === alt) return true;
     }
     
     return false;
