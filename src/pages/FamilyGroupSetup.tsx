@@ -78,7 +78,7 @@ const FamilyGroupSetup = () => {
   });
 
   const { control, watch, setValue, getValues, handleSubmit, trigger, formState: { errors, isValid, isDirty } } = form;
-  const { fields, append, remove, move } = useFieldArray({
+  const { fields, append, remove, move, replace } = useFieldArray({
     control,
     name: "groupMembers",
   });
@@ -372,7 +372,9 @@ const FamilyGroupSetup = () => {
           return newMember;
         });
         
-        setValue("groupMembers", formattedHostMembers, { shouldDirty: false });
+        // Replace the entire field array so no leftover slots from a previously
+        // selected family group (with more members) can survive in the form.
+        replace(formattedHostMembers);
         setShowAllMembers(formattedHostMembers.length > 3);
       } else {
         // No host members - create default empty list
@@ -391,11 +393,11 @@ const FamilyGroupSetup = () => {
         };
         
         console.log('📋 [FORM_LOAD] Creating default member list with legacy lead data:', leadAsHostMember);
-        setValue("groupMembers", [
+        replace([
           leadAsHostMember,
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true },
           { firstName: "", lastName: "", name: "", phone: "", email: "", canHost: false, canEditReservations: true, canEditDailyFinal: true, canEditStayHistory: true }
-        ], { shouldDirty: false });
+        ]);
       }
       
       // Reset the form to clear dirty state after loading data from database
