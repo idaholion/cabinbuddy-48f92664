@@ -2614,7 +2614,7 @@ export default function StayHistory() {
                 {!(financialSettings?.venmo_handle && stayData.amountDue !== 0 && !stayData.creditAppliedToFuture &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id) &&
                   lastReservationByHost.get(getLedgerKey(reservation)) === reservation.id &&
-                  stayData.paymentId && stayData.amountDue > 0 && (
+                  stayData.amountDue > 0 && (
                   <div className="mt-4 pt-4 border-t">
                     <OtherPaymentOptionsButton
                       onClick={() => setRecordPaymentStay({
