@@ -92,7 +92,7 @@ export const ViewAsUserPicker = () => {
     }
   }, [members, searchParams, target?.userId, setTarget]);
 
-  if (!isAdmin) return null;
+  if (!canImpersonate) return null;
 
   const grouped = members.reduce<Record<string, typeof members>>((acc, m) => {
     (acc[m.familyGroup] ||= []).push(m);
