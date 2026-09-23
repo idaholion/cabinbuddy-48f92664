@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { secureSelect, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface FinancialRecord {
@@ -29,7 +29,7 @@ export const useFinancialData = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup } = useUserRole();
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup, isImpersonating, target: impersonationTarget } = useEffectiveRole();
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -107,10 +107,13 @@ export const useFinancialData = () => {
         .lte('date', `${selectedYear}-12-31`)
         .order('date', { ascending: false });
 
+      // While viewing as another member, scope to the person being viewed.
+      const viewedUserId = impersonationTarget?.userId || user.id;
+
       // Apply access level filtering
       if (accessLevel === 'host') {
         // Hosts can only see their own data
-        query = query.eq('user_id', user.id);
+        query = query.eq('user_id', viewedUserId);
       } else if (accessLevel === 'group_lead') {
         // Group leads can see all data from their family group
         const userFamilyGroupName = roleUserFamilyGroup?.name || getUserFamilyGroup();
@@ -118,7 +121,7 @@ export const useFinancialData = () => {
           query = query.eq('family_group', userFamilyGroupName);
         } else {
           // If no family group found, default to own data
-          query = query.eq('user_id', user.id);
+          query = query.eq('user_id', viewedUserId);
         }
       }
       // Admins and treasurers can see all data (no additional filtering)
@@ -147,7 +150,7 @@ export const useFinancialData = () => {
     if (organization?.id && userProfile) {
       fetchFinancialData();
     }
-  }, [organization?.id, userProfile, selectedYear]);
+  }, [organization?.id, userProfile, selectedYear, isAdmin, isTreasurer, isGroupLead, isImpersonating, impersonationTarget?.userId, roleUserFamilyGroup?.name]);
 
   // Get available years from data
   const getAvailableYears = () => {

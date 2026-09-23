@@ -16,6 +16,7 @@ import { Download, Receipt, DollarSign, Calendar, Users, TrendingUp, Settings, R
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
+import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 
 const FinancialDashboard = () => {
   const [activeTab, setActiveTab] = useState("manage");
@@ -123,6 +124,12 @@ const FinancialDashboard = () => {
             </div>
           </div>
         </div>
+
+        <ViewAsUserPicker />
+
+
+
+
 
         {/* Main Content */}
         <Card className="bg-card/95">

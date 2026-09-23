@@ -1847,8 +1847,8 @@ export default function StayHistory() {
             </div>
           )}
 
-          {/* Family Group Filter (Admin only) */}
-          {isAdmin && (
+          {/* Family Group Filter (Admin & Treasurer) */}
+          {canViewAllStays && (
             <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select family group" />
@@ -2659,7 +2659,7 @@ export default function StayHistory() {
                       Edit/Split Occupancy
                     </Button>
                   )}
-                  {isAdmin && reservation.user_id && (
+                  {canViewAllStays && reservation.user_id && (
                     <>
                       <Button
                         variant="outline"
@@ -2897,7 +2897,7 @@ export default function StayHistory() {
           onOpenChange={setShowExportDialog}
           seasonData={exportSeasonData}
           year={selectedYear}
-          isAdminView={isAdmin}
+          isAdminView={canViewAllStays}
         />
       )}
 

@@ -23,7 +23,8 @@ export const ViewAsUserPicker = () => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
-  const { target, setTarget, clear, isImpersonating } = useImpersonation();
+  const { target, setTarget, clear, isImpersonating, canImpersonate } = useImpersonation();
+  const selfLabel = isAdmin ? 'Admin (myself)' : 'Treasurer (myself)';
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
 
@@ -91,7 +92,7 @@ export const ViewAsUserPicker = () => {
     }
   }, [members, searchParams, target?.userId, setTarget]);
 
-  if (!isAdmin) return null;
+  if (!canImpersonate) return null;
 
   const grouped = members.reduce<Record<string, typeof members>>((acc, m) => {
     (acc[m.familyGroup] ||= []).push(m);
@@ -132,7 +133,7 @@ export const ViewAsUserPicker = () => {
             </span>
           </div>
           <Button size="sm" variant="outline" onClick={() => handleSelect('__self__')}>
-            <X className="h-3.5 w-3.5 mr-1" /> Return to Admin
+            <X className="h-3.5 w-3.5 mr-1" /> {isAdmin ? 'Return to Admin' : 'Return to Treasurer'}
           </Button>
         </div>
       )}
@@ -145,10 +146,10 @@ export const ViewAsUserPicker = () => {
           </div>
           <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
             <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Admin (myself)" />
+              <SelectValue placeholder={selfLabel} />
             </SelectTrigger>
             <SelectContent className="max-h-80">
-              <SelectItem value="__self__">Admin (myself)</SelectItem>
+              <SelectItem value="__self__">{selfLabel}</SelectItem>
               {Object.entries(grouped)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([fg, list]) => (
