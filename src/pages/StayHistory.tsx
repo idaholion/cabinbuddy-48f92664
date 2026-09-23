@@ -70,6 +70,7 @@ export default function StayHistory() {
   const { familyGroups } = useFamilyGroups();
   const {
     isAdmin,
+    isTreasurer,
     isCalendarKeeper,
     isGroupLead,
     userFamilyGroup,
@@ -78,6 +79,9 @@ export default function StayHistory() {
   } = useEffectiveRole();
   const navigate = useNavigate();
   const canDeleteStays = isAdmin || isCalendarKeeper;
+  // Treasurers get full read access to every family's stays, receipts and
+  // balances, and may record payments. Deleting stays stays admin-only.
+  const canViewAllStays = !!isAdmin || !!isTreasurer;
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
   const { syncing, syncPayments } = usePaymentSync();
@@ -121,7 +125,7 @@ export default function StayHistory() {
   ).trim().toLowerCase();
 
   const resolvedLeadGroupName = useMemo(() => {
-    if (isAdmin) return undefined;
+    if (canViewAllStays) return undefined;
     const match = (familyGroups || []).find((fg: any) => {
       if (sameName(fg.lead_email, identityEmail)) return true;
       if (sameName(fg.lead_name, identityName)) return true;
@@ -133,14 +137,14 @@ export default function StayHistory() {
       return sameName(first.email, identityEmail) || sameName(firstName, identityName);
     });
     return match?.name as string | undefined;
-  }, [familyGroups, identityEmail, identityName, isAdmin]);
+  }, [familyGroups, identityEmail, identityName, canViewAllStays]);
 
   const myGroupName = resolvedLeadGroupName
     || (typeof userFamilyGroup === 'string' ? userFamilyGroup : (userFamilyGroup as any)?.name)
     || leadGroupName;
-  const isEffectiveLead = !isAdmin && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
+  const isEffectiveLead = !canViewAllStays && (!!resolvedLeadGroupName || (!!canEditStayHistory && !!myGroupName));
   // Admins viewing one family group get the same My stays / Whole family choice.
-  const canChooseScope = isEffectiveLead || (isAdmin && selectedFamilyGroup !== 'all');
+  const canChooseScope = isEffectiveLead || (canViewAllStays && selectedFamilyGroup !== 'all');
   const scopeIsMineOnly = canChooseScope && leadScope === 'mine';
 
 
@@ -153,10 +157,10 @@ export default function StayHistory() {
       setSelectedFamilyGroup(effective.familyGroup);
       return;
     }
-    if (!isAdmin && myGroupName && selectedFamilyGroup !== myGroupName) {
+    if (!canViewAllStays && myGroupName && selectedFamilyGroup !== myGroupName) {
       setSelectedFamilyGroup(myGroupName);
     }
-  }, [isImpersonating, effective.familyGroup, isAdmin, myGroupName]);
+  }, [isImpersonating, effective.familyGroup, canViewAllStays, myGroupName]);
 
   const loading = orgLoading || reservationsLoading || receiptsLoading || settingsLoading;
 
@@ -475,8 +479,8 @@ export default function StayHistory() {
   const canViewReservation = (reservation: any): boolean => {
     // Admins and calendar keepers can see everything, unless an admin has
     // narrowed a single family group down to their own stays.
-    if (isAdmin || isCalendarKeeper) {
-      if (isAdmin && scopeIsMineOnly) return isOwnReservation(reservation);
+    if (canViewAllStays || isCalendarKeeper) {
+      if (canViewAllStays && scopeIsMineOnly) return isOwnReservation(reservation);
       return true;
     }
 
@@ -495,8 +499,8 @@ export default function StayHistory() {
   const isUserReservationOwner = (reservation: any): boolean => {
     if (!user) return false;
     
-    // Admins can split costs on any reservation
-    if (isAdmin) return true;
+    // Admins and treasurers can split costs on any reservation
+    if (canViewAllStays) return true;
     
     // Family group leads (and members with Stay History permission) can split
     // costs on their group's reservations.
@@ -535,8 +539,8 @@ export default function StayHistory() {
     
     return paymentSplits
       .filter(split => {
-        if (isAdmin || isCalendarKeeper) {
-          if (isAdmin && scopeIsMineOnly && split.split_to_user_id !== effectiveUserId) {
+        if (canViewAllStays || isCalendarKeeper) {
+          if (canViewAllStays && scopeIsMineOnly && split.split_to_user_id !== effectiveUserId) {
             return false;
           }
           if (selectedFamilyGroup !== "all") {
@@ -1642,8 +1646,8 @@ export default function StayHistory() {
               </SelectContent>
             </Select>
 
-            {/* Family Group Filter (Admin only) */}
-            {isAdmin && (
+            {/* Family Group Filter (Admin / Treasurer only) */}
+            {canViewAllStays && (
               <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select family group" />
@@ -2629,7 +2633,7 @@ export default function StayHistory() {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
-                  {(isAdmin || isCalendarKeeper || isUserReservationOwner(reservation)) && (
+                  {(canViewAllStays || isCalendarKeeper || isUserReservationOwner(reservation)) && (
                     <Button
                       variant="outline"
                       size="sm"
