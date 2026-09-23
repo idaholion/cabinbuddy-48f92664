@@ -29,7 +29,7 @@ export const useFinancialData = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup, isImpersonating } = useEffectiveRole();
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup, isImpersonating, target: impersonationTarget } = useEffectiveRole();
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
