@@ -2659,7 +2659,7 @@ export default function StayHistory() {
                       Edit/Split Occupancy
                     </Button>
                   )}
-                  {isAdmin && reservation.user_id && (
+                  {canViewAllStays && reservation.user_id && (
                     <>
                       <Button
                         variant="outline"
@@ -2897,7 +2897,7 @@ export default function StayHistory() {
           onOpenChange={setShowExportDialog}
           seasonData={exportSeasonData}
           year={selectedYear}
-          isAdminView={isAdmin}
+          isAdminView={canViewAllStays}
         />
       )}
 
