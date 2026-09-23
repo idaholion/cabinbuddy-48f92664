@@ -148,7 +148,7 @@ export default function AdminSeasonSummary() {
             onClick={() => {
               // Generate CSV export of all family data
               const csvContent = [
-                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Receipt Credits', 'Credit Carried In', 'Balance', 'Status'],
+                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Receipt Credits', "Previous Year's Balance", 'Current Balance', 'Status'],
                 ...summary.familySummaries.map(f => [
                   f.familyGroup,
                   f.totalStays.toString(),
@@ -244,7 +244,7 @@ export default function AdminSeasonSummary() {
               {formatCurrency(summary.totals.totalReceiptCredits + Math.max(0, summary.totals.totalCarriedInCredit))}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Receipts {formatCurrency(summary.totals.totalReceiptCredits)} • Carried in {formatCurrency(Math.max(0, summary.totals.totalCarriedInCredit))}
+              Receipts {formatCurrency(summary.totals.totalReceiptCredits)} • Prev. year balance {formatCurrency(Math.max(0, summary.totals.totalCarriedInCredit))}
             </p>
           </CardContent>
         </Card>
@@ -336,8 +336,8 @@ export default function AdminSeasonSummary() {
                 <TableHead className="text-right">Charged</TableHead>
                 <TableHead className="text-right">Paid</TableHead>
                 <TableHead className="text-right">Receipt Credits</TableHead>
-                <TableHead className="text-right">Credit Carried In</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
+                <TableHead className="text-right">Previous Year's Balance</TableHead>
+                <TableHead className="text-right">Current Balance</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
