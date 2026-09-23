@@ -122,8 +122,11 @@ const FinancialDashboard = () => {
                 </Badge>
               )}
             </div>
-          </div>
         </div>
+
+        <ViewAsUserPicker />
+
+
 
         {/* Main Content */}
         <Card className="bg-card/95">
