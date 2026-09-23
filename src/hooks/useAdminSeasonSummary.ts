@@ -18,6 +18,8 @@ interface FamilySummary {
   totalNights: number;
   totalCharged: number;
   totalPaid: number;
+  receiptCredits: number;
+  carriedInCredit: number;
   outstandingBalance: number;
   leadEmail?: string;
   leadPhone?: string;
@@ -30,11 +32,14 @@ interface AdminSeasonSummary {
     totalFamilies: number;
     totalStays: number;
     totalNights: number;
-    totalCharged: number;
     totalPaid: number;
+    totalCharged: number;
+    totalReceiptCredits: number;
+    totalCarriedInCredit: number;
     totalOutstanding: number;
   };
 }
+
 
 export const useAdminSeasonSummary = (seasonYear?: number) => {
   const [summary, setSummary] = useState<AdminSeasonSummary | null>(null);
