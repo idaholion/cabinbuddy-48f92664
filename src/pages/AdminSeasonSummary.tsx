@@ -157,7 +157,7 @@ export default function AdminSeasonSummary() {
                   f.totalPaid.toFixed(2),
                   f.receiptCredits.toFixed(2),
                   f.carriedInCredit.toFixed(2),
-                  f.outstandingBalance.toFixed(2),
+                  (-f.outstandingBalance).toFixed(2),
                   f.outstandingBalance <= 0.004 ? (f.outstandingBalance < -0.004 ? 'Credit' : 'Paid') : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
                 ])
 
@@ -367,7 +367,7 @@ export default function AdminSeasonSummary() {
                     {Math.abs(family.carriedInCredit) > 0.004 ? formatCurrency(family.carriedInCredit) : '—'}
                   </TableCell>
                   <TableCell className={`text-right font-mono ${family.outstandingBalance < -0.004 ? 'text-green-600' : ''}`}>
-                    {formatCurrency(family.outstandingBalance)}
+                    {formatCurrency(-family.outstandingBalance)}
                   </TableCell>
                   <TableCell className="text-center">
                     {family.outstandingBalance < -0.004 ? (
