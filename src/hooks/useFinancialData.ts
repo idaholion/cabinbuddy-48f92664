@@ -150,7 +150,7 @@ export const useFinancialData = () => {
     if (organization?.id && userProfile) {
       fetchFinancialData();
     }
-  }, [organization?.id, userProfile, selectedYear, isAdmin, isTreasurer, isGroupLead, isImpersonating, roleUserFamilyGroup?.name]);
+  }, [organization?.id, userProfile, selectedYear, isAdmin, isTreasurer, isGroupLead, isImpersonating, impersonationTarget?.userId, roleUserFamilyGroup?.name]);
 
   // Get available years from data
   const getAvailableYears = () => {
