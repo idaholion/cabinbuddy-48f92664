@@ -317,6 +317,8 @@ export default function AdminSeasonSummary() {
                 <TableHead className="text-right">Nights</TableHead>
                 <TableHead className="text-right">Charged</TableHead>
                 <TableHead className="text-right">Paid</TableHead>
+                <TableHead className="text-right">Receipt Credits</TableHead>
+                <TableHead className="text-right">Credit Carried In</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -340,11 +342,22 @@ export default function AdminSeasonSummary() {
                   <TableCell className="text-right font-mono">
                     {formatCurrency(family.totalPaid)}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className="text-right font-mono text-green-600">
+                    {family.receiptCredits > 0.004 ? formatCurrency(family.receiptCredits) : '—'}
+                  </TableCell>
+                  <TableCell className={`text-right font-mono ${family.carriedInCredit > 0.004 ? 'text-green-600' : ''}`}>
+                    {Math.abs(family.carriedInCredit) > 0.004 ? formatCurrency(family.carriedInCredit) : '—'}
+                  </TableCell>
+                  <TableCell className={`text-right font-mono ${family.outstandingBalance < -0.004 ? 'text-green-600' : ''}`}>
                     {formatCurrency(family.outstandingBalance)}
                   </TableCell>
                   <TableCell className="text-center">
-                    {family.outstandingBalance === 0 ? (
+                    {family.outstandingBalance < -0.004 ? (
+                      <Badge variant="default" className="bg-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Credit
+                      </Badge>
+                    ) : family.outstandingBalance <= 0.004 ? (
                       <Badge variant="default" className="bg-green-500">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Paid
@@ -358,6 +371,7 @@ export default function AdminSeasonSummary() {
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Unpaid
                       </Badge>
+
                     )}
                   </TableCell>
                   <TableCell className="text-right">
