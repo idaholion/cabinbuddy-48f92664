@@ -10,14 +10,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useReceipts } from "@/hooks/useReceipts";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
+import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { EmptyState } from "@/components/ui/empty-state";
 
 export const ExpenseTracker = () => {
   const [showAddExpense, setShowAddExpense] = useState(false);
   const { receipts: allReceipts, createReceipt, deleteReceipt, loading } = useReceipts();
-  
-  // Filter out Cabin Fund expenses — those appear in their own tab
-  const receipts = useMemo(() => allReceipts.filter(r => r.family_group !== "Cabin Fund"), [allReceipts]);
+  const { isAdmin, isTreasurer, userFamilyGroup: effectiveFamilyGroup } = useEffectiveRole();
+  const canSeeAllReceipts = !!isAdmin || !!isTreasurer;
+
+  // Filter out Cabin Fund expenses — those appear in their own tab,
+  // and keep non-admins scoped to their own family group.
+  const receipts = useMemo(() => {
+    const base = allReceipts.filter(r => r.family_group !== "Cabin Fund");
+    if (canSeeAllReceipts) return base;
+    const groupName = effectiveFamilyGroup?.name;
+    if (!groupName) return base;
+    return base.filter(r => r.family_group === groupName);
+  }, [allReceipts, canSeeAllReceipts, effectiveFamilyGroup?.name]);
   const { familyGroups } = useFamilyGroups();
   
   const [description, setDescription] = useState("");
