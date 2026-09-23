@@ -157,7 +157,7 @@ export default function AdminSeasonSummary() {
                   f.totalPaid.toFixed(2),
                   f.receiptCredits.toFixed(2),
                   f.carriedInCredit.toFixed(2),
-                  f.outstandingBalance.toFixed(2),
+                  (-f.outstandingBalance).toFixed(2),
                   f.outstandingBalance <= 0.004 ? (f.outstandingBalance < -0.004 ? 'Credit' : 'Paid') : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
                 ])
 
@@ -252,13 +252,13 @@ export default function AdminSeasonSummary() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-destructive" />
+              <DollarSign className="h-4 w-4" />
               Outstanding
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {formatCurrency(summary.totals.totalOutstanding)}
+            <div className={`text-2xl font-bold ${summary.totals.totalOutstanding < -0.004 ? 'text-green-600' : ''}`}>
+              {formatCurrency(-summary.totals.totalOutstanding)}
             </div>
           </CardContent>
         </Card>
@@ -367,7 +367,7 @@ export default function AdminSeasonSummary() {
                     {Math.abs(family.carriedInCredit) > 0.004 ? formatCurrency(family.carriedInCredit) : '—'}
                   </TableCell>
                   <TableCell className={`text-right font-mono ${family.outstandingBalance < -0.004 ? 'text-green-600' : ''}`}>
-                    {formatCurrency(family.outstandingBalance)}
+                    {formatCurrency(-family.outstandingBalance)}
                   </TableCell>
                   <TableCell className="text-center">
                     {family.outstandingBalance < -0.004 ? (
