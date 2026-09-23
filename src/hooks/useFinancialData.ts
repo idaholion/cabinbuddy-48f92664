@@ -29,7 +29,7 @@ export const useFinancialData = () => {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { familyGroups } = useFamilyGroups();
-  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup } = useUserRole();
+  const { isAdmin, isTreasurer, isGroupLead, userFamilyGroup: roleUserFamilyGroup, isImpersonating } = useEffectiveRole();
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<FinancialRecord[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -147,7 +147,7 @@ export const useFinancialData = () => {
     if (organization?.id && userProfile) {
       fetchFinancialData();
     }
-  }, [organization?.id, userProfile, selectedYear]);
+  }, [organization?.id, userProfile, selectedYear, isAdmin, isTreasurer, isGroupLead, isImpersonating, roleUserFamilyGroup?.name]);
 
   // Get available years from data
   const getAvailableYears = () => {
