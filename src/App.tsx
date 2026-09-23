@@ -96,6 +96,7 @@ const FAQManagement = React.lazy(() => import("./pages/FAQManagement"));
 
 import { SupervisorRoute } from "./components/SupervisorRoute";
 import { AdminTreasurerRoute } from "./components/AdminTreasurerRoute";
+import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { MainLayout } from "./components/MainLayout";
 
 const queryClient = new QueryClient({
@@ -148,12 +149,12 @@ const AppContent = () => {
 
         <Route path="/seasonal-checklists" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklists /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/seasonal-checklist/:id" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SeasonalChecklistView /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/checklist-creator" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/checklist-creator" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ChecklistCreator /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/documents" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Documents /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/photos" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><PhotoSharing /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetup /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/reservation-setup-preview" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><ReservationSetupPreview /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/data-backup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/data-backup" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><DataBackup /></Suspense></MainLayout></AdminOnlyRoute>} />
         
         <Route path="/family-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilySetup /></Suspense></MainLayout></ProtectedRoute>} />
         
@@ -166,7 +167,7 @@ const AppContent = () => {
         <Route path="/admin-season-summary" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminSeasonSummary /></Suspense></MainLayout></AdminTreasurerRoute>} />
         <Route path="/survey-responses" element={<Navigate to="/documents?tab=economic-survey" replace />} />
         <Route path="/use-fee-setup" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><UseFeeSetupPage /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/google-calendar-setup" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/google-calendar-setup" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><GoogleCalendarSetup /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/admin-treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/admin/treasurer" element={<Navigate to="/finance-reports" replace />} />
         <Route path="/messaging" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><Messaging /></Suspense></MainLayout></ProtectedRoute>} />
@@ -180,14 +181,14 @@ const AppContent = () => {
         <Route path="/demo" element={<Suspense fallback={<LoadingSpinner />}><Demo /></Suspense>} />
         <Route path="/privacy-policy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />
         <Route path="/faq" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQ /></Suspense></MainLayout></ProtectedRoute>} />
-        <Route path="/faq-management" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQManagement /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/faq-management" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQManagement /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/access-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AccessCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
-        <Route path="/family-group-health-check" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        <Route path="/admin-documentation" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        <Route path="/notification-monitoring" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><NotificationMonitoring /></Suspense></MainLayout></AdminTreasurerRoute>} />
-        <Route path="/stay-history-snapshots" element={<AdminTreasurerRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistorySnapshots /></Suspense></MainLayout></AdminTreasurerRoute>} />
+        <Route path="/family-group-health-check" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminOnlyRoute>} />
+        <Route path="/admin-documentation" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminOnlyRoute>} />
+        <Route path="/notification-monitoring" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><NotificationMonitoring /></Suspense></MainLayout></AdminOnlyRoute>} />
+        <Route path="/stay-history-snapshots" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistorySnapshots /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/supervisor/cb-faq" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CBFaqManagementPage /></Suspense></MainLayout></SupervisorRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
