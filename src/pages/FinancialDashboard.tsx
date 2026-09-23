@@ -122,9 +122,12 @@ const FinancialDashboard = () => {
                 </Badge>
               )}
             </div>
+          </div>
         </div>
 
         <ViewAsUserPicker />
+
+
 
 
 
