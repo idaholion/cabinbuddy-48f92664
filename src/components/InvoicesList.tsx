@@ -148,7 +148,7 @@ export const InvoicesList = () => {
                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                       <span>Total: ${invoice.total_amount.toFixed(2)}</span>
                       <span>Paid: ${invoice.amount_paid.toFixed(2)}</span>
-                      <span className="font-medium text-foreground">Balance: ${invoice.balance_due.toFixed(2)}</span>
+                      <span className={`font-medium ${invoice.balance_due > 0.004 ? 'text-destructive' : invoice.balance_due < -0.004 ? 'text-green-600' : 'text-foreground'}`}>Balance: ${invoice.balance_due.toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
