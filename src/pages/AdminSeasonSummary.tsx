@@ -235,6 +235,23 @@ export default function AdminSeasonSummary() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              Credits Applied
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(summary.totals.totalReceiptCredits + Math.max(0, summary.totals.totalCarriedInCredit))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Receipts {formatCurrency(summary.totals.totalReceiptCredits)} • Carried in {formatCurrency(Math.max(0, summary.totals.totalCarriedInCredit))}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-destructive" />
               Outstanding
             </CardTitle>
@@ -245,6 +262,7 @@ export default function AdminSeasonSummary() {
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Season Configuration */}
