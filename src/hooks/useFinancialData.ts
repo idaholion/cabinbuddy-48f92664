@@ -107,10 +107,20 @@ export const useFinancialData = () => {
         .lte('date', `${selectedYear}-12-31`)
         .order('date', { ascending: false });
 
+      // While viewing as another member, scope to the person being viewed.
+      const viewedUserId = impersonationTarget?.userId || user.id;
+
       // Apply access level filtering
       if (accessLevel === 'host') {
         // Hosts can only see their own data
-        query = query.eq('user_id', user.id);
+        const viewedGroupName = impersonationTarget
+          ? (roleUserFamilyGroup?.name || impersonationTarget.familyGroup)
+          : null;
+        if (viewedGroupName) {
+          query = query.eq('family_group', viewedGroupName);
+        } else {
+          query = query.eq('user_id', viewedUserId);
+        }
       } else if (accessLevel === 'group_lead') {
         // Group leads can see all data from their family group
         const userFamilyGroupName = roleUserFamilyGroup?.name || getUserFamilyGroup();
@@ -118,7 +128,7 @@ export const useFinancialData = () => {
           query = query.eq('family_group', userFamilyGroupName);
         } else {
           // If no family group found, default to own data
-          query = query.eq('user_id', user.id);
+          query = query.eq('user_id', viewedUserId);
         }
       }
       // Admins and treasurers can see all data (no additional filtering)
