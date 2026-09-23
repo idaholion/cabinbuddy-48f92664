@@ -294,6 +294,22 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
           priorPaid += payment?.amount_paid || 0;
         }
 
+        // Guest cost splits billed to this family
+        const familySplits = splitStays.filter(s => s.familyGroup === familyGroup.name);
+        const seasonSplits = familySplits.filter(
+          s => s.date >= seasonStartStr && s.date <= seasonEndStr
+        );
+        const priorSplits = familySplits.filter(s => s.date < seasonStartStr);
+
+        for (const s of seasonSplits) {
+          familyCharged += s.charged;
+          familyPaid += s.paid;
+        }
+        for (const s of priorSplits) {
+          priorCharged += s.charged;
+          priorPaid += s.paid;
+        }
+
         // Positive = still owed from earlier years, negative = credit carried in
         const priorBalance = round2(priorCharged - priorPaid - priorReceipts);
         const outstandingBalance = round2(
@@ -302,6 +318,7 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
         const hasActivity =
           familyReservations.length > 0 ||
+          seasonSplits.length > 0 ||
           Math.abs(priorBalance) > 0.004 ||
           seasonReceipts > 0;
 
