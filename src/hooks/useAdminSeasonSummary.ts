@@ -206,12 +206,27 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
       }
 
       // Create payment lookup map (split payments are handled separately so they
-      // never overwrite the source family's own payment for the same reservation)
+      // never overwrite the source family's own payment for the same reservation).
+      // Some reservations have duplicate payment rows: keep the one carrying the
+      // real transaction data (most paid, then locked billing, then newest).
       const paymentsByReservation = new Map<string, any>();
+      const betterPayment = (a: any, b: any) => {
+        const paidA = Number(a.amount_paid || 0);
+        const paidB = Number(b.amount_paid || 0);
+        if (paidA !== paidB) return paidA > paidB ? a : b;
+        if (!!a.billing_locked !== !!b.billing_locked) return a.billing_locked ? a : b;
+        const amtA = Number(a.amount || 0);
+        const amtB = Number(b.amount || 0);
+        if (amtA !== amtB) return amtA > amtB ? a : b;
+        return String(a.created_at || '') >= String(b.created_at || '') ? a : b;
+      };
       payments?.forEach(payment => {
-        if (payment.reservation_id && !splitPaymentIds.has(payment.id)) {
-          paymentsByReservation.set(payment.reservation_id, payment);
-        }
+        if (!payment.reservation_id || splitPaymentIds.has(payment.id)) return;
+        const existing = paymentsByReservation.get(payment.reservation_id);
+        paymentsByReservation.set(
+          payment.reservation_id,
+          existing ? betterPayment(existing, payment) : payment
+        );
       });
 
       const chargeForReservation = (reservation: any, payment: any): number => {
