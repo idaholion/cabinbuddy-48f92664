@@ -144,10 +144,72 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
       if (receiptsError) throw receiptsError;
 
-      // Create payment lookup map
+      // Guest cost splits: the recipient's share lives in its own payment row,
+      // which may point at the source family's reservation (or at nothing).
+      const { data: splitRows, error: splitsError } = await supabase
+        .from('payment_splits')
+        .select('id, split_payment_id, source_payment_id, split_to_family_group')
+        .eq('organization_id', organization.id);
+
+      if (splitsError) throw splitsError;
+
+      // All payments (including split rows with no reservation) for split lookup
+      const { data: allPayments, error: allPaymentsError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('organization_id', organization.id);
+
+      if (allPaymentsError) throw allPaymentsError;
+
+      const paymentsById = new Map<string, any>();
+      allPayments?.forEach(p => paymentsById.set(p.id, p));
+
+      const reservationsById = new Map<string, any>();
+      (allReservations || []).forEach(r => reservationsById.set(r.id, r));
+
+      const splitPaymentIds = new Set<string>(
+        (splitRows || []).map(s => s.split_payment_id).filter(Boolean) as string[]
+      );
+
+      // A split stay: who owes it, when it happened, charged & paid amounts
+      interface SplitStay {
+        familyGroup: string;
+        date: string;
+        charged: number;
+        paid: number;
+      }
+
+      const splitStays: SplitStay[] = [];
+      for (const split of splitRows || []) {
+        const splitPayment = paymentsById.get(split.split_payment_id);
+        if (!splitPayment) continue;
+
+        const sourcePayment = split.source_payment_id
+          ? paymentsById.get(split.source_payment_id)
+          : null;
+        const reservation =
+          (splitPayment.reservation_id && reservationsById.get(splitPayment.reservation_id)) ||
+          (sourcePayment?.reservation_id && reservationsById.get(sourcePayment.reservation_id)) ||
+          null;
+
+        const date: string | null =
+          reservation?.end_date ||
+          (splitPayment.created_at ? String(splitPayment.created_at).split('T')[0] : null);
+        if (!date) continue;
+
+        splitStays.push({
+          familyGroup: split.split_to_family_group,
+          date,
+          charged: Number(splitPayment.amount || 0),
+          paid: Number(splitPayment.amount_paid || 0),
+        });
+      }
+
+      // Create payment lookup map (split payments are handled separately so they
+      // never overwrite the source family's own payment for the same reservation)
       const paymentsByReservation = new Map<string, any>();
       payments?.forEach(payment => {
-        if (payment.reservation_id) {
+        if (payment.reservation_id && !splitPaymentIds.has(payment.id)) {
           paymentsByReservation.set(payment.reservation_id, payment);
         }
       });
@@ -232,6 +294,22 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
           priorPaid += payment?.amount_paid || 0;
         }
 
+        // Guest cost splits billed to this family
+        const familySplits = splitStays.filter(s => s.familyGroup === familyGroup.name);
+        const seasonSplits = familySplits.filter(
+          s => s.date >= seasonStartStr && s.date <= seasonEndStr
+        );
+        const priorSplits = familySplits.filter(s => s.date < seasonStartStr);
+
+        for (const s of seasonSplits) {
+          familyCharged += s.charged;
+          familyPaid += s.paid;
+        }
+        for (const s of priorSplits) {
+          priorCharged += s.charged;
+          priorPaid += s.paid;
+        }
+
         // Positive = still owed from earlier years, negative = credit carried in
         const priorBalance = round2(priorCharged - priorPaid - priorReceipts);
         const outstandingBalance = round2(
@@ -240,6 +318,7 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
         const hasActivity =
           familyReservations.length > 0 ||
+          seasonSplits.length > 0 ||
           Math.abs(priorBalance) > 0.004 ||
           seasonReceipts > 0;
 
