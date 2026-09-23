@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { secureSelect, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
 interface FinancialRecord {
