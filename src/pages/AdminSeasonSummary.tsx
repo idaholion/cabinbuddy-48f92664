@@ -148,16 +148,19 @@ export default function AdminSeasonSummary() {
             onClick={() => {
               // Generate CSV export of all family data
               const csvContent = [
-                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Balance', 'Status'],
+                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Receipt Credits', 'Credit Carried In', 'Balance', 'Status'],
                 ...summary.familySummaries.map(f => [
                   f.familyGroup,
                   f.totalStays.toString(),
                   f.totalNights.toString(),
                   f.totalCharged.toFixed(2),
                   f.totalPaid.toFixed(2),
+                  f.receiptCredits.toFixed(2),
+                  f.carriedInCredit.toFixed(2),
                   f.outstandingBalance.toFixed(2),
-                  f.outstandingBalance === 0 ? 'Paid' : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
+                  f.outstandingBalance <= 0.004 ? (f.outstandingBalance < -0.004 ? 'Credit' : 'Paid') : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
                 ])
+
               ].map(row => row.join(',')).join('\n');
               
               const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -180,7 +183,7 @@ export default function AdminSeasonSummary() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -232,6 +235,23 @@ export default function AdminSeasonSummary() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              Credits Applied
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(summary.totals.totalReceiptCredits + Math.max(0, summary.totals.totalCarriedInCredit))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Receipts {formatCurrency(summary.totals.totalReceiptCredits)} • Carried in {formatCurrency(Math.max(0, summary.totals.totalCarriedInCredit))}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-destructive" />
               Outstanding
             </CardTitle>
@@ -242,6 +262,7 @@ export default function AdminSeasonSummary() {
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Season Configuration */}
@@ -314,6 +335,8 @@ export default function AdminSeasonSummary() {
                 <TableHead className="text-right">Nights</TableHead>
                 <TableHead className="text-right">Charged</TableHead>
                 <TableHead className="text-right">Paid</TableHead>
+                <TableHead className="text-right">Receipt Credits</TableHead>
+                <TableHead className="text-right">Credit Carried In</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -337,11 +360,22 @@ export default function AdminSeasonSummary() {
                   <TableCell className="text-right font-mono">
                     {formatCurrency(family.totalPaid)}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className="text-right font-mono text-green-600">
+                    {family.receiptCredits > 0.004 ? formatCurrency(family.receiptCredits) : '—'}
+                  </TableCell>
+                  <TableCell className={`text-right font-mono ${family.carriedInCredit > 0.004 ? 'text-green-600' : ''}`}>
+                    {Math.abs(family.carriedInCredit) > 0.004 ? formatCurrency(family.carriedInCredit) : '—'}
+                  </TableCell>
+                  <TableCell className={`text-right font-mono ${family.outstandingBalance < -0.004 ? 'text-green-600' : ''}`}>
                     {formatCurrency(family.outstandingBalance)}
                   </TableCell>
                   <TableCell className="text-center">
-                    {family.outstandingBalance === 0 ? (
+                    {family.outstandingBalance < -0.004 ? (
+                      <Badge variant="default" className="bg-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Credit
+                      </Badge>
+                    ) : family.outstandingBalance <= 0.004 ? (
                       <Badge variant="default" className="bg-green-500">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Paid
@@ -355,6 +389,7 @@ export default function AdminSeasonSummary() {
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Unpaid
                       </Badge>
+
                     )}
                   </TableCell>
                   <TableCell className="text-right">

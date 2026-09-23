@@ -18,6 +18,8 @@ interface FamilySummary {
   totalNights: number;
   totalCharged: number;
   totalPaid: number;
+  receiptCredits: number;
+  carriedInCredit: number;
   outstandingBalance: number;
   leadEmail?: string;
   leadPhone?: string;
@@ -30,11 +32,14 @@ interface AdminSeasonSummary {
     totalFamilies: number;
     totalStays: number;
     totalNights: number;
-    totalCharged: number;
     totalPaid: number;
+    totalCharged: number;
+    totalReceiptCredits: number;
+    totalCarriedInCredit: number;
     totalOutstanding: number;
   };
 }
+
 
 export const useAdminSeasonSummary = (seasonYear?: number) => {
   const [summary, setSummary] = useState<AdminSeasonSummary | null>(null);
@@ -110,13 +115,15 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
       if (familyGroupsError) throw familyGroupsError;
 
-      // Fetch all reservations within season
-      const { data: reservations, error: reservationsError } = await supabase
+      const seasonStartStr = config.startDate.toISOString().split('T')[0];
+      const seasonEndStr = config.endDate.toISOString().split('T')[0];
+
+      // Fetch ALL reservations (not just this season) so prior-year balances /
+      // credits can be carried into the season summary.
+      const { data: allReservations, error: reservationsError } = await supabase
         .from('reservations')
         .select('*')
-        .eq('organization_id', organization.id)
-        .gte('start_date', config.startDate.toISOString().split('T')[0])
-        .lte('end_date', config.endDate.toISOString().split('T')[0]);
+        .eq('organization_id', organization.id);
 
       if (reservationsError) throw reservationsError;
 
@@ -129,6 +136,14 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
 
       if (paymentsError) throw paymentsError;
 
+      // Reimbursable receipts count as credit against what a family owes
+      const { data: allReceipts, error: receiptsError } = await supabase
+        .from('receipts')
+        .select('family_group, amount, date')
+        .eq('organization_id', organization.id);
+
+      if (receiptsError) throw receiptsError;
+
       // Create payment lookup map
       const paymentsByReservation = new Map<string, any>();
       payments?.forEach(payment => {
@@ -137,76 +152,107 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
         }
       });
 
+      const chargeForReservation = (reservation: any, payment: any): number => {
+        if (!payment) return 0;
+        // Priority 1: Calculate from daily occupancy if available
+        if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
+          const dailyOccupancy: Record<string, number> = {};
+          payment.daily_occupancy.forEach((day: any) => {
+            dailyOccupancy[day.date] = day.guests || 0;
+          });
+
+          const billing = BillingCalculator.calculateFromDailyOccupancy(
+            {
+              method: financialSettings?.billing_method as any || 'per_person_per_night',
+              amount: financialSettings?.billing_amount || 0,
+              taxRate: financialSettings?.tax_rate,
+              cleaningFee: financialSettings?.cleaning_fee,
+              petFee: financialSettings?.pet_fee,
+              damageDeposit: financialSettings?.damage_deposit,
+            },
+            dailyOccupancy,
+            {
+              startDate: parseDateOnly(reservation.start_date),
+              endDate: parseDateOnly(reservation.end_date),
+            }
+          );
+          return billing.total + (payment.manual_adjustment_amount || 0);
+        }
+        // Priority 2: If locked, use stored amount
+        if (payment.billing_locked && payment.amount) {
+          return payment.amount + (payment.manual_adjustment_amount || 0);
+        }
+        // Priority 3: No occupancy data yet
+        return 0;
+      };
+
+      const round2 = (n: number) => Math.round(n * 100) / 100;
+
       // Process data by family group
       const familySummaries: FamilySummary[] = [];
       let totalStays = 0;
       let totalNights = 0;
       let totalCharged = 0;
       let totalPaid = 0;
+      let totalReceiptCredits = 0;
+      let totalCarriedInCredit = 0;
+      let totalOutstanding = 0;
 
       for (const familyGroup of familyGroups || []) {
-        const familyReservations = reservations?.filter(r => r.family_group === familyGroup.name) || [];
-        
+        const familyAll = (allReservations || []).filter(r => r.family_group === familyGroup.name);
+        const familyReservations = familyAll.filter(
+          r => r.start_date >= seasonStartStr && r.end_date <= seasonEndStr
+        );
+        const priorReservations = familyAll.filter(r => r.end_date < seasonStartStr);
+
+        const familyReceiptsAll = (allReceipts || []).filter(rc => rc.family_group === familyGroup.name);
+        const seasonReceipts = familyReceiptsAll
+          .filter(rc => rc.date >= seasonStartStr && rc.date <= seasonEndStr)
+          .reduce((sum, rc) => sum + Number(rc.amount || 0), 0);
+        const priorReceipts = familyReceiptsAll
+          .filter(rc => rc.date < seasonStartStr)
+          .reduce((sum, rc) => sum + Number(rc.amount || 0), 0);
+
         let familyCharged = 0;
         let familyPaid = 0;
         let familyNights = 0;
 
         for (const reservation of familyReservations) {
           const payment = paymentsByReservation.get(reservation.id);
-          const nights = calculateNights(reservation.start_date, reservation.end_date);
-
-          // Calculate billing based on daily occupancy data
-          let reservationCharge = 0;
-          
-          if (payment) {
-            // Priority 1: Calculate from daily occupancy if available
-            if (payment.daily_occupancy && Array.isArray(payment.daily_occupancy) && payment.daily_occupancy.length > 0) {
-              const dailyOccupancy: Record<string, number> = {};
-              payment.daily_occupancy.forEach((day: any) => {
-                dailyOccupancy[day.date] = day.guests || 0;
-              });
-
-              const billing = BillingCalculator.calculateFromDailyOccupancy(
-                {
-                  method: financialSettings?.billing_method as any || 'per_person_per_night',
-                  amount: financialSettings?.billing_amount || 0,
-                  taxRate: financialSettings?.tax_rate,
-                  cleaningFee: financialSettings?.cleaning_fee,
-                  petFee: financialSettings?.pet_fee,
-                  damageDeposit: financialSettings?.damage_deposit,
-                },
-                dailyOccupancy,
-                {
-                  startDate: parseDateOnly(reservation.start_date),
-                  endDate: parseDateOnly(reservation.end_date),
-                }
-              );
-              reservationCharge = billing.total + (payment.manual_adjustment_amount || 0);
-            }
-            // Priority 2: If locked, use stored amount
-            else if (payment.billing_locked && payment.amount) {
-              reservationCharge = payment.amount + (payment.manual_adjustment_amount || 0);
-            }
-            // Priority 3: If no occupancy data, show $0 (awaiting data)
-            else {
-              reservationCharge = 0;
-            }
-            
-            familyCharged += reservationCharge;
-            familyPaid += payment.amount_paid || 0;
-          }
-
-          familyNights += nights;
+          familyCharged += chargeForReservation(reservation, payment);
+          familyPaid += payment?.amount_paid || 0;
+          familyNights += calculateNights(reservation.start_date, reservation.end_date);
         }
 
-        if (familyReservations.length > 0) {
+        let priorCharged = 0;
+        let priorPaid = 0;
+        for (const reservation of priorReservations) {
+          const payment = paymentsByReservation.get(reservation.id);
+          priorCharged += chargeForReservation(reservation, payment);
+          priorPaid += payment?.amount_paid || 0;
+        }
+
+        // Positive = still owed from earlier years, negative = credit carried in
+        const priorBalance = round2(priorCharged - priorPaid - priorReceipts);
+        const outstandingBalance = round2(
+          priorBalance + familyCharged - familyPaid - seasonReceipts
+        );
+
+        const hasActivity =
+          familyReservations.length > 0 ||
+          Math.abs(priorBalance) > 0.004 ||
+          seasonReceipts > 0;
+
+        if (hasActivity) {
           familySummaries.push({
             familyGroup: familyGroup.name,
             totalStays: familyReservations.length,
             totalNights: familyNights,
-            totalCharged: familyCharged,
-            totalPaid: familyPaid,
-            outstandingBalance: familyCharged - familyPaid,
+            totalCharged: round2(familyCharged),
+            totalPaid: round2(familyPaid),
+            receiptCredits: round2(seasonReceipts),
+            carriedInCredit: round2(-priorBalance),
+            outstandingBalance,
             leadEmail: familyGroup.lead_email || undefined,
             leadPhone: familyGroup.lead_phone || undefined,
           });
@@ -215,6 +261,9 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
           totalNights += familyNights;
           totalCharged += familyCharged;
           totalPaid += familyPaid;
+          totalReceiptCredits += seasonReceipts;
+          totalCarriedInCredit += -priorBalance;
+          totalOutstanding += outstandingBalance;
         }
       }
 
@@ -225,11 +274,14 @@ export const useAdminSeasonSummary = (seasonYear?: number) => {
           totalFamilies: familySummaries.length,
           totalStays,
           totalNights,
-          totalCharged,
-          totalPaid,
-          totalOutstanding: totalCharged - totalPaid,
+          totalCharged: round2(totalCharged),
+          totalPaid: round2(totalPaid),
+          totalReceiptCredits: round2(totalReceiptCredits),
+          totalCarriedInCredit: round2(totalCarriedInCredit),
+          totalOutstanding: round2(totalOutstanding),
         },
       });
+
     } catch (error) {
       console.error('Error fetching admin season summary:', error);
       toast({
