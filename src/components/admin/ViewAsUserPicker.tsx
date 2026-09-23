@@ -23,7 +23,8 @@ export const ViewAsUserPicker = () => {
   const { isAdmin } = useOrgAdmin();
   const { familyGroups } = useFamilyGroups();
   const { organization } = useOrganization();
-  const { target, setTarget, clear, isImpersonating } = useImpersonation();
+  const { target, setTarget, clear, isImpersonating, canImpersonate } = useImpersonation();
+  const selfLabel = isAdmin ? 'Admin (myself)' : 'Treasurer (myself)';
   const [searchParams, setSearchParams] = useSearchParams();
   const [links, setLinks] = useState<Array<{ family_group_name: string; member_name: string; claimed_by_user_id: string | null }>>([]);
 

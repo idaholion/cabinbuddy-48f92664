@@ -30,7 +30,12 @@ export const ImpersonationProvider = ({ children }: { children: ReactNode }) => 
   const { organization } = useOrganization();
   const [target, setTargetState] = useState<ImpersonationTarget | null>(null);
 
-  const canImpersonate = !!isAdmin;
+  // Treasurers get the same read-only "view as" ability as admins.
+  const userEmail = (user?.email || '').toLowerCase();
+  const treasurerEmail = ((organization as any)?.treasurer_email || '').toLowerCase();
+  const isTreasurer = !!userEmail && !!treasurerEmail && userEmail === treasurerEmail;
+
+  const canImpersonate = !!isAdmin || isTreasurer;
 
   // Hydrate from sessionStorage so the admin's choice persists across nav
   useEffect(() => {
