@@ -133,7 +133,7 @@ export const ViewAsUserPicker = () => {
             </span>
           </div>
           <Button size="sm" variant="outline" onClick={() => handleSelect('__self__')}>
-            <X className="h-3.5 w-3.5 mr-1" /> Return to Admin
+            <X className="h-3.5 w-3.5 mr-1" /> {isAdmin ? 'Return to Admin' : 'Return to Treasurer'}
           </Button>
         </div>
       )}
@@ -146,10 +146,10 @@ export const ViewAsUserPicker = () => {
           </div>
           <Select value={target?.userId ?? '__self__'} onValueChange={handleSelect}>
             <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Admin (myself)" />
+              <SelectValue placeholder={selfLabel} />
             </SelectTrigger>
             <SelectContent className="max-h-80">
-              <SelectItem value="__self__">Admin (myself)</SelectItem>
+              <SelectItem value="__self__">{selfLabel}</SelectItem>
               {Object.entries(grouped)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([fg, list]) => (
