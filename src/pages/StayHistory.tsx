@@ -1847,8 +1847,8 @@ export default function StayHistory() {
             </div>
           )}
 
-          {/* Family Group Filter (Admin only) */}
-          {isAdmin && (
+          {/* Family Group Filter (Admin & Treasurer) */}
+          {canViewAllStays && (
             <Select value={selectedFamilyGroup} onValueChange={setSelectedFamilyGroup}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select family group" />
