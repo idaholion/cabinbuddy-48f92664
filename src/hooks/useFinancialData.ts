@@ -113,14 +113,7 @@ export const useFinancialData = () => {
       // Apply access level filtering
       if (accessLevel === 'host') {
         // Hosts can only see their own data
-        const viewedGroupName = impersonationTarget
-          ? (roleUserFamilyGroup?.name || impersonationTarget.familyGroup)
-          : null;
-        if (viewedGroupName) {
-          query = query.eq('family_group', viewedGroupName);
-        } else {
-          query = query.eq('user_id', viewedUserId);
-        }
+        query = query.eq('user_id', viewedUserId);
       } else if (accessLevel === 'group_lead') {
         // Group leads can see all data from their family group
         const userFamilyGroupName = roleUserFamilyGroup?.name || getUserFamilyGroup();
