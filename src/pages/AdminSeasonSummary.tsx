@@ -148,16 +148,19 @@ export default function AdminSeasonSummary() {
             onClick={() => {
               // Generate CSV export of all family data
               const csvContent = [
-                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Balance', 'Status'],
+                ['Family Group', 'Stays', 'Nights', 'Charged', 'Paid', 'Receipt Credits', 'Credit Carried In', 'Balance', 'Status'],
                 ...summary.familySummaries.map(f => [
                   f.familyGroup,
                   f.totalStays.toString(),
                   f.totalNights.toString(),
                   f.totalCharged.toFixed(2),
                   f.totalPaid.toFixed(2),
+                  f.receiptCredits.toFixed(2),
+                  f.carriedInCredit.toFixed(2),
                   f.outstandingBalance.toFixed(2),
-                  f.outstandingBalance === 0 ? 'Paid' : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
+                  f.outstandingBalance <= 0.004 ? (f.outstandingBalance < -0.004 ? 'Credit' : 'Paid') : f.totalPaid > 0 ? 'Partial' : 'Unpaid'
                 ])
+
               ].map(row => row.join(',')).join('\n');
               
               const blob = new Blob([csvContent], { type: 'text/csv' });
