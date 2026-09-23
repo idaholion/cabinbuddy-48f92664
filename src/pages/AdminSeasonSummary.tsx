@@ -252,13 +252,13 @@ export default function AdminSeasonSummary() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-destructive" />
+              <DollarSign className="h-4 w-4" />
               Outstanding
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {formatCurrency(summary.totals.totalOutstanding)}
+            <div className={`text-2xl font-bold ${summary.totals.totalOutstanding < -0.004 ? 'text-green-600' : ''}`}>
+              {formatCurrency(-summary.totals.totalOutstanding)}
             </div>
           </CardContent>
         </Card>
