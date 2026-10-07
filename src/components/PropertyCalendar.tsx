@@ -55,7 +55,12 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { reservationSettings } = useReservationSettings();
-  const { reservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
+  const { reservations: allReservations, loading: reservationsLoading, updateReservation, deleteReservation, refetchReservations } = useReservations();
+  // Stays marked "Didn't use this stay" release their dates on the calendar.
+  const reservations = useMemo(
+    () => allReservations.filter((r: any) => r.status !== 'unused'),
+    [allReservations]
+  );
   const { isCalendarKeeper: isCalendarKeeperRole } = useUserRole();
   
   // Work weekend accordion state and ref
