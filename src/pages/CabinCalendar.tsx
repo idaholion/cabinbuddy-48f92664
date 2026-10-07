@@ -705,7 +705,7 @@ const CabinCalendar = () => {
                               Work Weekend
                             </DropdownMenuItem>
                            <DropdownMenuSeparator />
-                           <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => propertyCalendarRef.current?.scrollToUpcomingReservations()}>
                              <Edit2 className="h-4 w-4 mr-2" />
                              Edit my bookings
                            </DropdownMenuItem>
