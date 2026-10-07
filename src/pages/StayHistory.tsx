@@ -414,6 +414,61 @@ export default function StayHistory() {
     setEditOccupancyStay(null);
   };
 
+  // Holder (primary host / booker), admins, treasurer and calendar keeper may
+  // mark a stay as unused.
+  const canMarkUnused = (reservation: any) => {
+    if (isAdmin || isTreasurer || isCalendarKeeper) return true;
+    if (reservation.user_id && reservation.user_id === effectiveUserId) return true;
+    const email = (effectiveUserEmail || '').trim().toLowerCase();
+    const hosts = Array.isArray(reservation.host_assignments) ? reservation.host_assignments : [];
+    if (email && hosts[0]?.host_email && String(hosts[0].host_email).trim().toLowerCase() === email) return true;
+    return false;
+  };
+
+  const handleMarkUnused = async (reservationId: string) => {
+    if (!organization?.id) return;
+    if (isImpersonating) {
+      toast.error("Viewing as another user is read-only");
+      return;
+    }
+    try {
+      const { error: resErr } = await supabase
+        .from('reservations')
+        .update({ status: 'unused', edited_by_user_id: user?.id ?? null })
+        .eq('id', reservationId)
+        .eq('organization_id', organization.id);
+      if (resErr) throw resErr;
+      const { error: payErr } = await supabase
+        .from('payments')
+        .update({ amount: 0 })
+        .eq('reservation_id', reservationId)
+        .eq('organization_id', organization.id);
+      if (payErr) throw payErr;
+      await refetchReservations();
+      await fetchPayments(1, 500);
+      toast.success("Stay marked as unused — dates released");
+    } catch (error) {
+      console.error('Failed to mark stay unused', error);
+      toast.error("Couldn't mark this stay as unused");
+    }
+  };
+
+  const handleRestoreUnused = async (reservationId: string) => {
+    if (!organization?.id) return;
+    try {
+      const { error } = await supabase
+        .from('reservations')
+        .update({ status: 'confirmed', edited_by_user_id: user?.id ?? null })
+        .eq('id', reservationId)
+        .eq('organization_id', organization.id);
+      if (error) throw error;
+      await refetchReservations();
+      toast.success("Stay restored — re-enter charges with Edit/Split Occupancy");
+    } catch (error) {
+      toast.error("Couldn't restore this stay");
+    }
+  };
+
   const handleDeleteStay = async (reservationId: string) => {
     try {
       const success = await deleteReservation(reservationId);
@@ -966,6 +1021,13 @@ export default function StayHistory() {
       billingMethod = dailyOccupancy.length > 0 
         ? "Daily occupancy" 
         : "Session-based";
+    }
+
+    // Stays marked "Didn't use this stay" carry no charges; anything paid
+    // toward them flows forward as credit.
+    if (reservation.status === 'unused') {
+      billingAmount = 0;
+      manualAdjustment = 0;
     }
 
     // Include manual adjustment in balance calculation
@@ -2234,6 +2296,9 @@ export default function StayHistory() {
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2 flex-wrap">
                       {format(checkInDate, "MMM d, yyyy")} - {format(checkOutDate, "MMM d, yyyy")}
+                      {reservation.status === 'unused' && (
+                        <Badge variant="outline">Unused</Badge>
+                      )}
                       {reservation.isVirtualSplit && (
                         <Badge variant="outline" className="gap-1 bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
                           <Users className="h-3 w-3" />
@@ -2699,6 +2764,34 @@ export default function StayHistory() {
                        <Receipt className="h-4 w-4 mr-2" />
                        Payment History
                      </Button>
+                   )}
+                   {!reservation.isVirtualSplit && reservation.status !== 'unused' && canMarkUnused(reservation) && (
+                     <ConfirmationDialog
+                       title="Didn't use this stay?"
+                       description="This marks the stay as Unused: the dates are released on the calendar, arrival/departure reminders stop, and the stay's charges are set to $0. Any money already paid becomes credit. The stay still counts as one of your family's selections. The record stays here in Stay History as Unused."
+                       confirmText="Mark as Unused"
+                       cancelText="Cancel"
+                       onConfirm={() => handleMarkUnused(reservation.id)}
+                     >
+                       <Button variant="outline" size="sm">
+                         <AlertCircle className="h-4 w-4 mr-2" />
+                         Didn't use this stay
+                       </Button>
+                     </ConfirmationDialog>
+                   )}
+                   {!reservation.isVirtualSplit && reservation.status === 'unused' && (isAdmin || isCalendarKeeper) && (
+                     <ConfirmationDialog
+                       title="Restore this stay?"
+                       description="This puts the stay back on the calendar and turns reminders back on. Charges are not restored automatically — use Edit/Split Occupancy afterward to re-enter them."
+                       confirmText="Restore"
+                       cancelText="Cancel"
+                       onConfirm={() => handleRestoreUnused(reservation.id)}
+                     >
+                       <Button variant="outline" size="sm">
+                         <RefreshCw className="h-4 w-4 mr-2" />
+                         Restore stay
+                       </Button>
+                     </ConfirmationDialog>
                    )}
                    {canDeleteStays && (
                      <ConfirmationDialog
