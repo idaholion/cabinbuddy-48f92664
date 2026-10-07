@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from "react";
 import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
