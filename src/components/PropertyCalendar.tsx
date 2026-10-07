@@ -283,11 +283,11 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
         .eq('organization_id', organization.id);
       if (payErr) throw payErr;
       await refetchReservations();
-      toast.success("Stay marked as unused — dates released");
+      toast({ title: "Stay marked as unused — dates released" });
       setReservationToMarkUnused(null);
     } catch (error) {
       console.error('Failed to mark stay unused', error);
-      toast.error("Couldn't mark this stay as unused");
+      toast({ title: "Couldn't mark this stay as unused", variant: "destructive" });
     }
   };
 
