@@ -1720,8 +1720,14 @@ const getBookingsForDate = (date: Date) => {
                      </div>
                    </div>
                    <div className="flex items-center space-x-2">
-                     {item.type === 'reservation' ? (
-                       <DropdownMenu>
+                      {item.type === 'reservation' && canMarkUnused(item) && item.status !== 'unused' && (
+                        <Button variant="outline" size="sm" onClick={() => setReservationToMarkUnused(item)}>
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          Didn't use
+                        </Button>
+                      )}
+                      {item.type === 'reservation' ? (
+                        <DropdownMenu>
                          <DropdownMenuTrigger asChild>
                            <Button variant="outline" size="sm">
                              <Edit2 className="h-4 w-4 mr-1" />
