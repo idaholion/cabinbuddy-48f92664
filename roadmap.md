@@ -10,5 +10,9 @@
 
 
 ## Waiting on user / external
-- [ ] Verify credit-transfer math on preview
+- [x] Verify credit-transfer math on preview (user tested $1 to Sam — works; edge cases deferred as low-frequency)
 - [ ] Family Group Setup hint about delegate checkboxes (optional)
+- [ ] "Didn't use this stay" calendar option — offered, not yet decided
+- [ ] Template-layer supervisor propagation — deferred to off-season queue
+- [ ] Review 3 critical findings in Security scan
+
