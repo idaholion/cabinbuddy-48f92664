@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from "react";
-import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Calendar, MapPin, User, Clock, ChevronDown, Edit2, Filter, Eye, EyeOff, Layers, Users, Search, CalendarDays, Plus, CalendarIcon, TestTube, ChevronUp, ChevronLeft, ChevronRight, Trash2, AlertCircle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -22,6 +22,7 @@ import { TradeRequestForm } from "@/components/TradeRequestForm";
 import { TradeRequestsManager } from "@/components/TradeRequestsManager";
 import { MultiPeriodBookingForm } from "@/components/MultiPeriodBookingForm";
 import { ReservationSplitDialog } from "@/components/ReservationSplitDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { WorkWeekendCalendarEvent } from "@/components/WorkWeekendCalendarEvent";
@@ -61,7 +62,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
     () => allReservations.filter((r: any) => r.status !== 'unused'),
     [allReservations]
   );
-  const { isCalendarKeeper: isCalendarKeeperRole } = useUserRole();
+  const { isAdmin, isTreasurer, isCalendarKeeper: isCalendarKeeperRole } = useUserRole();
   
   // Work weekend accordion state and ref
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
@@ -128,6 +129,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [editingReservation, setEditingReservation] = useState<any>(null);
   const [reservationToDelete, setReservationToDelete] = useState<any>(null);
+  const [reservationToMarkUnused, setReservationToMarkUnused] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   // Phase 4: Enhanced filtering and view options
@@ -251,6 +253,41 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
       setShowDeleteDialog(false);
       setReservationToDelete(null);
       refetchReservations(); // Refresh the calendar
+    }
+  };
+
+  // Holder (primary host / booker), admins, treasurer and calendar keeper may
+  // mark a stay as unused — same rules as Stay History.
+  const canMarkUnused = (reservation: any) => {
+    if (isAdmin || isTreasurer || isCalendarKeeper) return true;
+    if (reservation.user_id && reservation.user_id === user?.id) return true;
+    const email = (user?.email || '').trim().toLowerCase();
+    const hosts = Array.isArray(reservation.host_assignments) ? reservation.host_assignments : [];
+    if (email && hosts[0]?.host_email && String(hosts[0].host_email).trim().toLowerCase() === email) return true;
+    return false;
+  };
+
+  const handleMarkUnused = async (reservationId: string) => {
+    if (!organization?.id) return;
+    try {
+      const { error: resErr } = await supabase
+        .from('reservations')
+        .update({ status: 'unused', edited_by_user_id: user?.id ?? null })
+        .eq('id', reservationId)
+        .eq('organization_id', organization.id);
+      if (resErr) throw resErr;
+      const { error: payErr } = await supabase
+        .from('payments')
+        .update({ amount: 0 })
+        .eq('reservation_id', reservationId)
+        .eq('organization_id', organization.id);
+      if (payErr) throw payErr;
+      await refetchReservations();
+      toast.success("Stay marked as unused — dates released");
+      setReservationToMarkUnused(null);
+    } catch (error) {
+      console.error('Failed to mark stay unused', error);
+      toast.error("Couldn't mark this stay as unused");
     }
   };
 
@@ -1706,7 +1743,13 @@ const getBookingsForDate = (date: Date) => {
                                <Calendar className="h-4 w-4 mr-2" />
                                Split into Periods
                              </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                             {canMarkUnused(item) && item.status !== 'unused' && (
+                              <DropdownMenuItem onClick={() => setReservationToMarkUnused(item)}>
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                                Didn't use this stay
+                              </DropdownMenuItem>
+                             )}
+                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => {
                                 setReservationToDelete(item);
@@ -1951,6 +1994,24 @@ const getBookingsForDate = (date: Date) => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete Reservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Didn't Use This Stay Confirmation Dialog */}
+      <AlertDialog open={!!reservationToMarkUnused} onOpenChange={(open) => { if (!open) setReservationToMarkUnused(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Didn't use this stay?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This marks the stay as Unused: the dates are released on the calendar, arrival/departure reminders stop, and the stay's charges are set to $0. Any money already paid becomes credit. The stay still counts as one of your family's selections. The record stays in Stay History as Unused.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleMarkUnused(reservationToMarkUnused.id)}>
+              Mark as Unused
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
