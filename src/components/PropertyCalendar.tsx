@@ -50,6 +50,7 @@ interface PropertyCalendarProps {
 
 export interface PropertyCalendarRef {
   scrollToWorkWeekend: () => void;
+  scrollToUpcomingReservations: () => void;
 }
 
 export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendarProps>(({ onMonthChange, selectedFamilyGroupFilter }, ref) => {
@@ -67,8 +68,15 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   // Work weekend accordion state and ref
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   const workWeekendSectionRef = useRef<HTMLDivElement>(null);
+  const upcomingReservationsRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(ref, () => ({
+    scrollToUpcomingReservations: () => {
+      upcomingReservationsRef.current?.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    },
     scrollToWorkWeekend: () => {
       setAccordionValue(prev => prev.includes('work-weekend') ? prev : [...prev, 'work-weekend']);
       setTimeout(() => {
@@ -1624,7 +1632,7 @@ const getBookingsForDate = (date: Date) => {
       </div>
 
       {/* Upcoming Reservations */}
-      <Card>
+      <Card ref={upcomingReservationsRef} className="scroll-mt-24">
         <CardHeader>
           <CardTitle>Upcoming Reservations</CardTitle>
           <CardDescription>Reservations in the next 60 days</CardDescription>
