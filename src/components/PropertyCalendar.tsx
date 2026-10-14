@@ -1421,9 +1421,25 @@ const getBookingsForDate = (date: Date) => {
                                   ✕
                                 </Button>
                               </div>
-                              <div className="text-xs text-center mt-1 opacity-90">
-                                {selectedDates.length} day{selectedDates.length > 1 ? 's' : ''} selected
-                              </div>
+                              {(() => {
+                                const sorted = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+                                const nights = Math.max(0, sorted.length - 1);
+                                const weeks = Math.round(nights / 7);
+                                return (
+                                  <>
+                                    <div className="text-xs text-center mt-1 opacity-90">
+                                      {nights} night{nights === 1 ? '' : 's'}
+                                      {sorted.length > 1 && ` · ${format(sorted[0], 'EEE MMM d')} – ${format(sorted[sorted.length - 1], 'EEE MMM d')}`}
+                                      {weeks >= 1 && ` (${weeks} week${weeks > 1 ? 's' : ''})`}
+                                    </div>
+                                    {nights > 0 && nights <= 7 && (
+                                      <div className="text-[11px] text-center mt-0.5 opacity-80">
+                                        Need 2 weeks? Drag across both weeks to book them as one stay.
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         );
