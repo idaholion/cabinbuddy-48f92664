@@ -117,12 +117,7 @@ const cabinItems = [
     icon: CheckSquare,
   },
   {
-    title: "Daily & Final Input",
-    url: "/checkout-final",
-    icon: CreditCard,
-  },
-  {
-    title: "Stay History",
+    title: "Current & Past Stays",
     url: "/stay-history",
     icon: Calendar,
   },
