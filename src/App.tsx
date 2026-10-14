@@ -60,7 +60,6 @@ const Documents = React.lazy(() => import("./pages/Documents"));
 const SeasonalChecklists = React.lazy(() => import("./pages/SeasonalChecklists"));
 const SeasonalChecklistView = React.lazy(() => import("./pages/SeasonalChecklistView"));
 const CheckoutList = React.lazy(() => import("./pages/CheckoutList"));
-const CheckoutFinal = React.lazy(() => import("./pages/CheckoutFinal"));
 const StayHistory = React.lazy(() => import("./pages/StayHistory"));
 const PhotoSharing = React.lazy(() => import("./pages/PhotoSharing"));
 const DataBackup = React.lazy(() => import("./pages/DataBackup"));
