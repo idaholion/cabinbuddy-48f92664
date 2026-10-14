@@ -58,12 +58,13 @@ const NotificationMonitoring = () => {
   return (
     <MainLayout>
       <div className="container mx-auto py-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Notification Monitoring</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center">
+          <h1 className="text-4xl sm:text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Notification Monitoring</h1>
+          <p className="text-base text-muted-foreground">
             View delivery status for all email and SMS notifications
           </p>
         </div>
+
 
         <Card>
           <CardHeader>
