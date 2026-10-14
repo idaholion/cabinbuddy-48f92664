@@ -138,11 +138,13 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       // Filter periods by rotation year to match NotificationManagement logic
       const filteredPeriods = periods.filter(p => p.rotation_year === rotationYear);
       
+      // Ignore results from an older request that finished after a newer one
+      if (requestId !== requestIdRef.current) return;
       generateReminderPreviews(templates || [], filteredPeriods, days, completedSet, secondaryStatus);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
