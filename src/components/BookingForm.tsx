@@ -63,7 +63,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { toast } = useToast();
   const { familyGroups } = useFamilyGroups();
   const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo, isAdmin, canEditReservations } = useEffectiveRole();
-  const { createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
+  const { reservations: allReservations, createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
   const { rotationData, getRotationForYear } = useRotationOrder();
   const { 
     calculateTimePeriodWindows, 
@@ -99,6 +99,44 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const [submitting, setSubmitting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showNoHostDialog, setShowNoHostDialog] = useState(false);
+  const [adjacentPrompt, setAdjacentPrompt] = useState<{ reservation: any; data: BookingFormData; gap: boolean } | null>(null);
+  const skipAdjacentCheckRef = useRef(false);
+
+  const combineWithAdjacent = async () => {
+    if (!adjacentPrompt) return;
+    const { reservation, data } = adjacentPrompt;
+    setAdjacentPrompt(null);
+    setSubmitting(true);
+    try {
+      const start = new Date(reservation.start_date + 'T00:00:00');
+      const nights = Math.round((data.endDate.getTime() - start.getTime()) / 86400000);
+      const updated = await updateReservation(reservation.id, {
+        end_date: data.endDate.toISOString().split('T')[0],
+        nights_used: nights,
+        total_cost: Math.round(((Number(reservation.total_cost) || 0) + (Number(data.totalCost) || 0)) * 100) / 100,
+      }, testOverrideMode || data.adminOverride);
+      if (updated) {
+        toast({ title: "Stays Combined", description: `Your stay now runs ${nights} nights as one reservation.` });
+        form.reset();
+        onOpenChange(false);
+        onBookingComplete?.();
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const keepSeparate = () => {
+    if (!adjacentPrompt) return;
+    const { reservation, gap } = adjacentPrompt;
+    setAdjacentPrompt(null);
+    if (gap) {
+      // Start on the changeover day instead of leaving one unbooked night
+      form.setValue('startDate', new Date(reservation.end_date + 'T00:00:00'));
+    }
+    skipAdjacentCheckRef.current = true;
+    form.handleSubmit(onSubmit)();
+  };
 
   const form = useForm<BookingFormData>({
     defaultValues: {
@@ -363,6 +401,22 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       });
       return;
     }
+
+    // Back-to-back stay detection: offer to combine with the family's own adjacent stay
+    if (!editingReservation && !skipAdjacentCheckRef.current) {
+      const newStart = data.startDate.toISOString().split('T')[0];
+      const dayBefore = new Date(data.startDate.getTime() - 86400000).toISOString().split('T')[0];
+      const adjacent = (allReservations || []).find((r: any) =>
+        r.family_group === data.familyGroup &&
+        r.status !== 'cancelled' &&
+        (r.end_date === newStart || r.end_date === dayBefore)
+      );
+      if (adjacent) {
+        setAdjacentPrompt({ reservation: adjacent, data, gap: adjacent.end_date === dayBefore });
+        return;
+      }
+    }
+    skipAdjacentCheckRef.current = false;
 
     setSubmitting(true);
     try {
