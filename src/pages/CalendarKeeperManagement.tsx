@@ -14,14 +14,14 @@ import { SelectionTurnNotificationSender } from "@/components/SelectionTurnNotif
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SECTIONS = [
-  { value: "notifications", label: "Manual Reminders" },
-  { value: "manual-templates", label: "Manual Notifications" },
-  { value: "selection-turn", label: "Selection Turn" },
-  { value: "lookup", label: "Reservation Lookup" },
-  { value: "test", label: "Test System" },
-  { value: "templates", label: "Templates" },
   { value: "automated", label: "Automated System" },
   { value: "monitoring", label: "Delivery History" },
+  { value: "templates", label: "Templates" },
+  { value: "selection-turn", label: "Selection Turn" },
+  { value: "notifications", label: "Manual Reminders" },
+  { value: "manual-templates", label: "Manual Notifications" },
+  { value: "lookup", label: "Reservation Lookup" },
+  { value: "test", label: "Test System" },
 ];
 
 const CalendarKeeperManagement = () => {
@@ -29,7 +29,7 @@ const CalendarKeeperManagement = () => {
     document.title = "Notification Management – Notifications & Reminders";
   }, []);
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") || "notifications";
+  const tab = searchParams.get("tab") || "automated";
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>

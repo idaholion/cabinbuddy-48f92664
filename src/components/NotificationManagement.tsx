@@ -769,10 +769,9 @@ export const NotificationManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
+        <TabsList className="grid w-full grid-cols-3 h-auto gap-1">
           <TabsTrigger value="all">All Events</TabsTrigger>
           <TabsTrigger value="reservations">Reservations</TabsTrigger>
-          <TabsTrigger value="selections">Selection Periods</TabsTrigger>
           <TabsTrigger value="work-weekends">Work Weekends</TabsTrigger>
         </TabsList>
         
@@ -829,7 +828,12 @@ export const NotificationManagement = () => {
                                   <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                                 )}
                               </div>
-                              <div className="flex flex-wrap items-center gap-2 sm:ml-4">
+                              {event.type === 'selection_period' && (
+                                <a href="/calendar-keeper-management?tab=selection-turn" className="text-sm text-primary underline sm:ml-4">
+                                  Sent automatically — use Selection Turn to resend
+                                </a>
+                              )}
+                              <div className={`flex flex-wrap items-center gap-2 sm:ml-4 ${event.type === 'selection_period' ? 'hidden' : ''}`}>
                                 <Select
                                   value={selectedReminderTypes[event.id] || ''}
                                   onValueChange={(value) => handleReminderTypeChange(event.id, value)}
