@@ -7,7 +7,7 @@ import { ReminderTemplateManager } from "@/components/ReminderTemplateManager";
 import { ReservationLookup } from "@/components/ReservationLookup";
 import { AutomatedReminderSettings } from "@/components/AutomatedReminderSettings";
 import { PageHeader } from "@/components/ui/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { ManualTemplateNotifications } from "@/components/ManualTemplateNotifications";
 import { SelectionTurnNotificationSender } from "@/components/SelectionTurnNotificationSender";
@@ -44,7 +44,7 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })} className="w-full">
-            <div className="md:hidden">
+            <div className="sticky top-0 z-20 bg-background/95 backdrop-blur rounded-md p-2 shadow-sm max-w-md">
               <label className="text-sm font-medium mb-1 block">Section</label>
               <Select value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
                 <SelectTrigger className="w-full bg-background"><SelectValue /></SelectTrigger>
@@ -53,9 +53,6 @@ const CalendarKeeperManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <TabsList className="hidden md:flex w-full justify-start overflow-x-auto scrollbar-thin">
-              {SECTIONS.map((s) => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
-            </TabsList>
             <TabsContent value="notifications" className="mt-6">
               <NotificationManagement />
             </TabsContent>
