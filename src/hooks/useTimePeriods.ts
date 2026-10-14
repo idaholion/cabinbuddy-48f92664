@@ -539,31 +539,25 @@ export const useTimePeriods = (rotationYear?: number) => {
         if (!primaryCounts[familyGroup]) primaryCounts[familyGroup] = 0;
         if (!secondaryCounts[familyGroup]) secondaryCounts[familyGroup] = 0;
         
-        // Count periods (7-day periods)
+        // Count periods (7-day periods). A short stay (e.g. 6 nights) still counts as one pick.
         const start = new Date(res.start_date);
         const end = new Date(res.end_date);
         const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const periods = Math.floor(days / 7);
-        
-        // Add to appropriate counter
+        const periods = Math.max(1, Math.round(days / 7));
+
+        const orgAllocationModel = organization.allocation_model ||
+          (organization.use_virtual_weeks_system ? 'static_weeks' : 'rotating_selection');
+
         if (isSecondary) {
           secondaryCounts[familyGroup] += periods;
-        } else if (res.time_period_number !== null) {
-          // SAFETY CHECK: Verify organization actually uses static weeks
-          // This prevents incorrect counting if period numbers somehow exist in rotating selection org
-          const orgAllocationModel = organization.allocation_model || 
-            (organization.use_virtual_weeks_system ? 'static_weeks' : 'rotating_selection');
-          
-          if (orgAllocationModel !== 'static_weeks') {
-            console.warn(`SAFETY: Reservation ${res.id} has period number but org uses ${orgAllocationModel}. Ignoring period counting.`);
-            // Don't count this - it's likely corrupted data or test data
-          } else {
-            // Only count as primary if it has a period number (static weeks)
+        } else if (orgAllocationModel === 'static_weeks') {
+          if (res.time_period_number !== null) {
             primaryCounts[familyGroup] += periods;
           }
+        } else if (!secondaryStartDate || resCreatedAt < secondaryStartDate) {
+          // Rotating selection: each primary-phase reservation is one selection pick
+          primaryCounts[familyGroup] += 1;
         }
-        // Ignore reservations with null period number made before secondary started
-        // (these are manual/admin bookings or bookings from sequential rotation primary)
       });
 
       // Get all family groups from both counts
