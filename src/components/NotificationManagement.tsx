@@ -769,7 +769,7 @@ export const NotificationManagement = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1">
           <TabsTrigger value="all">All Events</TabsTrigger>
           <TabsTrigger value="reservations">Reservations</TabsTrigger>
           <TabsTrigger value="selections">Selection Periods</TabsTrigger>
@@ -801,10 +801,10 @@ export const NotificationManagement = () => {
                     <div className="space-y-4">
                       {allEvents.map((event) => (
                         <Card key={`${event.type}-${event.id}`} className="border-l-4 border-l-primary">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                   {getEventIcon(event.type)}
                                   <h4 className="font-medium">{event.title}</h4>
                                   <Badge variant={getReminderBadgeVariant(event.days_until)}>
@@ -829,12 +829,12 @@ export const NotificationManagement = () => {
                                   <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-2 ml-4">
+                              <div className="flex flex-wrap items-center gap-2 sm:ml-4">
                                 <Select
                                   value={selectedReminderTypes[event.id] || ''}
                                   onValueChange={(value) => handleReminderTypeChange(event.id, value)}
                                 >
-                                  <SelectTrigger className="w-[180px]">
+                                  <SelectTrigger className="w-full sm:w-[180px]">
                                     <SelectValue placeholder="Select notification type" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -897,10 +897,10 @@ export const NotificationManagement = () => {
                 <div className="space-y-4">
                   {upcomingReservations.map((reservation) => (
                     <Card key={reservation.id} className="border-l-4 border-l-primary">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <Calendar className="h-4 w-4" />
                               <h4 className="font-medium">{reservation.family_group}</h4>
                               <Badge variant={getReminderBadgeVariant(reservation.days_until)}>
@@ -922,12 +922,12 @@ export const NotificationManagement = () => {
                               {reservation.guest_name} • {reservation.guest_email}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2 ml-4">
+                          <div className="flex flex-wrap items-center gap-2 sm:ml-4">
                             <Select
                               value={selectedReminderTypes[reservation.id] || 'reminder_3'}
                               onValueChange={(value) => handleReminderTypeChange(reservation.id, value)}
                             >
-                              <SelectTrigger className="w-[180px]">
+                              <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Select reminder type" />
                               </SelectTrigger>
                               <SelectContent>
@@ -985,10 +985,10 @@ export const NotificationManagement = () => {
 
                     return (
                       <Card key={periodId} className="border-l-4 border-l-secondary">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex-1">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <Users className="h-4 w-4" />
                                 <h4 className="font-medium">{period.familyGroup} Selection Period</h4>
                                 <Badge variant={period.isCurrentlyActive ? 'default' : getReminderBadgeVariant(daysUntil)}>
@@ -1000,12 +1000,12 @@ export const NotificationManagement = () => {
                                 {parseLocalDate(period.scheduledStartDate).toLocaleDateString()} - {parseLocalDate(period.scheduledEndDate).toLocaleDateString()}
                               </p>
                             </div>
-                            <div className="flex items-center space-x-2 ml-4">
+                            <div className="flex flex-wrap items-center gap-2 sm:ml-4">
                               <Select
                                 value={selectedReminderTypes[periodId] || ''}
                                 onValueChange={(value) => handleReminderTypeChange(periodId, value)}
                               >
-                                <SelectTrigger className="w-[180px]">
+                                <SelectTrigger className="w-full sm:w-[180px]">
                                   <SelectValue placeholder="Select notification type" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1076,10 +1076,10 @@ export const NotificationManagement = () => {
 
                     return (
                       <Card key={workWeekend.id} className="border-l-4 border-l-accent">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex-1">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 <Hammer className="h-4 w-4" />
                                 <h4 className="font-medium">{workWeekend.title}</h4>
                                 <Badge variant={getReminderBadgeVariant(daysUntil)}>
@@ -1095,12 +1095,12 @@ export const NotificationManagement = () => {
                                 <p className="text-sm text-muted-foreground mt-1">{workWeekend.description}</p>
                               )}
                             </div>
-                            <div className="flex items-center space-x-2 ml-4">
+                            <div className="flex flex-wrap items-center gap-2 sm:ml-4">
                               <Select
                                 value={selectedReminderTypes[workWeekend.id] || ''}
                                 onValueChange={(value) => handleReminderTypeChange(workWeekend.id, value)}
                               >
-                                <SelectTrigger className="w-[180px]">
+                                <SelectTrigger className="w-full sm:w-[180px]">
                                   <SelectValue placeholder="Select notification type" />
                                 </SelectTrigger>
                                 <SelectContent>
