@@ -200,6 +200,11 @@ const adminItems = [
     url: "/checklist-creator",
     icon: ListChecks,
   },
+  {
+    title: "Notification Monitoring",
+    url: "/notification-monitoring",
+    icon: Bell,
+  },
 ];
 
 const betaItems = [
@@ -222,11 +227,6 @@ const betaItems = [
     title: "Google Calendar Setup",
     url: "/google-calendar-setup",
     icon: Calendar,
-  },
-  {
-    title: "Notification Monitoring",
-    url: "/notification-monitoring",
-    icon: Bell,
   },
 ];
 
