@@ -556,7 +556,7 @@ export const useTimePeriods = (rotationYear?: number) => {
           }
         } else if (!secondaryStartDate || resCreatedAt < secondaryStartDate) {
           // Rotating selection: each primary-phase reservation is one selection pick
-          primaryCounts[familyGroup] += 1;
+          primaryCounts[familyGroup] += periods; // weeks booked = picks used
         }
       });
 
