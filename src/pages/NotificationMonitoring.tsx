@@ -242,6 +242,7 @@ const NotificationMonitoring = ({ embedded = false }: { embedded?: boolean }) =>
                   </TableBody>
                 </Table>
               </div>
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 No notifications found matching your filters
