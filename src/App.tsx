@@ -82,7 +82,6 @@ const ChecklistCreator = React.lazy(() => import("./pages/ChecklistCreator"));
 const SharedNotes = React.lazy(() => import("./pages/SharedNotes"));
 const FamilyGroupHealthCheck = React.lazy(() => import("./pages/FamilyGroupHealthCheck"));
 const AdminDocumentation = React.lazy(() => import("./pages/AdminDocumentation"));
-const NotificationMonitoring = React.lazy(() => import("./pages/NotificationMonitoring"));
 const StayHistorySnapshots = React.lazy(() => import("./pages/StayHistorySnapshots"));
 const CBFaqManagementPage = React.lazy(() => import("./pages/CBFaqManagementPage"));
 
@@ -186,7 +185,7 @@ const AppContent = () => {
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/family-group-health-check" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FamilyGroupHealthCheck /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/admin-documentation" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AdminDocumentation /></Suspense></MainLayout></AdminOnlyRoute>} />
-        <Route path="/notification-monitoring" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><NotificationMonitoring /></Suspense></MainLayout></AdminOnlyRoute>} />
+        <Route path="/notification-monitoring" element={<Navigate to="/calendar-keeper-management?tab=monitoring" replace />} />
         <Route path="/stay-history-snapshots" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><StayHistorySnapshots /></Suspense></MainLayout></AdminOnlyRoute>} />
         <Route path="/supervisor/cb-faq" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><CBFaqManagementPage /></Suspense></MainLayout></SupervisorRoute>} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

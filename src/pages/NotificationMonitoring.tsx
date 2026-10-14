@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { CheckCircle2, XCircle, AlertCircle, Mail, MessageSquare, RefreshCw } from "lucide-react";
 
-const NotificationMonitoring = () => {
+const NotificationMonitoring = ({ embedded = false }: { embedded?: boolean }) => {
   const [startDate, setStartDate] = useState(() => {
     const t = new Date();
     return format(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 30), "yyyy-MM-dd");
@@ -55,16 +55,14 @@ const NotificationMonitoring = () => {
     setFamilyGroup("");
   };
 
-  return (
-    <MainLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="text-center">
+  const content = (
+      <div className={embedded ? "space-y-6" : "container mx-auto py-6 space-y-6"}>
+        {!embedded && <div className="text-center">
           <h1 className="text-4xl sm:text-6xl mb-4 font-kaushan text-primary drop-shadow-lg">Notification Monitoring</h1>
           <p className="text-base text-muted-foreground">
             View delivery status for all email and SMS notifications
           </p>
-        </div>
-
+        </div>}
 
         <Card>
           <CardHeader>
@@ -225,8 +223,8 @@ const NotificationMonitoring = () => {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
   );
+  return embedded ? content : <MainLayout>{content}</MainLayout>;
 };
 
 export default NotificationMonitoring;

@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import NotificationMonitoring from "@/pages/NotificationMonitoring";
 import { NotificationManagement } from "@/components/NotificationManagement";
 import { NotificationTest } from "@/components/NotificationTest";
 import { ReminderTemplateManager } from "@/components/ReminderTemplateManager";
@@ -14,6 +16,8 @@ const CalendarKeeperManagement = () => {
   useEffect(() => {
     document.title = "Notification Management – Notifications & Reminders";
   }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "notifications";
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -27,7 +31,7 @@ const CalendarKeeperManagement = () => {
           backgroundImage={true}
         />
         <section aria-label="Notification tools" className="mt-4">
-          <Tabs defaultValue="notifications" className="w-full">
+          <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })} className="w-full">
             <TabsList className="flex w-full justify-start overflow-x-auto scrollbar-thin">
               <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
               <TabsTrigger value="manual-templates">Manual Notifications</TabsTrigger>
@@ -36,6 +40,7 @@ const CalendarKeeperManagement = () => {
               <TabsTrigger value="test">Test System</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
               <TabsTrigger value="automated">Automated System</TabsTrigger>
+              <TabsTrigger value="monitoring">Delivery History</TabsTrigger>
             </TabsList>
             <TabsContent value="notifications" className="mt-6">
               <NotificationManagement />
@@ -57,6 +62,9 @@ const CalendarKeeperManagement = () => {
             </TabsContent>
             <TabsContent value="automated" className="mt-6">
               <AutomatedReminderSettings />
+            </TabsContent>
+            <TabsContent value="monitoring" className="mt-6">
+              <NotificationMonitoring embedded />
             </TabsContent>
           </Tabs>
         </section>
