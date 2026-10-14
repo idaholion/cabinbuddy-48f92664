@@ -147,13 +147,7 @@ const handler = async (req: Request): Promise<Response> => {
                     sms_sent: notifyResponse?.sms_sent || false,
                     sms_status: notifyResponse?.sms_status || null,
                     twilio_sid: notifyResponse?.twilio_sid || null,
-                    metadata: {
-                      phase: 'secondary',
-                      rotation_year: year,
-                      triggered_by: 'cron_job',
-                      recipient_phone: notifyResponse?.recipient_phone,
-                      timestamp: new Date().toISOString()
-                    }
+                    recipient_phone: notifyResponse?.recipient_phone || null
                   });
                 
                 totalNotifications++;
@@ -323,13 +317,7 @@ const handler = async (req: Request): Promise<Response> => {
                     sms_sent: notifyResponse?.sms_sent || false,
                     sms_status: notifyResponse?.sms_status || null,
                     twilio_sid: notifyResponse?.twilio_sid || null,
-                    metadata: {
-                      phase: 'primary_auto_advance',
-                      rotation_year: year,
-                      triggered_by: 'cron_job',
-                      recipient_phone: notifyResponse?.recipient_phone,
-                      timestamp: new Date().toISOString()
-                    }
+                    recipient_phone: notifyResponse?.recipient_phone || null
                   });
                 
                 totalNotifications++;
@@ -397,13 +385,7 @@ const handler = async (req: Request): Promise<Response> => {
                   sms_sent: notifyResponse?.sms_sent || false,
                   sms_status: notifyResponse?.sms_status || null,
                   twilio_sid: notifyResponse?.twilio_sid || null,
-                  metadata: {
-                    phase: 'primary',
-                    rotation_year: year,
-                    triggered_by: 'cron_job',
-                    recipient_phone: notifyResponse?.recipient_phone,
-                    timestamp: new Date().toISOString()
-                  }
+                  recipient_phone: notifyResponse?.recipient_phone || null
                 });
               
               totalNotifications++;
@@ -486,13 +468,7 @@ const handler = async (req: Request): Promise<Response> => {
                       sms_sent: notifyResponse?.sms_sent || false,
                       sms_status: notifyResponse?.sms_status || null,
                       twilio_sid: notifyResponse?.twilio_sid || null,
-                      metadata: {
-                        phase: 'ending_tomorrow',
-                        rotation_year: year,
-                        triggered_by: 'cron_job',
-                        recipient_phone: notifyResponse?.recipient_phone,
-                        timestamp: new Date().toISOString()
-                      }
+                      recipient_phone: notifyResponse?.recipient_phone || null
                     });
                   
                   totalNotifications++;

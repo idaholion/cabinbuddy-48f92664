@@ -12,8 +12,11 @@ import { format } from "date-fns";
 import { CheckCircle2, XCircle, AlertCircle, Mail, MessageSquare, RefreshCw } from "lucide-react";
 
 const NotificationMonitoring = () => {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const t = new Date();
+    return format(new Date(t.getFullYear(), t.getMonth(), t.getDate() - 30), "yyyy-MM-dd");
+  });
+  const [endDate, setEndDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [notificationType, setNotificationType] = useState<string>("");
   const [familyGroup, setFamilyGroup] = useState<string>("");
 
