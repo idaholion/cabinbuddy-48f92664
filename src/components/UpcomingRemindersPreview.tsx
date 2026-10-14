@@ -56,24 +56,35 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const { getSelectionRotationYear } = useRotationOrder();
   const rotationYear = getSelectionRotationYear();
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
-  const { periods } = useReservationPeriods();
+  const { periods, fetchReservationPeriods } = useReservationPeriods();
   const [reminderPreviews, setReminderPreviews] = useState<ReminderPreview[]>([]);
   const [reminderTemplates, setReminderTemplates] = useState<any[]>([]);
   const [selectionDays, setSelectionDays] = useState<number>(14);
   const [expandedReminders, setExpandedReminders] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [completedFamilies, setCompletedFamilies] = useState<Set<string>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Load as soon as the organization is known. Scheduled turn dates come from
+  // reservation_periods, so we must not wait on the async "current family" lookup.
   useEffect(() => {
-    if (organization?.id && currentFamilyGroup !== null) {
-      // Always fetch data to ensure we clear stale reminders when periods become empty
+    if (organization?.id) {
       fetchData();
     } else {
-      // Clear reminders if we don't have required data
       setReminderPreviews([]);
       setLoading(false);
     }
-  }, [organization?.id, reservations, workWeekends, currentFamilyGroup, periods]);
+  }, [organization?.id, reservations, workWeekends, currentFamilyGroup, periods, rotationYear]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await (fetchReservationPeriods as any)?.();
+      await fetchData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const fetchData = async () => {
     if (!organization?.id) return;
@@ -335,7 +346,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
         // Selection turn START notification (sent when period begins)
         // Only show if the start date is within the 30-day preview window
         if (automatedSettings.automated_selection_turn_notifications_enabled) {
-          if (isAfter(actualStartDate, now) && isBefore(actualStartDate, thirtyDaysFromNow)) {
+          const startsToday = format(actualStartDate, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+          if ((startsToday || isAfter(actualStartDate, now)) && isBefore(actualStartDate, thirtyDaysFromNow)) {
             console.log('[UpcomingRemindersPreview] Adding selection start notification for:', period.current_family_group);
             previews.push({
               id: `sel-start-${period.current_family_group}-${rotationYear}`,
@@ -700,10 +712,21 @@ Don't miss out on making your reservations!`;
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 flex-wrap">
           <Clock className="h-5 w-5" />
           Upcoming Automated Reminders
           <Badge variant="outline">{totalReminders} scheduled</Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Refresh reminder schedule"
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
