@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Calendar, Clock, Hammer, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Clock, Hammer, Users, RefreshCw } from 'lucide-react';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useReservations } from '@/hooks/useReservations';
 import { useWorkWeekends } from '@/hooks/useWorkWeekends';
