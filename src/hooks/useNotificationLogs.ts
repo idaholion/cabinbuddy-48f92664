@@ -39,18 +39,18 @@ export const useNotificationLogs = (filters?: {
       let query = secureSelect("notification_log", orgContext)
         .select("*")
         .order("sent_at", { ascending: false })
-        .limit(100);
+        .limit(1000);
 
       if (filters?.startDate) {
         query = query.gte("sent_at", filters.startDate);
       }
       if (filters?.endDate) {
-        query = query.lte("sent_at", filters.endDate);
+        query = query.lte("sent_at", filters.endDate.length === 10 ? `${filters.endDate}T23:59:59.999` : filters.endDate);
       }
-      if (filters?.notificationType) {
+      if (filters?.notificationType && filters.notificationType !== "all") {
         query = query.eq("notification_type", filters.notificationType);
       }
-      if (filters?.familyGroup) {
+      if (filters?.familyGroup && filters.familyGroup !== "all") {
         query = query.eq("family_group", filters.familyGroup);
       }
 

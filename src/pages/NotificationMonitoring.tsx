@@ -36,6 +36,15 @@ const NotificationMonitoring = () => {
     return <Badge variant="secondary" className="gap-1"><AlertCircle className="h-3 w-3" /> Not Sent</Badge>;
   };
 
+  const applyPreset = (preset: "30" | "90" | "year") => {
+    const today = new Date();
+    const start = preset === "year"
+      ? new Date(today.getFullYear(), 0, 1)
+      : new Date(today.getFullYear(), today.getMonth(), today.getDate() - Number(preset));
+    setStartDate(format(start, "yyyy-MM-dd"));
+    setEndDate(format(today, "yyyy-MM-dd"));
+  };
+
   const handleReset = () => {
     setStartDate("");
     setEndDate("");
@@ -109,6 +118,11 @@ const NotificationMonitoring = () => {
                 </Select>
               </div>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => applyPreset("30")} variant="secondary" size="sm">Last 30 days</Button>
+              <Button onClick={() => applyPreset("90")} variant="secondary" size="sm">Last 90 days</Button>
+              <Button onClick={() => applyPreset("year")} variant="secondary" size="sm">This year</Button>
+            </div>
             <div className="flex gap-2">
               <Button onClick={handleReset} variant="outline">Reset Filters</Button>
               <Button onClick={() => refetch()} variant="outline" className="gap-2">
@@ -121,7 +135,7 @@ const NotificationMonitoring = () => {
         <Card>
           <CardHeader>
             <CardTitle>Recent Notifications ({logs?.length || 0})</CardTitle>
-            <CardDescription>Last 100 notifications matching your filters</CardDescription>
+            <CardDescription>Newest first, up to 1,000 notifications matching your filters</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
