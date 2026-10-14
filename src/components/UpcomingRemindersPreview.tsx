@@ -52,11 +52,11 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const { organization } = useOrganization();
   const { reservations } = useReservations();
   const { workWeekends } = useWorkWeekends();
-  const { familyGroups } = useFamilyGroups();
-  const { getSelectionRotationYear } = useRotationOrder();
+  const { familyGroups, loading: familyGroupsLoading } = useFamilyGroups();
+  const { getSelectionRotationYear, loading: rotationLoading } = useRotationOrder();
   const rotationYear = getSelectionRotationYear();
   const { currentFamilyGroup, getDaysRemaining } = useSequentialSelection(rotationYear);
-  const { periods, fetchReservationPeriods } = useReservationPeriods();
+  const { periods, fetchReservationPeriods, loading: periodsLoading } = useReservationPeriods();
   const [reminderPreviews, setReminderPreviews] = useState<ReminderPreview[]>([]);
   const [reminderTemplates, setReminderTemplates] = useState<any[]>([]);
   const [selectionDays, setSelectionDays] = useState<number>(14);
@@ -64,22 +64,29 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
   const [loading, setLoading] = useState(true);
   const [completedFamilies, setCompletedFamilies] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
+  const requestIdRef = useRef(0);
 
-  // Load as soon as the organization is known. Scheduled turn dates come from
-  // reservation_periods, so we must not wait on the async "current family" lookup.
+  // Wait until the rotation year, scheduled turns and family list are loaded,
+  // otherwise we'd compute an empty preview against incomplete data.
+  const dependenciesReady = !rotationLoading && !periodsLoading && !familyGroupsLoading;
+
   useEffect(() => {
-    if (organization?.id) {
-      fetchData();
-    } else {
+    if (!organization?.id) {
       setReminderPreviews([]);
       setLoading(false);
+      return;
     }
-  }, [organization?.id, reservations, workWeekends, currentFamilyGroup, periods, rotationYear]);
+    if (!dependenciesReady) {
+      setLoading(true);
+      return;
+    }
+    fetchData();
+  }, [organization?.id, dependenciesReady, reservations, workWeekends, currentFamilyGroup, periods, familyGroups, rotationYear]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await (fetchReservationPeriods as any)?.();
+      await fetchReservationPeriods();
       await fetchData();
     } finally {
       setRefreshing(false);
@@ -88,6 +95,7 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
 
   const fetchData = async () => {
     if (!organization?.id) return;
+    const requestId = ++requestIdRef.current;
     
     setLoading(true);
     try {
