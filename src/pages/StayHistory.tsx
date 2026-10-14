@@ -36,6 +36,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
 import { usePaymentSync } from "@/hooks/usePaymentSync";
 import { BillingCalculator } from "@/lib/billing-calculator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CheckoutFinal from "@/pages/CheckoutFinal";
 
 
 export default function StayHistory() {
@@ -1686,8 +1688,8 @@ export default function StayHistory() {
       <div className="container mx-auto p-6 space-y-8">
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Stay History</h1>
-            <p className="text-muted-foreground">View your past cabin stays and related costs</p>
+            <h1 className="text-4xl sm:text-6xl font-kaushan text-primary drop-shadow-lg text-center mb-2">Current &amp; Past Stays</h1>
+            <p className="text-lg sm:text-xl font-kaushan text-primary text-center">Log your current stay, finalize payment, and review past stays</p>
           </div>
 
           <ViewAsUserPicker />
@@ -1865,9 +1867,9 @@ export default function StayHistory() {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Stay History</h1>
-          <p className="text-muted-foreground">
-            View and manage your past cabin stays
+          <h1 className="text-4xl sm:text-6xl font-kaushan text-primary drop-shadow-lg text-center mb-2">Current &amp; Past Stays</h1>
+          <p className="text-lg sm:text-xl font-kaushan text-primary text-center">
+            Log your current stay, finalize payment, and review past stays
           </p>
         </div>
 
@@ -1966,6 +1968,13 @@ export default function StayHistory() {
       </div>
 
 
+      <Tabs defaultValue="stays" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+          <TabsTrigger value="stays">Stays</TabsTrigger>
+          <TabsTrigger value="overview">Season Overview</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-8 mt-6">
       {/* Summary Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card>
@@ -2239,6 +2248,12 @@ export default function StayHistory() {
         </div>
       )}
 
+
+        </TabsContent>
+
+        <TabsContent value="stays" className="space-y-8 mt-6">
+      {/* Current / most recent stay (formerly Daily & Final Input) */}
+      <CheckoutFinal embedded />
 
       {/* Past Stays List */}
       <div className="space-y-4">
@@ -2848,6 +2863,8 @@ export default function StayHistory() {
           </Link>
         </Button>
       </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Dialogs */}
       {editOccupancyStay && organization && (
