@@ -1471,6 +1471,9 @@ export default function StayHistory() {
     0
   );
   const totalReceiptsCredited = displayReservations.reduce((sum, r) => sum + (r.stayData.receiptsApplied || 0), 0);
+  // Full amounts submitted (not just the part used on charges) so the boxes reconcile with Credit Remaining.
+  const totalPaidSubmitted = displayReservations.reduce((sum, r) => sum + Math.max(0, r.stayData.amountPaid || 0), 0);
+  const totalReceiptsSubmitted = displayReservations.reduce((sum, r) => sum + Math.max(0, r.stayData.receiptsTotal || 0), 0);
   // Charges still unpaid = what each visible person still owes at the END of the
   // stays currently shown (the year filter included). Intermediate stays later
   // covered by credit are not outstanding, so summing per-stay shortfalls would
@@ -2014,6 +2017,11 @@ export default function StayHistory() {
           <CardContent>
             <div className="text-2xl font-bold">${totalPaid.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground mt-1">Money paid toward the stays shown</p>
+            {totalPaidSubmitted - totalPaid > 0.004 && (
+              <p className="text-xs text-muted-foreground">
+                ${totalPaidSubmitted.toFixed(2)} paid in total; ${(totalPaidSubmitted - totalPaid).toFixed(2)} went to credit
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -2024,6 +2032,11 @@ export default function StayHistory() {
           <CardContent>
             <div className="text-2xl font-bold">${totalReceiptsCredited.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground mt-1">Charges paid via receipt credit</p>
+            {totalReceiptsSubmitted - totalReceiptsCredited > 0.004 && (
+              <p className="text-xs text-muted-foreground">
+                ${totalReceiptsSubmitted.toFixed(2)} in receipts submitted; ${(totalReceiptsSubmitted - totalReceiptsCredited).toFixed(2)} went to credit
+              </p>
+            )}
           </CardContent>
         </Card>
         {totalTransferredInApplied > 0.004 && (
@@ -2106,7 +2119,7 @@ export default function StayHistory() {
               </div>
               {currentBalance < 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  From payments and receipts above total charges
+                  Payments and receipts submitted beyond what charges used (includes any credit transfers and credit held without a stay)
                 </p>
               )}
               {transferableCreditKeys.length > 0 && (
