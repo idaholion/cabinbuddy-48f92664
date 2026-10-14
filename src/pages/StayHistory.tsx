@@ -2119,7 +2119,7 @@ export default function StayHistory() {
               </div>
               {currentBalance < 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  From payments and receipts above total charges
+                  Payments and receipts submitted beyond what charges used (includes any credit transfers and credit held without a stay)
                 </p>
               )}
               {transferableCreditKeys.length > 0 && (
