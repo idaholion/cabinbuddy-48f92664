@@ -254,12 +254,12 @@ export const ReminderTemplateManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
           <Mail className="h-5 w-5" />
           <h3 className="text-lg font-semibold">Reminder Templates</h3>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!isEditing ? (
             <Button onClick={() => setIsEditing(true)} variant="outline" className="flex items-center space-x-2 hover:scale-105 hover:shadow-lg hover:border-primary/50 transition-all duration-200 ease-in-out">
               <Edit className="h-4 w-4" />
@@ -305,7 +305,7 @@ export const ReminderTemplateManager = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <Input
                   placeholder="Template type (e.g., Work Weekend, Annual Meeting)"
                   value={newTemplateType}
@@ -337,7 +337,7 @@ export const ReminderTemplateManager = () => {
           <Card key={template.id} className={`${!template.is_active ? 'opacity-60' : ''}`}>
             <CardHeader>
               <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {getTemplateIcon(template.reminder_type)}
                   <CardTitle className="text-base">{getTemplateTitle(template.reminder_type)}</CardTitle>
                   <span className={`text-xs px-2 py-1 rounded ${template.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
@@ -355,7 +355,7 @@ export const ReminderTemplateManager = () => {
                   )}
                 </div>
                 {isEditing && (
-                  <div className="flex items-center space-x-4 flex-wrap gap-y-2">
+                  <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center space-x-2">
 
                       <Label htmlFor={`trigger-${template.id}`} className="text-sm">Send</Label>
@@ -363,7 +363,7 @@ export const ReminderTemplateManager = () => {
                         value={template.trigger_event}
                         onValueChange={(value) => updateTemplate(template.id, { trigger_event: value as ReminderTemplate['trigger_event'] })}
                       >
-                        <SelectTrigger className="w-56" id={`trigger-${template.id}`}>
+                        <SelectTrigger className="w-full sm:w-56" id={`trigger-${template.id}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

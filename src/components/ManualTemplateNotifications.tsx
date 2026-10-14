@@ -349,7 +349,7 @@ export const ManualTemplateNotifications = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
           <Send className="h-5 w-5" />
           <h3 className="text-lg font-semibold">Manual Notifications</h3>
@@ -525,7 +525,7 @@ export const ManualTemplateNotifications = () => {
         {/* Preview Panel */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center justify-between">
+            <CardTitle className="text-base flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center space-x-2">
                 <Eye className="h-4 w-4" />
                 <span>Preview</span>
@@ -544,7 +544,7 @@ export const ManualTemplateNotifications = () => {
           <CardContent className="space-y-4">
             {/* Recipient Count */}
             {selectedTemplateId && (
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted rounded-lg">
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4" />
                   <span className="text-sm font-medium">Recipients</span>

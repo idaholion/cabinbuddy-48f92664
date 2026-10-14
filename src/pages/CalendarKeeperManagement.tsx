@@ -36,7 +36,7 @@ const CalendarKeeperManagement = () => {
       <header className="sr-only">
         <h1>Notification Management – Notifications & Reminders</h1>
       </header>
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 overflow-x-hidden">
         <PageHeader
           title="Notification Management"
           subtitle="Send manual reminders, run automatic notifications, and manage reservation communications."
@@ -53,28 +53,28 @@ const CalendarKeeperManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <TabsContent value="notifications" className="mt-6">
+            <TabsContent value="notifications" className="mt-6 min-w-0">
               <NotificationManagement />
             </TabsContent>
-            <TabsContent value="manual-templates" className="mt-6">
+            <TabsContent value="manual-templates" className="mt-6 min-w-0">
               <ManualTemplateNotifications />
             </TabsContent>
-            <TabsContent value="selection-turn" className="mt-6 flex justify-center">
+            <TabsContent value="selection-turn" className="mt-6 flex justify-center min-w-0 [&>*]:w-full [&>*]:max-w-full">
               <SelectionTurnNotificationSender />
             </TabsContent>
-            <TabsContent value="lookup" className="mt-6">
+            <TabsContent value="lookup" className="mt-6 min-w-0">
               <ReservationLookup />
             </TabsContent>
-            <TabsContent value="test" className="mt-6 flex justify-center">
+            <TabsContent value="test" className="mt-6 flex justify-center min-w-0 [&>*]:w-full [&>*]:max-w-full">
               <NotificationTest />
             </TabsContent>
-            <TabsContent value="templates" className="mt-6">
+            <TabsContent value="templates" className="mt-6 min-w-0">
               <ReminderTemplateManager />
             </TabsContent>
-            <TabsContent value="automated" className="mt-6">
+            <TabsContent value="automated" className="mt-6 min-w-0">
               <AutomatedReminderSettings />
             </TabsContent>
-            <TabsContent value="monitoring" className="mt-6">
+            <TabsContent value="monitoring" className="mt-6 min-w-0">
               <NotificationMonitoring embedded />
             </TabsContent>
           </Tabs>
