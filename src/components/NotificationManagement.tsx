@@ -828,7 +828,12 @@ export const NotificationManagement = () => {
                                   <p className="text-sm text-muted-foreground mt-1">{event.description}</p>
                                 )}
                               </div>
-                              <div className="flex flex-wrap items-center gap-2 sm:ml-4">
+                              {event.type === 'selection_period' && (
+                                <a href="/calendar-keeper-management?tab=selection-turn" className="text-sm text-primary underline sm:ml-4">
+                                  Sent automatically — use Selection Turn to resend
+                                </a>
+                              )}
+                              <div className={`flex flex-wrap items-center gap-2 sm:ml-4 ${event.type === 'selection_period' ? 'hidden' : ''}`}>
                                 <Select
                                   value={selectedReminderTypes[event.id] || ''}
                                   onValueChange={(value) => handleReminderTypeChange(event.id, value)}
