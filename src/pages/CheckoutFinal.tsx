@@ -69,7 +69,7 @@ interface UserSplit {
   };
 }
 
-const CheckoutFinal = () => {
+const CheckoutFinal = ({ embedded = false }: { embedded?: boolean }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -1129,8 +1129,11 @@ const CheckoutFinal = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
-      {/* Top Navigation Bar */}
+    <div
+      className={embedded ? "" : "min-h-screen bg-cover bg-center bg-no-repeat"}
+      style={embedded ? undefined : {backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}
+    >
+      {!embedded && (
       <div className="container mx-auto px-4 py-4">
         <ViewAsUserPicker />
         <div className="flex items-center justify-between mb-6">
@@ -1141,22 +1144,17 @@ const CheckoutFinal = () => {
           >
             <Home className="h-4 w-4" />
           </Button>
-          
-          {/* Center title */}
           <h1 className="text-6xl font-kaushan text-primary drop-shadow-lg">Daily & Final Input</h1>
-          
-          {/* Right side spacer for balance */}
           <div className="w-20"></div>
         </div>
-
-        {/* Subtitle */}
         <div className="text-center mb-6 -mt-2">
           <p className="text-xl font-kaushan text-primary">Complete daily tasks, review your stay, and finalize payment</p>
         </div>
       </div>
+      )}
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6 max-w-2xl">
+      <div className={embedded ? "max-w-2xl mx-auto" : "container mx-auto px-4 py-6 max-w-2xl"}>
         {/* Show loading or empty state */}
         {isLoading ? (
           <Card>
