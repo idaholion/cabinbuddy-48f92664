@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -924,6 +924,25 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             }}>
               Continue Without Host
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Back-to-back stay prompt */}
+      <AlertDialog open={!!adjacentPrompt} onOpenChange={(o) => !o && setAdjacentPrompt(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Combine with your other stay?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {adjacentPrompt?.gap
+                ? 'This leaves 1 night unbooked between your stays. '
+                : 'This stay starts the same day your other stay departs. '}
+              Combining makes one continuous stay. Your selection count stays the same (counted by weeks).
+              {adjacentPrompt?.gap && ' If you keep them separate, the new stay will start on the departure day of your other stay, so no night is left out.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={keepSeparate}>Keep Separate</AlertDialogCancel>
+            <AlertDialogAction onClick={combineWithAdjacent}>Combine Into One Stay</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
