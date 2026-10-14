@@ -11,6 +11,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ManualTemplateNotifications } from "@/components/ManualTemplateNotifications";
 import { SelectionTurnNotificationSender } from "@/components/SelectionTurnNotificationSender";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const SECTIONS = [
+  { value: "notifications", label: "Manual Reminders" },
+  { value: "manual-templates", label: "Manual Notifications" },
+  { value: "selection-turn", label: "Selection Turn" },
+  { value: "lookup", label: "Reservation Lookup" },
+  { value: "test", label: "Test System" },
+  { value: "templates", label: "Templates" },
+  { value: "automated", label: "Automated System" },
+  { value: "monitoring", label: "Delivery History" },
+];
 
 const CalendarKeeperManagement = () => {
   useEffect(() => {
@@ -32,15 +44,17 @@ const CalendarKeeperManagement = () => {
         />
         <section aria-label="Notification tools" className="mt-4">
           <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })} className="w-full">
-            <TabsList className="flex w-full justify-start overflow-x-auto scrollbar-thin">
-              <TabsTrigger value="notifications">Manual Reminders</TabsTrigger>
-              <TabsTrigger value="manual-templates">Manual Notifications</TabsTrigger>
-              <TabsTrigger value="selection-turn">Selection Turn</TabsTrigger>
-              <TabsTrigger value="lookup">Reservation Lookup</TabsTrigger>
-              <TabsTrigger value="test">Test System</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="automated">Automated System</TabsTrigger>
-              <TabsTrigger value="monitoring">Delivery History</TabsTrigger>
+            <div className="md:hidden">
+              <label className="text-sm font-medium mb-1 block">Section</label>
+              <Select value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
+                <SelectTrigger className="w-full bg-background"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SECTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <TabsList className="hidden md:flex w-full justify-start overflow-x-auto scrollbar-thin">
+              {SECTIONS.map((s) => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
             </TabsList>
             <TabsContent value="notifications" className="mt-6">
               <NotificationManagement />

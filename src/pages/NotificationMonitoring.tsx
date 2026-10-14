@@ -143,7 +143,34 @@ const NotificationMonitoring = ({ embedded = false }: { embedded?: boolean }) =>
             {isLoading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
             ) : logs && logs.length > 0 ? (
-              <div className="overflow-x-auto">
+              <>
+              <div className="md:hidden space-y-3">
+                {logs.map((log) => (
+                  <div key={log.id} className="rounded-md border p-3 space-y-2 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="outline">{log.notification_type}</Badge>
+                      <span className="text-xs text-muted-foreground">{format(new Date(log.sent_at), "MMM dd, yyyy HH:mm")}</span>
+                    </div>
+                    <div className="font-medium">{log.family_group || "-"}</div>
+                    {log.recipient_email && (
+                      <div className="flex items-center gap-2 break-all"><Mail className="h-3 w-3 shrink-0" />{log.recipient_email}</div>
+                    )}
+                    {log.recipient_phone && (
+                      <div className="flex items-center gap-2"><MessageSquare className="h-3 w-3 shrink-0" />{log.recipient_phone}</div>
+                    )}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-xs text-muted-foreground">Email:</span>
+                      {getStatusBadge(log.email_sent, log.email_status, null)}
+                      {log.recipient_phone && (<>
+                        <span className="text-xs text-muted-foreground">SMS:</span>
+                        {getStatusBadge(log.sms_sent, log.sms_status, log.sms_error)}
+                      </>)}
+                    </div>
+                    {log.sms_error && <div className="text-xs text-destructive">{log.sms_error}</div>}
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
