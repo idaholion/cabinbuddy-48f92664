@@ -70,13 +70,10 @@ export function validateReservationEditLimits({ original, start, end, settings, 
     && r.start_date.slice(0, 4) === start.slice(0, 4));
   const isSecond = (r: EditableStay) => r.time_period_number === -1;
   const isFirst = (r: EditableStay) => !isSecond(r) && (!secondaryStartedAt || !r.created_at || r.created_at < secondaryStartedAt);
-  const sameRound = phase === 'first' ? isFirst(original) : isSecond(original);
   const roundStays = free ? familyStays : familyStays.filter(phase === 'first' ? isFirst : isSecond);
-  // Earlier-round nights stay charged to that earlier round; newly claimed nights
-  // must fit the current round. Retained unused stays remain in the allowance.
-  const overlap = Math.max(0, stayNights(start > original.start_date ? start : original.start_date,
-    end < original.end_date ? end : original.end_date));
-  const chargedNights = free || sameRound ? nights : nights - overlap;
+  // Count the complete edited stay, even if created in an earlier round: repeated
+  // one-night extensions must not evade the current allowance. Unused stays count.
+  const chargedNights = nights;
   const totalNights = roundStays.reduce((sum, r) => sum + stayNights(r.start_date, r.end_date), 0) + chargedNights;
   const weeks = roundStays.reduce((sum, r) => sum + Math.max(1, Math.round(stayNights(r.start_date, r.end_date) / 7)), 0)
     + Math.max(1, Math.round(chargedNights / 7));
