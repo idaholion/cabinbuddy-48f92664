@@ -331,13 +331,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       }
     }
     
-    // Can't extend duration
-    const originalDuration = calculateNights(editingReservation.start_date, editingReservation.end_date);
-    const newDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (newDuration > originalDuration) {
-      errors.push(`Cannot extend booking duration. Original: ${originalDuration} days, New: ${newDuration} days`);
-    }
+    // Availability, turn order and family allowances are checked with fresh
+    // organization-scoped data by updateReservation, also used by Combine.
     
     return { isValid: errors.length === 0, errors };
   };
@@ -363,7 +358,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Check if the family group can make a booking (considering admin override and all phases active)
   const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
-  const canMakeBooking = watchedAdminOverride || allPhasesActive || isPostRotationPhase || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+  const canMakeBooking = !!editingReservation || watchedAdminOverride || allPhasesActive || isPostRotationPhase || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
 
   const onSubmit = async (data: BookingFormData) => {
     // Check if no host is assigned and confirmation hasn't been given

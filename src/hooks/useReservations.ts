@@ -7,6 +7,7 @@ import { useReservationConflicts } from '@/hooks/useReservationConflicts';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
+import { addsReservedDates, validateReservationEditLimits } from '@/lib/reservation-edit-limits';
 
 interface ReservationData {
   start_date: string;
@@ -267,6 +268,47 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
           description: "You can only modify reservations for your own family group.",
           variant: "destructive",
         });
+        return null;
+      }
+    }
+
+    // Check every path that expands/moves an existing stay, including Combine.
+    // Read the booking's year, not whichever month happens to be on screen.
+    if (updates.start_date || updates.end_date) {
+      try {
+        const { data: original, error: originalError } = await secureSelect('reservations', orgContext)
+          .eq('id', reservationId).single();
+        if (originalError || !original) throw new Error('Could not verify the original reservation. Please try again.');
+        const start = updates.start_date || original.start_date;
+        const end = updates.end_date || original.end_date;
+        if (!testOverrideMode && addsReservedDates(original, start, end)) {
+          const year = Number(original.start_date.slice(0, 4));
+          const [settingsResult, secondaryResult, staysResult, periodsResult] = await Promise.all([
+            secureSelect('rotation_orders', orgContext).eq('rotation_year', year).maybeSingle(),
+            secureSelect('secondary_selection_status', orgContext).eq('rotation_year', year).maybeSingle(),
+            secureSelect('reservations', orgContext).gte('start_date', `${year}-01-01`).lt('start_date', `${year + 1}-01-01`),
+            secureSelect('reservation_periods', orgContext).eq('rotation_year', year),
+          ]);
+          if (settingsResult.error || secondaryResult.error || staysResult.error || periodsResult.error || !settingsResult.data) {
+            throw new Error('Could not verify selection limits. Please try again or contact the calendar keeper.');
+          }
+          const today = new Date();
+          const now = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const activePeriod = (periodsResult.data || []).find((p: any) =>
+            p.selection_start_date <= now && p.selection_end_date >= now && !p.reservations_completed);
+          const errors = validateReservationEditLimits({
+            original, start, end, settings: settingsResult.data, reservations: staysResult.data || [],
+            secondaryStartedAt: secondaryResult.data?.started_at,
+            secondaryCurrentFamily: secondaryResult.data?.current_family_group,
+            primaryCurrentFamily: settingsResult.data.current_primary_turn_family || activePeriod?.current_family_group,
+          });
+          if (errors.length) {
+            toast({ title: 'Change exceeds selection limits', description: errors.join(' '), variant: 'destructive' });
+            return null;
+          }
+        }
+      } catch (error) {
+        toast({ title: 'Unable to verify change', description: error instanceof Error ? error.message : 'Please try again.', variant: 'destructive' });
         return null;
       }
     }
