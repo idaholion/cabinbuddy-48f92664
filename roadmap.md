@@ -10,7 +10,8 @@
 
 
 ## Open
-- [ ] Replace blanket reservation-extension block with availability, turn, and family-limit checks; test safeguards.
+- [x] Replace blanket reservation-extension block with availability, turn, and family-limit checks; nine safeguard tests passed.
+- [ ] Verify reservation extension through the signed-in UI — external Supabase does not provide a test session.
 - [ ] Selection-process conversation: back-to-back picks vs one multi-week pick (Debbie's case) — user wants to discuss
 - [ ] Verify selection counter + multi-week booking prompts in preview (needs a sign-in)
 - [ ] Family Group Setup hint about delegate checkboxes (optional)

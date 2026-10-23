@@ -292,7 +292,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
           if (settingsResult.error || secondaryResult.error || staysResult.error || periodsResult.error || !settingsResult.data) {
             throw new Error('Could not verify selection limits. Please try again or contact the calendar keeper.');
           }
-          const now = toLocalCalendarDate(new Date());
+          const today = new Date();
+          const now = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
           const activePeriod = (periodsResult.data || []).find((p: any) =>
             p.selection_start_date <= now && p.selection_end_date >= now && !p.reservations_completed);
           const errors = validateReservationEditLimits({
