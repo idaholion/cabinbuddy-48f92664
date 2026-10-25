@@ -63,7 +63,13 @@ export const usePaymentSplits = () => {
         .eq('organization_id', organization.id)
         .single();
 
-      const isAdmin = userOrgs?.role === 'admin' || userOrgs?.role === 'treasurer';
+      const email = (user.email || '').toLowerCase();
+      const orgAny = organization as any;
+      const isAdmin =
+        userOrgs?.role === 'admin' ||
+        userOrgs?.role === 'treasurer' ||
+        (!!email && (orgAny?.treasurer_email || '').toLowerCase() === email) ||
+        (!!email && (orgAny?.admin_email || '').toLowerCase() === email);
 
       const orgContext = createOrganizationContext(organization.id);
       
