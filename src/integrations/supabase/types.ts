@@ -3728,6 +3728,10 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: boolean
       }
+      is_org_admin_or_treasurer: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
       is_org_member_of: {
         Args: { p_organization_id: string }
         Returns: boolean
