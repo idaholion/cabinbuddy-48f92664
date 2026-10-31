@@ -192,12 +192,6 @@ export const PaymentHistoryDialog = ({
                       <span className="text-muted-foreground">Amount Paid:</span>
                       <span className="font-medium">${payment.amount_paid.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        Receipts Credited{receiptsCount > 0 ? ` (${receiptsCount})` : ''}:
-                      </span>
-                      <span className="font-medium">${receiptsCredited.toFixed(2)}</span>
-                    </div>
                     <div className="flex justify-between text-sm border-t pt-2">
                       <span className="font-semibold">Balance Due:</span>
                       <span className={`font-bold ${balanceDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
