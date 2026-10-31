@@ -1409,6 +1409,18 @@ export default function StayHistory() {
     })
     .reverse();
 
+  // The checkout section at the top repeats the bill for the newest stay. When
+  // that stay's own card is on screen below, the repeat is pure duplication and
+  // the two sets of numbers disagree. When a year or family filter hides that
+  // card, the top section is the only place left to see the bill and pay, so it
+  // has to stay.
+  const newestStayForCurrentUser = currentUserLedgerKey
+    ? lastReservationByHost.get(currentUserLedgerKey)
+    : undefined;
+  const newestStayShownBelow = !!newestStayForCurrentUser &&
+    displayReservations.some(({ reservation }) => reservation.id === newestStayForCurrentUser);
+
+
   // Receipt-only credit crossing a calendar-year boundary, kept separate for
   // every person. Receipts recorded on the first stay of a new year represent
   // receipts received since that person's previous stay, so their net overflow
@@ -2276,7 +2288,7 @@ export default function StayHistory() {
 
         <TabsContent value="stays" className="space-y-8 mt-6">
       {/* Current / most recent stay (formerly Daily & Final Input) */}
-      <CheckoutFinal embedded />
+      <CheckoutFinal embedded breakdownShownBelow={newestStayShownBelow} />
 
       {/* Past Stays List */}
       <div className="space-y-4">
