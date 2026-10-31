@@ -14,6 +14,7 @@ import {
   listPaymentLines,
   updatePaymentLine,
   deletePaymentLine,
+  displayPaymentNotes,
 } from "@/lib/payment-transactions";
 
 interface Props {
@@ -68,7 +69,7 @@ export const PaymentLinesList = ({ paymentIds, amountPaid, stayLabels, readOnly,
       amount: Number(l.amount),
       paidDate: l.paid_date,
       reference: l.payment_reference || "",
-      notes: l.notes || "",
+      notes: displayPaymentNotes(l.notes),
     });
   };
 
@@ -169,7 +170,7 @@ export const PaymentLinesList = ({ paymentIds, amountPaid, stayLabels, readOnly,
                   <div className="text-xs text-muted-foreground">Stay: {stayLabels[l.payment_id]}</div>
                 )}
                 {l.payment_reference && <div className="text-xs text-muted-foreground">Ref: {l.payment_reference}</div>}
-                {l.notes && <div className="text-xs text-muted-foreground whitespace-pre-line break-words">{l.notes}</div>}
+                {displayPaymentNotes(l.notes) && <div className="text-xs text-muted-foreground whitespace-pre-line break-words">{displayPaymentNotes(l.notes)}</div>}
               </div>
               {!readOnly && (
                 <div className="flex shrink-0">
