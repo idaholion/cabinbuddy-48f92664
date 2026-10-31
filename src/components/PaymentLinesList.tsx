@@ -17,9 +17,12 @@ import {
 } from "@/lib/payment-transactions";
 
 interface Props {
-  paymentId: string;
-  /** Combined paid total on the stay record (includes non-line adjustments). */
+  /** One or more stay payment records whose lines should be shown together. */
+  paymentIds: string[];
+  /** Combined paid total on the stay record(s) (includes non-line adjustments). */
   amountPaid: number;
+  /** Optional stay label per payment id, shown on each line when given. */
+  stayLabels?: Record<string, string>;
   readOnly?: boolean;
   onChanged: () => void;
   /** Called with null when payment lines aren't installed yet. */
@@ -28,17 +31,19 @@ interface Props {
 
 const money = (v: number) => `$${v.toFixed(2)}`;
 
-export const PaymentLinesList = ({ paymentId, amountPaid, readOnly, onChanged, onAvailability }: Props) => {
+export const PaymentLinesList = ({ paymentIds, amountPaid, stayLabels, readOnly, onChanged, onAvailability }: Props) => {
   const [lines, setLines] = useState<PaymentLine[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState({ amount: 0, paidDate: "", reference: "", notes: "" });
   const [busy, setBusy] = useState(false);
 
+  const idsKey = paymentIds.join(",");
+
   const load = async () => {
     setLoading(true);
     try {
-      const data = await listPaymentLines(paymentId);
+      const data = await listPaymentLines(paymentIds);
       setLines(data);
       onAvailability?.(data !== null);
     } catch (e) {
@@ -52,7 +57,7 @@ export const PaymentLinesList = ({ paymentId, amountPaid, readOnly, onChanged, o
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentId]);
+  }, [idsKey]);
 
   if (loading) return <div className="flex justify-center py-4"><LoadingSpinner /></div>;
   if (lines === null) return null;
@@ -112,12 +117,10 @@ export const PaymentLinesList = ({ paymentId, amountPaid, readOnly, onChanged, o
   const linesTotal = Math.round(lines.reduce((s, l) => s + Number(l.amount), 0) * 100) / 100;
   const otherAdjustments = Math.round((amountPaid - linesTotal) * 100) / 100;
 
+  if (lines.length === 0 && Math.abs(otherAdjustments) < 0.01) return null;
+
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold">Payments</div>
-      {lines.length === 0 && (
-        <p className="text-sm text-muted-foreground">No payments recorded yet</p>
-      )}
       {lines.map((l) => (
         <Card key={l.id} className="p-3">
           {editingId === l.id ? (
@@ -162,6 +165,9 @@ export const PaymentLinesList = ({ paymentId, amountPaid, readOnly, onChanged, o
                   <span className="text-sm text-muted-foreground">{format(parseISO(l.paid_date), "MMM d, yyyy")}</span>
                   {l.payment_method && <Badge variant="secondary">{l.payment_method.replace("_", " ")}</Badge>}
                 </div>
+                {stayLabels?.[l.payment_id] && (
+                  <div className="text-xs text-muted-foreground">Stay: {stayLabels[l.payment_id]}</div>
+                )}
                 {l.payment_reference && <div className="text-xs text-muted-foreground">Ref: {l.payment_reference}</div>}
                 {l.notes && <div className="text-xs text-muted-foreground whitespace-pre-line break-words">{l.notes}</div>}
               </div>
@@ -185,7 +191,9 @@ export const PaymentLinesList = ({ paymentId, amountPaid, readOnly, onChanged, o
           <span>{money(otherAdjustments)}</span>
         </div>
       )}
-      <p className="text-xs text-muted-foreground px-1">Every correction is saved in the payment's change history.</p>
+      {lines.length > 0 && (
+        <p className="text-xs text-muted-foreground px-1">Every correction is saved in the payment's change history.</p>
+      )}
     </div>
   );
 };
