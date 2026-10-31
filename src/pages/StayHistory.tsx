@@ -1,4 +1,5 @@
 import { addPaymentLine } from "@/lib/payment-transactions";
+import { getStaysPaidLater } from "@/lib/stay-settlement";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1312,6 +1313,7 @@ export default function StayHistory() {
   const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
   const latestLedgerEventByHost = new Map<string, string>();
   const finalBalanceByHost = new Map<string, number>();
+  const staysPaidLater = new Set<string>();
   const ledgerHostKeys = new Set<string>([
     ...fullLedger.map(({ reservation }) => getLedgerKey(reservation)),
     ...Array.from(transfersBySource.keys()),
@@ -1371,6 +1373,14 @@ export default function StayHistory() {
       a.createdAt - b.createdAt ||
       a.id.localeCompare(b.id)
     );
+
+    for (const id of getStaysPaidLater(events.map(event => ({
+      id: event.id,
+      delta: event.delta,
+      isStay: !!event.stayData,
+    })))) {
+      staysPaidLater.add(id);
+    }
 
     let balance = 0;
     for (const event of events) {
@@ -2321,6 +2331,7 @@ export default function StayHistory() {
           // the opening line is simply the balance standing before this stay.
           const receiptCreditMovedToOpeningBalance = 0;
           const displayedPreviousBalance = stayData.previousBalance;
+          const paidAtLaterStay = staysPaidLater.has(`stay:${reservation.id}`);
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2357,11 +2368,14 @@ export default function StayHistory() {
                       )}
                       {stayData.paymentId && (() => {
                         const isPending = stayData.billingAmount === 0 && !stayData.hasOccupancyData;
-                        const isPaid = stayData.amountDue <= 0;
+                        const isPaid = stayData.amountDue <= 0 || paidAtLaterStay;
                         const isPartial = !isPaid && stayData.amountPaid > 0;
                         return (
-                          <Badge variant={isPending ? 'secondary' : isPaid ? 'default' : isPartial ? 'secondary' : 'destructive'}>
-                            {isPending ? 'Not checked out' : isPaid ? 'paid' : isPartial ? 'partial' : 'Pending payment'}
+                          <Badge
+                            variant={isPending ? 'secondary' : isPaid ? 'default' : isPartial ? 'secondary' : 'destructive'}
+                            className={!isPending && isPaid ? 'bg-success text-success-foreground hover:bg-success' : undefined}
+                          >
+                            {isPending ? 'Not checked out' : isPaid ? 'Paid' : isPartial ? 'partial' : 'Pending payment'}
                           </Badge>
                         );
                       })()}
@@ -2545,6 +2559,11 @@ export default function StayHistory() {
                         </div>
                       );
                     })()}
+                    {paidAtLaterStay && (
+                      <p className="text-xs text-muted-foreground text-right">
+                        Carried forward and paid at later stay
+                      </p>
+                    )}
                   </div>
                 </div>
 
