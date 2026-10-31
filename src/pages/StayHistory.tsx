@@ -3042,8 +3042,6 @@ export default function StayHistory() {
           paymentId={viewPaymentHistory.paymentId}
           familyGroup={viewPaymentHistory.familyGroup}
           totalAmount={viewPaymentHistory.totalAmount}
-          receiptsCredited={viewPaymentHistory.receiptsCredited}
-          receiptsCount={viewPaymentHistory.receiptsCount}
           balanceAfterStay={viewPaymentHistory.balanceAfterStay}
           organizationId={organization?.id}
           onPaymentUpdated={async () => {

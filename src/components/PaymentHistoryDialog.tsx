@@ -31,10 +31,6 @@ interface PaymentHistoryDialogProps {
   paymentId: string;
   familyGroup: string;
   totalAmount: number;
-  /** Receipt purchases credited against this stay */
-  receiptsCredited?: number;
-  /** Number of receipts credited against this stay */
-  receiptsCount?: number;
   /** Running ledger balance after this stay (negative = credit) */
   balanceAfterStay?: number;
   /** Needed to offer the whole family's payment history, not just this stay */
@@ -48,8 +44,6 @@ export const PaymentHistoryDialog = ({
   paymentId,
   familyGroup,
   totalAmount,
-  receiptsCredited = 0,
-  receiptsCount = 0,
   balanceAfterStay,
   organizationId,
   onPaymentUpdated,
