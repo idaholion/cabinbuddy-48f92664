@@ -3045,6 +3045,7 @@ export default function StayHistory() {
           receiptsCredited={viewPaymentHistory.receiptsCredited}
           receiptsCount={viewPaymentHistory.receiptsCount}
           balanceAfterStay={viewPaymentHistory.balanceAfterStay}
+          organizationId={organization?.id}
           onPaymentUpdated={async () => {
             await fetchPayments(1, 500);
           }}
