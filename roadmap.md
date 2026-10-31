@@ -28,3 +28,6 @@
 - [x] Single cost breakdown on Current & Past Stays: top section no longer repeats the newest stay's bill when that stay's card is shown in the ledger below
 
 
+
+- [x] Payment lines: each payment is a dated, editable line in Payment History (payer + Admin/Treasurer), with change log, double-click and overpayment guards. Needs supabase/sql/2026-10-31_payment_transactions.sql run in Supabase.
+- [ ] Dana Oct 9-15 payment: Richard/Dana to correct $2,614.12 to $848.53 via Payment History (test of edit flow)
