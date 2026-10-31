@@ -53,8 +53,10 @@ export async function addPaymentLine(paymentId: string, organizationId: string, 
   return true;
 }
 
-export async function listPaymentLines(paymentId: string): Promise<PaymentLine[] | null> {
-  const { data, error } = await table().select("*").eq("payment_id", paymentId).order("paid_date", { ascending: true }).order("created_at", { ascending: true });
+export async function listPaymentLines(paymentIds: string | string[]): Promise<PaymentLine[] | null> {
+  const ids = Array.isArray(paymentIds) ? paymentIds : [paymentIds];
+  if (ids.length === 0) return [];
+  const { data, error } = await table().select("*").in("payment_id", ids).order("paid_date", { ascending: false }).order("created_at", { ascending: false });
   if (error) {
     if (isMissingTable(error)) return null;
     throw error;
