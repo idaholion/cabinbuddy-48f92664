@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditPaymentDialog } from "./EditPaymentDialog";
+import { PaymentLinesList } from "./PaymentLinesList";
 
 interface Payment {
   id: string;
@@ -51,6 +52,7 @@ export const PaymentHistoryDialog = ({
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingPayment, setEditingPayment] = useState(false);
+  const [linesAvailable, setLinesAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (open && paymentId) {
@@ -122,7 +124,7 @@ export const PaymentHistoryDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
@@ -173,8 +175,18 @@ export const PaymentHistoryDialog = ({
               </div>
 
 
-              {/* Payment Details */}
-              {payment.amount_paid > 0 ? (
+              <PaymentLinesList
+                paymentId={payment.id}
+                amountPaid={Number(payment.amount_paid) || 0}
+                onAvailability={setLinesAvailable}
+                onChanged={async () => {
+                  await fetchPayment();
+                  onPaymentUpdated();
+                }}
+              />
+
+              {/* Legacy combined payment details (before payment lines existed) */}
+              {linesAvailable !== false ? null : payment.amount_paid > 0 ? (
                 <Card className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
