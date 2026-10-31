@@ -136,7 +136,7 @@ INSERT INTO public.payment_transactions
 SELECT p.organization_id, p.id, p.amount_paid,
        coalesce(p.paid_date, p.updated_at::date, p.created_at::date),
        p.payment_method::text, p.payment_reference,
-       'Earlier payments (combined before payment lines existed)'
+       'Earlier payments'
        || CASE WHEN p.notes IS NOT NULL AND p.notes <> '' THEN E'\n' || p.notes ELSE '' END,
        true, p.updated_by_user_id
 FROM public.payments p
