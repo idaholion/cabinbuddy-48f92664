@@ -69,7 +69,7 @@ interface UserSplit {
   };
 }
 
-const CheckoutFinal = ({ embedded = false }: { embedded?: boolean }) => {
+const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embedded?: boolean; breakdownShownBelow?: boolean }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -1981,8 +1981,11 @@ const CheckoutFinal = ({ embedded = false }: { embedded?: boolean }) => {
                 );
               })()}
 
-              {/* Cost Breakdown - Single view (split details shown in Daily Occupancy card above) */}
-              {!splitMode && (
+              {/* Cost Breakdown - Single view (split details shown in Daily Occupancy card above).
+                  On the Current & Past Stays page the ledger card below carries the same stay's
+                  bill, so repeating it here is duplication — unless this stay is still in progress
+                  (not in the ledger yet) or the filters below hide its card. */}
+              {!splitMode && (!embedded || isCurrentStay || !breakdownShownBelow) && (
                 // Original single cost breakdown
                 <Card className="mb-6">
                 <CardHeader>
