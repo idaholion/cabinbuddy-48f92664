@@ -64,9 +64,20 @@ export const PaymentHistoryDialog = ({
 
   useEffect(() => {
     if (open && paymentId) {
+      setScope("stay");
       fetchPayment();
+      fetchFamilyStays();
     }
   }, [open, paymentId]);
+
+  const fetchFamilyStays = async () => {
+    if (!organizationId || !familyGroup) return;
+    try {
+      setFamilyStays(await listFamilyStayPayments(organizationId, familyGroup));
+    } catch (error) {
+      console.error('Error fetching family payment history:', error);
+    }
+  };
 
   const fetchPayment = async () => {
     try {
