@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Receipt, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditPaymentDialog } from "./EditPaymentDialog";
 import { PaymentLinesList } from "./PaymentLinesList";
+import { FamilyStayPayment, listFamilyStayPayments } from "@/lib/payment-transactions";
 
 interface Payment {
   id: string;
