@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { isOverpayment } from "@/lib/payment-transactions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,20 @@ export const RecordPaymentDialog = ({
       return;
     }
 
+    // Block double-clicks / repeat submits before React re-renders.
+    if (savingRef.current) return;
+
+    if (isOverpayment(amount, stay.balanceDue)) {
+      const owed = Math.max(stay.balanceDue, 0);
+      const ok = window.confirm(
+        owed <= 0
+          ? `This stay is already paid. Record another $${amount.toFixed(2)} anyway? (Any extra becomes credit.)`
+          : `$${amount.toFixed(2)} is more than the $${owed.toFixed(2)} still owed. Record anyway? (The extra becomes credit.)`,
+      );
+      if (!ok) return;
+    }
+
+    savingRef.current = true;
     setSaving(true);
     try {
       // Build payment reference based on method
