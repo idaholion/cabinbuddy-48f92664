@@ -2812,7 +2812,7 @@ export default function StayHistory() {
                        })}
                      >
                        <Receipt className="h-4 w-4 mr-2" />
-                       Payment History
+                       View/Edit Payments
                      </Button>
                    )}
                    {!reservation.isVirtualSplit && reservation.status !== 'unused' && canMarkUnused(reservation) && (
