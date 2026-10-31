@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EditPaymentDialog } from "./EditPaymentDialog";
 import { PaymentLinesList } from "./PaymentLinesList";
-import { FamilyStayPayment, listFamilyStayPayments } from "@/lib/payment-transactions";
+import { FamilyStayPayment, listFamilyStayPayments, displayPaymentNotes } from "@/lib/payment-transactions";
 
 interface Payment {
   id: string;
@@ -208,9 +208,9 @@ export const PaymentHistoryDialog = ({
                               </div>
                             )}
 
-                            {payment.notes && (
+                            {displayPaymentNotes(payment.notes) && (
                               <div>
-                                <span className="font-medium">Notes:</span> {payment.notes}
+                                <span className="font-medium">Notes:</span> {displayPaymentNotes(payment.notes)}
                               </div>
                             )}
                           </div>

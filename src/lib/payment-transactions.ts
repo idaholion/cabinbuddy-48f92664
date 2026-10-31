@@ -31,6 +31,13 @@ const isMissingTable = (error: any) =>
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
+/** Hide obsolete backfill wording without changing saved payment data. */
+export function displayPaymentNotes(notes: string | null | undefined): string {
+  return (notes || "")
+    .replace(/\s*[,;:]?\s*\(\s*combined before payment lines existed\s*\)/gi, "")
+    .trim();
+}
+
 /**
  * Records a payment as its own line. The database keeps the stay's paid total
  * in sync. Returns false when payment lines aren't installed yet, so callers
