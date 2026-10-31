@@ -225,12 +225,7 @@ export const PaymentHistoryDialog = ({
                         </Button>
                       </div>
                     </Card>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p>No payments recorded yet</p>
-                    </div>
-                  )}
+                  ) : null}
                 </>
               ) : (
                 <FamilyPaymentsView
