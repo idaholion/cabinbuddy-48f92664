@@ -2260,26 +2260,6 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embe
               </Card>
               )}
 
-              {/* Confirmation */}
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center space-y-3">
-                    <h3 className="text-lg font-semibold">Thank You for Your Stay!</h3>
-                    <div className="flex gap-3 justify-center flex-wrap">
-                      <Button variant="outline" onClick={() => navigate("/home")} className="text-base">
-                        Return to Home
-                      </Button>
-                      <Button variant="outline" onClick={() => navigate("/stay-history")} className="text-base">
-                        <History className="h-4 w-4 mr-2" />
-                        View Stay History
-                      </Button>
-                      <Button onClick={() => window.print()} className="text-base">
-                        Print Summary
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </>
         )}
