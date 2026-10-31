@@ -2292,7 +2292,6 @@ export default function StayHistory() {
 
       {/* Past Stays List */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Past Stays</h2>
         {displayReservations.map(({ reservation, stayData }, idx) => {
           const isLastVisible = latestLedgerEventByHost.get(getLedgerKey(reservation)) === `stay:${reservation.id}`;
           const currentYear = parseDateOnly(reservation.start_date).getFullYear();
