@@ -30,9 +30,6 @@ interface PaymentHistoryDialogProps {
   onOpenChange: (open: boolean) => void;
   paymentId: string;
   familyGroup: string;
-  totalAmount: number;
-  /** Running ledger balance after this stay (negative = credit) */
-  balanceAfterStay?: number;
   /** Needed to offer the whole family's payment history, not just this stay */
   organizationId?: string;
   onPaymentUpdated: () => void;
@@ -43,8 +40,6 @@ export const PaymentHistoryDialog = ({
   onOpenChange,
   paymentId,
   familyGroup,
-  totalAmount,
-  balanceAfterStay,
   organizationId,
   onPaymentUpdated,
 }: PaymentHistoryDialogProps) => {

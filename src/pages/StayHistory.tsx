@@ -3041,8 +3041,6 @@ export default function StayHistory() {
           onOpenChange={(open) => !open && setViewPaymentHistory(null)}
           paymentId={viewPaymentHistory.paymentId}
           familyGroup={viewPaymentHistory.familyGroup}
-          totalAmount={viewPaymentHistory.totalAmount}
-          balanceAfterStay={viewPaymentHistory.balanceAfterStay}
           organizationId={organization?.id}
           onPaymentUpdated={async () => {
             await fetchPayments(1, 500);
