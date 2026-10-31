@@ -311,3 +311,34 @@ export const PaymentHistoryDialog = ({
     </>
   );
 };
+
+/** Every stay's payments for the chosen year(s), each with its own editable lines. */
+const FamilyPaymentsView = ({ stays, onChanged }: { stays: FamilyStayPayment[]; onChanged: () => void }) => {
+  if (stays.length === 0) {
+    return <p className="text-sm text-muted-foreground text-center py-6">No payments found for this period</p>;
+  }
+  const totalPaid = Math.round(stays.reduce((s, st) => s + st.amountPaid, 0) * 100) / 100;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between text-sm bg-muted/50 rounded-lg px-4 py-2">
+        <span className="text-muted-foreground">Total paid across these stays:</span>
+        <span className="font-semibold">${totalPaid.toFixed(2)}</span>
+      </div>
+      {stays.map((st) => (
+        <Card key={st.paymentId} className="p-3 space-y-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-2">
+            <span className="font-semibold text-sm">{st.stayLabel}</span>
+            <span className="text-xs text-muted-foreground">
+              Charges ${st.amount.toFixed(2)} · Paid ${st.amountPaid.toFixed(2)}
+            </span>
+          </div>
+          <PaymentLinesList
+            paymentId={st.paymentId}
+            amountPaid={st.amountPaid}
+            onChanged={onChanged}
+          />
+        </Card>
+      ))}
+    </div>
+  );
+};
