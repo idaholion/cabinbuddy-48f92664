@@ -37,6 +37,8 @@ interface PaymentHistoryDialogProps {
   receiptsCount?: number;
   /** Running ledger balance after this stay (negative = credit) */
   balanceAfterStay?: number;
+  /** Needed to offer the whole family's payment history, not just this stay */
+  organizationId?: string;
   onPaymentUpdated: () => void;
 }
 
@@ -49,12 +51,16 @@ export const PaymentHistoryDialog = ({
   receiptsCredited = 0,
   receiptsCount = 0,
   balanceAfterStay,
+  organizationId,
   onPaymentUpdated,
 }: PaymentHistoryDialogProps) => {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingPayment, setEditingPayment] = useState(false);
   const [linesAvailable, setLinesAvailable] = useState<boolean | null>(null);
+  // "stay" = only the stay the dialog was opened from; otherwise a year or "all"
+  const [scope, setScope] = useState<string>("stay");
+  const [familyStays, setFamilyStays] = useState<FamilyStayPayment[] | null>(null);
 
   useEffect(() => {
     if (open && paymentId) {
