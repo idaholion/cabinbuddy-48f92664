@@ -80,6 +80,7 @@ export const RecordPaymentDialog = ({
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const methodList = useMemo(() => {
     const base = methods && methods.length > 0
