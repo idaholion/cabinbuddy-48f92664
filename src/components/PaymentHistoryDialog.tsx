@@ -170,7 +170,7 @@ export const PaymentHistoryDialog = ({
               {scope === "stay" ? (
                 <>
                   <PaymentLinesList
-                    paymentId={payment.id}
+                    paymentIds={[payment.id]}
                     amountPaid={Number(payment.amount_paid) || 0}
                     onAvailability={setLinesAvailable}
                     onChanged={async () => {
