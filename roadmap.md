@@ -25,4 +25,6 @@
 - [x] Notification Management: Delivery History tab, dropdown sections, mobile layout
 - [x] Selection counter counts main-round picks and short stays (weeks booked)
 - [x] Multi-week booking clarity: nights label, drag tip, Combine / Keep Separate prompt
+- [x] Single cost breakdown on Current & Past Stays: top section no longer repeats the newest stay's bill when that stay's card is shown in the ledger below
+
 
