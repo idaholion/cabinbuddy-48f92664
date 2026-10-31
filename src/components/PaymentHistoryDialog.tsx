@@ -157,104 +157,140 @@ export const PaymentHistoryDialog = ({
             </div>
           ) : (
             <>
-              {/* Summary */}
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Amount Due:</span>
-                  <span className="font-medium">${payment.amount.toFixed(2)}</span>
+              {/* Which payments to show: just this stay, one year, or everything */}
+              {familyStays && familyStays.length > 1 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">Show payments for:</span>
+                  <Select value={scope} onValueChange={setScope}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stay">This stay only</SelectItem>
+                      {Array.from(new Set(familyStays.map((s) => s.year).filter((y): y is number => y !== null)))
+                        .sort((a, b) => b - a)
+                        .map((y) => (
+                          <SelectItem key={y} value={String(y)}>
+                            {y}{y === new Date().getFullYear() ? " (year to date)" : ""}
+                          </SelectItem>
+                        ))}
+                      <SelectItem value="all">All years</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Amount Paid:</span>
-                  <span className="font-medium">${payment.amount_paid.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Receipts Credited{receiptsCount > 0 ? ` (${receiptsCount})` : ''}:
-                  </span>
-                  <span className="font-medium">${receiptsCredited.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm border-t pt-2">
-                  <span className="font-semibold">Balance Due:</span>
-                  <span className={`font-bold ${balanceDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
-                    ${balanceDue.toFixed(2)}
-                  </span>
-                </div>
-                {balanceAfterStay !== undefined && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {balanceAfterStay < 0 ? 'Credit Remaining After This Stay:' : 'Running Balance After This Stay:'}
-                    </span>
-                    <span className={`font-medium ${
-                      balanceAfterStay > 0 ? 'text-destructive' : balanceAfterStay < 0 ? 'text-green-600' : ''
-                    }`}>
-                      ${Math.abs(balanceAfterStay).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-              </div>
+              )}
 
-
-              <PaymentLinesList
-                paymentId={payment.id}
-                amountPaid={Number(payment.amount_paid) || 0}
-                onAvailability={setLinesAvailable}
-                onChanged={async () => {
-                  await fetchPayment();
-                  onPaymentUpdated();
-                }}
-              />
-
-              {/* Legacy combined payment details (before payment lines existed) */}
-              {linesAvailable !== false ? null : payment.amount_paid > 0 ? (
-                <Card className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        {payment.payment_method && (
-                          <Badge className={getPaymentMethodBadgeColor(payment.payment_method)}>
-                            {payment.payment_method.replace('_', ' ')}
-                          </Badge>
-                        )}
-                        <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'}>
-                          {payment.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        {payment.paid_date && (
-                          <div>
-                            <span className="font-medium">Payment Date:</span> {format(new Date(payment.paid_date), 'MMM d, yyyy')}
-                          </div>
-                        )}
-                        
-                        {payment.payment_reference && (
-                          <div>
-                            <span className="font-medium">Reference:</span> {payment.payment_reference}
-                          </div>
-                        )}
-                        
-                        {payment.notes && (
-                          <div>
-                            <span className="font-medium">Notes:</span> {payment.notes}
-                          </div>
-                        )}
-                      </div>
+              {scope === "stay" ? (
+                <>
+                  {/* Summary */}
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Total Amount Due:</span>
+                      <span className="font-medium">${payment.amount.toFixed(2)}</span>
                     </div>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingPayment(true)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Amount Paid:</span>
+                      <span className="font-medium">${payment.amount_paid.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Receipts Credited{receiptsCount > 0 ? ` (${receiptsCount})` : ''}:
+                      </span>
+                      <span className="font-medium">${receiptsCredited.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm border-t pt-2">
+                      <span className="font-semibold">Balance Due:</span>
+                      <span className={`font-bold ${balanceDue > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                        ${balanceDue.toFixed(2)}
+                      </span>
+                    </div>
+                    {balanceAfterStay !== undefined && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {balanceAfterStay < 0 ? 'Credit Remaining After This Stay:' : 'Running Balance After This Stay:'}
+                        </span>
+                        <span className={`font-medium ${
+                          balanceAfterStay > 0 ? 'text-destructive' : balanceAfterStay < 0 ? 'text-green-600' : ''
+                        }`}>
+                          ${Math.abs(balanceAfterStay).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </Card>
+
+
+                  <PaymentLinesList
+                    paymentId={payment.id}
+                    amountPaid={Number(payment.amount_paid) || 0}
+                    onAvailability={setLinesAvailable}
+                    onChanged={async () => {
+                      await fetchPayment();
+                      onPaymentUpdated();
+                    }}
+                  />
+
+                  {/* Legacy combined payment details (before payment lines existed) */}
+                  {linesAvailable !== false ? null : payment.amount_paid > 0 ? (
+                    <Card className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            {payment.payment_method && (
+                              <Badge className={getPaymentMethodBadgeColor(payment.payment_method)}>
+                                {payment.payment_method.replace('_', ' ')}
+                              </Badge>
+                            )}
+                            <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'}>
+                              {payment.status}
+                            </Badge>
+                          </div>
+
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            {payment.paid_date && (
+                              <div>
+                                <span className="font-medium">Payment Date:</span> {format(new Date(payment.paid_date), 'MMM d, yyyy')}
+                              </div>
+                            )}
+
+                            {payment.payment_reference && (
+                              <div>
+                                <span className="font-medium">Reference:</span> {payment.payment_reference}
+                              </div>
+                            )}
+
+                            {payment.notes && (
+                              <div>
+                                <span className="font-medium">Notes:</span> {payment.notes}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingPayment(true)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No payments recorded yet</p>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No payments recorded yet</p>
-                </div>
+                <FamilyPaymentsView
+                  stays={(familyStays || []).filter((s) => scope === "all" || s.year === Number(scope))}
+                  onChanged={async () => {
+                    await fetchPayment();
+                    await fetchFamilyStays();
+                    onPaymentUpdated();
+                  }}
+                />
               )}
             </>
           )}
