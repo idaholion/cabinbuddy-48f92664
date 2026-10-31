@@ -1022,8 +1022,23 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embe
 
     setIsCreatingPayment(true);
     try {
-      if (paymentId) {
-        // Apply the payment to the existing record for this stay
+      const addedAsLine = paymentId && organization?.id
+        ? await addPaymentLine(paymentId, organization.id, {
+            amount,
+            paidDate: data.paidDate,
+            paymentMethod: dbMethod,
+            paymentReference: data.paymentReference,
+            notes: noteText,
+          })
+        : false;
+
+      if (addedAsLine) {
+        toast({
+          title: 'Payment Recorded',
+          description: `${BillingCalculator.formatCurrency(amount)} recorded (${methodLabel}).`,
+        });
+      } else if (paymentId) {
+        // Fallback before payment lines are installed: update the combined total
         const { data: existing, error: fetchError } = await supabase
           .from('payments')
           .select('amount, amount_paid, notes')

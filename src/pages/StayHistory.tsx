@@ -2974,6 +2974,21 @@ export default function StayHistory() {
               if (fetchError) throw fetchError;
 
 
+              // Preferred: record as its own dated, editable payment line.
+              const addedAsLine = await addPaymentLine(payment.id, payment.organization_id, {
+                amount: paymentData.amount,
+                paidDate: paymentData.paidDate,
+                paymentMethod: paymentData.paymentMethod,
+                paymentReference: paymentData.paymentReference,
+                notes: paymentData.notes,
+              });
+              if (addedAsLine) {
+                await fetchPayments();
+                toast.success("Payment recorded successfully");
+                setRecordPaymentStay(null);
+                return;
+              }
+
               const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
               const newBalanceDue = payment.amount - newAmountPaid;
 

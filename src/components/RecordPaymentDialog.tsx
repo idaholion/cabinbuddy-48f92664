@@ -178,6 +178,7 @@ export const RecordPaymentDialog = ({
         variant: "destructive",
       });
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
