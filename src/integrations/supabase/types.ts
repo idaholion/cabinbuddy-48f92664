@@ -1717,6 +1717,98 @@ export type Database = {
           },
         ]
       }
+      payment_transaction_audit: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by_user_id: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string
+          payment_id: string
+          transaction_id: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id: string
+          payment_id: string
+          transaction_id: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by_user_id?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string
+          payment_id?: string
+          transaction_id?: string
+        }
+        Relationships: []
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by_user_id: string | null
+          id: string
+          is_backfill: boolean
+          notes: string | null
+          organization_id: string
+          paid_date: string
+          payment_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          updated_at: string
+          updated_by_user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_backfill?: boolean
+          notes?: string | null
+          organization_id: string
+          paid_date?: string
+          payment_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by_user_id?: string | null
+          id?: string
+          is_backfill?: boolean
+          notes?: string | null
+          organization_id?: string
+          paid_date?: string
+          payment_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          updated_at?: string
+          updated_by_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           adjustment_notes: string | null
