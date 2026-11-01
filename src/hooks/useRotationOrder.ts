@@ -49,7 +49,7 @@ interface DatabaseRotationOrder {
 // selection year, so the new season can be previewed before it begins.
 export const SELECTION_YEAR_LOOKAHEAD_DAYS = 60;
 
-export const useRotationOrder = () => {
+export const useRotationOrder = (bookingYear?: number) => {
   const [rotationData, setRotationData] = useState<RotationOrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const { organization } = useOrganization();
@@ -135,6 +135,13 @@ export const useRotationOrder = () => {
       
       if (error) {
         console.error('Error fetching rotation order:', error);
+        if (bookingYear !== undefined) setRotationData(null);
+        return;
+      }
+
+      // Booking callers must never inherit another season's restrictions.
+      if (bookingYear !== undefined) {
+        setRotationData(data ? { ...data, rotation_order: Array.isArray(data.rotation_order) ? data.rotation_order.map(String) : [] } : null);
         return;
       }
       
@@ -193,11 +200,12 @@ export const useRotationOrder = () => {
   };
 
   useEffect(() => {
-    fetchRotationOrder();
-  }, [organization?.id]);
+    setRotationData(null);
+    fetchRotationOrder(bookingYear);
+  }, [organization?.id, bookingYear]);
 
   return {
-    rotationData,
+    rotationData: bookingYear !== undefined && rotationData?.rotation_year !== bookingYear ? null : rotationData,
     loading,
     getRotationForYear,
     calculateRotationForYear,

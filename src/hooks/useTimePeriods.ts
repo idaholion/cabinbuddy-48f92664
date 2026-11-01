@@ -36,7 +36,7 @@ interface TimePeriodUsageData {
 export const useTimePeriods = (rotationYear?: number) => {
   const { user } = useAuth();
   const { organization } = useOrganization();
-  const { rotationData, getRotationForYear } = useRotationOrder();
+  const { rotationData, getRotationForYear } = useRotationOrder(rotationYear);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [timePeriodUsage, setTimePeriodUsage] = useState<TimePeriodUsageData[]>([]);
