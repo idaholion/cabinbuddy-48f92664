@@ -10,7 +10,8 @@
 
 
 ## Open
-- [ ] Use target-year settings and fresh primary/secondary turn checks for every new reservation; preserve explicit Done handoff.
+- [x] Use target-year settings and fresh primary/secondary turn checks for every new reservation; preserve explicit Done handoff. Eleven new tests and nine extension regressions passed.
+- [ ] Verify new-booking turn enforcement in the signed-in UI — external Supabase cannot provide a test session.
 - [x] Replace blanket reservation-extension block with availability, turn, and family-limit checks; nine safeguard tests passed.
 - [ ] Verify reservation extension through the signed-in UI — external Supabase does not provide a test session.
 - [ ] Selection-process conversation: back-to-back picks vs one multi-week pick (Debbie's case) — user wants to discuss
