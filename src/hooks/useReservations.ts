@@ -8,6 +8,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { secureSelect, secureInsert, secureUpdate, secureDelete, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 import { addsReservedDates, validateReservationEditLimits } from '@/lib/reservation-edit-limits';
+import { resolveBookingTurn, validateReservationCreation } from '@/lib/reservation-create-limits';
 
 interface ReservationData {
   start_date: string;
@@ -33,7 +34,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   const { activeOrganization, getOrganizationId } = useOrganizationContext();
   const { toast } = useToast();
   const { validateReservationDates } = useReservationConflicts();
-  const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper } = useUserRole();
+  const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper, isAdmin, loading: roleLoading } = useUserRole();
   const { forceReconcileUsageData } = useTimePeriods();
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
@@ -93,10 +94,15 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
     const organizationId = getOrganizationId();
 
-    // Skip permission checks in test override mode
+    if (roleLoading || (testOverrideMode && !isAdmin && !isCalendarKeeper)) {
+      toast({ title: 'Permission Denied', description: 'Please wait for your permissions to load. Only an Admin or calendar keeper can override booking rules.', variant: 'destructive' });
+      return null;
+    }
+
+    // Privileged users can book on behalf of families; override still requires authorization.
     if (!testOverrideMode) {
       // Check if user has permission to make reservations for their family group
-      const canMakeReservation = isGroupLead || (userHostInfo && userHostInfo.canHost);
+      const canMakeReservation = isAdmin || isCalendarKeeper || isGroupLead || (userHostInfo && userHostInfo.canHost);
       if (!canMakeReservation) {
         toast({
           title: "Permission Denied",
@@ -107,7 +113,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
       }
 
       // Ensure user can only make reservations for their own family group
-      if (userFamilyGroup && reservationData.family_group !== userFamilyGroup.name) {
+      if (!isAdmin && !isCalendarKeeper && (!userFamilyGroup || reservationData.family_group !== userFamilyGroup.name)) {
         toast({
           title: "Permission Denied",
           description: "You can only make reservations for your own family group.",
@@ -147,6 +153,30 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
 
     setLoading(true);
     try {
+      // Re-read immediately before saving: a form left open cannot authorize
+      // a later turn, nor use the current calendar year's free-selection rules.
+      if (!testOverrideMode) {
+        const year = Number(reservationData.start_date.slice(0, 4));
+        const [settings, secondary, stays] = await Promise.all([
+          secureSelect('rotation_orders', orgContext).eq('rotation_year', year).maybeSingle(),
+          secureSelect('secondary_selection_status', orgContext).eq('rotation_year', year).maybeSingle(),
+          secureSelect('reservations', orgContext).gte('start_date', `${year}-01-01`).lt('start_date', `${year + 1}-01-01`),
+        ]);
+        if (settings.error || secondary.error || stays.error || !settings.data) {
+          throw new Error(`Could not verify selection rules for ${year}. Please try again or contact the calendar keeper.`);
+        }
+        const errors = validateReservationCreation({ start: reservationData.start_date, end: reservationData.end_date,
+          family: reservationData.family_group, settings: settings.data, secondary: secondary.data,
+          reservations: stays.data || [], privileged: isAdmin || isCalendarKeeper });
+        if (errors.length) {
+          toast({ title: 'Booking Invalid', description: errors.join(' '), variant: 'destructive' });
+          return null;
+        }
+        const turn = resolveBookingTurn(settings.data, secondary.data);
+        if (orgContext.allocationModel !== 'static_weeks') {
+          reservationData = { ...reservationData, time_period_number: turn.phase === 'secondary' ? -1 : null };
+        }
+      }
       console.log('Creating reservation with data:', reservationData);
       
       const dataToSave = {

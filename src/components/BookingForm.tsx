@@ -16,8 +16,8 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
-import { useSequentialSelection } from '@/hooks/useSequentialSelection';
-import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { useBookingSelection } from '@/hooks/useBookingSelection';
+import { resolveBookingTurn, validateReservationCreation } from '@/lib/reservation-create-limits';
 import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
@@ -64,28 +64,27 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const { familyGroups } = useFamilyGroups();
   const { isGroupLead, isGroupMember, isHost, isCalendarKeeper, userFamilyGroup, userHostInfo, isAdmin, canEditReservations } = useEffectiveRole();
   const { reservations: allReservations, createReservation, updateReservation, deleteReservation, loading: reservationLoading } = useReservations();
-  const { rotationData, getRotationForYear } = useRotationOrder();
+  const form = useForm<BookingFormData>({
+    defaultValues: { startDate: new Date(), endDate: new Date(), familyGroup: '', totalCost: 0, hostAssignments: [], adminOverride: false }
+  });
+  const watchedStartDate = form.watch('startDate');
+  const currentYear = watchedStartDate?.getFullYear() || selectedStartDate?.getFullYear() || currentMonth.getFullYear();
+  const { snapshot: selectionSnapshot, error: selectionError } = useBookingSelection(currentYear, open);
+  const { rotationData } = useRotationOrder(currentYear);
   const { 
     calculateTimePeriodWindows, 
     validateBooking, 
     updateTimePeriodUsage,
     timePeriodUsage 
-  } = useTimePeriods();
+  } = useTimePeriods(currentYear);
   const { getAllocationModel, isStaticWeeks } = useOrganizationContext();
 
   // Get user's family group name for legacy compatibility  
   const userFamilyGroupName = userFamilyGroup?.name;
 
-  // Get current rotation order and determine whose turn it is
-  const currentYear = currentMonth.getFullYear();
-  const rotationOrder = getRotationForYear(currentYear);
-  
-  // Check secondary selection status to prevent regular bookings during user's turn
-  const { isSecondaryRoundActive: isSecondaryActive, isCurrentFamilyTurn } = useSecondarySelection(currentYear);
-  
-  // Use the sequential selection system to determine current turn and check if secondary selection is active
-  const { currentFamilyGroup, currentPhase } = useSequentialSelection(currentYear);
-  const currentTurnGroup = currentFamilyGroup || rotationOrder[0];
+  const turn = selectionSnapshot ? resolveBookingTurn(selectionSnapshot.settings, selectionSnapshot.secondary) : null;
+  const currentPhase = turn?.phase;
+  const currentTurnGroup = turn?.family;
   const isSecondarySelectionActive = currentPhase === 'secondary';
   const isPostRotationPhase = currentPhase === 'post_rotation';
 
@@ -137,17 +136,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     skipAdjacentCheckRef.current = true;
     form.handleSubmit(onSubmit)();
   };
-
-  const form = useForm<BookingFormData>({
-    defaultValues: {
-      startDate: new Date(),
-      endDate: new Date(),
-      familyGroup: '',
-      totalCost: 0,
-      hostAssignments: [],
-      adminOverride: false
-    }
-  });
 
   // Populate form when editing
   useEffect(() => {
@@ -257,7 +245,6 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     }
   }, [editingReservation, form, selectedStartDate, selectedEndDate, isGroupMember, isHost, isGroupLead, isCalendarKeeper, isAdmin, canEditReservations, userFamilyGroup, userHostInfo, prefilledFamilyGroup, prefilledHost, familyGroups]);
 
-  const watchedStartDate = form.watch('startDate');
   const watchedEndDate = form.watch('endDate');
   const watchedFamilyGroup = form.watch('familyGroup');
   const watchedHostAssignments = form.watch('hostAssignments');
@@ -286,7 +273,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
 
   // Calculate time period windows for the month of the selected dates (or editing reservation)
   // For bookings that might span month boundaries, calculate windows for both months
-  const relevantMonth = selectedStartDate || (editingReservation ? parseLocalDate(editingReservation.start_date) : currentMonth);
+  const relevantMonth = watchedStartDate || selectedStartDate || currentMonth;
   
   // Generate windows for the relevant month and the previous month to catch periods that span months
   const prevMonth = new Date(relevantMonth);
@@ -337,13 +324,23 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
     return { isValid: errors.length === 0, errors };
   };
 
-  // Validate current form state - bypass validation in test mode
+  const validateNewBooking = (start: Date, end: Date, family: string, override = false) => {
+    if (override && (isAdmin || isCalendarKeeper)) return { isValid: true, errors: [] };
+    if (!selectionSnapshot) return { isValid: false, errors: [selectionError || `Loading selection rules for ${start.getFullYear()}…`] };
+    const errors = validateReservationCreation({ start: toDateOnlyString(start), end: toDateOnlyString(end), family,
+      settings: selectionSnapshot.settings, secondary: selectionSnapshot.secondary, reservations: selectionSnapshot.reservations,
+      privileged: isAdmin || isCalendarKeeper });
+    if (isStaticWeeks()) errors.push(...validateBooking(start, end, family, timePeriodWindows, override, isSecondarySelectionActive || isPostRotationPhase).errors);
+    return { isValid: errors.length === 0, errors };
+  };
+
+  // Validate current form state using the selected dates' season.
   const currentValidation = watchedStartDate && watchedEndDate && watchedFamilyGroup
     ? testOverrideMode 
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup)
-        : validateBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, timePeriodWindows, watchedAdminOverride, isSecondarySelectionActive || isPostRotationPhase)
+        : validateNewBooking(watchedStartDate, watchedEndDate, watchedFamilyGroup, watchedAdminOverride)
     : { isValid: false, errors: [] };
 
   // Find the relevant time period window for the selected family group
@@ -357,8 +354,8 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
   const familyUsage = timePeriodUsage.find(u => u.family_group === watchedFamilyGroup);
 
   // Check if the family group can make a booking (considering admin override and all phases active)
-  const allPhasesActive = rotationData?.enable_secondary_selection && rotationData?.enable_post_rotation_selection;
-  const canMakeBooking = !!editingReservation || watchedAdminOverride || allPhasesActive || isPostRotationPhase || !familyUsage || familyUsage.time_periods_used < familyUsage.time_periods_allowed;
+  const allPhasesActive = isPostRotationPhase;
+  const canMakeBooking = !!editingReservation || currentValidation.isValid;
 
   const onSubmit = async (data: BookingFormData) => {
     // Check if no host is assigned and confirmation hasn't been given
@@ -385,7 +382,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
       ? { isValid: true, errors: [] } // Always valid in test mode
       : editingReservation 
         ? validateEditBooking(data.startDate, data.endDate, data.familyGroup)
-        : validateBooking(data.startDate, data.endDate, data.familyGroup, timePeriodWindows, data.adminOverride, isSecondarySelectionActive);
+        : validateNewBooking(data.startDate, data.endDate, data.familyGroup, data.adminOverride);
     
     if (!validation.isValid) {
       console.log('Validation failed:', validation.errors);
@@ -504,7 +501,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           time_period_number: timePeriodNumber,
           nights_used: nights,
           host_assignments: hostAssignmentsData
-        }, testOverrideMode); // Pass testOverrideMode parameter
+        }, testOverrideMode || data.adminOverride);
 
         if (reservation) {
           // Update time period usage for static weeks system only
@@ -566,7 +563,9 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
         {userFamilyGroupName && !testOverrideMode && (
               <div className="mt-2 p-3 bg-primary/10 rounded-lg">
                 <p className="text-sm font-medium">
-                  {isPostRotationPhase ? (
+                  {!turn ? (
+                    <span className="text-muted-foreground">{selectionError || `Loading selection rules for ${currentYear}…`}</span>
+                  ) : isPostRotationPhase ? (
                     <span className="text-green-600 dark:text-green-400">✓ Free selection is open — all families can book!</span>
                   ) : userFamilyGroupName === currentTurnGroup ? (
                     <>
@@ -580,7 +579,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
                     </>
                   ) : (
                     <span className="text-muted-foreground">
-                      Current turn: {currentTurnGroup} • Your group: {userFamilyGroupName}
+                      Current turn: {currentTurnGroup || 'Selection not open'} • Your group: {userFamilyGroupName}
                     </span>
                   )}
                 </p>
@@ -840,7 +839,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             {!canMakeBooking && !watchedAdminOverride && !allPhasesActive && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <p className="text-sm text-destructive">
-                  This family group has already used all allocated time periods for this year.
+                  This booking must meet the selection rules shown above.
                   {(isCalendarKeeper || testOverrideMode) && (
                     <span className="block mt-2 text-muted-foreground">
                       Use the "Override Time Period Limits" option above to allow this booking.
@@ -853,7 +852,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
             {allPhasesActive && (
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
                 <p className="text-sm text-primary">
-                  ℹ️ All selection phases (Primary, Secondary, and Post-Rotation) are active. Time period limits are not enforced.
+                  Free selection is open. Available dates and free-selection limits still apply.
                 </p>
               </div>
             )}
