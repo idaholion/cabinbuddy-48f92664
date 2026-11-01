@@ -6,6 +6,7 @@ import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
+import { secureSelect, secureUpdate, secureDelete, createOrganizationContext } from '@/lib/secure-queries';
 import { getFirstNameFromFullName } from '@/lib/reservation-utils';
 
 export type SelectionPhase = 'primary' | 'secondary' | 'post_rotation';
@@ -33,17 +34,17 @@ interface UseSequentialSelectionReturn {
 
 export const useSequentialSelection = (rotationYear: number): UseSequentialSelectionReturn => {
   const { organization } = useOrganization();
-  const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder();
-  const { timePeriodUsage } = useTimePeriods(rotationYear);
+  const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder(rotationYear);
+  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
-  const { generateSecondaryPeriods } = useReservationPeriods();
+  const { generateSecondaryPeriods } = useReservationPeriods(rotationYear);
   const { 
     secondaryStatus, 
     isSecondaryRoundActive, 
     isCurrentFamilyTurn,
     advanceSecondarySelection,
     endSecondarySelection,
-    checkIfSecondaryRoundShouldStart
+    startSecondarySelection
   } = useSecondarySelection(rotationYear);
 
   const [loading, setLoading] = useState(true);
@@ -54,10 +55,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const checkForSecondaryUsage = async (rotationOrder: string[]): Promise<boolean> => {
     if (!organization?.id) return false;
     
-    const { data } = await supabase
-      .from('time_period_usage')
-      .select('secondary_periods_used')
-      .eq('organization_id', organization.id)
+    const { data } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
       .eq('rotation_year', rotationYear)
       .gt('secondary_periods_used', 0)
       .limit(1);
@@ -83,10 +81,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       // Check if all families have completed their turns (not just reached their limit)
       const completionChecks = await Promise.all(
         rotationOrder.map(async (familyGroup) => {
-          const { data: turnData } = await supabase
-            .from('time_period_usage')
-            .select('turn_completed')
-            .eq('organization_id', organization.id)
+          const { data: turnData } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
             .eq('rotation_year', rotationYear)
             .eq('family_group', familyGroup)
             .maybeSingle();
@@ -97,14 +92,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       if (!isMounted) return;
       
-      const allCompletedPrimary = completionChecks.every(completed => completed);
+      const allCompletedPrimary = rotationOrder.length > 0 && completionChecks.every(completed => completed);
+      await determinePrimaryCurrentFamily(rotationOrder);
 
       // Check if secondary selection is active by looking at secondary_selection_status table
       // IMPORTANT: Include started_at to detect secondary phase even when all turns are completed
-      const { data: secondaryStatus } = await supabase
-        .from('secondary_selection_status')
-        .select('id, current_family_group, started_at')
-        .eq('organization_id', organization.id)
+      const { data: secondaryStatus } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear)
         .maybeSingle();
 
@@ -181,7 +174,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     return () => {
       isMounted = false;
     };
-  }, [rotationData, rotationYear, organization?.id]);
+  }, [rotationData, rotationYear, organization?.id, secondaryStatus, timePeriodUsage]);
 
   // Determine which family group's turn it is in primary phase
   // Now uses explicit current_primary_turn_family field from rotation_orders
@@ -189,10 +182,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!organization?.id || !rotationData) return;
 
     // Read the explicit current_primary_turn_family field
-    const { data: rotationOrderData, error } = await supabase
-      .from('rotation_orders')
-      .select('current_primary_turn_family')
-      .eq('organization_id', organization.id)
+    const { data: rotationOrderData, error } = await secureSelect('rotation_orders', createOrganizationContext(organization.id))
       .eq('rotation_year', rotationYear)
       .maybeSingle();
 
@@ -341,10 +331,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
     try {
       // CRITICAL: Mark current family's turn as completed in the database
-      const { error: updateError } = await supabase
-        .from('time_period_usage')
-        .update({ turn_completed: true })
-        .eq('organization_id', organization.id)
+      const { error: updateError } = await secureUpdate('time_period_usage', { turn_completed: true }, createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear)
         .eq('family_group', primaryCurrentFamily);
 
@@ -354,10 +341,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       }
 
       // Clean up any "ending tomorrow" notification records for this family
-      const { error: cleanupError } = await supabase
-        .from('selection_turn_notifications_sent')
-        .delete()
-        .eq('organization_id', organization.id)
+      const { error: cleanupError } = await secureDelete('selection_turn_notifications_sent', createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear)
         .eq('family_group', primaryCurrentFamily)
         .eq('phase', 'ending_tomorrow');
@@ -376,14 +360,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         const candidateFamily = rotationOrder[nextIndex];
         
         // Check if next family has completed their turn
-        const { data: nextTurnData } = await supabase
-          .from('time_period_usage')
-          .select('turn_completed')
-          .eq('organization_id', organization.id)
+        const { data: nextTurnData, error: nextTurnError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
           .eq('rotation_year', rotationYear)
           .eq('family_group', candidateFamily)
           .maybeSingle();
         
+        if (nextTurnError) throw nextTurnError;
         const nextTurnCompleted = nextTurnData?.turn_completed || false;
         
         // Advance to first family that hasn't completed their turn
@@ -394,10 +376,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       }
       
       // Update current_primary_turn_family in rotation_orders
-      const { error: rotationUpdateError } = await supabase
-        .from('rotation_orders')
-        .update({ current_primary_turn_family: nextFamily })
-        .eq('organization_id', organization.id)
+      const { error: rotationUpdateError } = await secureUpdate('rotation_orders', { current_primary_turn_family: nextFamily }, createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear);
 
       if (rotationUpdateError) {
@@ -414,13 +393,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         newEndDate.setDate(newEndDate.getDate() + (rotationData.selection_days || 14) - 1);
         const formattedEndDate = newEndDate.toISOString().split('T')[0];
         
-        const { error: periodUpdateError } = await supabase
-          .from('reservation_periods')
-          .update({
+        const { error: periodUpdateError } = await secureUpdate('reservation_periods', {
             selection_start_date: today,
             selection_end_date: formattedEndDate
-          })
-          .eq('organization_id', organization.id)
+          }, createOrganizationContext(organization.id))
           .eq('rotation_year', rotationYear)
           .eq('current_family_group', nextFamily);
         
@@ -437,15 +413,19 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         // If secondary selection is enabled, generate secondary periods and start secondary round
         if (rotationData.enable_secondary_selection) {
           console.log('[useSequentialSelection] Primary complete, generating secondary periods');
-          await generateSecondaryPeriods(rotationYear);
+          await startSecondarySelection();
+          // This legacy generator takes the selection-calendar year, not the stay year.
+          await generateSecondaryPeriods(rotationYear - 1);
+          setCurrentPhase('secondary');
           
           // Trigger check to start secondary selection round
           console.log('[useSequentialSelection] Triggering secondary selection start');
-          await checkIfSecondaryRoundShouldStart();
+          await fetchTimePeriodUsage(rotationYear);
         }
       }
     } catch (error) {
       console.error('[useSequentialSelection] Error in advancePrimarySelection:', error);
+      throw error;
     }
   };
 
@@ -454,10 +434,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
     try {
       // Get family group lead contact information
-      const { data: familyData, error: familyError } = await supabase
-        .from('family_groups')
-        .select('lead_name, lead_email, lead_phone')
-        .eq('organization_id', organization.id)
+      const { data: familyData, error: familyError } = await secureSelect('family_groups', createOrganizationContext(organization.id))
         .eq('name', familyGroup)
         .maybeSingle();
 

@@ -17,11 +17,11 @@ interface ReservationPeriod {
   updated_at: string;
 }
 
-export const useReservationPeriods = () => {
+export const useReservationPeriods = (rotationYear?: number) => {
   const [periods, setPeriods] = useState<ReservationPeriod[]>([]);
   const [loading, setLoading] = useState(false);
   const { organization } = useOrganization();
-  const { rotationData, calculateRotationForYear } = useRotationOrder();
+  const { rotationData, calculateRotationForYear } = useRotationOrder(rotationYear);
   const { toast } = useToast();
 
   // Generate reservation periods for a given selection year

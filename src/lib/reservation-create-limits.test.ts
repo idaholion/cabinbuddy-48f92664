@@ -44,4 +44,7 @@ describe('New reservation selection safeguards', () => {
   test('no saved turn or open free selection fails closed', () => {
     expect(check({ settings: { rotation_year: 2027 } }).some(e => e.includes('Selection is not open'))).toBe(true);
   });
+  test('clearing primary does not open free selection before secondary starts', () => {
+    expect(check({ settings: { ...settings, current_primary_turn_family: null } }).some(e => e.includes('Selection is not open'))).toBe(true);
+  });
 });

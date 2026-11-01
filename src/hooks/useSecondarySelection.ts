@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { planSecondaryTransition } from '@/lib/secondary-selection-transition';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
+
+const pendingTransitions = new Map<string, Promise<void>>();
 
 interface SecondarySelectionData {
   id: string;
@@ -18,8 +21,8 @@ interface SecondarySelectionData {
 
 export const useSecondarySelection = (rotationYear: number) => {
   const { organization } = useOrganization();
-  const { rotationData, getRotationForYear } = useRotationOrder();
-  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods();
+  const { rotationData, getRotationForYear } = useRotationOrder(rotationYear);
+  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   
   const [secondaryStatus, setSecondaryStatus] = useState<SecondarySelectionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +41,7 @@ export const useSecondarySelection = (rotationYear: number) => {
     if (!organization?.id) return;
     fetchSecondarySelectionStatus();
     checkIfSecondaryRoundShouldStart();
-  }, [organization?.id, rotationYear, timePeriodUsage]);
+  }, [organization?.id, rotationYear, rotationData, timePeriodUsage]);
 
   // Real-time subscription for secondary_selection_status updates
   useEffect(() => {
@@ -62,10 +65,7 @@ export const useSecondarySelection = (rotationYear: number) => {
           
           // Fetch with current rotation year from ref to avoid stale closure
           try {
-            const { data, error } = await supabase
-              .from('secondary_selection_status')
-              .select('*')
-              .eq('organization_id', organization.id)
+            const { data, error } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
               .eq('rotation_year', rotationYearRef.current)
               .maybeSingle();
 
@@ -132,77 +132,54 @@ export const useSecondarySelection = (rotationYear: number) => {
     }
   };
 
-  const checkIfSecondaryRoundShouldStart = async () => {
-    if (!organization?.id || !rotationData || !timePeriodUsage.length) return;
-
-    // Check if all family groups have EXPLICITLY completed their primary selections (turn_completed = true)
-    const rotationOrder = getRotationForYear(rotationYear);
-    
-    // Check turn_completed flags from database
-    const completionChecks = await Promise.all(
-      rotationOrder.map(async (familyGroup) => {
-        const { data: turnData } = await supabase
-          .from('time_period_usage')
-          .select('turn_completed')
-          .eq('organization_id', organization.id)
-          .eq('rotation_year', rotationYear)
-          .eq('family_group', familyGroup)
-          .maybeSingle();
-        
-        return turnData?.turn_completed || false;
-      })
-    );
-    
-    const allCompletedPrimary = completionChecks.every(completed => completed);
-
-    // Check if secondary selection is enabled
-    const secondaryEnabled = rotationData.enable_secondary_selection;
-
-    if (allCompletedPrimary && secondaryEnabled && !secondaryStatus) {
-      console.log('[useSecondarySelection] Starting secondary selection round');
-      await startSecondarySelection();
+  // Both automatic recovery and the Done handoff use fresh, year-scoped records.
+  const startSecondarySelection = async () => {
+    if (!organization?.id) return;
+    const context = createOrganizationContext(organization.id);
+    const key = `${organization.id}:${rotationYear}`;
+    const pending = pendingTransitions.get(key);
+    if (pending) {
+      await pending;
+      await fetchSecondarySelectionStatus();
+      return;
+    }
+    const transition = (async () => {
+      const [settings, usage, status] = await Promise.all([
+        secureSelect('rotation_orders', context).eq('rotation_year', rotationYear).maybeSingle(),
+        secureSelect('time_period_usage', context).eq('rotation_year', rotationYear),
+        secureSelect('secondary_selection_status', context).eq('rotation_year', rotationYear).maybeSingle(),
+      ]);
+      if (settings.error || usage.error || status.error) throw settings.error || usage.error || status.error;
+      // Never restart an active or finished secondary round.
+      if (status.data?.started_at || status.data?.current_family_group || !settings.data) return;
+      const order = Array.isArray(settings.data.rotation_order)
+        ? settings.data.rotation_order.map(String).filter((family: string) => family !== 'static_weeks_mode' && family !== 'manual_mode') : [];
+      const plan = planSecondaryTransition(rotationYear, order, settings.data.enable_secondary_selection === true, usage.data || [], settings.data.secondary_max_periods || 1);
+      if (!plan) return;
+      const values = { ...plan, turn_completed: !plan.current_family_group, started_at: new Date().toISOString() };
+      const result = status.data
+        ? await secureUpdate('secondary_selection_status', values, context).eq('id', status.data.id).is('started_at', null).is('current_family_group', null)
+        : await secureInsert('secondary_selection_status', { ...values, rotation_year: rotationYear }, context);
+      // Another browser may have inserted the unique organization/year row first.
+      if (result.error && result.error.code !== '23505') throw result.error;
+      const saved = await secureSelect('secondary_selection_status', context).eq('rotation_year', rotationYear).maybeSingle();
+      if (saved.error) throw saved.error;
+      if (!saved.data?.started_at) throw new Error('Secondary selection did not start. Please try again.');
+      const roundUpdate = await secureUpdate('time_period_usage', { selection_round: 'secondary' }, context).eq('rotation_year', rotationYear);
+      if (roundUpdate.error) throw roundUpdate.error;
+    })();
+    pendingTransitions.set(key, transition);
+    try {
+      await transition;
+      await fetchSecondarySelectionStatus();
+    } finally {
+      pendingTransitions.delete(key);
     }
   };
 
-  const startSecondarySelection = async () => {
-    if (!organization?.id || !rotationData) return;
-
+  const checkIfSecondaryRoundShouldStart = async () => {
     try {
-      // Get reverse order for secondary selection (last person goes first)
-      const rotationOrder = getRotationForYear(rotationYear);
-      const reverseOrder = [...rotationOrder].reverse();
-      
-      // Find first family group that can make secondary selections
-      const firstEligibleFamily = reverseOrder.find(familyGroup => {
-        const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-        const remainingSecondary = (rotationData.secondary_max_periods || 1) - (usage?.secondary_periods_used || 0);
-        return remainingSecondary > 0;
-      });
-
-      if (!firstEligibleFamily) return;
-
-      const orgContext = createOrganizationContext(organization.id);
-      const { error } = await secureInsert('secondary_selection_status', {
-        rotation_year: rotationYear,
-        current_family_group: firstEligibleFamily,
-        current_group_index: reverseOrder.indexOf(firstEligibleFamily),
-        turn_completed: false, // Start with turn not completed
-        started_at: new Date().toISOString()
-      }, orgContext);
-
-      if (error) {
-        console.error('Error starting secondary selection:', error);
-        return;
-      }
-
-      // Update all family groups to secondary selection round
-      await supabase
-        .from('time_period_usage')
-        .update({ selection_round: 'secondary' })
-        .eq('organization_id', organization.id)
-        .eq('rotation_year', rotationYear);
-
-      fetchSecondarySelectionStatus();
+      await startSecondarySelection();
     } catch (error) {
       console.error('Error starting secondary selection:', error);
     }
@@ -289,14 +266,11 @@ export const useSecondarySelection = (rotationYear: number) => {
           console.log(`[useSecondarySelection] Notification sent to ${nextFamily} for secondary selection`);
           
           // Track that notification was sent
-          await supabase
-            .from('selection_turn_notifications_sent')
-            .insert({
-              organization_id: organization.id,
+          await secureInsert('selection_turn_notifications_sent', {
               rotation_year: rotationYear,
               family_group: nextFamily,
               phase: 'secondary'
-            });
+            }, orgContext);
         }
       } catch (notifyError) {
         console.error('[useSecondarySelection] Failed to send notification:', notifyError);
