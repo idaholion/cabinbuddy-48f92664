@@ -37,7 +37,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder(rotationYear);
   const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
-  const { generateSecondaryPeriods } = useReservationPeriods();
+  const { generateSecondaryPeriods } = useReservationPeriods(rotationYear);
   const { 
     secondaryStatus, 
     isSecondaryRoundActive, 
@@ -425,6 +425,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       }
     } catch (error) {
       console.error('[useSequentialSelection] Error in advancePrimarySelection:', error);
+      throw error;
     }
   };
 

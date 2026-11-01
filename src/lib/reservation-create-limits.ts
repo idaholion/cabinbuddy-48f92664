@@ -11,7 +11,7 @@ export function resolveBookingTurn(settings: BookingSettings, secondary?: { star
   // are enabled. Using all picks never hands the turn to another family.
   if (settings.current_primary_turn_family) return { phase: 'primary' as const, family: settings.current_primary_turn_family };
   if (secondary?.current_family_group) return { phase: 'secondary' as const, family: secondary.current_family_group };
-  if (settings.enable_post_rotation_selection && (secondary?.started_at || settings.enable_secondary_selection)) {
+  if (settings.enable_post_rotation_selection && secondary?.started_at) {
     return { phase: 'post_rotation' as const, family: null };
   }
   return { phase: 'primary' as const, family: null };
