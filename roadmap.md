@@ -28,6 +28,7 @@
 - [ ] Review 3 critical findings in Security scan
 
 ## Done
+- [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.
 - [x] Removed the second duplicate $80 Mallory-to-Tina credit transfer; verified only the original $80 transfer remains.
 - [x] Credit-transfer math verified by user ($1 to Sam)
 - [x] "Didn't use this stay" (Option A) — Stay History, Upcoming Reservations, standalone button

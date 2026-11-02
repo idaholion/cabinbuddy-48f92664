@@ -1,6 +1,7 @@
 import { addPaymentLine } from "@/lib/payment-transactions";
 import { getStaysPaidLater } from "@/lib/stay-settlement";
 import { applyTransferToBalance } from "@/lib/transfer-balance";
+import { countOrphanedPayments } from "@/lib/orphaned-payments";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1716,15 +1717,9 @@ export default function StayHistory() {
     selectedYear === 0 || parseDateOnly(transfer.transfer_date).getFullYear() === selectedYear
   );
 
-  // Count orphaned payments (for admin debugging)
-  // Exclude intentional split payments (reservation_id is null by design)
-  const orphanedPaymentsCount = payments.filter(p => 
-    p.reservation_id === null && 
-    (p as any).daily_occupancy && 
-    Array.isArray((p as any).daily_occupancy) && 
-    (p as any).daily_occupancy.length > 0 &&
-    !(p.notes && p.notes.toLowerCase().includes('split from'))
-  ).length;
+  // Actual split connections exclude both source and recipient payments;
+  // legacy split notes remain a fallback for older records.
+  const orphanedPaymentsCount = countOrphanedPayments(payments, paymentSplits);
   
   console.log(`[StayHistory] Summary:`, {
     totalStays,
