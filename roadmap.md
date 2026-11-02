@@ -10,7 +10,8 @@
 
 
 ## Open
-- [ ] Apply incoming transferred credit to the recipient's current outstanding balance first, across years; retain any surplus for future stays — requested behavior, not yet implemented.
+- [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
+- [ ] Verify Tina’s $80 transfer in her signed-in Current & Past Stays — external Supabase does not provide an authenticated test session.
 - [ ] Review yearly selection handoff robustness with Richard in the next few days.
 - [x] Fix direct-login claimed-profile recognition and align the secondary banner with the calendar selection year; 34 identity and selection safeguard tests passed.
 - [x] Fix primary-to-secondary handoff using fresh target-year completion and reverse rotation; 28 selection safeguard tests passed.
