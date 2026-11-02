@@ -386,7 +386,7 @@ const CabinCalendar = () => {
             {/* Secondary Selection Manager - active states */}
             {currentPhase === 'secondary' && (
               <SecondarySelectionManager 
-                currentMonth={currentCalendarMonth}
+                rotationYear={rotationYear}
                 userFamilyGroup={userGroup?.name}
               />
             )}

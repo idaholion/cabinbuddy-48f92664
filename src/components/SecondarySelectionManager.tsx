@@ -12,26 +12,18 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 interface SecondarySelectionManagerProps {
-  currentMonth: Date;
+  rotationYear: number;
   userFamilyGroup?: string;
 }
 
 export function SecondarySelectionManager({ 
-  currentMonth, 
+  rotationYear,
   userFamilyGroup 
 }: SecondarySelectionManagerProps) {
   console.log('=== SECONDARY SELECTION MANAGER RENDERED ===', { userFamilyGroup });
   
-  // Use rotation year logic to get the correct year (same as calendar)
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const startMonth = 9; // October (0-indexed)
-  const rotationStartThisYear = new Date(currentYear, startMonth, 1);
-  const hasPassedStartDate = today >= rotationStartThisYear;
-  const rotationYear = hasPassedStartDate ? currentYear + 1 : currentYear;
-  
   const { familyGroups } = useFamilyGroups();
-  const { rotationData } = useRotationOrder();
+  const { rotationData } = useRotationOrder(rotationYear);
   const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const {
     secondaryStatus,

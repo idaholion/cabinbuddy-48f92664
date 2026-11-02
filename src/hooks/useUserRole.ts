@@ -2,40 +2,25 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useMultiOrganization } from '@/hooks/useMultiOrganization';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { secureRpc, secureSelect, createOrganizationContext } from '@/lib/secure-queries';
+import { resolveFamilyRole, type ClaimedFamilyProfile } from '@/lib/family-role-identity';
 import { useRole } from '@/contexts/RoleContext';
-
-// Name matching utility
-const isNameMatch = (userName: string, targetName: string): boolean => {
-  if (!userName || !targetName) return false;
-  
-  const normalize = (str: string) => str.toLowerCase().trim();
-  const userNormalized = normalize(userName);
-  const targetNormalized = normalize(targetName);
-  
-  // Exact match
-  if (userNormalized === targetNormalized) return true;
-  
-  // Check if names contain each other (for partial matches)
-  const userWords = userNormalized.split(/\s+/);
-  const targetWords = targetNormalized.split(/\s+/);
-  
-  // At least 2 words must match for multi-word names
-  if (userWords.length > 1 && targetWords.length > 1) {
-    const matches = userWords.filter(word => targetWords.includes(word));
-    return matches.length >= 2;
-  }
-  
-  // For single words, must be exact match or contain
-  return userWords.some(word => targetWords.includes(word)) ||
-         targetWords.some(word => userWords.includes(word));
-};
 
 export const useUserRole = () => {
   const { user } = useAuth();
   const { familyGroups, loading: familyGroupsLoading } = useFamilyGroups();
   const { activeOrganization, loading: organizationLoading } = useMultiOrganization();
   const { impersonatedFamilyGroup } = useRole();
+  const { data: claimedProfile, isPending: claimPending, isFetching: claimFetching } = useQuery({
+    queryKey: ['claimed-family-profile', user?.id, activeOrganization?.organization_id],
+    enabled: !!user?.id && !!activeOrganization?.organization_id,
+    queryFn: async () => {
+      const { data, error } = await secureRpc('get_user_claimed_profile', {}, createOrganizationContext(activeOrganization?.organization_id));
+      if (error) throw error;
+      return data as ClaimedFamilyProfile | null;
+    },
+  });
   const [isGroupLead, setIsGroupLead] = useState(false);
   const [isCalendarKeeper, setIsCalendarKeeper] = useState(false);
   const [isNameMatchedGroupLead, setIsNameMatchedGroupLead] = useState(false);
@@ -66,9 +51,7 @@ export const useUserRole = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
+      const { data, error } = await secureSelect('organizations', createOrganizationContext(activeOrganization.organization_id), { skipIsolation: true })
         .eq('id', activeOrganization.organization_id)
         .single();
 
@@ -110,91 +93,12 @@ export const useUserRole = () => {
       // });
       setIsCalendarKeeper(isCalKeeper);
 
-      // Check if user is a group lead by matching their email to lead_email in any family group (case-insensitive)
-      const leadGroup = familyGroups.find(group => 
-        group.lead_email?.toLowerCase() === user.email.toLowerCase()
-      );
-      
-      // Check if user matches any group lead by name (for users who haven't claimed profiles yet)
-      const nameMatchedLeadGroup = userDisplayName ? familyGroups.find(group => 
-        group.lead_name && isNameMatch(userDisplayName, group.lead_name)
-      ) : null;
-      
-      // Temporarily disable to prevent infinite loop
-      // console.log('🎭 [USER ROLE] Group lead check:', {
-      //   userEmail: user.email,
-      //   userDisplayName,
-      //   familyGroups: familyGroups.map(g => ({ 
-      //     name: g.name, 
-      //     lead_email: g.lead_email,
-      //     lead_name: g.lead_name,
-      //     host_members: g.host_members
-      //   })),
-      //   foundLeadGroup: leadGroup?.name,
-      //   nameMatchedLeadGroup: nameMatchedLeadGroup?.name,
-      //   isGroupLead: !!leadGroup,
-      //   isNameMatchedGroupLead: !!nameMatchedLeadGroup
-      // });
-      // Treat a name match against the lead name as a lead too — a lead's login
-      // email and contact (lead) email can legitimately differ (identity separation).
-      setIsGroupLead(!!leadGroup || !!nameMatchedLeadGroup);
-      setIsNameMatchedGroupLead(!!nameMatchedLeadGroup);
-
-      if (leadGroup || nameMatchedLeadGroup) {
-        setUserFamilyGroup(leadGroup || nameMatchedLeadGroup);
-        setUserHostInfo(null);
-      } else {
-        // Check if user is a host member in any family group by email
-        let foundGroup = null;
-        let foundHost = null;
-        let nameMatchedGroup = null;
-        let nameMatchedHost = null;
-        
-        for (const group of familyGroups) {
-          if (group.host_members) {
-            const hostMember = group.host_members.find((member: any) => 
-              member.email?.toLowerCase() === user.email.toLowerCase()
-            );
-            if (hostMember) {
-              foundGroup = group;
-              foundHost = hostMember;
-              break;
-            }
-          }
-        }
-        
-        // Check if user matches any host member by name (for users who haven't claimed profiles yet)
-        if (userDisplayName && !foundGroup) {
-          for (const group of familyGroups) {
-            if (group.host_members) {
-              const hostMember = group.host_members.find((member: any) => 
-                member.name && isNameMatch(userDisplayName, member.name)
-              );
-              if (hostMember) {
-                nameMatchedGroup = group;
-                nameMatchedHost = hostMember;
-                break;
-              }
-            }
-          }
-        }
-        
-        // Temporarily disable to prevent infinite loop
-        // console.log('🎭 [USER ROLE] Host member check:', {
-        //   userEmail: user.email,
-        //   userDisplayName,
-        //   foundGroupName: foundGroup?.name,
-        //   foundHost: foundHost,
-        //   nameMatchedGroupName: nameMatchedGroup?.name,
-        //   nameMatchedHost: nameMatchedHost,
-        //   isHost: !!foundHost?.canHost,
-        //   isNameMatchedMember: !!nameMatchedHost
-        // });
-        
-        setUserFamilyGroup(foundGroup || nameMatchedGroup);
-        setUserHostInfo(foundHost || nameMatchedHost);
-        setIsNameMatchedMember(!!nameMatchedHost);
-      }
+      const resolved = resolveFamilyRole(familyGroups, { id: user.id, email: user.email, name: userDisplayName }, claimedProfile);
+      setIsGroupLead(resolved.isLead);
+      setIsNameMatchedGroupLead(resolved.isLead && resolved.nameMatched);
+      setIsNameMatchedMember(!resolved.isLead && resolved.nameMatched);
+      setUserFamilyGroup(resolved.group);
+      setUserHostInfo(resolved.member);
 
       // Check admin/treasurer roles from organization table AND user_organizations table
       const isTreasurer = organizationDetails?.treasurer_email?.toLowerCase() === user?.email?.toLowerCase();
@@ -232,6 +136,7 @@ export const useUserRole = () => {
     checkUserRole();
   }, [
     impersonatedFamilyGroup,
+    claimedProfile,
     user?.email, 
     user?.id, 
     user?.user_metadata?.display_name,
@@ -263,6 +168,7 @@ export const useUserRole = () => {
     isAdmin,
     userFamilyGroup: impersonatedGroup || userFamilyGroup,
     userHostInfo: impersonatedGroup ? null : userHostInfo,
-    loading,
+    claimedProfile,
+    loading: loading || (!!user?.id && !!activeOrganization?.organization_id && (claimPending || claimFetching)),
   };
 };
