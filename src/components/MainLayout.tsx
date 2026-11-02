@@ -25,7 +25,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex w-full">
           <AppSidebar />
-          <main className="flex-1">
+          <main className="flex-1 min-w-0">
             <GuestAccessBanner />
             <TestOrganizationBanner />
             <ProfileClaimingPrompt />
