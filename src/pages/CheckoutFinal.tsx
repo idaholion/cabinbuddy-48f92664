@@ -1156,6 +1156,13 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
   const canEarlyCheckout = currentReservation && checkOutDate &&
     checkOutDate > new Date();
 
+  // On Current & Past Stays, the departure checklist only belongs to the stay
+  // that is happening this week. Once the family has left, the box goes away.
+  const showDepartureChecklist = !embedded || isCurrentStay;
+  const showEarlyCheckout = !!(canEarlyCheckout || checkoutData.isSample);
+
+
+
   const handleEarlyCheckoutComplete = () => {
     // Refresh reservations data after early checkout
     window.location.reload();
