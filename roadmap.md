@@ -10,6 +10,7 @@
 
 
 ## Open
+- [ ] Fix direct-login claimed-profile recognition and align the secondary banner with the calendar selection year.
 - [x] Fix primary-to-secondary handoff using fresh target-year completion and reverse rotation; 28 selection safeguard tests passed.
 - [ ] Verify Tina's third-week selection in the signed-in UI — external Supabase cannot provide a test session.
 - [x] Use target-year settings and fresh primary/secondary turn checks for every new reservation; preserve explicit Done handoff. Eleven new tests and nine extension regressions passed.
