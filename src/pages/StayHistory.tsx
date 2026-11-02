@@ -1992,7 +1992,7 @@ export default function StayHistory() {
             </Select>
           )}
 
-          <div className="flex gap-2 ml-auto">
+          <div className="flex flex-wrap gap-2 ml-auto justify-end">
             {isAdmin && (
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/financial-admin-tools">
