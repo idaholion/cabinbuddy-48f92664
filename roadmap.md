@@ -14,7 +14,8 @@
 
 - [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
 - [ ] Verify Tina’s $80 transfer in her signed-in Current & Past Stays — external Supabase does not provide an authenticated test session.
-- [ ] Review yearly selection handoff robustness with Richard in the next few days.
+- [x] Read-only 2027 selection audit completed; primary complete, secondary active, saved-limit and phase-display concerns identified without changing data.
+- [x] Record the agreed selection-hardening sequence and safeguards below.
 - [x] Fix direct-login claimed-profile recognition and align the secondary banner with the calendar selection year; 34 identity and selection safeguard tests passed.
 - [x] Fix primary-to-secondary handoff using fresh target-year completion and reverse rotation; 28 selection safeguard tests passed.
 - [ ] Verify Tina's third-week selection in the signed-in UI — external Supabase cannot provide a test session.
@@ -28,6 +29,18 @@
 - [ ] Template-layer supervisor propagation — deferred to off-season queue
 - [ ] Payment transaction ledger — off-season queue
 - [ ] Review 3 critical findings in Security scan
+
+## Selection hardening — agreed sequence
+
+**Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
+
+1. [ ] Wait for Dana Grandy (Grandy Family) to press “I'm done selecting.” Richard Andrew (Andrew Family) is next and can hold off starting his selections to provide the quiet window.
+2. [ ] In that window, implement and verify display-only hardening: load the banner and status dropdown from consistent saved target-year state, refresh when the viewed person or year changes and after handoffs, and replace hardcoded/default phase text with accurate loading and saved-state displays. No stored selection data changes. Publish only with Richard's explicit approval.
+3. [ ] Confirm Andrew's secondary turn displays correctly and existing reservations and completed turns remain unchanged before Richard resumes selecting.
+4. [ ] Wait until the entire 2027 secondary round finishes before correcting saved zero limits, introducing separate round status records, or re-saving season setup. Review proposed changes with Richard first; any external Supabase SQL is supplied for manual execution.
+5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
+
+**Current blockers:** Display work waits for Dana's Done and Richard's quiet window; saved-data changes and rollover implementation wait for the secondary round to finish. This sequence records future work only, not authorization to change live state.
 
 ## Done
 - [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.
