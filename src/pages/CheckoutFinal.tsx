@@ -1156,6 +1156,13 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
   const canEarlyCheckout = currentReservation && checkOutDate &&
     checkOutDate > new Date();
 
+  // On Current & Past Stays, the departure checklist only belongs to the stay
+  // that is happening this week. Once the family has left, the box goes away.
+  const showDepartureChecklist = !embedded || isCurrentStay;
+  const showEarlyCheckout = !!(canEarlyCheckout || checkoutData.isSample);
+
+
+
   const handleEarlyCheckoutComplete = () => {
     // Refresh reservations data after early checkout
     window.location.reload();
@@ -1218,8 +1225,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
         ) : (
           <>
             {/* Compact Side-by-Side Reminders */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {(showDepartureChecklist || showEarlyCheckout) && (
+            <div className={`grid gap-4 mb-6 ${showDepartureChecklist && showEarlyCheckout ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
               {/* Departure Checklist Collapsible */}
+              {showDepartureChecklist && (
               <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
                   <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-primary">
@@ -1306,9 +1315,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
                   </Card>
                 </CollapsibleContent>
               </Collapsible>
+              )}
 
               {/* Early Checkout Collapsible */}
-              {(canEarlyCheckout || checkoutData.isSample) && (
+              {showEarlyCheckout && (
                 <Collapsible defaultOpen={false}>
                   <CollapsibleTrigger asChild>
                     <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-orange-500">
@@ -1371,6 +1381,7 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
                 </Collapsible>
               )}
             </div>
+            )}
 
             {/* Sample Data Banner - shown when using demo data */}
             {checkoutData.isSample && (
