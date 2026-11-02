@@ -1371,6 +1371,7 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
                 </Collapsible>
               )}
             </div>
+            )}
 
             {/* Sample Data Banner - shown when using demo data */}
             {checkoutData.isSample && (
