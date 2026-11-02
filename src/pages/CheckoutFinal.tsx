@@ -1218,8 +1218,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
         ) : (
           <>
             {/* Compact Side-by-Side Reminders */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {(showDepartureChecklist || showEarlyCheckout) && (
+            <div className={`grid gap-4 mb-6 ${showDepartureChecklist && showEarlyCheckout ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
               {/* Departure Checklist Collapsible */}
+              {showDepartureChecklist && (
               <Collapsible defaultOpen={false}>
                 <CollapsibleTrigger asChild>
                   <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-primary">
