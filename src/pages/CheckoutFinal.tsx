@@ -70,7 +70,7 @@ interface UserSplit {
   };
 }
 
-const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embedded?: boolean; breakdownShownBelow?: boolean }) => {
+const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly = false }: { embedded?: boolean; breakdownShownBelow?: boolean; mineOnly?: boolean }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -224,6 +224,19 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embe
       // If it's a transferred-out reservation, don't show it for checkout (original person already checked out)
       if (r.transfer_type === 'transferred_out') return false;
       
+      // "My stays": only the viewed person's own stays, never another family member's.
+      if (mineOnly) {
+        const hosts = Array.isArray(r.host_assignments) ? r.host_assignments : [];
+        if (hosts.length > 0) {
+          return hosts.some(host =>
+            (!!claimedProfile && host.host_name === claimedProfile.member_name &&
+              r.family_group === claimedProfile.family_group_name) ||
+            (!!user.email && host.host_email?.toLowerCase() === user.email.toLowerCase())
+          );
+        }
+        return r.user_id === effectiveUserId;
+      }
+
       // Filter by user - check if this reservation belongs to the logged-in user
       // Option 1: If user has claimed a profile, match by family group and host name
       if (claimedProfile) {
@@ -283,8 +296,12 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embe
       parseDateOnly(b.end_date).getTime() - parseDateOnly(a.end_date).getTime()
     )[0];
     
-    // Always show the most recent past stay regardless of how long ago it ended.
-    // Sample mode only applies when the user has no stays at all.
+    // On Current & Past Stays, the pinned card only stays up for 7 days after
+    // departure; afterwards the stay lives in the history list like any other.
+    if (embedded && mostRecentPast) {
+      const daysSince = (today.getTime() - parseDateOnly(mostRecentPast.end_date).getTime()) / 86400000;
+      if (daysSince > 7) return undefined;
+    }
     return mostRecentPast;
   };
 
@@ -1143,6 +1160,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false }: { embe
     // Refresh reservations data after early checkout
     window.location.reload();
   };
+
+  // Embedded in Current & Past Stays: no pinned card (and no sample) when there
+  // is no active stay or one that ended within the last 7 days.
+  if (embedded && !currentReservation) return null;
 
   return (
     <div
