@@ -1912,9 +1912,13 @@ export default function StayHistory() {
             });
             if (result) {
               toast.success('Credit transferred successfully');
-              await refetchTransfers();
-              await fetchPayments(1, 500);
               setTransferDialogOpen(false);
+              await Promise.all([
+                refetchTransfers(),
+                fetchPayments(1, 500),
+                fetchPaymentSplits(),
+                refetchReservations(),
+              ]);
             }
           }}
         />
@@ -3233,9 +3237,13 @@ export default function StayHistory() {
           });
           if (result) {
             toast.success('Credit transferred successfully');
-            await refetchTransfers();
-            await fetchPayments(1, 500);
             setTransferDialogOpen(false);
+            await Promise.all([
+              refetchTransfers(),
+              fetchPayments(1, 500),
+              fetchPaymentSplits(),
+              refetchReservations(),
+            ]);
           }
         }}
       />
