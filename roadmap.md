@@ -36,6 +36,7 @@
 
 1. [ ] Wait for Dana Grandy (Grandy Family) to press “I'm done selecting.” Richard Andrew (Andrew Family) is next and can hold off starting his selections to provide the quiet window.
 2. [ ] In that window, implement and verify display-only hardening: load the banner and status dropdown from consistent saved target-year state, refresh when the viewed person or year changes and after handoffs, and replace hardcoded/default phase text with accurate loading and saved-state displays. No stored selection data changes. Publish only with Richard's explicit approval.
+   - [x] Early piece done (Nov 2, in preview, not yet published): late answers for the wrong year are ignored and failed reads retry instead of showing Round 1. Remaining: hardcoded "Selection begins October 1st" text and a clear loading state.
 3. [ ] Confirm Andrew's secondary turn displays correctly and existing reservations and completed turns remain unchanged before Richard resumes selecting.
 4. [ ] Wait until the entire 2027 secondary round finishes before correcting saved zero limits, introducing separate round status records, or re-saving season setup. Review proposed changes with Richard first; any external Supabase SQL is supplied for manual execution.
 5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
