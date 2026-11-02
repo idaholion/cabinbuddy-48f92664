@@ -40,7 +40,7 @@ describe('Saved family identity for selection', () => {
       start: '2027-08-13', end: '2027-08-20', family: role.group?.name || '',
       settings: { rotation_year: 2027, current_primary_turn_family: null, enable_secondary_selection: true, secondary_max_periods: 1 },
       secondary: { started_at: '2026-11-01', current_family_group: 'Comeau Family' },
-      reservations: [{ id: 'primary', family_group: 'Comeau Family', start_date: '2027-07-02', end_date: '2027-07-16', selection_round: 'primary' }],
+      reservations: [{ id: 'primary', family_group: 'Comeau Family', start_date: '2027-07-02', end_date: '2027-07-16' }],
     })).toEqual([]);
   });
 });
