@@ -2337,7 +2337,7 @@ export default function StayHistory() {
 
         <TabsContent value="stays" className="space-y-8 mt-6">
       {/* Current / most recent stay (formerly Daily & Final Input) */}
-      <CheckoutFinal embedded breakdownShownBelow={newestStayShownBelow} />
+      <CheckoutFinal embedded breakdownShownBelow={newestStayShownBelow} mineOnly={scopeIsMineOnly || (!canChooseScope && !canViewAllStays)} />
 
       {/* Past Stays List */}
       <div className="space-y-4">
