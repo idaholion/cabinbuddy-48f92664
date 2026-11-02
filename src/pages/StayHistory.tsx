@@ -1434,7 +1434,13 @@ export default function StayHistory() {
       detail.previousBalance !== detail.newBalance &&
       (creditTransfers || []).some(transfer => transfer.id === detail.eventId.split(':')[1] &&
         parseDateOnly(transfer.transfer_date).getTime() >= parseDateOnly(reservation.start_date).getTime())
-    );
+    ).sort((a, b) => {
+      const first = creditTransfers.find(t => `transfer:${t.id}:${a.direction}` === a.eventId);
+      const second = creditTransfers.find(t => `transfer:${t.id}:${b.direction}` === b.eventId);
+      if (!first || !second) return 0;
+      return parseDateOnly(first.transfer_date).getTime() - parseDateOnly(second.transfer_date).getTime() ||
+        new Date(first.created_at).getTime() - new Date(second.created_at).getTime();
+    });
     stayData.amountDue = finalBalanceByHost.get(hostKey) ?? stayData.amountDue;
     stayData.unpaidRemaining = Math.max(0, stayData.amountDue);
   }
