@@ -14,7 +14,8 @@
 
 - [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
 - [ ] Verify Tina’s $80 transfer in her signed-in Current & Past Stays — external Supabase does not provide an authenticated test session.
-- [ ] Review yearly selection handoff robustness with Richard in the next few days.
+- [x] Read-only 2027 selection audit completed; primary complete, secondary active, saved-limit and phase-display concerns identified without changing data.
+- [x] Record the agreed selection-hardening sequence and safeguards below.
 - [x] Fix direct-login claimed-profile recognition and align the secondary banner with the calendar selection year; 34 identity and selection safeguard tests passed.
 - [x] Fix primary-to-secondary handoff using fresh target-year completion and reverse rotation; 28 selection safeguard tests passed.
 - [ ] Verify Tina's third-week selection in the signed-in UI — external Supabase cannot provide a test session.
