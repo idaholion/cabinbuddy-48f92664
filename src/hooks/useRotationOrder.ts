@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "./useOrganization";
 import { secureSelect, createOrganizationContext } from "@/lib/secure-queries";
@@ -53,6 +53,9 @@ export const useRotationOrder = (bookingYear?: number) => {
   const [rotationData, setRotationData] = useState<RotationOrderData | null>(null);
   const [loading, setLoading] = useState(true);
   const { organization } = useOrganization();
+  // Each fetch gets an id; answers from an older request (e.g. the previous
+  // year while the page settles on the selection year) are discarded.
+  const requestIdRef = useRef(0);
 
   const calculateRotationForYear = (baseOrder: string[], startYear: number, targetYear: number, firstLastOption: string): string[] => {
     if (!baseOrder.length || targetYear < startYear) return baseOrder;
@@ -124,6 +127,8 @@ export const useRotationOrder = (bookingYear?: number) => {
   const fetchRotationOrder = async (year?: number) => {
     if (!organization?.id) return;
     
+    const requestId = ++requestIdRef.current;
+    const isStale = () => requestId !== requestIdRef.current;
     setLoading(true);
     try {
       const orgContext = createOrganizationContext(organization.id);
@@ -132,6 +137,7 @@ export const useRotationOrder = (bookingYear?: number) => {
       const { data, error } = await secureSelect('rotation_orders', orgContext)
         .eq('rotation_year', targetYear)
         .maybeSingle();
+      if (isStale()) return;
       
       if (error) {
         console.error('Error fetching rotation order:', error);
@@ -160,6 +166,7 @@ export const useRotationOrder = (bookingYear?: number) => {
         // No valid data - find most recent year with valid rotation data
         const { data: allYears, error: allError } = await secureSelect('rotation_orders', orgContext)
           .order('rotation_year', { ascending: false });
+        if (isStale()) return;
         
         if (allError) {
           console.error('Error fetching all rotation orders:', allError);
@@ -195,7 +202,7 @@ export const useRotationOrder = (bookingYear?: number) => {
     } catch (error) {
       console.error('Error fetching rotation order:', error);
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   };
 

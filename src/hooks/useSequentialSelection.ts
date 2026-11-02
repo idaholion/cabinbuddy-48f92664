@@ -71,20 +71,23 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     }
 
     let isMounted = true;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
     const checkPhaseAndFamily = async () => {
       // Determine current phase - use CALCULATED rotation for target year
       const rotationOrder = getRotationForYear(rotationYear);
+      let hadReadError = false;
       
       if (!isMounted) return;
 
       // Check if all families have completed their turns (not just reached their limit)
       const completionChecks = await Promise.all(
         rotationOrder.map(async (familyGroup) => {
-          const { data: turnData } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
+          const { data: turnData, error: turnError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
             .eq('rotation_year', rotationYear)
             .eq('family_group', familyGroup)
             .maybeSingle();
+          if (turnError) hadReadError = true;
           
           return turnData?.turn_completed || false;
         })
@@ -97,11 +100,19 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
       // Check if secondary selection is active by looking at secondary_selection_status table
       // IMPORTANT: Include started_at to detect secondary phase even when all turns are completed
-      const { data: secondaryStatus } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
+      const { data: secondaryStatus, error: secondaryReadError } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear)
         .maybeSingle();
 
       if (!isMounted) return;
+
+      // A failed read must never be mistaken for "no round has started" — that
+      // used to drop the screen back to Round 1. Keep the current view and retry.
+      if (hadReadError || secondaryReadError) {
+        console.warn('[useSequentialSelection] Read failed during phase check; retrying shortly');
+        retryTimer = setTimeout(() => { if (isMounted) checkPhaseAndFamily(); }, 3000);
+        return;
+      }
 
       // CRITICAL FIX: Detect secondary phase using started_at OR current_family_group
       // - If started_at exists, the secondary round was initiated (even if completed)
@@ -173,6 +184,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
     return () => {
       isMounted = false;
+      if (retryTimer) clearTimeout(retryTimer);
     };
   }, [rotationData, rotationYear, organization?.id, secondaryStatus, timePeriodUsage]);
 
