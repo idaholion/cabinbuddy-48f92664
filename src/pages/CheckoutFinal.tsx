@@ -1161,6 +1161,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
     window.location.reload();
   };
 
+  // Embedded in Current & Past Stays: no pinned card (and no sample) when there
+  // is no active stay or one that ended within the last 7 days.
+  if (embedded && !currentReservation) return null;
+
   return (
     <div
       className={embedded ? "" : "min-h-screen bg-cover bg-center bg-no-repeat"}
