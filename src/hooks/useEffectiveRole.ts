@@ -3,22 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { resolveFamilyRole } from '@/lib/family-role-identity';
 
 const normalize = (str?: string | null) => (str || '').toLowerCase().trim();
-
-const isNameMatch = (a?: string | null, b?: string | null): boolean => {
-  const na = normalize(a);
-  const nb = normalize(b);
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-  const aw = na.split(/\s+/).filter(Boolean);
-  const bw = nb.split(/\s+/).filter(Boolean);
-  if (aw.length > 1 && bw.length > 1) {
-    const matches = aw.filter(w => bw.includes(w));
-    return matches.length >= 2;
-  }
-  return aw.some(w => bw.includes(w)) || bw.some(w => aw.includes(w));
-};
 
 interface ResolvedIdentity {
   id?: string | null;
@@ -73,39 +60,10 @@ export const useEffectiveRole = () => {
   return useMemo(() => {
     const identity = resolveIdentity(user, isImpersonating ? target : null);
 
-    let matchedGroup: any = null;
-    let matchedMember: any = null;
-    let matchedIndex = -1;
-
-    for (const fg of familyGroups || []) {
-      if (identity.email && normalize(fg.lead_email) === identity.email) {
-        matchedGroup = fg;
-        matchedIndex = -2; // lead by email
-        break;
-      }
-      if (identity.name && isNameMatch(fg.lead_name, identity.name)) {
-        matchedGroup = fg;
-        matchedIndex = -2; // lead by name
-        break;
-      }
-      const hosts: any[] = Array.isArray(fg.host_members) ? fg.host_members : [];
-      const idx = hosts.findIndex((m: any) => {
-        if (identity.id && (m?.user_id || '').toString() === identity.id) return true;
-        if (identity.email && normalize(m?.email) === identity.email) return true;
-        if (identity.name && isNameMatch(m?.name, identity.name)) return true;
-        const fullName = [m?.firstName, m?.lastName].filter(Boolean).join(' ');
-        if (identity.name && isNameMatch(fullName, identity.name)) return true;
-        return false;
-      });
-      if (idx !== -1) {
-        matchedGroup = fg;
-        matchedMember = hosts[idx];
-        matchedIndex = idx;
-        break;
-      }
-    }
-
-    const isGroupLead = matchedIndex === -2 || matchedIndex === 0;
+    const resolved = resolveFamilyRole(familyGroups, identity, isImpersonating ? null : role.claimedProfile);
+    const matchedGroup = resolved.group;
+    const matchedMember = resolved.member;
+    const isGroupLead = resolved.isLead;
     const isGroupMember = !isGroupLead && !!matchedMember;
     const isHost = isGroupMember && !!matchedMember?.canHost;
 
@@ -128,8 +86,8 @@ export const useEffectiveRole = () => {
       isGroupMember: isImpersonating ? isGroupMember : (role.isGroupMember || isGroupMember),
       isNameMatchedMember: isImpersonating ? false : role.isNameMatchedMember,
       isHost: isImpersonating ? isHost : (role.isHost || isHost),
-      userFamilyGroup: isImpersonating ? matchedGroup : (role.userFamilyGroup || matchedGroup),
-      userHostInfo: isImpersonating ? matchedMember : (role.userHostInfo || matchedMember),
+      userFamilyGroup: matchedGroup,
+      userHostInfo: matchedMember,
       canEditReservations,
       canEditDailyFinal,
       canEditStayHistory,
