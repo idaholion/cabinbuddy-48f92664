@@ -10,6 +10,8 @@
 
 
 ## Open
+- [ ] Verify the Departure Checklist box only appears while the current stay is in progress — external Supabase does not provide a test session.
+
 - [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
 - [ ] Verify Tina’s $80 transfer in her signed-in Current & Past Stays — external Supabase does not provide an authenticated test session.
 - [ ] Review yearly selection handoff robustness with Richard in the next few days.
