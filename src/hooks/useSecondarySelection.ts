@@ -31,6 +31,8 @@ export const useSecondarySelection = (rotationYear: number) => {
   
   // Use ref to avoid stale closure in real-time subscription
   const rotationYearRef = useRef(rotationYear);
+  // Several screens use this hook at once; each needs its own live-update channel.
+  const channelSuffixRef = useRef(Math.random().toString(36).slice(2));
   
   // Keep ref in sync with prop
   useEffect(() => {
@@ -50,7 +52,7 @@ export const useSecondarySelection = (rotationYear: number) => {
     console.log('[Secondary Selection] Setting up real-time subscription for organization:', organization.id);
     
     const channel = supabase
-      .channel('secondary-selection-status-changes')
+      .channel(`secondary-selection-status-changes-${channelSuffixRef.current}`)
       .on(
         'postgres_changes',
         {
@@ -106,6 +108,9 @@ export const useSecondarySelection = (rotationYear: number) => {
         .select('*')
         .eq('rotation_year', rotationYear)
         .maybeSingle();
+
+      // Ignore a late answer for a year this screen has already moved away from.
+      if (rotationYearRef.current !== rotationYear) return;
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error fetching secondary selection status:', error);

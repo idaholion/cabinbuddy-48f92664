@@ -360,6 +360,9 @@ export const useTimePeriods = (rotationYear?: number) => {
       const { data, error } = await secureSelect('time_period_usage', orgContext)
         .eq('rotation_year', currentYear);
 
+      // Ignore a late answer for a year this screen has already moved away from.
+      if (rotationYearRef.current !== undefined && rotationYearRef.current !== currentYear) return;
+
       if (error) {
         console.error('Error fetching time period usage:', error);
         return;
