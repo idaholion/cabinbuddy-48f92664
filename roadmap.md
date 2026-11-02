@@ -10,6 +10,8 @@
 
 
 ## Open
+- [ ] Apply incoming transferred credit to the recipient's current outstanding balance first, across years; retain any surplus for future stays — requested behavior, not yet implemented.
+- [ ] Review yearly selection handoff robustness with Richard in the next few days.
 - [x] Fix direct-login claimed-profile recognition and align the secondary banner with the calendar selection year; 34 identity and selection safeguard tests passed.
 - [x] Fix primary-to-secondary handoff using fresh target-year completion and reverse rotation; 28 selection safeguard tests passed.
 - [ ] Verify Tina's third-week selection in the signed-in UI — external Supabase cannot provide a test session.
@@ -25,6 +27,7 @@
 - [ ] Review 3 critical findings in Security scan
 
 ## Done
+- [x] Removed the second duplicate $80 Mallory-to-Tina credit transfer; verified only the original $80 transfer remains.
 - [x] Credit-transfer math verified by user ($1 to Sam)
 - [x] "Didn't use this stay" (Option A) — Stay History, Upcoming Reservations, standalone button
 - [x] Notification Management: Delivery History tab, dropdown sections, mobile layout
