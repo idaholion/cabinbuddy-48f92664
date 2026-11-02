@@ -1306,9 +1306,10 @@ const CheckoutFinal = ({ embedded = false, breakdownShownBelow = false, mineOnly
                   </Card>
                 </CollapsibleContent>
               </Collapsible>
+              )}
 
               {/* Early Checkout Collapsible */}
-              {(canEarlyCheckout || checkoutData.isSample) && (
+              {showEarlyCheckout && (
                 <Collapsible defaultOpen={false}>
                   <CollapsibleTrigger asChild>
                     <Card className="cursor-pointer hover:bg-muted/50 transition-colors border-l-4 border-l-orange-500">
