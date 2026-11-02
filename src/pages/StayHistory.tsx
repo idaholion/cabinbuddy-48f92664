@@ -1,5 +1,6 @@
 import { addPaymentLine } from "@/lib/payment-transactions";
 import { getStaysPaidLater } from "@/lib/stay-settlement";
+import { applyTransferToBalance } from "@/lib/transfer-balance";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -311,6 +312,7 @@ export default function StayHistory() {
       await refetchReservations();
       await fetchPayments(1, 500);
       await fetchPaymentSplits();
+      await refetchTransfers();
       toast.success("Data refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh data");
@@ -1217,12 +1219,13 @@ export default function StayHistory() {
     while (ptr.inIndex < list.length && parseDateOnly(list[ptr.inIndex].transfer_date).getTime() <= beforeDate.getTime()) {
       const t = list[ptr.inIndex++];
       const amount = Number(t.amount) || 0;
-      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      const applied = applyTransferToBalance(hostBalances.get(hostKey) || 0, amount);
+      hostBalances.set(hostKey, applied.balance);
       pool.transferInQueue.push({
         id: t.id,
         fromName: getTransferDisplayName(t.from_ledger_name),
         notes: t.notes,
-        remaining: amount,
+        remaining: applied.creditForFuture,
       });
     }
     hostTransferPointers.set(hostKey, ptr);
@@ -1284,15 +1287,17 @@ export default function StayHistory() {
   for (const [hostKey, list] of transfersByTarget.entries()) {
     const ptr = hostTransferPointers.get(hostKey) || { outIndex: 0, inIndex: 0 };
     const pool = hostPools.get(hostKey) || { payment: 0, receipt: 0, transferInQueue: [] };
+    hostPools.set(hostKey, pool);
     while (ptr.inIndex < list.length) {
       const t = list[ptr.inIndex++];
       const amount = Number(t.amount) || 0;
-      hostBalances.set(hostKey, (hostBalances.get(hostKey) || 0) - amount);
+      const applied = applyTransferToBalance(hostBalances.get(hostKey) || 0, amount);
+      hostBalances.set(hostKey, applied.balance);
       pool.transferInQueue.push({
         id: t.id,
         fromName: getTransferDisplayName(t.from_ledger_name),
         notes: t.notes,
-        remaining: amount,
+        remaining: applied.creditForFuture,
       });
     }
     hostTransferPointers.set(hostKey, ptr);
@@ -1308,6 +1313,8 @@ export default function StayHistory() {
     direction: 'out' | 'in';
     previousBalance: number;
     newBalance: number;
+    appliedToDebt: number;
+    creditForFuture: number;
     isCurrent: boolean;
   };
   const transferLedgerDetails = new Map<string, TransferLedgerDetail>();
@@ -1392,12 +1399,17 @@ export default function StayHistory() {
         event.stayData.amountDue = balance;
       }
       if (event.transfer && event.direction) {
+        const applied = event.direction === 'in'
+          ? applyTransferToBalance(previousBalance, Number(event.transfer.amount) || 0)
+          : { appliedToDebt: 0, creditForFuture: 0 };
         transferLedgerDetails.set(`${event.transfer.id}|${hostKey}`, {
           eventId: event.id,
           hostKey,
           direction: event.direction,
           previousBalance,
           newBalance: balance,
+          appliedToDebt: applied.appliedToDebt,
+          creditForFuture: applied.creditForFuture,
           isCurrent: false,
         });
       }
@@ -1409,6 +1421,22 @@ export default function StayHistory() {
 
   for (const detail of transferLedgerDetails.values()) {
     detail.isCurrent = latestLedgerEventByHost.get(detail.hostKey) === detail.eventId;
+  }
+
+  // Keep the historical closing balance, but payment/refund actions on the
+  // latest stay must use the actual balance after subsequent transfers.
+  for (const { reservation, stayData } of fullLedger) {
+    const hostKey = getLedgerKey(reservation);
+    stayData.closingBalance = stayData.amountDue;
+    if (lastReservationByHost.get(hostKey) !== reservation.id) continue;
+    stayData.transfersSinceStay = Array.from(transferLedgerDetails.values()).filter(detail =>
+      detail.hostKey === hostKey &&
+      detail.previousBalance !== detail.newBalance &&
+      (creditTransfers || []).some(transfer => transfer.id === detail.eventId.split(':')[1] &&
+        parseDateOnly(transfer.transfer_date).getTime() >= parseDateOnly(reservation.start_date).getTime())
+    );
+    stayData.amountDue = finalBalanceByHost.get(hostKey) ?? stayData.amountDue;
+    stayData.unpaidRemaining = Math.max(0, stayData.amountDue);
   }
 
   // Apply the year filter to display ONLY (math already ran globally),
@@ -1506,7 +1534,7 @@ export default function StayHistory() {
   for (const item of displayReservations) {
     const hostKey = getLedgerKey(item.reservation);
     if (!lastVisibleBalanceByHost.has(hostKey)) {
-      lastVisibleBalanceByHost.set(hostKey, item.stayData.amountDue || 0);
+      lastVisibleBalanceByHost.set(hostKey, finalBalanceByHost.get(hostKey) || 0);
     }
   }
   const totalStillOwed = Array.from(lastVisibleBalanceByHost.values()).reduce(
@@ -2332,6 +2360,7 @@ export default function StayHistory() {
           const receiptCreditMovedToOpeningBalance = 0;
           const displayedPreviousBalance = stayData.previousBalance;
           const paidAtLaterStay = staysPaidLater.has(`stay:${reservation.id}`);
+          const transfersSinceStay = stayData.transfersSinceStay || [];
           const checkInDate = parseDateOnly(reservation.start_date);
           const checkOutDate = parseDateOnly(reservation.end_date);
 
@@ -2545,9 +2574,9 @@ export default function StayHistory() {
 
 
                     {(() => {
-                      const bal = stayData.amountDue;
+                      const bal = stayData.closingBalance;
                       const isCredit = bal < 0;
-                      const label = isLastVisible
+                      const label = isLastVisible && transfersSinceStay.length === 0
                         ? (isCredit ? 'Current Balance (Credit):' : 'Current Balance:')
                         : (isCredit ? 'New Balance (Credit):' : 'New Balance:');
                       return (
@@ -2559,9 +2588,45 @@ export default function StayHistory() {
                         </div>
                       );
                     })()}
+                    {transfersSinceStay.map((detail: TransferLedgerDetail) => {
+                      const transfer = creditTransfers.find(t => `transfer:${t.id}:${detail.direction}` === detail.eventId);
+                      if (!transfer) return null;
+                      const incoming = detail.direction === 'in';
+                      return (
+                        <div key={detail.eventId} className="space-y-1">
+                          <div className="flex justify-between gap-3 text-sm">
+                            <span className="text-muted-foreground">
+                              {incoming ? 'Credit from' : 'Credit to'} {getTransferDisplayName(incoming ? transfer.from_ledger_name : transfer.to_ledger_name)}
+                              {' · '}{format(parseDateOnly(transfer.transfer_date), 'MMM d, yyyy')}
+                            </span>
+                            <span className="font-medium shrink-0">{incoming ? '−' : '+'}${Number(transfer.amount).toFixed(2)}</span>
+                          </div>
+                          {incoming && detail.appliedToDebt > 0 && (
+                            <p className="text-xs text-muted-foreground text-right">
+                              ${detail.appliedToDebt.toFixed(2)} applied to outstanding balance
+                            </p>
+                          )}
+                          {incoming && detail.creditForFuture > 0 && (
+                            <p className="text-xs text-muted-foreground text-right">
+                              ${detail.creditForFuture.toFixed(2)} carried forward as credit
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {transfersSinceStay.length > 0 && (
+                      <div className="flex justify-between gap-3 text-sm border-t pt-2">
+                        <span className="font-semibold">Current Balance{stayData.amountDue < 0 ? ' (Credit)' : ''}:</span>
+                        <span className={`font-bold ${stayData.amountDue > 0 ? 'text-destructive' : 'text-success'}`}>
+                          {stayData.amountDue < 0 ? '+' : ''}${Math.abs(stayData.amountDue).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                     {paidAtLaterStay && (
                       <p className="text-xs text-muted-foreground text-right">
-                        Carried forward and paid at later stay
+                        {transfersSinceStay.some((detail: TransferLedgerDetail) => detail.appliedToDebt > 0)
+                          ? 'Carried forward and paid with transferred credit'
+                          : 'Carried forward and paid at later stay'}
                       </p>
                     )}
                   </div>
