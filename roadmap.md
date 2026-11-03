@@ -40,6 +40,7 @@
 3. [ ] Confirm Andrew's secondary turn displays correctly and existing reservations and completed turns remain unchanged before Richard resumes selecting.
 4. [ ] Wait until the entire 2027 secondary round finishes before correcting saved zero limits, introducing separate round status records, or re-saving season setup. Review proposed changes with Richard first; any external Supabase SQL is supplied for manual execution.
 5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
+6. [ ] Yearly reminders for Admin and calendar keeper: setup reminder ~60 days before selection opens, pre-flight check ~14 days before, "ready" confirmation ~3 days before, plus an end-of-season wrap-up check. Uses the existing daily automated-notification job, not a new frequent one.
 
 **Current blockers:** Display work waits for Dana's Done and Richard's quiet window; saved-data changes and rollover implementation wait for the secondary round to finish. This sequence records future work only, not authorization to change live state.
 
