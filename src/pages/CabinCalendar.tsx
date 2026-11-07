@@ -18,7 +18,7 @@ import { WorkWeekendProposalForm } from "@/components/WorkWeekendProposalForm";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useReservationPeriods } from "@/hooks/useReservationPeriods";
-import { parseISO, format, addDays } from "date-fns";
+import { parseISO, format } from "date-fns";
 import { useSequentialSelection, SelectionStatus } from "@/hooks/useSequentialSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSelectionExtensions } from "@/hooks/useSelectionExtensions";
@@ -29,6 +29,8 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useState, useEffect, useRef } from "react";
+import { selectionDisplaySchedule } from '@/lib/selection-display-schedule';
+import { refreshSelectionDisplay, SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +47,7 @@ const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
-  const { periods: reservationPeriods } = useReservationPeriods();
+  const { periods: reservationPeriods, loading: periodsLoading, fetchReservationPeriods: refetchPeriods } = useReservationPeriods();
   const { toast } = useToast();
   
   // State variables
@@ -204,6 +206,7 @@ const CabinCalendar = () => {
   };
   
   const rotationYear = getRotationYear();
+  const { rotationData: selectionSettings, loading: settingsLoading } = useRotationOrder(rotationYear);
   const currentRotationOrder = rotationData ? getRotationForYear(rotationYear) : [];
   const { 
     currentPhase, 
@@ -258,10 +261,43 @@ const CabinCalendar = () => {
   const { 
     getExtensionForFamily, 
     createOrUpdateExtension,
-    loading: extensionsLoading 
+    loading: extensionsLoading,
+    refetch: refetchExtensions
   } = useSelectionExtensions(rotationYear);
   
   const { userFamilyGroup } = useEffectiveRole();
+  const displayLoading = selectionLoading || periodsLoading || settingsLoading;
+  const activeStart = currentPhase === 'secondary'
+    ? secondarySelectionStartDate?.toISOString()
+    : currentFamilyPeriod?.selection_start_date;
+  const activeEnd = currentPhase === 'secondary' ? null : currentFamilyPeriod?.selection_end_date;
+  const displayDays = currentPhase === 'secondary'
+    ? selectionSettings?.secondary_selection_days || 7
+    : selectionSettings?.selection_days || 14;
+  const activeExtension = currentFamilyGroup ? getExtensionForFamily(currentFamilyGroup) : null;
+  const displayedWindows = selectionDisplaySchedule(
+    currentRotationYearStatuses, activeStart, activeEnd, displayDays, activeExtension?.extended_until
+  );
+
+  useEffect(() => {
+    // Re-read the displayed schedule on a person change; never initialize a season.
+    refreshSelectionDisplay();
+  }, [userGroup?.name, userHostInfo?.name, rotationYear]);
+
+  const scheduleRefreshRef = useRef(() => {});
+  scheduleRefreshRef.current = () => {
+    void refetchPeriods();
+    void refetchExtensions();
+  };
+  useEffect(() => {
+    const refresh = () => scheduleRefreshRef.current();
+    window.addEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
@@ -310,7 +346,7 @@ const CabinCalendar = () => {
             })()}
             
             {/* Upcoming turn notice — shown before the scheduled start date */}
-            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && !currentTurnStarted && seasonStartDate && currentFamilyPeriod && (
+            {!displayLoading && currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && !currentTurnStarted && seasonStartDate && currentFamilyPeriod && (
               <div className="mb-4 p-4 bg-muted/50 border border-border rounded-lg">
                 <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-1">
                   <Clock className="h-5 w-5 flex-shrink-0" />
@@ -323,7 +359,7 @@ const CabinCalendar = () => {
             )}
 
             {/* Primary Selection Turn Indicator Banner */}
-            {currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && currentTurnStarted && (
+            {!displayLoading && currentPhase === 'primary' && userGroup && canCurrentUserSelect(userGroup.name) && currentTurnStarted && (
 
               <div className="mb-4 p-4 bg-primary/10 border-2 border-primary rounded-lg">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -360,6 +396,7 @@ const CabinCalendar = () => {
                     onConfirm={async () => {
                       try {
                         await advanceSelection(true);
+                        refreshSelectionDisplay();
                         toast({
                           title: "Selection Complete",
                           description: "Your selection period has been marked complete. The next family group has been notified that it's their turn.",
@@ -384,7 +421,7 @@ const CabinCalendar = () => {
             )}
             
             {/* Secondary Selection Manager - active states */}
-            {currentPhase === 'secondary' && (
+            {!displayLoading && currentPhase === 'secondary' && (
               <SecondarySelectionManager 
                 rotationYear={rotationYear}
                 userFamilyGroup={userGroup?.name}
@@ -454,12 +491,12 @@ const CabinCalendar = () => {
 
                        {/* Selection Status Dropdown - Narrow trigger, wide content */}
                        {(() => {
-                         const phaseLabel = currentPhase === 'secondary'
+                         const phaseLabel = displayLoading ? 'Loading selection status…' : currentPhase === 'secondary'
                            ? 'Secondary Selection (Round 2)'
                            : currentPhase === 'post_rotation'
                              ? 'Free Selection (Rounds Complete)'
                              : 'Primary Selection (Round 1)';
-                         const phaseShort = currentPhase === 'secondary'
+                         const phaseShort = displayLoading ? 'Loading…' : currentPhase === 'secondary'
                            ? 'Round 2'
                            : currentPhase === 'post_rotation'
                              ? 'Complete'
@@ -479,20 +516,17 @@ const CabinCalendar = () => {
                              </div>
                              <div className="space-y-1">
 
-                               {currentRotationYearStatuses.map((familyStatus, index) => {
-                                 const familyPeriod = reservationPeriods?.find(
-                                   p => p.current_family_group === familyStatus.familyGroup &&
-                                        p.rotation_year === rotationYear
-                                 );
-                                 const notStartedYet = !hasTurnStarted(familyStatus.familyGroup);
+                               {!displayLoading && currentRotationYearStatuses.map((familyStatus, index) => {
+                                 const window = displayedWindows.get(familyStatus.familyGroup);
+                                 const notStartedYet = window ? startOfToday < window.start : false;
 
                                  const getStatusDisplay = () => {
                                    switch (familyStatus.status) {
                                      case 'active':
-                                       if (notStartedYet && familyPeriod?.selection_start_date) {
+                                       if (notStartedYet && window) {
                                          return {
                                            icon: '⏳',
-                                           text: `starts ${format(parseISO(familyPeriod.selection_start_date), 'MMM d')}`,
+                                           text: `starts ${format(window.start, 'MMM d')}`,
                                            title: 'Turn has not opened yet'
                                          };
                                        }
@@ -524,11 +558,10 @@ const CabinCalendar = () => {
                                  
                                  const statusDisplay = getStatusDisplay();
 
-                                 const turnDates = familyPeriod
-                                   ? `${format(parseISO(familyPeriod.selection_start_date), 'MMM d')} – ${format(parseISO(familyPeriod.selection_end_date), 'MMM d')}`
+                                 const turnDates = window && familyStatus.status !== 'completed'
+                                   ? `${format(window.start, 'MMM d')} – ${format(window.end, 'MMM d')}${window.estimated ? ' est.' : ''}`
                                    : null;
 
-                                 
                                  return (
                                    <div key={index} className="flex items-center gap-2 text-sm">
                                      <span className="font-semibold w-6">{index + 1}.</span>
@@ -548,129 +581,19 @@ const CabinCalendar = () => {
                                  );
                                })}
                              </div>
-              <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
-                <p className="font-medium">Selection begins October 1st</p>
-                {(() => {
-                  // Check if all families have completed both primary and secondary
-                  const allPrimaryCompleted = currentRotationYearStatuses.every(s => s.status === 'completed');
-                  const allSecondaryCompleted = (currentPhase === 'secondary' || currentPhase === 'post_rotation') && allPrimaryCompleted;
-                  const isPostRotation = currentPhase === 'post_rotation';
-                  
-                  if (allSecondaryCompleted || isPostRotation) {
-                    return (
-                      <div className="space-y-1 mt-2">
-                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
-                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Secondary Selection Completed</p>
-                        <p className="font-semibold text-blue-600 dark:text-blue-400">🏕️ Free Selection Open — Any family can book!</p>
-                      </div>
-                    );
-                  }
-                  
-                  if (currentPhase === 'secondary' && allPrimaryCompleted && !allSecondaryCompleted) {
-                    // In secondary phase, primary is done
-                    return (
-                      <div className="space-y-1 mt-2">
-                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
-                        {currentRotationYearCurrentFamily ? (
-                          <>
-                            <p className="font-semibold text-primary">Secondary Selection Active</p>
-                            {secondarySelectionStartDate && rotationData && (
-                              <p className="text-xs">
-                                Selection period: {format(secondarySelectionStartDate, 'MMM d')} - {format(addDays(secondarySelectionStartDate, rotationData.secondary_selection_days || 7), 'MMM d')}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-xs">Secondary selection in progress</p>
-                        )}
-                      </div>
-                    );
-                  }
-                  
-                  if (!currentRotationYearCurrentFamily) {
-                    return null;
-                  }
-                  
-                  // Primary selection phase: show actual selection dates
-                  if (currentPhase === 'secondary') {
-                    if (!secondarySelectionStartDate || !rotationData) {
-                      return (
-                        <div className="space-y-1 mt-2">
-                          <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
-                          <p className="font-semibold text-primary">Secondary Selection Active</p>
-                          <p className="text-xs">7-day rolling selection period</p>
-                        </div>
-                      );
-                    }
-                    
-                    const startDate = secondarySelectionStartDate;
-                    const selectionDays = rotationData.secondary_selection_days || 7;
-                    const endDate = addDays(startDate, selectionDays);
-                    
-                    return (
-                      <div className="space-y-1 mt-2">
-                        <p className="font-semibold text-green-600 dark:text-green-400">✅ Primary Selection Completed</p>
-                        <p className="font-semibold text-primary">Secondary Selection Active</p>
-                        <p className="text-xs">Selection period: {format(startDate, 'MMM d')} - {format(endDate, 'MMM d')}</p>
-                      </div>
-                    );
-                  }
-                  
-                  // Primary selection phase: show actual selection period dates
-                  const currentPeriod = reservationPeriods?.find(
-                    p => p.current_family_group === currentRotationYearCurrentFamily && 
-                         p.rotation_year === rotationYear
-                  );
-
-                  if (!currentPeriod) {
-                    return <div className="text-xs text-muted-foreground">Selection period not found</div>;
-                  }
-
-                  const startDate = parseISO(currentPeriod.selection_start_date);
-                  const originalEndDate = parseISO(currentPeriod.selection_end_date);
-                  
-                  // Check for extension
-                  const extension = getExtensionForFamily(currentRotationYearCurrentFamily);
-                  const endDate = extension 
-                    ? new Date(extension.extended_until)
-                    : originalEndDate;
-
-                  const formatDate = (date: Date) => {
-                    return format(date, 'MMM d');
-                  };
-                  
-                  const handleExtendClick = () => {
-                    setSelectedFamilyForExtension(currentRotationYearCurrentFamily);
-                    setExtensionEndDate(endDate);
-                    setExtendDialogOpen(true);
-                  };
-                  
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p>Selection period: {formatDate(startDate)} - {formatDate(endDate)}</p>
-                        {(isCalendarKeeper || isGroupLead) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleExtendClick}
-                            className="h-6 px-2 text-xs"
-                          >
-                            <Clock className="h-3 w-3 mr-1" />
-                            Extend
-                          </Button>
-                        )}
-                      </div>
-                      {extension && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          ⚠️ Extended from {formatDate(originalEndDate)}
-                          {extension.extension_reason && ` - ${extension.extension_reason}`}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
+              {!displayLoading && currentPhase === 'primary' && currentFamilyPeriod && (
+                <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                  {(isCalendarKeeper || isGroupLead) && (
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => {
+                      setSelectedFamilyForExtension(currentRotationYearCurrentFamily);
+                      setExtensionEndDate(displayedWindows.get(currentFamilyPeriod.current_family_group)?.end || parseISO(currentFamilyPeriod.selection_end_date));
+                      setExtendDialogOpen(true);
+                    }}>
+                      <Clock className="h-3 w-3 mr-1" />Extend
+                    </Button>
+                  )}
+                </div>
+              )}
                            </div>
                          </SelectContent>
                        </Select>

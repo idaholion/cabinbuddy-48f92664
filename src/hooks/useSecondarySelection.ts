@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
+import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { planSecondaryTransition } from '@/lib/secondary-selection-transition';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
@@ -19,10 +20,10 @@ interface SecondarySelectionData {
   updated_at: string;
 }
 
-export const useSecondarySelection = (rotationYear: number) => {
+export const useSecondarySelection = (rotationYear: number, displayOnly = false) => {
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder(rotationYear);
-  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
+  const { timePeriodUsage } = useSelectionUsageDisplay(rotationYear);
   
   const [secondaryStatus, setSecondaryStatus] = useState<SecondarySelectionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,15 +36,23 @@ export const useSecondarySelection = (rotationYear: number) => {
   const channelSuffixRef = useRef(Math.random().toString(36).slice(2));
   
   // Keep ref in sync with prop
-  useEffect(() => {
-    rotationYearRef.current = rotationYear;
-  }, [rotationYear]);
+  rotationYearRef.current = rotationYear;
 
   useEffect(() => {
     if (!organization?.id) return;
     fetchSecondarySelectionStatus();
-    checkIfSecondaryRoundShouldStart();
+    if (!displayOnly) checkIfSecondaryRoundShouldStart();
   }, [organization?.id, rotationYear, rotationData, timePeriodUsage]);
+
+  useEffect(() => {
+    const refresh = () => { void fetchSecondarySelectionStatus(); };
+    window.addEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [organization?.id, rotationYear]);
 
   // Real-time subscription for secondary_selection_status updates
   useEffect(() => {
@@ -67,9 +76,12 @@ export const useSecondarySelection = (rotationYear: number) => {
           
           // Fetch with current rotation year from ref to avoid stale closure
           try {
+            const requestedYear = rotationYearRef.current;
             const { data, error } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
-              .eq('rotation_year', rotationYearRef.current)
+              .eq('rotation_year', requestedYear)
               .maybeSingle();
+
+            if (rotationYearRef.current !== requestedYear) return;
 
             if (error && error.code !== 'PGRST116') {
               console.error('[Secondary Selection] Error fetching in real-time:', error);
@@ -133,7 +145,7 @@ export const useSecondarySelection = (rotationYear: number) => {
     } catch (error) {
       console.error('Error in fetchSecondarySelectionStatus:', error);
     } finally {
-      setLoading(false);
+      if (rotationYearRef.current === rotationYear) setLoading(false);
     }
   };
 
@@ -343,7 +355,7 @@ export const useSecondarySelection = (rotationYear: number) => {
   };
 
   return {
-    secondaryStatus,
+    secondaryStatus: secondaryStatus?.rotation_year === rotationYear ? secondaryStatus : null,
     loading,
     isSecondaryRoundActive,
     isCurrentFamilyTurn,

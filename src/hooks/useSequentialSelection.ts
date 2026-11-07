@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
-import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
+import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
@@ -35,7 +36,7 @@ interface UseSequentialSelectionReturn {
 export const useSequentialSelection = (rotationYear: number): UseSequentialSelectionReturn => {
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder(rotationYear);
-  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
+  const { timePeriodUsage, fetchTimePeriodUsage, loading: usageLoading } = useSelectionUsageDisplay(rotationYear);
   const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
   const { generateSecondaryPeriods } = useReservationPeriods(rotationYear);
   const { 
@@ -45,11 +46,25 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     advanceSecondarySelection,
     endSecondarySelection,
     startSecondarySelection
-  } = useSecondarySelection(rotationYear);
+  } = useSecondarySelection(rotationYear, true);
 
   const [loading, setLoading] = useState(true);
   const [currentPhase, setCurrentPhase] = useState<SelectionPhase>('primary');
   const [primaryCurrentFamily, setPrimaryCurrentFamily] = useState<string | null>(null);
+  const [resolvedKey, setResolvedKey] = useState<string | null>(null);
+  const key = `${organization?.id}:${rotationYear}`;
+  const latestKey = useRef(key);
+  latestKey.current = key;
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  useEffect(() => {
+    const refresh = () => setRefreshVersion(v => v + 1);
+    window.addEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
   
   // Helper to check if any family has secondary usage (meaning secondary selection happened)
   const checkForSecondaryUsage = async (rotationOrder: string[]): Promise<boolean> => {
@@ -97,6 +112,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       
       const allCompletedPrimary = rotationOrder.length > 0 && completionChecks.every(completed => completed);
       await determinePrimaryCurrentFamily(rotationOrder);
+      if (!isMounted) return;
 
       // Check if secondary selection is active by looking at secondary_selection_status table
       // IMPORTANT: Include started_at to detect secondary phase even when all turns are completed
@@ -154,6 +170,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         // All primary completed but no secondary active - check if secondary usage exists
         // This handles the case where secondary selection completed (all used their periods)
         const hasSecondaryUsage = await checkForSecondaryUsage(rotationOrder);
+        if (!isMounted) return;
         if (hasSecondaryUsage) {
           // Secondary happened — check if it's fully done
           const secondaryMaxPeriods = rotationData.secondary_max_periods || 1;
@@ -176,6 +193,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       }
       
       if (isMounted) {
+        setResolvedKey(key);
         setLoading(false);
       }
     };
@@ -186,7 +204,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       isMounted = false;
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [rotationData, rotationYear, organization?.id, secondaryStatus, timePeriodUsage]);
+  }, [rotationData, rotationYear, organization?.id, secondaryStatus, timePeriodUsage, refreshVersion]);
 
   // Determine which family group's turn it is in primary phase
   // Now uses explicit current_primary_turn_family field from rotation_orders
@@ -204,6 +222,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     }
 
     const currentFamily = rotationOrderData?.current_primary_turn_family || null;
+    if (latestKey.current !== key) return;
     setPrimaryCurrentFamily(currentFamily);
   };
 
@@ -239,9 +258,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         let dayCountText: string | undefined;
         const isCurrentTurn = isCurrentFamilyTurn(familyGroup);
         
-        if (remainingSecondary <= 0) {
-          status = 'completed';
-        } else if (isCurrentTurn) {
+        if (isCurrentTurn) {
           status = 'active';
           const daysRemaining = calculateDaysRemaining(familyGroup, 'secondary');
           if (daysRemaining !== null) {
@@ -249,6 +266,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
             const daysPassed = totalDays - daysRemaining;
             dayCountText = `Day ${daysPassed + 1} of ${totalDays}`;
           }
+        } else if (remainingSecondary <= 0) {
+          status = 'completed';
         } else if (isSecondaryRoundActive) {
           const currentIndex = secondaryOrder.findIndex(f => isCurrentFamilyTurn(f));
           if (currentIndex === -1) {
@@ -292,10 +311,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         
         // Set status based on current turn and completion
         // A family is completed if: turn_completed is true, OR they've used all slots
-        if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
-          status = 'completed';
-        } else if (isCurrentTurn) {
+        if (isCurrentTurn) {
           status = 'active';
+        } else if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
+          status = 'completed';
         } else if (allPrimaryCompleted) {
           // If all primaries are done but we're still in primary phase, mark as completed
           status = 'completed';
@@ -526,7 +545,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     canCurrentUserSelect,
     advanceSelection,
     getDaysRemaining,
-    loading,
+    loading: loading || resolvedKey !== key || usageLoading,
     getUserUsageInfo,
     secondarySelectionStartDate: secondaryStatus?.started_at ? new Date(secondaryStatus.started_at) : null
   };

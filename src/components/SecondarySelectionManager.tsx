@@ -5,7 +5,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, CheckCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
-import { useTimePeriods } from '@/hooks/useTimePeriods';
+import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
+import { refreshSelectionDisplay } from '@/lib/selection-display-events';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
@@ -24,7 +25,7 @@ export function SecondarySelectionManager({
   
   const { familyGroups } = useFamilyGroups();
   const { rotationData } = useRotationOrder(rotationYear);
-  const { timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
+  const { timePeriodUsage, fetchTimePeriodUsage, loading: usageLoading } = useSelectionUsageDisplay(rotationYear);
   const {
     secondaryStatus,
     loading,
@@ -37,7 +38,7 @@ export function SecondarySelectionManager({
     startSecondarySelection,
     advanceSecondarySelection,
     refetchSecondaryStatus
-  } = useSecondarySelection(rotationYear);
+  } = useSecondarySelection(rotationYear, true);
 
   const {
     currentPhase,
@@ -49,7 +50,7 @@ export function SecondarySelectionManager({
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  if (loading) {
+  if (loading || usageLoading) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -177,7 +178,7 @@ export function SecondarySelectionManager({
     );
   }
 
-  if (allSecondaryComplete) {
+  if (allSecondaryComplete && !secondaryStatus?.current_family_group) {
     return (
       <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium bg-green-50 dark:bg-green-950/30 px-3 py-1.5 rounded-md border border-green-200 dark:border-green-800">
         <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -276,6 +277,7 @@ export function SecondarySelectionManager({
               onConfirm={async () => {
                 try {
                   await advanceSecondarySelection();
+                  refreshSelectionDisplay();
                   
                   // Force refresh all data immediately after advancing
                   await Promise.all([
