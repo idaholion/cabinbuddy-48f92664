@@ -30,7 +30,7 @@ import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useState, useEffect, useRef } from "react";
 import { selectionDisplaySchedule } from '@/lib/selection-display-schedule';
-import { refreshSelectionDisplay } from '@/lib/selection-display-events';
+import { refreshSelectionDisplay, SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +47,7 @@ const CabinCalendar = () => {
   const { getRotationForYear, rotationData } = useRotationOrder();
   const { reservationSettings } = useReservationSettings();
   const { tradeRequests } = useTradeRequests();
-  const { periods: reservationPeriods, loading: periodsLoading, refetch: refetchPeriods } = useReservationPeriods();
+  const { periods: reservationPeriods, loading: periodsLoading, fetchReservationPeriods: refetchPeriods } = useReservationPeriods();
   const { toast } = useToast();
   
   // State variables
@@ -261,7 +261,8 @@ const CabinCalendar = () => {
   const { 
     getExtensionForFamily, 
     createOrUpdateExtension,
-    loading: extensionsLoading 
+    loading: extensionsLoading,
+    refetch: refetchExtensions
   } = useSelectionExtensions(rotationYear);
   
   const { userFamilyGroup } = useEffectiveRole();
@@ -282,6 +283,21 @@ const CabinCalendar = () => {
     // Re-read the displayed schedule on a person change; never initialize a season.
     refreshSelectionDisplay();
   }, [userGroup?.name, userHostInfo?.name, rotationYear]);
+
+  const scheduleRefreshRef = useRef(() => {});
+  scheduleRefreshRef.current = () => {
+    void refetchPeriods();
+    void refetchExtensions();
+  };
+  useEffect(() => {
+    const refresh = () => scheduleRefreshRef.current();
+    window.addEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener(SELECTION_DISPLAY_REFRESH, refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/lovable-uploads/45c3083f-46c5-4e30-a2f0-31a24ab454f4.png)'}}>
