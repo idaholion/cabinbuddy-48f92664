@@ -3,6 +3,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { secureSelect, createOrganizationContext } from '@/lib/secure-queries';
 import { supabase } from '@/integrations/supabase/client';
 import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
+import { selectionDisplayCounts } from '@/lib/selection-display-counts';
 
 interface Usage {
   family_group: string;
@@ -26,10 +27,25 @@ export function useSelectionUsageDisplay(year: number) {
     const id = ++requestId.current;
     setLoading(true);
     try {
-      const result = await secureSelect('time_period_usage', createOrganizationContext(organization.id)).eq('rotation_year', year);
+      const context = createOrganizationContext(organization.id);
+      const [result, stays] = await Promise.all([
+        secureSelect('time_period_usage', context).eq('rotation_year', year),
+        secureSelect('reservations', context).gte('start_date', `${year}-01-01`).lt('start_date', `${year + 1}-01-01`),
+      ]);
       if (latestKey.current !== key || id !== requestId.current) return;
       if (result.error) throw result.error;
-      setSnapshot({ key, rows: result.data || [] });
+      if (stays.error) throw stays.error;
+      const counts = selectionDisplayCounts(stays.data || []);
+      // Refresh the visible tally without writing counters or completion flags.
+      const rows = (result.data || []).map(row => ({ ...row,
+        time_periods_used: Math.max(row.time_periods_used || 0, counts.get(row.family_group)?.primary || 0),
+        secondary_periods_used: Math.max(row.secondary_periods_used || 0, counts.get(row.family_group)?.secondary || 0),
+      }));
+      for (const [family, count] of counts) {
+        if (!rows.some(row => row.family_group === family)) rows.push({ family_group: family, time_periods_used: count.primary,
+          secondary_periods_used: count.secondary, turn_completed: false, selection_round: 'primary' } as typeof rows[number]);
+      }
+      setSnapshot({ key, rows });
     } catch (error) {
       console.error('Selection display refresh failed:', error);
     } finally {
