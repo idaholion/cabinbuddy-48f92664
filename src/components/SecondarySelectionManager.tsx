@@ -178,7 +178,7 @@ export function SecondarySelectionManager({
     );
   }
 
-  if (allSecondaryComplete) {
+  if (allSecondaryComplete && !secondaryStatus?.current_family_group) {
     return (
       <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 font-medium bg-green-50 dark:bg-green-950/30 px-3 py-1.5 rounded-md border border-green-200 dark:border-green-800">
         <CheckCircle className="h-4 w-4 flex-shrink-0" />

@@ -258,9 +258,7 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         let dayCountText: string | undefined;
         const isCurrentTurn = isCurrentFamilyTurn(familyGroup);
         
-        if (remainingSecondary <= 0) {
-          status = 'completed';
-        } else if (isCurrentTurn) {
+        if (isCurrentTurn) {
           status = 'active';
           const daysRemaining = calculateDaysRemaining(familyGroup, 'secondary');
           if (daysRemaining !== null) {
@@ -268,6 +266,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
             const daysPassed = totalDays - daysRemaining;
             dayCountText = `Day ${daysPassed + 1} of ${totalDays}`;
           }
+        } else if (remainingSecondary <= 0) {
+          status = 'completed';
         } else if (isSecondaryRoundActive) {
           const currentIndex = secondaryOrder.findIndex(f => isCurrentFamilyTurn(f));
           if (currentIndex === -1) {
@@ -311,10 +311,10 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         
         // Set status based on current turn and completion
         // A family is completed if: turn_completed is true, OR they've used all slots
-        if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
-          status = 'completed';
-        } else if (isCurrentTurn) {
+        if (isCurrentTurn) {
           status = 'active';
+        } else if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
+          status = 'completed';
         } else if (allPrimaryCompleted) {
           // If all primaries are done but we're still in primary phase, mark as completed
           status = 'completed';
