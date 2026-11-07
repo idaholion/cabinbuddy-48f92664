@@ -42,6 +42,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getHostFirstName } from "@/lib/reservation-utils";
+import { refreshSelectionDisplay } from '@/lib/selection-display-events';
 
 interface PropertyCalendarProps {
   onMonthChange?: (date: Date) => void;
@@ -242,6 +243,7 @@ export const PropertyCalendar = forwardRef<PropertyCalendarRef, PropertyCalendar
   );
 
   const handleBookingComplete = () => {
+    refreshSelectionDisplay();
     console.log('Booking completed - refreshing reservations and work weekends');
     console.log('Current reservations before refetch:', reservations.length);
     refetchReservations();
