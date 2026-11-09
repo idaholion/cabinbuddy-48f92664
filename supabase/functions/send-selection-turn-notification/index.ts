@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { getTurnNotificationPolicy } from './turn-notification-policy.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -35,10 +36,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if we're in secondary phase first
     const { data: secondaryStatus } = await supabase
       .from('secondary_selection_status')
-      .select('turn_completed')
+      .select('started_at, current_family_group, turn_completed')
       .eq('organization_id', organization_id)
       .eq('rotation_year', rotation_year)
-      .eq('current_family_group', family_group)
       .maybeSingle();
 
     // Check if family has completed their turn before sending
@@ -50,16 +50,14 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('family_group', family_group)
       .maybeSingle();
 
-    // Skip if turn is completed in either primary or secondary phase
-    const isSecondaryCompleted = secondaryStatus?.turn_completed || false;
-    const isPrimaryCompleted = usageData?.turn_completed || false;
-
-    if (isSecondaryCompleted || isPrimaryCompleted) {
-      console.log(`Skipping notification for ${family_group} - turn already completed (secondary: ${isSecondaryCompleted}, primary: ${isPrimaryCompleted})`);
+    // Completion belongs to the active round, not a previously finished round.
+    const policy = getTurnNotificationPolicy(family_group, secondaryStatus, usageData?.turn_completed === true);
+    if (policy.skip) {
+      console.log(`Skipping notification for ${family_group} - not an incomplete active turn (secondary phase: ${policy.secondaryPhase})`);
       return new Response(JSON.stringify({ 
         success: true,
         skipped: true,
-        message: `Turn already completed for ${family_group}`
+        message: `No incomplete active turn for ${family_group}`
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -79,7 +77,24 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Determine if we're in secondary phase based on the earlier query
-    const isSecondaryPhase = !!secondaryStatus;
+    const isSecondaryPhase = policy.secondaryPhase;
+
+    if (isSecondaryPhase && !notification_type) {
+      const { data: alreadySent, error: sentReadError } = await supabase
+        .from('selection_turn_notifications_sent')
+        .select('id')
+        .eq('organization_id', organization_id)
+        .eq('rotation_year', rotation_year)
+        .eq('family_group', family_group)
+        .eq('phase', 'secondary')
+        .maybeSingle();
+      if (sentReadError) throw sentReadError;
+      if (alreadySent) {
+        return new Response(JSON.stringify({ success: true, skipped: true, message: 'Turn notification already sent' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Get selection dates based on phase
     let selectionStartDate = '';
@@ -216,11 +231,32 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`✅ send-notification response:`, notifyData);
 
     // Check if notification was actually delivered
-    if (notifyData && notifyData.success) {
+    if (notifyData?.success && (notifyData.email_sent || notifyData.sms_sent)) {
+      // Own secondary delivery tracking here for immediate handoffs and daily retries alike.
+      if (isSecondaryPhase && !notification_type) {
+        const { error: trackingError } = await supabase.from('selection_turn_notifications_sent').insert({
+          organization_id, rotation_year, family_group, phase: 'secondary',
+        });
+        if (trackingError) console.error('Secondary notification tracking failed:', trackingError);
+        const { error: logError } = await supabase.from('notification_log').insert({
+          organization_id, family_group, notification_type: 'selection_turn_ready',
+          recipient_email: notifyData.recipient_email || 'unknown',
+          recipient_phone: notifyData.recipient_phone || null,
+          email_sent: !!notifyData.email_sent, sms_sent: !!notifyData.sms_sent,
+          sms_status: notifyData.sms_status || null, twilio_sid: notifyData.twilio_sid || null,
+        });
+        if (logError) console.error('Secondary delivery history logging failed:', logError);
+      }
       console.log(`Notification sent successfully to ${familyData.name}`);
       return new Response(JSON.stringify({ 
         success: true,
         message: `Notification sent to ${familyData.name}`,
+        email_sent: !!notifyData.email_sent,
+        sms_sent: !!notifyData.sms_sent,
+        sms_status: notifyData.sms_status || null,
+        twilio_sid: notifyData.twilio_sid || null,
+        recipient_email: notifyData.recipient_email || 'unknown',
+        recipient_phone: notifyData.recipient_phone || null,
         delivery_details: notifyData
       }), {
         status: 200,

@@ -269,7 +269,7 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
 
       // Send notification to the next family
       try {
-        const { error: notifyError } = await supabase.functions.invoke('send-selection-turn-notification', {
+        const { data: notifyResponse, error: notifyError } = await supabase.functions.invoke('send-selection-turn-notification', {
           body: {
             organization_id: organization.id,
             family_group: nextFamily,
@@ -279,15 +279,10 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
 
         if (notifyError) {
           console.error('[useSecondarySelection] Error sending notification:', notifyError);
-        } else {
+        } else if (notifyResponse?.success && !notifyResponse?.skipped) {
           console.log(`[useSecondarySelection] Notification sent to ${nextFamily} for secondary selection`);
-          
-          // Track that notification was sent
-          await secureInsert('selection_turn_notifications_sent', {
-              rotation_year: rotationYear,
-              family_group: nextFamily,
-              phase: 'secondary'
-            }, orgContext);
+        } else {
+          console.log('[useSecondarySelection] Notification not delivered:', notifyResponse?.message || notifyResponse?.error);
         }
       } catch (notifyError) {
         console.error('[useSecondarySelection] Failed to send notification:', notifyError);
