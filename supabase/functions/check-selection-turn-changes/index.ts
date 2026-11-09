@@ -126,30 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
 
               // Only record as sent if the response indicates success
               if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
-                await supabase
-                  .from('selection_turn_notifications_sent')
-                  .insert({
-                    organization_id: org.id,
-                    rotation_year: year,
-                    family_group: currentSecondaryFamily,
-                    phase: 'secondary'
-                  });
-                
-                // Log to notification_log for monitoring
-                await supabase
-                  .from('notification_log')
-                  .insert({
-                    organization_id: org.id,
-                    family_group: currentSecondaryFamily,
-                    notification_type: 'selection_turn_ready',
-                    recipient_email: notifyResponse?.recipient_email || 'unknown',
-                    email_sent: notifyResponse?.email_sent || false,
-                    sms_sent: notifyResponse?.sms_sent || false,
-                    sms_status: notifyResponse?.sms_status || null,
-                    twilio_sid: notifyResponse?.twilio_sid || null,
-                    recipient_phone: notifyResponse?.recipient_phone || null
-                  });
-                
+                // The sender owns secondary tracking for both immediate and scheduled sends.
                 totalNotifications++;
                 console.log(`✅ Successfully sent and recorded secondary notification for ${currentSecondaryFamily}`);
               } else {
