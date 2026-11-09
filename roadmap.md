@@ -10,7 +10,7 @@
 
 
 ## Open
-- [ ] Repair notification-only active-round completion checks, verify Holly's notice, and preserve all reservation and selection state.
+- [x] Repair notification-only active-round completion checks; deployed sender and scheduled checker. Holly's email accepted and text queued Nov 8 at 9:01 PM Denver; waiting-family and repeat-send checks skipped correctly. Eight notification tests and fifteen selection regressions passed; all 46 reservations, secondary turns, and usage fingerprints unchanged. Future handoffs await the families' actual Done actions.
 - [ ] Verify the Departure Checklist box only appears while the current stay is in progress — external Supabase does not provide a test session.
 
 - [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
