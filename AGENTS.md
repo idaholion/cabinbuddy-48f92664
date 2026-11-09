@@ -13,3 +13,4 @@
 - Selection-year data hooks discard stale-year responses and phase detection retries failed reads rather than falling back to Round 1.
 - Selection banners/status use `useSelectionUsageDisplay` for read-only scoped refreshes, never booking reconciliation; booking success and explicit Done emit a shared display-refresh event so independent counters refresh together without advancing turns.
 - Status dates use the pure `selection-display-schedule` projection from saved active dates and extensions; waiting estimates are never persisted, preventing display changes from rewriting active seasons.
+- Selection-turn notification completion uses the saved active round and current secondary family, never primary completion during secondary selection; skipped or failed sends must not be recorded as delivered.

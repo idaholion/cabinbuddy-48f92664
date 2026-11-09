@@ -10,6 +10,7 @@
 
 
 ## Open
+- [ ] Repair notification-only active-round completion checks, verify Holly's notice, and preserve all reservation and selection state.
 - [ ] Verify the Departure Checklist box only appears while the current stay is in progress — external Supabase does not provide a test session.
 
 - [x] Apply incoming transferred credit to current debt across years, retain surplus, and show subsequent transfers and current balance on the latest stay; covered by focused accounting tests.
@@ -59,4 +60,4 @@
 
 
 - [x] Payment lines: each payment is a dated, editable line in Payment History (payer + Admin/Treasurer), with change log, double-click and overpayment guards. Needs supabase/sql/2026-10-31_payment_transactions.sql run in Supabase.
-- [ ] Dana Oct 9-15 payment: Richard/Dana to correct $2,614.12 to $848.53 via Payment History (test of edit flow)
+- [x] Dana Oct 9-15 payment confirmed at $848.53 in saved payment and transaction; old $2,614.12 appears only in deletion audit history.
