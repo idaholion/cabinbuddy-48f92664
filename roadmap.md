@@ -34,11 +34,14 @@
 ## Phase 1 — after Round 2 (Nov 12)
 - [x] Status menu shows free-selection state (on hold / open / not enabled) instead of a family order.
 - [x] Hold period setting (days + Mountain opening time, default 7 PM) with booking lock, announcement, and day-before reminder.
-- [ ] Richard to run supabase/sql/2026-11-12_post_rotation_hold.sql, then set the 2027 opening date in Reservation Setup.
+- [x] Hold SQL applied and 2027 opening configured; Richard confirmed the calendar and published Phase 1.
 - [x] "Are you done selecting?" prompt after a family's last pick of the round.
 - [ ] Verify all three in the signed-in calendar (no test session available).
 
 ## Selection hardening — agreed sequence
+
+- [x] Phase 2 saved-limit cleanup applied by Richard Nov 12; read-only verification confirms 2026/2027 primary limit 2, secondary limit 1, no active turn, and unlimited post-rotation weeks.
+- [ ] Separate round completion records: review the preservation/backfill plan before supplying manual SQL and updating the completion readers/writers.
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
