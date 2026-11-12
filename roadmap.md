@@ -51,7 +51,7 @@
 - [x] Prepared read-only preview checks in docs/SELECTION_PREVIEW_CHECKLIST.md; future Done handoffs need a test season, never reset the finished live season.
 - [x] Richard confirmed the preview checklist Nov 12 (hold displays, year switching, View As stays, Notification Management, Reservation Setup values); separate-round readers approved for publishing.
 - [x] Richard published the separate-round completion checkpoint himself Nov 12; live site updated.
-- [ ] Convert the direct `allocation_model_audit` insert in Reservation Setup to the secure wrapper pattern, or record the exception; the project rule requires secureInsert().
+- [x] Reservation Setup now writes the allocation-model change through the protected wrappers: organization-scoped update plus secureInsert audit row.
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
@@ -62,10 +62,11 @@
    - [ ] Richard to verify Andrew's banner and booking count in signed-in preview, then approve publishing; external Supabase does not provide an authenticated test session.
 3. [ ] Confirm Andrew's secondary turn displays correctly and existing reservations and completed turns remain unchanged before Richard resumes selecting.
 4. [x] Entire 2027 secondary round finished; Richard applied saved-limit corrections and approved the separate-round completion plan. External Supabase SQL remains manual.
-5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
+5. [x] Annual pre-flight readiness check built and verified against live 2027 rows: `src/lib/selection-preflight.ts` (20 tests), read-only `useSelectionPreflight` hook, and a **{year} Season Readiness** card on Reservation Setup. It reads only through organization-scoped wrappers and never writes; initialization still never resets an active or completed round.
+   - [ ] Fix what the 2027 check flagged: per-family Round 1 and Round 2 pick counts are saved as 0 for all six families (the app falls back to defaults 2/1), and 2027 turn rows overlap (Cook/Andrew, Andrew/Grandy, Grandy/Comeau). Both need a database change and Richard's approval.
 6. [ ] Yearly reminders for Admin and calendar keeper: setup reminder ~60 days before selection opens, pre-flight check ~14 days before, "ready" confirmation ~3 days before, plus an end-of-season wrap-up check. Uses the existing daily automated-notification job, not a new frequent one.
 
-**Current blockers:** Signed-in checks are unavailable through external Supabase; Richard will check the preview before publishing. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
+**Current blockers:** Signed-in checks are unavailable through external Supabase; Richard will check the preview before publishing. Yearly Admin/calendar-keeper reminders remain, plus the two 2027 data items the readiness check flagged. Existing reservations and completed turn state must remain unchanged.
 
 ## Done
 - [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.

@@ -13,10 +13,16 @@ import { useReservationSettings } from "@/hooks/useReservationSettings";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  createOrganizationContext,
+  secureInsert,
+  secureUpdate,
+} from "@/lib/secure-queries";
 import { AllocationModelBadge } from "@/components/AllocationModelBadge";
 import { AllocationModelChangeDialog, type AllocationModel } from "@/components/AllocationModelChangeDialog";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { SelectionSeasonSetup } from "@/components/SelectionSeasonSetup";
+import { SelectionSeasonReadiness } from "@/components/SelectionSeasonReadiness";
 import { PostRotationHoldSettings } from "@/components/reservation-setup/PostRotationHoldSettings";
 
 
@@ -355,22 +361,33 @@ export default function ReservationSetup() {
       const newAllocationModel = allocationModelMap[pendingSetupMethod];
       const oldAllocationModel = allocationModelMap[originalSetupMethod];
 
+      const orgContext = createOrganizationContext(
+        organization.id,
+        organization.is_test_organization,
+        organization.allocation_model
+      );
+
       // Update the organization's allocation_model field
-      const { error: orgError } = await supabase
-        .from("organizations")
-        .update({ allocation_model: newAllocationModel })
-        .eq("id", organization.id);
+      const { error: orgError } = await secureUpdate(
+        "organizations",
+        { allocation_model: newAllocationModel },
+        orgContext,
+        { skipIsolation: true }
+      ).eq("id", organization.id);
 
       if (orgError) throw orgError;
 
       // Log the change to audit trail
-      const { error: auditError } = await supabase.from("allocation_model_audit").insert({
-        organization_id: organization.id,
-        old_model: oldAllocationModel,
-        new_model: newAllocationModel,
-        change_reason: reason,
-        changed_by_user_id: (await supabase.auth.getUser()).data.user?.id,
-      });
+      const { error: auditError } = await secureInsert(
+        "allocation_model_audit",
+        {
+          old_model: oldAllocationModel,
+          new_model: newAllocationModel,
+          change_reason: reason,
+          changed_by_user_id: (await supabase.auth.getUser()).data.user?.id,
+        },
+        orgContext
+      );
 
       if (auditError) {
         console.error("Failed to log audit trail:", auditError);
@@ -1101,6 +1118,7 @@ export default function ReservationSetup() {
         )}
 
         {setupMethod === "rotation" && <SelectionSeasonSetup />}
+        {setupMethod === "rotation" && <SelectionSeasonReadiness />}
 
         {/* Static Weeks Setup - Only show if static-weeks is selected */}
         {setupMethod === "static-weeks" && (
