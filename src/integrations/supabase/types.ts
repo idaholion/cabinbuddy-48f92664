@@ -3073,9 +3073,11 @@ export type Database = {
           id: string
           last_selection_date: string | null
           organization_id: string
+          primary_turn_completed: boolean | null
           rotation_year: number
           secondary_periods_allowed: number | null
           secondary_periods_used: number | null
+          secondary_turn_completed: boolean | null
           selection_deadline: string | null
           selection_round: string | null
           time_periods_allowed: number
@@ -3089,9 +3091,11 @@ export type Database = {
           id?: string
           last_selection_date?: string | null
           organization_id: string
+          primary_turn_completed?: boolean | null
           rotation_year: number
           secondary_periods_allowed?: number | null
           secondary_periods_used?: number | null
+          secondary_turn_completed?: boolean | null
           selection_deadline?: string | null
           selection_round?: string | null
           time_periods_allowed?: number
@@ -3105,9 +3109,11 @@ export type Database = {
           id?: string
           last_selection_date?: string | null
           organization_id?: string
+          primary_turn_completed?: boolean | null
           rotation_year?: number
           secondary_periods_allowed?: number | null
           secondary_periods_used?: number | null
+          secondary_turn_completed?: boolean | null
           selection_deadline?: string | null
           selection_round?: string | null
           time_periods_allowed?: number
