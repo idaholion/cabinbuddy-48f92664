@@ -43,11 +43,13 @@
 - [x] Phase 2 saved-limit cleanup applied by Richard Nov 12; read-only verification confirms 2026/2027 primary limit 2, secondary limit 1, no active turn, and unlimited post-rotation weeks.
 - [x] Separate round completion plan approved; reader/writer and database-trigger inventory recorded in docs/SELECTION_ROUND_COMPLETION_TRANSITION.md.
 - [x] Additive separate-completion SQL prepared with finished-season guards and legacy-field preservation; shared completion reader covered by focused tests, not yet enabled in calendar consumers.
-- [x] Separate completion fields applied by Richard and independently verified: all twelve reviewed family/year rows have both flags true; original varied usage counts preserved, including Debbie's zero second-round bookings.
+- [x] Separate completion fields applied by Richard and independently verified: all twelve reviewed family/year rows have both flags true; original usage counts preserved. Debbie's saved secondary count is 1 in 2026 and 0 in 2027; neither is proof of her actual bookings.
 - [x] Usage reconciliation now uses protected organization queries, never infers Done from bookings, and skips active or finished seasons.
 - [x] Richard confirmed atomic completion triggers installed Nov 12: secondary handoff plus primary INSERT/UPDATE compatibility.
-- [ ] Switch separate-round completion readers and handoff progression together; preserve all saved reservations and completed turns.
-- [x] Clarify calendar-only versus calendar-and-reminder scope before changing reminder-page queries; awaiting Richard's choice.
+- [x] Switched separate-round calendar/reminder readers and guarded handoff progression; 90 policy tests and 11 notification tests pass, preview compiles, both functions deployed. Live completed-family notification skipped; all 178 reservations retained identical fingerprint.
+- [x] Richard approved calendar and reminder checks together, including protected reminder queries.
+- [x] Prepared read-only preview checks in docs/SELECTION_PREVIEW_CHECKLIST.md; future Done handoffs need a test season, never reset the finished live season.
+- [ ] Richard to confirm preview checklist before publishing; authenticated UI cannot be exercised through this external Supabase connection.
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
@@ -61,7 +63,7 @@
 5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
 6. [ ] Yearly reminders for Admin and calendar keeper: setup reminder ~60 days before selection opens, pre-flight check ~14 days before, "ready" confirmation ~3 days before, plus an end-of-season wrap-up check. Uses the existing daily automated-notification job, not a new frequent one.
 
-**Current blockers:** Reminder-page scope awaits Richard's choice. Signed-in checks are unavailable through external Supabase. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
+**Current blockers:** Signed-in checks are unavailable through external Supabase; Richard will check the preview before publishing. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
 
 ## Done
 - [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.

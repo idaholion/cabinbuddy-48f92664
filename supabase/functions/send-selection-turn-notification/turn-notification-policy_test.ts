@@ -31,3 +31,13 @@ Deno.test('unstarted secondary placeholder does not hide active primary turn', (
     started_at: null, current_family_group: null, turn_completed: false,
   }, false), { secondaryPhase: false, skip: false });
 });
+
+Deno.test('independent secondary Done blocks a notice even if its pointer is stale', () => {
+  assertEquals(getTurnNotificationPolicy('Cook Family', {
+    started_at: '2026-11-09T03:52:56Z', current_family_group: 'Cook Family', turn_completed: false,
+  }, true, true).skip, true);
+});
+Deno.test('primary notice only belongs to the saved active family', () => {
+  assertEquals(getTurnNotificationPolicy('Cook Family', null, false, false, 'Woolf Family').skip, true);
+  assertEquals(getTurnNotificationPolicy('Woolf Family', null, false, false, 'Woolf Family').skip, false);
+});

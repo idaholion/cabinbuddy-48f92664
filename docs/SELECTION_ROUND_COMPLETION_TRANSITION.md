@@ -1,10 +1,10 @@
 # Separate round completion transition
 
-## Checkpoint 1: additive SQL, not enabled in the calendar yet
+## Checkpoint 1: additive SQL confirmed installed
 
 `supabase/sql/2026-11-12_separate_round_completion.sql` adds nullable per-family primary and secondary completion fields to existing usage rows. It does not create a table or change grants/RLS. Existing policies continue to apply. The backfill is limited to the six saved rotation families in each reviewed Andrew organization season (2026/2027) and aborts unless both authoritative rounds remain finished. It preserves legacy usage data and repeat execution does not overwrite new completion values.
 
-Debbie/Poznanovich has zero second-round bookings but explicitly finished; she must still be backfilled as completed. No booking-count inference is allowed.
+Debbie/Poznanovich has saved secondary usage of 1 in 2026 and 0 in 2027; Richard reports an October secondary stay. Those counts are preserved, not treated as proof of actual reservations or completion. Both years' saved independent completion fields are true. No booking-count inference is allowed.
 
 ## Inventory for checkpoint 2, after manual SQL confirmation
 
@@ -24,6 +24,12 @@ Debbie/Poznanovich has zero second-round bookings but explicitly finished; she m
 
 Existing usage triggers only default null legacy completion on insertion and maintain updated_at. The rotation trigger only maintains updated_at. No secondary-status trigger was found. `reset_selection_for_testing` is a legacy destructive testing function and must not be called or changed as part of this work. Existing policies allow organization-scoped usage/status management; do not widen them in this transition.
 
-## Remaining validation
+## Checkpoint 2 implementation and validation
 
-The pure shared completion reader has tests for independent rounds, zero-booking Done, exhausted picks without Done, wrong-year records, legacy compatibility, and missing records. SQL has not been executed by the agent. After Richard applies it, compare live reservation/state snapshots and run handoff/finished-season regression tests before enabling new consumers. Repeat/stale handoff tests belong to that implementation checkpoint. Authenticated UI verification is unavailable for the external Supabase connection.
+Richard confirmed installing both compatibility triggers. A read of pg_catalog.pg_trigger confirms both enabled; information_schema.triggers does not expose them to the diagnostic role. Calendar phase/status, primary Done, secondary initialization/progression, and reminder pages now use independent completion. Secondary progression reads fresh usage and guards the outgoing pointer/start timestamp; the installed trigger records outgoing Done atomically. Secondary booking no longer advances a turn, and uses the shared creation validator. Reminder pages now use secure organization wrappers. The turn sender owns successful tracking in both rounds, and scheduled callers no longer duplicate it.
+
+New usage initialization retains legacy false, with the confirmed INSERT trigger supplying independent false defaults; no existing-season initialization is invoked. Booking/edit validators retain saved active-pointer enforcement. Annual setup/pre-flight remains a later task.
+
+Primary completion and primary pointer movement remain two guarded requests, not one transaction; a retry can finish pointer movement without resetting completion. Full transactional primary handoff is not claimed by this checkpoint.
+
+Tests cover independent rounds, zero-booking Done, exhausted picks without Done, wrong-year/missing records, progression through the full reverse order, and finished-season preservation. No SQL was executed by the agent. Authenticated UI verification is unavailable for the external Supabase connection. Do not reset a finished production season to test a future handoff.

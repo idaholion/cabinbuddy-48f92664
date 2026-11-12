@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { freeSelectionState, holdOpening, formatOpening } from "../_shared/post-rotation-hold.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { isRoundCompleted } from '../_shared/selection-round-completion.ts';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const corsHeaders = {
@@ -128,18 +129,20 @@ const handler = async (req: Request): Promise<Response> => {
       // Check current year and next year
       for (const year of [currentYear, currentYear + 1]) {
         // Check for secondary selection phase
-        const { data: secondaryStatus } = await supabase
+        const { data: secondaryStatus, error: secondaryError } = await supabase
           .from('secondary_selection_status')
           .select('*')
           .eq('organization_id', org.id)
           .eq('rotation_year', year)
           .maybeSingle();
 
+        if (secondaryError) { console.error('Could not read secondary phase', secondaryError); continue; }
+
         // If in secondary phase, handle secondary notifications
-        if (secondaryStatus && checkTurnNotifications) {
+        if (secondaryStatus?.started_at || secondaryStatus?.current_family_group) {
           const currentSecondaryFamily = secondaryStatus.current_family_group;
 
-          if (currentSecondaryFamily) {
+          if (currentSecondaryFamily && checkTurnNotifications) {
             // CRITICAL: Check if turn is already completed before sending notification
             if (secondaryStatus.turn_completed) {
               console.log(`Skipping notification for ${currentSecondaryFamily} - secondary turn already completed`);
@@ -260,7 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
         // If extension expired and they haven't completed, auto-advance
         if (expiredExtension && checkTurnNotifications) {
           const usage = usageData.find(u => u.family_group === currentFamily);
-          const turnCompleted = usage?.turn_completed || false;
+          const turnCompleted = isRoundCompleted(usage, year, 'primary');
           const usedPrimary = usage?.time_periods_used || 0;
           const allowedPrimary = usage?.time_periods_allowed || 0;
 
@@ -269,12 +272,14 @@ const handler = async (req: Request): Promise<Response> => {
             console.log(`Auto-advancing from ${currentFamily} due to expired extension`);
             
             // Mark turn as completed
-            await supabase
+            const { error: completionError } = await supabase
               .from('time_period_usage')
-              .update({ turn_completed: true })
+              .update({ primary_turn_completed: true, turn_completed: true })
               .eq('organization_id', org.id)
               .eq('rotation_year', year)
               .eq('family_group', currentFamily);
+
+            if (completionError) { console.error('Could not complete expired turn', completionError); continue; }
 
             // Find next family
             const currentIndex = rotationOrder.indexOf(currentFamily);
@@ -285,9 +290,9 @@ const handler = async (req: Request): Promise<Response> => {
               const candidateFamily = rotationOrder[nextIndex];
               
               const nextUsage = usageData.find(u => u.family_group === candidateFamily);
-              const nextTurnCompleted = nextUsage?.turn_completed || false;
+              const nextTurnCompleted = isRoundCompleted(nextUsage, year, 'primary');
               
-              if (!nextTurnCompleted) {
+              if (candidateFamily !== currentFamily && nextUsage && !nextTurnCompleted) {
                 nextFamily = candidateFamily;
                 break;
               }
@@ -316,30 +321,6 @@ const handler = async (req: Request): Promise<Response> => {
               console.log(`Auto-advance notification response:`, { data: notifyResponse, error: sendError });
 
               if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
-                await supabase
-                  .from('selection_turn_notifications_sent')
-                  .insert({
-                    organization_id: org.id,
-                    rotation_year: year,
-                    family_group: currentFamily,
-                    phase: 'primary'
-                  });
-                
-                // Log to notification_log for monitoring
-                await supabase
-                  .from('notification_log')
-                  .insert({
-                    organization_id: org.id,
-                    family_group: currentFamily,
-                    notification_type: 'selection_turn_ready',
-                    recipient_email: notifyResponse?.recipient_email || 'unknown',
-                    email_sent: notifyResponse?.email_sent || false,
-                    sms_sent: notifyResponse?.sms_sent || false,
-                    sms_status: notifyResponse?.sms_status || null,
-                    twilio_sid: notifyResponse?.twilio_sid || null,
-                    recipient_phone: notifyResponse?.recipient_phone || null
-                  });
-                
                 totalNotifications++;
                 console.log(`✅ Successfully sent and recorded primary notification after auto-advance for ${currentFamily}`);
               } else {
@@ -384,30 +365,6 @@ const handler = async (req: Request): Promise<Response> => {
             console.log(`Primary notification response:`, { data: notifyResponse, error: sendError });
 
             if (!sendError && notifyResponse?.success && !notifyResponse?.skipped) {
-              await supabase
-                .from('selection_turn_notifications_sent')
-                .insert({
-                  organization_id: org.id,
-                  rotation_year: year,
-                  family_group: currentFamily,
-                  phase: 'primary'
-                });
-              
-              // Log to notification_log for monitoring
-              await supabase
-                .from('notification_log')
-                .insert({
-                  organization_id: org.id,
-                  family_group: currentFamily,
-                  notification_type: 'selection_turn_ready',
-                  recipient_email: notifyResponse?.recipient_email || 'unknown',
-                  email_sent: notifyResponse?.email_sent || false,
-                  sms_sent: notifyResponse?.sms_sent || false,
-                  sms_status: notifyResponse?.sms_status || null,
-                  twilio_sid: notifyResponse?.twilio_sid || null,
-                  recipient_phone: notifyResponse?.recipient_phone || null
-                });
-              
               totalNotifications++;
               console.log(`✅ Successfully sent and recorded primary notification for ${currentFamily}`);
             } else {
@@ -424,7 +381,7 @@ const handler = async (req: Request): Promise<Response> => {
         if (checkEndingTomorrow) {
           // Check if family has already completed their turn
           const usage = usageData.find(u => u.family_group === currentFamily);
-          const turnCompleted = usage?.turn_completed || false;
+          const turnCompleted = isRoundCompleted(usage, year, 'primary');
 
           if (turnCompleted) {
             console.log(`Skipping ending tomorrow notification for ${currentFamily} - turn already completed`);

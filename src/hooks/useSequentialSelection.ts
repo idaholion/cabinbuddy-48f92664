@@ -5,10 +5,9 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
 import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { useSecondarySelection } from '@/hooks/useSecondarySelection';
-import { useSelectionExtensions } from '@/hooks/useSelectionExtensions';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
 import { secureSelect, secureUpdate, secureDelete, createOrganizationContext } from '@/lib/secure-queries';
-import { getFirstNameFromFullName } from '@/lib/reservation-utils';
+import { isRoundCompleted, completionPhase, nextIncompleteFamily } from '@/lib/selection-round-completion';
 
 export type SelectionPhase = 'primary' | 'secondary' | 'post_rotation';
 export type SelectionStatus = 'waiting' | 'active' | 'completed' | 'skipped';
@@ -37,14 +36,12 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear, calculateRotationForYear: calcRotation } = useRotationOrder(rotationYear);
   const { timePeriodUsage, fetchTimePeriodUsage, loading: usageLoading } = useSelectionUsageDisplay(rotationYear);
-  const { getExtensionForFamily } = useSelectionExtensions(rotationYear);
   const { generateSecondaryPeriods } = useReservationPeriods(rotationYear);
   const { 
     secondaryStatus, 
     isSecondaryRoundActive, 
     isCurrentFamilyTurn,
     advanceSecondarySelection,
-    endSecondarySelection,
     startSecondarySelection
   } = useSecondarySelection(rotationYear, true);
 
@@ -66,19 +63,6 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     };
   }, []);
   
-  // Helper to check if any family has secondary usage (meaning secondary selection happened)
-  const checkForSecondaryUsage = async (rotationOrder: string[]): Promise<boolean> => {
-    if (!organization?.id) return false;
-    
-    const { data } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
-      .eq('rotation_year', rotationYear)
-      .gt('secondary_periods_used', 0)
-      .limit(1);
-    
-    return (data?.length || 0) > 0;
-  };
-
-  
   useEffect(() => {
     if (!rotationData || !organization?.id) {
       setLoading(false);
@@ -91,107 +75,22 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     const checkPhaseAndFamily = async () => {
       // Determine current phase - use CALCULATED rotation for target year
       const rotationOrder = getRotationForYear(rotationYear);
-      let hadReadError = false;
       
       if (!isMounted) return;
 
-      // Check if all families have completed their turns (not just reached their limit)
-      const completionChecks = await Promise.all(
-        rotationOrder.map(async (familyGroup) => {
-          const { data: turnData, error: turnError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
-            .eq('rotation_year', rotationYear)
-            .eq('family_group', familyGroup)
-            .maybeSingle();
-          if (turnError) hadReadError = true;
-          
-          return turnData?.turn_completed || false;
-        })
-      );
-      
+      const [usageResult, secondaryResult, primaryResult] = await Promise.all([
+        secureSelect('time_period_usage', createOrganizationContext(organization.id)).eq('rotation_year', rotationYear),
+        secureSelect('secondary_selection_status', createOrganizationContext(organization.id)).eq('rotation_year', rotationYear).maybeSingle(),
+        secureSelect('rotation_orders', createOrganizationContext(organization.id)).eq('rotation_year', rotationYear).maybeSingle(),
+      ]);
       if (!isMounted) return;
-      
-      const allCompletedPrimary = rotationOrder.length > 0 && completionChecks.every(completed => completed);
-      await determinePrimaryCurrentFamily(rotationOrder);
-      if (!isMounted) return;
-
-      // Check if secondary selection is active by looking at secondary_selection_status table
-      // IMPORTANT: Include started_at to detect secondary phase even when all turns are completed
-      const { data: secondaryStatus, error: secondaryReadError } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
-        .eq('rotation_year', rotationYear)
-        .maybeSingle();
-
-      if (!isMounted) return;
-
-      // A failed read must never be mistaken for "no round has started" — that
-      // used to drop the screen back to Round 1. Keep the current view and retry.
-      if (hadReadError || secondaryReadError) {
-        console.warn('[useSequentialSelection] Read failed during phase check; retrying shortly');
-        retryTimer = setTimeout(() => { if (isMounted) checkPhaseAndFamily(); }, 3000);
+      if (usageResult.error || secondaryResult.error || primaryResult.error) {
+        retryTimer = setTimeout(() => { if (isMounted) void checkPhaseAndFamily(); }, 3000);
         return;
       }
+      setPrimaryCurrentFamily(primaryResult.data?.current_primary_turn_family || null);
+      setCurrentPhase(completionPhase(usageResult.data || [], rotationOrder, rotationYear, secondaryResult.data));
 
-      // CRITICAL FIX: Detect secondary phase using started_at OR current_family_group
-      // - If started_at exists, the secondary round was initiated (even if completed)
-      // - If current_family_group exists, a family is actively selecting
-      // This ensures phase detection works even after all families complete their turns
-      const isSecondaryPhase = secondaryStatus && (
-        secondaryStatus.current_family_group ||   // Active turn
-        secondaryStatus.started_at                 // Round started (even if completed)
-      );
-
-      console.log('=== USE SEQUENTIAL SELECTION PHASE CHECK ===', {
-        rotationYear,
-        allCompletedPrimary,
-        enableSecondarySelection: rotationData.enable_secondary_selection,
-        secondaryStatus,
-        isSecondaryPhase,
-        willBeSecondary: isSecondaryPhase,
-        completionChecks
-      });
-
-      // If secondary selection started (started_at exists) or has active family,
-      // we're in secondary phase. The secondary_selection_status record is the source of truth.
-      if (isSecondaryPhase) {
-        // Check if ALL families have used their secondary periods — if so, we're in post-rotation (free selection)
-        const secondaryMaxPeriods = rotationData.secondary_max_periods || 1;
-        const allSecondaryUsed = rotationOrder.every((familyGroup) => {
-          const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-          return (usage?.secondary_periods_used || 0) >= secondaryMaxPeriods;
-        });
-        
-        if (allSecondaryUsed && !secondaryStatus.current_family_group) {
-          // All families completed secondary selection and no active turn — free selection mode
-          console.log('[useSequentialSelection] All secondary periods used, entering post_rotation phase');
-          setCurrentPhase('post_rotation');
-        } else {
-          setCurrentPhase('secondary');
-        }
-      } else if (allCompletedPrimary) {
-        // All primary completed but no secondary active - check if secondary usage exists
-        // This handles the case where secondary selection completed (all used their periods)
-        const hasSecondaryUsage = await checkForSecondaryUsage(rotationOrder);
-        if (!isMounted) return;
-        if (hasSecondaryUsage) {
-          // Secondary happened — check if it's fully done
-          const secondaryMaxPeriods = rotationData.secondary_max_periods || 1;
-          const allSecondaryUsed = rotationOrder.every((familyGroup) => {
-            const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-            return (usage?.secondary_periods_used || 0) >= secondaryMaxPeriods;
-          });
-          if (allSecondaryUsed) {
-            setCurrentPhase('post_rotation');
-          } else {
-            setCurrentPhase('secondary');
-          }
-        } else {
-          setCurrentPhase('primary');
-        }
-      } else {
-        setCurrentPhase('primary');
-        // Determine current family for primary phase
-        await determinePrimaryCurrentFamily(rotationOrder);
-      }
-      
       if (isMounted) {
         setResolvedKey(key);
         setLoading(false);
@@ -205,26 +104,6 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
       if (retryTimer) clearTimeout(retryTimer);
     };
   }, [rotationData, rotationYear, organization?.id, secondaryStatus, timePeriodUsage, refreshVersion]);
-
-  // Determine which family group's turn it is in primary phase
-  // Now uses explicit current_primary_turn_family field from rotation_orders
-  const determinePrimaryCurrentFamily = async (rotationOrder: string[]) => {
-    if (!organization?.id || !rotationData) return;
-
-    // Read the explicit current_primary_turn_family field
-    const { data: rotationOrderData, error } = await secureSelect('rotation_orders', createOrganizationContext(organization.id))
-      .eq('rotation_year', rotationYear)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[useSequentialSelection] Error fetching current_primary_turn_family:', error);
-      return;
-    }
-
-    const currentFamily = rotationOrderData?.current_primary_turn_family || null;
-    if (latestKey.current !== key) return;
-    setPrimaryCurrentFamily(currentFamily);
-  };
 
   const calculateDaysRemaining = (familyGroup: string, phase: SelectionPhase): number | null => {
     if (!rotationData) return null;
@@ -245,96 +124,23 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
 
     const rotationOrder = getRotationForYear(rotationYear);
     
-    if (currentPhase === 'secondary') {
-      const secondaryOrder = [...rotationOrder].reverse();
-      
-      return secondaryOrder.map((familyGroup, index) => {
-        const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-        const usedSecondary = usage?.secondary_periods_used || 0;
-        const allowedSecondary = rotationData.secondary_max_periods || 1;
-        const remainingSecondary = allowedSecondary - usedSecondary;
-        
-        let status: SelectionStatus = 'waiting';
-        let dayCountText: string | undefined;
-        const isCurrentTurn = isCurrentFamilyTurn(familyGroup);
-        
-        if (isCurrentTurn) {
-          status = 'active';
-          const daysRemaining = calculateDaysRemaining(familyGroup, 'secondary');
-          if (daysRemaining !== null) {
-            const totalDays = rotationData.secondary_selection_days || 7;
-            const daysPassed = totalDays - daysRemaining;
-            dayCountText = `Day ${daysPassed + 1} of ${totalDays}`;
-          }
-        } else if (remainingSecondary <= 0) {
-          status = 'completed';
-        } else if (isSecondaryRoundActive) {
-          const currentIndex = secondaryOrder.findIndex(f => isCurrentFamilyTurn(f));
-          if (currentIndex === -1) {
-            // Round has started but no family is currently up: the secondary round
-            // has finished, so everyone's turn has passed (not "waiting").
-            status = 'completed';
-          } else if (index < currentIndex) {
-            status = 'completed';
-          }
-        }
-
-
-        return {
-          familyGroup,
-          status,
-          dayCountText,
-          isCurrentTurn,
-          daysRemaining: calculateDaysRemaining(familyGroup, 'secondary')
-        };
-      });
-    } else {
-      // Primary phase logic
-      // First check if ALL families have completed their primary turns
-      const allPrimaryCompleted = rotationOrder.every((familyGroup) => {
-        const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-        return usage?.turn_completed === true;
-      });
-
-      return rotationOrder.map((familyGroup, index) => {
-        const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
-        const usedPrimary = usage?.time_periods_used || 0;
-        const allowedPrimary = rotationData.max_time_slots || 2;
-        const turnCompleted = usage?.turn_completed === true;
-        
-        // Check for active extension
-        const extension = getExtensionForFamily(familyGroup);
-        const hasActiveExtension = extension && new Date(extension.extended_until) >= new Date();
-        
-        const isCurrentTurn = primaryCurrentFamily === familyGroup;
-        let status: SelectionStatus = 'waiting';
-        
-        // Set status based on current turn and completion
-        // A family is completed if: turn_completed is true, OR they've used all slots
-        if (isCurrentTurn) {
-          status = 'active';
-        } else if (turnCompleted || (usedPrimary >= allowedPrimary && !hasActiveExtension)) {
-          status = 'completed';
-        } else if (allPrimaryCompleted) {
-          // If all primaries are done but we're still in primary phase, mark as completed
-          status = 'completed';
-        }
-
-        return {
-          familyGroup,
-          status,
-          isCurrentTurn,
-          daysRemaining: null
-        };
-      });
-    }
+    if (currentPhase === 'post_rotation') return [];
+    const round = currentPhase === 'secondary' ? 'secondary' : 'primary';
+    const order = round === 'secondary' ? [...rotationOrder].reverse() : rotationOrder;
+    return order.map(familyGroup => {
+      const usage = timePeriodUsage.find(u => u.family_group === familyGroup);
+      const completed = isRoundCompleted(usage, rotationYear, round);
+      const isCurrentTurn = !completed && (round === 'secondary' ? isCurrentFamilyTurn(familyGroup) : primaryCurrentFamily === familyGroup);
+      return { familyGroup, status: (completed ? 'completed' : isCurrentTurn ? 'active' : 'waiting') as SelectionStatus,
+        isCurrentTurn, daysRemaining: calculateDaysRemaining(familyGroup, currentPhase) };
+    });
   };
 
   const getCurrentFamilyGroup = (): string | null => {
     if (currentPhase === 'secondary') {
       return secondaryStatus?.current_family_group || null;
     }
-    return primaryCurrentFamily;
+    return currentPhase === 'post_rotation' ? null : primaryCurrentFamily;
   };
 
   const canCurrentUserSelect = (userFamilyGroup?: string): boolean => {
@@ -348,8 +154,6 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (currentPhase === 'secondary') {
       if (completed) {
         await advanceSecondarySelection();
-      } else {
-        await endSecondarySelection();
       }
     } else {
       // Primary phase advancement
@@ -361,8 +165,19 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!organization?.id || !rotationData || !primaryCurrentFamily) return;
 
     try {
-      // CRITICAL: Mark current family's turn as completed in the database
-      const { error: updateError } = await secureUpdate('time_period_usage', { turn_completed: true }, createOrganizationContext(organization.id))
+      const context = createOrganizationContext(organization.id);
+      const [savedTurn, savedUsage] = await Promise.all([
+        secureSelect('rotation_orders', context).eq('rotation_year', rotationYear).maybeSingle(),
+        secureSelect('time_period_usage', context).eq('rotation_year', rotationYear),
+      ]);
+      if (savedTurn.error || savedUsage.error) throw savedTurn.error || savedUsage.error;
+      if (savedTurn.data?.current_primary_turn_family !== primaryCurrentFamily) throw new Error('The selection turn has changed. Please refresh the calendar.');
+      const outgoing = savedUsage.data?.find((row: any) => row.family_group === primaryCurrentFamily);
+      if (!outgoing) throw new Error('This selection turn is unavailable. Please refresh the calendar.');
+      const rotationOrder = getRotationForYear(rotationYear);
+      const nextFamily = nextIncompleteFamily(savedUsage.data || [], rotationOrder, rotationYear, 'primary', primaryCurrentFamily);
+      // Keep the legacy primary flag compatible; neither flag belongs to Round 2.
+      const { error: updateError } = await secureUpdate('time_period_usage', { primary_turn_completed: true, turn_completed: true }, createOrganizationContext(organization.id))
         .eq('rotation_year', rotationYear)
         .eq('family_group', primaryCurrentFamily);
 
@@ -381,39 +196,15 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
         console.error('[useSequentialSelection] Error cleaning up ending_tomorrow notifications:', cleanupError);
       }
 
-      const rotationOrder = getRotationForYear(rotationYear);
-      const currentIndex = rotationOrder.indexOf(primaryCurrentFamily);
-      
-      // Find next family group that hasn't completed their turn
-      let nextFamily: string | null = null;
-      for (let i = 1; i <= rotationOrder.length; i++) {
-        const nextIndex = (currentIndex + i) % rotationOrder.length;
-        const candidateFamily = rotationOrder[nextIndex];
-        
-        // Check if next family has completed their turn
-        const { data: nextTurnData, error: nextTurnError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
-          .eq('rotation_year', rotationYear)
-          .eq('family_group', candidateFamily)
-          .maybeSingle();
-        
-        if (nextTurnError) throw nextTurnError;
-        const nextTurnCompleted = nextTurnData?.turn_completed || false;
-        
-        // Advance to first family that hasn't completed their turn
-        if (!nextTurnCompleted) {
-          nextFamily = candidateFamily;
-          break;
-        }
-      }
-      
       // Update current_primary_turn_family in rotation_orders
-      const { error: rotationUpdateError } = await secureUpdate('rotation_orders', { current_primary_turn_family: nextFamily }, createOrganizationContext(organization.id))
-        .eq('rotation_year', rotationYear);
+      const { data: advanced, error: rotationUpdateError } = await secureUpdate('rotation_orders', { current_primary_turn_family: nextFamily }, createOrganizationContext(organization.id))
+        .eq('rotation_year', rotationYear).eq('current_primary_turn_family', primaryCurrentFamily).select('id').maybeSingle();
 
       if (rotationUpdateError) {
         console.error('[useSequentialSelection] Error updating current_primary_turn_family:', rotationUpdateError);
         throw rotationUpdateError;
       }
+      if (!advanced) throw new Error('The selection turn changed before saving. Please refresh the calendar.');
 
       if (nextFamily) {
         setPrimaryCurrentFamily(nextFamily);
@@ -464,36 +255,8 @@ export const useSequentialSelection = (rotationYear: number): UseSequentialSelec
     if (!organization?.id) return;
 
     try {
-      // Get family group lead contact information
-      const { data: familyData, error: familyError } = await secureSelect('family_groups', createOrganizationContext(organization.id))
-        .eq('name', familyGroup)
-        .maybeSingle();
-
-      if (familyError || !familyData?.lead_email) {
-        console.error('Could not find family group contact info:', familyError);
-        return;
-      }
-
-      // Calculate available periods (simplified - you may want to make this more accurate)
-      const remainingUsage = timePeriodUsage.find(u => u.family_group === familyGroup);
-      const used = remainingUsage?.time_periods_used || 0;
-      const allowed = rotationData?.max_time_slots || 2;
-      const availablePeriods = `${allowed - used} time periods remaining`;
-
-      // Send the notification
-      const { error: notificationError } = await supabase.functions.invoke('send-notification', {
-        body: {
-          type: 'selection_turn_ready',
-          organization_id: organization.id,
-          selection_data: {
-            family_group_name: familyGroup,
-            guest_email: familyData.lead_email,
-            guest_name: getFirstNameFromFullName(familyData.lead_name || familyGroup),
-            guest_phone: familyData.lead_phone,
-            selection_year: year.toString(),
-            available_periods: availablePeriods,
-          }
-        }
+      const { error: notificationError } = await supabase.functions.invoke('send-selection-turn-notification', {
+        body: { organization_id: organization.id, family_group: familyGroup, rotation_year: year }
       });
 
       if (notificationError) {

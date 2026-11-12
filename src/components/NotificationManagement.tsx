@@ -17,6 +17,8 @@ import { getHostFirstName, getHostEmail } from "@/lib/reservation-utils";
 import { getSelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
 import type { SelectionPeriodDisplayInfo } from "@/lib/selection-period-utils";
 import { toDateOnlyString } from "@/lib/date-utils";
+import { secureSelect, createOrganizationContext } from '@/lib/secure-queries';
+import { isRoundCompleted, allRoundCompleted } from '@/lib/selection-round-completion';
 import { differenceInDays } from "date-fns";
 
 interface ReservationPeriod {
@@ -210,8 +212,7 @@ export const NotificationManagement = () => {
       const today = new Date().toISOString().split('T')[0];
       const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      const { data: reservations, error } = await supabase
-        .from('reservations')
+      const { data: reservations, error } = await secureSelect('reservations', createOrganizationContext(organization.id))
         .select(`
           id,
           family_group,
@@ -219,7 +220,6 @@ export const NotificationManagement = () => {
           end_date,
           host_assignments
         `)
-        .eq('organization_id', organization.id)
         .eq('status', 'confirmed')
         .gte('start_date', today)
         .lte('start_date', thirtyDaysFromNow)
@@ -232,8 +232,7 @@ export const NotificationManagement = () => {
       }
 
       // Get family groups data separately
-      const { data: familyGroups, error: familyError } = await supabase
-        .from('family_groups')
+      const { data: familyGroups, error: familyError } = await secureSelect('family_groups', createOrganizationContext(organization.id))
         .select('name, lead_email, lead_name, lead_phone')
         .eq('organization_id', organization.id);
 
@@ -308,23 +307,20 @@ export const NotificationManagement = () => {
     
     try {
       // Fetch time period usage to identify completed families
-      const { data: usageData } = await supabase
-        .from('time_period_usage')
-        .select('family_group, time_periods_used, time_periods_allowed, secondary_periods_used')
-        .eq('organization_id', organization.id)
+      const { data: usageData, error: usageError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
+        .select('*')
         .eq('rotation_year', rotationYear);
       
       // Fetch secondary selection status
-      const { data: secondaryData } = await supabase
-        .from('secondary_selection_status')
+      const { data: secondaryData, error: secondaryError } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
         .select('*')
-        .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
         .maybeSingle();
+      if (usageError || secondaryError) throw usageError || secondaryError;
       
       const isSecondaryPhase = secondaryData?.started_at != null;
       // Only treat as active if the turn is NOT completed
-      const isSecondaryTurnCompleted = secondaryData?.turn_completed === true;
+      const isSecondaryTurnCompleted = secondaryData?.turn_completed === true || isRoundCompleted(usageData?.find((u: any) => u.family_group === secondaryData?.current_family_group), rotationYear, 'secondary');
       const secondaryCurrentFamily = isSecondaryTurnCompleted ? null : secondaryData?.current_family_group;
       
       // Create usage map
@@ -353,7 +349,7 @@ export const NotificationManagement = () => {
       if (!isSecondaryPhase) {
         // ALWAYS show the current family from database first, regardless of usage
         // The database current_primary_turn_family is the authoritative source
-        if (currentFamilyGroup) {
+        if (currentFamilyGroup && !isRoundCompleted(usageData?.find((u: any) => u.family_group === currentFamilyGroup), rotationYear, 'primary')) {
           const usage = usageData?.find(u => u.family_group === currentFamilyGroup);
           const primaryUsed = usage?.time_periods_used || 0;
           const primaryAllowed = usage?.time_periods_allowed || 2;
@@ -423,7 +419,7 @@ export const NotificationManagement = () => {
             const primaryAllowed = usage?.time_periods_allowed || 2;
             
             // Skip families that already completed
-            if (primaryUsed >= primaryAllowed) return;
+            if (isRoundCompleted(usage, rotationYear, 'primary')) return;
             
             // Find the actual period record from reservation_periods table
             const futurePeriod = periods.find(p => 
@@ -478,9 +474,7 @@ export const NotificationManagement = () => {
         }
         
         // Check if primary phase is completely done
-        const allPrimaryComplete = usageData?.every(u => 
-          u.time_periods_used >= u.time_periods_allowed
-        );
+        const allPrimaryComplete = allRoundCompleted(usageData || [], getRotationForYear(rotationYear), rotationYear, 'primary');
         
         // If primary is complete, show secondary periods from reservation_periods table
         if (allPrimaryComplete) {
@@ -499,7 +493,7 @@ export const NotificationManagement = () => {
             const secondaryAllowed = rotationData?.secondary_max_periods || 1;
             
             // Only show families that haven't completed their secondary selection
-            if (secondaryUsed < secondaryAllowed) {
+            if (!isRoundCompleted(usage, rotationYear, 'secondary')) {
               const startDateObj = parseLocalDate(period.selection_start_date);
               const endDateObj = parseLocalDate(period.selection_end_date);
               const daysUntil = differenceInDays(startDateObj, today);
@@ -534,6 +528,7 @@ export const NotificationManagement = () => {
         // Find the current family index
         const currentIndex = secondaryOrder.findIndex(f => f === secondaryCurrentFamily);
         
+        if (!secondaryCurrentFamily) { setUpcomingSelectionPeriods([]); return; }
         secondaryOrder.forEach((familyGroup, index) => {
           const usage = usageData?.find(u => u.family_group === familyGroup);
           const secondaryUsed = usage?.secondary_periods_used || 0;
@@ -541,7 +536,7 @@ export const NotificationManagement = () => {
           const isActive = familyGroup === secondaryCurrentFamily;
           
           // Skip completed families (unless they're currently active)
-          if (secondaryUsed >= secondaryAllowed && !isActive) {
+          if (isRoundCompleted(usage, rotationYear, 'secondary')) {
             return;
           }
           

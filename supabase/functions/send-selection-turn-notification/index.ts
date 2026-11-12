@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getTurnNotificationPolicy } from './turn-notification-policy.ts';
+import { isRoundCompleted } from '../_shared/selection-round-completion.ts';
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const corsHeaders = {
@@ -34,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${notification_type === 'ending_tomorrow' ? 'ending tomorrow' : 'selection turn'} notification for ${family_group} in year ${rotation_year}`);
 
     // Check if we're in secondary phase first
-    const { data: secondaryStatus } = await supabase
+    const { data: secondaryStatus, error: secondaryError } = await supabase
       .from('secondary_selection_status')
       .select('started_at, current_family_group, turn_completed')
       .eq('organization_id', organization_id)
@@ -42,16 +43,22 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     // Check if family has completed their turn before sending
-    const { data: usageData } = await supabase
+    const { data: usageData, error: usageError } = await supabase
       .from('time_period_usage')
-      .select('turn_completed')
+      .select('rotation_year, turn_completed, primary_turn_completed, secondary_turn_completed')
       .eq('organization_id', organization_id)
       .eq('rotation_year', rotation_year)
       .eq('family_group', family_group)
       .maybeSingle();
 
     // Completion belongs to the active round, not a previously finished round.
-    const policy = getTurnNotificationPolicy(family_group, secondaryStatus, usageData?.turn_completed === true);
+    const { data: activePrimary, error: primaryError } = await supabase.from('rotation_orders')
+      .select('current_primary_turn_family').eq('organization_id', organization_id).eq('rotation_year', rotation_year).maybeSingle();
+    if (secondaryError || usageError || primaryError) throw secondaryError || usageError || primaryError;
+    const policy = getTurnNotificationPolicy(family_group, secondaryStatus,
+      !usageData || isRoundCompleted(usageData, rotation_year, 'primary'),
+      !usageData || isRoundCompleted(usageData, rotation_year, 'secondary'),
+      activePrimary?.current_primary_turn_family ?? null);
     if (policy.skip) {
       console.log(`Skipping notification for ${family_group} - not an incomplete active turn (secondary phase: ${policy.secondaryPhase})`);
       return new Response(JSON.stringify({ 
@@ -79,14 +86,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Determine if we're in secondary phase based on the earlier query
     const isSecondaryPhase = policy.secondaryPhase;
 
-    if (isSecondaryPhase && !notification_type) {
+    if (!notification_type) {
       const { data: alreadySent, error: sentReadError } = await supabase
         .from('selection_turn_notifications_sent')
         .select('id')
         .eq('organization_id', organization_id)
         .eq('rotation_year', rotation_year)
         .eq('family_group', family_group)
-        .eq('phase', 'secondary')
+        .eq('phase', isSecondaryPhase ? 'secondary' : 'primary')
         .maybeSingle();
       if (sentReadError) throw sentReadError;
       if (alreadySent) {
@@ -233,9 +240,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if notification was actually delivered
     if (notifyData?.success && (notifyData.email_sent || notifyData.sms_sent)) {
       // Own secondary delivery tracking here for immediate handoffs and daily retries alike.
-      if (isSecondaryPhase && !notification_type) {
+      if (!notification_type) {
         const { error: trackingError } = await supabase.from('selection_turn_notifications_sent').insert({
-          organization_id, rotation_year, family_group, phase: 'secondary',
+          organization_id, rotation_year, family_group, phase: isSecondaryPhase ? 'secondary' : 'primary',
         });
         if (trackingError) console.error('Secondary notification tracking failed:', trackingError);
         const { error: logError } = await supabase.from('notification_log').insert({

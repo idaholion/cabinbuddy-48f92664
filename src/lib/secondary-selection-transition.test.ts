@@ -21,8 +21,9 @@ test('disabled and empty rotations cannot start round two', () => {
   expect(planSecondaryTransition(2027, order, false, usage)).toBeNull();
   expect(planSecondaryTransition(2027, [], true, usage)).toBeNull();
 });
-test('reverse rotation skips an exhausted secondary allocation', () => {
-  expect(planSecondaryTransition(2027, order, true, usage.map(row => ({ ...row, secondary_periods_used: row.family_group === 'Tina Family' ? 1 : 0 })))?.current_family_group).toBe('Barb Family');
+test('reverse rotation skips explicit secondary Done, not an exhausted allocation', () => {
+  expect(planSecondaryTransition(2027, order, true, usage.map(row => ({ ...row, secondary_turn_completed: row.family_group === 'Tina Family' })))?.current_family_group).toBe('Barb Family');
+  expect(planSecondaryTransition(2027, order, true, usage.map(row => ({ ...row, secondary_periods_used: 1 })))?.current_family_group).toBe('Tina Family');
 });
 test('Tina can book her third week, but Barb must wait', () => {
   const turn = planSecondaryTransition(2027, order, true, usage);

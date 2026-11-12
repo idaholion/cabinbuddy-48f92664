@@ -5,6 +5,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
 import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { scheduleFreeSelectionOpening } from '@/lib/schedule-free-selection';
+import { isRoundCompleted, nextIncompleteFamily } from '@/lib/selection-round-completion';
 import { planSecondaryTransition } from '@/lib/secondary-selection-transition';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
@@ -211,62 +212,60 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
       const rotationOrder = getRotationForYear(rotationYear);
       const reverseOrder = [...rotationOrder].reverse();
       
-      // First check if any other family has remaining secondary periods
-      let nextIndex = (secondaryStatus.current_group_index + 1) % reverseOrder.length;
-      let nextFamily: string | null = null;
-      let attempts = 0;
-      
-      while (attempts < reverseOrder.length) {
-        const candidateFamily = reverseOrder[nextIndex];
-        const usage = timePeriodUsage.find(u => u.family_group === candidateFamily);
-        const remainingSecondary = (rotationData.secondary_max_periods || 1) - (usage?.secondary_periods_used || 0);
-        
-        if (remainingSecondary > 0) {
-          nextFamily = candidateFamily;
-          break;
-        }
-        
-        nextIndex = (nextIndex + 1) % reverseOrder.length;
-        attempts++;
+      const [freshStatus, freshUsage] = await Promise.all([
+        secureSelect('secondary_selection_status', orgContext).eq('rotation_year', rotationYear).maybeSingle(),
+        secureSelect('time_period_usage', orgContext).eq('rotation_year', rotationYear),
+      ]);
+      if (freshStatus.error || freshUsage.error) throw freshStatus.error || freshUsage.error;
+      const saved = freshStatus.data;
+      const outgoing = secondaryStatus.current_family_group;
+      if (!outgoing || saved?.current_family_group !== outgoing || saved?.started_at !== secondaryStatus.started_at) {
+        throw new Error('The selection turn has changed. Please refresh the calendar.');
       }
+      const outgoingUsage = freshUsage.data?.find((row: any) => row.family_group === outgoing);
+      if (!outgoingUsage || isRoundCompleted(outgoingUsage, rotationYear, 'secondary')) throw new Error('This secondary turn is already complete or unavailable.');
+      const nextFamily = nextIncompleteFamily(freshUsage.data || [], reverseOrder, rotationYear, 'secondary', outgoing);
+      const nextIndex = nextFamily ? reverseOrder.indexOf(nextFamily) : reverseOrder.length;
 
       // If no one has remaining secondary periods, end the round with atomic update
-      if (!nextFamily || attempts >= reverseOrder.length) {
+      if (!nextFamily) {
         console.log('[useSecondarySelection] All families completed secondary selection, ending round');
         // ATOMIC: Mark turn completed AND clear current_family_group in one update
-        const { error: endError } = await secureUpdate('secondary_selection_status', {
+        const { data: ended, error: endError } = await secureUpdate('secondary_selection_status', {
           turn_completed: true,
           current_family_group: null,
           updated_at: new Date().toISOString()
         }, orgContext)
-          .eq('id', secondaryStatus.id);
+          .eq('id', secondaryStatus.id).eq('current_family_group', outgoing).eq('started_at', saved.started_at).select('id').maybeSingle();
 
         if (endError) {
           console.error('[useSecondarySelection] Error ending secondary selection:', endError);
           throw endError;
         }
         
+        if (!ended) throw new Error('The selection turn changed before saving. Please refresh.');
         setIsSecondaryRoundActive(false);
         await scheduleFreeSelectionOpening(organization.id, rotationYear);
-        fetchSecondarySelectionStatus();
+        await fetchSecondarySelectionStatus();
         return;
       }
 
       // ATOMIC UPDATE: Mark current turn completed AND set next family in one call
-      const { error: advanceError } = await secureUpdate('secondary_selection_status', {
+      const { data: advanced, error: advanceError } = await secureUpdate('secondary_selection_status', {
         turn_completed: false, // Reset for new family
         current_family_group: nextFamily,
         current_group_index: nextIndex,
         started_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, orgContext)
-        .eq('id', secondaryStatus.id);
+        .eq('id', secondaryStatus.id).eq('current_family_group', outgoing).eq('started_at', saved.started_at).select('id').maybeSingle();
 
       if (advanceError) {
         console.error('[useSecondarySelection] Error advancing secondary selection:', advanceError);
         throw advanceError;
       }
 
+      if (!advanced) throw new Error('The selection turn changed before saving. Please refresh.');
       console.log(`[useSecondarySelection] Advanced to ${nextFamily} for secondary selection`);
 
       // Send notification to the next family
@@ -293,28 +292,12 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
       fetchSecondarySelectionStatus();
     } catch (error) {
       console.error('[useSecondarySelection] Error in advanceSecondarySelection:', error);
+      throw error;
     }
   };
 
-  const endSecondarySelection = async () => {
-    if (!organization?.id || !secondaryStatus) return;
-
-    const orgContext = createOrganizationContext(organization.id);
-    const { error } = await secureUpdate('secondary_selection_status', {
-      current_family_group: null,
-      updated_at: new Date().toISOString()
-    }, orgContext)
-      .eq('id', secondaryStatus.id);
-
-    if (error) {
-      console.error('Error ending secondary selection:', error);
-      return;
-    }
-
-    setIsSecondaryRoundActive(false);
-    await scheduleFreeSelectionOpening(organization.id, rotationYear);
-    fetchSecondarySelectionStatus();
-  };
+  // End only the outgoing turn; never clear waiting families to open free selection.
+  const endSecondarySelection = advanceSecondarySelection;
 
   const isCurrentFamilyTurn = (familyGroup: string): boolean => {
     return secondaryStatus?.current_family_group === familyGroup;

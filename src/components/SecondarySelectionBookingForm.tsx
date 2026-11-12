@@ -12,13 +12,13 @@ import { useTimePeriods } from '@/hooks/useTimePeriods';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
-import { useSecondarySelection } from '@/hooks/useSecondarySelection';
+import { useReservations } from '@/hooks/useReservations';
+import { refreshSelectionDisplay, announceBookingCreated } from '@/lib/selection-display-events';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
-import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,17 +48,11 @@ export function SecondarySelectionBookingForm({
   const { organization } = useOrganization();
   const { rotationData, getRotationForYear } = useRotationOrder();
   
-  // Use rotation year logic to get the correct year (same as SecondarySelectionManager)
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const startMonth = 9; // October (0-indexed)
-  const rotationStartThisYear = new Date(currentYear, startMonth, 1);
-  const hasPassedStartDate = today >= rotationStartThisYear;
-  const rotationYear = hasPassedStartDate ? currentYear + 1 : currentYear;
-  
+  const rotationYear = currentMonth.getFullYear();
+
   const { calculateTimePeriodWindows, timePeriodUsage, fetchTimePeriodUsage } = useTimePeriods(rotationYear);
   const { currentPhase, currentFamilyGroup } = useSequentialSelection(rotationYear);
-  const { advanceSecondarySelection } = useSecondarySelection(rotationYear);
+  const { createReservation } = useReservations();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -116,27 +110,19 @@ export function SecondarySelectionBookingForm({
     setLoading(true);
     try {
       // Create the reservation
-      const { error: reservationError } = await supabase
-        .from('reservations')
-        .insert({
-          organization_id: organization.id,
-          user_id: user.id,
-          family_group: familyGroup,
-          start_date: format(data.startDate, 'yyyy-MM-dd'),
-          end_date: format(data.endDate, 'yyyy-MM-dd'),
-          guest_count: data.guestCount,
-          host_assignments: data.hostAssignments as any,
-          status: 'confirmed',
-          time_period_number: -1 // CRITICAL: -1 marks this as a secondary selection
-        });
-
-      if (reservationError) throw reservationError;
-
-      // Update secondary period usage
-      await updateSecondaryTimePeriodUsage(familyGroup, rotationYear);
-
-      // Move to next family in secondary selection order
-      await advanceSecondarySelection();
+      const saved = await createReservation({
+        family_group: familyGroup,
+        start_date: format(data.startDate, 'yyyy-MM-dd'),
+        end_date: format(data.endDate, 'yyyy-MM-dd'),
+        guest_count: data.guestCount,
+        host_assignments: data.hostAssignments as any,
+        status: 'confirmed', time_period_number: -1,
+      });
+      if (!saved) return;
+      // A booking refreshes counts; only the family's Done action hands off.
+      refreshSelectionDisplay();
+      announceBookingCreated(familyGroup);
+      await fetchTimePeriodUsage(rotationYear);
 
       toast({
         title: "Secondary Selection Complete",
@@ -157,32 +143,6 @@ export function SecondarySelectionBookingForm({
       setLoading(false);
     }
   };
-
-  const updateSecondaryTimePeriodUsage = async (familyGroup: string, year: number) => {
-    if (!organization?.id) return;
-
-    const { error } = await supabase
-      .from('time_period_usage')
-      .update({ 
-        secondary_periods_used: (familyUsage?.secondary_periods_used || 0) + 1,
-        selection_round: 'secondary',
-        last_selection_date: new Date().toISOString()
-      })
-      .eq('organization_id', organization.id)
-      .eq('family_group', familyGroup)
-      .eq('rotation_year', year);
-
-    if (error) {
-      console.error('Error updating secondary usage:', error);
-      throw error;
-    }
-    
-    // Refresh time period usage to get latest data
-    await fetchTimePeriodUsage(year);
-  };
-
-  // Removed local advanceSecondarySelection - now using hook version
-  // which properly marks turn_completed and sends notifications
 
   if (!isCurrentFamilyTurn()) {
     return (

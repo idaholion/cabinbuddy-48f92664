@@ -13,7 +13,8 @@ import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { useSequentialSelection } from '@/hooks/useSequentialSelection';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useReservationPeriods } from '@/hooks/useReservationPeriods';
-import { supabase } from '@/integrations/supabase/client';
+import { secureSelect, createOrganizationContext } from '@/lib/secure-queries';
+import { isRoundCompleted } from '@/lib/selection-round-completion';
 import { getHostFirstName, getFirstNameFromFullName, isContinuationOfPreviousStay, getChainedEndDate } from '@/lib/reservation-utils';
 import { parseDateOnly } from '@/lib/date-utils';
 import { getSelectionPeriodDisplayInfo } from '@/lib/selection-period-utils';
@@ -100,36 +101,29 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
     setLoading(true);
     try {
       // Fetch reminder templates
-      const { data: templates } = await supabase
-        .from('reminder_templates')
+      const { data: templates, error: templatesError } = await secureSelect('reminder_templates', createOrganizationContext(organization.id))
         .select('*')
-        .eq('organization_id', organization.id)
         .eq('is_active', true);
 
       setReminderTemplates(templates || []);
       
       // Fetch families that have clicked "I'm Done" for this rotation year
-      const { data: timePeriodUsage } = await supabase
-        .from('time_period_usage')
-        .select('family_group, turn_completed')
-        .eq('organization_id', organization.id)
-        .eq('rotation_year', rotationYear)
-        .eq('turn_completed', true);
+      const { data: timePeriodUsage, error: usageError } = await secureSelect('time_period_usage', createOrganizationContext(organization.id))
+        .select('*')
+        .eq('rotation_year', rotationYear);
 
       // Create a set of family groups that have completed their turn
-      const completedSet = new Set(
-        (timePeriodUsage || []).map(usage => usage.family_group)
+      const completedSet = new Set<string>(
+        (timePeriodUsage || []).filter((usage: any) => isRoundCompleted(usage, rotationYear, 'primary')).map((usage: any) => usage.family_group)
       );
       setCompletedFamilies(completedSet);
       
       // Fetch active secondary selection status
-      const { data: secondaryStatus } = await supabase
-        .from('secondary_selection_status')
+      const { data: secondaryStatus, error: statusError } = await secureSelect('secondary_selection_status', createOrganizationContext(organization.id))
         .select('*')
-        .eq('organization_id', organization.id)
         .eq('rotation_year', rotationYear)
-        .eq('turn_completed', false)
         .maybeSingle();
+      if (templatesError || usageError || statusError) throw templatesError || usageError || statusError;
       
       // Use default selection days of 14 (can be made configurable later)
       const days = 14;
@@ -140,7 +134,8 @@ export const UpcomingRemindersPreview = ({ automatedSettings }: Props) => {
       
       // Ignore results from an older request that finished after a newer one
       if (requestId !== requestIdRef.current) return;
-      generateReminderPreviews(templates || [], filteredPeriods, days, completedSet, secondaryStatus);
+      const secondaryDone = isRoundCompleted(timePeriodUsage?.find((row: any) => row.family_group === secondaryStatus?.current_family_group), rotationYear, 'secondary');
+      generateReminderPreviews(templates || [], secondaryStatus?.started_at ? [] : filteredPeriods, days, completedSet, secondaryDone ? null : secondaryStatus);
     } catch (error) {
       console.error('Error fetching reminder data:', error);
     } finally {

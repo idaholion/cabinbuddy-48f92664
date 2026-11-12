@@ -24,6 +24,9 @@ interface TimePeriodWindow {
 
 interface TimePeriodUsageData {
   family_group: string;
+  rotation_year: number;
+  primary_turn_completed?: boolean | null;
+  secondary_turn_completed?: boolean | null;
   time_periods_used: number;
   time_periods_allowed: number;
   secondary_periods_used?: number;
@@ -377,6 +380,9 @@ export const useTimePeriods = (rotationYear?: number) => {
 
       const processedData = (data || []).map(item => ({
         family_group: item.family_group,
+        rotation_year: item.rotation_year,
+        primary_turn_completed: item.primary_turn_completed,
+        secondary_turn_completed: item.secondary_turn_completed,
         time_periods_used: item.time_periods_used,
         time_periods_allowed: item.time_periods_allowed,
         secondary_periods_used: item.secondary_periods_used || 0,

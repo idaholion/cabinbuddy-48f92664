@@ -7,6 +7,9 @@ import { selectionDisplayCounts } from '@/lib/selection-display-counts';
 
 interface Usage {
   family_group: string;
+  rotation_year: number;
+  primary_turn_completed: boolean | null;
+  secondary_turn_completed: boolean | null;
   time_periods_used: number;
   secondary_periods_used: number | null;
   turn_completed: boolean | null;
@@ -43,7 +46,8 @@ export function useSelectionUsageDisplay(year: number) {
       }));
       for (const [family, count] of counts) {
         if (!rows.some(row => row.family_group === family)) rows.push({ family_group: family, time_periods_used: count.primary,
-          secondary_periods_used: count.secondary, turn_completed: false, selection_round: 'primary' } as typeof rows[number]);
+          secondary_periods_used: count.secondary, rotation_year: year, primary_turn_completed: false,
+          secondary_turn_completed: false, turn_completed: false, selection_round: 'primary' } as typeof rows[number]);
       }
       setSnapshot({ key, rows });
     } catch (error) {
