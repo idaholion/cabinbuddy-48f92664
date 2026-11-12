@@ -43,7 +43,9 @@
 - [x] Phase 2 saved-limit cleanup applied by Richard Nov 12; read-only verification confirms 2026/2027 primary limit 2, secondary limit 1, no active turn, and unlimited post-rotation weeks.
 - [x] Separate round completion plan approved; reader/writer and database-trigger inventory recorded in docs/SELECTION_ROUND_COMPLETION_TRANSITION.md.
 - [x] Additive separate-completion SQL prepared with finished-season guards and legacy-field preservation; shared completion reader covered by focused tests, not yet enabled in calendar consumers.
-- [ ] Richard to run supabase/sql/2026-11-12_separate_round_completion.sql; then update completion readers/writers and atomic handoffs. Blocked on manual SQL confirmation.
+- [x] Separate completion fields applied by Richard and independently verified: all twelve reviewed family/year rows have both flags true; original varied usage counts preserved, including Debbie's zero second-round bookings.
+- [x] Usage reconciliation now uses protected organization queries, never infers Done from bookings, and skips active or finished seasons.
+- [ ] Richard to run supabase/sql/2026-11-12_atomic_round_completion.sql; then switch completion readers and handoff progression together. Blocked on atomic trigger installation.
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
@@ -57,7 +59,7 @@
 5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
 6. [ ] Yearly reminders for Admin and calendar keeper: setup reminder ~60 days before selection opens, pre-flight check ~14 days before, "ready" confirmation ~3 days before, plus an end-of-season wrap-up check. Uses the existing daily automated-notification job, not a new frequent one.
 
-**Current blockers:** Separate-round consumers wait for Richard to run the additive SQL. Signed-in checks are unavailable through external Supabase. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
+**Current blockers:** Separate-round consumers wait for Richard to install atomic completion triggers. Signed-in checks are unavailable through external Supabase. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
 
 ## Done
 - [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { secureSelect, secureInsert, secureUpdate, createOrganizationContext } from '@/lib/secure-queries';
+import { canReconcileSelectionUsage, selectionUsageCountUpdate } from '@/lib/selection-usage-reconciliation';
 
 interface TimePeriodWindow {
   startDate: Date;
@@ -502,11 +503,17 @@ export const useTimePeriods = (rotationYear?: number) => {
     console.log(`[Reconciliation] Starting reconciliation for year ${year}`);
 
     try {
+      const orgContext = createOrganizationContext(organization.id);
+      const [settingsRead, secondaryRead] = await Promise.all([
+        secureSelect('rotation_orders', orgContext).eq('rotation_year', year).maybeSingle(),
+        secureSelect('secondary_selection_status', orgContext).eq('rotation_year', year).maybeSingle(),
+      ]);
+      if (settingsRead.error || secondaryRead.error) throw settingsRead.error || secondaryRead.error;
+      if (!canReconcileSelectionUsage(settingsRead.data, secondaryRead.data)) return;
+
       // Fetch all reservations for this year (need created_at to determine secondary selections)
-      const { data: reservations, error: resError } = await supabase
-        .from('reservations')
+      const { data: reservations, error: resError } = await secureSelect('reservations', orgContext)
         .select('id, family_group, start_date, end_date, time_period_number, created_at')
-        .eq('organization_id', organization.id)
         .gte('start_date', `${year}-01-01`)
         .lt('start_date', `${year + 1}-01-01`);
 
@@ -516,12 +523,7 @@ export const useTimePeriods = (rotationYear?: number) => {
       }
 
       // Fetch when secondary selection started (if at all)
-      const { data: secondaryStatus } = await supabase
-        .from('secondary_selection_status')
-        .select('started_at')
-        .eq('organization_id', organization.id)
-        .eq('rotation_year', year)
-        .maybeSingle();
+      const secondaryStatus = secondaryRead.data;
 
       const secondaryStartDate = secondaryStatus?.started_at ? new Date(secondaryStatus.started_at) : null;
 
@@ -570,10 +572,7 @@ export const useTimePeriods = (rotationYear?: number) => {
       for (const familyGroup of allFamilyGroups) {
         const primaryCount = primaryCounts[familyGroup] || 0;
         const secondaryCount = secondaryCounts[familyGroup] || 0;
-        const { data: existing, error: fetchError } = await supabase
-          .from('time_period_usage')
-          .select('*')
-          .eq('organization_id', organization.id)
+        const { data: existing, error: fetchError } = await secureSelect('time_period_usage', orgContext)
           .eq('family_group', familyGroup)
           .eq('rotation_year', year)
           .maybeSingle();
@@ -584,13 +583,8 @@ export const useTimePeriods = (rotationYear?: number) => {
         }
 
         if (!existing) {
-          // Create new record - preserve turn_completed if we can infer it
-          // If they have secondary usage, they must have completed their turns
-          const inferredTurnCompleted = secondaryCount > 0;
-          const { error: insertError } = await supabase
-            .from('time_period_usage')
-            .insert({
-              organization_id: organization.id,
+          // Booking counts never imply that the family pressed Done.
+          const { error: insertError } = await secureInsert('time_period_usage', {
               family_group: familyGroup,
               rotation_year: year,
               time_periods_used: primaryCount,
@@ -598,8 +592,8 @@ export const useTimePeriods = (rotationYear?: number) => {
               time_periods_allowed: rotationData.max_time_slots || 2,
               secondary_periods_allowed: rotationData.secondary_max_periods || 1,
               last_selection_date: new Date().toISOString(),
-              turn_completed: inferredTurnCompleted
-            });
+              turn_completed: false
+            }, orgContext);
 
           if (insertError) {
             console.error('Error creating usage record for', familyGroup, insertError);
@@ -607,17 +601,9 @@ export const useTimePeriods = (rotationYear?: number) => {
             console.log(`[Reconciliation] Created usage record for ${familyGroup}: ${primaryCount} primary, ${secondaryCount} secondary periods`);
           }
         } else if (existing.time_periods_used !== primaryCount || (existing.secondary_periods_used || 0) !== secondaryCount) {
-          // Update existing record - NEVER reset turn_completed
-          // If it was already true, keep it. If secondary usage increased, infer completion.
-          const preservedTurnCompleted = existing.turn_completed || secondaryCount > 0;
-          const { error: updateError } = await supabase
-            .from('time_period_usage')
-            .update({
-              time_periods_used: primaryCount,
-              secondary_periods_used: secondaryCount,
-              last_selection_date: new Date().toISOString(),
-              turn_completed: preservedTurnCompleted
-            })
+          // Update counts only; preserve every saved completion field.
+          const { error: updateError } = await secureUpdate('time_period_usage',
+            selectionUsageCountUpdate(primaryCount, secondaryCount, new Date().toISOString()), orgContext)
             .eq('id', existing.id);
 
           if (updateError) {
