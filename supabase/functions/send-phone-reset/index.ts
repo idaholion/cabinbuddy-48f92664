@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { withAppLabel } from "../_shared/sms-label.ts";
 
 // Twilio configuration  
 const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -35,7 +36,7 @@ async function sendSMS(to: string, message: string) {
   const body = new URLSearchParams({
     From: twilioPhoneNumber,
     To: to,
-    Body: message
+    Body: withAppLabel(message)
   });
 
   const response = await fetch(twilioUrl, {

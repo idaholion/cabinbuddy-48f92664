@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { withAppLabel } from "../_shared/sms-label.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -134,7 +135,7 @@ async function sendSMS(to: string, message: string) {
     const requestBody = new URLSearchParams({
       From: twilioPhoneNumber,
       To: to,
-      Body: message,
+      Body: withAppLabel(message),
     });
     
     console.log("  - Request body prepared");
