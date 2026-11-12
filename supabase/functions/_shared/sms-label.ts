@@ -1,6 +1,6 @@
 // Every automated text message starts with this line so recipients can tell
 // right away that it came from Cabin Buddy instead of a marketing blast.
-export const SMS_APP_LABEL = "Message from Cabin Buddy";
+export const SMS_APP_LABEL = "Cabin Buddy!";
 
 /**
  * Prefix a text message with the app label, unless it already carries one

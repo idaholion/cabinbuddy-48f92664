@@ -4,7 +4,7 @@ import { SMS_APP_LABEL, withAppLabel } from '../../supabase/functions/_shared/sm
 describe('text message label', () => {
   test('puts the app label on the first line', () => {
     const text = withAppLabel('2027 free selection opens Friday, Nov 20 at 7:00 PM');
-    expect(text.split('\n')[0]).toBe('Message from Cabin Buddy');
+    expect(text.split('\n')[0]).toBe('Cabin Buddy!');
     expect(text.split('\n')[1]).toBe('2027 free selection opens Friday, Nov 20 at 7:00 PM');
   });
 
@@ -18,6 +18,6 @@ describe('text message label', () => {
 
   test('leaves the rest of the message untouched', () => {
     const body = 'Hi Dana!\n\nCheck-in: 10/24/2026.\n- Woolf Family';
-    expect(withAppLabel(body)).toBe('Message from Cabin Buddy\n' + body);
+    expect(withAppLabel(body)).toBe('Cabin Buddy!\n' + body);
   });
 });
