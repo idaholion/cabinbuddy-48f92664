@@ -21,3 +21,4 @@
 - Secondary handoffs re-read scoped completion and guard the saved outgoing family/start timestamp; its database trigger records Done atomically, preventing stale/repeated handoffs and allocation-based skips.
 - The turn-notification sender owns primary and secondary successful-delivery tracking; both immediate and scheduled paths use it to avoid duplicate history and retries after delivery.
 - Usage reconciliation uses `selection-usage-reconciliation` to skip active/finished seasons and write counts only; handoff compatibility triggers must be installed before switching separate-round consumers so outgoing completion and pointer changes share one transaction.
+- Season readiness uses `selection-preflight` as a pure projection over already-loaded, organization-scoped rows; the readiness card and `useSelectionPreflight` only read, so a failing check is reported for a human to fix and never repairs selection state on its own.
