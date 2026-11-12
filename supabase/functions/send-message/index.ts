@@ -140,18 +140,6 @@ const handler = async (req: Request): Promise<Response> => {
         break;
 
       case 'all_users':
-        // Get all users in the organization
-        const { data: userOrgs, error: userError } = await supabase
-          .from('user_organizations')
-          .select(`
-            profiles!inner(*)
-          `)
-          .eq('organization_id', organizationId);
-
-        if (userError) {
-          throw new Error('Failed to fetch organization users');
-        }
-
         // Also include family group leads and organization contacts
         const { data: familyGroupsAll, error: familyErrorAll } = await supabase
           .from('family_groups')
