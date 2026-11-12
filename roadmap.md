@@ -49,7 +49,8 @@
 - [x] Switched separate-round calendar/reminder readers and guarded handoff progression; 90 policy tests and 11 notification tests pass, preview compiles, both functions deployed. Live completed-family notification skipped; all 178 reservations retained identical fingerprint.
 - [x] Richard approved calendar and reminder checks together, including protected reminder queries.
 - [x] Prepared read-only preview checks in docs/SELECTION_PREVIEW_CHECKLIST.md; future Done handoffs need a test season, never reset the finished live season.
-- [ ] Richard to confirm preview checklist before publishing; authenticated UI cannot be exercised through this external Supabase connection.
+- [x] Richard confirmed the preview checklist Nov 12 (hold displays, year switching, View As stays, Notification Management, Reservation Setup values); separate-round readers approved for publishing.
+- [ ] Convert the direct `allocation_model_audit` insert in Reservation Setup to the secure wrapper pattern, or record the exception; the project rule requires secureInsert().
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
