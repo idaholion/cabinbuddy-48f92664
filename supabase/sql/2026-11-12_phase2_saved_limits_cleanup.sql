@@ -14,13 +14,12 @@ SET secondary_max_periods = 1
 WHERE organization_id = 'f8882cbd-fc37-4521-bfd2-992dc8eb9a9f'
   AND rotation_year IN (2026, 2027) AND COALESCE(secondary_max_periods, 0) = 0;
 
--- Round 1 windows that are long over but still flagged "not completed"
+-- Round 1 windows: both rounds are finished, so none should read "not completed"
 UPDATE public.reservation_periods
 SET reservations_completed = true, updated_at = now()
 WHERE organization_id = 'f8882cbd-fc37-4521-bfd2-992dc8eb9a9f'
   AND rotation_year IN (2026, 2027)
-  AND COALESCE(reservations_completed, false) = false
-  AND selection_end_date < CURRENT_DATE;
+  AND COALESCE(reservations_completed, false) = false;
 
 -- Expect: 2 rows each with 2 / 1, and every period row = true
 SELECT rotation_year, max_time_slots, secondary_max_periods
