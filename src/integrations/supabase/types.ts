@@ -2609,9 +2609,14 @@ export type Database = {
           max_time_slots: number | null
           min_nights_per_booking: number | null
           organization_id: string
+          post_rotation_announced_at: string | null
+          post_rotation_hold_days: number | null
           post_rotation_max_consecutive_nights: number | null
           post_rotation_max_weeks: number | null
           post_rotation_min_nights: number | null
+          post_rotation_open_time: string | null
+          post_rotation_opens_at: string | null
+          post_rotation_reminder_sent_at: string | null
           rotation_order: Json
           rotation_year: number
           secondary_max_periods: number | null
@@ -2639,9 +2644,14 @@ export type Database = {
           max_time_slots?: number | null
           min_nights_per_booking?: number | null
           organization_id: string
+          post_rotation_announced_at?: string | null
+          post_rotation_hold_days?: number | null
           post_rotation_max_consecutive_nights?: number | null
           post_rotation_max_weeks?: number | null
           post_rotation_min_nights?: number | null
+          post_rotation_open_time?: string | null
+          post_rotation_opens_at?: string | null
+          post_rotation_reminder_sent_at?: string | null
           rotation_order?: Json
           rotation_year: number
           secondary_max_periods?: number | null
@@ -2669,9 +2679,14 @@ export type Database = {
           max_time_slots?: number | null
           min_nights_per_booking?: number | null
           organization_id?: string
+          post_rotation_announced_at?: string | null
+          post_rotation_hold_days?: number | null
           post_rotation_max_consecutive_nights?: number | null
           post_rotation_max_weeks?: number | null
           post_rotation_min_nights?: number | null
+          post_rotation_open_time?: string | null
+          post_rotation_opens_at?: string | null
+          post_rotation_reminder_sent_at?: string | null
           rotation_order?: Json
           rotation_year?: number
           secondary_max_periods?: number | null
