@@ -41,7 +41,9 @@
 ## Selection hardening — agreed sequence
 
 - [x] Phase 2 saved-limit cleanup applied by Richard Nov 12; read-only verification confirms 2026/2027 primary limit 2, secondary limit 1, no active turn, and unlimited post-rotation weeks.
-- [ ] Separate round completion records: review the preservation/backfill plan before supplying manual SQL and updating the completion readers/writers.
+- [x] Separate round completion plan approved; reader/writer and database-trigger inventory recorded in docs/SELECTION_ROUND_COMPLETION_TRANSITION.md.
+- [x] Additive separate-completion SQL prepared with finished-season guards and legacy-field preservation; shared completion reader covered by focused tests, not yet enabled in calendar consumers.
+- [ ] Richard to run supabase/sql/2026-11-12_separate_round_completion.sql; then update completion readers/writers and atomic handoffs. Blocked on manual SQL confirmation.
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.
 
@@ -51,11 +53,11 @@
    - [x] Preview implementation: compact schedule for both rounds, loading barrier, refresh on accepted bookings/person changes/Done, read-only reservation tally when saved usage lags; no saved records changed. Focused schedule/count and booking regression tests pass.
    - [ ] Richard to verify Andrew's banner and booking count in signed-in preview, then approve publishing; external Supabase does not provide an authenticated test session.
 3. [ ] Confirm Andrew's secondary turn displays correctly and existing reservations and completed turns remain unchanged before Richard resumes selecting.
-4. [ ] Wait until the entire 2027 secondary round finishes before correcting saved zero limits, introducing separate round status records, or re-saving season setup. Review proposed changes with Richard first; any external Supabase SQL is supplied for manual execution.
+4. [x] Entire 2027 secondary round finished; Richard applied saved-limit corrections and approved the separate-round completion plan. External Supabase SQL remains manual.
 5. [ ] After the round ends, design the annual rollover/pre-flight workflow: validate target-year settings, rotation, round status, and booking/usage consistency before future seasons begin. Initialization must preserve existing seasons and never reset an active or completed round.
 6. [ ] Yearly reminders for Admin and calendar keeper: setup reminder ~60 days before selection opens, pre-flight check ~14 days before, "ready" confirmation ~3 days before, plus an end-of-season wrap-up check. Uses the existing daily automated-notification job, not a new frequent one.
 
-**Current blockers:** Signed-in verification needs Richard's preview session; publishing requires Richard's approval. Saved-data changes and rollover implementation wait for the secondary round to finish. No authorization to rewrite live selection state.
+**Current blockers:** Separate-round consumers wait for Richard to run the additive SQL. Signed-in checks are unavailable through external Supabase. Annual pre-flight/reminders follow completion of this checkpoint. Existing reservations and completed turn state must remain unchanged.
 
 ## Done
 - [x] Exclude actual split-connected payments from orphaned-payment warnings without modifying financial records; covered by five focused tests.
