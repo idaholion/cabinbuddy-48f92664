@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { secureSelect, secureUpdate, createOrganizationContext } from "@/lib/secure-queries";
 import { useRotationOrder } from "@/hooks/useRotationOrder";
-import { addDays, DEFAULT_OPEN_TIME, formatOpening, mountainDate, mountainToInstant } from "@/lib/post-rotation-hold";
+import { DEFAULT_OPEN_TIME, formatOpening, mountainDate, mountainToInstant } from "@/lib/post-rotation-hold";
 
 const TIMES = [
   { value: "12:00", label: "12:00 PM (noon)" },
@@ -38,6 +38,7 @@ export function PostRotationHoldSettings({ organizationId }: { organizationId: s
   const [announcedAt, setAnnouncedAt] = useState<string | null>(null);
   const [notifyNow, setNotifyNow] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showOverride, setShowOverride] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -128,18 +129,24 @@ export function PostRotationHoldSettings({ organizationId }: { organizationId: s
         </Select>
         <span>Mountain Time</span>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-base">
-        <Label htmlFor="freeSelectionOpenDate">Opening date:</Label>
-        <Input id="freeSelectionOpenDate" type="date" value={openDate} onChange={(e) => setOpenDate(e.target.value)} className="w-44" />
-        <Button type="button" variant="outline" size="sm" onClick={() => setOpenDate(addDays(mountainDate(new Date()), Math.max(0, parseInt(holdDays) || 0)))}>
-          {holdDays || 0} days from today
-        </Button>
-        {openDate && <Button type="button" variant="ghost" size="sm" onClick={() => setOpenDate("")}>Clear</Button>}
-      </div>
       <p className="text-sm text-muted-foreground">
-        {opensAt ? `Free selection opens ${formatOpening(opensAt)}.` : "Leave the date blank to set it automatically when the last family finishes."}
-        {announcedAt && !dateChanged ? " Announcement already sent." : ""}
+        {opensAt
+          ? `${opensAt > new Date() ? "🔒 Currently on hold. " : ""}Free selection opens ${formatOpening(opensAt)}.`
+          : `Will lock automatically for ${holdDays || 0} days after the final Round 2 selection finishes.`}
+        {announcedAt && !dateChanged ? " Announcement sent." : ""}
       </p>
+      {!showOverride ? (
+        <button type="button" onClick={() => setShowOverride(true)} className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+          Adjust opening date…
+        </button>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted/50 p-2 text-sm">
+          <Label htmlFor="freeSelectionOpenDate">Opening date override:</Label>
+          <Input id="freeSelectionOpenDate" type="date" value={openDate} onChange={(e) => setOpenDate(e.target.value)} className="w-44" />
+          {openDate && <Button type="button" variant="ghost" size="sm" onClick={() => setOpenDate("")}>Clear</Button>}
+          <Button type="button" variant="ghost" size="sm" onClick={() => setShowOverride(false)}>Hide</Button>
+        </div>
+      )}
       {canNotify && (
         <div className="flex items-center space-x-2">
           <Checkbox id="notifyFreeSelection" checked={notifyNow} onCheckedChange={(c) => setNotifyNow(c === true)} />
