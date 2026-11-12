@@ -7,6 +7,7 @@ import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 export function useFreeSelectionState(organizationId: string | undefined, year: number, enabled: boolean) {
   const [state, setState] = useState<FreeSelectionState | null>(null);
   const [rules, setRules] = useState<{ min?: number | null; max?: number | null; weeks?: number | null }>({});
+  const [opensAt, setOpensAt] = useState<Date | null>(null);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -28,10 +29,11 @@ export function useFreeSelectionState(organizationId: string | undefined, year: 
       if (!live || settings.error || !settings.data) return;
       const s = settings.data as any;
       setState(freeSelectionState(s, secondary.data as any));
+      setOpensAt(s.post_rotation_opens_at ? new Date(s.post_rotation_opens_at) : null);
       setRules({ min: s.post_rotation_min_nights, max: s.post_rotation_max_consecutive_nights, weeks: s.post_rotation_max_weeks });
     })();
     return () => { live = false; };
   }, [organizationId, year, enabled, tick]);
 
-  return { state, rules };
+  return { state, rules, opensAt };
 }

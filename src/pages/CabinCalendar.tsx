@@ -425,6 +425,24 @@ const CabinCalendar = () => {
               </div>
             )}
             
+            {/* Free selection banner: shown during the hold, and for 3 days after opening */}
+            {currentPhase === 'post_rotation' && (() => {
+              const st = freeSelection.state;
+              if (st?.state === 'locked') return (
+                <div className="mb-4 p-4 rounded-lg border border-primary/40 bg-primary/10 text-foreground">
+                  <p className="text-base font-semibold">🔒 Free selection opens {formatOpening(st.opensAt)}.</p>
+                  <p className="text-sm text-muted-foreground">The calendar is on hold until then so every family has an equal chance. First come, first served.</p>
+                </div>
+              );
+              const opened = freeSelection.opensAt;
+              if (st?.state === 'open' && opened && Date.now() - opened.getTime() < 3 * 86400000) return (
+                <div className="mb-4 p-4 rounded-lg border border-primary/40 bg-primary/10 text-foreground">
+                  <p className="text-base font-semibold">✅ Free selection is open. First come, first served.</p>
+                </div>
+              );
+              return null;
+            })()}
+
             {/* Secondary Selection Manager - active states */}
             {!displayLoading && currentPhase === 'secondary' && (
               <SecondarySelectionManager 
