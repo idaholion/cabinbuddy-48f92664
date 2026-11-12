@@ -1048,56 +1048,7 @@ export default function ReservationSetup() {
                     </div>
                     
                     {organization?.id && (
-                      <PostRotationHoldSettings
-                        organizationId={organization.id}
-                        rotationYear={parseInt(rotationYear)}
-                        limits={{ minNights: postRotationMinNights, maxConsecutiveNights: postRotationMaxConsecutiveNights, maxWeeks: postRotationMaxWeeks }}
-                      >
-                    <div className="space-y-4 border-t pt-4">
-                      <h4 className="text-base font-medium">Post-Rotation Booking Limits:</h4>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-base">
-                        <span>Minimum nights per booking:</span>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="14"
-                          value={postRotationMinNights}
-                          onChange={(e) => setPostRotationMinNights(e.target.value)}
-                          className="w-20"
-                        />
-                        <span>nights</span>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-base">
-                        <span>Maximum consecutive nights per booking:</span>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={postRotationMaxConsecutiveNights}
-                          onChange={(e) => setPostRotationMaxConsecutiveNights(e.target.value)}
-                          placeholder="Unlimited"
-                          className="w-24"
-                        />
-                        <span className="text-muted-foreground text-sm">(leave blank for unlimited)</span>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-2 text-base">
-                        <span>Maximum virtual weeks per family:</span>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={postRotationMaxWeeks}
-                          onChange={(e) => setPostRotationMaxWeeks(e.target.value)}
-                          placeholder="Unlimited"
-                          className="w-24"
-                        />
-                        <span className="text-muted-foreground text-sm">(leave blank for unlimited)</span>
-                      </div>
-                    </div>
-                      </PostRotationHoldSettings>
+                      <PostRotationHoldSettings organizationId={organization.id} />
                     )}
                   </div>
                 )}

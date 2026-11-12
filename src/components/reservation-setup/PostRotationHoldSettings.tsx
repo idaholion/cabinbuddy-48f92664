@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { secureSelect, secureUpdate, createOrganizationContext } from "@/lib/secure-queries";
+import { useRotationOrder } from "@/hooks/useRotationOrder";
 import { addDays, DEFAULT_OPEN_TIME, formatOpening, mountainDate, mountainToInstant } from "@/lib/post-rotation-hold";
 
 const TIMES = [
@@ -22,8 +22,12 @@ const TIMES = [
 export interface PostRotationLimits { minNights: string; maxConsecutiveNights: string; maxWeeks: string }
 
 /** One save for the whole post-rotation section: hold, opening, and free-selection booking limits. */
-export function PostRotationHoldSettings({ organizationId, rotationYear, limits, children }: { organizationId: string; rotationYear: number; limits: PostRotationLimits; children?: React.ReactNode }) {
+/** Always edits the active selection season (same year as Selection Season Setup), never the rotation anchor year. */
+export function PostRotationHoldSettings({ organizationId }: { organizationId: string }) {
   const { toast } = useToast();
+  const { rotationData, getSelectionRotationYear } = useRotationOrder();
+  const rotationYear = rotationData ? getSelectionRotationYear() : 0;
+  const [limits, setLimits] = useState<PostRotationLimits>({ minNights: "2", maxConsecutiveNights: "", maxWeeks: "" });
   const ctx = createOrganizationContext(organizationId);
   const [rowId, setRowId] = useState<string | null>(null);
   const [installed, setInstalled] = useState(true);
@@ -37,9 +41,10 @@ export function PostRotationHoldSettings({ organizationId, rotationYear, limits,
 
   useEffect(() => {
     let live = true;
+    if (!rotationYear) return;
     (async () => {
       const { data, error } = await secureSelect("rotation_orders", ctx)
-        .select("id, post_rotation_hold_days, post_rotation_open_time, post_rotation_opens_at, post_rotation_announced_at")
+        .select("id, post_rotation_hold_days, post_rotation_open_time, post_rotation_opens_at, post_rotation_announced_at, post_rotation_min_nights, post_rotation_max_consecutive_nights, post_rotation_max_weeks")
         .eq("rotation_year", rotationYear).maybeSingle();
       if (!live) return;
       if (error) { setInstalled(false); return; }
@@ -51,10 +56,16 @@ export function PostRotationHoldSettings({ organizationId, rotationYear, limits,
       setSavedOpensAt(row?.post_rotation_opens_at ?? null);
       setOpenDate(row?.post_rotation_opens_at ? mountainDate(new Date(row.post_rotation_opens_at)) : "");
       setAnnouncedAt(row?.post_rotation_announced_at ?? null);
+      setLimits({
+        minNights: row?.post_rotation_min_nights != null ? String(row.post_rotation_min_nights) : "2",
+        maxConsecutiveNights: row?.post_rotation_max_consecutive_nights != null ? String(row.post_rotation_max_consecutive_nights) : "",
+        maxWeeks: row?.post_rotation_max_weeks != null ? String(row.post_rotation_max_weeks) : "",
+      });
     })();
     return () => { live = false; };
   }, [organizationId, rotationYear]);
 
+  if (!rotationYear) return null;
   if (!installed) {
     return <p className="text-sm text-muted-foreground">The hold period needs a one-time database update before it can be used.</p>;
   }
@@ -105,7 +116,7 @@ export function PostRotationHoldSettings({ organizationId, rotationYear, limits,
 
   return (
     <div className="space-y-3 rounded-lg border p-4">
-      <h4 className="text-base font-medium">Hold period before free selection</h4>
+      <h4 className="text-base font-medium">{rotationYear} season: hold period before free selection</h4>
       <p className="text-sm text-muted-foreground">Time period to lock reservations so everyone has an equal opportunity to make post rotation selections. Everyone is emailed and texted the opening time, with a reminder the day before.</p>
       <div className="flex flex-wrap items-center gap-2 text-base">
         <span>Lock the calendar for</span>
@@ -135,7 +146,24 @@ export function PostRotationHoldSettings({ organizationId, rotationYear, limits,
           <Label htmlFor="notifyFreeSelection">Email and text everyone the opening time when I save</Label>
         </div>
       )}
-      {children}
+      <div className="space-y-4 border-t pt-4">
+        <h4 className="text-base font-medium">Post-Rotation Booking Limits:</h4>
+        <div className="flex flex-wrap items-center gap-2 text-base">
+          <span>Minimum nights per booking:</span>
+          <Input type="number" min="1" max="14" value={limits.minNights} onChange={(e) => setLimits(l => ({ ...l, minNights: e.target.value }))} className="w-20" />
+          <span>nights</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-base">
+          <span>Maximum consecutive nights per booking:</span>
+          <Input type="number" min="1" max="30" value={limits.maxConsecutiveNights} onChange={(e) => setLimits(l => ({ ...l, maxConsecutiveNights: e.target.value }))} placeholder="Unlimited" className="w-24" />
+          <span className="text-muted-foreground text-sm">(leave blank for unlimited)</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-base">
+          <span>Maximum total weeks per family:</span>
+          <Input type="number" min="1" max="10" value={limits.maxWeeks} onChange={(e) => setLimits(l => ({ ...l, maxWeeks: e.target.value }))} placeholder="Unlimited" className="w-24" />
+          <span className="text-muted-foreground text-sm">(leave blank for unlimited)</span>
+        </div>
+      </div>
       <Button type="button" onClick={save} disabled={saving} className="w-full">{saving ? "Saving…" : "Update Post Rotation Selection"}</Button>
     </div>
   );

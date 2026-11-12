@@ -4,6 +4,7 @@ import { useOrganization } from '@/hooks/useOrganization';
 import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useSelectionUsageDisplay } from '@/hooks/useSelectionUsageDisplay';
 import { SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
+import { scheduleFreeSelectionOpening } from '@/lib/schedule-free-selection';
 import { planSecondaryTransition } from '@/lib/secondary-selection-transition';
 import { secureSelect, secureInsert, secureUpdate, assertOrganizationOwnership, createOrganizationContext } from '@/lib/secure-queries';
 
@@ -246,6 +247,7 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
         }
         
         setIsSecondaryRoundActive(false);
+        await scheduleFreeSelectionOpening(organization.id, rotationYear);
         fetchSecondarySelectionStatus();
         return;
       }
@@ -310,6 +312,7 @@ export const useSecondarySelection = (rotationYear: number, displayOnly = false)
     }
 
     setIsSecondaryRoundActive(false);
+    await scheduleFreeSelectionOpening(organization.id, rotationYear);
     fetchSecondarySelectionStatus();
   };
 
