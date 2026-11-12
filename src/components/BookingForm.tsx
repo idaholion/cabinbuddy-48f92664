@@ -18,6 +18,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useEffectiveRole } from '@/hooks/useEffectiveRole';
 import { useBookingSelection } from '@/hooks/useBookingSelection';
 import { resolveBookingTurn, validateReservationCreation } from '@/lib/reservation-create-limits';
+import { announceBookingCreated } from '@/lib/selection-display-events';
 import { useOrganizationContext } from '@/hooks/useOrganizationContext';
 import { cn } from '@/lib/utils';
 import { HostAssignmentForm, type HostAssignment } from '@/components/HostAssignmentForm';
@@ -517,6 +518,7 @@ export function BookingForm({ open, onOpenChange, currentMonth, onBookingComplet
           form.reset();
           onOpenChange(false);
           onBookingComplete?.();
+          announceBookingCreated(data.familyGroup);
         }
       }
     } catch (error) {

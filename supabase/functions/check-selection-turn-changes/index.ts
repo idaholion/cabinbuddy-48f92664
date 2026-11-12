@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { freeSelectionState, holdOpening, formatOpening } from "../_shared/post-rotation-hold.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -9,6 +10,48 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Free-selection hold: schedule the opening, announce it, and remind ~a day before.
+// Timestamps are recorded only after a send succeeds.
+async function processFreeSelectionHold(supabase: any, orgId: string, year: number, now: Date): Promise<number> {
+  const { data: settings, error } = await supabase.from('rotation_orders')
+    .select('id, current_primary_turn_family, enable_post_rotation_selection, post_rotation_hold_days, post_rotation_open_time, post_rotation_opens_at, post_rotation_announced_at, post_rotation_reminder_sent_at')
+    .eq('organization_id', orgId).eq('rotation_year', year).maybeSingle();
+  if (error || !settings) return 0; // hold columns not installed yet, or no season
+  const { data: secondary } = await supabase.from('secondary_selection_status').select('*')
+    .eq('organization_id', orgId).eq('rotation_year', year).maybeSingle();
+  let state = freeSelectionState(settings, secondary, now);
+  if (state.state === 'awaiting_date') {
+    const ended = new Date(secondary?.updated_at || now);
+    const opensAt = holdOpening(ended, settings.post_rotation_hold_days, settings.post_rotation_open_time || '19:00');
+    const { error: upErr } = await supabase.from('rotation_orders').update({ post_rotation_opens_at: opensAt.toISOString() }).eq('id', settings.id);
+    if (upErr) { console.error('Could not schedule free selection opening', upErr); return 0; }
+    settings.post_rotation_opens_at = opensAt.toISOString();
+    state = freeSelectionState(settings, secondary, now);
+  }
+  if (state.state !== 'locked') return 0;
+  const when = formatOpening(state.opensAt);
+  const send = async (subject: string, message: string) => {
+    const { error: sendErr } = await supabase.functions.invoke('send-message', {
+      body: { organizationId: orgId, subject, message, recipientGroup: 'all_users', messageType: 'both', urgent: false },
+    });
+    if (sendErr) console.error('Free selection message failed', sendErr);
+    return !sendErr;
+  };
+  let sent = 0;
+  if (!settings.post_rotation_announced_at) {
+    if (await send(`${year} free selection opens ${when}`, `The ${year} selection rounds are complete. The calendar is on hold so every family has an equal chance, and free selection opens ${when}, first come, first served.`)) {
+      await supabase.from('rotation_orders').update({ post_rotation_announced_at: now.toISOString() }).eq('id', settings.id);
+      sent++;
+    }
+  } else if (!settings.post_rotation_reminder_sent_at && state.opensAt.getTime() - now.getTime() <= 36 * 3600 * 1000) {
+    if (await send(`Reminder: ${year} free selection opens ${when}`, `Reminder: the cabin calendar opens for ${year} free selection ${when}, first come, first served.`)) {
+      await supabase.from('rotation_orders').update({ post_rotation_reminder_sent_at: now.toISOString() }).eq('id', settings.id);
+      sent++;
+    }
+  }
+  return sent;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -461,6 +504,13 @@ const handler = async (req: Request): Promise<Response> => {
             }
           }
         }
+      }
+    }
+
+    for (const org of (turnOrgs || [])) {
+      for (const year of [currentYear, currentYear + 1]) {
+        try { totalNotifications += await processFreeSelectionHold(supabase, org.id, year, now); }
+        catch (e) { console.error('Free selection hold check failed', org.id, year, e); }
       }
     }
 

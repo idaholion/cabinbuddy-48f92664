@@ -11,6 +11,7 @@ import { useRotationOrder } from '@/hooks/useRotationOrder';
 import { useFamilyGroups } from '@/hooks/useFamilyGroups';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { DoneSelectingReminder, DONE_BUTTON_ID } from '@/components/DoneSelectingReminder';
 
 interface SecondarySelectionManagerProps {
   rotationYear: number;
@@ -299,11 +300,12 @@ export function SecondarySelectionManager({
                 }
               }}
             >
-              <Button size="lg" variant="outline" className="shadow-lg whitespace-nowrap">
+              <Button id={DONE_BUTTON_ID} size="lg" variant="outline" className="shadow-lg whitespace-nowrap">
                 <CheckCircle className="h-5 w-5 mr-2" />
                 I'm Done Selecting
               </Button>
             </ConfirmationDialog>
+            <DoneSelectingReminder familyGroup={userFamilyGroup} remaining={remaining} />
           </div>
         </div>
       </div>

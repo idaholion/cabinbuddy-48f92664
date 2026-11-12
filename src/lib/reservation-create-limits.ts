@@ -1,17 +1,21 @@
+import { freeSelectionState, formatOpening, type HoldSettings } from './post-rotation-hold';
 import { stayNights, type EditableStay, type EditRoundSettings } from './reservation-edit-limits';
 
-export interface BookingSettings extends EditRoundSettings {
+export interface BookingSettings extends EditRoundSettings, HoldSettings {
   rotation_year: number;
   max_time_slots?: number;
   secondary_max_periods?: number;
 }
 
-export function resolveBookingTurn(settings: BookingSettings, secondary?: { started_at?: string | null; current_family_group?: string | null } | null) {
+export function resolveBookingTurn(settings: BookingSettings, secondary?: { started_at?: string | null; current_family_group?: string | null } | null, now = new Date()): { phase: 'primary' | 'secondary' | 'post_rotation' | 'post_rotation_hold'; family: string | null; opensAt?: Date | null } {
   // An explicit active primary turn always wins, even if both later rounds
   // are enabled. Using all picks never hands the turn to another family.
   if (settings.current_primary_turn_family) return { phase: 'primary' as const, family: settings.current_primary_turn_family };
   if (secondary?.current_family_group) return { phase: 'secondary' as const, family: secondary.current_family_group };
   if (settings.enable_post_rotation_selection && secondary?.started_at) {
+    const free = freeSelectionState(settings, secondary, now);
+    if (free.state === 'locked') return { phase: 'post_rotation_hold' as const, family: null, opensAt: free.opensAt };
+    if (free.state === 'awaiting_date') return { phase: 'post_rotation_hold' as const, family: null, opensAt: null };
     return { phase: 'post_rotation' as const, family: null };
   }
   return { phase: 'primary' as const, family: null };
@@ -27,10 +31,12 @@ export function validateReservationCreation({ start, end, family, settings, seco
   if (!Number.isFinite(nights) || nights < 1) return ['Departure must be after arrival.'];
   if (Number(start.slice(0, 4)) !== settings.rotation_year) return ['Selection settings do not match the booking year. Please try again.'];
   const turn = resolveBookingTurn(settings, secondary);
-  if (!privileged && turn.phase !== 'post_rotation' && turn.family !== family) {
+  if (!privileged && turn.phase === 'post_rotation_hold') {
+    errors.push(turn.opensAt ? `Free selection opens ${formatOpening(turn.opensAt)}. The calendar is on hold until then so every family has an equal chance.` : 'Free selection has not opened yet. The calendar keeper will announce the opening date.');
+  } else if (!privileged && turn.phase !== 'post_rotation' && turn.family !== family) {
     errors.push(turn.family ? `It is ${turn.family}’s selection turn for ${settings.rotation_year}. Please wait until your family’s turn.` : `Selection is not open for your family for ${settings.rotation_year}. Contact the calendar keeper.`);
   }
-  const free = turn.phase === 'post_rotation';
+  const free = turn.phase === 'post_rotation' || turn.phase === 'post_rotation_hold';
   const second = turn.phase === 'secondary';
   const min = free ? settings.post_rotation_min_nights || 2 : settings.min_nights_per_booking || 2;
   const max = free ? settings.post_rotation_max_consecutive_nights || 14 : second ? settings.max_consecutive_nights_secondary || 7 : settings.max_consecutive_nights_primary || 14;

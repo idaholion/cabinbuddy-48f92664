@@ -17,6 +17,7 @@ import { AllocationModelBadge } from "@/components/AllocationModelBadge";
 import { AllocationModelChangeDialog, type AllocationModel } from "@/components/AllocationModelChangeDialog";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { SelectionSeasonSetup } from "@/components/SelectionSeasonSetup";
+import { PostRotationHoldSettings } from "@/components/reservation-setup/PostRotationHoldSettings";
 
 
 export default function ReservationSetup() {
@@ -1046,6 +1047,10 @@ export default function ReservationSetup() {
                       </ul>
                     </div>
                     
+                    {organization?.id && (
+                      <PostRotationHoldSettings organizationId={organization.id} rotationYear={parseInt(rotationYear)} />
+                    )}
+
                     <div className="space-y-4 mt-4">
                       <h4 className="text-base font-medium">Post-Rotation Booking Limits:</h4>
                       

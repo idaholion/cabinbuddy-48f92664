@@ -31,6 +31,13 @@
 - [ ] Payment transaction ledger — off-season queue
 - [ ] Review 3 critical findings in Security scan
 
+## Phase 1 — after Round 2 (Nov 12)
+- [x] Status menu shows free-selection state (on hold / open / not enabled) instead of a family order.
+- [x] Hold period setting (days + Mountain opening time, default 7 PM) with booking lock, announcement, and day-before reminder.
+- [ ] Richard to run supabase/sql/2026-11-12_post_rotation_hold.sql, then set the 2027 opening date in Reservation Setup.
+- [x] "Are you done selecting?" prompt after a family's last pick of the round.
+- [ ] Verify all three in the signed-in calendar (no test session available).
+
 ## Selection hardening — agreed sequence
 
 **Safeguards:** Preserve every existing reservation for every year. Never reset completed turns, move the season backward, rewrite active-round limits or usage, or disable working booking features.

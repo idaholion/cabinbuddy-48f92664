@@ -30,6 +30,9 @@ import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
 import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { useState, useEffect, useRef } from "react";
 import { selectionDisplaySchedule } from '@/lib/selection-display-schedule';
+import { DoneSelectingReminder, DONE_BUTTON_ID } from '@/components/DoneSelectingReminder';
+import { useFreeSelectionState } from '@/hooks/useFreeSelectionState';
+import { formatOpening } from '@/lib/post-rotation-hold';
 import { refreshSelectionDisplay, SELECTION_DISPLAY_REFRESH } from '@/lib/selection-display-events';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
@@ -218,6 +221,7 @@ const CabinCalendar = () => {
     getUserUsageInfo,
     secondarySelectionStartDate
   } = useSequentialSelection(rotationYear);
+  const freeSelection = useFreeSelectionState(organization?.id, rotationYear, currentPhase === 'post_rotation');
   
   console.log('=== CABIN CALENDAR SELECTION STATE ===', {
     rotationYear,
@@ -411,11 +415,12 @@ const CabinCalendar = () => {
                       }
                     }}
                   >
-                    <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap">
+                    <Button id={DONE_BUTTON_ID} size="lg" className="bg-primary hover:bg-primary/90 shadow-lg whitespace-nowrap">
                       <CheckCircle className="h-5 w-5 mr-2" />
                       I'm Done Selecting
                     </Button>
                   </ConfirmationDialog>
+                  <DoneSelectingReminder familyGroup={userGroup.name} remaining={getUserUsageInfo(userGroup.name)?.remaining ?? null} />
                 </div>
               </div>
             )}
@@ -473,7 +478,7 @@ const CabinCalendar = () => {
                          <SelectContent className="bg-background border border-border shadow-lg z-50 w-80">
                            <div className="p-3">
                              <div className="font-medium text-sm mb-2">
-                               {rotationYear} Rotation Order — Primary Selection (Round 1)
+                               {rotationYear} Rotation Order — {currentPhase === 'post_rotation' ? 'rounds complete' : 'Primary Selection (Round 1)'}
                              </div>
                              <div className="space-y-1">
                                {currentRotationOrder.map((familyGroup, index) => {
@@ -496,10 +501,11 @@ const CabinCalendar = () => {
                            : currentPhase === 'post_rotation'
                              ? 'Free Selection (Rounds Complete)'
                              : 'Primary Selection (Round 1)';
+                         const freeState = freeSelection.state?.state;
                          const phaseShort = displayLoading ? 'Loading…' : currentPhase === 'secondary'
                            ? 'Round 2'
                            : currentPhase === 'post_rotation'
-                             ? 'Complete'
+                             ? (freeState === 'open' ? 'Free Selection' : 'On Hold')
                              : 'Round 1';
                          return (
                        <Select>
@@ -514,6 +520,26 @@ const CabinCalendar = () => {
                              <div className="text-xs text-muted-foreground mb-2">
                                Showing: {phaseLabel}
                              </div>
+                             {!displayLoading && currentPhase === 'post_rotation' ? (
+                               <div className="space-y-2 text-sm">
+                                 <div>✅ Rounds 1 &amp; 2 complete for every family</div>
+                                 {(() => {
+                                   const st = freeSelection.state;
+                                   if (!st) return <div className="text-muted-foreground">Loading free selection status…</div>;
+                                   if (st.state === 'open') return <div>🟢 Free selection is open — any family, first come, first served</div>;
+                                   if (st.state === 'locked') return <div>🔒 Calendar on hold. Free selection opens {formatOpening(st.opensAt)}</div>;
+                                   if (st.state === 'awaiting_date') return <div>🔒 Calendar on hold. The opening time will be announced shortly.</div>;
+                                   return <div>🔒 Free selection is not enabled. Contact the calendar keeper.</div>;
+                                 })()}
+                                 {freeSelection.state?.state !== 'not_enabled' && (
+                                   <div className="text-xs text-muted-foreground">
+                                     {freeSelection.rules.min || 2}-night minimum
+                                     {freeSelection.rules.max ? ` · up to ${freeSelection.rules.max} nights per stay` : ''}
+                                     {freeSelection.rules.weeks ? ` · up to ${freeSelection.rules.weeks} weeks per family` : ''}
+                                   </div>
+                                 )}
+                               </div>
+                             ) : (
                              <div className="space-y-1">
 
                                {!displayLoading && currentRotationYearStatuses.map((familyStatus, index) => {
@@ -581,6 +607,7 @@ const CabinCalendar = () => {
                                  );
                                })}
                              </div>
+                             )}
               {!displayLoading && currentPhase === 'primary' && currentFamilyPeriod && (
                 <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
                   {(isCalendarKeeper || isGroupLead) && (
