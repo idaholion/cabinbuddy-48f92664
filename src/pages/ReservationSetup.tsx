@@ -18,7 +18,6 @@ import { AllocationModelChangeDialog, type AllocationModel } from "@/components/
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { SelectionSeasonSetup } from "@/components/SelectionSeasonSetup";
 import { PostRotationHoldSettings } from "@/components/reservation-setup/PostRotationHoldSettings";
-import { secureUpdate, createOrganizationContext } from "@/lib/secure-queries";
 
 
 export default function ReservationSetup() {
@@ -395,33 +394,6 @@ export default function ReservationSetup() {
         description: "Failed to change allocation model",
         variant: "destructive",
       });
-    }
-  };
-
-  const [savingPostLimits, setSavingPostLimits] = useState(false);
-  /** Saves only the free-selection booking limits, so active-season setup is never re-saved. */
-  const handleSavePostRotationLimits = async () => {
-    if (!organization?.id) return;
-    const min = parseInt(postRotationMinNights);
-    if (!Number.isFinite(min) || min < 1) {
-      toast({ title: "Error", description: "Minimum nights must be at least 1", variant: "destructive" });
-      return;
-    }
-    setSavingPostLimits(true);
-    try {
-      const { data, error } = await secureUpdate("rotation_orders", {
-        post_rotation_min_nights: min,
-        post_rotation_max_consecutive_nights: postRotationMaxConsecutiveNights ? parseInt(postRotationMaxConsecutiveNights) : null,
-        post_rotation_max_weeks: postRotationMaxWeeks ? parseInt(postRotationMaxWeeks) : null,
-      }, createOrganizationContext(organization.id)).eq("rotation_year", parseInt(rotationYear)).select("id");
-      if (error) throw error;
-      if (!data || (data as any[]).length === 0) throw new Error("No setup found for this year");
-      toast({ title: "Saved", description: `Free selection booking limits saved for ${rotationYear}` });
-    } catch (e) {
-      console.error("Error saving post-rotation limits:", e);
-      toast({ title: "Error", description: "Could not save the booking limits", variant: "destructive" });
-    } finally {
-      setSavingPostLimits(false);
     }
   };
 
@@ -1076,10 +1048,12 @@ export default function ReservationSetup() {
                     </div>
                     
                     {organization?.id && (
-                      <PostRotationHoldSettings organizationId={organization.id} rotationYear={parseInt(rotationYear)} />
-                    )}
-
-                    <div className="space-y-4 mt-4">
+                      <PostRotationHoldSettings
+                        organizationId={organization.id}
+                        rotationYear={parseInt(rotationYear)}
+                        limits={{ minNights: postRotationMinNights, maxConsecutiveNights: postRotationMaxConsecutiveNights, maxWeeks: postRotationMaxWeeks }}
+                      >
+                    <div className="space-y-4 border-t pt-4">
                       <h4 className="text-base font-medium">Post-Rotation Booking Limits:</h4>
                       
                       <div className="flex flex-wrap items-center gap-2 text-base">
@@ -1122,10 +1096,9 @@ export default function ReservationSetup() {
                         />
                         <span className="text-muted-foreground text-sm">(leave blank for unlimited)</span>
                       </div>
-                      <Button variant="outline" onClick={handleSavePostRotationLimits} disabled={savingPostLimits}>
-                        {savingPostLimits ? "Saving..." : "Save Booking Limits"}
-                      </Button>
                     </div>
+                      </PostRotationHoldSettings>
+                    )}
                   </div>
                 )}
               </div>

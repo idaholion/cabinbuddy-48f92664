@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +19,10 @@ const TIMES = [
 ];
 
 /** Hold period before free selection; saves only its own fields so active-season settings are never re-saved. */
-export function PostRotationHoldSettings({ organizationId, rotationYear }: { organizationId: string; rotationYear: number }) {
+export interface PostRotationLimits { minNights: string; maxConsecutiveNights: string; maxWeeks: string }
+
+/** One save for the whole post-rotation section: hold, opening, and free-selection booking limits. */
+export function PostRotationHoldSettings({ organizationId, rotationYear, limits, children }: { organizationId: string; rotationYear: number; limits: PostRotationLimits; children?: React.ReactNode }) {
   const { toast } = useToast();
   const ctx = createOrganizationContext(organizationId);
   const [rowId, setRowId] = useState<string | null>(null);
@@ -61,12 +65,18 @@ export function PostRotationHoldSettings({ organizationId, rotationYear }: { org
 
   const save = async () => {
     if (!rowId) { toast({ title: "Save the rotation order first", variant: "destructive" }); return; }
+    const minNights = parseInt(limits.minNights);
+    if (!Number.isFinite(minNights) || minNights < 1) { toast({ title: "Minimum nights must be at least 1", variant: "destructive" }); return; }
     setSaving(true);
     try {
       const update: Record<string, unknown> = {
         post_rotation_hold_days: Math.max(0, parseInt(holdDays) || 0),
         post_rotation_open_time: openTime,
         post_rotation_opens_at: opensAt?.toISOString() ?? null,
+        enable_post_rotation_selection: true,
+        post_rotation_min_nights: minNights,
+        post_rotation_max_consecutive_nights: limits.maxConsecutiveNights ? parseInt(limits.maxConsecutiveNights) : null,
+        post_rotation_max_weeks: limits.maxWeeks ? parseInt(limits.maxWeeks) : null,
       };
       if (dateChanged) { update.post_rotation_announced_at = null; update.post_rotation_reminder_sent_at = null; }
       const { error } = await secureUpdate("rotation_orders", update, ctx).eq("id", rowId);
@@ -87,9 +97,9 @@ export function PostRotationHoldSettings({ organizationId, rotationYear }: { org
         setAnnouncedAt(stamp);
         notified = true;
       }
-      toast({ title: "Hold period saved", description: notified ? "Everyone has been emailed and texted the opening time." : opensAt ? `Free selection opens ${formatOpening(opensAt)}.` : "The opening date will be set automatically when the rounds finish." });
+      toast({ title: "Post rotation selection updated", description: notified ? "Everyone has been emailed and texted the opening time." : opensAt ? `Free selection opens ${formatOpening(opensAt)}.` : "The opening date will be set automatically when the rounds finish." });
     } catch (e) {
-      toast({ title: "Could not save hold period", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+      toast({ title: "Could not update post rotation selection", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
     } finally { setSaving(false); }
   };
 
@@ -125,7 +135,8 @@ export function PostRotationHoldSettings({ organizationId, rotationYear }: { org
           <Label htmlFor="notifyFreeSelection">Email and text everyone the opening time when I save</Label>
         </div>
       )}
-      <Button type="button" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save hold period"}</Button>
+      {children}
+      <Button type="button" onClick={save} disabled={saving} className="w-full">{saving ? "Saving…" : "Update Post Rotation Selection"}</Button>
     </div>
   );
 }
