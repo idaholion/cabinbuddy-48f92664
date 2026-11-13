@@ -34,11 +34,7 @@ const Join = () => {
       setError("");
       
       try {
-        const { data: org, error: orgError } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('code', codeFromUrl)
-          .single();
+        const { data: org, error: orgError } = await lookupOrgByCode(codeFromUrl);
 
         if (orgError || !org) {
           setError("This invitation link appears to be invalid or the organization no longer exists.");
@@ -69,11 +65,7 @@ const Join = () => {
     setError("");
 
     try {
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('name')
-        .eq('code', organizationCode.toUpperCase())
-        .single();
+      const { data: org, error: orgError } = await lookupOrgByCode(organizationCode.toUpperCase());
 
       if (orgError || !org) {
         setError("No organization found with that code. Please check the code and try again.");
@@ -289,3 +281,11 @@ const Join = () => {
 };
 
 export default Join;
+
+// Name-only lookup via secure function; falls back to legacy query until the SQL is applied.
+async function lookupOrgByCode(code: string): Promise<{ data: { name: string } | null; error: unknown }> {
+  const { data, error } = await (supabase.rpc as any)('get_organization_name_by_code', { _code: code });
+  if (!error) return { data: data ? { name: data as string } : null, error: null };
+  const res = await supabase.from('organizations').select('name').eq('code', code).maybeSingle();
+  return { data: res.data, error: res.error };
+}
