@@ -1518,6 +1518,8 @@ export type Database = {
           is_test_organization: boolean | null
           name: string
           selection_season_lead_days: number
+          selection_setup_final_reminder_days: number
+          selection_setup_first_reminder_days: number
           stay_history_snapshot_frequency: string | null
           stay_history_snapshot_retention: number | null
           treasurer_email: string | null
@@ -1575,6 +1577,8 @@ export type Database = {
           is_test_organization?: boolean | null
           name: string
           selection_season_lead_days?: number
+          selection_setup_final_reminder_days?: number
+          selection_setup_first_reminder_days?: number
           stay_history_snapshot_frequency?: string | null
           stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
@@ -1632,6 +1636,8 @@ export type Database = {
           is_test_organization?: boolean | null
           name?: string
           selection_season_lead_days?: number
+          selection_setup_final_reminder_days?: number
+          selection_setup_first_reminder_days?: number
           stay_history_snapshot_frequency?: string | null
           stay_history_snapshot_retention?: number | null
           treasurer_email?: string | null
