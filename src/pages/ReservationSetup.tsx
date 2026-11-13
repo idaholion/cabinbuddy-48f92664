@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -87,10 +87,10 @@ export default function ReservationSetup() {
   const [totalNightsAllowedPrimary, setTotalNightsAllowedPrimary] = useState("14");
   const [totalWeeksAllowedPrimary, setTotalWeeksAllowedPrimary] = useState("2");
   const [totalWeeksAllowedSecondary, setTotalWeeksAllowedSecondary] = useState("1");
-  const [minNightsPerBooking, setMinNightsPerBooking] = useState("2");
+  const [minNightsPerBooking, setMinNightsPerBooking] = useState("1");
   const [maxConsecutiveNightsPrimary, setMaxConsecutiveNightsPrimary] = useState("14");
   const [maxConsecutiveNightsSecondary, setMaxConsecutiveNightsSecondary] = useState("7");
-  const [postRotationMinNights, setPostRotationMinNights] = useState("2");
+  const [postRotationMinNights, setPostRotationMinNights] = useState("1");
   const [postRotationMaxConsecutiveNights, setPostRotationMaxConsecutiveNights] = useState("");
   const [postRotationMaxWeeks, setPostRotationMaxWeeks] = useState("");
 
@@ -196,10 +196,10 @@ export default function ReservationSetup() {
         setTotalNightsAllowedPrimary((data as any).total_nights_allowed_primary?.toString() || "14");
         setTotalWeeksAllowedPrimary((data as any).total_weeks_allowed_primary?.toString() || "2");
         setTotalWeeksAllowedSecondary((data as any).total_weeks_allowed_secondary?.toString() || "1");
-        setMinNightsPerBooking((data as any).min_nights_per_booking?.toString() || "2");
+        setMinNightsPerBooking((data as any).min_nights_per_booking?.toString() || "1");
         setMaxConsecutiveNightsPrimary((data as any).max_consecutive_nights_primary?.toString() || "14");
         setMaxConsecutiveNightsSecondary((data as any).max_consecutive_nights_secondary?.toString() || "7");
-        setPostRotationMinNights((data as any).post_rotation_min_nights?.toString() || "2");
+        setPostRotationMinNights((data as any).post_rotation_min_nights?.toString() || "1");
         setPostRotationMaxConsecutiveNights((data as any).post_rotation_max_consecutive_nights?.toString() || "");
         setPostRotationMaxWeeks((data as any).post_rotation_max_weeks?.toString() || "");
         
@@ -517,6 +517,33 @@ export default function ReservationSetup() {
     }
   };
 
+  // Unsaved-changes tracking for the floating save bar. Until the person
+  // first touches the page, the baseline follows the loaded values; after
+  // that it freezes, so any edit anywhere on the page shows the bar.
+  const setupSnapshot = JSON.stringify([
+    propertyName, address, bedrooms, bathrooms, maxGuests,
+    seasonStartMonth, seasonStartDay, seasonEndMonth, seasonEndDay, defaultOccupancy,
+    setupMethod, rotationYear, maxTimeSlots, maxNights, startDay, startTime, firstLastOption,
+    rotationOrder, startMonth, selectionDays, enableSecondarySelection, secondaryMaxPeriods,
+    secondarySelectionDays, enablePostRotationSelection, useVirtualWeeksSystem,
+    totalNightsAllowedPrimary, totalWeeksAllowedPrimary, totalWeeksAllowedSecondary,
+    minNightsPerBooking, maxConsecutiveNightsPrimary, maxConsecutiveNightsSecondary,
+    postRotationMinNights, postRotationMaxConsecutiveNights, postRotationMaxWeeks,
+    staticWeeksStartDay, staticWeeksPeriodLength, staticWeeksRotationDirection,
+  ]);
+  const [baselineSnapshot, setBaselineSnapshot] = useState(setupSnapshot);
+  const userTouchedRef = useRef(false);
+  useEffect(() => {
+    if (!userTouchedRef.current) setBaselineSnapshot(setupSnapshot);
+  }, [setupSnapshot]);
+  const hasUnsavedChanges = userTouchedRef.current && setupSnapshot !== baselineSnapshot;
+  const markTouched = () => { userTouchedRef.current = true; };
+
+  const handleFloatingSave = async () => {
+    await handleSaveReservationSetup();
+    setBaselineSnapshot(setupSnapshot);
+  };
+
   const handleSaveReservationSetup = async () => {
     const reservationData = {
       property_name: propertyName || undefined,
@@ -639,7 +666,11 @@ export default function ReservationSetup() {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div
+      className="min-h-screen bg-background p-6 pb-28"
+      onPointerDownCapture={markTouched}
+      onKeyDownCapture={markTouched}
+    >
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="mb-4">
           <Button variant="outline" asChild>
@@ -1545,7 +1576,7 @@ export default function ReservationSetup() {
             Back
           </Button>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSaveReservationSetup} disabled={loading} className="text-base">
+            <Button variant="outline" onClick={handleFloatingSave} disabled={loading} className="text-base">
               {loading ? "Saving..." : "Save Setup"}
             </Button>
             <Button onClick={() => navigate("/calendar-keeper-management")} className="text-base">
@@ -1554,6 +1585,22 @@ export default function ReservationSetup() {
           </div>
         </div>
       </div>
+
+      {hasUnsavedChanges && (
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t bg-card/95 backdrop-blur shadow-lg">
+          <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <span className="text-base font-medium text-foreground">You have unsaved changes</span>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => window.location.reload()} disabled={loading}>
+                Discard
+              </Button>
+              <Button onClick={handleFloatingSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Setup"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AllocationModelChangeDialog
         open={showAllocationChangeDialog}

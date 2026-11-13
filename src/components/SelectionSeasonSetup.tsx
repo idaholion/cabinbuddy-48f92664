@@ -50,7 +50,7 @@ export const SelectionSeasonSetup = () => {
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoEnabled, setAutoEnabled] = useState(true);
-  const [leadDays, setLeadDays] = useState(10);
+  const [leadDays, setLeadDays] = useState(2);
   const [savingAuto, setSavingAuto] = useState(false);
 
   const targetYear = rotationData ? getSelectionRotationYear() : new Date().getFullYear() + 1;
@@ -124,7 +124,7 @@ export const SelectionSeasonSetup = () => {
         .maybeSingle();
       if (data) {
         setAutoEnabled(data.auto_create_selection_season !== false);
-        setLeadDays(Number(data.selection_season_lead_days ?? 10));
+        setLeadDays(Number(data.selection_season_lead_days ?? 2));
       }
     };
     loadAutoSettings();
@@ -138,7 +138,7 @@ export const SelectionSeasonSetup = () => {
         .from("organizations")
         .update({
           auto_create_selection_season: autoEnabled,
-          selection_season_lead_days: Math.max(1, Math.min(180, Math.round(leadDays) || 10)),
+          selection_season_lead_days: Math.max(1, Math.min(180, Math.round(leadDays) || 2)),
         })
         .eq("id", organization.id);
       if (error) throw error;
@@ -260,7 +260,7 @@ export const SelectionSeasonSetup = () => {
   if (firstStart) {
     const [y, m, d] = firstStart.split("-").map(Number);
     const trigger = new Date(y, m - 1, d);
-    trigger.setDate(trigger.getDate() - (Math.round(leadDays) || 10));
+    trigger.setDate(trigger.getDate() - (Math.round(leadDays) || 2));
     autoCreateDate = toDateString(trigger);
   }
 

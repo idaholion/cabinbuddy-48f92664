@@ -306,11 +306,11 @@ export const useTimePeriods = (rotationYear?: number) => {
       usage && usage.selection_round === 'secondary');
     
     // Determine min/max nights based on phase
-    let minNights = rotationData.min_nights_per_booking || 2;
+    let minNights = rotationData.min_nights_per_booking || 1;
     let maxConsecutive: number;
     
     if (isPostRotation) {
-      minNights = rotationData.post_rotation_min_nights || 2;
+      minNights = rotationData.post_rotation_min_nights || 1;
       maxConsecutive = rotationData.post_rotation_max_consecutive_nights || 14;
     } else if (isSecondaryPhase) {
       maxConsecutive = rotationData.max_consecutive_nights_secondary || 7;

@@ -96,7 +96,7 @@ async function sendAdminHeadsUp(
 }
 
 async function processOrganization(org: any) {
-  const leadDays = Number(org.selection_season_lead_days ?? 10);
+  const leadDays = Number(org.selection_season_lead_days ?? 2);
 
   // Most recent saved season with a real family order is the baseline.
   const { data: seasons } = await supabase
