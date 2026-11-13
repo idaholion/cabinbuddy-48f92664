@@ -50,6 +50,9 @@ export const SelectionSeasonSetup = () => {
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
   const [autoEnabled, setAutoEnabled] = useState(true);
+  const [firstReminderDays, setFirstReminderDays] = useState(14);
+  const [finalReminderDays, setFinalReminderDays] = useState(2);
+  const [reminderColumnsReady, setReminderColumnsReady] = useState(true);
   const [leadDays, setLeadDays] = useState(2);
   const [savingAuto, setSavingAuto] = useState(false);
 
@@ -117,11 +120,23 @@ export const SelectionSeasonSetup = () => {
   useEffect(() => {
     const loadAutoSettings = async () => {
       if (!organization?.id) return;
-      const { data } = await (supabase as any)
+      let { data, error } = await (supabase as any)
         .from("organizations")
-        .select("auto_create_selection_season, selection_season_lead_days")
+        .select("auto_create_selection_season, selection_season_lead_days, selection_setup_first_reminder_days, selection_setup_final_reminder_days")
         .eq("id", organization.id)
         .maybeSingle();
+      if (error) {
+        // Reminder columns not installed yet: fall back to the original fields.
+        setReminderColumnsReady(false);
+        ({ data } = await (supabase as any)
+          .from("organizations")
+          .select("auto_create_selection_season, selection_season_lead_days")
+          .eq("id", organization.id)
+          .maybeSingle());
+      } else if (data) {
+        setFirstReminderDays(Number(data.selection_setup_first_reminder_days ?? 14));
+        setFinalReminderDays(Number(data.selection_setup_final_reminder_days ?? 2));
+      }
       if (data) {
         setAutoEnabled(data.auto_create_selection_season !== false);
         setLeadDays(Number(data.selection_season_lead_days ?? 2));
@@ -139,6 +154,12 @@ export const SelectionSeasonSetup = () => {
         .update({
           auto_create_selection_season: autoEnabled,
           selection_season_lead_days: Math.max(1, Math.min(180, Math.round(leadDays) || 2)),
+          ...(reminderColumnsReady
+            ? {
+                selection_setup_first_reminder_days: Math.max(0, Math.min(180, Math.round(firstReminderDays) || 0)),
+                selection_setup_final_reminder_days: Math.max(0, Math.min(180, Math.round(finalReminderDays) || 0)),
+              }
+            : {}),
         })
         .eq("id", organization.id);
       if (error) throw error;
@@ -331,6 +352,23 @@ export const SelectionSeasonSetup = () => {
                 className="w-24"
               />
             </div>
+
+            {reminderColumnsReady && (
+              <div className="space-y-2 border-t pt-3">
+                <p className="text-sm font-medium">Reminders to Admin and calendar keeper</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Label htmlFor="first-reminder" className="text-sm whitespace-nowrap">First reminder (days before)</Label>
+                  <Input id="first-reminder" type="number" min={0} max={180} value={firstReminderDays}
+                    onChange={(e) => setFirstReminderDays(Number(e.target.value))} className="w-20" />
+                  <Label htmlFor="final-reminder" className="text-sm whitespace-nowrap">Final reminder (days before)</Label>
+                  <Input id="final-reminder" type="number" min={0} max={180} value={finalReminderDays}
+                    onChange={(e) => setFinalReminderDays(Number(e.target.value))} className="w-20" />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Sent by email and text. The final reminder is skipped if the season is already set up. Use 0 to turn a reminder off.
+                </p>
+              </div>
+            )}
 
             <p className="text-sm text-muted-foreground">
               {autoEnabled

@@ -1,4 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { withAppLabel } from '../_shared/sms-label.ts';
+import {
+  setupReminderToSend,
+  setupReminderType,
+  type SetupReminderKind,
+} from '../_shared/season-setup-reminders.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -93,6 +99,153 @@ async function sendAdminHeadsUp(
   } catch (e) {
     console.error('Heads-up email error:', e);
   }
+}
+
+const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+const TWILIO_FROM = Deno.env.get('TWILIO_PHONE_NUMBER');
+
+function reminderRecipients(org: any) {
+  const list: { email: string | null; phone: string | null }[] = [];
+  const add = (email?: string | null, phone?: string | null) => {
+    const e = email?.trim().toLowerCase() || null;
+    const p = phone?.trim() || null;
+    if (!e && !p) return;
+    if (list.some((r) => (e && r.email === e) || (p && r.phone === p))) return;
+    list.push({ email: e, phone: p });
+  };
+  add(org.admin_email, org.admin_phone);
+  add(org.calendar_keeper_email, org.calendar_keeper_phone);
+  return list;
+}
+
+async function sendSetupReminder(
+  org: any,
+  kind: SetupReminderKind,
+  targetYear: number,
+  startDate: string,
+  daysUntilStart: number,
+  autoCreateDate: string | null,
+) {
+  const autoLine = autoCreateDate
+    ? `If it isn't set up by ${formatDate(autoCreateDate)}, CabinBuddy will set it up automatically.`
+    : 'Automatic setup is turned off, so the season will not start until you press the button.';
+  const subject = kind === 'final'
+    ? `Final reminder: set up the ${targetYear} selection season`
+    : `Time to review the ${targetYear} selection season`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+      <h2 style="color:#2d5d2d;">${subject}</h2>
+      <p>The ${targetYear} selection season for <strong>${org.name}</strong> begins on ${formatDate(startDate)} (${daysUntilStart} days from now).</p>
+      <p>Open <strong>Reservation Setup</strong> in CabinBuddy, check the Season Readiness card and the family order, then press <strong>Start the ${targetYear} selection season</strong>.</p>
+      <p>${autoLine}</p>
+    </div>`;
+  const sms = `${subject}. Selection begins ${formatDate(startDate)}. Open Reservation Setup in CabinBuddy to review and start it. ${autoLine}`;
+
+  let anySent = false;
+  for (const r of reminderRecipients(org)) {
+    let emailSent = false;
+    let smsSent = false;
+    if (r.email && RESEND_API_KEY) {
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'CabinBuddy <notifications@cabinbuddy.org>',
+            to: [r.email],
+            subject,
+            html,
+          }),
+        });
+        emailSent = res.ok;
+        if (!res.ok) console.error('Setup reminder email failed:', await res.text());
+      } catch (e) {
+        console.error('Setup reminder email error:', e);
+      }
+    }
+    if (r.phone && TWILIO_SID && TWILIO_TOKEN && TWILIO_FROM) {
+      try {
+        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${btoa(`${TWILIO_SID}:${TWILIO_TOKEN}`)}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ From: TWILIO_FROM, To: r.phone, Body: withAppLabel(sms) }).toString(),
+        });
+        smsSent = res.ok;
+        if (!res.ok) console.error('Setup reminder text failed:', await res.text());
+      } catch (e) {
+        console.error('Setup reminder text error:', e);
+      }
+    }
+    if (emailSent || smsSent) {
+      anySent = true;
+      await supabase.from('notification_log').insert({
+        organization_id: org.id,
+        family_group: 'Admin',
+        notification_type: setupReminderType(kind, targetYear),
+        recipient_email: r.email,
+        recipient_phone: r.phone,
+        email_sent: emailSent,
+        sms_sent: smsSent,
+      });
+    }
+  }
+  return anySent;
+}
+
+async function processReminders(org: any) {
+  const { data: seasons } = await supabase
+    .from('rotation_orders')
+    .select('*')
+    .eq('organization_id', org.id)
+    .order('rotation_year', { ascending: false });
+  const baseline = (seasons || []).find((s) => cleanOrder(s.rotation_order).length > 0);
+  if (!baseline) return null;
+
+  const targetYear = baseline.rotation_year + 1;
+  const startMonthIndex = Math.max(0, MONTHS.indexOf(baseline.start_month || 'October'));
+  const seasonStart = new Date(targetYear - 1, startMonthIndex, 1);
+  const startDate = toDateString(seasonStart);
+  const todayStr = toDateString(new Date());
+  const [ty, tm, td] = todayStr.split('-').map(Number);
+  const daysUntilStart = Math.round((seasonStart.getTime() - new Date(ty, tm - 1, td).getTime()) / 86400000);
+
+  const { data: periods } = await supabase
+    .from('reservation_periods')
+    .select('id')
+    .eq('organization_id', org.id)
+    .eq('rotation_year', targetYear)
+    .limit(1);
+
+  const { data: sentRows } = await supabase
+    .from('notification_log')
+    .select('notification_type')
+    .eq('organization_id', org.id)
+    .in('notification_type', [setupReminderType('first', targetYear), setupReminderType('final', targetYear)]);
+  const alreadySent = (sentRows || []).map((r: any) =>
+    r.notification_type === setupReminderType('final', targetYear) ? 'final' : 'first',
+  ) as SetupReminderKind[];
+
+  const kind = setupReminderToSend({
+    daysUntilStart,
+    firstReminderDays: Number(org.selection_setup_first_reminder_days ?? 14),
+    finalReminderDays: Number(org.selection_setup_final_reminder_days ?? 2),
+    seasonAlreadySetUp: !!(periods && periods.length > 0),
+    alreadySent,
+  });
+  if (!kind) return null;
+
+  let autoCreateDate: string | null = null;
+  if (org.auto_create_selection_season !== false) {
+    const d = new Date(seasonStart);
+    d.setDate(d.getDate() - Number(org.selection_season_lead_days ?? 2));
+    autoCreateDate = toDateString(d);
+  }
+  const sent = await sendSetupReminder(org, kind, targetYear, startDate, daysUntilStart, autoCreateDate);
+  return { reminder: kind, target_year: targetYear, sent };
 }
 
 async function processOrganization(org: any) {
@@ -245,12 +398,15 @@ Deno.serve(async (req: Request) => {
 
     const results: any[] = [];
     for (const org of orgs || []) {
-      if ((org as any).auto_create_selection_season === false) {
-        results.push({ organization: org.name, skipped: 'automatic creation turned off' });
-        continue;
-      }
       try {
-        results.push(await processOrganization(org));
+        // Automatic setup first, so a season created today never also gets a "please set up" reminder.
+        if ((org as any).auto_create_selection_season === false) {
+          results.push({ organization: org.name, skipped: 'automatic creation turned off' });
+        } else {
+          results.push(await processOrganization(org));
+        }
+        const reminder = await processReminders(org);
+        if (reminder) results.push({ organization: org.name, ...reminder });
       } catch (e) {
         console.error(`Error processing ${org.name}:`, e);
         results.push({ organization: org.name, error: e instanceof Error ? e.message : 'unknown' });
