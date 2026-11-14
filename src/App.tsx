@@ -75,6 +75,7 @@ const CabinSecurityCameras = React.lazy(() => import("./pages/CabinSecurityCamer
 
 
 // Lazy load admin/supervisor pages
+const AvengerInitiative = React.lazy(() => import("./pages/AvengerInitiative"));
 const SupervisorDashboard = React.lazy(() => import("./pages/SupervisorDashboard").then(module => ({ default: module.SupervisorDashboard })));
 const AccessCodeManagement = React.lazy(() => import("./pages/AccessCodeManagement"));
 const SupervisorOrganizationFamilyGroups = React.lazy(() => import("./pages/SupervisorOrganizationFamilyGroups"));
@@ -180,6 +181,7 @@ const AppContent = () => {
         <Route path="/privacy-policy" element={<Suspense fallback={<LoadingSpinner />}><PrivacyPolicy /></Suspense>} />
         <Route path="/faq" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQ /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/faq-management" element={<AdminOnlyRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><FAQManagement /></Suspense></MainLayout></AdminOnlyRoute>} />
+        <Route path="/avenger-initiative" element={<ProtectedRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AvengerInitiative /></Suspense></MainLayout></ProtectedRoute>} />
         <Route path="/supervisor" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorDashboard /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/access-codes" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><AccessCodeManagement /></Suspense></MainLayout></SupervisorRoute>} />
         <Route path="/supervisor/organization/:organizationId/family-groups" element={<SupervisorRoute><MainLayout><Suspense fallback={<LoadingSpinner />}><SupervisorOrganizationFamilyGroups /></Suspense></MainLayout></SupervisorRoute>} />

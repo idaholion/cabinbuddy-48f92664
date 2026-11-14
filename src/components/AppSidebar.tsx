@@ -52,6 +52,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useSupervisor } from "@/hooks/useSupervisor";
+import { useAvengerAccess } from "@/hooks/useAvengerAccess";
+import { Shield as AvengerShield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -229,6 +231,7 @@ const betaItems = [
 export function AppSidebar() {
   const location = useLocation();
   const { isSupervisor } = useSupervisor();
+  const { isAvenger } = useAvengerAccess();
   const { signOut, user } = useAuth();
   const { canAccessSupervisorFeatures } = useRole();
   const { isGroupLead, isNameMatchedGroupLead, isNameMatchedMember, isAdmin, loading: roleLoading } = useUserRole();
@@ -627,6 +630,24 @@ export function AppSidebar() {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {isAvenger && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Private</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Avenger Initiative">
+                    <NavLink to="/avenger-initiative" onClick={handleMobileNavClick} className={({ isActive }) => `${getNavCls({ isActive })} flex items-center gap-2`}>
+                      <AvengerShield className="h-4 w-4" />
+                      <span>Avenger Initiative</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
