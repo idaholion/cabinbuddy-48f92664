@@ -3755,6 +3755,10 @@ export type Database = {
       }
       get_current_user_email: { Args: never; Returns: string }
       get_next_invoice_number: { Args: { org_id: string }; Returns: string }
+      get_organization_name_by_code: {
+        Args: { _code: string }
+        Returns: string
+      }
       get_organization_user_emails: {
         Args: { org_id: string }
         Returns: {
@@ -3888,6 +3892,8 @@ export type Database = {
         Returns: undefined
       }
       set_primary_organization: { Args: { org_id: string }; Returns: boolean }
+      storage_folder_shares_org: { Args: { _folder: string }; Returns: boolean }
+      storage_is_my_org: { Args: { _folder: string }; Returns: boolean }
       supervisor_bulk_remove_host_member: {
         Args: {
           p_confirmation_code: string
