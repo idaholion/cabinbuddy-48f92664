@@ -477,11 +477,11 @@ export default function ReservationSetup() {
           enable_post_rotation_selection: enablePostRotationSelection,
           // Virtual weeks booking limits
           use_virtual_weeks_system: useVirtualWeeksSystem,
-          total_nights_allowed_primary: parseInt(totalNightsAllowedPrimary),
+          total_nights_allowed_primary: parseInt(maxTimeSlots) * parseInt(maxNights),
           total_weeks_allowed_primary: parseInt(totalWeeksAllowedPrimary),
           total_weeks_allowed_secondary: parseInt(totalWeeksAllowedSecondary),
           min_nights_per_booking: parseInt(minNightsPerBooking),
-          max_consecutive_nights_primary: parseInt(maxConsecutiveNightsPrimary),
+          max_consecutive_nights_primary: parseInt(maxTimeSlots) * parseInt(maxNights),
           max_consecutive_nights_secondary: parseInt(maxConsecutiveNightsSecondary),
           post_rotation_min_nights: parseInt(postRotationMinNights),
           post_rotation_max_consecutive_nights: postRotationMaxConsecutiveNights ? parseInt(postRotationMaxConsecutiveNights) : null,
@@ -616,11 +616,11 @@ export default function ReservationSetup() {
             enable_post_rotation_selection: enablePostRotationSelection,
             // Virtual weeks booking limits
             use_virtual_weeks_system: useVirtualWeeksSystem,
-            total_nights_allowed_primary: parseInt(totalNightsAllowedPrimary),
+            total_nights_allowed_primary: parseInt(maxTimeSlots) * parseInt(maxNights),
             total_weeks_allowed_primary: parseInt(totalWeeksAllowedPrimary),
             total_weeks_allowed_secondary: parseInt(totalWeeksAllowedSecondary),
             min_nights_per_booking: parseInt(minNightsPerBooking),
-            max_consecutive_nights_primary: parseInt(maxConsecutiveNightsPrimary),
+            max_consecutive_nights_primary: parseInt(maxTimeSlots) * parseInt(maxNights),
             max_consecutive_nights_secondary: parseInt(maxConsecutiveNightsSecondary),
             post_rotation_min_nights: parseInt(postRotationMinNights),
             post_rotation_max_consecutive_nights: postRotationMaxConsecutiveNights ? parseInt(postRotationMaxConsecutiveNights) : null,
@@ -811,6 +811,20 @@ export default function ReservationSetup() {
                 </Select>
                 <span>days to make their reservations in the calendar before it moves to the next person in line.</span>
               </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-base">
+                <span>Each stay must be at least</span>
+                <Input
+                  type="number"
+                  min="1"
+                  max="14"
+                  value={minNightsPerBooking}
+                  onChange={(e) => setMinNightsPerBooking(e.target.value)}
+                  className="w-20 text-lg"
+                  aria-label="Minimum nights per stay"
+                />
+                <span>night(s).</span>
+              </div>
               
               <div className="space-y-3">
                  <div className="flex flex-wrap items-center gap-2 text-base text-foreground">
@@ -897,85 +911,6 @@ export default function ReservationSetup() {
               </div>
 
               
-              {/* Booking Limits Configuration Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="useVirtualWeeksSystem"
-                    checked={useVirtualWeeksSystem}
-                    onCheckedChange={(checked) => setUseVirtualWeeksSystem(checked === true)}
-                  />
-                  <Label htmlFor="useVirtualWeeksSystem" className="text-base font-medium">
-                    Use Virtual Weeks System (Friday Boundaries)
-                  </Label>
-                </div>
-                
-                {useVirtualWeeksSystem && (
-                  <div className="pl-6 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Virtual Weeks:</strong> Weeks are counted by Friday boundaries regardless of arrival day. 
-                      Example: Booking Thu-Mon and Fri-Tue both count as 1 "virtual week" if they cross the same Friday.
-                    </p>
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  <h4 className="text-base font-semibold">Primary Selection Limits:</h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4">
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-sm">Total Nights Allowed (enforced)</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={totalNightsAllowedPrimary}
-                        onChange={(e) => setTotalNightsAllowedPrimary(e.target.value)}
-                        className="w-24"
-                      />
-                    </div>
-                    
-                    {useVirtualWeeksSystem && (
-                      <div className="flex flex-col gap-2">
-                        <Label className="text-sm">Max Virtual Weeks</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={totalWeeksAllowedPrimary}
-                          onChange={(e) => setTotalWeeksAllowedPrimary(e.target.value)}
-                          className="w-24"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-sm">Min Nights Per Booking</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="14"
-                        value={minNightsPerBooking}
-                        onChange={(e) => setMinNightsPerBooking(e.target.value)}
-                        className="w-24"
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <Label className="text-sm">Max Consecutive Nights</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={maxConsecutiveNightsPrimary}
-                        onChange={(e) => setMaxConsecutiveNightsPrimary(e.target.value)}
-                        className="w-24"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
               {/* Secondary Selection Section */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center space-x-2">
@@ -1007,19 +942,6 @@ export default function ReservationSetup() {
                       <h4 className="text-base font-semibold">Secondary Selection Limits:</h4>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-4">
-                        {useVirtualWeeksSystem && (
-                          <div className="flex flex-col gap-2">
-                            <Label className="text-sm">Max Virtual Weeks</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="5"
-                              value={totalWeeksAllowedSecondary}
-                              onChange={(e) => setTotalWeeksAllowedSecondary(e.target.value)}
-                              className="w-24"
-                            />
-                          </div>
-                        )}
                         
                         <div className="flex flex-col gap-2">
                           <Label className="text-sm">Max Consecutive Nights</Label>
