@@ -7,12 +7,26 @@ import { Input } from '@/components/ui/input';
 import { PhoneInput } from '@/components/ui/phone-input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Trash2, GripVertical, CheckCircle, AlertCircle, UserX, Info } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FamilyGroupSetupFormData } from '@/lib/validations';
+
+function DelegateTip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help shrink-0" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        <p>{text}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 interface GroupMemberCardProps {
   index: number;
@@ -279,6 +293,17 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="sm:col-span-2 flex items-center gap-2">
+              <span className="text-sm font-medium">Delegate permissions</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Delegates can manage things for the whole family group, not just their own stays. The Group Lead always has every permission. Uncheck all three to limit a member to their own stays only.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <FormField
               control={control}
               name={`groupMembers.${index}.canHost`}
@@ -327,8 +352,9 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                         className="h-4 w-4"
                       />
                     </FormControl>
-                    <label htmlFor={`edit-res-${index}`} className="text-base">
+                    <label htmlFor={`edit-res-${index}`} className="text-base flex items-center gap-1.5">
                       Can manage calendar reservations for the whole family group
+                      <DelegateTip text="Lets this member book, edit, combine, and cancel reservations on behalf of anyone in the family group — useful when one person handles booking for the whole family." />
                     </label>
                   </div>
                 </FormItem>
@@ -351,8 +377,9 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                         className="h-4 w-4"
                       />
                     </FormControl>
-                    <label htmlFor={`edit-df-${index}`} className="text-base">
+                    <label htmlFor={`edit-df-${index}`} className="text-base flex items-center gap-1.5">
                       Can fill out Daily & Final Input for the whole family group
+                      <DelegateTip text="Lets this member enter daily guest counts and the final departure input for any stay in the family group, not just stays they hosted." />
                     </label>
                   </div>
                 </FormItem>
@@ -375,8 +402,9 @@ export const GroupMemberCard: React.FC<GroupMemberCardProps> = ({
                         className="h-4 w-4"
                       />
                     </FormControl>
-                    <label htmlFor={`edit-sh-${index}`} className="text-base">
+                    <label htmlFor={`edit-sh-${index}`} className="text-base flex items-center gap-1.5">
                       Can view and edit Stay History for the whole family group
+                      <DelegateTip text="Lets this member see and update stay history, charges, and payments for everyone in the family group. Leave unchecked if members should only see their own stay finances." />
                     </label>
                   </div>
                 </FormItem>
