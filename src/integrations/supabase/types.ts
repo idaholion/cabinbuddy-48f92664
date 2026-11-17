@@ -55,6 +55,45 @@ export type Database = {
           },
         ]
       }
+      avenger_entries: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          notes: string | null
+          secret: string | null
+          title: string
+          updated_at: string
+          updated_by_email: string | null
+          url: string | null
+          username: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          secret?: string | null
+          title: string
+          updated_at?: string
+          updated_by_email?: string | null
+          url?: string | null
+          username?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          secret?: string | null
+          title?: string
+          updated_at?: string
+          updated_by_email?: string | null
+          url?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       backup_metadata: {
         Row: {
           backup_type: string
@@ -3843,6 +3882,7 @@ export type Database = {
         Args: { user_uuid?: string }
         Returns: string
       }
+      is_avenger_member: { Args: never; Returns: boolean }
       is_family_group_lead: {
         Args: { p_family_group_name: string; p_organization_id: string }
         Returns: boolean
