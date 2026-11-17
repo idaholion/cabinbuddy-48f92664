@@ -31,7 +31,7 @@
 - [x] Family Group Setup hint about delegate checkboxes (optional)
 - [ ] Template-layer supervisor propagation — deferred to off-season queue
 - [ ] Payment transaction ledger — off-season queue
-- [ ] Review 3 critical findings in Security scan
+- [x] Security scan review: zero Critical findings; function search paths pinned for check_bulk_family_group_update and log_allocation_model_change (SQL run, both report search_path=public, findings marked fixed). Remaining open by choice: 2 supervisor-email function warnings, organizations insert policy warning, 2 info notices.
 
 ## Phase 1 — after Round 2 (Nov 12)
 - [x] Status menu shows free-selection state (on hold / open / not enabled) instead of a family order.
