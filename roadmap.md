@@ -10,6 +10,7 @@
 
 
 ## Open
+- [x] Tighten Family Group Overview printing into a two-column contact directory with family-level page-break protection; signed-in checks unavailable for external Supabase.
 - [x] Add Print beside Export on Current & Past Stays, with selected-tab reports and existing year/family scope; authenticated checks unavailable for external Supabase.
 - [x] Repair notification-only active-round completion checks; deployed sender and scheduled checker. Holly's email accepted and text queued Nov 8 at 9:01 PM Denver; waiting-family and repeat-send checks skipped correctly. Eight notification tests and fifteen selection regressions passed; all 46 reservations, secondary turns, and usage fingerprints unchanged. Future handoffs await the families' actual Done actions.
 - [ ] Verify the Departure Checklist box only appears while the current stay is in progress — external Supabase does not provide a test session.

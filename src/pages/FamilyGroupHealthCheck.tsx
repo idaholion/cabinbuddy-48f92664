@@ -10,6 +10,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AlertCircle, CheckCircle, Mail, UserX, Users, RefreshCw, ListChecks, Printer, Phone } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { FamilyDirectoryPrint } from '@/components/FamilyDirectoryPrint';
 
 interface MismatchedMember {
   familyGroup: string;
@@ -252,6 +253,7 @@ export default function FamilyGroupHealthCheck() {
 
   return (
     <div className="space-y-6">
+      <FamilyDirectoryPrint organizationName={activeOrganization?.organization_name || ''} members={allMembers} />
       <div className="text-center space-y-2 mb-4 print:mb-2">
         <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center print:text-4xl print:mb-2">Family Group Overview</h1>
         <p className="text-2xl text-primary text-center font-medium print:text-lg">Organization Member Directory</p>

@@ -1,5 +1,7 @@
 # Project conventions
 
+- Family directory printing uses a body-level print-only report of already-loaded organization members, with two-column flow and family-level page-break protection; this excludes navigation and account diagnostics without changing access or queries.
+
 - Stay printing uses a body-level print-only report projected from the already-scoped visible ledger and selected tab; this keeps navigation, editing controls, and duplicate current-stay forms off paper without changing accounting.
 
 - Orphaned-payment warnings use `orphaned-payments` to exclude actual source/recipient split connections, with legacy notes as a fallback; intentionally isolated split records must not be reported as broken reservation links.
