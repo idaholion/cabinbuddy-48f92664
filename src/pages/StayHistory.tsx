@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, Printer, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -42,6 +42,7 @@ import { usePaymentSync } from "@/hooks/usePaymentSync";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CheckoutFinal from "@/pages/CheckoutFinal";
+import { StayPrintSummary } from "@/components/StayPrintSummary";
 
 
 export default function StayHistory() {
@@ -51,6 +52,7 @@ export default function StayHistory() {
   const [recordPaymentStay, setRecordPaymentStay] = useState<any>(null);
   const [viewPaymentHistory, setViewPaymentHistory] = useState<any>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState("stays");
   const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
   // Asked before we open Venmo, so someone who already sent the money
   // records it instead of paying twice.
@@ -2022,12 +2024,16 @@ export default function StayHistory() {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
+            <Button variant="outline" onClick={() => window.print()}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
           </div>
         </div>
       </div>
 
 
-      <Tabs defaultValue="stays" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
           <TabsTrigger value="stays">Stays</TabsTrigger>
           <TabsTrigger value="overview">Season Overview</TabsTrigger>
@@ -2989,6 +2995,56 @@ export default function StayHistory() {
       </div>
         </TabsContent>
       </Tabs>
+
+      <StayPrintSummary
+        organization={organization?.name || "CabinBuddy"}
+        period={selectedYear === 0 ? "All Years" : String(selectedYear)}
+        scope={`${selectedFamilyGroup === 'all' ? (canViewAllStays ? 'All Family Groups' : myGroupName || 'My stays') : selectedFamilyGroup}${scopeIsMineOnly ? ' · My stays' : ''}`}
+        tab={activeTab}
+        totals={[
+          { label: 'Total Stays', value: String(totalStays) },
+          { label: 'Guest Nights', value: String(totalNights) },
+          { label: 'Total Charges', value: `$${totalCharges.toFixed(2)}` },
+          { label: 'Payments Submitted', value: `$${totalPaidSubmitted.toFixed(2)}` },
+          { label: 'Payments Applied to Stays', value: `$${totalPaid.toFixed(2)}` },
+          { label: 'Receipts Submitted', value: `$${totalReceiptsSubmitted.toFixed(2)}` },
+          { label: 'Receipts Credited to Charges', value: `$${totalReceiptsCredited.toFixed(2)}` },
+          { label: 'Paid via Transferred Credit', value: `$${totalTransferredInApplied.toFixed(2)}` },
+          { label: 'Charges Still Unpaid', value: `$${totalStillOwed.toFixed(2)}` },
+        ]}
+        balances={Array.from(new Set([
+          ...displayReservations.map(({ reservation }) => getLedgerKey(reservation)),
+          ...visibleStandingCredit.map(([key]) => key),
+        ])).map(key => ({ name: getTransferDisplayName(key), balance: finalBalanceByHost.get(key) || 0 }))}
+        stays={displayReservations.map(({ reservation, stayData }) => {
+          const paidLater = staysPaidLater.has(`stay:${reservation.id}`);
+          const transfers = stayData.transfersSinceStay || [];
+          const isCurrent = latestLedgerEventByHost.get(getLedgerKey(reservation)) === `stay:${reservation.id}` && transfers.length === 0;
+          return {
+            id: reservation.id,
+            host: getHostFullName(reservation),
+            family: reservation.family_group,
+            arrival: format(parseDateOnly(reservation.start_date), 'MMM d, yyyy'),
+            departure: format(parseDateOnly(reservation.end_date), 'MMM d, yyyy'),
+            nights: stayData.nights,
+            status: reservation.status === 'unused' ? 'Unused' : !stayData.paymentId ? 'No payment recorded' : stayData.billingAmount === 0 && !stayData.hasOccupancyData ? 'Not checked out' : stayData.amountDue <= 0 || paidLater ? 'Paid' : stayData.amountPaid > 0 ? 'Partial payment' : 'Pending payment',
+            previousBalance: stayData.previousBalance,
+            charges: stayData.billingAmount + (stayData.manualAdjustment || 0),
+            payments: stayData.amountPaid || 0,
+            receipts: stayData.receiptsTotal || 0,
+            closingBalance: stayData.closingBalance,
+            balanceLabel: isCurrent ? 'Current Balance' : 'New Balance',
+            currentBalance: transfers.length > 0 ? stayData.amountDue : undefined,
+            adjustmentNote: stayData.adjustmentNotes,
+            settlementNote: paidLater ? (transfers.some((detail: TransferLedgerDetail) => detail.appliedToDebt > 0) ? 'Carried forward and paid with transferred credit' : 'Carried forward and paid at later stay') : undefined,
+            transfers: transfers.flatMap((detail: TransferLedgerDetail) => {
+              const transfer = creditTransfers.find(t => `transfer:${t.id}:${detail.direction}` === detail.eventId);
+              if (!transfer) return [];
+              return [`Credit ${detail.direction === 'in' ? 'from' : 'to'} ${getTransferDisplayName(detail.direction === 'in' ? transfer.from_ledger_name : transfer.to_ledger_name)} · ${format(parseDateOnly(transfer.transfer_date), 'MMM d, yyyy')} · $${Number(transfer.amount).toFixed(2)}`];
+            }),
+          };
+        })}
+      />
 
       {/* Dialogs */}
       {editOccupancyStay && organization && (

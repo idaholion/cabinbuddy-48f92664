@@ -1,5 +1,7 @@
 # Project conventions
 
+- Stay printing uses a body-level print-only report projected from the already-scoped visible ledger and selected tab; this keeps navigation, editing controls, and duplicate current-stay forms off paper without changing accounting.
+
 - Orphaned-payment warnings use `orphaned-payments` to exclude actual source/recipient split connections, with legacy notes as a fallback; intentionally isolated split records must not be reported as broken reservation links.
 
 - Reservation date expansions are validated by `reservation-edit-limits` in the shared update hook, using freshly read organization-scoped settings and stays; this covers both Edit Booking and Combine Into One Stay without double-counting the original stay.

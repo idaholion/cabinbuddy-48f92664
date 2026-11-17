@@ -439,3 +439,41 @@ All colors MUST be HSL.
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* A body-level report avoids printing navigation, forms, or duplicate stays. */
+.stay-print-summary { display: none; }
+@media print {
+  body:has(> .stay-print-summary) {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --border: 0 0% 65%;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    margin: 0;
+  }
+  body:has(> .stay-print-summary) > :not(.stay-print-summary) { display: none !important; }
+  .stay-print-summary {
+    display: block;
+    padding: 12mm;
+    font-family: Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.4;
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+  }
+  .stay-print-summary header { margin-bottom: 18pt; }
+  .stay-print-summary h1 { font-size: 20pt; font-weight: bold; }
+  .stay-print-summary h2 { font-size: 14pt; font-weight: bold; margin-bottom: 8pt; }
+  .stay-print-summary h3 { font-size: 11pt; font-weight: bold; }
+  .stay-print-summary p { margin: 4pt 0; overflow-wrap: anywhere; }
+  .stay-print-summary dl { margin: 8pt 0; }
+  .stay-print-summary dl > div { display: flex; justify-content: space-between; gap: 16pt; }
+  .stay-print-summary dd { font-weight: bold; white-space: nowrap; }
+  .stay-print-entry { break-inside: avoid; border-top: 1px solid hsl(var(--border)); padding: 10pt 0; }
+  .stay-print-totals { max-width: 420pt; }
+  .stay-print-summary table { width: 100%; border-collapse: collapse; }
+  .stay-print-summary thead { display: table-header-group; }
+  .stay-print-summary tr { break-inside: avoid; }
+  .stay-print-summary th, .stay-print-summary td { text-align: left; padding: 6pt; border-bottom: 1px solid hsl(var(--border)); }
+  .stay-print-summary th:last-child, .stay-print-summary td:last-child { text-align: right; }
+}
