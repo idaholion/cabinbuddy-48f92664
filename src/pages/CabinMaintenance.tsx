@@ -98,7 +98,10 @@ const CabinMaintenance = () => {
   const [editingEntry, setEditingEntry] = useState<MaintenanceEntry | null>(null);
 
   const filteredEntries = useMemo(() => {
-    let list = entries.filter((e) => e.entry_type === tab);
+    // Completed to-dos also belong in the Maintenance Log (they stay to-dos so they can be reopened).
+    const inLog = (e: MaintenanceEntry) =>
+      e.entry_type === 'work_log' || (e.entry_type === 'todo' && e.status === 'completed');
+    let list = entries.filter((e) => (tab === 'work_log' ? inLog(e) : e.entry_type === tab));
     if (tab === 'todo' && todoFilter !== 'all') {
       list = list.filter((e) => e.status === todoFilter);
     }
@@ -125,7 +128,7 @@ const CabinMaintenance = () => {
     const thisYear = new Date().getFullYear();
     const workThisYear = entries.filter(
       (e) =>
-        e.entry_type === 'work_log' &&
+        (e.entry_type === 'work_log' || (e.entry_type === 'todo' && e.status === 'completed')) &&
         e.date_performed &&
         new Date(e.date_performed).getFullYear() === thisYear
     ).length;
