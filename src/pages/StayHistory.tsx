@@ -54,6 +54,7 @@ export default function StayHistory() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("stays");
   const [venmoConfirmStay, setVenmoConfirmStay] = useState<any>(null);
+  const [venmoRecording, setVenmoRecording] = useState(false);
   // Asked before we open Venmo, so someone who already sent the money
   // records it instead of paying twice.
   const [venmoPrecheckStay, setVenmoPrecheckStay] = useState<any>(null);
@@ -354,6 +355,87 @@ export default function StayHistory() {
     }
   };
 
+
+  // Shared by the Record Payment dialog and the one-click "Yes, I've Paid" Venmo confirmation.
+  const recordStayPayment = async (stayToRecord: any, paymentData: { amount: number; paidDate: string; paymentMethod: string; paymentReference?: string; notes?: string }) => {
+            if (!organization?.id) return;
+
+            try {
+              // Stays that never went through Daily & Final Input have no payment
+              // record yet, so create one before recording the payment.
+              const paymentId = await ensurePaymentRecord(stayToRecord);
+              if (!paymentId) {
+                toast.error("Failed to record payment. Please try again.");
+                return;
+              }
+
+              // Get the current payment details
+              const { data: payment, error: fetchError } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('id', paymentId)
+                .single();
+
+              if (fetchError) throw fetchError;
+
+
+              // Preferred: record as its own dated, editable payment line.
+              const addedAsLine = await addPaymentLine(payment.id, payment.organization_id, {
+                amount: paymentData.amount,
+                paidDate: paymentData.paidDate,
+                paymentMethod: paymentData.paymentMethod,
+                paymentReference: paymentData.paymentReference,
+                notes: paymentData.notes,
+              });
+              if (addedAsLine) {
+                await fetchPayments();
+                toast.success("Payment recorded successfully");
+                setRecordPaymentStay(null);
+                return;
+              }
+
+              const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
+              const newBalanceDue = payment.amount - newAmountPaid;
+
+              console.log('[STAY-HISTORY] Recording payment:', {
+                paymentId: payment.id,
+                currentAmountPaid: payment.amount_paid,
+                paymentAmount: paymentData.amount,
+                newAmountPaid,
+                newBalanceDue
+              });
+
+              // Update the payment (balance_due is auto-calculated by database)
+              const { error: updateError } = await supabase
+                .from('payments')
+                .update({
+                  amount_paid: newAmountPaid,
+                  status: (newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending') as any,
+                  payment_method: paymentData.paymentMethod as any,
+                  payment_reference: paymentData.paymentReference,
+                  paid_date: newBalanceDue <= 0 ? paymentData.paidDate : payment.paid_date,
+                  notes: paymentData.notes || payment.notes,
+                  updated_by_user_id: user?.id,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', payment.id);
+
+              console.log('[STAY-HISTORY] Payment update result:', {
+                success: !updateError,
+                error: updateError
+              });
+
+              if (updateError) throw updateError;
+
+              await fetchPayments();
+              toast.success("Payment recorded successfully");
+              setRecordPaymentStay(null);
+            } catch (error: any) {
+              console.error('Error recording payment:', error);
+              toast.error("Failed to record payment. Please try again.");
+              throw error;
+            }
+  };
 
   // Some stays never go through Daily & Final Input (for example a reservation
   // nobody ended up using), so no payment record exists yet. Create one on the
@@ -3098,85 +3180,7 @@ export default function StayHistory() {
             balanceDue: recordPaymentStay.amountDue,
             family_group: recordPaymentStay.family_group
           }}
-          onSave={async (paymentData) => {
-            if (!organization?.id) return;
-
-            try {
-              // Stays that never went through Daily & Final Input have no payment
-              // record yet, so create one before recording the payment.
-              const paymentId = await ensurePaymentRecord(recordPaymentStay);
-              if (!paymentId) {
-                toast.error("Failed to record payment. Please try again.");
-                return;
-              }
-
-              // Get the current payment details
-              const { data: payment, error: fetchError } = await supabase
-                .from('payments')
-                .select('*')
-                .eq('id', paymentId)
-                .single();
-
-              if (fetchError) throw fetchError;
-
-
-              // Preferred: record as its own dated, editable payment line.
-              const addedAsLine = await addPaymentLine(payment.id, payment.organization_id, {
-                amount: paymentData.amount,
-                paidDate: paymentData.paidDate,
-                paymentMethod: paymentData.paymentMethod,
-                paymentReference: paymentData.paymentReference,
-                notes: paymentData.notes,
-              });
-              if (addedAsLine) {
-                await fetchPayments();
-                toast.success("Payment recorded successfully");
-                setRecordPaymentStay(null);
-                return;
-              }
-
-              const newAmountPaid = (payment.amount_paid || 0) + paymentData.amount;
-              const newBalanceDue = payment.amount - newAmountPaid;
-
-              console.log('[STAY-HISTORY] Recording payment:', {
-                paymentId: payment.id,
-                currentAmountPaid: payment.amount_paid,
-                paymentAmount: paymentData.amount,
-                newAmountPaid,
-                newBalanceDue
-              });
-
-              // Update the payment (balance_due is auto-calculated by database)
-              const { error: updateError } = await supabase
-                .from('payments')
-                .update({
-                  amount_paid: newAmountPaid,
-                  status: (newBalanceDue <= 0 ? 'paid' : newAmountPaid > 0 ? 'partial' : 'pending') as any,
-                  payment_method: paymentData.paymentMethod as any,
-                  payment_reference: paymentData.paymentReference,
-                  paid_date: newBalanceDue <= 0 ? paymentData.paidDate : payment.paid_date,
-                  notes: paymentData.notes || payment.notes,
-                  updated_by_user_id: user?.id,
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', payment.id);
-
-              console.log('[STAY-HISTORY] Payment update result:', {
-                success: !updateError,
-                error: updateError
-              });
-
-              if (updateError) throw updateError;
-
-              await fetchPayments();
-              toast.success("Payment recorded successfully");
-              setRecordPaymentStay(null);
-            } catch (error: any) {
-              console.error('Error recording payment:', error);
-              toast.error("Failed to record payment. Please try again.");
-              throw error;
-            }
-          }}
+          onSave={(paymentData) => recordStayPayment(recordPaymentStay, paymentData)}
         />
       )}
 
@@ -3245,20 +3249,38 @@ export default function StayHistory() {
       <Dialog open={!!venmoConfirmStay} onOpenChange={(open) => !open && setVenmoConfirmStay(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Did you complete your Venmo payment?</DialogTitle>
+            <DialogTitle>Return here after paying in Venmo</DialogTitle>
             <DialogDescription>
-              We opened Venmo in a new window so you can send ${venmoConfirmStay?.amountDue?.toFixed(2)}. 
-              Once you've completed the payment, click "Yes, I've Paid" below to record it.
+              <span className="block font-semibold text-foreground text-base mb-2">
+                Opening Venmo in a new window so you can send ${venmoConfirmStay?.amountDue?.toFixed(2)}.
+              </span>
+              <span className="block">
+                When you're finished in Venmo, come back to this page and click "Yes, I've Paid" to
+                record your payment in CabinBuddy. Your balance won't update until you do.
+              </span>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-4">
             <Button variant="outline" onClick={() => setVenmoConfirmStay(null)}>
               Not Yet
             </Button>
-            <Button onClick={() => {
-              setRecordPaymentDefaultMethod('venmo');
-              setRecordPaymentStay(venmoConfirmStay);
-              setVenmoConfirmStay(null);
+            <Button disabled={venmoRecording} onClick={async () => {
+              const stayToRecord = venmoConfirmStay;
+              if (!stayToRecord || venmoRecording) return;
+              setVenmoRecording(true);
+              try {
+                await recordStayPayment(stayToRecord, {
+                  amount: Math.round(stayToRecord.amountDue * 100) / 100,
+                  paidDate: format(new Date(), 'yyyy-MM-dd'),
+                  paymentMethod: 'venmo',
+                  notes: 'Recorded via Pay Now Via Venmo button',
+                });
+                setVenmoConfirmStay(null);
+              } catch {
+                // recordStayPayment already showed the error; keep the dialog open to retry
+              } finally {
+                setVenmoRecording(false);
+              }
             }}>
               Yes, I've Paid
             </Button>
