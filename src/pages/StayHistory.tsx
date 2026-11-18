@@ -38,7 +38,6 @@ import { useEffectiveRole } from "@/hooks/useEffectiveRole";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfileClaiming } from "@/hooks/useProfileClaiming";
-import { usePaymentSync } from "@/hooks/usePaymentSync";
 import { BillingCalculator } from "@/lib/billing-calculator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CheckoutFinal from "@/pages/CheckoutFinal";
@@ -93,7 +92,6 @@ export default function StayHistory() {
   const canViewAllStays = !!isAdmin || !!isTreasurer;
   const { payments, fetchPayments } = usePayments();
   const [paymentSplits, setPaymentSplits] = useState<any[]>([]);
-  const { syncing, syncPayments } = usePaymentSync();
   const { transfers: creditTransfers, createTransfer, refetchTransfers } = useCreditTransfers();
 
   const ledgerName = effective.isImpersonated
@@ -343,18 +341,6 @@ export default function StayHistory() {
       toast.error(error.message || "Failed to link orphaned payments");
     }
   };
-
-  const handleSyncPayments = async () => {
-    if (!organization?.id) return;
-    
-    const currentYear = selectedYear === 0 ? new Date().getFullYear() : selectedYear;
-    const result = await syncPayments(organization.id, currentYear);
-    
-    if (result?.success) {
-      await handleSync();
-    }
-  };
-
 
   // Shared by the Record Payment dialog and the one-click "Yes, I've Paid" Venmo confirmation.
   const recordStayPayment = async (stayToRecord: any, paymentData: { amount: number; paidDate: string; paymentMethod: string; paymentReference?: string; notes?: string }) => {
@@ -2084,16 +2070,6 @@ export default function StayHistory() {
               <Button variant="outline" onClick={handleSync}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Sync Data
-              </Button>
-            )}
-            {isAdmin && (
-              <Button 
-                variant="default" 
-                onClick={handleSyncPayments}
-                disabled={syncing}
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
-                {syncing ? 'Syncing...' : 'Sync Payments'}
               </Button>
             )}
             {isAdmin && orphanedPaymentsCount > 0 && (

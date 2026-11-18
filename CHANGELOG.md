@@ -7,6 +7,10 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.4] - 2026-11-18
+### Changed
+- Removed the "Sync Payments" tool from Financial Admin Tools and Stay History, so payment records are no longer created in bulk from check-in logs
+
 ## [2.4.3] - 2026-11-18
 ### Changed
 - Financial Admin Tools: removed outdated debugging tools (Fix Empty Occupancy Charges, Link Orphaned Payments, Cleanup Duplicate Payments)
