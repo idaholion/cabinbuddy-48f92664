@@ -519,7 +519,13 @@ function EntryDialog({
         title,
         description,
         category: category || undefined,
-        date_performed: effectiveType === 'work_log' ? datePerformed : null,
+        // Keep the completion date on finished to-dos so they stay in the Maintenance Log.
+        date_performed:
+          effectiveType === 'work_log'
+            ? datePerformed
+            : effectiveType === 'todo' && editing?.status === 'completed'
+            ? editing.date_performed ?? null
+            : null,
         performed_by_name: effectiveType === 'reference' ? null : (performedBy || null),
         cost: cost ? parseFloat(cost) : null,
         priority: effectiveType === 'todo' ? priority : null,
