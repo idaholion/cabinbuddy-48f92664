@@ -489,7 +489,46 @@ export function runSelectionPreflight(input: PreflightInput): PreflightResult {
     );
   }
 
+  // A fully finished season is history: its saved dates and counts reflect early
+  // finishes and extensions, so turn-shape and allowance checks no longer apply.
+  if (isSeasonFinished(season, periods, secondaryStatus)) {
+    const historical = new Set(HISTORICAL_CHECK_IDS);
+    return finish(
+      year,
+      checks.map((c) =>
+        historical.has(c.id) && c.status !== "pass"
+          ? { ...c, status: "pass" as const, detail: `${year} selection is finished — saved history, not checked.` }
+          : c
+      )
+    );
+  }
+
   return finish(year, checks);
+}
+
+/** Checks that only matter before or during a season, never after it ends. */
+export const HISTORICAL_CHECK_IDS = [
+  "turns-scheduled",
+  "turn-overlaps",
+  "turn-length",
+  "season-timing",
+  "primary-limit",
+  "secondary-limit",
+  "secondary-state",
+];
+
+/** Every Round 1 turn is Done and, when Round 2 is on, Round 2 is finished too. */
+export function isSeasonFinished(
+  season: PreflightSeason | null,
+  periods: PreflightPeriod[],
+  secondaryStatus: PreflightSecondaryStatus | null
+): boolean {
+  if (!season || !periods.length) return false;
+  if (!periods.every((p) => p.reservations_completed === true)) return false;
+  if (season.enable_secondary_selection) {
+    return !!secondaryStatus?.started_at && secondaryStatus.turn_completed === true;
+  }
+  return true;
 }
 
 function formatDay(date: Date): string {

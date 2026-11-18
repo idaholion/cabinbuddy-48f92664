@@ -251,3 +251,34 @@ test('dates parse as local calendar days', () => {
   expect(parseSeasonDate(null)).toBeNull();
   expect(parseSeasonDate('not-a-date')).toBeNull();
 });
+
+const finishedInput = (statusOverrides = {}): PreflightInput => ({
+  year: 2027,
+  today: new Date(2026, 10, 18),
+  familyGroups: [...FAMILIES],
+  season: season({ rotation_year: 2027 }),
+  periods: [
+    { current_family_group: 'Poznanovich Family', selection_start_date: '2026-10-01', selection_end_date: '2026-10-14', reservations_completed: true },
+    { current_family_group: 'Woolf Family', selection_start_date: '2026-10-14', selection_end_date: '2026-10-27', reservations_completed: true },
+    { current_family_group: 'Cook Family', selection_start_date: '2026-10-29', selection_end_date: '2026-11-11', reservations_completed: true },
+    { current_family_group: 'Andrew Family', selection_start_date: '2026-10-30', selection_end_date: '2026-11-12', reservations_completed: true },
+  ],
+  usage: FAMILIES.map((family_group) => ({ family_group, time_periods_used: 2, time_periods_allowed: 0, turn_completed: true })),
+  secondaryStatus: { current_family_group: null, started_at: '2026-11-12T18:28:56Z', turn_completed: true, ...statusOverrides },
+});
+
+test('finished season does not flag overlapping turns or zero saved pick counts', () => {
+  const result = runSelectionPreflight(finishedInput());
+  const byId = Object.fromEntries(result.checks.map((c) => [c.id, c.status]));
+  expect(byId['turn-overlaps']).toBe('pass');
+  expect(byId['primary-limit']).toBe('pass');
+  expect(byId['season-timing']).toBe('pass');
+  expect(result.summary.fail).toBe(0);
+});
+
+test('season with Round 2 still running keeps flagging overlaps and zero counts', () => {
+  const result = runSelectionPreflight(finishedInput({ turn_completed: false }));
+  const byId = Object.fromEntries(result.checks.map((c) => [c.id, c.status]));
+  expect(byId['turn-overlaps']).toBe('fail');
+  expect(byId['primary-limit']).toBe('fail');
+});
