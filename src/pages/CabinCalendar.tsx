@@ -548,15 +548,8 @@ const CabinCalendar = () => {
                                    if (st.state === 'locked') return <div>🔒 Calendar on hold. Free selection opens {formatOpening(st.opensAt)}</div>;
                                    if (st.state === 'awaiting_date') return <div>🔒 Calendar on hold. The opening time will be announced shortly.</div>;
                                    return <div>🔒 Free selection is not enabled. Contact the calendar keeper.</div>;
-                                 })()}
-                                 {freeSelection.state?.state !== 'not_enabled' && (
-                                   <div className="text-xs text-muted-foreground">
-                                     {freeSelection.rules.min || 2}-night minimum
-                                     {freeSelection.rules.max ? ` · up to ${freeSelection.rules.max} nights per stay` : ''}
-                                     {freeSelection.rules.weeks ? ` · up to ${freeSelection.rules.weeks} weeks per family` : ''}
-                                   </div>
-                                 )}
-                               </div>
+                                })()}
+                              </div>
                              ) : (
                              <div className="space-y-1">
 
