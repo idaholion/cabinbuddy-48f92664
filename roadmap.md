@@ -26,12 +26,13 @@
 - [ ] Verify new-booking turn enforcement in the signed-in UI — external Supabase cannot provide a test session.
 - [x] Replace blanket reservation-extension block with availability, turn, and family-limit checks; nine safeguard tests passed.
 - [ ] Verify reservation extension through the signed-in UI — external Supabase does not provide a test session.
-- [ ] Selection-process conversation: back-to-back picks vs one multi-week pick (Debbie's case) — user wants to discuss
+- [x] Selection-process conversation: back-to-back picks vs one multi-week pick (Debbie's case) — resolved, no change needed; one two-week stay stays allowed inside the existing 14-night limit and combine prompt.
 - [ ] Verify selection counter + multi-week booking prompts in preview (needs a sign-in)
 - [x] Family Group Setup hint about delegate checkboxes (optional)
 - [ ] Template-layer supervisor propagation — deferred to off-season queue
 - [ ] Payment transaction ledger — off-season queue
 - [x] Security scan review: zero Critical findings; function search paths pinned for check_bulk_family_group_update and log_allocation_model_change (SQL run, both report search_path=public, findings marked fixed). Remaining open by choice: 2 supervisor-email function warnings, organizations insert policy warning, 2 info notices.
+- [x] Single version source: root CHANGELOG.md drives the sidebar number; the window shows the three newest releases with a "Show older updates" button for the rest (v2.4.2).
 
 ## Phase 1 — after Round 2 (Nov 12)
 - [x] Status menu shows free-selection state (on hold / open / not enabled) instead of a family order.
