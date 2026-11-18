@@ -12,7 +12,7 @@ import { UserManagement } from "@/components/UserManagement";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
-import { useReservationSettings } from "@/hooks/useReservationSettings";
+import { useMultiOrganization } from "@/hooks/useMultiOrganization";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFamilyGroups } from "@/hooks/useFamilyGroups";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -21,6 +21,7 @@ import { useAutoSave } from "@/hooks/useAutoSave";
 import { unformatPhoneNumber } from "@/lib/phone-utils";
 
 import { supabase } from "@/integrations/supabase/client";
+import { createOrganizationContext, secureSelect, secureUpdate, secureInsert } from "@/lib/secure-queries";
 
 const FamilySetup = () => {
   // IMMEDIATE debug logging to see if component is loading at all
@@ -45,8 +46,13 @@ const FamilySetup = () => {
     otherAuthKeys: Object.keys(localStorage).filter(key => key.includes('auth'))
   });
   
-  const { organization, createOrganization, updateOrganization, loading: orgLoading } = useOrganization();
-  const { reservationSettings, saveReservationSettings, loading: settingsLoading } = useReservationSettings();
+  // createOrganization is only used for the "create new organization" flow.
+  // Everything else on this page follows the organization selected in the sidebar switcher.
+  const { createOrganization, loading: orgLoading } = useOrganization();
+  const { activeOrganization } = useMultiOrganization();
+  const activeOrgId = activeOrganization?.organization_id;
+  const [activeOrgDetails, setActiveOrgDetails] = useState<any>(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
   const { familyGroups: existingFamilyGroups } = useFamilyGroups();
   const { isGroupLead, isGroupMember, isAdmin, userFamilyGroup, loading: roleLoading } = useUserRole();
   
@@ -127,11 +133,68 @@ const FamilySetup = () => {
     adminFamilyGroup
   };
 
+  // Auto-save drafts are stored per organization so one cabin's draft
+  // can never appear while editing another cabin (or the Master Template).
   const { loadSavedData, clearSavedData } = useAutoSave({
-    key: 'family-setup',
+    key: `family-setup-${activeOrgId ?? 'create'}`,
     data: formData,
     enabled: true,
   });
+
+  // Load the full details of the ACTIVE organization (the one chosen in the
+  // sidebar switcher), not necessarily the user's primary organization.
+  // Switching organizations resets the form first so data never bleeds across.
+  useEffect(() => {
+    if (isCreatingNew || !activeOrgId) {
+      setActiveOrgDetails(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadActiveOrganization = async () => {
+      // Reset the form so the previous organization's data is never shown
+      // against the newly selected organization.
+      setOrgName("");
+      setPropertyName("");
+      setAdminName("");
+      setAdminPhone("");
+      setAdminEmail("");
+      setTreasurerName("");
+      setTreasurerPhone("");
+      setTreasurerEmail("");
+      setCalendarKeeperName("");
+      setCalendarKeeperPhone("");
+      setCalendarKeeperEmail("");
+      setFamilyGroups([{ name: "", leadFirstName: "", leadLastName: "", leadEmail: "" }]);
+
+      try {
+        const orgContext = createOrganizationContext(activeOrgId);
+        const { data: org, error: orgError } = await secureSelect('organizations', orgContext)
+          .select('*')
+          .eq('id', activeOrgId)
+          .single();
+
+        if (orgError) {
+          console.error('Error loading active organization details:', orgError);
+          return;
+        }
+
+        const { data: settings } = await secureSelect('reservation_settings', orgContext)
+          .select('property_name')
+          .maybeSingle();
+
+        if (cancelled) return;
+        setActiveOrgDetails(org);
+        setPropertyName(settings?.property_name || "");
+      } catch (error) {
+        console.error('Error loading active organization:', error);
+      }
+    };
+
+    loadActiveOrganization();
+    return () => { cancelled = true; };
+  }, [activeOrgId, isCreatingNew]);
 
   // Redirect regular group members to their profile page (but allow new joiners to complete setup)
   useEffect(() => {
@@ -280,41 +343,33 @@ const FamilySetup = () => {
       return;
     }
     
-    // First try to load from database if organization exists
-    if (organization && !isCreatingNew && user) {
-      // Additional safety check - ensure organization belongs to current user
-      console.log('🔍 [FAMILY SETUP] Loading organization data:', {
-        orgId: organization.id,
-        orgName: organization.name,
+    // First try to load from database if the active organization exists
+    if (activeOrgDetails && !isCreatingNew && user) {
+      console.log('🔍 [FAMILY SETUP] Loading active organization data:', {
+        orgId: activeOrgDetails.id,
+        orgName: activeOrgDetails.name,
         userId: user.id,
-        userEmail: user.email,
-        cachedUserId: organization._cached_user_id
+        userEmail: user.email
       });
-      
-      // Only load organization data if it's validated for current user
-      const orgAny = organization as any;
-      if (!orgAny._cached_user_id || orgAny._cached_user_id === user.id) {
-        setOrgName(organization.name || "");
-        setOrganizationCode(organization.code || generateOrgCode());
-        setAdminName(organization.admin_name || "");
-        setAdminPhone(organization.admin_phone || "");
-        setAdminEmail(organization.admin_email || "");
-        setTreasurerName(organization.treasurer_name || "");
-        setTreasurerPhone(organization.treasurer_phone || "");
-        setTreasurerEmail(organization.treasurer_email || "");
-        setCalendarKeeperName(organization.calendar_keeper_name || "");
-        setCalendarKeeperPhone(organization.calendar_keeper_phone || "");
-        setCalendarKeeperEmail(organization.calendar_keeper_email || "");
-      } else {
-        console.warn('🚨 [FAMILY SETUP] Organization data belongs to different user - ignoring');
-      }
-      
+
+      setOrgName(activeOrgDetails.name || "");
+      setOrganizationCode(activeOrgDetails.code || generateOrgCode());
+      setAdminName(activeOrgDetails.admin_name || "");
+      setAdminPhone(activeOrgDetails.admin_phone || "");
+      setAdminEmail(activeOrgDetails.admin_email || "");
+      setTreasurerName(activeOrgDetails.treasurer_name || "");
+      setTreasurerPhone(activeOrgDetails.treasurer_phone || "");
+      setTreasurerEmail(activeOrgDetails.treasurer_email || "");
+      setCalendarKeeperName(activeOrgDetails.calendar_keeper_name || "");
+      setCalendarKeeperPhone(activeOrgDetails.calendar_keeper_phone || "");
+      setCalendarKeeperEmail(activeOrgDetails.calendar_keeper_email || "");
+
       // Don't overwrite with auto-save data when loading fresh organization data
       return;
     }
-    
+
     // Only load auto-saved data if we're not loading fresh organization data
-    if (!organization) {
+    if (!activeOrgDetails) {
       // Try to load auto-saved data first (only if there's meaningful data)
       const savedData = loadSavedData();
       if (savedData && (savedData.orgName || savedData.familyGroups?.some((g: any) => typeof g === 'string' ? g.trim() : g.name?.trim()))) {
@@ -344,9 +399,9 @@ const FamilySetup = () => {
             description: "Your previous work has been restored from auto-save.",
           });
         }
-      } else {
-        // Fallback to localStorage for backward compatibility
-        const savedSetup = localStorage.getItem('familySetupData');
+      } else if (activeOrgId) {
+        // Fallback to localStorage for backward compatibility (scoped per organization)
+        const savedSetup = localStorage.getItem(`familySetupData_${activeOrgId}`);
         if (savedSetup) {
           const data = JSON.parse(savedSetup);
           setOrgName(data.orgName || "");
@@ -367,14 +422,7 @@ const FamilySetup = () => {
         }
       }
     }
-  }, [organization, isCreatingNew]); // Removed problematic dependencies
-
-  // Load property name from reservation settings
-  useEffect(() => {
-    if (reservationSettings && !isCreatingNew) {
-      setPropertyName(reservationSettings.property_name || "");
-    }
-  }, [reservationSettings, isCreatingNew]);
+  }, [activeOrgDetails, isCreatingNew]); // Removed problematic dependencies
 
   // Auto-populate admin fields with current user data if empty
   useEffect(() => {
@@ -434,19 +482,45 @@ const FamilySetup = () => {
     
     try {
       let newOrganization;
-      if (organization) {
-        newOrganization = await updateOrganization(orgData);
+      if (activeOrgDetails && activeOrgId) {
+        // Update the ACTIVE organization (the one selected in the sidebar switcher)
+        const orgContext = createOrganizationContext(activeOrgId);
+        const { data: updatedOrg, error: updateError } = await secureUpdate('organizations', orgData, orgContext)
+          .eq('id', activeOrgId)
+          .select()
+          .single();
+
+        if (updateError) {
+          throw updateError;
+        }
+        newOrganization = updatedOrg;
+        setActiveOrgDetails(updatedOrg);
       } else {
         newOrganization = await createOrganization(orgData);
       }
-      
-      // Save property name to reservation settings if provided and organization exists
-      if (propertyName.trim() && (organization || newOrganization)) {
+
+      const savedOrgId = (activeOrgDetails || newOrganization)?.id;
+
+      // Save property name to the ACTIVE organization's reservation settings
+      if (propertyName.trim() && savedOrgId) {
         try {
-          await saveReservationSettings({ property_name: propertyName });
+          setSettingsLoading(true);
+          const orgContext = createOrganizationContext(savedOrgId);
+          const { data: existingSettings } = await secureSelect('reservation_settings', orgContext)
+            .select('id')
+            .maybeSingle();
+
+          if (existingSettings?.id) {
+            await secureUpdate('reservation_settings', { property_name: propertyName }, orgContext)
+              .eq('id', existingSettings.id);
+          } else {
+            await secureInsert('reservation_settings', { property_name: propertyName }, orgContext);
+          }
         } catch (error) {
           console.log('Property name will be saved later - organization context not ready yet');
           // This is not critical, property name can be saved later
+        } finally {
+          setSettingsLoading(false);
         }
       }
       
@@ -465,7 +539,7 @@ const FamilySetup = () => {
       }
       
       // Create/update family groups in the database
-      const currentOrgId = (organization || newOrganization)?.id;
+      const currentOrgId = (activeOrgDetails || newOrganization)?.id;
       
       if (validGroups.length > 0 && currentOrgId) {
         try {
@@ -566,7 +640,7 @@ const FamilySetup = () => {
         adminFamilyGroup
       };
       
-      localStorage.setItem('familySetupData', JSON.stringify(setupData));
+      localStorage.setItem(`familySetupData_${currentOrgId ?? 'create'}`, JSON.stringify(setupData));
       
       // Clear auto-saved data after successful save
       clearSavedData();
@@ -1139,7 +1213,7 @@ const FamilySetup = () => {
         )}
 
         {/* User Management Section - Only visible for Administrators */}
-        {isAdmin && !showProfileClaimingStep && !isCreatingNew && organization && (
+        {isAdmin && !showProfileClaimingStep && !isCreatingNew && activeOrgDetails && (
           <Card className="bg-card/95 mb-8">
             <CardHeader>
               <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
@@ -1213,12 +1287,12 @@ const FamilySetup = () => {
       </div>
 
       {/* Send Invite Dialog */}
-      {organization && (
+      {activeOrgDetails && (
         <SendInviteDialog
           open={showSendInviteDialog}
           onOpenChange={setShowSendInviteDialog}
-          organizationId={organization.id}
-          organizationName={organization.name}
+          organizationId={activeOrgDetails.id}
+          organizationName={activeOrgDetails.name}
           organizationCode={organizationCode}
           members={existingFamilyGroups.flatMap(group => 
             (group.host_members || []).map(member => ({
