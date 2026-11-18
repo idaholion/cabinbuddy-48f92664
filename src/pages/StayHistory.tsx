@@ -1,7 +1,6 @@
 import { addPaymentLine } from "@/lib/payment-transactions";
 import { getStaysPaidLater } from "@/lib/stay-settlement";
 import { applyTransferToBalance } from "@/lib/transfer-balance";
-import { countOrphanedPayments } from "@/lib/orphaned-payments";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -318,27 +317,6 @@ export default function StayHistory() {
       toast.success("Data refreshed successfully");
     } catch (error) {
       toast.error("Failed to refresh data");
-    }
-  };
-
-  const handleLinkOrphanedPayments = async () => {
-    if (!organization?.id) return;
-    
-    try {
-      const { data, error } = await supabase.rpc('link_orphaned_payments_to_reservations', {
-        p_organization_id: organization.id
-      });
-      
-      if (error) throw error;
-      
-      const result = data as { success: boolean; linked_payments: number; message: string };
-      toast.success(result.message || 'Orphaned payments have been linked');
-      
-      // Refresh all data
-      await handleSync();
-    } catch (error: any) {
-      console.error('Error linking orphaned payments:', error);
-      toast.error(error.message || "Failed to link orphaned payments");
     }
   };
 
@@ -1787,15 +1765,10 @@ export default function StayHistory() {
     selectedYear === 0 || parseDateOnly(transfer.transfer_date).getFullYear() === selectedYear
   );
 
-  // Actual split connections exclude both source and recipient payments;
-  // legacy split notes remain a fallback for older records.
-  const orphanedPaymentsCount = countOrphanedPayments(payments, paymentSplits);
-  
   console.log(`[StayHistory] Summary:`, {
     totalStays,
     totalNights,
     totalPaid,
-    orphanedPayments: orphanedPaymentsCount,
     totalPayments: payments.length,
     linkedPayments: payments.filter(p => p.reservation_id !== null).length
   });
@@ -2070,12 +2043,6 @@ export default function StayHistory() {
               <Button variant="outline" onClick={handleSync}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Sync Data
-              </Button>
-            )}
-            {isAdmin && orphanedPaymentsCount > 0 && (
-              <Button variant="outline" onClick={handleLinkOrphanedPayments}>
-                <AlertCircle className="h-4 w-4 mr-2" />
-                Link {orphanedPaymentsCount} Orphaned Payment{orphanedPaymentsCount !== 1 ? 's' : ''}
               </Button>
             )}
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>

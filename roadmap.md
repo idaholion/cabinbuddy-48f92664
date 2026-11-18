@@ -34,6 +34,7 @@
 - [x] Security scan review: zero Critical findings; function search paths pinned for check_bulk_family_group_update and log_allocation_model_change (SQL run, both report search_path=public, findings marked fixed). Remaining open by choice: 2 supervisor-email function warnings, organizations insert policy warning, 2 info notices.
 - [x] Single version source: root CHANGELOG.md drives the sidebar number; the window shows the three newest releases with a "Show older updates" button for the rest (v2.4.2).
 - [x] Remove the bulk "Sync Payments" tool from Financial Admin Tools and Stay History so payments are never created from check-in logs; Adjust Billing for Reservation remains the only financial repair tool (v2.4.4).
+- [x] Remove the bulk "Link Orphaned Payments" button and its action from Current & Past Stays without changing payments or stays (v2.4.5).
 
 ## Phase 1 — after Round 2 (Nov 12)
 - [x] Status menu shows free-selection state (on hold / open / not enabled) instead of a family order.

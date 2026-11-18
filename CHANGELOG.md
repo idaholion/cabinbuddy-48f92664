@@ -7,6 +7,10 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.5] - 2026-11-18
+### Changed
+- Removed the bulk "Link Orphaned Payments" action from Current & Past Stays; existing payments and stays are unchanged
+
 ## [2.4.4] - 2026-11-18
 ### Changed
 - Removed the "Sync Payments" tool from Financial Admin Tools and Stay History, so payment records are no longer created in bulk from check-in logs
