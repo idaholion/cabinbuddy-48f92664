@@ -38,6 +38,7 @@ import {
   MessageCircle as MessageCircleIcon
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import {
   Sidebar,
   SidebarContent,
@@ -308,6 +309,9 @@ export function AppSidebar() {
     <Sidebar className="border-r" collapsible="icon">
       <div className="flex items-center justify-between p-2 border-b">
         <SidebarTrigger />
+      </div>
+      <div className="px-2 pt-2 border-b pb-2">
+        <OrganizationSwitcher compact />
       </div>
       <SidebarContent>
         {/* Dashboard */}
