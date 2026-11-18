@@ -28,3 +28,5 @@
 - Season readiness uses `selection-preflight` as a pure projection over already-loaded, organization-scoped rows, treating fully finished seasons as history (turn-shape and allowance checks pass); the readiness card and `useSelectionPreflight` only read, so a failing check is reported for a human to fix and never repairs selection state on its own.
 - Yearly season-setup reminders use the pure `_shared/season-setup-reminders` decision inside `auto-create-selection-season`, which runs automatic setup before reminders and logs delivery per season in notification_log; this prevents duplicate or pointless reminders.
 - The app version shown in the sidebar is read from the newest entry in root `CHANGELOG.md` (plus build date); add a changelog entry with a bumped Major.Minor.Patch for each user-visible release so there is only one version source.
+
+- The Master Template org is a normal organization flagged `is_template_source`; supervisors reach it through ordinary admin membership and the org switcher, and `MasterTemplateBanner` marks it in the layout, so no special access paths exist.

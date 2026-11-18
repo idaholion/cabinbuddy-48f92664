@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { CBHelpButton } from '@/components/CBHelpButton';
 import { GuestAccessBanner } from '@/components/GuestAccessBanner';
 import { TestOrganizationBanner } from '@/components/TestOrganizationBanner';
+import { MasterTemplateBanner } from '@/components/MasterTemplateBanner';
 import { ProfileClaimingPrompt } from '@/components/ProfileClaimingPrompt';
 import { PendingTradeRequestBanner } from '@/components/PendingTradeRequestBanner';
 import { ReadOnlyModeProvider } from '@/components/ReadOnlyModeProvider';
@@ -27,6 +28,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           <AppSidebar />
           <main className="flex-1 min-w-0">
             <GuestAccessBanner />
+            <MasterTemplateBanner />
             <TestOrganizationBanner />
             <ProfileClaimingPrompt />
             <PendingTradeRequestBanner />
