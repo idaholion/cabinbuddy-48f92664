@@ -7,6 +7,10 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.3] - 2026-11-18
+### Changed
+- Financial Admin Tools: removed outdated debugging tools (Fix Empty Occupancy Charges, Link Orphaned Payments, Cleanup Duplicate Payments)
+
 ## [2.4.2] - 2026-11-18
 ### Changed
 - The version window now opens with the three newest releases and a "Show older updates" button for the rest

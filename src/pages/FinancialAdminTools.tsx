@@ -11,7 +11,6 @@ import { Settings, DollarSign, AlertCircle, RefreshCw, Link2 } from "lucide-reac
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
-import { CleanupDuplicatePayments } from "@/components/CleanupDuplicatePayments";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
@@ -330,67 +329,6 @@ export default function FinancialAdminTools() {
         </CardContent>
       </Card>
 
-      {/* Fix Empty Occupancy Charges */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-warning" />
-            <CardTitle>Fix Empty Occupancy Charges</CardTitle>
-          </div>
-          <CardDescription>
-            Sets payments with missing or null daily_occupancy data to $0.00. This is a legacy data cleanup tool.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>⚠️ One-time cleanup tool:</strong> This operation sets all payments with missing occupancy data to $0.00. 
-              Once run, it typically doesn't need to be run again unless you're backfilling old data.
-            </AlertDescription>
-          </Alert>
-          <Button 
-            variant="destructive" 
-            onClick={() => setShowFixConfirmDialog(true)}
-            disabled={fixing}
-          >
-            {fixing ? 'Fixing...' : 'Fix Empty Occupancy Charges'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Link Orphaned Payments */}
-      {orphanedCount > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Link2 className="h-5 w-5 text-primary" />
-              <CardTitle>Link Orphaned Payments</CardTitle>
-            </div>
-            <CardDescription>
-              Automatically links payment records to matching reservations based on family group and date overlap.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Found <strong>{orphanedCount}</strong> payment{orphanedCount !== 1 ? 's' : ''} not linked to any reservation.
-              </AlertDescription>
-            </Alert>
-            <Button 
-              onClick={handleLinkOrphanedPayments}
-              disabled={linking}
-            >
-              <Link2 className="h-4 w-4 mr-2" />
-              {linking ? 'Linking...' : `Link ${orphanedCount} Orphaned Payment${orphanedCount !== 1 ? 's' : ''}`}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              This will attempt to match orphaned payments to reservations based on the family group name and overlapping dates.
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Adjust Billing for Reservation */}
       <Card>
@@ -462,30 +400,6 @@ export default function FinancialAdminTools() {
         </CardContent>
       </Card>
 
-      {/* Cleanup Duplicate Payments */}
-      <CleanupDuplicatePayments />
-
-      {/* Confirmation Dialog for Fix Empty Occupancy */}
-      <AlertDialog open={showFixConfirmDialog} onOpenChange={setShowFixConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will set all payments with missing or null daily_occupancy data to $0.00. 
-              This action cannot be undone automatically.
-              <br /><br />
-              This is typically used as a one-time cleanup for legacy data. Make sure you understand 
-              the implications before proceeding.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleFixEmptyOccupancy} className="bg-destructive hover:bg-destructive/90">
-              Confirm Fix
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Adjust Billing Dialog */}
       {adjustBillingData && (
