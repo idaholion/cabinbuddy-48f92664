@@ -4,7 +4,7 @@ BEGIN;
 
 -- 1. Create the template org (only once).
 INSERT INTO public.organizations (name, code, is_template_source)
-SELECT 'CabinBuddy Master Template', public.generate_unique_organization_code(), false
+SELECT 'CabinBuddy Master Template', public.generate_unique_organization_code('CBMASTER'), false
 WHERE NOT EXISTS (SELECT 1 FROM public.organizations WHERE name = 'CabinBuddy Master Template');
 
 -- 2. Start it with a copy of today's starter content so new cabins get exactly
