@@ -24,3 +24,13 @@ export function parseChangelog(text: string): ChangelogEntry[] {
 
 export const changelog = parseChangelog(raw);
 export const currentVersion = changelog[0]?.version ?? "0.0.0";
+
+/** Releases shown before the "Show older updates" button. */
+export const RECENT_RELEASE_COUNT = 3;
+
+export interface ChangelogSplit { recent: ChangelogEntry[]; older: ChangelogEntry[] }
+
+/** Splits newest-first entries into the releases shown by default and the collapsed rest. */
+export function splitChangelog(entries: ChangelogEntry[] = changelog): ChangelogSplit {
+  return { recent: entries.slice(0, RECENT_RELEASE_COUNT), older: entries.slice(RECENT_RELEASE_COUNT) };
+}
