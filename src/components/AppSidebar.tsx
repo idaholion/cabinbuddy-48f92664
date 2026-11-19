@@ -217,11 +217,6 @@ const betaItems = [
     icon: FileText,
   },
   {
-    title: "Financial Admin Tools",
-    url: "/financial-admin-tools",
-    icon: Settings,
-  },
-  {
     title: "Google Calendar Setup",
     url: "/google-calendar-setup",
     icon: Calendar,

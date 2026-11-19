@@ -7,6 +7,12 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.6] - 2026-11-18
+### Changed
+- Removed Sync Data and the Admin Tools shortcut from Current & Past Stays
+- Moved Adjust Billing for Reservation into Financial Dashboard; retired the separate Financial Admin Tools page and sidebar link, with old links redirected to the dashboard
+- Existing payments, stays, and automatic refresh behavior are unchanged
+
 ## [2.4.5] - 2026-11-18
 ### Changed
 - Removed the bulk "Link Orphaned Payments" action from Current & Past Stays; existing payments and stays are unchanged

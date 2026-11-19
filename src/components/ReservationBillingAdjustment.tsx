@@ -1,21 +1,20 @@
 import { useState, useEffect } from "react";
 import { useOrganization } from "@/hooks/useOrganization";
-import { supabase } from "@/integrations/supabase/client";
+import { createOrganizationContext, secureSelect, secureUpdate } from "@/lib/secure-queries";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, DollarSign } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageHeader } from "@/components/ui/page-header";
 import { AdjustBillingDialog } from "@/components/AdjustBillingDialog";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/date-utils";
 
-export default function FinancialAdminTools() {
+export default function ReservationBillingAdjustment() {
   const { organization } = useOrganization();
   const { toast } = useToast();
+  const context = createOrganizationContext(organization?.id, organization?.is_test_organization, organization?.allocation_model);
   
   const [selectedReservationId, setSelectedReservationId] = useState<string>('');
   const [reservations, setReservations] = useState<any[]>([]);
@@ -33,8 +32,7 @@ export default function FinancialAdminTools() {
     if (!organization?.id) return;
     
     try {
-      const { data, error } = await supabase
-        .from('reservations')
+      const { data, error } = await secureSelect('reservations', context)
         .select(`
           id, 
           family_group, 
@@ -62,15 +60,16 @@ export default function FinancialAdminTools() {
   };
 
   const handleReservationSelect = async (reservationId: string) => {
+    if (!organization?.id) return;
+    setSelectedPayment(null);
     setSelectedReservationId(reservationId);
     setLoadingPayment(true);
     
     try {
-      const { data, error } = await supabase
-        .from('payments')
+      const { data, error } = await secureSelect('payments', context)
         .select('*')
         .eq('reservation_id', reservationId)
-        .eq('organization_id', organization!.id)
+        .eq('organization_id', organization.id)
         .single();
       
       if (!error && data) {
@@ -87,8 +86,7 @@ export default function FinancialAdminTools() {
     if (!selectedPayment) return;
     
     // Fetch fresh data to avoid stale state
-    const { data: freshPayment } = await supabase
-      .from('payments')
+    const { data: freshPayment } = await secureSelect('payments', context)
       .select('amount, manual_adjustment_amount, adjustment_notes, billing_locked, family_group')
       .eq('id', selectedPayment.id)
       .single();
@@ -114,13 +112,11 @@ export default function FinancialAdminTools() {
   }) => {
     if (!adjustBillingData?.paymentId || !organization?.id) return;
     
-    const { error } = await supabase
-      .from('payments')
-      .update({
+    const { error } = await secureUpdate('payments', {
         manual_adjustment_amount: data.manualAdjustment,
         adjustment_notes: data.adjustmentNotes,
         billing_locked: data.billingLocked
-      })
+      }, context)
       .eq('id', adjustBillingData.paymentId)
       .eq('organization_id', organization.id);
     
@@ -137,49 +133,16 @@ export default function FinancialAdminTools() {
     setAdjustBillingData(null);
   };
 
-  if (!organization) {
-    return (
-      <div className="container mx-auto p-6">
-        <PageHeader
-          title="Financial Admin Tools"
-          subtitle="Loading organization data..."
-        />
-        <div className="space-y-4 mt-6">
-          <Skeleton className="h-[200px] w-full" />
-          <Skeleton className="h-[200px] w-full" />
-          <Skeleton className="h-[200px] w-full" />
-        </div>
-      </div>
-    );
-  }
+  if (!organization) return <Skeleton className="h-40 w-full" />;
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      <PageHeader
-        title="Financial Admin Tools"
-        subtitle="Reconciliation and data maintenance tools for organization finances"
-      />
-
-      <Alert>
-        <Settings className="h-4 w-4" />
-        <AlertDescription>
-          Stays are billed automatically. This tool is for a deliberate manual correction on one reservation.
-        </AlertDescription>
-      </Alert>
-
-      {/* Adjust Billing for Reservation */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary" />
-            <CardTitle>Adjust Billing for Reservation</CardTitle>
-          </div>
-          <CardDescription>
-            Manually adjust billing amounts for specific reservations. Use this for special circumstances
-            like early checkout discounts, damage charges, or other billing corrections.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+    <section className="max-w-2xl space-y-4">
+      <div>
+        <h2 className="text-xl font-semibold">Adjust Billing for Reservation</h2>
+        <p className="text-muted-foreground mt-1">
+          Discounts, damage charges, and other billing corrections.
+        </p>
+      </div>
           <div className="space-y-2">
             <Label>Select Reservation</Label>
             <Select value={selectedReservationId} onValueChange={handleReservationSelect}>
@@ -189,7 +152,7 @@ export default function FinancialAdminTools() {
               <SelectContent>
                 {reservations.map(r => (
                   <SelectItem key={r.id} value={r.id}>
-                    {r.family_group} - {format(new Date(r.start_date), 'MMM d')} to {format(new Date(r.end_date), 'MMM d, yyyy')}
+                    {r.family_group} - {format(parseDateOnly(r.start_date), 'MMM d')} to {format(parseDateOnly(r.end_date), 'MMM d, yyyy')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -206,7 +169,7 @@ export default function FinancialAdminTools() {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Manual Adjustment:</span>
-                <span className={selectedPayment.manual_adjustment_amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                <span className={selectedPayment.manual_adjustment_amount >= 0 ? 'text-primary' : 'text-destructive'}>
                   {selectedPayment.manual_adjustment_amount >= 0 ? '+' : ''}${selectedPayment.manual_adjustment_amount?.toFixed(2) || '0.00'}
                 </span>
               </div>
@@ -221,7 +184,7 @@ export default function FinancialAdminTools() {
               )}
               {selectedPayment.billing_locked && (
                 <div className="pt-2">
-                  <span className="text-sm text-amber-600">🔒 Billing is locked</span>
+                  <span className="text-sm text-muted-foreground">🔒 Billing is locked</span>
                 </div>
               )}
             </div>
@@ -234,8 +197,7 @@ export default function FinancialAdminTools() {
             <DollarSign className="h-4 w-4 mr-2" />
             Adjust Billing
           </Button>
-        </CardContent>
-      </Card>
+
 
 
       {/* Adjust Billing Dialog */}
@@ -247,6 +209,6 @@ export default function FinancialAdminTools() {
           onSave={handleSaveAdjustment}
         />
       )}
-    </div>
+    </section>
   );
 }

@@ -1,5 +1,7 @@
 # Project conventions
 
+- Reservation billing adjustments live in the Financial Dashboard's Adjust Billing tab using organization-scoped query wrappers; the retired financial-admin-tools route redirects there to preserve old links.
+
 - Family directory printing uses a body-level print-only report of already-loaded organization members, with two-column flow and family-level page-break protection; this excludes navigation and account diagnostics without changing access or queries.
 
 - Stay printing uses a body-level print-only report projected from the already-scoped visible ledger and selected tab; this keeps navigation, editing controls, and duplicate current-stay forms off paper without changing accounting.

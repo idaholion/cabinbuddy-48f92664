@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, Printer, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Settings, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
+import { Calendar, Users, DollarSign, Clock, ArrowLeft, Receipt, Edit, FileText, Download, Printer, RefreshCw, Trash2, AlertCircle, Send, CreditCard, Calendar as CalendarIcon, Wallet, CheckCircle, Eye, ArrowRightLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useReservations } from "@/hooks/useReservations";
 import { useReceipts } from "@/hooks/useReceipts";
@@ -308,7 +308,7 @@ export default function StayHistory() {
     };
   }, [fetchPayments, refetchReservations, selectedYear]);
 
-  const handleSync = async () => {
+  const refreshStayData = async () => {
     try {
       await refetchReservations();
       await fetchPayments(1, 500);
@@ -454,7 +454,7 @@ export default function StayHistory() {
       toast.success(`${BillingCalculator.formatCurrency(Math.abs(amount))} will be deducted from your next season's billing.`);
       
       // Refresh data
-      await handleSync();
+      await refreshStayData();
     } catch (error: any) {
       console.error('Error applying credit:', error);
       toast.error("Failed to apply credit. Please try again.");
@@ -2031,20 +2031,6 @@ export default function StayHistory() {
           )}
 
           <div className="flex flex-wrap gap-2 ml-auto justify-end">
-            {isAdmin && (
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/financial-admin-tools">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Admin Tools
-                </Link>
-              </Button>
-            )}
-            {isAdmin && (
-              <Button variant="outline" onClick={handleSync}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sync Data
-              </Button>
-            )}
             <Button variant="outline" onClick={() => setShowExportDialog(true)}>
               <Download className="h-4 w-4 mr-2" />
               Export

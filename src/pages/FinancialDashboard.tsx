@@ -17,9 +17,14 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { parseDateOnly } from "@/lib/date-utils";
 import { ViewAsUserPicker } from "@/components/admin/ViewAsUserPicker";
+import ReservationBillingAdjustment from "@/components/ReservationBillingAdjustment";
+import { useOrganization } from "@/hooks/useOrganization";
+import { useSearchParams } from "react-router-dom";
 
 const FinancialDashboard = () => {
-  const [activeTab, setActiveTab] = useState("manage");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") === "adjust-billing" ? "adjust-billing" : "manage");
+  const { organization } = useOrganization();
   const {
     records,
     loading,
@@ -135,7 +140,7 @@ const FinancialDashboard = () => {
         <Card className="bg-card/95">
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1 m-4 mb-0">
+              <TabsList className="grid grid-cols-3 lg:grid-cols-6 h-auto gap-1 mx-4 mt-4 mb-0">
                 <TabsTrigger value="manage" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
                   <Settings className="h-4 w-4 hidden sm:inline" />
                   <span className="sm:hidden">Member</span>
@@ -161,7 +166,19 @@ const FinancialDashboard = () => {
                   <span className="sm:hidden">Reports</span>
                   <span className="hidden sm:inline">Financial Reports</span>
                 </TabsTrigger>
+                {(accessLevel === 'admin' || accessLevel === 'treasurer') && (
+                  <TabsTrigger value="adjust-billing" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm py-2">
+                    <DollarSign className="h-4 w-4 hidden sm:inline" />
+                    Adjust Billing
+                  </TabsTrigger>
+                )}
               </TabsList>
+
+              {(accessLevel === 'admin' || accessLevel === 'treasurer') && (
+                <TabsContent value="adjust-billing" className="p-6 pt-4">
+                  <ReservationBillingAdjustment key={organization?.id} />
+                </TabsContent>
+              )}
 
               {/* Member Expenses Tab */}
               <TabsContent value="manage" className="p-6 pt-4">
