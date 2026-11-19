@@ -10,6 +10,7 @@
 
 
 ## Open
+- [x] Remove the role and family-group labels from the Financial Dashboard header (v2.4.7); the "View as" banner remains the indicator. No access, tab, or record-scoping changes.
 - [x] Remove Sync Data and Admin Tools from Current & Past Stays; move Adjust Billing into Financial Dashboard and redirect the retired financial admin page (v2.4.6). All 120 regression tests pass; redirect checked with no runtime errors. Signed-in billing checks unavailable for external Supabase.
 - [x] Tighten Family Group Overview printing into a two-column contact directory with family-level page-break protection; signed-in checks unavailable for external Supabase.
 - [x] Add Print beside Export on Current & Past Stays, with selected-tab reports and existing year/family scope; authenticated checks unavailable for external Supabase.

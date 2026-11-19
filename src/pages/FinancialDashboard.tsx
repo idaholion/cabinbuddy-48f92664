@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataTable } from "@/components/ui/data-table";
@@ -42,21 +41,6 @@ const FinancialDashboard = () => {
       currency: 'USD',
     }).format(amount);
   };
-
-  const getAccessLevelDisplay = () => {
-    switch (accessLevel) {
-      case 'admin':
-        return { label: 'Administrator', color: 'bg-purple-100 text-purple-700' };
-      case 'treasurer':
-        return { label: 'Treasurer', color: 'bg-orange-100 text-orange-700' };
-      case 'group_lead':
-        return { label: 'Group Lead', color: 'bg-blue-100 text-blue-700' };
-      default:
-        return { label: 'Host', color: 'bg-green-100 text-green-700' };
-    }
-  };
-
-  const accessDisplay = getAccessLevelDisplay();
 
   const reportColumns = [
     {
@@ -115,17 +99,6 @@ const FinancialDashboard = () => {
             <div>
               <h1 className="text-6xl mb-4 font-kaushan text-primary drop-shadow-lg text-center">Financial Dashboard</h1>
               <p className="text-2xl text-primary text-center font-medium">Manage expenses and view financial reports</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge className={`${accessDisplay.color} text-base`}>
-                {accessDisplay.label}
-              </Badge>
-              {userFamilyGroup && (
-                <Badge variant="outline" className="text-base">
-                  <Users className="h-3 w-3 mr-1" />
-                  {userFamilyGroup}
-                </Badge>
-              )}
             </div>
           </div>
         </div>

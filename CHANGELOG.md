@@ -7,6 +7,11 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.7] - 2026-11-18
+### Changed
+- Removed the role and family-group labels from the top of the Financial Dashboard; the "View as" banner already tells you whose view you are in
+- Tabs, billing adjustment access, and which records you can see are unchanged
+
 ## [2.4.6] - 2026-11-18
 ### Changed
 - Removed Sync Data and the Admin Tools shortcut from Current & Past Stays
