@@ -59,7 +59,7 @@ export const PhotoRepositoryPanel: React.FC<PhotoRepositoryPanelProps> = ({
 
       const { error: uploadError } = await supabase.storage
         .from('checklist-images')
-        .upload(filePath, file);
+        .upload(filePath, file, { cacheControl: '604800' });
 
       if (uploadError) throw uploadError;
 

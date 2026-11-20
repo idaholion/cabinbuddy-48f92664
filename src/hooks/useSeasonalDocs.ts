@@ -63,7 +63,7 @@ export const useSeasonalDocs = () => {
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(fileName, file);
+        .upload(fileName, file, { cacheControl: '604800' });
 
       if (uploadError) throw uploadError;
 

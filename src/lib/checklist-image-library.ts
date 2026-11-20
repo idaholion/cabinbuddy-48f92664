@@ -77,7 +77,7 @@ export const uploadChecklistImage = async (
   
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from('checklist-images')
-    .upload(fileName, file, { upsert: true }); // upsert allows replacing existing files
+    .upload(fileName, file, { upsert: true, cacheControl: '3600' }); // upsert allows replacing existing files
   
   if (uploadError) throw uploadError;
   

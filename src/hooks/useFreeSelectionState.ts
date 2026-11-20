@@ -13,8 +13,7 @@ export function useFreeSelectionState(organizationId: string | undefined, year: 
   useEffect(() => {
     const bump = () => setTick(t => t + 1);
     window.addEventListener(SELECTION_DISPLAY_REFRESH, bump);
-    const timer = setInterval(bump, 60_000); // flips from on-hold to open without a refresh
-    return () => { window.removeEventListener(SELECTION_DISPLAY_REFRESH, bump); clearInterval(timer); };
+    return () => window.removeEventListener(SELECTION_DISPLAY_REFRESH, bump);
   }, []);
 
   useEffect(() => {
@@ -34,6 +33,15 @@ export function useFreeSelectionState(organizationId: string | undefined, year: 
     })();
     return () => { live = false; };
   }, [organizationId, year, enabled, tick]);
+
+  // Re-check once at the saved opening moment instead of polling every minute.
+  useEffect(() => {
+    if (!opensAt) return;
+    const wait = opensAt.getTime() - Date.now() + 1000;
+    if (wait <= 0 || wait > 2_147_000_000) return;
+    const t = setTimeout(() => setTick(x => x + 1), wait);
+    return () => clearTimeout(t);
+  }, [opensAt]);
 
   return { state, rules, opensAt };
 }

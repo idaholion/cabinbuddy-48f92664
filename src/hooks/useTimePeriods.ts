@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { usePageVisible } from '@/hooks/usePageVisible';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +44,7 @@ export const useTimePeriods = (rotationYear?: number) => {
   const { rotationData, getRotationForYear } = useRotationOrder(rotationYear);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const pageVisible = usePageVisible();
   const [timePeriodUsage, setTimePeriodUsage] = useState<TimePeriodUsageData[]>([]);
   const rotationYearRef = useRef<number | undefined>(rotationYear);
 
@@ -664,12 +666,12 @@ export const useTimePeriods = (rotationYear?: number) => {
 
   // Real-time subscription for time_period_usage updates
   useEffect(() => {
-    if (!organization?.id) return;
+    if (!organization?.id || !pageVisible) return;
 
     console.log('[Real-time Setup] Setting up subscription for organization:', organization.id);
     
     const channel = supabase
-      .channel('time-period-usage-changes')
+      .channel(`time-period-usage-changes-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {
@@ -698,7 +700,7 @@ export const useTimePeriods = (rotationYear?: number) => {
       console.log('[Real-time Cleanup] Removing subscription');
       supabase.removeChannel(channel);
     };
-  }, [organization?.id, fetchTimePeriodUsage]);
+  }, [organization?.id, fetchTimePeriodUsage, pageVisible]);
 
   return {
     timePeriodUsage,

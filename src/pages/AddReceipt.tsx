@@ -601,7 +601,7 @@ const AddReceipt = () => {
         
         const { error: uploadError } = await supabase.storage
           .from('receipt-images')
-          .upload(filePath, editFormData.newImage);
+          .upload(filePath, editFormData.newImage, { cacheControl: '604800' });
           
         if (uploadError) throw uploadError;
         

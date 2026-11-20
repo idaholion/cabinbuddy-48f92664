@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { usePageVisible } from '@/hooks/usePageVisible';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +38,8 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   const { isGroupLead, userFamilyGroup, userHostInfo, isCalendarKeeper, isAdmin, loading: roleLoading } = useUserRole();
   const { forceReconcileUsageData } = useTimePeriods();
   const [loading, setLoading] = useState(false);
+  const pageVisible = usePageVisible();
+  const wasHiddenRef = useRef(false);
   const [reservations, setReservations] = useState<any[]>([]);
 
   // Create organization context for secure queries
@@ -530,9 +533,11 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
   // Add real-time subscription for reservations
   useEffect(() => {
     if (!activeOrganization) return;
+    if (!pageVisible) { wasHiddenRef.current = true; return; }
+    if (wasHiddenRef.current) { wasHiddenRef.current = false; fetchReservations(); } // catch up after the tab was hidden
 
     const channel = supabase
-      .channel('reservations-changes')
+      .channel(`reservations-changes-${Math.random().toString(36).slice(2)}`)
       .on(
         'postgres_changes',
         {
@@ -552,7 +557,7 @@ export const useReservations = (adminViewMode: { enabled: boolean; familyGroup?:
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeOrganization?.organization_id]);
+  }, [activeOrganization?.organization_id, pageVisible]);
 
   return {
     reservations,

@@ -7,6 +7,11 @@ Version format: Major.Minor.Patch
 
 The newest version at the top is the one shown at the bottom of the side menu.
 
+## [2.4.8] - 2026-11-20
+### Changed
+- Reduced background traffic to the database: the calendar no longer checks every minute for free selection to open, live updates pause while the tab is hidden, and newly uploaded photos are remembered by the browser
+- Booking rules, turns, and financial records are unchanged
+
 ## [2.4.7] - 2026-11-18
 ### Changed
 - Removed the role and family-group labels from the top of the Financial Dashboard; the "View as" banner already tells you whose view you are in

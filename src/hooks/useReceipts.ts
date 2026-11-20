@@ -51,7 +51,7 @@ export const useReceipts = () => {
     
     const { data, error } = await supabase.storage
       .from('receipt-images')
-      .upload(fileName, file);
+      .upload(fileName, file, { cacheControl: '604800' });
 
     if (error) throw error;
 

@@ -68,7 +68,7 @@ export const useDocuments = () => {
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(fileName, file);
+        .upload(fileName, file, { cacheControl: '604800' });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);

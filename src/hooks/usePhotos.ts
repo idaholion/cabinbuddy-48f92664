@@ -64,7 +64,7 @@ export const usePhotos = () => {
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(fileName, file);
+        .upload(fileName, file, { cacheControl: '604800' });
 
       if (uploadError) throw uploadError;
 
